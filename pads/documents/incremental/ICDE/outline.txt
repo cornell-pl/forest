@@ -10,6 +10,7 @@ Format Inference of Very Large Ad Hoc Data
 - However producing PADS desc by hand is very tedious and error-prone, 
   especially when data sources are very large
 - This motivates us to "incrementally" learn data formats
+- Main contributions...
 
 2. Review of PADS & LearnPADS
 - PADS language (use a running example - free_clickthrough.dat?)
@@ -19,35 +20,36 @@ Format Inference of Very Large Ad Hoc Data
   (d) tool suites
 - LearnPADS
   (a) multi-phase algorithm - histogram, relative entropy, MDL, rewriting
+      union-clustering(?)
   (b) limitations: main memory, quadratic to determine dependency
 
 3. Main algorithm
-- IR
+- high level desc of the main phases of the algo
+  options of generating initial desc: 
+   (a) learning a chunk
+   (b) user provides a desc
+- Use an example or two to run thru the algo 
+- IR (note that we will make no distinction between IR and pads)
 - Initial description
 - Parsing into rep: sync tokens, partial success, etc 
 - Aggregate structure (only store error data), opts table
 - Translation of aggregate back to IR
-- Rewriting rules  
+- Rewriting rules 
+  New ones: 
+  (a) blob-finding
+  (b) option-to-union, etc
+  (c) simulated annealing(?)
 
 4. Implementations 
-- pxml to IR to get initial description
-- Considerations of parsing and aggregation complexity:
-  To contain the parse space:
+- Optimization in parsing and aggregation:
   (a) the "clean" function to limit the number of parses
   (b) memoization
   (c) parse cut-off
   (d) struct parsing optimizations
   (e) partly deterministic array and union semantics (similar to PADS)
-  To reduce the complexity of parsing regex:
-  (a) use substring matching whenever possible
 
 - Various parameter tuning (with running example)
-- More optimizations:
-  (a) blob-finding
-  (b) option-to-union, etc
-  (c) union-clustering(?)
-  (d) simulated annearling(?)
- 
+
 5. Evaluation
 - Data sets (large and medium sizes)
 - System specs
@@ -61,9 +63,7 @@ Format Inference of Very Large Ad Hoc Data
 6. Related Work
 
 7. Conclusion
-- Future work: 
-  (a) parsing efficiency
-  (b) sensitivity to initial description
-  (c) more effective (correct) blob finding
-
+  1. parsing efficiency is important
+  2. scales up to large numbers. The degree of scale depends in part on
+     the complexity of the desciption...
 
