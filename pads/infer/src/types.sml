@@ -81,15 +81,6 @@ struct
 					      described by this ty *)
                    }
 
-(*
-    fun updateComps ( aux : AuxInfo ) ( comps : TyComp ) : AuxInfo =
-        { coverage = #coverage aux
-        , label    = #label aux
-        , tycomp   = comps
-	, len = #len aux
-        }
-*)
-
     (* Update the len and type and data complexity of an AuxInfo *)
      fun updateLenComps ( aux : AuxInfo ) (l: real ) (comps : TyComp) : AuxInfo =
         { coverage = #coverage aux
@@ -303,17 +294,22 @@ struct
     fun mkTyLabel  (i:int) : Id = mkLabel "BTy_" i
     fun mkTBDLabel (i:int) : Id = mkLabel "TBD_" i
     fun mkBOTLabel (i:int) : Id = mkLabel "BOT_" i
-    fun mkNextTyLabel () = (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
+
+    fun mkNextTyLabel () = 
+	  (mkTyLabel (!Tystamp)) before 
+	  (
+	  if !Tystamp < maxInt then
+		Tystamp := !Tystamp + 1 
+	  else Tystamp := 0 (* reset to 0 *)
+	  )
+
     fun getLabel ( a : AuxInfo ) : Id =
     let val { coverage = c, label = l, ... } = a
     in case l of
-            NONE => (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
+            NONE => mkNextTyLabel () 
           | SOME id => id
     end
 
-    fun getNextLabel () : Id = 
-     (mkTyLabel (!Tystamp)) before Tystamp := !Tystamp + 1 
-         
     fun getLabelString ( a : AuxInfo ) : string = Atom.toString (getLabel a)
     fun getIdString ( a : AuxInfo ) : string = 
 	let val label = getLabelString a
@@ -361,10 +357,21 @@ struct
 	end
 
     fun mkTyAux ( coverage : int ) : AuxInfo = 
-	let val next = !Tystamp
-            val () = Tystamp := !Tystamp + 1
-            val label = mkTyLabel next
+	let val label = mkNextTyLabel ()
 	in { coverage = coverage
+           , label    = SOME label
+           , tycomp   = { tc  = zeroComp
+                        , adc = zeroComp
+                        , dc  = zeroComp
+                        }
+	   , len = 0.0
+           }
+	end
+
+    fun mkTyAuxDummy () : AuxInfo = 
+	let
+	  val label = Atom.atom("dummy") 
+	in { coverage = 0
            , label    = SOME label
            , tycomp   = { tc  = zeroComp
                         , adc = zeroComp
@@ -386,10 +393,9 @@ struct
            }
 	end
 
-    fun mkTyAux3 ( coverage : int, comp: TyComp ) : AuxInfo = 
-	let val next = !Tystamp
-            val () = Tystamp := !Tystamp + 1
-            val label = mkTyLabel next
+    fun mkTyAuxComp ( coverage : int, comp: TyComp ) : AuxInfo = 
+	let 
+            val label = mkNextTyLabel()
 	in { coverage = coverage
            , label    = SOME label
            , tycomp   = comp
@@ -889,7 +895,7 @@ struct
 			else 
 			  let 
 			    val (newcov, newcomp) = List.foldl combAux (0, zeroComps) bodyTys
-			    val newUnionAux = mkTyAux3 (newcov, newcomp)
+			    val newUnionAux = mkTyAuxComp (newcov, newcomp)
 			  in
 			    (headers, footers, SOME aux, Punion(newUnionAux, bodyTys))
 			  end

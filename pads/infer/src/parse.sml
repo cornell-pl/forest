@@ -176,6 +176,7 @@ struct
 
 
   (* helper function get the worse parse from a set of parses *)	
+  (********
   fun get_worse_parse s =
      let val l = ParseSet.listItems s
          fun f opt l =
@@ -197,7 +198,8 @@ struct
      in
 	f NONE l
      end
-	   	
+  *****)	   
+	
   val tmap = 
 	let fun add ((t, re), map) = TokenMap.insert (map, t, re)
 	in foldl add TokenMap.empty TokenDefs.tokenDefList
@@ -592,7 +594,8 @@ struct
 		     | _ => [(SyncR Fail, (1, 0, 0, 0), start)]
 	       val slen = String.size s
 	    in
-		if isPunctuation s then match_const_str (parse_const_str (s, start, input))
+		if isPunctuation s then 
+			match_const_str (parse_const_str (s, start, input))
 		else if isWhiteSpace s then
 			let val x =  parse_regex ("[ \\t\\r\\n]+", start, input, true)
 			in match_const_str x
@@ -954,7 +957,9 @@ struct
 	end
     | RArray (a, sep, term, body, len, lengths) => 
      (
-      let fun merge_s ((r, m, j), set, has_sep) =
+      let 
+	val now = Time.now()
+	fun merge_s ((r, m, j), set, has_sep) =
 		case r of
 		  ArrayR(elems, seps, termop) =>
 		    if has_sep then
@@ -976,7 +981,7 @@ struct
 				   case body_sep of
 				     TupleR ([sepR, elemR]) => 
 					(ArrayR(elems@[elemR], seps@[sepR], termop), add_metric m  m', j')
-				   | _ => raise TyMismatch) set
+				   | _ => (print ((repToString "" body_sep ) ^ "\n"); raise TyMismatch)) set
 		    else 
 		      ParseSet.map (fn (elemR, m', j') =>
 				(ArrayR(elems@[elemR], seps, termop), add_metric m  m', j')) set
@@ -1011,7 +1016,7 @@ struct
 	  (* returns whether the re is parsed successfully and the parses *)
 	  fun pair_parse bodyset re isTerm =
 		let
-		  val rety = RefinedBase (mkTyAux 0, re, nil)
+		  val rety = RefinedBase (mkTyAuxDummy (), re, nil)
 		  fun gg ((r, m, j), set) =
 			let
 			    val news = parse_all (rety, e, j, input, cutoff)
@@ -1030,8 +1035,9 @@ struct
 		  	in	
 			   ParseSet.union (set, newset)
 			end
+		  val s = ParseSet.foldl gg (ParseSet.empty) bodyset
 		in 
-		  ParseSet.foldl gg (ParseSet.empty) bodyset
+		  s
 		end 
       in
       case len of
@@ -1063,7 +1069,7 @@ struct
                           if start >= String.size input then ((prev_r, m, start), true)
                           else
                             let
-                              val rety = RefinedBase (mkTyAux 0, term, nil)
+                              val rety = RefinedBase (mkTyAuxDummy(), term, nil)
 			      (* val _ = print "trying term...\n" *)
                               val news = parse_all (rety, e, start, input, cutoff)
                             in
@@ -1081,7 +1087,7 @@ struct
 		  case term of 
 		    SOME term => 
                       let
-                        val rety = RefinedBase (mkTyAux 0, term, nil)
+                        val rety = RefinedBase (mkTyAuxDummy(), term, nil)
 			(* val _ = print "doing term...\n" *)
                         val news = parse_all (rety, e, start, input, cutoff)
                       in
@@ -1100,11 +1106,11 @@ struct
                     val (has_sep, ty_to_parse) =
                         case sep of
                           SOME sep =>
-                            (true, Pstruct (mkTyAux 0, [RefinedBase (mkTyAux 0, sep, nil), body]))
+                            (true, Pstruct (mkTyAux1(0, Atom.atom("dummy1")), 
+			[RefinedBase (mkTyAux1(0, Atom.atom("dummy2")), sep, nil), body]))
                         | NONE => (false, body)
                     fun f ((prev_r, m, start), set) =
                        let 
-			   (* val _ = print "parsing body...\n" *)
 			   val cur_parses = parse_all (ty_to_parse, e, start, input, cutoff)
                            val cur_parses' = clean (ParseSet.filter
                                                 (fn (r, m, j) => (j > start)) cur_parses)
@@ -1251,7 +1257,7 @@ struct
 				case sep of
 				  NONE => 
 				    if is_good_metric m then 
-				      parse_all (RefinedBase (mkTyAux 0, term, nil), 
+				      parse_all (RefinedBase (mkTyAuxDummy(), term, nil), 
 						e, start, input, cutoff)
 				    else ParseSet.empty
 				| SOME sep => ParseSet.empty
@@ -1381,8 +1387,9 @@ struct
 		   ParseSet.foldl f ParseSet.empty  parse_set 
 	    in parse_fixed_len_array (e, new_parse_set, index+1)
 	    end
+	   val s = (parse_fixed_len_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i), 0))
 	in
-	  clean (parse_fixed_len_array (e, ParseSet.singleton(ArrayR(nil, nil, NONE), (0, 0, 0, 0), i), 0))
+ 	  clean s
 	end 
       end  
       )

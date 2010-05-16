@@ -5,11 +5,11 @@ structure Incremental: sig
 
   end = struct
 
-(*
+    (*
     val _ = Compiler.Profile.setProfMode true
     val _ = Compiler.Profile.setTimingMode true
-    val _ = SMLofNJ.Internals.ProfControl.spaceProfiling:= true
-*)
+    val _ = SMLofNJ.Internals.ProfControl.spaceProfiling:= true 
+    *)
 
     val anyErrors = ref false
     val max_bad_parses = Parse.max_bad_parses
@@ -88,7 +88,8 @@ structure Incremental: sig
  	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, !Parse.do_parse_cutoff)
 	(* val _ = print ("Number of parses: " ^ Int.toString (Parse.ParseSet.numItems set) ^ "\n") *)
         val set = if Parse.ParseSet.numItems set = 0 then
-		  (Parse.memo:=Parse.MemoMap.empty;
+		  (
+		  Parse.memo:=Parse.MemoMap.empty;
 		  Parse.parse_all(ty, LabelMap.empty, 0, line, false))
 		  else set
 	(* val elapse = Time.- (Time.now(), tm)
@@ -197,57 +198,6 @@ structure Incremental: sig
        in
 	  (top_aggregates, has_good_parse)
        end 
-
-(*
-       fun inc_learn (chunk, index, goldenTy) =
-	   let
-	     val start_time = Time.now()
-	     (* invariant: number of aggregates <= max_aggregates *)
-	     val _ = print ("\n**** Incrementally learning from chunk No. " ^ 
-		Int.toString index ^ "...\n")
-(*
-	     fun wrapper n line aggrs =
-		if n = 250001 then aggrs
-		else 
-		  let val new_aggrs = add (line, aggrs)
-		      val _ = if n mod 5000 = 0 then 
-	     			let val elapse = Time.- (Time.now(), start_time)
-				in 
-				  print (Int.toString n ^ " Records - Time elapsed: " ^ 
-					Time.toString  elapse ^ " secs\n")
-				end
-			      else ()
-		  in wrapper (n+1) line new_aggrs
-		  end
-	     val final_aggrs = wrapper 1 (hd lines) [init_aggr]
-*)
-
-	     (* val _ = print "loadFile complete \n" *)
-	     val init_aggr = AG.TupleA [AG.initialize goldenTy, AG.Ln nil]
-	     (* val _ = print "Aggregate initialization complete \n" *)
-	     val final_aggrs = (foldl (fn (line, aggrs) => add (goldenTy, line, aggrs)) 
-			[init_aggr] chunk)
-	     val final_aggr = if length final_aggrs = 0 then
-				(print "Warning! Number of aggregates is 0!\n"; init_aggr)
-			      else hd (final_aggrs)
-	     val final_cost = AG.cost final_aggr
-	     val (newTy, changed) = 
-		if final_cost = 0 andalso AG.equal_aggr(init_aggr, final_aggr) then 
-		(* no change to the description *)
-		  (print "**** No Change to Description!\n";
-		   (goldenTy, false))
-		else 
-		  let  
-	     	    val _ = (print "The Best Aggregate:\n"; print (AG.aggrToString "" final_aggr)) 
-	     	    val _ = print ("Cost of Best Aggregation = " ^ Int.toString final_cost ^ "\n")
-	     	    val newTy = Reduce.reduce 3 (AG.updateTy goldenTy final_aggr)
-	     	    val _ = (print "**** Newly updated Ty: \n"; printTy newTy)
-		  in (newTy, true)
-		  end
-	   in
-	     (newTy, final_cost, changed)
-	   end
-***)
 
      (* this function reparses the data files using the learned description - no learning is done *)
      fun reparse_files(ty, filepaths) =

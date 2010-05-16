@@ -258,7 +258,7 @@ structure Pxml = struct
 	in
 	  if (String.substring(bodyname, 0, 2) = "PP") then
 	    (* this is a base type *)
-	    let val bodyTy = ptypeToIR (getNextLabel ()) 
+	    let val bodyTy = ptypeToIR (mkNextTyLabel ()) 
 		(valOf(search [xml] ["_", "ptype"])) cons
 	    in
 	      RArray (aux,sep, term, bodyTy, len, nil)
@@ -287,7 +287,7 @@ structure Pxml = struct
 	in
 	  if (String.substring(bodyName, 0, 2) = "PP") then
 	    (* this is a base type *)
-	    let val bodyTy = ptypeToIR (getNextLabel ()) 
+	    let val bodyTy = ptypeToIR (mkNextTyLabel ()) 
 			(valOf(search [xml] ["_", "ptype"])) cons
 	    in
 	      Poption (aux, bodyTy)
@@ -299,7 +299,7 @@ structure Pxml = struct
 		in
 		  Poption (aux, bodyTy)
 		end
-	  | NONE => Poption (aux, ptypeToIR (getNextLabel ()) 
+	  | NONE => Poption (aux, ptypeToIR (mkNextTyLabel ()) 
 			(valOf (search [xml] ["_", "ptype"])) cons)
 	end
 

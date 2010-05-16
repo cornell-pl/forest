@@ -2892,7 +2892,7 @@ let
     end
   (* we use $ to denote end of the entire chunk *)
   val sib_opt = case sib_opt of
-		  NONE => SOME (RefinedBase (mkTyAux 0, StringME("/$/"), nil))
+		  NONE => SOME (RefinedBase (mkTyAuxDummy(), StringME("/$/"), nil))
 		| _ => sib_opt
 
   val (cmap', ty') = reduce' phase cmap sib_opt true ty 

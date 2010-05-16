@@ -190,4 +190,9 @@ struct
 	else case Char.fromString s of
 		NONE => false
 	      | SOME c => Char.isPunct c 
+
+    val maxInt =
+	case Int.maxInt of
+	SOME x => x
+	| _ => 1000000000
 end
