@@ -1044,7 +1044,7 @@ struct
         NONE =>	
 	(
 	 let
-	   (* val _ = print ("Begin parsing Array " ^ getLabelString (getAuxInfo ty) ^ "\n") *)
+	   (* val _ = print ("Begin parsing Array " ^ getLabelString (getAuxInfo ty) ^ "\n") *) 
 	   val start = Time.toReal (Time.now())
 
 	   (** the following is an implementation of the 700 DDC paper*) 
@@ -1314,11 +1314,11 @@ struct
 
 	   (* we have to add a parse that is an zero-length array *)
 	   (* val final_set = ParseSet.add (non_empty_set, (ArrayR(nil, nil, NONE), (0, 0, 0, 0), i))*)
-           (*
+	   (*
 	   val _ = print "**** Begin \n"
 	   val _ = ParseSet.app (fn x => print (parseItemToString x)) final_set 
-	   val _ = print "**** End \n" 
-	   *)
+	   val _ = print "**** End \n"
+	   *) 
 	  in
 		final_set	
 	  end  
@@ -1402,7 +1402,9 @@ struct
 	   newset
 	end
     | _ => raise TyMismatch
-    val _ = if !do_memo then memo:= MemoMap.insert(!memo, (mylabel, i), finalset)
+    (* don't include dummy types in the memo table *)
+    val _ = if !do_memo andalso not (String.isPrefix "dummy" (Atom.toString mylabel)) then 
+		memo:= MemoMap.insert(!memo, (mylabel, i), finalset)
 	    else ()
 
 (*
