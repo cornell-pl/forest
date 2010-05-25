@@ -1016,7 +1016,7 @@ struct
 	  (* returns whether the re is parsed successfully and the parses *)
 	  fun pair_parse bodyset re isTerm =
 		let
-		  val rety = RefinedBase (mkTyAuxDummy (), re, nil)
+		  val rety = RefinedBase (mkTyAux(0), re, nil)
 		  fun gg ((r, m, j), set) =
 			let
 			    val news = parse_all (rety, e, j, input, cutoff)
@@ -1069,7 +1069,7 @@ struct
                           if start >= String.size input then ((prev_r, m, start), true)
                           else
                             let
-                              val rety = RefinedBase (mkTyAuxDummy(), term, nil)
+                              val rety = RefinedBase (mkTyAux(0), term, nil)
 			      (* val _ = print "trying term...\n" *)
                               val news = parse_all (rety, e, start, input, cutoff)
                             in
@@ -1087,7 +1087,7 @@ struct
 		  case term of 
 		    SOME term => 
                       let
-                        val rety = RefinedBase (mkTyAuxDummy(), term, nil)
+                        val rety = RefinedBase (mkTyAux(0), term, nil)
 			(* val _ = print "doing term...\n" *)
                         val news = parse_all (rety, e, start, input, cutoff)
                       in
@@ -1106,8 +1106,7 @@ struct
                     val (has_sep, ty_to_parse) =
                         case sep of
                           SOME sep =>
-                            (true, Pstruct (mkTyAux1(0, Atom.atom("dummy1")), 
-			[RefinedBase (mkTyAux1(0, Atom.atom("dummy2")), sep, nil), body]))
+                            (true, Pstruct (mkTyAux(0), [RefinedBase (mkTyAux(0), sep, nil), body]))
                         | NONE => (false, body)
                     fun f ((prev_r, m, start), set) =
                        let 
@@ -1257,7 +1256,7 @@ struct
 				case sep of
 				  NONE => 
 				    if is_good_metric m then 
-				      parse_all (RefinedBase (mkTyAuxDummy(), term, nil), 
+				      parse_all (RefinedBase (mkTyAux(0), term, nil), 
 						e, start, input, cutoff)
 				    else ParseSet.empty
 				| SOME sep => ParseSet.empty
@@ -1403,7 +1402,7 @@ struct
 	end
     | _ => raise TyMismatch
     (* don't include dummy types in the memo table *)
-    val _ = if !do_memo andalso not (String.isPrefix "dummy" (Atom.toString mylabel)) then 
+    val _ = if !do_memo then
 		memo:= MemoMap.insert(!memo, (mylabel, i), finalset)
 	    else ()
 

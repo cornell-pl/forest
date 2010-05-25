@@ -2280,13 +2280,19 @@ and contract_blobs sib ty =
 	  else ty
         end
     | Poption(a, blob as (RefinedBase(a', Blob x, tl))) =>
-	(* generate only one empty token in the base type *)
-	let 
-	  val empty_a = updateCoverage a (#coverage a - #coverage a')
-	  val emptyBase = genEmptyBase empty_a 
-	in 
-	  mergeTyInto (emptyBase, blob)
-	end
+      (
+       case sib of
+	SOME (RefinedBase _) =>
+	  (* if this optional blob contains a valid stopping pattern or string as a sibling then do following *)
+	  let 
+	   (* generate only one empty token in the base type *)
+	    val empty_a = updateCoverage a (#coverage a - #coverage a')
+	    val emptyBase = genEmptyBase empty_a 
+	  in 
+	    mergeTyInto (emptyBase, blob)
+	  end
+      | _ => ty
+     )
     | _ => ty
   end
 

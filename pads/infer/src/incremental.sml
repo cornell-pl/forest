@@ -85,7 +85,11 @@ structure Incremental: sig
 	(* val _ = print (line ^ "\n") *) 
 	(* val tm = Time.now() *)
 	val _ = Parse.memo:=Parse.MemoMap.empty
+	(* remember the Tystamp value before parsing and then reset it back after parsing 
+	   because parsing a ty should not change its labels *)
+        val prev_tystamp = !Tystamp
  	val set = Parse.parse_all(ty, LabelMap.empty, 0, line, !Parse.do_parse_cutoff)
+	val _ = Tystamp:=prev_tystamp
 	(* val _ = print ("Number of parses: " ^ Int.toString (Parse.ParseSet.numItems set) ^ "\n") *)
         val set = if Parse.ParseSet.numItems set = 0 then
 		  (
@@ -279,10 +283,10 @@ structure Incremental: sig
 	     in newTy
 	     end
 	    else newTy
-	    (****
+	    (*
 	    val _ = (print ("\n*** New Ty after Chunk " ^ Int.toString index ^ " (" ^ 
 			Int.toString count ^ " lines) (after rewriting):\n"); printTy newTy)
-	    ****)
+	    *)
 	    (* val refinedTy = Reduce.reduce 4 newTy *)
 	    val elapse = Time.- (Time.now(), start_time)
    	    val _ = print ("Time elapsed: " ^ Time.toString elapse ^ " secs\n")
@@ -325,7 +329,7 @@ structure Incremental: sig
 	     	     aggrs := [(AG.TupleA (0, [AG.initialize newTy, AG.Ln(mkNextTyLabel(), nil)]), 
 				AG.initTable())]
 		    end 
-		else ();
+		else (); (* if (!count) mod 1000 = 0 then print ((Int.toString (!count)) ^ "\n") else ()); *)
 		case TextIO.inputLine strm of
 		  SOME x => 
 			let 
