@@ -15,14 +15,14 @@ use Time::HiRes qw ( time alarm sleep );
 #		"debug_getbig.20090624_000",
 #		"dbg_req_redirect.20090624_000"
 	     );
-$numTimes = 1;
+$numTimes = 3;
 $initsize = 500;
 $incsize = 100;
 $pads_home = `echo \$PADS_HOME`;
 chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
-$tmout = 5; #1.5 hours timeout for each learn task 
+$tmout = 5400; #1.5 hours timeout for each learn task 
 
 sub getFileName
 {

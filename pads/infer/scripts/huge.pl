@@ -108,6 +108,7 @@ foreach my $largefile (@largefiles)
    {print "$largefile is too small!\n"; exit;}
    
    print "\n**** Processing  $largefile ****\n";
+   print "Total num of lines = $largefile_lines\n";
    print "wc -l elapse = $wc_elapse secs\n";
    
    $linecount = int($largefile_lines / $multiplier);

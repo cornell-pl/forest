@@ -578,7 +578,9 @@ struct
 		  | _ => raise Unexpected
 	       fun match_const_str (recovered, matched, j) =
 		     case (recovered, matched) of
-		       (NONE, SOME s) => [(SyncR(Good (s, StringConst s)), (0, 1, 0, String.size s), j)]
+		       (NONE, SOME matched_s) => 
+			  if String.compare(s, matched_s) = EQUAL then [(SyncR(Good (s, StringConst s)), (0, 1, 0, String.size s), j)]
+			  else [(SyncR(Partial(matched_s, StringConst matched_s)), (0, 1, 0, String.size s), j)]
 		     | (SOME r, SOME matched_s) => 
 			let val rlen = String.size r
 			    val slen = String.size matched_s

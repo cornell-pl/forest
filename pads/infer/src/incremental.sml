@@ -116,7 +116,7 @@ structure Incremental: sig
 		   else (r, m, j)
 		end) list_parses
 	(* if there are some perfect parses, only take those *)
-	val perfect_parses = List.filter (fn (r, m, j) => (#1 m) = 0) list_parses
+	val perfect_parses = List.filter (fn (r, m, j) => Rep.is_good_metric m) list_parses
 	(* val _ = print ("Num of perfect parses: " ^ Int.toString (length perfect_parses) ^ "\n") *)
 	val (top_parses, has_good_parse) =
 		if List.length perfect_parses > 0 then
