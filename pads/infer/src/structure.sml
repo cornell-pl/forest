@@ -611,7 +611,7 @@ struct
 	return the original list *)
     fun findGroups (tokens : LToken list) : LToken list = 
 	let fun TokenMatch (t1,t2) = case (t1,t2) 
-	                             of (PbXML _, PbXML _) => (print "looking for a pbxml token\n"; true) (* begin xml tag in group list has placeholder tag, so any bXML matches *)
+	                             of (PbXML _, PbXML _) => ((*print "looking for a pbxml token\n";*) true) (* begin xml tag in group list has placeholder tag, so any bXML matches *)
 				     | _ => TokenEq(t1,t2)
 	    fun findDelim (t,loc) = List.find (fn(f,s) => TokenMatch (t,f)) groupOps
             fun delimMatches r (t,loc) = TokenEq(t, r)
