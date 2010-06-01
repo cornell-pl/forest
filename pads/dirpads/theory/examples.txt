@@ -1,0 +1,116 @@
+The RP and PDs for derived forms stated here are for illustrative
+purposes only. They are computed from the primitives.
+
+=========
+= first = 
+=========
+
+RP : s1_rp
+PD : s1_pd
+where 
+  s_{RP} = s1_rp * s2_rp
+  s_{PD} = (s1_pd * s2_pd) pd
+
+first(s) =def=
+  (fun ((v1,v2),(b,(d1,d2))) -> 
+     (v1,(b,desc(d1))))
+  @[s1_rp,s1_pd]
+  s
+
+-- note that it would be type correct to return (v1,d1) in the body of
+   the function. However, we want to keep the information contained in
+   the top-level header for derived forms like where, etc.
+
+==========
+= second = 
+==========
+
+RP : s2_rp
+PD : s2_pd
+where 
+  s_{RP} = s1_rp * s2_rp
+  s_{PD} = (s1_pd * s2_pd) pd
+
+second(s) =def=
+  (fun ((v1,v2),(b,(d1,d2))) -> 
+     (v2,(b,desc(d2))))
+  @[s2_rp,s2_pd]
+  s
+
+=================
+= where clauses = 
+=================
+
+RP: s_{RP}
+PD: s_{PD} 
+
+x:s where e =def= 
+  first(<x:s,Pred(e)>)
+
+===================
+= empty directory =
+===================
+
+RP: string set
+PD: meta pd
+
+emptydir =def= 
+  x:dir where size(x) = 0
+
+===========================
+= not the empty directory = 
+===========================
+
+RP: string set
+PD: meta pd
+
+nottheemptydir =def=
+  ~emptydir
+
+-- semantics: either a non-directory contents or non-empty directory
+
+=======================
+= non-empty directory = 
+=======================
+
+RP: string set
+PD: meta pd
+
+nonemptydir =def=
+  x:dir where size(x) > 0
+
+=======================
+= singleton directory = 
+=======================
+
+RP: string set
+PD: meta pd
+
+singletondir =def=
+  x:dir where size(x) = 1
+
+=======================================
+= singleton directory with named file = 
+=======================================
+
+RP: contents
+PD: path pd
+
+single(name) =def=
+  (fun ((v1,v2),(b,(d1,d2))) -> 
+    let _,(_,r,_) = d2 in 
+    (v2,(b,r)))
+  @[contents,path pd]
+  <singletondir, name::True>
+
+=========================================
+= directory only containing *.exe files = 
+=========================================
+
+RP: string set
+PD: meta pd
+
+exedir =def=
+  first(second(< y:dir, < x : { f::file | f in "*.exe" }, Pred(size(y) = size(x)) >))
+
+-- note that the rep here is the set of string contents of all the .exe files 
