@@ -15,14 +15,14 @@ use Time::HiRes qw ( time alarm sleep );
 #		"debug_getbig.20090624_000",
 #		"dbg_req_redirect.20090624_000"
 	     );
-$numTimes = 3;
+$numTimes = 1;
 $initsize = 500;
 $incsize = 100;
 $pads_home = `echo \$PADS_HOME`;
 chomp $pads_home;
 $arch = `$pads_home/ast-ast/bin/package.cvs`;
 chomp $arch;
-$tmout = 5400; #1.5 hours timeout for each learn task 
+$tmout = 3600; #1.5 hours timeout for each learn task 
 
 sub getFileName
 {
@@ -194,13 +194,16 @@ sub inc_lrn
   {
     $exectime = 0;
     if ($doparse) {
-      $inctimedout = timed_exec ("increment -f $file -i $isize -l $lsize -output gen -reparse true $adc_str $uc_str > $filename.inc", $tmout);
+      $inctimedout = timed_exec ("increment -f $file -i $isize -l $lsize -output gen -reparse true $adc_str $uc_str > $filename.inc", 3*$tmout);
+      #system ("increment -f $file -i $isize -l $lsize -output gen -reparse true $adc_str $uc_str > $filename.inc"); 
     } else
     {
-      $inctimedout = timed_exec("increment -f $file -i $isize -l $lsize -output gen $adc_str $uc_str > $filename.inc", 2*$tmout);
+      $inctimedout = timed_exec("increment -f $file -i $isize -l $lsize -output gen $adc_str $uc_str > $filename.inc", $tmout);
+      #system("increment -f $file -i $isize -l $lsize -output gen $adc_str $uc_str > $filename.inc");
     }
+    #$inctimedout = 0;
     #unlink("$filename.inc");
-
+    
     if ($doparse) {
       ($rate, $ptime, $btime) = verify($filename, $file);
       if (-e $goldxml && $rate > 0 )
@@ -223,6 +226,8 @@ sub inc_lrn
 #    output("$filename (inc)", $score, $rate, $exectime, $reparsetime, $ptime, $btime, $num);
   }
 #  unlink("$filename.inc");
+  system ("mv $filename.inc $filename.$isize.$lsize.inc");
+
   if ($num > 0) {
     $time = $time/$num; 
     $rptime = $rptime/$num;

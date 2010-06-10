@@ -130,7 +130,13 @@ foreach my $largefile (@largefiles)
      ($rate, $ptime, $btime) = verify($firstsmallfile, $largefile);
 
      if (-e "gold/$arch/$fname.pxml") {
-	system("descdist gen/$arch/$firstsmallfile.pxml gold/$arch/$fname.pxml")
+   	my $line = `descdist gen/$arch/$firstsmallfile.pxml gold/$arch/$fname.pxml`;
+   	chomp $line;
+   	if ($line =~ /.*ty2 = ([0-9.]+) nodes.*Edit distance = ([0-9.]+)/) 
+	{
+	  printf ("Edit distance = %.3f\n", $2/$1);
+	}
+	else {print "Edit distance = -1\n";}
      }
      print "Reparse time = $reparsetime secs\n";
      print "PADS parse time = $ptime secs\n";
