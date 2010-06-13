@@ -82,7 +82,7 @@ structure Incremental: sig
     (* each aggregate is actually a pair: (aggr, OptsTable) *)
     fun add (ty, line, aggregates) =
       let 
-	(* val _ = print (line ^ "\n") *) 
+	(* val _ = print (line ^ "\n") *)
 	(* val tm = Time.now() *)
 	val _ = Parse.memo:=Parse.MemoMap.empty
 	(* remember the Tystamp value before parsing and then reset it back after parsing 
@@ -350,7 +350,7 @@ structure Incremental: sig
 	  (!myTy, !aggrs, !start_time, !index, !count, !badcount, 0)
        end
 
-     fun parse_files (initTy, numHeaders, numFooters, filepaths, chunksize, 
+     fun parse_files (initTy, filepaths, chunksize, 
 		begin_time, dir, start_pos, reparse) =
       let
 	   val filepath = hd filepaths
@@ -368,7 +368,6 @@ structure Incremental: sig
 		List.foldl batch (initTy, aggrs, Time.now(), 0, 0, 0, start_pos) filepaths
 	   val finalTy = output aggrs finalTy start_time index count logFile
 	   val finalTy = sortUnionBranches (Reduce.reduce 4 NONE finalTy)
-
 	   val total_elapse = Time.- (Time.now(), begin_time)
 	   val _ = (print "**** Final Ty: \n"; printTy (measure 0 finalTy))
 	   val tycomp = getComps finalTy
@@ -391,8 +390,9 @@ structure Incremental: sig
 	   val padscFile = dir ^  "/" ^ filename ^ ".p"
 	   val pmlFile = dir ^  "/" ^ filename ^ ".pml"
 	   val _ = print ("\nOutput final PADS description to " ^ padscFile ^ "\n")
+	   (* pretend no headers or footers *)
 	   val (topName, hdrName, tyName, trlName) = Printing.dumpPADSdesc padscFile 
-				pmlFile finalTy numHeaders numFooters
+				pmlFile finalTy 0 0
 	   (* val _ = Printing.dumpAccumProgram (dir ^ "/") filename hdrName tyName trlName *)
 	   val _ = Printing.dumpParseProgram (dir ^ "/") filename hdrName tyName trlName
 	   val _ = Printing.dumpXMLProgram (dir ^ "/") filename topName hdrName tyName trlName
@@ -637,7 +637,7 @@ structure Incremental: sig
 	 val _ = printTy goldenTy *)
 
        in
-         parse_files (initTy, numHeaders, numFooters, learn_files, chunksize, 
+         parse_files (initTy, learn_files, chunksize, 
 			stime, timedir, start_pos, reparse) 
 	 (* Compiler.Profile.reportAll TextIO.stdOut *)
        end handle e =>(TextIO.output(TextIO.stdErr, concat[
