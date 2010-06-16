@@ -16,20 +16,27 @@ import qualified Text.Regex as RE
 [pads| IntPair = (Pint, '|', Pint) |]
 
 intPair_result = intPair_parseS "12|23"
+-- ((IntPair (Pint 12,Pint 23),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
 
 [pads|Bar = (Pint, ',', IntPair, ';', Pint) |]            -- reference to another named type
 bar_result = bar_parseS "256,12|23;456:"
+-- ((Bar (Pint 256,IntPair (Pint 12,Pint 23),Pint 456),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),Errors: 0,Errors: 0))),":")
 
 [pads|Bar2 = (Pint, ',', (Pint,':',Pint), ';', Pint) |]   -- nested tuple type.
+bar2_result = bar2_parseS "56,23:46;29"
+-- ((Bar2 (Pint 56,(Pint 23,Pint 46),Pint 29),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),Errors: 0,Errors: 0))),"")
 
 [pads|BazR = Precord (Pint, ',',Pint) |]                  -- type that consumes a record boundary.
 bazr_result = bazR_parseS "33,33:"
+-- ((BazR (Pint 33,Pint 33),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
 
 bazr_input = "33,44\n55,66\n"
 bazr_results = parseAllS bazR_parseM bazr_input
+-- ([BazR (Pint 33,Pint 44),BazR (Pint 55,Pint 66)],[(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))])
 
 [pads| MyInt = Pint |]
 myInt_result = myInt_parseS "23"
+-- ((MyInt (Pint 23),Errors: 0),"")
 
 testStrLen = 2
 computeLen x = x - 1
@@ -37,13 +44,16 @@ computeLen x = x - 1
 
 inputStrTy = "catdog"
 strty_results = strTy_parseS inputStrTy
+-- ((StrTy (PstringFW "catdo"),Errors: 0),"g")
 
 [pads| StrTy1 = Pstring(:'o':) |]
 strty1_results = strTy1_parseS inputStrTy
+-- ((StrTy1 (Pstring "catd"),Errors: 0),"og")
 
 [pads|Baz = (PstringFW(:3:),',',Pint) |]
 input_baz  = "cat,123"
 baz_results = baz_parseS input_baz
+-- ((Baz (PstringFW "cat",Pint 123),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
 
 [pads| StrME = PstringME(:RE "a+":) |]
 input_strME = "aaaab"
