@@ -17,18 +17,21 @@ import Language.Pads.Padsc
 
 
 parse :: Monad m
-      => String
+      => Loc
       -> P.Parser a
       -> String
       -> m a
-parse fileName p input =
-    case P.parse p fileName input of
-      Left err -> unsafePerformIO $ fail $ show err
-      Right x  -> return x
+parse loc p input = let
+  fileName = loc_filename loc
+  (line,column) = loc_start loc
+  in case P.parse p fileName line column input of
+       Left err -> unsafePerformIO $ fail $ show err
+       Right x  -> return x
 
 
 pparse1 p pToQ s
-    = do  x <- Language.Pads.Quote.parse "filename" p s
+    = do  loc <- location
+          x <- Language.Pads.Quote.parse loc p s
           pToQ x
 
 pqausiquote1 p
@@ -39,3 +42,4 @@ pqausiquote1 p
 
 pads :: QuasiQuoter
 pads  = pqausiquote1 P.padsDecl
+    

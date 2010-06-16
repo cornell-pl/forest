@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
 module Language.Pads.Padsc where
 
 import Language.Pads.Syntax 
@@ -5,6 +6,7 @@ import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax
 import Data.Data
 import Data.List
+import qualified Data.Map as M
 import Monad
 import Char
 import Text.PrettyPrint.Mainland as PP
@@ -14,7 +16,6 @@ import qualified Language.Pads.Errors as E
 {- Pretty prints a list of declarations -}
 ppP d = liftM ppr_list (runQ d)
 
-
 {- Base type library support -}
 data Base_md = Base_md { numErrors :: Int
                        , errInfo   :: Maybe E.ErrInfo
@@ -22,10 +23,12 @@ data Base_md = Base_md { numErrors :: Int
                        }
    deriving (Typeable, Data, Eq)
 
+pprBaseMD Base_md {numErrors=num, errInfo = info} = text "Errors:" <+> PP.ppr num <+> 
+                                                    case info of Nothing -> empty
+                                                                 Just e -> PP.ppr e
+
 instance Pretty Base_md where
-  ppr Base_md {numErrors=num, errInfo = info} = text "Errors:" <+> PP.ppr num <+> 
-                                                case info of Nothing -> empty
-                                                             Just e -> PP.ppr e
+  ppr = pprBaseMD 
 
 cleanBasePD = Base_md {numErrors = 0, errInfo = Nothing }
 mkErrBasePD msg pos = Base_md {numErrors = 1, 
@@ -54,6 +57,18 @@ gdef = def_help
          in fromConstrB gdef constr 
 
 
+{- Meta data type class -}
+class PadsMD md where
+  get_md_header :: md -> Base_md
+  replace_md_header :: md -> Base_md -> md
+
+instance PadsMD Base_md where
+  get_md_header b = b
+  replace_md_header old new = new
+
+instance PadsMD (Base_md,b) where
+  get_md_header (h,b) = h
+  replace_md_header (h1,b) h2 = (h2,b)
 
 {-
 We'd like to have a type class like the following so that we can have a single name for the PADS parsers instead
@@ -68,242 +83,520 @@ default arguments.  That would work as long as there were sensible defaults for 
 The compiler would need to call the type-specific versions, though.
 -}
 
-class Pads rep md | rep -> md where
-  def :: rep
-  parsePP  :: PadsParser(rep,md)
-  parseS   :: String -> ((rep, md), String) 
-  parseS cs = let ((r,rest):alternates) = (runPP parsePP) (S.padsSourceFromString cs) in (r, S.padsSourceToString rest)  
-
-instance Pads Int Base_md where
-  def = gdef
-  parsePP = pInt_parseM
-
 {-
-class Pads rep where
-  def :: rep
+ We are now generating one PADS instance for the pads type, not for the rep type.
+ We could add a method strip :: pads -> rep that could be coded generically (?) with some 
+  loss of abstraction, or could be generated...  Omit for now.
+-}
 
-instance Pads Int where
+class Data pads => Pads pads md | pads -> md  where
+  def :: pads
   def = gdef
+  parsePP  :: PadsParser(pads,md)
+  parseS   :: String -> ((pads, md), String) 
+  parseS cs = case (runPP parsePP  (S.padsSourceFromString cs)) of
+                 Good ((r,rest):alternates) -> (r, S.padsSourceToString rest)  
+                 Bad   (r,rest)             -> (r, S.padsSourceToString rest)  
 
-instance Pads Char where
-  def = gdef
 
-instance Pads Float where
-  def = gdef
+class Data pads => Pads1 arg pads md | pads->md, pads->arg where
+  def1 :: arg -> pads
+  def1 =  \_ -> gdef
+  parsePP1  :: arg -> PadsParser(pads,md)
+  parseS1   :: arg -> String -> ((pads, md), String) 
+  parseS1 arg cs = case (runPP (parsePP1 arg)) (S.padsSourceFromString cs) of
+                      Good ((r,rest):alternates) -> (r, S.padsSourceToString rest)  
+                      Bad   (r,rest)             -> (r, S.padsSourceToString rest)  
+
+
+{-  Base types 
+    Pads type name, underlying representation type name, list of parameter types.
+-}
+
+baseTypesList = [
+  ("Pint",      (''Int,     [])),
+  ("Pstring",   (''String,  [''Char])),
+  ("PstringFW", (''String,  [''Int])),
+  ("PstringME", (''String,  [''S.RE])),
+  ("PstringSE", (''String,  [''S.RE]))
+ ]
+
+baseTypesMap :: M.Map String (Name, [Name]) = M.fromList baseTypesList
+
+{- XXX: These declarations should be generated from table above . -}
+{- XXX: Default values should be defined to use parameter, so for example, we can generate a string of the proper length. -}
+newtype Pint = Pint Int
+  deriving (Eq, Show, Data, Typeable, Num)
+
+instance Pads Pint Base_md where
+  parsePP = pint_parseM
+
+newtype Pstring    = Pstring    String
+  deriving (Eq, Show, Data, Typeable)
+newtype PstringFW = PstringFW String
+  deriving (Eq, Show, Data, Typeable)
+newtype PstringME = PstringME String
+  deriving (Eq, Show, Data, Typeable)
+newtype PstringSE = PstringSE String
+  deriving (Eq, Show, Data, Typeable)
+
+instance Pads1 Char Pstring Base_md where 
+  parsePP1 = pstring_parseM 
+
+instance Pads1 Int PstringFW Base_md where 
+  parsePP1  = pstringFW_parseM 
+
+instance Pads1 S.RE PstringME Base_md where
+  parsePP1 = pstringME_parseM
+
+instance Pads1 S.RE PstringSE Base_md where
+  parsePP1 = pstringSE_parseM
+
+
+{- Parsing Monad -}
+{- Invariant: Good [] never arises -}
+data Result a =  Good [a] | Bad a
+newtype PadsParser a = PadsParser (S.Source -> Result (a,S.Source))
+
+runPP :: PadsParser t -> S.Source -> Result (t, S.Source)
+runPP (PadsParser p) = p
+
+appendResult :: Result a -> Result a -> Result a
+appendResult (Good r) (Good s) = Good (r++s)
+appendResult (Good r) _ = Good r
+appendResult _ (Good r) = Good r
+appendResult (Bad r1) (Bad r2) = Bad r1
+
+concatResult = foldr appendResult (Bad (error "Should never arise: empty good list"))
+
+instance Monad PadsParser where
+  return r = PadsParser (\bs -> Good [(r,bs)])
+  p >>= f  = PadsParser $ \bs -> 
+               case runPP p bs of
+                  Good results -> 
+                       concatResult [runPP (f a) bs' | (a,bs') <- results ]
+                  Bad (errVal,bs') -> case runPP (f errVal) bs' of
+                                         Good results -> Bad (head results)   -- Should always succeed by Result invariant.
+                                         Bad v -> Bad v
+badReturn  r = PadsParser $ \bs -> Bad (r,bs)
+goodReturn r = PadsParser $ \bs -> Good [(r,bs)]
+
+eitherP :: PadsParser a -> PadsParser a -> PadsParser a
+eitherP p q = PadsParser $ \s -> 
+   runPP p s `appendResult` runPP q s 
+
+{- 
+This combinator seems natural because it is the unit for eitherP, but it breaks the 
+invariant on Result.  So, either we don't need failP or the invariant is wrong.
+
+failP :: PadsParser [a]
+failP = PadsParser $ \s -> Good []
 -}
 
 
 
-class PadsPD md where
-  get_md_header :: md -> Base_md
+productive :: PadsParser a -> PadsParser (Maybe a)
+productive p = PadsParser $ \s -> 
+    case runPP p s of
+       Good v  -> case [ (Just results,s') | (results,s') <- v, not (S.eqCurrent s s')] of
+                    [] -> Bad (Nothing,s)
+                    w  -> Good w
+       Bad (r,s) -> Bad (Nothing,s)
 
-instance PadsPD Base_md where
-  get_md_header b_md = b_md
+parseAll :: PadsParser(rep,md) -> PadsParser([rep],[md])
+parseAll p = ifEofP $ do 
+  m <- productive p 
+  case m of Nothing -> return ([],[])
+            Just (r,md) -> do 
+               (rs,mds) <- parseAll p
+               return (r:rs, md:mds)
 
-instance PadsPD a => PadsPD (a,b) where
-  get_md_header (a,b) = get_md_header a
+
+parseAllS :: PadsParser (rep,md) -> String -> ([rep],[md])
+parseAllS p inputS = 
+  let psource = (S.padsSourceFromString inputS)
+  in case runPP (parseAll p) psource of
+      Good ((r,rest):alternates) -> r
+      Bad (r,rest) -> r
 
 
 
+onFail :: PadsParser a -> PadsParser a -> PadsParser a
+onFail p q = PadsParser $ \s -> 
+             case runPP p s of 
+               Bad a   -> runPP q s
+               Good [] -> runPP q s
+               Good v  -> Good v
 
-                                                         
 
-{- Parsing Monad -}
-newtype PadsParser a = PadsParser (S.Source -> [(a,S.Source)])
+parseOpt :: PadsParser a -> a -> PadsParser a
+parseOpt p x = p `onFail` return x
 
-runPP :: PadsParser t -> S.Source -> [(t, S.Source)]
-runPP (PadsParser p) = p
+primPads :: (S.Source -> (a,S.Source)) -> PadsParser a
+primPads f = PadsParser $ \s -> Good [f s]
 
-instance Monad PadsParser where
-  return r = PadsParser (\bs -> [(r,bs)])
-  p >>= f  = PadsParser (\bs -> concat [runPP (f a) bs' | (a,bs') <- runPP p bs ])
+queryPads :: (S.Source -> a) -> PadsParser a
+queryPads f = PadsParser $ \s -> Good [(f s,s)]
 
-mkStr c = "'" ++ [c] ++ "'"
+getPos :: PadsParser S.Pos
+getPos = queryPads S.getPos
 
-{- Base type library support -}
-pInt_parseM :: PadsParser (Int,Base_md)
-pInt_parseM = PadsParser (\source ->
-    let p source a = if S.isEOR source then [((a,cleanBasePD),source)]
-                     else let c = S.head source
-                       in if Char.isDigit c then p (S.tail source)  (10*a + (Char.digitToInt c)) 
-                          else [((a,cleanBasePD),source)]
-    in if S.isEOF source then [((def, mkErrBasePD (E.FoundWhenExpecting "EOF" "Int") (S.getPos source)), source)]
-       else if S.isEOR source then [((def, mkErrBasePD (E.FoundWhenExpecting "EOR" "Int") (S.getPos source)), source)]
-       else if not $ Char.isDigit $ S.head source then 
-                              [((def,mkErrBasePD (E.FoundWhenExpecting (mkStr (S.head source)) "Int") (S.getPos source)),source)]
-       else p source 0 )
+isEofP :: PadsParser Bool 
+isEofP = queryPads S.isEOF
+
+ifEofP :: PadsParser ([rep],[md]) -> PadsParser ([rep],[md])
+ifEofP p = do
+  b <- isEofP
+  if b then return ([],[]) else p
+
+isEorP :: PadsParser Bool
+isEorP = queryPads S.isEOR
+
+ifEorP :: PadsParser ([rep],[md]) -> PadsParser ([rep],[md])
+ifEorP p = do
+  b <- isEorP
+  if b then return ([],[]) else p
+
+peakHeadP :: PadsParser Char 
+peakHeadP = queryPads S.head
+
+takeHeadP :: PadsParser Char
+takeHeadP = primPads S.takeHead
+
+takeP :: Int -> PadsParser String
+takeP n = primPads (S.take (fromInteger $ toInteger n))
+
+regexMatchP :: S.RE -> PadsParser (Maybe String)
+regexMatchP re = primPads (S.regexMatch re)
+
+regexStopP :: S.RE -> PadsParser (Maybe String)
+regexStopP re = primPads (S.regexStop re)
+
+scanP :: Char -> PadsParser Bool
+scanP c = primPads (\s -> let (f,r,e) = S.scanTo c s in (f,r))
+
+satisfy p = primPads loop
+ where loop s = if S.isEOF s || S.isEOR s then ([],s) else
+          let c = S.head s in
+          if p c then 
+            let (xs,s') = loop (S.tail s) in
+            (c:xs, s')
+          else
+            ([],s)
+
+digitListToInt :: [Char] -> Int
+digitListToInt = foldl (\a d ->10*a + (Char.digitToInt d)) 0
+
+
+recordBegin,recordEnd :: PadsParser (Maybe String)
+recordBegin = primPads S.recordBegin
+recordEnd = primPads S.recordEnd
+
+doRecordEnd = do
+  rendErr <- recordEnd
+  case rendErr of
+    Nothing -> return cleanBasePD
+    Just err -> do p <- getPos
+                   badReturn (mkErrBasePD (E.RecordError err) p)
+
+doRecordBegin = do
+  rbegErr <- recordBegin
+  case rbegErr of
+    Nothing -> return cleanBasePD
+    Just err -> do p <- getPos
+                   badReturn (mkErrBasePD (E.RecordError err) p)
+
+
+parseRecord :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
+parseRecord p = do 
+   bmd <- doRecordBegin
+   (r,md) <- p
+   emd <- doRecordEnd
+   let hmd = get_md_header md
+   let new_hd = mergeBaseMDs [bmd,hmd,emd]
+   let new_md = replace_md_header md new_hd
+   return (r,new_md)
+
+pstringFW_parseM :: Int -> PadsParser (PstringFW, Base_md)
+pstringFW_parseM n = do 
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def1 n, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringFW") initPos)
+   else do 
+     isEor <- isEorP
+     if isEor && n /= 0 then badReturn (def1 n, mkErrBasePD (E.FoundWhenExpecting "EOR" "PstringFW") initPos)
+      else do  
+          str <- takeP n 
+          if (length str) /= n then badReturn (def1 n, mkErrBasePD (E.Insufficient (length str) n) initPos)
+            else goodReturn (PstringFW str, cleanBasePD)
+
+
+pstringME_parseM :: S.RE -> PadsParser (PstringME, Base_md)
+pstringME_parseM re = do 
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def1 re, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringME") initPos)
+   else do 
+      match <- regexMatchP re
+      case match of 
+        Nothing  -> badReturn  (def1 re, mkErrBasePD (E.RegexMatchFail (show re)) initPos)
+        Just str -> goodReturn (PstringME str, cleanBasePD)
+
+
+
+pstringSE_parseM :: S.RE -> PadsParser (PstringSE, Base_md)
+pstringSE_parseM re = do 
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def1 re, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringSE") initPos)
+   else do 
+      match <- regexStopP re
+      case match of 
+        Nothing  -> badReturn  (def1 re, mkErrBasePD (E.RegexMatchFail (show re)) initPos)
+        Just str -> goodReturn (PstringSE str, cleanBasePD)
+
+pstring_parseM :: Char -> PadsParser (Pstring, Base_md)
+pstring_parseM c = do 
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def1 c, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pstring") initPos)
+   else do 
+     isEor <- isEorP
+     if isEor then badReturn (def1 c, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pstring") initPos)
+      else do  
+          str <- satisfy (\c'-> c /= c')
+          goodReturn (Pstring str, cleanBasePD)
+
+
+pint_parseM :: PadsParser (Pint,Base_md)
+pint_parseM = do
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pint") initPos)
+   else do 
+     isEor <- isEorP
+     if isEor then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pint") initPos)
+      else do  
+          c <- peakHeadP 
+          digits <- satisfy Char.isDigit
+          if null digits then badReturn (def, mkErrBasePD (E.FoundWhenExpecting (mkStr c) "Pint") initPos)
+            else goodReturn (Pint $ digitListToInt digits, cleanBasePD)
+
+
+pcharLit_parseM :: Char -> PadsParser Base_md
+pcharLit_parseM c = do 
+  let cStr = mkStr c
+  initPos <- getPos
+  isEof <- isEofP
+  if isEof then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOF" cStr) initPos)
+   else do 
+     isEor <- isEorP
+     if isEor then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOR" cStr) initPos)
+      else do
+         c' <- takeHeadP 
+         if c == c' then goodReturn cleanBasePD
+          else do
+           foundIt <- scanP c
+           errPos <- getPos
+           if foundIt then badReturn (mkErrBasePD (E.ExtraBeforeLiteral cStr) errPos)
+                      else badReturn (mkErrBasePD (E.MissingLiteral     cStr) errPos)
 
 
   
-pCharLit_parseM :: Char -> PadsParser Base_md
-pCharLit_parseM c  = PadsParser (\source ->
-   if S.isEOF source then      [(mkErrBasePD (E.FoundWhenExpecting "EOF" (mkStr c)) (S.getPos source), source)]
-   else if S.isEOR source then [(mkErrBasePD (E.FoundWhenExpecting "EOR" (mkStr c)) (S.getPos source), source)]
-   else let c' = S.head source
-         in if c == c' then [(cleanBasePD, S.tail source)]
-            else let (foundIt, resSource,errPos) = S.scanTo c source 
-                 in if foundIt then [(mkErrBasePD (E.ExtraBeforeLiteral (mkStr c)) errPos, resSource)] 
-                    else            [(mkErrBasePD (E.MissingLiteral     (mkStr c)) errPos, resSource)] )
 
-
-
-
-
+{- Code generation routines -}
 make_pads_declarations :: PadsDecl -> Q [Dec]
-make_pads_declarations (PadsDecl (id, padsTy)) = do
+make_pads_declarations (PadsDecl (id, pat, padsTy)) = do
    let p_name = case id of
                    Id str -> str
                    AntiId str -> error "Did not expect antiquotation in defining context."
    let ty_name    = getTyName    p_name
-   let pd_ty_name = getMDName    p_name
+   let md_ty_name = getMDName    p_name
    let parse_name = getParseName p_name
-   let (ty,pd_ty,aux_ty_decls::[Dec]) = genTy padsTy
-   let ty_decl :: Dec    = mk_newTyD ty_name ty
-   let pd_ty_decl :: Dec = mk_newTyD pd_ty_name pd_ty
-   let padsInstance :: [Dec]   = genPadsInstance ty_name pd_ty_name parse_name
-   let padsPDInstance :: [Dec] = genPadsPDInstance pd_ty_name 
-   let parseM :: [Dec] = genPadsParseM parse_name ty_name pd_ty_name padsTy 
-   let parseS :: [Dec] = genPadsParseS p_name parse_name ty_name pd_ty_name padsTy 
-   return ([ty_decl, pd_ty_decl] ++ aux_ty_decls ++ padsInstance ++ padsPDInstance ++ parseM ++ parseS)
+   let (ty,md_ty) = genRepMD padsTy       -- Generate reprsentation and meta-data types for padsTy
+   let ty_decl        ::  Dec  = mk_newTyD    ty_name    ty
+   let md_ty_decl     ::  Dec  = mk_TySynD md_ty_name md_ty
+   let padsInstance   :: [Dec] = genPadsInstance      ty_name md_ty parse_name
+   parseM :: [Dec] <- genPadsParseM        parse_name ty_name md_ty_name padsTy 
+   parseS :: [Dec] <- genPadsParseS p_name parse_name ty_name md_ty_name padsTy 
+   return ([ty_decl, md_ty_decl]  ++ 
+           padsInstance ++  
+           parseM ++ 
+           parseS )
 
-genTy :: PadsTy -> (TH.Type, TH.Type, [Dec])
-genTy ty = case ty of
-  Pint      -> (ConT ''Int, ConT ''Base_md, [])
-  Plit char -> (ConT ''(),  ConT ''Base_md, [])
---  Pname str -> (VarT (mkName str), [])
-  Ptuple tys -> mkTupleTy tys
+{- Functions for generation representation and meta-data types -}
+genRepMD ::  PadsTy -> (TH.Type, TH.Type)
+genRepMD ty = case ty of
+  Plit char    -> (ConT ''(),  ConT ''Base_md)
+  Pname p_name -> (ConT (getTyName p_name), ConT (getMDName p_name))
+  Ptuple tys   -> genRepMDTuple tys
+  Precord ty   -> genRepMD ty
+  Papp ty arg  -> genRepMD ty
 
 
-{- Convert a pads tuple type into a TH tuple type and any auxiliary declarations -}
-mkTupleTy :: [PadsTy] -> (TH.Type, TH.Type, [Dec])
-mkTupleTy tys = 
-  let (tys', pds', declss) = unzip3 (map genTy tys)
-      decls = concat declss
+{- Generate a representation and meta-data types for a tuple -}
+genRepMDTuple :: [PadsTy] -> (TH.Type, TH.Type)
+genRepMDTuple tys = 
+  let (tys', mds') = unzip (map genRepMD tys)
       r_tys = filter (\t -> t /= ConT ''()) tys'
       ty =  case r_tys of          -- Construct rep type for a tuple.
              []   -> ConT ''()     -- Tuple contained no non-singleton types, so its rep is the unit type.
              [ty] -> ty            -- Tuple contains one non-singleton type T, so its rep type is just T
              (r_ty:r_tys') ->      -- Rep is tuple of non-singleton types T.
                  foldl AppT (AppT (TupleT (length r_tys) ) r_ty) r_tys'
-      pd_ty_nested = case pds' of  
+      md_ty_nested = case mds' of  
                       []      -> ConT ''Base_md   -- Tuple contains no types, so its nested pd is just a base pd
-                      [pd_ty] -> pd_ty            -- Tuple contains a single type, so its nested pd is just the pd of the type
-                      (pd_ty:pd_tys') -> 
-                         foldl AppT (AppT (TupleT (length pds') ) pd_ty) pd_tys'
+                      [md_ty] -> md_ty            -- Tuple contains a single type, so its nested pd is just the pd of the type
+                      (md_ty:md_tys') -> 
+                         foldl AppT (AppT (TupleT (length mds') ) md_ty) md_tys'
      {- Pd of a tuple is a pair of a base pd and a tuple of pds for each element in the tuple. -}
-      pd_ty = AppT (AppT (TupleT 2) (ConT ''Base_md)) pd_ty_nested     
+      md_ty = AppT (AppT (TupleT 2) (ConT ''Base_md)) md_ty_nested     
   in
-      (ty, pd_ty, decls)
+      (ty, md_ty)
 
-genPadsInstance ty_name pd_ty_name parse_name = 
-  let inst = AppT (AppT (ConT ''Pads) (ConT ty_name)) (ConT pd_ty_name)    -- Pads RepTy MDTy
+genPadsInstance ty_name md_ty parse_name = 
+  let inst = AppT (AppT (ConT ''Pads) (ConT ty_name)) md_ty   -- Pads RepTy MDTy
       def = mkName "def"
       def_method = ValD (VarP def) (NormalB (VarE 'gdef)) []
       parsePP = mkName "parsePP"
       parsePP_method = ValD (VarP parsePP) (NormalB (VarE parse_name)) []
   in [InstanceD [] inst [def_method,parsePP_method]]
 
-
-genPadsPDInstance pd_ty_name = 
-  let inst = AppT (ConT ''PadsPD) (ConT pd_ty_name)
-      get_md_header = mkName "get_md_header"
-      md_hd = mkName "md_hd"
-      md_rest = mkName "md_rest"
-      get_hd_method = FunD get_md_header [Clause [ConP pd_ty_name [TupP [VarP md_hd,VarP md_rest]]] (NormalB (VarE md_hd)) []]
-  in [InstanceD [] inst [get_hd_method]]
-
-
-genPadsParseM :: Name -> Name -> Name -> PadsTy -> [Dec]
-genPadsParseM parse_name rep_name pd_name padsTy = 
-   let ty = AppT (ConT ''PadsParser) (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name))
-       sigD = SigD parse_name ty
-       bodyE = genParseBody rep_name pd_name padsTy
-       funD = ValD (VarP parse_name) (NormalB bodyE) []
-   in [sigD, funD]
-
-genPadsParseS :: String -> Name -> Name -> Name -> PadsTy -> [Dec]
-genPadsParseS p_name parse_name rep_name pd_name padsTy = 
+{- This generates a type-specific name for the parseS function by redirecting to the generic function. -}
+genPadsParseS :: String -> Name -> Name -> Name -> PadsTy -> Q [Dec]
+genPadsParseS p_name parse_name rep_name pd_name padsTy = do
    let stringTy    = ConT ''String
-       padsPairTy  =  AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)
-       resultTy    =  AppT (AppT (TupleT 2) padsPairTy) stringTy
-       ty          = AppT (AppT ArrowT     stringTy  ) resultTy
-       parseSName  = getParseSName p_name
-       sigD = SigD parseSName ty
-       bodySs = genParseBody rep_name pd_name padsTy
-       funD = ValD (VarP parseSName) (NormalB (VarE 'parseS)) []
-   in [sigD, funD]
+   let padsPairTy  = AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)
+   let resultTy    = AppT (AppT (TupleT 2) padsPairTy) stringTy
+   let ty          = AppT (AppT ArrowT     stringTy  ) resultTy
+   let parseSName  = getParseSName p_name
+   let sigD = SigD parseSName ty
+   let funD = ValD (VarP parseSName) (NormalB (VarE 'parseS)) []
+   return [sigD, funD]
 
-genParseBody :: Name -> Name -> PadsTy -> TH.Exp
-genParseBody repN mdN ty = 
-   let repName     = genRepName 0
-       mdName      = genMdName 0
-       (repE,repP) = (VarE repName, VarP repName)
-       (mdE, mdP)  = (VarE mdName,  VarP mdName)
-       rhsE        = case ty of 
-                       Ptuple tys -> mkParseTuple tys
-       doParseS    = BindS (TupP [repP,mdP]) rhsE
-       frepE       = AppE  (ConE repN) repE
-       fmdE        = AppE  (ConE mdN ) mdE
-       resultE     = TupE [frepE,fmdE]
-       finalS      = NoBindS (AppE (VarE 'return) resultE)
-   in 
-      DoE [doParseS, finalS]
 
-mkParseTuple :: [PadsTy] -> TH.Exp
-mkParseTuple tys = 
-  let (_,repEs,mdEs,bmdEs, stmts) = mkParseTupleB 0 tys
-      top_md             = mkName "top_md"
-      (top_mdE, top_mdP) = (VarE top_md, VarP top_md)
-      headerE            = AppE (VarE 'mergeBaseMDs) (ListE bmdEs)
-      mdS                = LetS [ValD top_mdP (NormalB headerE) []]
-      repE               = TupE repEs
-      mdE                = TupE [top_mdE, TupE mdEs]
-      resultE            = TupE [repE,mdE]
-      finalS             = NoBindS (AppE (VarE 'return) resultE)
-  in
-     DoE (stmts ++ [mdS,finalS])
+genPadsParseM :: Name -> Name -> Name -> PadsTy -> Q [Dec]
+genPadsParseM parse_name rep_name pd_name padsTy = do 
+   let ty = AppT (ConT ''PadsParser) (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name))
+   let sigD = SigD parse_name ty
+   bodyE <- genParseBody rep_name pd_name padsTy
+   let funD = ValD (VarP parse_name) (NormalB bodyE) []
+   return [sigD, funD]
 
-mkParseTupleB :: Int -> [PadsTy] -> (Int, [TH.Exp], [TH.Exp], [TH.Exp], [Stmt])
-mkParseTupleB init [] = (init, [],[],[],[])
-mkParseTupleB init (ty:tys) = 
-  let (i,rep_ty,   md_ty,  bmd_ty,  stmt_ty)  = mkParseTyB init ty
-      (j,reps_tys, md_tys, bmd_tys, stmt_tys) = mkParseTupleB i tys
-  in (j, rep_ty++reps_tys, md_ty++md_tys, bmd_ty ++ bmd_tys, stmt_ty++stmt_tys)
+{-
+ Generate body of parseM function, which has the form:
+  do (rep,md) <- rhsE
+     return (Rep rep, md)
+-}
+genParseBody :: Name -> Name -> PadsTy -> Q TH.Exp
+genParseBody repN mdN ty = do
+   repName     <- genRepName 
+   mdName      <- genMdName 
+   rhsE        <- parseE ty 
+   let (repE,repP) = genPE repName
+   let (mdE, mdP)  = genPE mdName
+   let doParseS    = BindS (TupP [repP,mdP]) rhsE
+   let frepE       = AppE  (ConE repN) repE
+   let resultE     = TupE [frepE,mdE]
+   let finalS      = NoBindS (AppE (VarE 'return) resultE)
+   return (DoE [doParseS, finalS])
+
+{- Given a PadsTy ty, return the haskell expression that parses ty. -}
+parseE :: PadsTy -> Q TH.Exp
+parseE ty = case ty of
+  Plit c       -> return (AppE (VarE(getParseName "PcharLit")) (LitE (CharL c)))   -- Note the type of this expression has a different pattern: (no rep).
+  Pname p_name -> return (VarE (getParseName p_name))
+  Ptuple tys   -> mkParseTuple tys
+  Precord ty   -> mkParseRecord ty
+  Papp ty argE -> mkParseTyApp ty argE
+
+
+mkParseTyApp :: PadsTy -> TH.Exp -> Q TH.Exp
+mkParseTyApp ty argE = do
+  parseFnE <- parseE ty            -- XXX should add type checking to ensure that ty is expecting an argument
+  return (AppE parseFnE argE) 
+
+{-
+The representation of Precord ty is the same as the representation for ty.
+The meta-data structure of a Precord ty is the same as the meta-data structure for ty.
+TODO: Report error if underlying type has no representation. 
+-}
+
+mkParseRecord :: PadsTy -> Q TH.Exp
+mkParseRecord ty = do
+   rhsE <- parseE ty
+   return (AppE (VarE 'parseRecord) rhsE)
+
+{- 
+   stmts to parse each element of tuple:
+   do
+    (rep_1,md_1) <- parse_1
+    let bmd_1 = get_md_header md_1
+    ...
+    (rep_n,md_n) <- parse_n
+    let bmd_n = get_md_header md_n
+    let top_md = mergeBaseMDs [bmd_1,...bmd_n]
+    return (rep,(top_md,(md_1,...,md_n)))
+-}
+
+mkParseTuple :: [PadsTy] -> Q TH.Exp
+mkParseTuple tys = do
+  (repEs,mdEs,bmdEs, stmts) <- mkParseTupleB tys
+  let top_md             = mkName "top_md"
+  let (top_mdE, top_mdP) = genPE top_md
+  let headerE            = AppE (VarE 'mergeBaseMDs) (ListE bmdEs)
+  let mdS                = LetS [ValD top_mdP (NormalB headerE) []]
+  let repE               = TupE repEs
+  let mdE                = TupE [top_mdE, TupE mdEs]
+  let resultE            = TupE [repE,mdE]
+  let finalS             = NoBindS (AppE (VarE 'return) resultE)
+  return (DoE (stmts ++ [mdS,finalS]))
+
+mkParseTupleB :: [PadsTy] -> Q ([TH.Exp], [TH.Exp], [TH.Exp], [Stmt])
+mkParseTupleB [] = return ([],[],[],[])
+mkParseTupleB (ty:tys) = do
+  (rep_ty,   md_ty,  bmd_ty,  stmt_ty)  <- mkParseTyB ty
+  (reps_tys, md_tys, bmd_tys, stmt_tys) <- mkParseTupleB tys
+  return (rep_ty++reps_tys, md_ty:md_tys, bmd_ty:bmd_tys, stmt_ty++stmt_tys)
 
 {- Input:
-     Int: counter to generate new id
      PadsTy: type we are generating parsing instructions for
    Output:
-     Int: new value of counter
      [TH.Exp]: list of expressions that store parse results (can be empty)
-     [TH.Exp]: list of expressions that store meta data results (always !1)
-     [TH.Exp]: list of expressions that store base level meta data (always !1) 
+      TH.Exp : expression that stores meta data result 
+      TH.Exp : expression that stores base level meta data 
      [Stmt]  : list of statements to do parsing for PadsTy.
+
+    Plit c:
+     md <- parseE
+     bmd <- get_md_header md
+    others
+     (rep,md) <- parseE
+     bmd <- get_md_header md
+
 -}
-mkParseTyB :: Int -> PadsTy -> (Int, [TH.Exp], [TH.Exp], [TH.Exp], [Stmt])
-mkParseTyB next ty = 
-   let repName     = genRepName next
-       mdName      = genMdName  next
-       bmdName     = genBMdName next
-       (repE, repP)  = (VarE repName, VarP repName)
-       ( mdE,  mdP)  = (VarE mdName,  VarP mdName)
-       (bmdE, bmdP)  = (VarE bmdName, VarP bmdName)
-       stmt2         = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
-   in case ty of
-       Pint ->       let prsName = getParseName "PInt"
-                         stmt1    = BindS (TupP [repP,mdP]) (VarE prsName)
-                     in (next+1, [repE], [mdE], [bmdE], [stmt1,stmt2])
-       Plit c ->     let prsName = getParseName "pCharLit"
-                         stmt1    = BindS mdP (AppE (VarE prsName) (LitE (CharL c)))
-                     in (next+1, [], [mdE], [bmdE], [stmt1,stmt2])
-       Ptuple tys -> let prsE = mkParseTuple tys
-                         stmt1    = BindS (TupP [repP,mdP]) prsE
-                     in (next+1, [repE], [mdE], [bmdE], [stmt1,stmt2])
-       _ -> error "mkParseTyB: unimplemented case."
+mkParseTyB :: PadsTy -> Q ([TH.Exp], TH.Exp, TH.Exp, [Stmt])
+mkParseTyB ty = do
+   repName     <- genRepName 
+   mdName      <- genMdName  
+   bmdName     <- genBMdName 
+   let (repE, repP) = genPE repName
+   let ( mdE,  mdP) = genPE mdName
+   let (bmdE, bmdP) = genPE bmdName
+   rhsE        <- parseE ty
+   let (resultEs,stmt1) =  case ty of
+        Plit c ->    ([],     BindS  mdP              rhsE)
+        otherwise -> ([repE], BindS (TupP [repP,mdP]) rhsE)
+   let stmt2    = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
+   return (resultEs, mdE,bmdE,[stmt1,stmt2])
+   
+
 
   
 
 {- Helper functions -}
+mkStr c = "'" ++ [c] ++ "'"
+
 mapFstChar f [] = []
 mapFstChar f (c:cs) = (f c) : cs
 
@@ -314,14 +607,23 @@ mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
     where con = NormalC ty_name [(NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
           derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data]
 
+mk_TySynD ty_name ty = TySynD ty_name [] ty
 
 {- Name manipulation functions -}
-genUniqueName base (i::Int) = mkName (base++(show i))
+-- genUniqueName base (i::Int) = mkName (base++(show i))
+genUniqueName base = newName base
 genRepName = genUniqueName "rep" 
 genMdName  = genUniqueName "md" 
 genBMdName = genUniqueName "bmd"
-getMDName pname = mkName ((strToUpper pname) ++ "_md")
+getMDName pname = case M.lookup pname baseTypesMap of
+         Nothing -> mkName ((strToUpper pname) ++ "_md")
+         Just _ -> ''Base_md                  -- Built-in base type        
 getTyName pname = mkName  (strToUpper pname)
+{-
+XXXgetTyName pname = case M.lookup pname baseTypesMap of
+         Nothing  -> mkName  (strToUpper pname)
+         Just name-> name -}
 getParseName pname = mkName ((strToLower pname) ++ "_parseM")
 getParseSName pname = mkName ((strToLower pname) ++ "_parseS")
 
+genPE name = (VarE name, VarP name)

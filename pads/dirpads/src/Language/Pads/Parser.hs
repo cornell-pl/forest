@@ -11,14 +11,14 @@ import Text.Parsec.Prim as PP
 import qualified Text.Parsec.Token as PT
 import Text.Parsec.Language
 import Text.ParserCombinators.Parsec.Language 
+import Text.ParserCombinators.Parsec.Pos
+import Language.Haskell.Meta as LHM
 
 type Parser = PS.Parser
 
-baseTypeL = [("Pint", Pint)]
-baseTypeM = Map.fromList baseTypeL
-
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["="]})
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)"],
+                                           reservedNames   = ["Precord"]})
 
 whiteSpace  = PT.whiteSpace  lexer
 identifier  = PT.identifier  lexer
@@ -30,26 +30,64 @@ parens      = PT.parens      lexer
 
 padsDecl :: Parser PadsDecl
 padsDecl = do { id <- identifier
-              ; reservedOp "="
+--              ; args <- sepBy identifier whiteSpace
+              ; str <- manyTill anyChar (reservedOp "=")
+              ; pat <- case (Prelude.null str, LHM.parsePat str) of 
+                            (True, _) -> return Nothing
+                            (_, Left err) -> unexpected ("Failed to parse Haskell pattern: " ++ err)
+                            (_, Right patTH) -> return (Just patTH)
               ; ty <- padsTy
-              ; return (PadsDecl(Id id,ty))
+              ; return (PadsDecl(Id id,pat,ty))
               }
 
+
+
+idTy   :: Parser PadsTy
+idTy   = do { base <- identifier
+            ; return (Pname base)
+            } <?> "named type"
+
+litTy :: Parser PadsTy
+litTy = do { c <- charLiteral
+           ; return (Plit c)
+           } <?> "literal type"
+
+fnTy   :: Parser PadsTy
+fnTy   =  idTy
+
+fnAppTy :: Parser PadsTy
+fnAppTy = do { ty <- fnTy
+             ; reservedOp "(:"
+             ; str <- manyTill anyChar (reservedOp ":)") 
+             ; case LHM.parseExp str of
+                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
+                 Right expTH -> return (Papp ty expTH)
+             } <?> "type function application"
+
+
+recordTy :: Parser PadsTy
+recordTy = do { reserved "Precord"
+              ; ty <- padsTy
+              ; return (Precord ty)
+              } <?> "record type"
+
+tupleTy :: Parser PadsTy
+tupleTy = do { tys <- parens padsTyList
+             ; return (Ptuple tys)
+             } <?> "tuple type"
+
+
 padsTy :: Parser PadsTy
-padsTy = do { base <- identifier
-            ; case Map.lookup base baseTypeM of
-                Nothing -> return (Pname base)
-                Just ty -> return ty
-            }
-     <|> do { c <- charLiteral
-            ; return (Plit c)
-            }
-     <|> do { tys <- parens padsTyList
-            ; return (Ptuple tys)
-            }
+padsTy = recordTy
+     <|> tupleTy
+     <|> try fnAppTy
+     <|> litTy
+     <|> idTy
+     <?> "pads type"
 
 padsTyList :: Parser [PadsTy]
 padsTyList = commaSep1 padsTy
+
 
 runLex :: Show a => PS.Parser a -> String -> IO()
 runLex p input 
@@ -59,13 +97,18 @@ runLex p input
                   ; return x
                   }) input
 
-parse :: PS.Parser a -> SourceName -> String -> Either ParseError a
-parse p sourceName input 
-  = PP.parse (do { whiteSpace
+
+
+parse :: PS.Parser a -> SourceName -> Line -> Column -> String -> Either ParseError a
+parse p fileName line column input 
+  = PP.parse (do {  setPosition (newPos fileName line column)
+                  ; whiteSpace
                   ; x <- p
                   ; eof
                   ; return x
-                  }) sourceName input
+                  }) fileName input
+
+
 
 simple :: PS.Parser Char
 simple = letter
