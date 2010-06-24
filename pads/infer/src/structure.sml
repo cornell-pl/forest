@@ -1357,9 +1357,9 @@ struct
 
             fun buildUnionTy(FirstToken,rtokens) = case (!useUnionClustering ) 
               of SOME threshold => 
-                   let val () = print "Starting to look for union clusters.\n"
+                   let (* val () = print "Starting to look for union clusters.\n" *)
                        val branches = CU.findClusters threshold rtokens
-                       val () = print "Finished looking for union clusters.\n"
+                       (* val () = print "Finished looking for union clusters.\n" *)
 		   in
 		      if (length branches) = 1 then orig_buildUnionTy(FirstToken,rtokens)
                       else let val tys = List.map (fn branch => mkTBD(~12, curDepth, List.length branch, branch)) branches

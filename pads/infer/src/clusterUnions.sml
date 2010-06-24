@@ -195,7 +195,7 @@ struct
       end
 
   fun findClusters threshold (rs : record_t list) = let
-      val () = print ("Using cluster threshold of:"^(Real.toString threshold)^".\n")
+      (* val () = print ("Using cluster threshold of:"^(Real.toString threshold)^".\n") *)
       val equivClasses = hashRecords rs   (* records grouped by hash code *)
       val basis = getBasis equivClasses   (* representative record from each equivalence class *)
       val basisClusters = mergeClusters threshold basis
