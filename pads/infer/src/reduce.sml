@@ -331,11 +331,13 @@ and prefix _ ty =
 			let val rem_tlist = List.drop(tlist, plen)
 			    val rem_t1list = List.drop(t1list, plen)
 			    val newt = case rem_tlist of
-						nil => genEmptyBase a_t 
+						nil => genEmptyBase (mkTyAux  
+							(#coverage a_t)) 
 					    | t :: nil => t
 					    | _ => Pstruct(a_t, rem_tlist)
 			    val newt1 = case rem_t1list of
-						nil => genEmptyBase a_t1 
+						nil => genEmptyBase (mkTyAux 
+							(#coverage a_t1)) 
 					    | t :: nil => t
 					    | _ => Pstruct(a_t1, rem_t1list)
 			    val newunion = 
