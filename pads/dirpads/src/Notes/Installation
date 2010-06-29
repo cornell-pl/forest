@@ -3,6 +3,16 @@ installing the HEAD version are available from:
 
   http://hackage.haskell.org/trac/ghc/wiki/Building
 
+The instructions don't mention this, but you'd be much better off
+configuring your HEAD version to be installed in your user directory
+hierarchy than in the default place (/usr/local). You have to install
+the older main ghc before you can build the HEAD version, and installing
+them in a place like /usr/local increases the chances of interference 
+between the two versions and their associated tools.
+
+The #haskell IRC channel is very helpful for all sorts of newbie-Haskell
+(and more advanced) questions.
+
 The sources for PADS/Haskell are currently stored in the PADS
 respository:
 
@@ -15,12 +25,31 @@ in the directory:
 Let GHC_PATH be the path to the bin directory for the head version of ghc: 
 GHC_PATH = /Users/kfisher/sw/ghc-head/bin
 
-Cabal is the tool for installing libraries for Haskell.  To get Cabal
-to generate documentation, you need to change a configuration parameter.
-In the default .cabal/config file you should see an option called
-"documentation", that will be commented out, as well as set to False.
-Uncommenting that line and setting the value to True should build
-documentation the next time you install a package.
+There are at least two methods for installing libraries for Haskell. The
+standard and preferred tool is called Cabal; the other method is presented
+because HEAD versions sometimes get out of sync with Cabal and it no longer
+works for those versions.
+
+Cabal can install libraries for Haskell and optionally also can generate
+documentation.  To get Cabal to generate documentation, you need to change 
+a configuration parameter. In the default .cabal/config file you should see 
+an option called "documentation", that will be commented out, as well as 
+set to False. Uncommenting that line and setting the value to True should 
+build documentation the next time you install a package.
+
+If you can't get Cabal to work with your ghc HEAD version, try this:
+
+* make sure the HEAD version of ghc is first in your PATH
+* download and decompress the library you want, 'mylibrary' for example
+* cd mylibrary
+* ghc --make Setup.hs -o Setup'
+* ./Setup configure --user'
+* ./Setup build'
+* ./Setup install --user'
+
+You can list the packages installed in your HEAD version with the command
+
+	ghc-pkg list
 
 I have the following libraries installed (and so everything
 PADS/Haskell needs is in this list):
@@ -41,7 +70,7 @@ Some of these libraries will be installed as a side effect of
 installing others.  To install a library <lib-name> from hackage for
 the HEAD version: 
 
-~/.cabal/bin/cabal install  <lib-name> -w GHC_PATH/ghc --with-haddock=GHC_PATH/haddock
+~/.cabal/bin/cabal install  <lib-name> -w $GHC_PATH/ghc --with-haddock=$GHC_PATH/haddock
 
 The -w flag tells cabal for which version of ghc you want to install
 the library.  The --with-haddock flag tells cabal which tool you want
