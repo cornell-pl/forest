@@ -50,6 +50,8 @@ Format Inference of Very Large Ad Hoc Data
 
 - Various parameter tuning (with running example)
 
+- Parsing regex in sml/nj is slow, the implementation is optimized for that
+
 5. Evaluation
 - Data sets (large and medium sizes)
 - System specs
