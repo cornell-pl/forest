@@ -54,7 +54,7 @@ You can list the packages installed in your HEAD version with the command
 I have the following libraries installed (and so everything
 PADS/Haskell needs is in this list):
     cpphs-1.11
-    haskell-src-exts-1.9.0
+    haskell-src-exts-1.9.0  [note: now 1.9.2 -- 1.9.0 no longer available]
     haskell-src-meta-0.0.7
     mtl-1.1.0.2
     packedstring-0.1.0.1
