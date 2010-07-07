@@ -3,7 +3,7 @@ installing the HEAD version are available from:
 
   http://hackage.haskell.org/trac/ghc/wiki/Building
 
-The instructions don't mention this, but you'd be much better off
+The instructions don't mention this, but you'll be much better off
 configuring your HEAD version to be installed in your user directory
 hierarchy than in the default place (/usr/local). You have to install
 the older main ghc before you can build the HEAD version, and installing
