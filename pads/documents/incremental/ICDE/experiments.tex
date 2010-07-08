@@ -6,11 +6,11 @@
 Name 	& Size(GB) & Lines & Description \\ \hline
 redstorm & 34.18 & 219096168 & Supercomputer log from Sandia National Lab	\\ \hline
 liberty & 30.833 & 265569231 &	Supercomputer log from Sandia National Lab\\ \hline
-dalpiv.dat & 15.41 & 25867260 &	Yellow pages server log \\ \hline
+dalpiv.dat & 15.41 & 25867260 &	Yellow pages web server log \\ \hline
 vshkap2.log & 10.33 & 89662433	\\ \hline
 cosmosLog\_csm.exe.log & 6.09 & 22143288 & Microsoft Cosmos service manager log\\ \hline
 free\_impression.dat & 2.60 & 27644006 & Impression data of yellow pages for Free users\\ \hline
-free\_clickthroughs.dat & 0.024 & 285332 & Click through stream data \\ \hline
+free\_clickthroughs.dat & 0.024 & 285332 & Yellow pages click through stream data \\ \hline
 thirdpartycontent.log & 0.04 & 281519 &	Third party content stream data \\ \hline
 eventstream.current & 0.50 & 1579920 &	Event streams \\ \hline
 strace\_jaccn.dat & 0.08 & 896490 & NERSC application traces \\ \hline
@@ -25,6 +25,19 @@ smallrace.log & 0.0019 & 3000 &	\\ \hline
 \end{table*}
 
 \subsection{Initial/incremental sizes}
+
+General comments: 
+\begin{itemize}
+\item longer learning time usually produces worse results
+\item smaller incremental batch sizes can reduce the total number of times 
+incremental learning are invoked  and also total running time
+because descriptions are refined earlier and parses more efficiently earlier
+in the whole process. However this phenomenon is not visable with larger
+init size as the initial description was already good enough and no more 
+incremental learning is needed.
+\item allow intermediate bad parse duing parsing can result in better overall 
+parses later on - this was evident in free\_click\_through.dat
+\end{itemize}
 
 \subsubsection{Default settings}
 
@@ -103,6 +116,9 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \begin{tabular}{|c||c|c|c|c|c|}
 \hline
 init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
+       & 454.17   & 806.17  & 889.54  & 1046.30 & 855.84 \\
+Manual & 10199.04 & 9763.39 & 9763.39 & 9767.39 & 9742.43 \\
+       & 3.37     & 3.00    & 3.00    & 3.00    & 3.00 \\ \hline
   & 771.56 & 1129.86 & 1064.14 & 1064.82 & 1079.70\\ 
 500  & 16016.90 & 14949.20 & 14949.20 & 14949.20 & 14949.20\\ 
   & 6.47 & 5.32 & 5.32 & 5.32 & 5.32\\ \hline 
@@ -205,6 +221,9 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \begin{tabular}{|c||c|c|c|c|c|}
 \hline
 init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
+       & 294.11     & 398.34   & 347.50   & 291.33   & 290.55 \\
+Manual & 8316.77    & 8355.71  & 8313.52  & 8297.47  & 8297.47 \\
+       & 0.62       & 0.62     & 0.62     & 0.52     & 0.52 \\ \hline
   & 127.38 & 125.42 & 124.59 & 124.49 & 138.14\\ 
 500  & 8098.46 & 8098.46 & 8098.46 & 8098.46 & 8098.46\\ 
   & 0.67 & 0.67 & 0.67 & 0.67 & 0.67\\ \hline 
@@ -445,6 +464,9 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \begin{tabular}{|c||c|c|c|c|c|}
 \hline
 init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
+       & 442.18  &  827.66  & 897.30  & 910.00 & 868.01 \\
+Manual & 10199.04 & 9763.39 & 9763.39 & 9763.39 & 9742.43 \\
+       & 3.37     & 3.00    & 3.00    & 3.00    & 3.00 \\ \hline
   & 927.84 & 1286.60 & 1117.60 & 1147.43 & 1118.18\\ 
 500  & 16119.06 & 15184.53 & 15184.53 & 15184.53 & 15184.53\\ 
   & 5.05 & 5.05 & 5.05 & 5.05 & 5.05\\ \hline 
@@ -547,6 +569,9 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \begin{tabular}{|c||c|c|c|c|c|}
 \hline
 init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
+       & 337.44  & 438.29  & 292.88  & 295.68  & 292.05 \\
+Manual & 8316.77 & 8355.71 & 8313.52 & 8297.47 & 8297.04 \\
+       & 0.62    & 0.62    & 0.62    & 0.52    & 0.52  \\ \hline
   & 123.88 & 127.76 & 130.17 & 125.52 & 124.45\\ 
 500  & 8098.46 & 8098.46 & 8098.46 & 8098.46 & 8098.46\\ 
   & 0.67 & 0.67 & 0.67 & 0.67 & 0.67\\ \hline 

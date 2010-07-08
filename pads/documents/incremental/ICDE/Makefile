@@ -1,4 +1,7 @@
 all:
 	latex paper.tex
 	latex paper.tex
-	dvipdf paper
+	bibtex paper
+	latex paper.tex
+	latex paper.tex
+	dvipdfm -p letter paper.dvi

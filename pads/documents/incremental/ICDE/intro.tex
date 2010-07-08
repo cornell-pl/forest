@@ -1,0 +1,93 @@
+\section{Introduction}
+Ad hoc data is any {\em non-standard}, {\em semi-structured} 
+data sources for which no processing tools or libraries are 
+readily available. HTML/XML data is not ad hoc data because 
+they are standard, delimited by tags, and there
+are many tools and manuals written for them; relational databases 
+are also not ad hoc data because they are structured. 
+Despite efforts to standardize data formats such as using XML 
+as a data exchange mechanism, ad hoc data still persists
+in many domains ranging from computer system administration to 
+financial transaction to health care to computational biology. Figure 
+\ref{fig:adhoc} shows fragments of two ad hoc data sources.
+People continue to produce and use ad hoc data because they 
+are expedient to output and more compact to store.  
+Typical use of these data sources includes system fault monitoring
+by looking at vital system health parameters in the system logs,
+intrusion detection by matching access patterns to intrusion
+models and data mining of scientific and financial data.
+
+\begin{figure*}
+Cosmos event streams:
+{\small
+\begin{verbatim}
+EventName=CosmosPerfCounter_1,CurrentTimeStamp=2010-04-10T02:07:54.950Z,Machine=msradb001,
+name=\\Cosmos\\MessageSent,instanceName=Total,counterType=rate,currentValue=1,minValue=1,
+maxValue=1,average=0,rate=1.18217E-006,runningTotalCount=0,runningTotal=0,timeIntervalMs=
+845901093,CsProcessId=NONE
+\end{verbatim}
+}
+Messages.sdb:
+{\small
+\begin{verbatim}
+Jun  6 10:42:56 nid00004 sshd[5405]: Accepted publickey for root from 
+ 192.168.0.1 port 43484 ssh2
+Jun  6 10:57:49 nid00003 syslog-ng[3504]: syslog-ng version 1.6.8 starting
+Jun  6 10:57:53 nid00003 sshd[4069]: Server listening on :: port 22.
+\end{verbatim}
+}
+\caption{Example ad hoc data sources}\label{fig:adhoc}
+\end{figure*}
+
+Despite the convenience to produce ad hoc data, these
+data formats become very difficult to deal with because of missing
+documentation, lack of tools, and corruptions caused by
+repeated redesign and re-engineering over time. 
+In the past, ad hoc data analysis usually involved
+writing a shell script or a wrapper programs to parse each 
+individual data formats, which is expensive, error-prone and 
+hard to maintain. 
+
+The \pads{} project \cite{padsweb} aims at solving some of the above 
+problems. The central technology is a declarative, type-based 
+data description language that allows the user to specify the physical
+layout of the data sources as well as some semantics among the data
+values. The specification can then be compiled into a suite of
+processing tools such as a statistical reporting tool, an 
+XML converter and a query engine, and programming libraries 
+including parser, printer and traversal functions. 
+
+A significant impediment to using \pads{} is the need to learn
+a new language and the amount of efforts to
+hand craft \pads{} descriptions, which can be very time consuming
+especially when the data format is complex or the data source is
+very large. These efforts are significantly increased if the data
+formats are evolving and the descriptions have to be updated 
+frequently. For example, when analyzing large amount of Cisco router
+logs at AT\&T, we noticed that the format changes once after the first 2GB, 
+and then again after another few GBs. The sudden change in format is
+the result of router firmware upgrades.
+
+The tremendous scale as well as the streaming and evolving nature of many ad hoc
+sources led us to believe that a system which automatically {\em learns}
+the \pads{} description of a given data source and incrementally updates that
+description as the source evolves will significantly reduce the barrier for
+using \pads{} and also further improve the productivity of ad hoc data users.
+As a first step, we developed an unsupervised algorithm \learnpads{}
+\cite{Fisher+:dirttoshovels,fisher+:sigmod08}
+that automatically infers the \pads{} description of a sample data source by 
+computing the statistics of {\em tokens} in the data and using an information
+theretical score to optimize the description. This algorithm, however,
+requires all data to be pre-loaded into main memory and contains procedures 
+that are quadratic to the size of data, 
+and therefore cannot scale to very large scale data. 
+
+In this paper, we propose a new framework that automatically infers 
+descriptions of large scale or continuous ad hoc data sources 
+{\em incrementally}. The system takes as input an initial description 
+and a new batch of data. It returns a
+modified description that extends the initial description and covers the new 
+data. The initial description may be supplied by the user or automatically
+generated using the original \learnpads{} system. This iterative architecture
+enables the learning of a very large data source by breaking it up 
+into many smaller batches and updating the description from one batch to next. 
