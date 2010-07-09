@@ -2,7 +2,7 @@
 
 \begin{figure*}
 Cosmos event streams:
-{\small
+{\footnotesize
 \begin{verbatim}
 EventName=CosmosPerfCounter_1,CurrentTimeStamp=2010-04-10T02:07:54.950Z,Machine=msradb001,
 name=\\Cosmos\\MessageSent,instanceName=Total,counterType=rate,currentValue=1,minValue=1,
@@ -11,12 +11,11 @@ maxValue=1,average=0,rate=1.18217E-006,runningTotalCount=0,runningTotal=0,timeIn
 \end{verbatim}
 }
 Messages.sdb:
-{\small
+{\footnotesize
 \begin{verbatim}
-Jun  6 10:42:56 nid00004 sshd[5405]: Accepted publickey for root from 192.168.0.1 
- port 43484 ssh2
-Jun  6 10:57:49 nid00003 syslog-ng[3504]: syslog-ng version 1.6.8 starting
-Jun  6 10:57:53 nid00003 sshd[4069]: Server listening on :: port 22.
+Jun  4 10:42:56 nid00004 sshd[5405]: Accepted publickey for root from 193.168.0.1 port 43484 ssh2
+Jun  4 10:57:49 nid00003 syslog-ng[3504]: syslog-ng version 1.6.8 starting
+Jun  4 10:57:53 nid00003 sshd[4069]: Server listening on :: port 22.
 \end{verbatim}
 }
 \caption{Example ad hoc data sources}\label{fig:adhoc}
@@ -24,67 +23,63 @@ Jun  6 10:57:53 nid00003 sshd[4069]: Server listening on :: port 22.
 
 
 Ad hoc data is any {\em non-standard}, {\em semi-structured} 
-data sources for which no processing tools or libraries are 
-readily available. HTML/XML data is not ad hoc data because 
-they are standard, delimited by tags, and there
-are many tools and manuals written for them; relational databases 
-are also not ad hoc data because they are structured. 
-Despite efforts to standardize data formats such as using XML 
-as a data exchange mechanism, ad hoc data still persists
+data source for which processing tools and libraries are not
+readily available. HTML, XML, and data in relational databases are not ad hoc because 
+many tools exist to manage such data.
+Despite efforts to standardize data formats, ad hoc data persists
 in many domains ranging from computer system administration to 
-financial transaction to health care to computational biology. Figure 
+financial transactions
+ to health care to computational biology. Figure 
 \ref{fig:adhoc} shows fragments of two ad hoc data sources.
 The first example comes from Microsoft's distributed computing
-infrastructure Cosmos. The second example is part of /var/log/messages
-from a CRAY supercomputer.
+infrastructure Cosmos. The second example is excerpted from the file 
+\texttt{/var/log/messages}
+on a CRAY supercomputer.
 
-People continue to produce and use ad hoc data because they 
-are expedient to output and more compact to store.  
-Typical use of these data sources includes system fault monitoring
-by looking at vital system health parameters in the system logs,
+People continue to produce and use ad hoc data because such formats 
+are expedient and compact.  
+Typical uses of these data sources include system fault monitoring
+by tracking vital system health parameters in the system logs,
 intrusion detection by matching access patterns to intrusion
 models and data mining of scientific and financial data.
 
-Despite the convenience to produce ad hoc data, these
+Despite the expediency of producing ad hoc data, these
 data formats become very difficult to deal with because of missing
-documentation, lack of tools, and corruptions caused by
+documentation, the lack of tools, and corruptions caused by
 repeated redesign and re-engineering over time. 
 In the past, ad hoc data analysis usually involved
-writing a shell script or a wrapper programs to parse each 
-individual data formats, which is expensive, error-prone and 
-hard to maintain. 
+writing a shell script or one-off wrapper program to parse each 
+data format, a practice which is expensive, error-prone and brittle.
 
-The \pads{} project \cite{padsweb} aims at solving some of the above 
-problems. The central technology is a declarative, type-based 
+The \pads{} project \cite{padsweb} aims to solve the above 
+problems. The central technology is a declarative, type-based, 
 data description language that allows the user to specify the physical
-layout of the data sources as well as some semantics among the data
-values. The specification can then be compiled into a suite of
+layout of data sources as well as semantic properties of the data. 
+\pads{} specifications can be compiled into a suite of
 processing tools such as a statistical reporting tool, an 
 XML converter and a query engine, and programming libraries 
 including parser, printer and traversal functions. 
 
-A significant impediment to using \pads{} is the need to learn
-a new language and the amount of efforts to
-hand craft \pads{} descriptions, which can be very time consuming
-especially when the data format is complex or the data source is
-very large. These efforts are significantly increased if the data
-formats are evolving and the descriptions have to be updated 
-frequently. For example, when analyzing large amount of Cisco router
-logs at AT\&T, we noticed that the format changes once after the first 2GB, 
+An impediment to using \pads{} is the need to learn
+the description language and the effort required to
+write \pads{} descriptions, which can be time consuming
+if the data format is large and complex. Evolving data formats 
+present an additional challenge because the descriptions must be updated.
+For example, when analyzing Cisco router
+logs at AT\&T, we noticed that the format changes after the first 2GB, 
 and then again after another few GBs. The sudden change in format is
 the result of router firmware upgrades.
 
-The tremendous scale as well as the streaming and evolving nature of many ad hoc
+The large scale as well as the streaming and evolving nature of many ad hoc
 sources led us to believe that a system which automatically {\em learns}
-the \pads{} description of a given data source and incrementally updates that
-description as the source evolves will significantly reduce the barrier for
-using \pads{} and also further improve the productivity of ad hoc data users.
+a \pads{} description of a given data source and incrementally updates that
+description as the source evolves could significantly improve the productivity of ad hoc data users.
 As a first step, we developed an unsupervised algorithm \learnpads{}
 \cite{Fisher+:dirttoshovels,fisher+:sigmod08}
-that automatically infers the \pads{} description of a sample data source by 
-computing the statistics of {\em tokens} in the data and using an information
-theretical score to optimize the description. This algorithm, however,
-requires all data to be pre-loaded into main memory and contains procedures 
+that automatically infers a \pads{} description of a data source by 
+computing frequency statistics for the {\em tokens} in the data and using an information
+theoretic score to guide description optimization. This algorithm, however,
+requires all data fit into main memory and contains procedures 
 that are quadratic to the size of data, 
 and therefore cannot scale to very large sources. 
 
@@ -95,31 +90,31 @@ and a new batch of data. It returns a
 modified description that extends the initial description and covers the new 
 data. The initial description may be supplied by the user or automatically
 generated using the original \learnpads{} system. This iterative architecture
-enables the learning of a very large data source by breaking it up 
+enables the learning of a very large data source by partitioning it 
 into many smaller batches and updating the description from one batch to next. 
 It also allows the user to take the output description at the end of
-any iteration, make manual changes to it (e.g. renaming the 
-automatically generated variable names to more intuitive and human-readable
-ones), and throw the new description back into the loop.
+an iteration, make manual changes to it (e.g. renaming the 
+automatically generated variable names to more human-friendly
+ones), and insert the revised description back into the loop.
 
 The main contributions of this paper are:
 \begin{itemize}
-\item we present a novel inference algorithm capable of
+\item We present a novel inference algorithm capable of
 combining automatic learning with human modification and thus creating 
-more accurate and readable descriptions suitable for documentation;
-\item we formalize the incremental step through the operating semantics of 
-parsing and aggregation functions;
-\item we tested the system on over 16 different ad hoc data formats and
-showed that it can learn a correct description from a source larger than
-30GB in a matter of a few hours;
-\item we analyze the experimental results and give suggestions on how to 
-configure the system to achieve better performance.
+more accurate and readable descriptions suitable for documentation.
+\item We formalize the incremental step through an operational semantics of 
+parsing and aggregation functions.
+\item We test the system on over 16 different ad hoc data formats and
+show that it can learn a correct description from a source larger than
+30GB in a matter of a few hours.
+\item We analyze the experimental results to demonstrate how system parameters affect 
+performance.
 \end{itemize}
 
 In the rest of the paper, we give a brief overview of \pads{} and the original
 \learnpads{} inference algorithm (\secref{sec:review}). We then decribe
 the new incremental inference algorithm (\secref{sec:algo}), discuss its
-implementation (\secref{sec:imp}), give a comprehensive experimental
-evaluation of the system (\secref{sec:eval}). Finally we compare this
+implementation (\secref{sec:imp}), and give a comprehensive experimental
+evaluation of the system (\secref{sec:eval}). Finally, we compare this
 system with some related work (\secref{sec:related}) and conclude
 the paper (\secref{sec:conclude}).
