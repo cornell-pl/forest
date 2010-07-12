@@ -675,10 +675,9 @@ struct
 			    s
 			end
 		    (* can add more variations here *)
-		    val lex =   if (!lexName) = "vanilla" then
-				  VanillaLex.makeLexer feedLex
-				else
-				  TokensLex.makeLexer feedLex
+		    val lex =   if      (!lexName) = "vanilla" then VanillaLex.makeLexer feedLex
+				else if (!lexName) = "walaa"   then WalaaLex.makeLexer feedLex
+				else TokensLex.makeLexer feedLex
 		    fun getMatches acc =
                         ( case lex() of 
                                NONE   => List.rev acc

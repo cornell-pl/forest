@@ -81,7 +81,7 @@ structure Main : sig
 	  NONE => ()
 	| SOME g => adcCoeff := g
     fun setUnionClustering (f: real option) = case f 
-	                       of NONE   => useUnionClustering := (SOME def_union_cluster_threshold)
+	                       of NONE   => useUnionClustering := NONE (* (SOME def_union_cluster_threshold)*)
 	                       |  SOME g => if (Real.>=(g,0.0) andalso Real.<=(g, 1.0)) then useUnionClustering := (SOME g)
 				            else (print ("Illegal union cluster parameter value: "^(Real.toString g) ^". "^
 							 "Union clustering parameter should be a value between 0.0 and 1.0.\n")

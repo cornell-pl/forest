@@ -56,6 +56,10 @@ vanilla.lex: ../include/vanilla.config ../scripts/config.pl
 	../scripts/config.pl ../include/vanilla.config .
 	mv vanilla.p ../include/vanilla.p
 
+walaa.lex: ../include/walaa.config ../scripts/config.pl
+	../scripts/config.pl ../include/walaa.config .
+	mv walaa.p ../include/walaa.p
+
 tokens.lex: ../scripts/config.pl ../include/tokens.config
 	../scripts/config.pl ../include/tokens.config .
 	mv tokens.p ../include/tokens.p
@@ -67,6 +71,10 @@ tokens.lex.sml: tokens.lex
 vanilla.lex.sml: vanilla.lex
 	@echo Running lexer generator
 	$(SML_ROOT_PATH)/ml-ulex --ml-lex-mode vanilla.lex
+
+walaa.lex.sml: walaa.lex
+	@echo Running lexer generator
+	$(SML_ROOT_PATH)/ml-ulex --ml-lex-mode walaa.lex
 
 pxml.lex.sml: pxml.lex
 	@echo Running lexer generator for pxml
