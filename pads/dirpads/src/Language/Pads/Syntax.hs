@@ -10,6 +10,7 @@ data PadsTy = Plit Char
             | Ptuple [PadsTy] 
             | Precord PadsTy
             | Papp PadsTy TH.Exp
+            | Ptrans PadsTy PadsTy TH.Exp   {- Src, Dest, and pair of functions to do transformation -}
    deriving (Eq, Data, Typeable)
 
 newtype PadsDecl = PadsDecl (Id, Maybe TH.Pat, PadsTy)

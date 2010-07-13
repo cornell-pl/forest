@@ -13,6 +13,7 @@ import Text.PrettyPrint.Mainland as PP
 import qualified Language.Pads.Source as S
 import qualified Language.Pads.Errors as E
 
+
 {- Pretty prints a list of declarations -}
 ppP d = liftM ppr_list (runQ d)
 
@@ -297,14 +298,14 @@ doRecordEnd = do
   case rendErr of
     Nothing -> return cleanBasePD
     Just err -> do p <- getPos
-                   badReturn (mkErrBasePD (E.RecordError err) p)
+                   badReturn (mkErrBasePD (E.RecordError err) (Just p))
 
 doRecordBegin = do
   rbegErr <- recordBegin
   case rbegErr of
     Nothing -> return cleanBasePD
     Just err -> do p <- getPos
-                   badReturn (mkErrBasePD (E.RecordError err) p)
+                   badReturn (mkErrBasePD (E.RecordError err) (Just p))
 
 
 parseRecord :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
@@ -321,13 +322,13 @@ pstringFW_parseM :: Int -> PadsParser (PstringFW, Base_md)
 pstringFW_parseM n = do 
   initPos <- getPos
   isEof <- isEofP 
-  if isEof then badReturn (def1 n, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringFW") initPos)
+  if isEof then badReturn (def1 n, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringFW") (Just initPos))
    else do 
      isEor <- isEorP
-     if isEor && n /= 0 then badReturn (def1 n, mkErrBasePD (E.FoundWhenExpecting "EOR" "PstringFW") initPos)
+     if isEor && n /= 0 then badReturn (def1 n, mkErrBasePD (E.FoundWhenExpecting "EOR" "PstringFW") (Just initPos))
       else do  
           str <- takeP n 
-          if (length str) /= n then badReturn (def1 n, mkErrBasePD (E.Insufficient (length str) n) initPos)
+          if (length str) /= n then badReturn (def1 n, mkErrBasePD (E.Insufficient (length str) n) (Just initPos))
             else goodReturn (PstringFW str, cleanBasePD)
 
 
@@ -335,11 +336,11 @@ pstringME_parseM :: S.RE -> PadsParser (PstringME, Base_md)
 pstringME_parseM re = do 
   initPos <- getPos
   isEof <- isEofP 
-  if isEof then badReturn (def1 re, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringME") initPos)
+  if isEof then badReturn (def1 re, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringME") (Just initPos))
    else do 
       match <- regexMatchP re
       case match of 
-        Nothing  -> badReturn  (def1 re, mkErrBasePD (E.RegexMatchFail (show re)) initPos)
+        Nothing  -> badReturn  (def1 re, mkErrBasePD (E.RegexMatchFail (show re)) (Just initPos))
         Just str -> goodReturn (PstringME str, cleanBasePD)
 
 
@@ -348,21 +349,21 @@ pstringSE_parseM :: S.RE -> PadsParser (PstringSE, Base_md)
 pstringSE_parseM re = do 
   initPos <- getPos
   isEof <- isEofP 
-  if isEof then badReturn (def1 re, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringSE") initPos)
+  if isEof then badReturn (def1 re, mkErrBasePD (E.FoundWhenExpecting "EOF" "PstringSE") (Just initPos))
    else do 
       match <- regexStopP re
       case match of 
-        Nothing  -> badReturn  (def1 re, mkErrBasePD (E.RegexMatchFail (show re)) initPos)
+        Nothing  -> badReturn  (def1 re, mkErrBasePD (E.RegexMatchFail (show re)) (Just initPos))
         Just str -> goodReturn (PstringSE str, cleanBasePD)
 
 pstring_parseM :: Char -> PadsParser (Pstring, Base_md)
 pstring_parseM c = do 
   initPos <- getPos
   isEof <- isEofP 
-  if isEof then badReturn (def1 c, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pstring") initPos)
+  if isEof then badReturn (def1 c, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pstring") (Just initPos))
    else do 
      isEor <- isEorP
-     if isEor then badReturn (def1 c, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pstring") initPos)
+     if isEor then badReturn (def1 c, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pstring") (Just initPos))
       else do  
           str <- satisfy (\c'-> c /= c')
           goodReturn (Pstring str, cleanBasePD)
@@ -372,14 +373,14 @@ pint_parseM :: PadsParser (Pint,Base_md)
 pint_parseM = do
   initPos <- getPos
   isEof <- isEofP 
-  if isEof then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pint") initPos)
+  if isEof then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pint") (Just initPos))
    else do 
      isEor <- isEorP
-     if isEor then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pint") initPos)
+     if isEor then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pint") (Just initPos))
       else do  
           c <- peakHeadP 
           digits <- satisfy Char.isDigit
-          if null digits then badReturn (def, mkErrBasePD (E.FoundWhenExpecting (mkStr c) "Pint") initPos)
+          if null digits then badReturn (def, mkErrBasePD (E.FoundWhenExpecting (mkStr c) "Pint") (Just initPos))
             else goodReturn (Pint $ digitListToInt digits, cleanBasePD)
 
 
@@ -388,18 +389,18 @@ pcharLit_parseM c = do
   let cStr = mkStr c
   initPos <- getPos
   isEof <- isEofP
-  if isEof then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOF" cStr) initPos)
+  if isEof then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOF" cStr) (Just initPos))
    else do 
      isEor <- isEorP
-     if isEor then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOR" cStr) initPos)
+     if isEor then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOR" cStr) (Just initPos))
       else do
          c' <- takeHeadP 
          if c == c' then goodReturn cleanBasePD
           else do
            foundIt <- scanP c
            errPos <- getPos
-           if foundIt then badReturn (mkErrBasePD (E.ExtraBeforeLiteral cStr) errPos)
-                      else badReturn (mkErrBasePD (E.MissingLiteral     cStr) errPos)
+           if foundIt then badReturn (mkErrBasePD (E.ExtraBeforeLiteral cStr) (Just errPos))
+                      else badReturn (mkErrBasePD (E.MissingLiteral     cStr) (Just errPos))
 
 
   
@@ -414,11 +415,12 @@ make_pads_declarations (PadsDecl (id, pat, padsTy)) = do
    let md_ty_name = getMDName    p_name
    let parse_name = getParseName p_name
    let (ty,md_ty) = genRepMD padsTy       -- Generate reprsentation and meta-data types for padsTy
+   let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
    let ty_decl        ::  Dec  = mk_newTyD    ty_name    ty
    let md_ty_decl     ::  Dec  = mk_TySynD md_ty_name md_ty
-   let padsInstance   :: [Dec] = genPadsInstance      ty_name md_ty parse_name
-   parseM :: [Dec] <- genPadsParseM        parse_name ty_name md_ty_name padsTy 
-   parseS :: [Dec] <- genPadsParseS p_name parse_name ty_name md_ty_name padsTy 
+   let padsInstance   :: [Dec] = genPadsInstance      ty_name md_ty parse_name  arg_info_opt
+   parseM :: [Dec] <- genPadsParseM        parse_name ty_name md_ty_name padsTy arg_info_opt
+   parseS :: [Dec] <- genPadsParseS p_name parse_name ty_name md_ty_name padsTy arg_info_opt
    return ([ty_decl, md_ty_decl]  ++ 
            padsInstance ++  
            parseM ++ 
@@ -432,6 +434,7 @@ genRepMD ty = case ty of
   Ptuple tys   -> genRepMDTuple tys
   Precord ty   -> genRepMD ty
   Papp ty arg  -> genRepMD ty
+  Ptrans tySrc tyDest exp -> genRepMD tyDest    -- rep and md for transform are rep and md for destination type
 
 
 {- Generate a representation and meta-data types for a tuple -}
@@ -443,43 +446,54 @@ genRepMDTuple tys =
              []   -> ConT ''()     -- Tuple contained no non-singleton types, so its rep is the unit type.
              [ty] -> ty            -- Tuple contains one non-singleton type T, so its rep type is just T
              (r_ty:r_tys') ->      -- Rep is tuple of non-singleton types T.
-                 foldl AppT (AppT (TupleT (length r_tys) ) r_ty) r_tys'
+                 tyListToTupleTy r_tys
       md_ty_nested = case mds' of  
                       []      -> ConT ''Base_md   -- Tuple contains no types, so its nested pd is just a base pd
                       [md_ty] -> md_ty            -- Tuple contains a single type, so its nested pd is just the pd of the type
-                      (md_ty:md_tys') -> 
-                         foldl AppT (AppT (TupleT (length mds') ) md_ty) md_tys'
+                      (md_ty:md_tys') -> tyListToTupleTy mds'
      {- Pd of a tuple is a pair of a base pd and a tuple of pds for each element in the tuple. -}
-      md_ty = AppT (AppT (TupleT 2) (ConT ''Base_md)) md_ty_nested     
+      md_ty = tyListToTupleTy [(ConT ''Base_md), md_ty_nested]
   in
       (ty, md_ty)
 
-genPadsInstance ty_name md_ty parse_name = 
-  let inst = AppT (AppT (ConT ''Pads) (ConT ty_name)) md_ty   -- Pads RepTy MDTy
-      def = mkName "def"
-      def_method = ValD (VarP def) (NormalB (VarE 'gdef)) []
-      parsePP = mkName "parsePP"
+genPadsInstance ty_name md_ty parse_name mpat_info = 
+  let (inst, parsePP) = case mpat_info of
+                          Nothing -> (AppT (AppT (ConT ''Pads) (ConT ty_name)) md_ty,   -- Pads RepTy MDTy
+                                      mkName "parsePP")
+                          Just (p,arg_ty) -> 
+                                     (AppT 
+                                        (AppT (AppT (ConT ''Pads1) arg_ty) (ConT ty_name)) 
+                                        md_ty,   -- Pads Arg RepTy MDTy
+                                      mkName "parsePP1")
       parsePP_method = ValD (VarP parsePP) (NormalB (VarE parse_name)) []
-  in [InstanceD [] inst [def_method,parsePP_method]]
+  in [InstanceD [] inst [parsePP_method]]
 
 {- This generates a type-specific name for the parseS function by redirecting to the generic function. -}
-genPadsParseS :: String -> Name -> Name -> Name -> PadsTy -> Q [Dec]
-genPadsParseS p_name parse_name rep_name pd_name padsTy = do
+genPadsParseS :: String -> Name -> Name -> Name -> PadsTy -> Maybe(TH.Pat, TH.Type) -> Q [Dec]
+genPadsParseS p_name parse_name rep_name pd_name padsTy mpat_info = do
+   let parseSName  = getParseSName p_name
    let stringTy    = ConT ''String
    let padsPairTy  = AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)
    let resultTy    = AppT (AppT (TupleT 2) padsPairTy) stringTy
-   let ty          = AppT (AppT ArrowT     stringTy  ) resultTy
-   let parseSName  = getParseSName p_name
+   let core_ty     = arrowTy stringTy resultTy
+   let (bodyE, ty) = case mpat_info of
+                      Nothing -> (VarE 'parseS, core_ty)
+                      Just (pat,pat_ty) -> (LamE [pat] (AppE (VarE 'parseS1) (patToExp pat)),
+                                            arrowTy pat_ty core_ty)
    let sigD = SigD parseSName ty
-   let funD = ValD (VarP parseSName) (NormalB (VarE 'parseS)) []
+   let funD = ValD (VarP parseSName) (NormalB bodyE ) []
    return [sigD, funD]
 
 
-genPadsParseM :: Name -> Name -> Name -> PadsTy -> Q [Dec]
-genPadsParseM parse_name rep_name pd_name padsTy = do 
-   let ty = AppT (ConT ''PadsParser) (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name))
+genPadsParseM :: Name -> Name -> Name -> PadsTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
+genPadsParseM parse_name rep_name pd_name padsTy mpat_info = do 
+   let core_ty = AppT (ConT ''PadsParser) (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name))
+   core_bodyE <- genParseBody rep_name pd_name padsTy
+   let (bodyE,ty) = case mpat_info of
+                     Nothing -> (core_bodyE, core_ty)
+                     Just (pat,pat_ty) -> ( LamE [pat] core_bodyE,
+                                            arrowTy pat_ty core_ty)
    let sigD = SigD parse_name ty
-   bodyE <- genParseBody rep_name pd_name padsTy
    let funD = ValD (VarP parse_name) (NormalB bodyE) []
    return [sigD, funD]
 
@@ -509,7 +523,19 @@ parseE ty = case ty of
   Ptuple tys   -> mkParseTuple tys
   Precord ty   -> mkParseRecord ty
   Papp ty argE -> mkParseTyApp ty argE
+  Ptrans tySrc tyDest exp -> mkParseTyTrans tySrc tyDest exp
 
+mkParseTyTrans :: PadsTy -> PadsTy -> TH.Exp -> Q TH.Exp
+mkParseTyTrans tySrc tyDest exp = do
+  srcE <- parseE tySrc
+  let srcEQ = return srcE
+  let expQ  = return exp
+  [| do begin_pos <- getPos
+        src_result <- $srcEQ
+        end_pos <- getPos
+        let src_pos = S.pos_span begin_pos end_pos
+        let (toDst,toSrc) = $expQ
+        return (toDst src_pos src_result) |]
 
 mkParseTyApp :: PadsTy -> TH.Exp -> Q TH.Exp
 mkParseTyApp ty argE = do
@@ -603,11 +629,65 @@ mapFstChar f (c:cs) = (f c) : cs
 strToUpper = mapFstChar Char.toUpper
 strToLower = mapFstChar Char.toLower
 
+mergeMaybe m1 m2 = case (m1,m2) of
+  (Nothing, Nothing) -> Nothing
+  (Just d1, Just d2) -> Just (d1,d2)
+  _ -> error "mergeMaybe given two maybes in different states."
+
 mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
     where con = NormalC ty_name [(NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
           derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data]
 
 mk_TySynD ty_name ty = TySynD ty_name [] ty
+
+arrowTy ty1 ty2 = AppT (AppT ArrowT     ty1  ) ty2
+tyListToTupleTy (ty:tys) = foldl AppT (AppT (TupleT (1 + length tys) ) ty) tys
+tyListToListTy  tys      = foldl AppT ListT                                tys
+
+{- XXX: need to add location information so can report location of error messages. -}
+patToTy :: TH.Pat -> TH.Type
+patToTy pat = case pat of
+  LitP l      -> litToTy l
+  VarP n      -> error ("Variable "++ (showName n) ++ " needs a type annotation.")
+  TupP pats   -> tyListToTupleTy (map patToTy pats)
+  InfixP p1 n p2 -> error ("Infix constructor "++ (showName n) ++ " application needs a type annotation.")
+  TildeP p    -> patToTy p
+  BangP  p    -> patToTy p
+  AsP n p     -> patToTy p
+  WildP       -> error "Wild card patterns are not supported in PADS declarations."
+  RecP name fieldPats -> ConT name   {-  I think this is the correct represtentation of a record type. -}
+  ListP pats  -> tyListToListTy (map patToTy pats)
+  SigP p ty   -> ty
+  
+litToTy :: TH.Lit -> TH.Type
+litToTy lit = 
+  let name = case lit of
+       CharL c       -> ''Char
+       StringL s     -> ''String
+       IntegerL i    -> ''Integer
+       RationalL r   -> ''Rational
+       IntPrimL  i   -> ''Integer
+       WordPrimL i   -> ''Integer
+       FloatPrimL f  -> ''Rational
+       DoublePrimL d -> ''Rational
+  in ConT name
+
+patToExp :: TH.Pat -> TH.Exp
+patToExp pat = case pat of
+  LitP l      -> LitE l
+  VarP n      -> VarE n
+  TupP pats   -> TupE (map patToExp pats)
+  InfixP p1 n p2 -> InfixE (Just (patToExp p1)) (VarE n) (Just (patToExp p2))
+  TildeP p    -> patToExp p
+  BangP  p    -> patToExp p
+  AsP n p     -> VarE n
+  WildP       -> error "Wild card patterns are not supported in PADS declarations. Can't convert to expression"
+  RecP name fieldPats -> RecConE name (map fieldPatToExp fieldPats)   {-  I think this is the correct represtentation of a record type. -}
+  ListP pats  -> ListE (map patToExp pats)
+  SigP p ty   -> patToExp p
+
+fieldPatToExp (n,p) = (n, patToExp p)
+
 
 {- Name manipulation functions -}
 -- genUniqueName base (i::Int) = mkName (base++(show i))
@@ -627,3 +707,4 @@ getParseName pname = mkName ((strToLower pname) ++ "_parseM")
 getParseSName pname = mkName ((strToLower pname) ++ "_parseS")
 
 genPE name = (VarE name, VarP name)
+

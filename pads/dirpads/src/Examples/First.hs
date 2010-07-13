@@ -3,14 +3,16 @@
 module Examples.First where
 
 import Language.Pads.Padsc
+import Language.Pads.BaseTypes
 
 import Language.Pads.Quote
 import Language.Pads.Source
+
 import Language.Haskell.TH as TH
 import Language.Haskell.Meta
 import Language.Pads.Pretty
 import Text.PrettyPrint.Mainland
-import qualified Text.Regex as RE
+import qualified Text.Regex.ByteString as BRE
 
 
 [pads| IntPair = (Pint, '|', Pint) |]
@@ -65,17 +67,36 @@ input_strSE_2 = "aaaac"
 strSE_results_1 = strSE_parseS input_strSE_1
 strSE_results_2 = strSE_parseS input_strSE_2
 
-[pads| StrP1 (x::Pint) = PstringFW(:3:) |]
+[pads| StrP1 (x::Int) = PstringFW(:x - 1 :) |]
 input_strP1 = "abcd"
-strP1_result = strP1_parseS input_strP1
+strP1_result = strP1_parseS 3 input_strP1
+
+[pads| StrHex = PstringME(:RE "[0-9A-Fa-f]+":) |]
+input_strHex = "12abcds"
+strHex_result = strHex_parseS input_strHex
+
+{- Testing for Phex32FW, which is in Pads.Language.BaseTypes -}
+input_hex32FW = "12bc34"  
+strhex32FW_result = phex32FW_parseS 4 input_hex32FW   -- ((Phex32FW (Pint 4796),Errors: 0),"34")
+
+input2_hex32FW = "00bc34"  
+strhex32FW_result2 = phex32FW_parseS 4 input2_hex32FW    -- ((Phex32FW (Pint 188),Errors: 0),"34")
+
+input3_hex32FW = "gbc34"  
+strhex32FW_result3 = phex32FW_parseS 4 input3_hex32FW    -- Prints error message
+
+[pads| HexPair = (Phex32FW(:2:), ',', Phex32FW(:3:)) |]
+input_hexpair = "aa,bbb"
+hexpair_result = hexPair_parseS input_hexpair
+
 
 ---- Play space
 
 first (x::Pint) = "hello"
 
-re = RE.mkRegexWithOpts "^a+" True True
-re_results1 = RE.matchRegexAll re "aaaab"
-re_results2 = RE.matchRegexAll re "caaaab"
+re = BRE.mkRegexWithOptsS "^a+" True True
+re_results1 = BRE.matchRegexAllS re "aaaab"
+re_results2 = BRE.matchRegexAllS re "caaaab"
 
 
 optIntP = parseOpt pint_parseM (0,cleanBasePD)

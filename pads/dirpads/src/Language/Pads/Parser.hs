@@ -17,8 +17,8 @@ import Language.Haskell.Meta as LHM
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)"],
-                                           reservedNames   = ["Precord"]})
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}"],
+                                           reservedNames   = ["Precord", "Ptrans", "Pusing"]})
 
 whiteSpace  = PT.whiteSpace  lexer
 identifier  = PT.identifier  lexer
@@ -30,7 +30,6 @@ parens      = PT.parens      lexer
 
 padsDecl :: Parser PadsDecl
 padsDecl = do { id <- identifier
---              ; args <- sepBy identifier whiteSpace
               ; str <- manyTill anyChar (reservedOp "=")
               ; pat <- case (Prelude.null str, LHM.parsePat str) of 
                             (True, _) -> return Nothing
@@ -60,7 +59,7 @@ fnAppTy = do { ty <- fnTy
              ; reservedOp "(:"
              ; str <- manyTill anyChar (reservedOp ":)") 
              ; case LHM.parseExp str of
-                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
+                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Pads application")
                  Right expTH -> return (Papp ty expTH)
              } <?> "type function application"
 
@@ -76,9 +75,22 @@ tupleTy = do { tys <- parens padsTyList
              ; return (Ptuple tys)
              } <?> "tuple type"
 
+transformTy :: Parser PadsTy
+transformTy = do { reserved "Ptrans"
+                 ; reservedOp "{" 
+                 ; srcTy <- padsTy
+                 ; reservedOp "<=>" 
+                 ; dstTy <- padsTy
+                 ; reserved "Pusing"
+                 ; str <- manyTill anyChar (reservedOp "}")
+                 ; case LHM.parseExp str of
+                   Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Ptrans.")
+                   Right expTH -> return (Ptrans srcTy dstTy expTH)
+                 } <?> "transform"
 
 padsTy :: Parser PadsTy
 padsTy = recordTy
+     <|> transformTy 
      <|> tupleTy
      <|> try fnAppTy
      <|> litTy

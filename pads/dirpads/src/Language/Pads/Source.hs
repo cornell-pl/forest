@@ -10,6 +10,8 @@ data Loc = Loc { lineNumber :: Int64,
                  byteOffset :: Int64 }
      deriving (Typeable, Data,Eq)
 
+dummyLoc = Loc {lineNumber = -1, byteOffset = -1 }
+
 instance Pretty Data.Int.Int64 where
   ppr i = text(show i)
 
@@ -26,6 +28,12 @@ data Pos = Pos { line       :: B.ByteString,
                  end        :: Maybe Loc}
   deriving (Typeable, Data, Eq)
 
+dummyPos = Pos {line = B.empty, begin = dummyLoc, end = Nothing }
+
+pos_span :: Pos -> Pos -> Pos
+pos_span p_begin p_end = Pos {line  = Language.Pads.Source.line p_begin,
+                              begin = begin p_begin,
+                              end   = Just (begin p_end)}
 
 instance Pretty Pos where 
   ppr (Pos{line,begin,end}) = case end of
