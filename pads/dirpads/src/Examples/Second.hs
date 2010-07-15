@@ -113,7 +113,7 @@ strSE_results_2 = strSE_parseS input_strSE_2
 
 [pads| StrP1 (x::Pint) = PstringFW(:3:) |]
 input_strP1 = "abcd"
-strP1_result = strP1_parseS input_strP1
+strP1_result = strP1_parseS 3 input_strP1
 
 ---- Play space
 
