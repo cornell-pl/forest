@@ -10,9 +10,9 @@ ks38.kms.com - kim [10/May/2009:18:38:35 -0400] "GET /doc/prev.gif HTTP/1.1" 304
 \label{fig:ai} 
 \end{figure*}
 
-We use a simple web server log format, which we call \ai{}
-in \figref{fig:ai}, to illustrate the principal 
-features of the \pads{} data
+The data in \figref{fig:ai} is a fragment of a simple web server log.
+We use this format, which we call
+\ai{}, to illustrate the principal features of the \pads{} data
 description language. The data 
 is made up of a sequence of records, separated by newlines.
 Each record contains a number of fields delimited by white spaces. 
@@ -21,6 +21,35 @@ then has two dashes, a time stamp enclosed in
 square brackets, a quoted HTTP message, and finally two
 integers. The second record shows some variation:
 the IP address becomes a hostname and the second dash becomes an identifier.
+
+\pads{} uses a type-based metaphor to
+describe ad hoc data.  Each \pads{} type plays a dual role: it
+specifies a grammar by which to parse the data and a data-specific
+data structure in which to store the results of the parse. 
+\padsc{} is the variant of \pads{} that uses \C{} as its host
+language, and therefore is syntactically similar to \C{}. 
+When compiled, the generated data structures and parsing code 
+are in \C{}.
+
+\figref{fig:ai.p} shows a \padsc{} specification that describes the
+records in \figref{fig:ai}.  
+The specification consists of a
+series of declarations. Types must be declared before they are used,
+so the last declaration \cd{entry\_t} describes the entirety of a
+record, while the earlier declarations describe fragments of the record.  
+Type \cd{entry\_t} is a \kw{Precord}, meaning it comprises a full line in
+the input, and is a \kw{Pstruct}, meaning it consists of a sequence of
+named fields, each with its own type.  For convenience, \kw{Pstruct}s
+can also contain anonymous literal fields, such as \cd{" ["}, which
+denote constants in the input source.  The generated representation
+for \cd{entry\_t} will be a \C{} struct with one field for each of the
+named fields in the declaration.
+The type \cd{client\_t} is a \kw{Punion}, meaning the described data
+matches \textit{one} of its branches, by analogy with \C{} unions. In
+particular, a \cd{client\_t} is either an IP address (\cd{Pip}) or a
+host name (\cd{Phostname}), where \cd{Pip} and \cd{Phostname} are
+\padsc{} \textit{base types} describing IP addresses and hostnames,
+respectively.  
 
 \begin{figure}[t]
 {\small 
@@ -54,34 +83,7 @@ the IP address becomes a hostname and the second dash becomes an identifier.
 \caption{\padsc{} description for the \ai{} format}
 \label{fig:ai.p}
 \end{figure}
-\pads{} uses a type-based metaphor to
-describe ad hoc data.  Each \pads{} type plays a dual role: it
-specifies a grammar by which to parse the data and a data-specific
-data structure in which to store the results of the parse. 
-\padsc{} is the variant of \pads{} that uses \C{} as its host
-language, and therefore is syntactically similar to \C{}. 
-While compiled, the generated data structures and parsing code 
-are in \C{}.
 
-\figref{fig:ai.p} shows a \padsc{} specification that describes each
-of the records in \figref{fig:ai}.  
-The specification consists of a
-series of declarations. Types must be declared before they are used,
-so the last declaration \cd{entry\_t} describes the entirety of a
-record, while the earlier declarations describe fragments of the record.  
-Type \cd{entry\_t} is a \kw{Precord}, meaning it comprises a full line in
-the input, and is a \kw{Pstruct}, meaning it consists of a sequence of
-named fields, each with its own type.  For convenience, \kw{Pstruct}s
-can also contain anonymous literal fields, such as \cd{" ["}, which
-denote constants in the input source.  The generated representation
-for \cd{entry\_t} will be a \C{} struct with one field for each of the
-named fields in the declaration.
-The type \cd{client\_t} is a \kw{Punion}, meaning the described data
-matches \textit{one} of its branches, by analogy with \C{} unions. In
-particular, a \cd{client\_t} is either an IP address (\cd{Pip}) or a
-host name (\cd{Phostname}), where \cd{Pip} and \cd{Phostname} are
-\padsc{} \textit{base types} describing IP addresses and hostnames,
-respectively.  
 
 In general, base types describe atomic pieces of data such as integers
 (\cd{Pint}) and floats (\cd{Pfloat}), characters (\cd{Pchar}) and
@@ -116,7 +118,7 @@ here.
 
 \learnpads{} assumes that the input data is a sequence of
 newline-terminated records and that each record is an instance of the
-desired description.  From such an input, it uses a a three-phase
+desired description.  From such an input, it uses a three-phase
 algorithm to produce a description.  In the {\em tokenization} phase,
 \learnpads{} converts each input line into a sequences of tokens,
 where each token type is defined by a regular expression.
@@ -144,7 +146,9 @@ is a base type, \kw{Pstruct}, \kw{Parray}, or \kw{Punion}.  Based on
 that determination, the algorithm partitions the data into new
 contexts and recursively analyzes each of those contexts, constructing
 the corresponding description as it recurses.  This phase terminates
-and outputs a candidate description.  In the {\em format refinement} phase,
+with a candidate description.  
+
+In the {\em format refinement} phase,
 the algorithm uses an information-theoretic scoring function to guide the
 application of rewriting rules.
 These rules seek to minimize the size of the description while
@@ -175,10 +179,10 @@ requires space quadratic in the input file size to perform the data
 dependency analysis, so it cannot be used on data sources larger than the
 square of the size of usable memory. In terms of adaptability, the
 algorithm only learns a description from a fixed amount of data.
-If the data changes or grows with new kind of records,
+If the data changes over time,
 the algorithm cannot modify the existing description; 
 it must start from scratch. This prevents the user from adapting
-descriptions to evolving data sources or data dreams.
+descriptions to manage evolving data sources.
 
 
 %
