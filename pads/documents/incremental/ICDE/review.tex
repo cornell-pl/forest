@@ -172,8 +172,8 @@ This algorithm produces good results for the small
 log files that we have experimented with, but it has two limitations:
 performance and adaptability.  In terms of performance, the algorithm
 requires space quadratic in the input file size to perform the data
-dependency analysis, so it cannot be used on log files larger than the
-square of the size of usable memory.  In terms of adaptability, the
+dependency analysis, so it cannot be used on data sources larger than the
+square of the size of usable memory. In terms of adaptability, the
 algorithm only learns a description from a fixed amount of data.
 If the data changes or grows with new kind of records,
 the algorithm cannot modify the existing description; 

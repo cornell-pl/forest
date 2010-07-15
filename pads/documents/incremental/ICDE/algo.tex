@@ -1,45 +1,61 @@
 \section{Main Algorithm}\label{sec:algo}
 
-To address these problems, we extended \learnpads{} to work incrementally.  
-Given a candidate description \cd{D}, the new algorithm uses \cd{D} to parse
-the records in the data source.  
-It discards records that parse successfully, since these records are
-already covered by \cd{D}, but it collects records that fail to parse.
-When the algorithm accumulates $M$ such records, where $M$ is a
-parameter of the algorithm, it invokes the incremental learning step,
-described below, to produce a refined description \cd{D'}.  This refined
-description subsumes \cd{D} and describes the $M$
-new records.  In addition, the algorithm attempts to preserve as much
-of the structure of \cd{D} as possible, so users supplying initial
-descriptions can recognize the resulting descriptions. 
-The algorithm then takes \cd{D'}
-to be the new candidate description and repeats the process until it
-has consumed all the input data.
-The initial description \cd{D} can either be supplied by a user or it
-can be inferred automatically by applying the original algorithm to
-$N$ records selected from the data source, where $N$ is another
-parameter.  
+\begin{figure}[th]
+\centering
+\epsfig{file=overview.eps,width=0.9\columnwidth}
+\caption{An Overview of the Incremental Learning Framework}
+\label{fig:overview}
+\end{figure}
+
+\figref{fig:overview} illustrates a high level schematic of the new incremental
+format inference framework. A large or streaming data source is input
+to the system in batches. Each batch of data contains $M$ number of
+records, where $M$ is a parameter of the framework.
+The state of the system is determined
+by the current data description which is subject to change as new data
+streams into the system. At the very beginning, the initial description
+can be supplied by user, or learned from the first batch of the input
+data. At each iteration, the current data description
+generates a new filter program which parses the incoming batch of data
+into an aggregted data structure similar to the parse tree of the description.
+In this process, the filter program collects ``bad data'' which does not
+comform to the current description. The system then invokes the original
+\learnpads{} algorithm to learn ``sub-descriptions'' from the bad data, and
+merge these sub-descriptions into the current data description to produce
+a new description for the next iteration. 
+
+In the rest of this section, we first define some preliminary data structures 
+to be used in this algorithm, then present
+the algorithm in more details including the operational semantics
+of two key functions in this algorithm, namely, 
+{\em parse} and {\em aggregate}, as well as some optimizations to refine
+the description learned in each step.
+
+%To address these problems, 
+%we extended \learnpads{} to work incrementally.  
+%Given a candidate description \cd{D}, the new algorithm uses \cd{D} to parse
+%the records in the data source.  
+%It discards records that parse successfully, since these records are
+%already covered by \cd{D}, but it collects records that fail to parse.
+%When the algorithm accumulates $M$ such records, where $M$ is a
+%parameter of the algorithm, it invokes the incremental learning step,
+%described below, to produce a refined description \cd{D'}.  This refined
+%description subsumes \cd{D} and describes the $M$
+%new records.  In addition, the algorithm attempts to preserve as much
+%of the structure of \cd{D} as possible, so users supplying initial
+%descriptions can recognize the resulting descriptions. 
+%The algorithm then takes \cd{D'}
+%to be the new candidate description and repeats the process until it
+%has consumed all the input data.
+%The initial description \cd{D} can either be supplied by a user or it
+%can be inferred automatically by applying the original algorithm to
+%$N$ records selected from the data source, where $N$ is another
+%parameter.  
 %Currently, the system selects a mix of $N/3$ consecutive lines
 %taken from the beginning, middle, and end of the data source. 
 
+\subsection{Preliminaries}
 
-Intuitively, the incremental learning step works by attempting to
-parse each of the $M$ records according to the current description
-\cd{D}.  It discards the portions of each record that parse correctly.
-If a portion fails to parse, that failure will be detected at a
-particular node in the description \cd{D}. It collects these failed
-portions in an aggregation data structure \cd{A} that mirrors the
-structure of \cd{D}.  After thus aggregating all the failures in the $M$
-records, the algorithm transforms \cd{D} to accommodate the places where
-differences were found (\ie, by introducing options where a piece of
-data was missing or unions where a new type of data was discovered).
-It then uses the original \learnpads{} algorithm to infer descriptions
-for the aggregated portions of bad data. 
-
-\figref{fig:data-structures} defines
-the data structures for  descriptions \cd{D}, data
-representations \cd{R}, and aggregate structures \cd{A}.
-%
 \begin{figure}[t]
 {\small 
 \begin{code}
@@ -76,21 +92,38 @@ A :: =
 | Opt A
 | Learn [s]
 \end{code}
-\vskip -2ex
 }
 \caption{Data structures used in incremental inference}
 \label{fig:data-structures}
 \end{figure}
-%
+
+\cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Intuitively, the incremental learning step works by attempting to
+parse each of the $M$ records according to the current description
+\cd{D}.  It discards the portions of each record that parse correctly.
+If a portion fails to parse, that failure will be detected at a
+particular node in the description \cd{D}. It collects these failed
+portions in an aggregation data structure \cd{A} that mirrors the
+structure of \cd{D}.  After thus aggregating all the failures in the $M$
+records, the algorithm transforms \cd{D} to accommodate the places where
+differences were found (\ie, by introducing options where a piece of
+data was missing or unions where a new type of data was discovered).
+It then uses the original \learnpads{} algorithm to infer descriptions
+for the aggregated portions of bad data. 
+}%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\figref{fig:data-structures} defines
+the data structures for descriptions \cd{D}, data
+representations \cd{R}, and aggregate structures \cd{A}.
 In these definitions,  variable \cd{re} ranges over regular expressions,
 \cd{s} and \cd{t} over strings, and \cd{i} over integers.
 A value with type \cd{D} is the abstract syntax tree of \pads{}
-description: it is what we want to learn.  
+description: this is what we want to learn.  
 For simplicity of presentation, we assume just two base types: 
 integers and strings that match a regular expression. Synchronizing
 tokens, or {\em sync tokens} for short, correspond to string literals
 in \pads{} descriptions.  Such tokens, which are often
-white space or punctuation,
+white spaces or punctuations,
 serve as delimiters in the data and are useful for detecting
 errors. We use binary pairs and unions to account for the
 \kw{Pstruct}s and \kw{Punion}s in \padsc{} descriptions.
@@ -126,6 +159,8 @@ The \cd{Learn} node accumulates the bad portions of the data that need
 to be learned. The newly learned sub-descriptions 
 will be spliced into the original description to get the new description. 
 
+\subsection{The Incremental Learning Step}
+
 \figref{fig:inc-learning} gives pseudo-code for the incremental
 learning step.
 The \cd{init\_aggregate} function initializes an empty aggregate
@@ -158,31 +193,28 @@ incremental_step(d, xs) =
     as = as'
   \} 
   best_a = \kw{select_best}(as);
-  d' = \kw{update_desc}(d, best_a);  
+  new_d = \kw{update_desc}(d, best_a);  
+  d' = \kw{refine}(d)
   return d'
 \end{codebox}
 \caption{Pseudo-code for the incremental learning step}
 \label{fig:inc-learning}
 \end{figure}
 
-
+\subsection{Operational Semantics}
 
 \begin{figure}[t]
 \begin{center}
 \epsfig{file=parse.eps, width=0.8\columnwidth}
-\vskip -2ex
 \caption{Result of parsing three input lines}\label{fig:parse}
 \end{center}
-\vskip -2ex
 \end{figure}
 
 \begin{figure*}[t]
 \begin{center}
 \epsfig{file=aggregate.eps, width=2\columnwidth}
-\vskip -4ex
 \caption{Aggregation of three parses}\label{fig:aggregate}
 \end{center}
-\vskip -2ex
 \end{figure*}
 
 To illustrate the parsing and aggregation phases of the algorithm, we
