@@ -148,6 +148,27 @@ contexts and recursively analyzes each of those contexts, constructing
 the corresponding description as it recurses.  This phase terminates
 with a candidate description.  
 
+The \learnpads{} system decides the current top-level structure must
+be a \kw{Punion} only if the frequency distribution does not look like
+a base type, a \kw{Pstruct} or a \kw{Parray}.  Having decided for a
+\kw{Punion}, the algorithm must partition the records of the data into
+buckets; each bucket corresponds to one branch of the new
+\kw{Punion}.  The original \learnpads{} partitioned the records
+based on the first token of each record: all records starting with
+\kw{Pint} into one bucket, \kw{Pdate} into a second, \etc{}  
+Although this approach is very effective for some formats, for others
+it fails to capture useful structure.  To address this lack, we added
+a second mechansism for partitioning records in a \kw{Punion}
+context: edit distance.  With this approach, two records are placed in
+the same bucket if the number of token ``edits'' (insertions and
+deletions) required to morph the token sequence of one record into the
+other is less than a threshold percentage of the length of the
+sequences.   This second approach is also very successful in many, but
+not all formats.  As a result, the current \learnpads{} system
+provides both options; the user selects the desired mechanism using a
+command-line switch.
+
+
 In the {\em format refinement} phase,
 the algorithm uses an information-theoretic scoring function to guide the
 application of rewriting rules.
