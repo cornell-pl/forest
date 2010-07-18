@@ -1,13 +1,8 @@
 \section{Main Algorithm}\label{sec:algo}
 
-\begin{figure}[th]
-\centering
-\includegraphics[width=0.9\columnwidth]{overview}
-%\epsfig{file=overview.eps,width=0.9\columnwidth}
-\caption{An Overview of the Incremental Learning Framework}
-\label{fig:overview}
-\end{figure}
-
+Intuitively, the incremental learning algorithm starts with an initial
+description, breaks the data source into smaller chunks, and updates
+the current description through the learning of each consecutive chunks. 
 \figref{fig:overview} illustrates a high level schematic of the new incremental
 format inference framework. A large or streaming data source is input
 to the system in batches. Each batch of data contains $M$ number of
@@ -24,6 +19,14 @@ comform to the current description. The system then invokes the original
 \learnpads{} algorithm to learn ``sub-descriptions'' from the bad data, and
 merge these sub-descriptions into the current data description to produce
 a new description for the next iteration. 
+
+\begin{figure}[th]
+\centering
+\includegraphics[width=0.9\columnwidth]{overview}
+%\epsfig{file=overview.eps,width=0.9\columnwidth}
+\caption{An Overview of the Incremental Learning Framework}
+\label{fig:overview}
+\end{figure}
 
 In the rest of this section, we first define some preliminary data structures 
 to be used in this algorithm, then present
@@ -191,8 +194,7 @@ incremental_step(d, xs) =
     as = as'
   \} 
   best_a = \kw{select_best}(as);
-  new_d = \kw{update_desc}(d, best_a);  
-  d' = \kw{refine}(d)
+  d' = \kw{update_desc}(d, best_a);  
   return d'
 \end{codebox}
 \caption{Pseudo-code for the incremental learning step}
@@ -217,15 +219,27 @@ each aggregate \cd{a} in the
 current list of aggregates. 
 We use `\cd{::}' to denote 
 prepending an element onto the front of a list. 
-When we finish parsing all the data lines and obtain 
+When it finishes parsing all the data lines and obtain 
 a final list of aggregates \cd{as}, 
-we select the best aggregate according to a scoring function which
-basically counts the number of errors in the aggregate, 
-and update the previous description
-\cd{d} to produce the new candidate description \cd{new\_d} 
-using the best aggregate. Finally this candidate description is
-refined using a set of rewriting rules. 
+the \cd{select\_best} function computes a score by counting the total 
+number of \cd{Opt} and \cd{Learn} nodes
+in each of the aggregates, and returns the one with the smallest number. 
+The idea is that the aggregate with the smallest number of added nodes is 
+more likely to represent a new description
+that is the closest to the original description. 
+Finally \cd{update\_desc} update the previous description
+\cd{d} to produce the new current description \cd{d'} 
+using the best aggregate. 
 
+Finally, the {\tt update\_desc} function does two things. 
+First, it invokes the format inference
+algorithm to learn a sub-description for the data strings collected 
+at each of the learn nodes
+and replace the learn nodes with these new sub-descriptions. 
+Then, it uses a number of rewriting
+rules into improve the overall structure. 
+We will discuss some of these rewriting rules in more
+details in section \ref{sec:imp}.
 
 \begin{figure*}[ht]
 \begin{center}
@@ -371,6 +385,10 @@ the derived definition of \kw{parse}.
 	$a_s$ ++ seps  $\goto a_s\prime$
 	$a_t$ +  term  $\goto a_t\prime$
 
+\kw{Option D}:
+  OptionA a + OptionR (SOME r) $\goto$ OptionA a' if a + r $\goto$ a'
+  OptionA a + OptionR (NONE) $\goto$ OptionA a 
+
 \kw{Aggregation of list}:
   a ++ [] $\goto$ a
 
@@ -393,6 +411,7 @@ This corresponds to the \kw{aggregate} function.
 \[A ++ Rs \goto A'\]
 represents aggregate $A$ plus a list of representations $Rs$ rewrites
 to $A'$. This is used in the aggregation of Array type of data.
+
 
 \subsection{Examples}
 To illustrate the parsing and aggregation phases of the algorithm, we
@@ -531,20 +550,8 @@ a optional learn node will be created before the sync node. And the new aggregat
 $(opt (l [r]),~ Sync~ s)$. If the aggregate structure already contains the learn node before this
 sync node, then recovered data $r$ will be added to the list under $l$.
 
-The {\tt select\_best} function computes a score by counting the total number of $opt$ and $l$ nodes
-in each of the aggregates, and returns the one with the smallest number. The idea is that the
-aggregate with the smallest number of added nodes is more likely to represent a new description
-that is the closest to the original description. 
-
-Finally, the {\tt update\_desc} function does two things. First, it invokes the format inference
-algorithm to learn a sub-description for the data strings collected at each of the learn nodes
-and replace the learn nodes with these new sub-descriptions. Then, it uses a number of rewriting
-rules into improve the overall structure. We will discuss some of these rewriting rules in more
-details in section \ref{sec:imp}.
 
 }%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF CUT %%%%%%%%%%%%%%%%
-
-\subsection{Refinement of the Description}
 
 % - problem definition (as close to the previous description as possible) (but we don't
 %   have a metric to measure how close yet, do we want to mention tree edit distance??)
