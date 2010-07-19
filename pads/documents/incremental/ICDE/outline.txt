@@ -43,6 +43,7 @@ Format Inference of Very Large Ad Hoc Data
 4. Implementations 
 - Optimization in parsing and aggregation:
   (a) the "clean" function to limit the number of parses
+      setting the number k : using free_click_through example
   (b) memoization
   (c) parse cut-off
   (d) struct parsing optimizations
@@ -56,11 +57,12 @@ Format Inference of Very Large Ad Hoc Data
 - Data sets (large and medium sizes)
 - System specs
 - Experiments:
-  (a) determining best params: discussion on the effect of init/inc sizes
-  (b) scaling tests
-  (c) large experiments (learning time, re-parse time, pads parsing time,
+  (a) union clustering or not?
+  (b) determining best params: discussion on the effect of init/inc sizes
+  (c) scaling tests
+  (d) large experiments (learning time, re-parse time, pads parsing time,
       blob-parsing time, wc -l time, edit distance to gold)
-  (d) show learned description and gold description for running examples
+  (e) show learned description and gold description for running examples
 
 6. Related Work
 

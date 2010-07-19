@@ -1,9 +1,18 @@
 \section{Experimental Results}
 \label{sec:eval}
 
+To evaluate the performance of our prototype system and to understand the
+trade-offs in setting the various paramters in the algorithm, we ran a number
+of experiments using 16 data sources. These sources are divided into two groups:
+{\em large files} with 6 sources each larger than 1GB, 
+and {\em small files} with 10 sources each under 1GB. 
+Table \ref{tab:sources} lists the names of these data sources, their sizes,
+number lines and brief descriptions. Our experiments are
+conducted on an AT\&T cluster xxx.
+
 \begin{table*}[h]
 \centering
-\caption{The data sources}
+\caption{The data sources}\label{tab:sources}
 \begin{tabular}{|c|c|c|c|} \hline
 Name 	& Size(GB) & Lines & Description \\ \hline
 redstorm & 34.18 & 219096168 & Supercomputer log from Sandia National Lab	\\ \hline
@@ -27,7 +36,35 @@ smallrace.log & 0.0019 & 3000 &	Log file from an autonomous vehicle \\ \hline
 \end{tabular}
 \end{table*}
 
-\subsection{Initial/incremental sizes}
+We are generally interested in two kinds of performance measures: 
+{\em time to learn a description} and 
+{\em quality of the learned description}. The time to learn can be further
+broken down into two components: time to learn the initial description,
+and the time to incrementally learn the rest of the data.
+The quality of the description can be measured in three ways:
+the MDL score of the description, the edit distance between the learned
+description and a gold description written by human expert, and the correctness
+of the learned description.  MDL score was the
+score we use to refine a description during the local search refinement 
+procedure. It provides a ``mechanical way'' to quantify both the
+precision and the compactness of a description. However, a description with
+good MDL score may not be so ideal from human perspective. To complement
+the MDL score, we measure how far the learn description is from the ``ideal''
+description, also known as the gold description. Of course there maybe
+many ways to craft a gold description depending on the expert's 
+knowledge of the given data source, but this subjective measure could give
+us a hint on how readable and document-worthy is the generated description.
+Finally, our system would not be very useful if the learn description 
+does not {\em describe} the original data correctly. Therefore,
+the correctness measures the percentage of the original data that
+can be parsed without any error using the learned description.
+
+
+We ran five sets of experiments altogether.
+
+\subsection{Union clustering or not?}
+ 
+\subsection{Optimal initial batch size and incremental batch size}
 
 General comments: 
 \begin{itemize}
