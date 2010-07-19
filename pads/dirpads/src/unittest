@@ -1,0 +1,12 @@
+#!/bin/bash
+
+ghc -o runtest  --make -package parsec -XQuasiQuotes -XTemplateHaskell -XDeriveDataTypeable -XScopedTypeVariables      -XMultiParamTypeClasses      -XFunctionalDependencies -XFlexibleInstances      -XUndecidableInstances -XNamedFieldPuns -XRecordWildCards -XStandaloneDeriving Examples/Main.hs Examples/Second.hs
+./runtest >&/tmp/test.out
+if diff /tmp/test.out Data/unittest.expected
+   then 
+   	echo "PASSED"
+   else
+	echo "FAILED"
+fi
+rm runtest
+
