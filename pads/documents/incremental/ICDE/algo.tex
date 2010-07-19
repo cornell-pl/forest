@@ -1,25 +1,66 @@
 \section{Main Algorithm}\label{sec:algo}
 
-Intuitively, the incremental learning algorithm starts with an initial
-description, breaks the data source into smaller chunks, and updates
-the current description through the learning of each consecutive chunks. 
-\figref{fig:overview} illustrates a high level schematic of the new incremental
-format inference framework. A large or streaming data source is input
-to the system in batches. Each batch of data contains $M$ number of
+To address these problems, we extended \learnpads{} to work
+incrementally.  
+\figref{fig:overview} illustrates a high level schematic of this
+algorithm. 
+Given a candidate description \cd{D}, the new algorithm uses \cd{D} to parse
+the records in the data source.  
+It discards records that parse successfully, since these records are
+already covered by \cd{D}, but it collects records that fail to parse.
+When the algorithm accumulates $M$ such records, where $M$ is a
+parameter of the algorithm, it invokes the incremental learning step,
+described below, to produce a refined description \cd{D'}.  This refined
+description subsumes \cd{D} and describes the $M$
+new records.  In addition, the algorithm attempts to preserve as much
+of the structure of \cd{D} as possible, so users supplying initial
+descriptions can recognize the resulting descriptions. 
+The algorithm then takes \cd{D'}
+to be the new candidate description and repeats the process until it
+has consumed all the input data.
+The initial description \cd{D} can either be supplied by a user or it
+can be inferred automatically by applying the original algorithm to
+$N$ records selected from the data source, where $N$ is another
+parameter.  
+%Currently, the system selects a mix of $N/3$ consecutive lines
+%taken from the beginning, middle, and end of the data source. 
+
+
+Intuitively, the incremental learning step works by attempting to
+parse each of the $M$ records according to the current description
+\cd{D}.  It discards the portions of each record that parse correctly.
+If a portion fails to parse, that failure will be detected at a
+particular node in the description \cd{D}. It collects these failed
+portions in an aggregation data structure \cd{A} that mirrors the
+structure of \cd{D}.  After thus aggregating all the failures in the $M$
+records, the algorithm transforms \cd{D} to accommodate the places where
+differences were found (\ie, by introducing options where a piece of
+data was missing or unions where a new type of data was discovered).
+It then uses the original \learnpads{} algorithm to infer descriptions
+for the aggregated portions of bad data. 
+
+\cut{
+Intuitively, the incremental learning algorithm takes an initial
+description as input, divides the new data into manageable
+chunks, and iteratively merges descriptions of these chunks into the
+current description.
+\figref{fig:overview} illustrates a high level schematic of this
+algorithm. A large or streaming data source is input 
+to the system in batches. Each batch of data contains $M$ 
 records, where $M$ is a parameter of the framework.
-The state of the system is determined
-by the current data description which is subject to change as new data
-streams into the system. At the very beginning, the initial description
+%%The state of the system is determined by the current data
+%%description which is subject to change as new data streams into the system. 
+The initial description
 can be supplied by user, or learned from the first batch of the input
-data. At each iteration, the current data description
-generates a new filter program which parses the incoming batch of data
+data. At each iteration, the system generates a filter program from
+the current data description.  This program parses the incoming batch of data
 into an aggregted data structure similar to the parse tree of the description.
 In this process, the filter program collects ``bad data'' which does not
 comform to the current description. The system then invokes the original
 \learnpads{} algorithm to learn ``sub-descriptions'' from the bad data, and
-merge these sub-descriptions into the current data description to produce
+merges these sub-descriptions into the current data description to produce
 a new description for the next iteration. 
-
+}
 \begin{figure}[th]
 \centering
 \includegraphics[width=0.9\columnwidth]{overview}
@@ -28,12 +69,11 @@ a new description for the next iteration.
 \label{fig:overview}
 \end{figure}
 
-In the rest of this section, we first define some preliminary data structures 
-to be used in this algorithm, then present
-the algorithm in more details including the operational semantics
-of two key functions in this algorithm, namely, 
-{\em parse} and {\em aggregate}, as well as some optimizations to refine
-the description learned in each step.
+In the rest of this section, define we some preliminary data
+structures and then present the algorithm in more detail, giving the
+operational semantics of two key functions ({\em parse} and {\em
+  aggregate}) and describing some optimizations to refine the
+description learned in each step.
 
 %To address these problems, 
 %we extended \learnpads{} to work incrementally.  
@@ -68,11 +108,12 @@ c          (a string character)
 s1.s2      (concatenation of strings)
 prefix(s)  (set of prefixes of s)
 sprefix(s) (set of strict prefixes of s)
-
-\cdmath
+\end{code}
+\begin{code}
 \kw{Descriptions}:
 Base ::= Pint | PstringME(re) | PstringFW(e)
-
+\end{code}
+\begin{code}
 D ::=   
   Base               (Base token)
 | Sync s             (Synchronizing token) 
@@ -80,12 +121,15 @@ D ::=
 | Union (D1, D2)     (Union)
 | Array(D, s, t)     (Array)
 | Option D           (Option)
-
+\end{code}
+\begin{code}
 \kw{Data representation}:
 BaseR ::= Str s | Int i | Error
-
+\end{code}
+\begin{code}
 SyncR ::= Good | Fail | Recovered s 
-
+\end{code}
+\begin{code}
 R ::=
   BaseR
 | SyncR
@@ -93,14 +137,15 @@ R ::=
 | Union1R R | Union2R R 
 | ArrayR (R list, SyncR list, SyncR)
 | OptionR (R option)
-
+\end{code}
+\begin{code}
 \kw{Aggregation structure}:
 A :: = 
   BaseA Base
 | SyncA s
 | PairA(A1, A2)
-| UnionA($A_l$, $A_r$)
-| ArrayA ($A_{elem}$, $A_{sep}$, $A_{term}$)
+| UnionA(Al, Ar)
+| ArrayA (A_elem, A_sep, A_term)
 | OptionA A
 | Opt A
 | Learn [s]
@@ -132,20 +177,21 @@ In these definitions,  variable \cd{re} ranges over regular expressions,
 \cd{e} over host language expressions,
 \cd{s} and \cd{t} over strings, and \cd{i} over integers.
 A value with type \cd{D} is the abstract syntax tree of \pads{}
-description: this is what we want to learn.  
+description: this description is what we want to learn.  
 For simplicity of presentation, we assume just three base types: 
 integers, strings that match a regular expression and strings with a
 fixed width specified by an expression. Synchronizing
 tokens, or {\em sync tokens} for short, correspond to string literals
 in \pads{} descriptions.  Such tokens, which are often
-white spaces or punctuations,
+white spaces or punctuation,
 serve as delimiters in the data and are useful for detecting
-errors. We use binary dependent pairs and unions to account for the
-\kw{Pstruct}s and \kw{Punion}s in \padsc{} descriptions. 
-\cd{x} is a variable name that appears in the second part of the pair.
-An array has an element type described by \cd{D}, a separator
-string $s$ that appears between array elements, and a
-terminator string $t$. \cd{Option D} indicates \cd{D} is optional.
+errors. We use binary dependent pairs \cd{Pair (x:D1, D2)} to model \kw{Pstruct}s. 
+The variable \cd{x} is bound in the second component of the
+pair to the value in the first componenet.
+We use  unions to account for \kw{Punion}s. 
+An array \cd{Array(D, s, t)} has an element type described by \cd{D}, a separator
+string \cd{s} that appears between array elements, and a
+terminator string \cd{t}. \cd{Option D} indicates \cd{D} is optional.
 
 A term with type \cd{R} is a parse tree obtained from parsing 
 data using a description \cd{D}.  Parsing a base type can result in a
@@ -157,25 +203,25 @@ meaning \cd{s} is not found at the beginning of the input, but
 can be {\em recovered} after ``skipping'' string \cd{s'}.  The parse
 of a pair is a pair of representations, and the parse of a union is
 either the parse of the first branch or the parse of the second
-branch. The parse of an option is either the parse of body or an empty.
+branch. The parse of an option is either the parse of its body or  empty.
 The parse of an array includes a list of parses for the
 element type, a list of parses for the separator and a parse for the
 terminator which appears at the end of the array.
 
-An aggregate structure is the {\em accumulation} of parse trees; it
+An aggregation structure is the {\em accumulation} of parse trees; it
 collects the data that cannot be parsed (in other words, error data)
 and therefore must be re-learned.
 The aggregation structure mirrors the structure of the description \cd{D} 
-with two additional nodes: an \cd{Opt} node, and a \cd{Learn} node. 
+with two additional nodes: an \cd{Opt} node and a \cd{Learn} node. 
 An invariant is that an \cd{Opt} node always wraps a \cd{BaseA} or a \cd{SyncA} node,
 where it indicates that the underlying base or sync token is missing
 in some of the parses being aggregated, and therefore that the wrapped
 token should be made optional. 
 %Note the difference between {\tt Opt} nodes and {\tt OptionA} nodes. The latter 
 %just corresponds to the description {\tt Option D}. 
-The \cd{Learn} node accumulates the bad portions of the data that need
-to be learned. The newly learned sub-descriptions 
-will be spliced into the original description to get the new description. 
+The \cd{Learn} node accumulates the bad portions of the data.
+Once the system infers a description for this accumulated data, it
+splices in the new description in place of the \cd{Learn} node.
 
 \subsection{Incremental Learning Step}
 \begin{figure}[t]
@@ -201,45 +247,38 @@ incremental_step(d, xs) =
 \label{fig:inc-learning}
 \end{figure}
 
-\figref{fig:inc-learning} gives pseudo-code for the operations of one
-single iteration in the algorithm, also known as the {\em incremental
-learning step}.
-The input to this step is the current description \cd{d} and a batch of
-data records \cd{xs}.
-The \cd{init\_aggregate} function initializes an empty aggregate
-according to description \cd{d}, which essentially involves renaming
-the types in \cd{d} to their corresponding aggregate types.
-At any time, the algorithm keeps a list of aggregates,
-which begins with just one element: the initial aggregate of \cd{d}.
-Then for each data record \cd{x}, we use the \cd{parse} function to
-produce a list \cd{rs} of possible parses.
-We then call the \cd{aggregate} function to merge
-each parse \cd{r} in the current list of parses with 
-each aggregate \cd{a} in the
-current list of aggregates. 
-We use `\cd{::}' to denote 
-prepending an element onto the front of a list. 
-When it finishes parsing all the data lines and obtain 
-a final list of aggregates \cd{as}, 
-the \cd{select\_best} function computes a score by counting the total 
-number of \cd{Opt} and \cd{Learn} nodes
-in each of the aggregates, and returns the one with the smallest number. 
+\figref{fig:inc-learning} gives pseudo-code for the {\em incremental
+  learning step}.  The input to this step is the current description
+\cd{d} and a batch of data records \cd{xs}.  The \cd{init\_aggregate}
+function initializes an empty aggregate according to description
+\cd{d}.  During parsing, the algorithm iteratively updates a list of
+possible aggregates \cd{as}, seeded with the initial aggregate of
+\cd{d}.  For each data record \cd{x}, the algorithm uses the
+\cd{parse} function to produce a list \cd{rs} of possible parses.  It
+then calls the \cd{aggregate} function to merge each parse \cd{r} in
+the current list of parses with each aggregate \cd{a} in the current
+list of aggregates.  (We use `\cd{::}' to denote prepending an element
+onto the front of a list.)  When the system finishes parsing all the
+input data, the algorithm uses the \cd{select\_best} function to
+select the best aggregate from the list of candidate aggregates
+\cd{as}.  The \cd{select\_best} function counts the total number of
+\cd{Opt} and \cd{Learn} nodes in each of the aggregates, and returns
+the one with the smallest number.
 The idea is that the aggregate with the smallest number of added nodes is 
 more likely to represent a new description
-that is the closest to the original description. 
-Finally \cd{update\_desc} update the previous description
-\cd{d} to produce the new current description \cd{d'} 
-using the best aggregate. 
-
-Finally, the {\tt update\_desc} function does two things. 
+that is the closer to the original description. 
+Finally, the \cd{update\_desc} function uses the structure of the best
+aggregate to update the previous description \cd{d} to produce the new
+current description \cd{d'}.  The \cd{update\_desc} function works by
+doing two things.
 First, it invokes the format inference
-algorithm to learn a sub-description for the data strings collected 
-at each of the learn nodes
-and replace the learn nodes with these new sub-descriptions. 
-Then, it uses a number of rewriting
-rules into improve the overall structure. 
-We will discuss some of these rewriting rules in more
-details in section \ref{sec:imp}.
+algorithm to learn a sub-description for the data collected 
+at each of the \cd{Learn} nodes
+and replaces these \cd{Learn} nodes with these new sub-descriptions. 
+Second, it uses rewriting
+rules into improve the overall structur.
+We will discuss these rewriting rules in more
+detail in \secref{sec:imp}.
 
 \begin{figure*}[ht]
 \begin{center}
@@ -309,34 +348,30 @@ details in section \ref{sec:imp}.
 \end{center}
 \end{figure*}
 
-\subsection{The \kw{parse} function}
+\subsection{The parse function}
 \label{sec:parse}
-We first define some useful notions.
+To define the \cd{parse} function, we first introduce some useful notation.
 An {\em environment} is a mapping between variable names and parses.
 \[E : x \arrow R \]
 
-A {\em parse metric} measures the quality of a parse, and is a 
+A {\em parse metric} $m$ measures the quality of a parse. It is a 
 pair of integers, where the first integer is the number of tokens
 with parse errors and the second is the total number of tokens parsed.
-Below defines the parse metric, the addition operator and the order
-relation:
+The following equations define addition and equality for parse metrics:
 \begin{eqnarray*}
-&&m ::= int * int \\        
 &&(n1, n1') + (n2, n2') = (n1 + n2, n1' + n2')  \\ 
-&&(n1,n1') \le (n2,n2') \rm{iff}~ n1/n1' \le n2/n2' 
+&&(n1,n1') \le (n2,n2')~\rm{iff}~ n1/n1' \le n2/n2' 
 \end{eqnarray*}
 
-To facilitate the presentation of \kw{parse}, we define a main
-judget:
+To facilitate the presentation of \cd{parse}, we define the judgement:
 \[(R, m) \in L(D, E, s, s')\]
-where $s$ is the string parsed by $D$ and $s'$ is look-ahead.
-The judgement can be read as ``with an environment $E$, a description $D$
+which can be read ``with an environment $E$, a description $D$
 can be parsed into $R$ with a metric $m$, while consuming
 string $s$, with a lookhead string $s'$ that remains unconsumed''.
 \figref{fig:parse-sem} gives the full semantics of this judgement and
-the derived definition of \kw{parse}.
+the definition of \cd{parse} that uses this judgement.
 
-\subsection{The \kw{aggregate} function}
+\subsection{The aggregate function}
 \begin{figure*}[ht]
 \centering
 \begin{code}
@@ -401,16 +436,17 @@ the derived definition of \kw{parse}.
 \caption{The operational semantics of aggregate function}
 \label{fig:aggr-sem}
 \end{figure*}
-
-In \figref{fig:aggr-sem}, $a$ and $b$ range over aggregate structures, while
-$r$ ranges over data representations, i.e. parses.
-We define two judgement forms for \kw{aggregate} function:
+\figref{fig:aggr-sem} gives the definition of the \cd{aggregate}
+function.
+In the figure, $a$ and $b$ range over aggregate structures, while
+$r$ ranges over data representations, \ie{} parses.
+We use two judgement forms to define the \cd{aggregate} function:
 \[A + R \goto A'\]
 represents aggregate $A$ plus a data representation $R$ rewrites to $A'$.
-This corresponds to the \kw{aggregate} function.
+This corresponds to the \cd{aggregate} function.
 \[A ++ Rs \goto A'\]
 represents aggregate $A$ plus a list of representations $Rs$ rewrites
-to $A'$. This is used in the aggregation of Array type of data.
+to $A'$. This is used in the aggregation of arrays.
 
 
 \subsection{Examples}
@@ -423,7 +459,7 @@ and we are given the following three lines of new input:
 \begin{tabular}{l}
 5*\\
 abc*\\
-8\$\\
+8\$\\[1ex]
 \end{tabular}}
 }
 
