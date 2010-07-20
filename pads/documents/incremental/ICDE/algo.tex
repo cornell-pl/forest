@@ -271,12 +271,14 @@ Finally, the \cd{update\_desc} function uses the structure of the best
 aggregate to update the previous description \cd{d} to produce the new
 current description \cd{d'}.  The \cd{update\_desc} function works by
 doing two things.
-First, it invokes the format inference
+First, it converts the aggregate structure back to a \pads{} description
+with \cd{Opt} nodes translated to \cd{Poption} types. In addition,
+it invokes the \learnpads{} format inference
 algorithm to learn a sub-description for the data collected 
 at each of the \cd{Learn} nodes
 and replaces these \cd{Learn} nodes with these new sub-descriptions. 
 Second, it uses rewriting
-rules into improve the overall structur.
+rules into improve the overall structure.
 We will discuss these rewriting rules in more
 detail in \secref{sec:imp}.
 
