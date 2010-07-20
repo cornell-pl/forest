@@ -8,39 +8,44 @@ of experiments using 16 data sources. These sources are divided into two groups:
 and {\em small files} with 10 sources each under 1GB. 
 Table \ref{tab:sources} lists the names of these data sources, their sizes,
 number lines and brief descriptions. Our experiments are
-conducted on an AT\&T cluster xxx.
+conducted on a 2.4GHz, 64-bit quad-core Intel Xeon Processor 
+running Linux version 2.6.18 with 46 GBs of memory.
 
 \begin{table*}[h]
 \centering
 \caption{The data sources}\label{tab:sources}
 \begin{tabular}{|c|c|c|c|} \hline
-Name 	& Size(GB) & Lines & Description \\ \hline
-redstorm & 34.18 & 219096168 & Supercomputer log from Sandia National Lab	\\ \hline
-liberty & 30.833 & 265569231 &	Supercomputer log from Sandia National Lab\\ \hline
-dalpiv.dat & 15.41 & 25867260 &	Yellow pages web server log \\ \hline
-vshkap2.log & 10.33 & 89662433	& Syslog format \\ \hline
-cosmosLog\_csm.exe.log & 6.09 & 22143288 & Microsoft Cosmos service manager log\\ \hline
-free\_impression.dat & 2.60 & 27644006 & Impression data of yellow pages for Free users\\ \hline
-free\_clickthroughs.dat & 0.024 & 285332 & Yellow pages click through stream data \\ \hline
-thirdpartycontent.log & 0.04 & 281519 &	Third party content stream data \\ \hline
-eventstream.current & 0.50 & 1579920 &	Event streams on Cosmos \\ \hline
-strace\_jaccn.dat & 0.08 & 896490 & NERSC application traces \\ \hline
-LA-UR-NODE-NOZ.TXT & 0.32 &  1630479 & Space separated LANL disk replacement data\\ \hline
-LA-UR-EVENTS.csv & 0.03 &  433490 & Comma separated LANL disk replacement data\\ \hline
-messages.sdb & 0.52 & 5047341 &	/var/log/messages from CRAY\\ \hline
-4046.xls & 0.007 & 24193 & DNA Microarray data\\ \hline
-searchevents.dat & 0.09 & 2035348 & Yellow pages search event log \\ \hline
-HALO\_have2impression.log.1 & 0.36 &  210034 & Server side impression records of
-iPhone applications\\ \hline
-smallrace.log & 0.0019 & 3000 &	Log file from an autonomous vehicle \\ \hline
+Name 	& Size & Lines & Description \\ \hline
+redstorm & 34.18 GB & 219096168 & Supercomputer log from Sandia National Lab	\\ \hline
+liberty & 30.833 GB & 265569231 &	Supercomputer log from Sandia National Lab\\ \hline
+dalpiv.dat & 15.41 GB & 25867260 &	Yellow pages web server log \\ \hline
+vshkap2.log & 10.33 GB & 89662433	& Syslog format \\ \hline
+cosmosLog\_csm.exe.log & 6.09 GB & 22143288 & Microsoft Cosmos service manager log\\ \hline
+free\_impression.dat & 2.60 GB & 27644006 & Impression data of yellow pages for Free users\\ \hline \hline
+free\_clickthroughs.dat & 24 MB & 285332 & Yellow pages click through stream data \\ \hline
+thirdpartycontent.log & 40 MB & 281519 &	Third party content stream data \\ \hline
+eventstream.current & 500 MB & 1579920 &	Event streams on Cosmos \\ \hline
+strace\_jaccn.dat & 80 MB & 896490 & NERSC application traces \\ \hline
+LA-UR-EVENTS.csv & 30 MB &  433490 & Comma separated LANL disk replacement data\\ \hline
+messages.sdb & 520 MB & 5047341 &	/var/log/messages from CRAY\\ \hline
+HALO\_have2impression.log.1 & 360 MB &  210034 & Server side impression records of iPhone applications\\ \hline
+LA-UR-NODE-NOZ.TXT & 32 MB &  1630479 & Space separated LANL disk replacement data\\ \hline
+searchevents.dat & 90 MB & 2035348 & Yellow pages search event log \\ \hline
+4046.xls & 7 MB & 24193 & DNA Microarray data\\ \hline
+smallrace.log & 1.9 MB & 3000 &	Log file from an autonomous vehicle \\ \hline
 \end{tabular}
 \end{table*}
 
 We are generally interested in two kinds of performance measures: 
-{\em time to learn a description} and 
-{\em quality of the learned description}. The time to learn can be further
+\begin{enumerate}
+\item {\em time to learn a description} 
+\item {\em quality of the learned description} 
+\end{enumerate}
+
+The time to learn can be further
 broken down into two components: time to learn the initial description,
 and the time to incrementally learn the rest of the data.
+
 The quality of the description can be measured in three ways:
 the MDL score of the description, the edit distance between the learned
 description and a gold description written by human expert, and the correctness
@@ -49,22 +54,47 @@ score we use to refine a description during the local search refinement
 procedure. It provides a ``mechanical way'' to quantify both the
 precision and the compactness of a description. However, a description with
 good MDL score may not be so ideal from human perspective. To complement
-the MDL score, we measure how far the learn description is from the ``ideal''
-description, also known as the gold description. Of course there maybe
+the MDL score, we measure how different the learn description is 
+from the ``ideal'' description, also known as the gold description, using
+a {\em normalized edit distance} measure:
+\[normal\_dist(D) = \frac{edit\_dist(D, D_{gold})}{|D_{gold}|}\]
+where $|D|$ denotes the total number of nodes in $D$.
+Of course, there maybe
 many ways to craft a gold description depending on the expert's 
 knowledge of the given data source, but this subjective measure could give
-us a hint on how readable and document-worthy is the generated description.
-Finally, our system would not be very useful if the learn description 
+us a hint on how readable and document-worthy the generated description is.
+Finally, our system would not be very useful if the learned description 
 does not {\em describe} the original data correctly. Therefore,
 the correctness measures the percentage of the original data that
 can be parsed without any error using the learned description.
 
-
-We ran five sets of experiments altogether.
+The rest of this section presents the results of five sets of experiments
 
 \subsection{Union clustering or not?}
- 
-\subsection{Optimal initial batch size and incremental batch size}
+In this experiement, we contrast the performance of the system with and without
+union clustering in the \learnpads{} algorithm. 
+
+\begin{table*}[th]
+\centering
+\caption{Default vs. Union Clustering}
+\label{tab:uceffects}
+\begin{tabular}{|c||c|c|c||c|c|c|} \hline
+Data & Time (secs) & Score & Dist & Time (Secs) & Score & Dist \\ \hline \hline
+free\_clickthroughs.dat.cleaned & 21.78 & 5272.57 & 0.19 & 22.54 & 5272.57 & 0.19 \\ \hline
+thirdpartycontent.log & 28.69 & 9038.22 & 0.55 & 30.18 & 9038.22 & 0.55 \\ \hline
+eventstream.current & 1102.43 & 15183.99 & 5.05 & 1115.32 & 15183.99 & 5.05 \\ \hline
+strace\_jaccn.dat & 58.92 & 7206.30 & 0.13 & 72.31 & 7246.68 & 0.12 \\ \hline
+LA-UR-06-0803-MX20\_NODES\_0\_TO\_255\_EVENTS.csv & 24.66 & 5773.51 & 0.67 & 161.14 & 5772.10 & 0.67 \\ \hline
+messages.sdb & 244.20 & 7932.71 & 0.48 & 702.52 & 7932.65 & 0.48 \\ \hline
+HALO\_have2impression.log.1 & 107.95 & 27460.96 & 0.65 & 115.25 & 27460.96 & 0.65 \\ \hline
+LA-UR-06-1446-MX16-NODE-NOZ.TXT & 1168.55 & 10572.83 & 0.59 & 1148.81 & 10572.83 & 0.59 \\ \hline
+searchevents.dat.cleaned & 120.61 & 12779.76 & 0.84 & 131.28 & 12778.65 & 0.84 \\ \hline
+4046.xls & 535.41 & 22828.71 & 0.97 & 447.30 & 22107.26 & 0.98 \\ \hline
+smallrace.log & 19.74 & 42782.44 & NA & 19.66 & 42779.64 & NA \\ \hline
+\end{tabular}
+\end{table*}
+
+\subsection{initial batch size and incremental batch size}
 
 General comments: 
 \begin{itemize}
@@ -806,28 +836,7 @@ Perturbation & init/inc & Time (sec) & Score & Dist \\ \hline
 \caption{Scaling Results with Union Clustering}
 \end{figure}
 
-\subsection{Effects of Union Clustering}
-\begin{table*}[th]
-\centering
-\caption{Default vs. Union Clustering}
-\label{tab:uceffects}
-\begin{tabular}{|c||c|c|c||c|c|c|} \hline
-Data & Time (secs) & Score & Dist & Time (Secs) & Score & Dist \\ \hline \hline
-free\_clickthroughs.dat.cleaned & 21.78 & 5272.57 & 0.19 & 22.54 & 5272.57 & 0.19 \\ \hline
-thirdpartycontent.log & 28.69 & 9038.22 & 0.55 & 30.18 & 9038.22 & 0.55 \\ \hline
-eventstream.current & 1102.43 & 15183.99 & 5.05 & 1115.32 & 15183.99 & 5.05 \\ \hline
-strace\_jaccn.dat & 58.92 & 7206.30 & 0.13 & 72.31 & 7246.68 & 0.12 \\ \hline
-LA-UR-06-0803-MX20\_NODES\_0\_TO\_255\_EVENTS.csv & 24.66 & 5773.51 & 0.67 & 161.14 & 5772.10 & 0.67 \\ \hline
-messages.sdb & 244.20 & 7932.71 & 0.48 & 702.52 & 7932.65 & 0.48 \\ \hline
-HALO\_have2impression.log.1 & 107.95 & 27460.96 & 0.65 & 115.25 & 27460.96 & 0.65 \\ \hline
-LA-UR-06-1446-MX16-NODE-NOZ.TXT & 1168.55 & 10572.83 & 0.59 & 1148.81 & 10572.83 & 0.59 \\ \hline
-searchevents.dat.cleaned & 120.61 & 12779.76 & 0.84 & 131.28 & 12778.65 & 0.84 \\ \hline
-4046.xls & 535.41 & 22828.71 & 0.97 & 447.30 & 22107.26 & 0.98 \\ \hline
-smallrace.log & 19.74 & 42782.44 & NA & 19.66 & 42779.64 & NA \\ \hline
-\end{tabular}
-\end{table*}
-
-\subsubsection{Results from Huge Tests}
+\subsection{Results from Huge Tests}
 \begin{table*}[th]
 \caption{Default results}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
