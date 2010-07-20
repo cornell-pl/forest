@@ -1,0 +1,43 @@
+#include "vanilla.p"
+Precord Pstruct entry_t {
+        PPstring v_prefix;
+        '.';
+        PPstring v_topic;
+        ".com";
+	//PPhostname  v_host_1;
+	Pfloat64  v_float_3;
+	'|';
+	Puint32  v_intrange_13;
+	'|';
+	Puint32  v_intrange_18;
+	'|';
+        PPstring v_prefix1: Pstring_eq(&v_prefix1, &v_prefix);
+        '.';
+        PPstring v_topic1: Pstring_eq(&v_topic1, &v_topic);
+        ".com";
+	//PPhostname  v_host_23;
+	Pstring (:'|':) v_somecode;
+	//'.';
+	//Puint32  v_intrange_60;
+	'|';
+	Pstring (:'|':) v_hexcode;
+	'|';
+        PPstring v_prefix2: Pstring_eq(&v_prefix2, &v_prefix);
+        '.';
+        PPstring v_topic2: Pstring_eq(&v_topic2, &v_topic);
+        ".com";
+	//PPhostname  v_host_80;
+	Pstring (:'|':) v_somecode1 : Pstring_eq(&v_somecode1, &v_somecode);
+	"|||";
+	PPdate  v_date_126;
+	' ';
+	PPtime  v_time_130;
+	'|';
+	PPstring  v_topic3: Pstring_eq(&v_topic3, &v_topic);
+	'|';
+	Puint32  v_intrange_139;
+	"|||";
+};
+Psource Parray entries_t {
+	entry_t[];
+};
