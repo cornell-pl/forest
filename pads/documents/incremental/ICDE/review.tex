@@ -108,6 +108,101 @@ data determines which branch to take.  Such unions illustrate that
 \pads{} supports \textit{dependencies}: earlier portions of the data
 can determine how to parse later portions.
 
+\begin{figure}[th]
+{\footnotesize
+\begin{verbatim}
+<entry_t>
+  <client>
+    <ip>
+      <elt><val>207</val></elt>
+      <elt><val>136</val></elt>
+      <elt><val>97</val></elt>
+      <elt><val>49</val></elt>
+      <length>4</length>
+      </ip>
+  </client>
+  <remoteID>
+    <unauthorized><val>-</val></unauthorized>
+  </remoteID>
+  <auth>
+    <unauthorized><val>-</val></unauthorized>
+  </auth>
+  <date><val>2009-05-05</val></date>
+  <time><val>16:37:20</val></time>
+  <timezone><val>-0400</val></timezone>
+  <request>
+    <meth><val>GET</val></meth>
+    <req_uri><val>/README.txt</val></req_uri>
+    <version>
+      <major><val>1</val></major>
+      <minor><val>1</val></minor>
+    </version>
+  </request>
+  <response><val>404</val></response>
+  <length>
+    <len><val>216</val></len>
+  </length>
+</entry_t>
+\end{verbatim}
+}
+\caption{XML translator output from one record of \ai{} format}\label{fig:xml}
+\end{figure}
+
+From a description like the one in \figref{fig:ai.p}, the \pads{}
+compiler can automatically produce a suite of data processing tools
+such as XML translator that converts the raw data into XML and
+statistical reporter that computes the various statistics of each types
+in the data source. \figref{fig:xml} presents the output of such an XML
+translator when applied to the first data records in \figref{fig:ai}.
+Note that every data fields has been tagged with the corresponding 
+\pads{} data types. \figref{fig:accum} shows a snipet of the statistical
+report on a \ai{} data source. 
+
+
+\begin{figure*}[th]
+{\footnotesize
+\begin{verbatim}
+*****************************************************************************************************
+<top> : struct entry_t
+*****************************************************************************************************
+good vals:       3000    bad vals:          0    pcnt-bad:    0.000
+
+[Describing each field of <top>]
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.client : union client_t
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Union tag: good vals:       3000    bad vals:          0    pcnt-bad:    0.000
+  Characterizing tag values:  min ip (    1)  max host (    2)
+    => distribution of top 2 values out of 2 distinct values:
+        val: ip (    1)     count:       1704  pcnt-of-good-vals:   56.800
+        val: host (    2)   count:       1296  pcnt-of-good-vals:   43.200
+. .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING             count:       3000  pcnt-of-good-vals:  100.000
+=====================================================================================================
+<top>.length.len : uint32
+=====================================================================================================
+good vals:       2651    bad vals:          0    pcnt-bad:    0.000
+  Characterizing uint32 values:  min 35 max 37947 avg 3896.320
+    => distribution of top 10 values out of 386 distinct values:
+        val:       3082 count:         80  pcnt-of-good-vals:    3.018
+        val:        178 count:         55  pcnt-of-good-vals:    2.075
+        val:        170 count:         54  pcnt-of-good-vals:    2.037
+        val:        518 count:         50  pcnt-of-good-vals:    1.886
+        val:         43 count:         49  pcnt-of-good-vals:    1.848
+        val:       9372 count:         49  pcnt-of-good-vals:    1.848
+        val:       1277 count:         45  pcnt-of-good-vals:    1.697
+        val:       1425 count:         45  pcnt-of-good-vals:    1.697
+        val:        536 count:         43  pcnt-of-good-vals:    1.622
+        val:       1027 count:         42  pcnt-of-good-vals:    1.584
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        SUMMING         count:        512  pcnt-of-good-vals:   19.313
+\end{verbatim}
+}
+\caption{Statistical report of a \ai{} data source}\label{fig:accum}
+\end{figure*}
+
+
 The goal of the \learnpads{} format inference engine is to infer 
 \pads{} descriptions like the one in \figref{fig:ai.p} from raw data.
 From such a description, the \pads{} compiler can produce end-to-end
@@ -191,7 +286,6 @@ low type complexity but a very high data complexity.  It also
 penalizes overly specific descriptions that are extremely verbose.
 Such descriptions have a low data complexity but a high type 
 complexity.
-
 
 This algorithm produces good results for the small
 log files that we have experimented with, but it has two limitations:

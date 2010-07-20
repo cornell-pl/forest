@@ -11,17 +11,18 @@ number lines and brief descriptions. Our experiments are
 conducted on a 2.4GHz, 64-bit quad-core Intel Xeon Processor 
 running Linux version 2.6.18 with 46 GBs of memory.
 
-\begin{table*}[h]
+\begin{table*}[th]
 \centering
 \caption{The data sources}\label{tab:sources}
-\begin{tabular}{|c|c|c|c|} \hline
-Name 	& Size & Lines & Description \\ \hline
+\begin{tabular}{|l|r|r|l|} \hline
+{\bf Name (Large)} & {\bf Size} & {\bf Lines} & {\bf Description} \\ \hline
 redstorm & 34.18 GB & 219096168 & Supercomputer log from Sandia National Lab	\\ \hline
 liberty & 30.833 GB & 265569231 &	Supercomputer log from Sandia National Lab\\ \hline
 dalpiv.dat & 15.41 GB & 25867260 &	Yellow pages web server log \\ \hline
 vshkap2.log & 10.33 GB & 89662433	& Syslog format \\ \hline
 cosmosLog\_csm.exe.log & 6.09 GB & 22143288 & Microsoft Cosmos service manager log\\ \hline
 free\_impression.dat & 2.60 GB & 27644006 & Impression data of yellow pages for Free users\\ \hline \hline
+{\bf Name (Small)} & {\bf Size} & {\bf Lines} & {\bf Description} \\ \hline
 free\_clickthroughs.dat & 24 MB & 285332 & Yellow pages click through stream data \\ \hline
 thirdpartycontent.log & 40 MB & 281519 &	Third party content stream data \\ \hline
 eventstream.current & 500 MB & 1579920 &	Event streams on Cosmos \\ \hline
@@ -52,9 +53,11 @@ description and a gold description written by human expert, and the correctness
 of the learned description.  MDL score was the
 score we use to refine a description during the local search refinement 
 procedure. It provides a ``mechanical way'' to quantify both the
-precision and the compactness of a description. However, a description with
-good MDL score may not be so ideal from human perspective. To complement
-the MDL score, we measure how different the learn description is 
+precision and the compactness of a description. A smaller MDL score is better.
+However, a description with
+good MDL score may not be so ideal from human perspective. 
+As a more important and intuitive metric, 
+we measure how different the learn description is 
 from the ``ideal'' description, also known as the gold description, using
 a {\em normalized edit distance} measure:
 \[normal\_dist(D) = \frac{edit\_dist(D, D_{gold})}{|D_{gold}|}\]
@@ -70,31 +73,38 @@ can be parsed without any error using the learned description.
 
 The rest of this section presents the results of five sets of experiments
 
-\subsection{Union clustering or not?}
-In this experiement, we contrast the performance of the system with and without
-union clustering in the \learnpads{} algorithm. 
-
 \begin{table*}[th]
 \centering
 \caption{Default vs. Union Clustering}
 \label{tab:uceffects}
-\begin{tabular}{|c||c|c|c||c|c|c|} \hline
-Data & Time (secs) & Score & Dist & Time (Secs) & Score & Dist \\ \hline \hline
-free\_clickthroughs.dat.cleaned & 21.78 & 5272.57 & 0.19 & 22.54 & 5272.57 & 0.19 \\ \hline
-thirdpartycontent.log & 28.69 & 9038.22 & 0.55 & 30.18 & 9038.22 & 0.55 \\ \hline
-eventstream.current & 1102.43 & 15183.99 & 5.05 & 1115.32 & 15183.99 & 5.05 \\ \hline
-strace\_jaccn.dat & 58.92 & 7206.30 & 0.13 & 72.31 & 7246.68 & 0.12 \\ \hline
-LA-UR-06-0803-MX20\_NODES\_0\_TO\_255\_EVENTS.csv & 24.66 & 5773.51 & 0.67 & 161.14 & 5772.10 & 0.67 \\ \hline
-messages.sdb & 244.20 & 7932.71 & 0.48 & 702.52 & 7932.65 & 0.48 \\ \hline
-HALO\_have2impression.log.1 & 107.95 & 27460.96 & 0.65 & 115.25 & 27460.96 & 0.65 \\ \hline
-LA-UR-06-1446-MX16-NODE-NOZ.TXT & 1168.55 & 10572.83 & 0.59 & 1148.81 & 10572.83 & 0.59 \\ \hline
-searchevents.dat.cleaned & 120.61 & 12779.76 & 0.84 & 131.28 & 12778.65 & 0.84 \\ \hline
-4046.xls & 535.41 & 22828.71 & 0.97 & 447.30 & 22107.26 & 0.98 \\ \hline
-smallrace.log & 19.74 & 42782.44 & NA & 19.66 & 42779.64 & NA \\ \hline
+\begin{tabular}{|c||c|c||c|c||c|c|} \hline
+Sources & Time & Time (UC) & Score & Score(UC) & Dist & Dist (UC) \\ \hline \hline
+free\_clickthroughs.dat & 23.81  & {\bf 23.41} & 5275.94 & 5275.94 & 0.19 & 0.19 \\ \hline
+thirdpartycontent.log & 38.29 & {\bf 28.23} & {\bf 9041.38} & 9041.41 & 0.55 & 0.55 \\ \hline
+eventstream.current & {\bf 1129.86} & 1286.60 & {\bf 14949.20} & 15184.53 & 5.32 & {\bf 5.05} \\ \hline
+strace\_jaccn.dat & 235.47 & {\bf 232.27} & 7381.82 & 7381.82 & 0.26 & 0.26 \\ \hline
+LA-UR-EVENTS.csv & {\bf 57.90} & 66.58 & {\bf 5637.25} & 6065.06 & 1.33 & {\bf 1.27} \\ \hline
+messages.sdb & {\bf 125.42} & 127.76 & 8098.46 & 8096.46 & 0.67 & 0.67 \\ \hline
+HALO\_have2impression.log & 122.33 & {\bf 121.75} & 25051.52 & 25051.52 & 1.59 & 1.59 \\ \hline
+LA-UR-NODE-NOZ.TXT & {\bf 1154.12} & 1185.79 & 10572.83 & 10572.83 & 0.59 & 0.59 \\ \hline
+searchevents.dat & {\bf 4300.79} & 6890.45 & 16650.63 & {\bf 16529.90} & {\bf 2.33} & 2.39 \\ \hline
+4046.xls & 15.20 & {\bf 13.57} & 22549.14 & 22549.14 & 0.99 & 0.99  \\ \hline
+%smallrace.log & 19.74 & 42782.44 & 0.97 & 19.66 & 42779.64 & NA \\ \hline
 \end{tabular}
 \end{table*}
 
-\subsection{initial batch size and incremental batch size}
+\subsection{Union clustering or not?}
+In this experiement, we contrast the performance of the system with and without
+union clustering in the \learnpads{} algorithm for 10 small files in 
+Table \ref{tab:uceffects}. We set the initial batch size to be 500 and 
+incremental batch size to be 100 for all data sources. We can conclude that
+union clustering helps produce more human readable descriptions with shallower
+nesting and hence the distance score is better in two of the ten sources by
+quite a large margin. Moreover, this can be achieved without spending much 
+more time. Therefore, we turned on union clustering feature in the remaining
+experiments below. 
+
+\subsection{Initial and incremental batch size}
 
 General comments: 
 \begin{itemize}
@@ -108,6 +118,8 @@ incremental learning is needed.
 \item allow intermediate bad parse duing parsing can result in better overall 
 parses later on - this was evident in free\_click\_through.dat
 \end{itemize}
+
+\cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Default settings}
 
@@ -179,6 +191,7 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \end{tabular}
 \end{table}
 
+
 \begin{table}[th]
 \caption{eventstream.current}
 \label{tab:eventstream.current}
@@ -214,8 +227,8 @@ Manual & 10199.04 & 9763.39 & 9763.39 & 9767.39 & 9742.43 \\
 64000  &  &  &  &  & \\ 
   &  &  &  &  & \\ \hline 
 \end{tabular}
-
 \end{table}
+
 \begin{table}[th]
 \caption{strace\_jaccn.dat}
 \label{tab:strace_jaccn.dat}
@@ -526,6 +539,7 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
   & 0.55 & 0.55 & 0.55 & 0.55 & 0.55\\ \hline 
 \end{tabular}
 \end{table}
+}%%%%%%%%%%%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%
 
 \begin{table}[th]
 \caption{eventstream.current}
@@ -555,14 +569,16 @@ Manual & 10199.04 & 9763.39 & 9763.39 & 9763.39 & 9742.43 \\
   & 1545.75 & 1457.71 & 1443.14 & 1252.26 & 1331.52\\ 
 16000  & 16573.39 & 15638.87 & 15638.87 & 15638.87 & 15638.87\\ 
   & 5.37 & 5.37 & 5.37 & 5.37 & 5.37\\ \hline 
-  &  &  &  &  & \\ 
-32000  &  &  &  &  & \\ 
-  &  &  &  &  & \\ \hline 
-  &  &  &  &  & \\ 
-64000  &  &  &  &  & \\ 
-  &  &  &  &  & \\ \hline 
+%  &  &  &  &  & \\ 
+%32000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
+%  &  &  &  &  & \\ 
+%64000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
 \end{tabular}
 \end{table}
+
+\cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{table}[th]
 \caption{strace\_jaccn.dat}
@@ -631,6 +647,7 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
   & 0.73 &  &  &  & \\ \hline 
 \end{tabular}
 \end{table}
+}%%%%%%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%%%
 
 \begin{table}[th]
 \caption{messages.sdb}
@@ -660,15 +677,16 @@ Manual & 8316.77 & 8355.71 & 8313.52 & 8297.47 & 8297.04 \\
   & 717.57 & 758.57 & 696.82 & 760.00 & 698.15\\ 
 16000  & 7995.88 & 7932.65 & 7932.65 & 7932.65 & 7932.65\\ 
   & 0.57 & 0.48 & 0.48 & 0.48 & 0.48\\ \hline 
-  &  &  &  &  & \\ 
-32000  &  &  &  &  & \\ 
-  &  &  &  &  & \\ \hline 
-  &  &  &  &  & \\ 
-64000  &  &  &  &  & \\ 
-  &  &  &  &  & \\ \hline 
+%  &  &  &  &  & \\ 
+%32000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
+%  &  &  &  &  & \\ 
+%64000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
 \end{tabular}
 \end{table}
 
+\cut{%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{table}[th]
 \caption{HALO\_have2impression.log.1}
 \label{tab:HALO_have2impression.log.1}
@@ -806,6 +824,7 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \end{table}
 
 \cleardoublepage
+}%%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%%%%%
 
 \begin{table}[th]
 \centering
@@ -823,12 +842,13 @@ Perturbation & init/inc & Time (sec) & Score & Dist \\ \hline
 \end{tabular}
 \end{table}
 
-\subsubsection{Scaling tests}
-\begin{figure}
-\includegraphics[width=\columnwidth]{scale-default}
-%\epsfig{file=scale-default.eps, width=\columnwidth}
-\caption{Scaling Results with Default Settings}
-\end{figure}
+\subsection{Scaling performance}
+%\subsubsection{Scaling tests}
+%\begin{figure}
+%\includegraphics[width=\columnwidth]{scale-default}
+%%\epsfig{file=scale-default.eps, width=\columnwidth}
+%\caption{Scaling Results with Default Settings}
+%\end{figure}
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{scale-uc}
@@ -836,7 +856,9 @@ Perturbation & init/inc & Time (sec) & Score & Dist \\ \hline
 \caption{Scaling Results with Union Clustering}
 \end{figure}
 
-\subsection{Results from Huge Tests}
+
+\subsection{Large files}
+\cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{table*}[th]
 \caption{Default results}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
@@ -849,9 +871,10 @@ redstorm & 192 & 724 & 56302.29 & 13837.73& 0.707 & 100\% & 24983.14 & 9569 \\ \
 vshkap2.log & 66 & 175 & 22466.57 & 10063.71 & 1.75 & 100\% & 13892.47 & 2205 \\ \hline
 \end{tabular}
 \end{table*}
+}%%%%%%%%%%%%%%%%%%%%%%end of cut %%%%%%%%%%
 
 \begin{table*}[th]
-\caption{UC = 0.5 results}
+\caption{Large data sources}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
 Data & wc Time & Blob Time & Learn Time & Score & Dist & Accuracy & Reparse time & PADS time \\ \hline
 cosmosLog\_csm.exe.log & 4 & 89 & 1040.42 & 21301.34 & 0.805 & 100\% & 1225.12 & 430 \\ \hline
