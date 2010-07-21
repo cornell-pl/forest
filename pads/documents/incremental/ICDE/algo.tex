@@ -395,49 +395,12 @@ parsed characters against erroneous tokens and skipped characters:
 (e1, s1, c1) \ge (  e2, s2, c2)~ \rm{iff}~ \frac{c_1}{s_1+c_1} \ge \frac{c_2}{s_2 + c_2}
 \]
 
-\subsection{Aggregation}
-\begin{figure}[t]
-\centering
-\begin{code}
-\cdmath
-\kw{Opt}:
-  Opt a + Error $\goto$ Opt a
-  Opt a + b     $\goto$ Opt b::a
-\mbox{}
-\kw{a : [Base]}:
-  a + Error $\goto$ Opt a
-  a + b     $\goto$ b::a
-\mbox{}
-\kw{a : [Sync s]}: 
-  a + Good $\goto$ Good :: a
-  a + Fail $\goto$ Opt a
-  a + Recovered s' $\goto$ (Opt(l [s'], Good :: a)
-\mbox{}
-\kw{Opt a : Opt [Sync s]}: 
-  Opt a + Good $\goto$ Opt (Good :: a)
-  Opt a + Fail $\goto$ Opt a
-  Opt a + Recovered s' $\goto$ 
-    (Opt (l [s]), Opt (Good :: a))
-\mbox{}
-\kw{(Opt(l Ss), a) : Opt L * [Sync s]}:
-  (Opt(l Ss), a) + Good $\goto$ 
-    (Opt(l Ss), Good :: a)
-  (Opt(l Ss), Opt a) + Fail $\goto$ 
-    (Opt(l Ss), Opt a)
-  (Opt(l Ss), Opt a) + Recovered s' $\goto$ 
-    (Opt(l s':: Ss), Opt Good :: a)
-\mbox{}
-\kw{Pair(x:D1, D2)}:
-  PairA($a_1$, $a_2$) + PairR($r_1$, $r_2$) $\goto$ 
-    PairA($a_1\prime$, $a_2\prime$),
-    if  $a_1 + r_1 \goto a_1\prime$
-    and $a_2 + r_2 \goto a_2\prime$
-\end{code}
-\caption{Semantics of aggregation (selected elements)}
-\label{fig:aggr-sem}
-\end{figure}
-
-%% \kw{Opt a : Opt [Base]}:
+%% \subsection{Aggregation}
+%% \begin{figure}[t]
+%% \centering
+%% \begin{code}
+%% \cdmath
+%% \kw{Opt}:
 %%   Opt a + Error $\goto$ Opt a
 %%   Opt a + b     $\goto$ Opt b::a
 %% \mbox{}
@@ -469,42 +432,79 @@ parsed characters against erroneous tokens and skipped characters:
 %%     PairA($a_1\prime$, $a_2\prime$),
 %%     if  $a_1 + r_1 \goto a_1\prime$
 %%     and $a_2 + r_2 \goto a_2\prime$
+%% \end{code}
+%% \caption{Semantics of aggregation (selected elements)}
+%% \label{fig:aggr-sem}
+%% \end{figure}
 
-%% \mbox{}
-%% \kw{Union(D1, D2)}:
-%%   UnionA($a_l$, $a_r$) + Union1R $r_l \goto$ 
-%%     UnionA($a_l\prime$, $a_r$)
-%%     if $a_l + r_l \goto a_l\prime$
-%%   UnionA($a_l$, $a_r$) + Union2R $r_r \goto$ 
-%%     UnionA($a_l$, $a_r\prime$)
-%%     if $a_r + r_r \goto a_r\prime$
+%% %% \kw{Opt a : Opt [Base]}:
+%% %%   Opt a + Error $\goto$ Opt a
+%% %%   Opt a + b     $\goto$ Opt b::a
+%% %% \mbox{}
+%% %% \kw{a : [Base]}:
+%% %%   a + Error $\goto$ Opt a
+%% %%   a + b     $\goto$ b::a
+%% %% \mbox{}
+%% %% \kw{a : [Sync s]}: 
+%% %%   a + Good $\goto$ Good :: a
+%% %%   a + Fail $\goto$ Opt a
+%% %%   a + Recovered s' $\goto$ (Opt(l [s'], Good :: a)
+%% %% \mbox{}
+%% %% \kw{Opt a : Opt [Sync s]}: 
+%% %%   Opt a + Good $\goto$ Opt (Good :: a)
+%% %%   Opt a + Fail $\goto$ Opt a
+%% %%   Opt a + Recovered s' $\goto$ 
+%% %%     (Opt (l [s]), Opt (Good :: a))
+%% %% \mbox{}
+%% %% \kw{(Opt(l Ss), a) : Opt L * [Sync s]}:
+%% %%   (Opt(l Ss), a) + Good $\goto$ 
+%% %%     (Opt(l Ss), Good :: a)
+%% %%   (Opt(l Ss), Opt a) + Fail $\goto$ 
+%% %%     (Opt(l Ss), Opt a)
+%% %%   (Opt(l Ss), Opt a) + Recovered s' $\goto$ 
+%% %%     (Opt(l s':: Ss), Opt Good :: a)
+%% %% \mbox{}
+%% %% \kw{Pair(x:D1, D2)}:
+%% %%   PairA($a_1$, $a_2$) + PairR($r_1$, $r_2$) $\goto$ 
+%% %%     PairA($a_1\prime$, $a_2\prime$),
+%% %%     if  $a_1 + r_1 \goto a_1\prime$
+%% %%     and $a_2 + r_2 \goto a_2\prime$
 
-%% \kw{Array(D, $D_{sep}$, $D_{term}$)}:
-%%   ArrayA($a_e, a_s, a_t$) + ArrayR(elems, seps, term) $\goto$ array($a_e\prime, a_s\prime, a_t\prime$)
-%%   if 
-%% 	$a_e$ ++ elems $\goto a_e\prime$
-%% 	$a_s$ ++ seps  $\goto a_s\prime$
-%% 	$a_t$ +  term  $\goto a_t\prime$
+%% %% \mbox{}
+%% %% \kw{Union(D1, D2)}:
+%% %%   UnionA($a_l$, $a_r$) + Union1R $r_l \goto$ 
+%% %%     UnionA($a_l\prime$, $a_r$)
+%% %%     if $a_l + r_l \goto a_l\prime$
+%% %%   UnionA($a_l$, $a_r$) + Union2R $r_r \goto$ 
+%% %%     UnionA($a_l$, $a_r\prime$)
+%% %%     if $a_r + r_r \goto a_r\prime$
 
-%% \kw{Option D}:
-%%   OptionA a + OptionR (SOME r) $\goto$ OptionA a' if a + r $\goto$ a'
-%%   OptionA a + OptionR (NONE) $\goto$ OptionA a 
+%% %% \kw{Array(D, $D_{sep}$, $D_{term}$)}:
+%% %%   ArrayA($a_e, a_s, a_t$) + ArrayR(elems, seps, term) $\goto$ array($a_e\prime, a_s\prime, a_t\prime$)
+%% %%   if 
+%% %% 	$a_e$ ++ elems $\goto a_e\prime$
+%% %% 	$a_s$ ++ seps  $\goto a_s\prime$
+%% %% 	$a_t$ +  term  $\goto a_t\prime$
 
-%% \kw{Aggregation of list}:
-%%   a ++ [] $\goto$ a
+%% %% \kw{Option D}:
+%% %%   OptionA a + OptionR (SOME r) $\goto$ OptionA a' if a + r $\goto$ a'
+%% %%   OptionA a + OptionR (NONE) $\goto$ OptionA a 
 
-%%   a ++ (r :: rs) $\goto$ a'' 
-%%   if 
-%% 	a + r $\goto$ a'
-%% 	a ++ rs $\goto$ a''
+%% %% \kw{Aggregation of list}:
+%% %%   a ++ [] $\goto$ a
 
-Aggregation is the process of merging a parse tree, which may contain
-errors, into an aggregation structure.  Aggregation is relatively
-straightforward and intuitive. 
-\figref{fig:aggr-sem} defines how we do aggregation
-for several of the important cases by defining a function
-$A + R \goto A'$ where $A$ is the initial aggregate data structure,
-$R$ is the parse tree and $A'$ is the new aggregate.
+%% %%   a ++ (r :: rs) $\goto$ a'' 
+%% %%   if 
+%% %% 	a + r $\goto$ a'
+%% %% 	a ++ rs $\goto$ a''
+
+%% Aggregation is the process of merging a parse tree, which may contain
+%% errors, into an aggregation structure.  Aggregation is relatively
+%% straightforward and intuitive. 
+%% \figref{fig:aggr-sem} defines how we do aggregation
+%% for several of the important cases by defining a function
+%% $A + R \goto A'$ where $A$ is the initial aggregate data structure,
+%% $R$ is the parse tree and $A'$ is the new aggregate.
 
 \subsection{Examples}
 To illustrate the parsing and aggregation phases of the algorithm, we
