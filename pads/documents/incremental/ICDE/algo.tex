@@ -288,22 +288,22 @@ detail in \secref{sec:imp}.
 \begin{code}
 \cdmath
 \kw{Base}:
-  (Int (string\_to\_int s), (0, 1)) $\in$ L(Pint, E, s, s')
-  (Error, (1, 1)) $\in$ L(Pint, E, "", s'), 
+  (Int (string\_to\_int s), (0, 0, len(s))) $\in$ L(Pint, E, s, s')
+  (Error, (1, 0, 0)) $\in$ L(Pint, E, "", s'), 
   if s $\in$ L((+|-)?[0-9]+) and L([0-9]) $\cap$ prefix(s') = \{\}
 
-  (Str s, (0, 1)) $\in$ L(PstringME(re), E, s, s'),
+  (Str s, (0, 0, len(s))) $\in$ L(PstringME(re), E, s, s'),
 	if s $\in$ L(re) and s.s'' $\not\in$ L(re) and s'' $\in$ prefix(s') 
-  (Error, (1, 1)) $\in$ L(PstringME(re), E, "", s'), if "" $\not\in$ L(re)
+  (Error, (1, 0, 0)) $\in$ L(PstringME(re), E, "", s'), if "" $\not\in$ L(re)
 
-  (Str s, (0, 1)) $\in$ L(PstringFW(e), E, s, s') if E(e) = Int k and s = c1...ck
-  (Error, (1, 1)) $\in$ L(PstringFW(e), E, "", s') if E(e) not= Int k for any k
-  (Error, (1, 1)) $\in$ L(PstringFW(e), E, "", s') if E(e) = Int k and k > 0
+  (Str s, (0, 0, len(s))) $\in$ L(PstringFW(e), E, s, s') if E(e) = Int k and s = c1...ck
+  (Error, (1, 0, 0)) $\in$ L(PstringFW(e), E, "", s') if E(e) $\ne$ Int k for any k
+  (Error, (1, 0, 0)) $\in$ L(PstringFW(e), E, "", s') if E(e) = Int k and k > 0
 
 \kw{Sync}:
-  (Good, (0, 1)) $\in$ L(Sync(s), E, s, s')
-  (Recovered s1, (1, 1)) $\in$ L(Sync(s2), E, s, s'), if s=s1.s2 and s2 $\not\in$ sprefix(s1.s2)
-(  Fail, (1, 1)) $\in$ L(Sync(s2), E, "", s')
+  (Good, (0, 0, len(s))) $\in$ L(Sync(s), E, s, s')
+  (Recovered s1, (1, len(s1), len(s2))) $\in$ L(Sync(s2), E, s, s'), if s=s1.s2 and s2 $\not\in$ sprefix(s1.s2)
+(  Fail, (1, 0, 0)) $\in$ L(Sync(s2), E, "", s')
 
 \kw{Pair}:
   (PairR(R1, R2), (m1 + m2)) $\in$ L(Pair(x:D1, D2), E, s1.s2, s')
@@ -357,13 +357,16 @@ An {\em environment} is a mapping between variable names and parses.
 \[E : x \arrow R \]
 
 A {\em parse metric} $m$ measures the quality of a parse. It is a 
-pair of integers, where the first integer is the number of tokens
-with parse errors and the second is the total number of tokens parsed.
-The following equations define addition and equality for parse metrics:
-\begin{eqnarray*}
-&&(n1, n1') + (n2, n2') = (n1 + n2, n1' + n2')  \\ 
-&&(n1,n1') \le (n2,n2')~\rm{iff}~ n1/n1' \le n2/n2' 
-\end{eqnarray*}
+triple: ($e$, $s$, $c$), where the $e$ is the number of tokens
+with parse errors, $s$ is the number of 
+characters skipped during \cd{Sync} token recovery, 
+and $c$ is the number of characters correctly parsed. 
+The following formulas define addition and inequality for parse metrics:
+\begin{eqnarray}
+&&(e1, s1, c1) + (e2, s2, c2) = (e1 + e2, s1 + s2, c1 + c2)  \\ 
+&&(e1, s1, c1) \ge (  e2, s2, c2)~ \rm{iff}~ \frac{c_1}{s_1+c_1} 
+\ge \frac{c_2}{s_2 + c_2} \label{eqn:metric-eqn}
+\end{eqnarray}
 
 To facilitate the presentation of \cd{parse}, we define the judgement:
 \[(R, m) \in L(D, E, s, s')\]

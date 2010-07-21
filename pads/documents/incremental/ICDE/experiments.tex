@@ -71,11 +71,32 @@ does not {\em describe} the original data correctly. Therefore,
 the correctness measures the percentage of the original data that
 can be parsed without any error using the learned description.
 
-The rest of this section presents the results of five sets of experiments
+The rest of this section presents the results of five sets of experiments.
 
+\begin{table}[th]
+\centering
+\caption{Without Union Clustering vs. With Union Clustering}
+\label{tab:uceffects}
+\begin{tabular}{|c||c|c||c|c|} \hline
+Sources & Time & Time (UC) &  Dist & Dist (UC) \\ \hline \hline
+free\_clickthroughs.dat & 23.81  & {\bf 23.41} & 0.19 & 0.19 \\ \hline
+thirdpartycontent.log & 38.29 & {\bf 28.23} & 0.55 & 0.55 \\ \hline
+eventstream.current & {\bf 1129.86} & 1286.60 & 5.32 & {\bf 5.05} \\ \hline
+strace\_jaccn.dat & 235.47 & {\bf 232.27} & 0.26 & 0.26 \\ \hline
+LA-UR-EVENTS.csv & {\bf 57.90} & 66.58 & 1.33 & {\bf 1.27} \\ \hline
+messages.sdb & {\bf 125.42} & 127.76 & 0.67 & 0.67 \\ \hline
+HALO\_have2impression.log & 122.33 & {\bf 121.75} & 1.59 & 1.59 \\ \hline
+LA-UR-NODE-NOZ.TXT & {\bf 1154.12} & 1185.79 & 0.59 & 0.59 \\ \hline
+searchevents.dat & {\bf 4300.79} & 6890.45 & {\bf 2.33} & 2.39 \\ \hline
+4046.xls & 15.20 & {\bf 13.57} & 0.99 & 0.99  \\ \hline
+%smallrace.log & 19.74 & 42782.44 & 0.97 & 19.66 & 42779.64 & NA \\ \hline
+\end{tabular}
+\end{table}
+
+\cut{%%%%%%%%%  the following table has a score column %%%%%%%%%%%
 \begin{table*}[th]
 \centering
-\caption{Default vs. Union Clustering}
+\caption{Without Union Clustering vs. With Union Clustering}
 \label{tab:uceffects}
 \begin{tabular}{|c||c|c||c|c||c|c|} \hline
 Sources & Time & Time (UC) & Score & Score(UC) & Dist & Dist (UC) \\ \hline \hline
@@ -91,7 +112,7 @@ searchevents.dat & {\bf 4300.79} & 6890.45 & 16650.63 & {\bf 16529.90} & {\bf 2.
 4046.xls & 15.20 & {\bf 13.57} & 22549.14 & 22549.14 & 0.99 & 0.99  \\ \hline
 %smallrace.log & 19.74 & 42782.44 & 0.97 & 19.66 & 42779.64 & NA \\ \hline
 \end{tabular}
-\end{table*}
+}%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%
 
 \subsection{Union clustering or not?}
 In this experiement, we contrast the performance of the system with and without
