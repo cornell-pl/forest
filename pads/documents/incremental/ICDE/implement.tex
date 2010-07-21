@@ -26,20 +26,20 @@ function will change the description to \cd{Sync (Enum [Word "GET", Word "POST"]
 Such partial nodes reduce the number of parsing errors
 and produce more compact and meaningful descriptions.
 
-\subsection{Deterministic parsing}
-In section \ref{sec:parse}, we presented a non-deterministic parsing semantics
-for unions and arrays. While this is a correct semantics, it is expensive
-to implement and is different from the \pads{} semantics of these two 
-types.
-Therefore in the prototype system, parsing a union involves 
-attempting to parse the first branch and,
-if it has error, attempting the second branch. This type of union semantics
-is known as {\em deterministic choice}, as opposed to a non-deterministic
-choice where both branches are always attempted.
-When parsing an array, we use {\em longest match} semantics,
-which means the parsing of the array elements and separators
-continues until no more progress can be made in
-the input. We will not elaborate these semantics because of lack of space.
+%% \subsection{Deterministic parsing}
+%% In section \ref{sec:parse}, we presented a non-deterministic parsing semantics
+%% for unions and arrays. While this is a correct semantics, it is expensive
+%% to implement and is different from the \pads{} semantics of these two 
+%% types.
+%% Therefore in the prototype system, parsing a union involves 
+%% attempting to parse the first branch and,
+%% if it has error, attempting the second branch. This type of union semantics
+%% is known as {\em deterministic choice}, as opposed to a non-deterministic
+%% choice where both branches are always attempted.
+%% When parsing an array, we use {\em longest match} semantics,
+%% which means the parsing of the array elements and separators
+%% continues until no more progress can be made in
+%% the input. We will not elaborate these semantics because of lack of space.
 
 \subsection{MDL score and description rewriting}
 In the prototype system, we define the MDL score for a particular
