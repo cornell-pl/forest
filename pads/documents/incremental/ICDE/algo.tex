@@ -329,7 +329,7 @@ detail in \secref{sec:imp}.
 \end{code}
 %and for all (R',m') $\in$ L(D,.,s,""), m <= m'
 }
-\caption{Semantics of parsing (selected elements)}
+\caption{Parsing (excerpts)}
 \label{fig:parse-sem}
 %\end{center}
 \end{figure}
@@ -433,7 +433,7 @@ parsed characters against erroneous tokens and skipped characters:
 %%     if  $a_1 + r_1 \goto a_1\prime$
 %%     and $a_2 + r_2 \goto a_2\prime$
 %% \end{code}
-%% \caption{Semantics of aggregation (selected elements)}
+%% \caption{Aggregation (excerpts)}
 %% \label{fig:aggr-sem}
 %% \end{figure}
 
@@ -506,21 +506,12 @@ parsed characters against erroneous tokens and skipped characters:
 %% $A + R \goto A'$ where $A$ is the initial aggregate data structure,
 %% $R$ is the parse tree and $A'$ is the new aggregate.
 
-\subsection{Examples}
+\subsection{An Example}
 To illustrate the parsing and aggregation phases of the algorithm, we
 introduce a simple example.
 Suppose we have a description $d$, comprised of a pair of an integer and a sync token ``\cd{*}'',
-and we are given the following three lines of new input:
-
-{\small \texttt{
-\begin{tabular}{l}
-5*\\
-abc*\\
-8\$\\[1ex]
-\end{tabular}}
-}
-
-\noindent
+and we are given the following three lines of new input: ``5*'' and
+``abc*'' and ``8\$''.
 \figref{fig:parse} shows the three data representations that result
 from parsing the lines, which we call $r_1$, $r_2$ and $r_3$,
 respectively. Notice the first line parsed without errors, the second
