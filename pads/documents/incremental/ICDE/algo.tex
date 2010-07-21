@@ -282,73 +282,85 @@ rules into improve the overall structure.
 We will discuss these rewriting rules in more
 detail in \secref{sec:imp}.
 
-\begin{figure*}[ht]
-\begin{center}
+\begin{figure}[t]
+%\begin{center}
 {\small
 \begin{code}
-\cdmath
+\cdmath\small
 \kw{Base}:
-  (Int (string\_to\_int s), (0, 0, len(s))) $\in$ L(Pint, E, s, s')
-  (Error, (1, 0, 0)) $\in$ L(Pint, E, "", s'), 
-  if s $\in$ L((+|-)?[0-9]+) and L([0-9]) $\cap$ prefix(s') = \{\}
-
-  (Str s, (0, 0, len(s))) $\in$ L(PstringME(re), E, s, s'),
-	if s $\in$ L(re) and s.s'' $\not\in$ L(re) and s'' $\in$ prefix(s') 
-  (Error, (1, 0, 0)) $\in$ L(PstringME(re), E, "", s'), if "" $\not\in$ L(re)
-
-  (Str s, (0, 0, len(s))) $\in$ L(PstringFW(e), E, s, s') if E(e) = Int k and s = c1...ck
-  (Error, (1, 0, 0)) $\in$ L(PstringFW(e), E, "", s') if E(e) $\ne$ Int k for any k
-  (Error, (1, 0, 0)) $\in$ L(PstringFW(e), E, "", s') if E(e) = Int k and k > 0
-
+(Int (atoi s), m) $\in$ L(Pint,E,s,s')
+  if m = (0,0,len(s))
+(Error, (1,0,0)) $\in$ L(Pint,E,"",s'), 
+  if s $\in$ L((+|-)?[0-9]+) 
+  and L([0-9]) $\cap$ prefix(s') = \{\}
+(Str s, m) $\in$ L(PstringME(re),E,s,s'),
+  if s $\in$ L(re) 
+  and m = (0,0,len(s)) 
+  and s.s'' $\not\in$ L(re) and s'' $\in$ prefix(s') 
+(Error, m) $\in$ L(PstringME(re),E,"",s'), 
+  if "" $\not\in$ L(re)
+  and m = (1,0,0)
+(Str s, m) $\in$ L(PstringFW(e),E,s,s') 
+  if E(e) = Int k and s = c1...ck
+  and m = (0,0,len(s))
+(Error, (1,0,0)) $\in$ L(PstringFW(e),E,"",s') 
+  if E(e) $\ne$ Int k for any k
+(Error, (1,0,0)) $\in$ L(PstringFW(e),E,"",s') 
+  if E(e) = Int k and k > 0
+\mbox{}
 \kw{Sync}:
-  (Good, (0, 0, len(s))) $\in$ L(Sync(s), E, s, s')
-  (Recovered s1, (1, len(s1), len(s2))) $\in$ L(Sync(s2), E, s, s'), if s=s1.s2 and s2 $\not\in$ sprefix(s1.s2)
-(  Fail, (1, 0, 0)) $\in$ L(Sync(s2), E, "", s')
-
+(Good, (0,0,len(s))) $\in$ L(Sync(s),E,s,s')
+(Recovered s1, m) $\in$ L(Sync(s2),E,s,s')
+  if s=s1.s2 and s2 $\not\in$ prefix(s1.s2)
+  and m = (1,len(s1),len(s2))
+(Fail, (1,0,0)) $\in$ L(Sync(s2),E,"",s')
+\mbox{}
 \kw{Pair}:
-  (PairR(R1, R2), (m1 + m2)) $\in$ L(Pair(x:D1, D2), E, s1.s2, s')
-        if (R1, m1) $\in$ L(D1, E, s1, s2.s'),
-           (R2, m2) $\in$ L(D2, E[x $\arrow$ R1], s2, s')
-
+(PairR (R1,R2), (m1 + m2)) 
+        $\in$ L(Pair(x:D1, D2),E,s1.s2,s')
+  if  (R1, m1) $\in$ L(D1,E,s1,s2.s')
+  and (R2, m2) $\in$ L(D2,E[x $\arrow$ R1],s2,s')
+\mbox{}
 \kw{Union}:
-  (Union1R R, m) $\in$ L(Union(D1, D2), E, s, s')
-        if (R, m) $\in$ L(D1, E, s, s')
-
-  (Union2R R, m) $\in$ L(Union(D1, D2), E, s, s')
-        if (R, m) $\in$ L(D2, E, s, s')
-
-\kw{Array}:
-  (ArrayR([R1,...,Rn], [SyncR1,...,SyncR(n-1)], $SyncR_{term}$), m)
-    $\in$ L(Array(D, $s_{sep}$, $s_{term}$), E, s, s'),
-        if
-        s = s1.$s_{sep}$.s2.$s_{sep}$...s(n-1).$s_{sep}$.sn,
-        lookaheadfori = $s_{sep}$.s(i+1).....sn.s'
-        lookaheadforsepi = s(i+1)....sn.s'
-        s' = s1'.lookaheadforterm
-
-        forall i $\in$ [1, n]:
-          (Ri, mi) $\in$ L(D, E, si, lookaheadfori),
-        forall i $\in$ [1, n-1]:
-          (SyncRi, m(s,i)) $\in$ L(Sync($s_{sep}$), E, $s_{(sep,i)}$, lookaheadforsepi),
-
-        ($SyncR_{term}$, $m_{term}$) $\in$ L(Sync($s_{term}$), E, s1', lookaheadforterm),
-        m = $\sum_{i= 1}^{n} mi$ + $\sum_{i=1}^{n-1} m(s,i)$ + $m_{term}$
-
-\kw{Option}:
-  (OptionR (SOME R), m) $\in$ L(Option D, E, s, s')
-	if (R, m) $\in$ L(D, E, s, s')
-  (OptionR (NONE), m) $\in$ L(Option D, E, "", s')
-	if (R, m) $\in$ L(D, E, "", s')
-
+(Union1R R, m) $\in$ L(Union(D1, D2),E,s,s')
+  if (R, m) $\in$ L(D1, E, s, s')
+(Union2R R, m) $\in$ L(Union(D1, D2),E,s,s')
+  if (R, m) $\in$ L(D2, E, s, s')
+\mbox{}
 \kw{Main parse function}:
-  \kw{parse}(D, s) = \{R | (R, m) $\in$ L(D, ., s, "")\} 
+\kw{parse}(D, s) = \{R | (R, m) $\in$ L(D,.,s,"")\} 
 \end{code}
-%and for all (R',m') $\in$ L(D, ., s, ""), m <= m'
+%and for all (R',m') $\in$ L(D,.,s,""), m <= m'
 }
-\caption{The operational semantics of parse function}
+\caption{Semantics of parsing (selected elements)}
 \label{fig:parse-sem}
-\end{center}
-\end{figure*}
+%\end{center}
+\end{figure}
+
+%% \kw{Array}:
+%%   (ArrayR([R1,...,Rn], [SyncR1,...,SyncR(n-1)], $SyncR_{term}$), m)
+%%     $\in$ L(Array(D, $s_{sep}$, $s_{term}$), E, s, s'),
+%%         if
+%%         s = s1.$s_{sep}$.s2.$s_{sep}$...s(n-1).$s_{sep}$.sn,
+%%         lookaheadfori = $s_{sep}$.s(i+1).....sn.s'
+%%         lookaheadforsepi = s(i+1)....sn.s'
+%%         s' = s1'.lookaheadforterm
+
+%%         forall i $\in$ [1, n]:
+%%           (Ri, mi) $\in$ L(D, E, si, lookaheadfori),
+%%         forall i $\in$ [1, n-1]:
+%%           (SyncRi, m(s,i)) $\in$ L(Sync($s_{sep}$), E, $s_{(sep,i)}$, lookaheadforsepi),
+
+%%         ($SyncR_{term}$, $m_{term}$) $\in$ L(Sync($s_{term}$), E, s1', lookaheadforterm),
+%%         m = $\sum_{i= 1}^{n} mi$ + $\sum_{i=1}^{n-1} m(s,i)$ + $m_{term}$
+%% \mbox{}
+%% \kw{Option}:
+%% (OptionR (SOME R), m) $\in$ L(Option D, E, s, s')
+%%   if (R, m) $\in$ L(D, E, s, s')
+%% (OptionR (NONE), m) $\in$ L(Option D, E, "", s')
+%%   if (R, m) $\in$ L(D, E, "", s')
+
+
 
 \subsection{The parse function}
 \label{sec:parse}
@@ -377,70 +389,75 @@ string $s$, with a lookhead string $s'$ that remains unconsumed''.
 the definition of \cd{parse} that uses this judgement.
 
 \subsection{The aggregate function}
-\begin{figure*}[ht]
+\begin{figure}[t]
 \centering
 \begin{code}
 \cdmath
 \kw{Opt a : Opt [Base]}:
   Opt a + Error $\goto$ Opt a
   Opt a + b     $\goto$ Opt b::a
-
+\mbox{}
 \kw{a : [Base]}:
   a + Error $\goto$ Opt a
   a + b     $\goto$ b::a
-
+\mbox{}
 \kw{a : [Sync s]}: 
   a + Good $\goto$ Good :: a
   a + Fail $\goto$ Opt a
   a + Recovered s' $\goto$ (Opt(l [s'], Good :: a)
-
+\mbox{}
 \kw{Opt a : Opt [Sync s]}: 
   Opt a + Good $\goto$ Opt (Good :: a)
   Opt a + Fail $\goto$ Opt a
-  Opt a + Recovered s' $\goto$ (Opt (l [s]), Opt (Good :: a))
-\kw{(Opt(l Ss), a) : Opt L * [Sync s]} 
-  (Opt(l Ss), a) + Good $\goto$ (Opt(l Ss), Good :: a)
-  (Opt(l Ss), Opt a) + Fail $\goto$ (Opt(l Ss), Opt a)
-  (Opt(l Ss), Opt a) + Recovered s' $\goto$ (Opt(l s':: Ss), Opt Good :: a)
-
+  Opt a + Recovered s' $\goto$ 
+    (Opt (l [s]), Opt (Good :: a))
+\mbox{}
+\kw{(Opt(l Ss), a) : Opt L * [Sync s]}:
+  (Opt(l Ss), a) + Good $\goto$ 
+    (Opt(l Ss), Good :: a)
+  (Opt(l Ss), Opt a) + Fail $\goto$ 
+    (Opt(l Ss), Opt a)
+  (Opt(l Ss), Opt a) + Recovered s' $\goto$ 
+    (Opt(l s':: Ss), Opt Good :: a)
+\mbox{}
 \kw{Pair(x:D1, D2)}:
-  PairA($a_1$, $a_2$) + PairR($r_1$, $r_2$) $\goto$ PairA($a_1\prime$, $a_2\prime$),
-  if 
-	$a_1 + r_1 \goto a_1\prime$
-	$a_2 + r_2 \goto a_2\prime$
-
-
+  PairA($a_1$, $a_2$) + PairR($r_1$, $r_2$) $\goto$ 
+    PairA($a_1\prime$, $a_2\prime$),
+    if  $a_1 + r_1 \goto a_1\prime$
+    and $a_2 + r_2 \goto a_2\prime$
+\mbox{}
 \kw{Union(D1, D2)}:
-  UnionA($a_l$, $a_r$) + Union1R $r_l \goto$ UnionA($a_l\prime$, $a_r$)
-  if $a_l + r_l \goto a_l\prime$
-
-  UnionA($a_l$, $a_r$) + Union2R $r_r \goto$ UnionA($a_l$, $a_r\prime$)
-  if $a_r + r_r \goto a_r\prime$
-
-
-\kw{Array(D, $D_{sep}$, $D_{term}$)}:
-  ArrayA($a_e, a_s, a_t$) + ArrayR(elems, seps, term) $\goto$ array($a_e\prime, a_s\prime, a_t\prime$)
-  if 
-	$a_e$ ++ elems $\goto a_e\prime$
-	$a_s$ ++ seps  $\goto a_s\prime$
-	$a_t$ +  term  $\goto a_t\prime$
-
-\kw{Option D}:
-  OptionA a + OptionR (SOME r) $\goto$ OptionA a' if a + r $\goto$ a'
-  OptionA a + OptionR (NONE) $\goto$ OptionA a 
-
-\kw{Aggregation of list}:
-  a ++ [] $\goto$ a
-
-  a ++ (r :: rs) $\goto$ a'' 
-  if 
-	a + r $\goto$ a'
-	a ++ rs $\goto$ a''
-
+  UnionA($a_l$, $a_r$) + Union1R $r_l \goto$ 
+    UnionA($a_l\prime$, $a_r$)
+    if $a_l + r_l \goto a_l\prime$
+  UnionA($a_l$, $a_r$) + Union2R $r_r \goto$ 
+    UnionA($a_l$, $a_r\prime$)
+    if $a_r + r_r \goto a_r\prime$
 \end{code}
-\caption{The operational semantics of aggregate function}
+\caption{Semantics of aggregation (selected elements)}
 \label{fig:aggr-sem}
-\end{figure*}
+\end{figure}
+
+%% \kw{Array(D, $D_{sep}$, $D_{term}$)}:
+%%   ArrayA($a_e, a_s, a_t$) + ArrayR(elems, seps, term) $\goto$ array($a_e\prime, a_s\prime, a_t\prime$)
+%%   if 
+%% 	$a_e$ ++ elems $\goto a_e\prime$
+%% 	$a_s$ ++ seps  $\goto a_s\prime$
+%% 	$a_t$ +  term  $\goto a_t\prime$
+
+%% \kw{Option D}:
+%%   OptionA a + OptionR (SOME r) $\goto$ OptionA a' if a + r $\goto$ a'
+%%   OptionA a + OptionR (NONE) $\goto$ OptionA a 
+
+%% \kw{Aggregation of list}:
+%%   a ++ [] $\goto$ a
+
+%%   a ++ (r :: rs) $\goto$ a'' 
+%%   if 
+%% 	a + r $\goto$ a'
+%% 	a ++ rs $\goto$ a''
+
+
 \figref{fig:aggr-sem} gives the definition of the \cd{aggregate}
 function.
 In the figure, $a$ and $b$ range over aggregate structures, while
