@@ -31,11 +31,11 @@ eventstream.current & 500 MB & 1579920 &	Event streams on Cosmos \\ \hline
 strace\_jaccn.dat & 80 MB & 896490 & NERSC application traces \\ \hline
 LA-UR-EVENTS.csv & 30 MB &  433490 & Comma separated LANL disk replacement data\\ \hline
 messages.sdb & 520 MB & 5047341 &	/var/log/messages from CRAY\\ \hline
-HALO\_have2impression.log.1 & 360 MB &  210034 & Server side impression records of iPhone applications\\ \hline
+HALO\_have2impression.log & 360 MB &  210034 & Server side impression records of iPhone applications\\ \hline
 LA-UR-NODE-NOZ.TXT & 32 MB &  1630479 & Space separated LANL disk replacement data\\ \hline
 searchevents.dat & 90 MB & 2035348 & Yellow pages search event log \\ \hline
 4046.xls & 7 MB & 24193 & DNA Microarray data\\ \hline
-smallrace.log & 1.9 MB & 3000 &	Log file from an autonomous vehicle \\ \hline
+%smallrace.log & 1.9 MB & 3000 &	Log file from an autonomous vehicle \\ \hline
 \end{tabular}
 \end{table*}
 
@@ -50,8 +50,8 @@ broken down into two components: time to learn the initial description,
 and the time to incrementally learn the rest of the data.
 
 The quality of the description can be measured in three ways:
-the MDL score of the description, the edit distance between the learned
-description and a gold description written by human expert, and the correctness
+the {\em MDL score} of the description, the {\em edit distance} between the learned
+description and a gold description written by human expert, and the {\em accuracy}
 of the learned description.  MDL score was the
 score we use to refine a description during the local search refinement 
 procedure. It provides a ``mechanical way'' to quantify both the
@@ -61,7 +61,7 @@ good MDL score may not be so ideal from human perspective.
 As a more important and intuitive metric, 
 we measure how different the learn description is 
 from the ``ideal'' description, also known as the gold description, using
-a {\em normalized edit distance} measure:
+a {\em normalized edit distance} score:
 \[normal\_dist(D) = \frac{edit\_dist(D, D_{gold})}{|D_{gold}|}\]
 where $|D|$ denotes the total number of nodes in $D$.
 Of course, there maybe
@@ -70,17 +70,18 @@ knowledge of the given data source, but this subjective measure could give
 us a hint on how readable and document-worthy the generated description is.
 Finally, our system would not be very useful if the learned description 
 does not {\em describe} the original data correctly. Therefore,
-the correctness measures the percentage of the original data that
+the accuracy measures the percentage of the original data that
 can be parsed without any error using the learned description.
 
-The rest of this section presents the results of five sets of experiments.
+The rest of this section presents the results of four sets of experiments.
 
 \begin{table}[th]
 \centering
-\caption{Without Union Clustering vs. With Union Clustering}
+\caption{Default vs. Union Clustering}
 \label{tab:uceffects}
 \begin{tabular}{|c||c|c||c|c|} \hline
-Sources & Time & Time (UC) &  Dist & Dist (UC) \\ \hline \hline
+\multirow{2}{*}{Sources} & \multicolumn{2}{c||}{Time(sec)} & \multicolumn{2}{c|}{Dist} \\ \cline{2-5}
+ & Def & UC &  Def & UC \\ \hline 
 free\_clickthroughs.dat & 23.81  & {\bf 23.41} & 0.19 & 0.19 \\ \hline
 thirdpartycontent.log & 38.29 & {\bf 28.23} & 0.55 & 0.55 \\ \hline
 eventstream.current & {\bf 1129.86} & 1286.60 & 5.32 & {\bf 5.05} \\ \hline
@@ -101,7 +102,7 @@ searchevents.dat & {\bf 4300.79} & 6890.45 & {\bf 2.33} & 2.39 \\ \hline
 \caption{Without Union Clustering vs. With Union Clustering}
 \label{tab:uceffects}
 \begin{tabular}{|c||c|c||c|c||c|c|} \hline
-Sources & Time & Time (UC) & Score & Score(UC) & Dist & Dist (UC) \\ \hline \hline
+ & Time & Time (UC) & Score & Score(UC) & Dist & Dist (UC) \\ \hline \hline
 free\_clickthroughs.dat & 23.81  & {\bf 23.41} & 5275.94 & 5275.94 & 0.19 & 0.19 \\ \hline
 thirdpartycontent.log & 38.29 & {\bf 28.23} & {\bf 9041.38} & 9041.41 & 0.55 & 0.55 \\ \hline
 eventstream.current & {\bf 1129.86} & 1286.60 & {\bf 14949.20} & 15184.53 & 5.32 & {\bf 5.05} \\ \hline
@@ -119,8 +120,9 @@ searchevents.dat & {\bf 4300.79} & 6890.45 & 16650.63 & {\bf 16529.90} & {\bf 2.
 \subsection{Union clustering or not?}
 In this experiement, we contrast the performance of the system with and without
 union clustering in the \learnpads{} algorithm for 10 small files in 
-Table \ref{tab:uceffects}. We set the initial batch size to be 500 and 
-incremental batch size to be 100 for all data sources. We can conclude that
+Table \ref{tab:uceffects}. We learned the initial description using the
+the first 500 records in each of these files and set the
+incremental batch size $M$ to be 100. We conclude that
 union clustering helps produce more human readable descriptions with shallower
 nesting and hence the distance score is better in two of the ten sources by
 quite a large margin. Moreover, this can be achieved without spending much 
@@ -128,20 +130,6 @@ more time. Therefore, we turned on union clustering feature in the remaining
 experiments below. 
 
 \subsection{Initial and incremental batch size}
-
-General comments: 
-\begin{itemize}
-\item longer learning time usually produces worse results
-\item smaller incremental batch sizes can reduce the total number of times 
-incremental learning are invoked  and also total running time
-because descriptions are refined earlier and parses more efficiently earlier
-in the whole process. However this phenomenon is not visable with larger
-init size as the initial description was already good enough and no more 
-incremental learning is needed.
-\item allow intermediate bad parse duing parsing can result in better overall 
-parses later on - this was evident in free\_click\_through.dat
-\end{itemize}
-
 \cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Default settings}
@@ -564,43 +552,6 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \end{table}
 }%%%%%%%%%%%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%
 
-\begin{table}[th]
-\caption{eventstream.current}
-\label{tab:eventstream.current}
-\centering
-\begin{tabular}{|c||c|c|c|c|c|}
-\hline
-init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
-       & 442.18  &  827.66  & 897.30  & 910.00 & 868.01 \\
-Manual & 10199.04 & 9763.39 & 9763.39 & 9763.39 & 9742.43 \\
-       & 3.37     & 3.00    & 3.00    & 3.00    & 3.00 \\ \hline
-  & 927.84 & 1286.60 & 1117.60 & 1147.43 & 1118.18\\ 
-500  & 16119.06 & 15184.53 & 15184.53 & 15184.53 & 15184.53\\ 
-  & 5.05 & 5.05 & 5.05 & 5.05 & 5.05\\ \hline 
-  & 962.74 & 1088.59 & 1086.97 & 1113.33 & 1115.03\\ 
-1000  & 16118.88 & 15184.35 & 15184.35 & 15184.35 & 15184.35\\ 
-  & 5.05 & 5.05 & 5.05 & 5.05 & 5.05\\ \hline 
-  & 934.40 & 1117.25 & 1120.37 & 1100.55 & 1114.62\\ 
-2000  & 16118.52 & 15183.99 & 15183.99 & 15183.99 & 15183.99\\ 
-  & 5.05 & 5.05 & 5.05 & 5.05 & 5.05\\ \hline 
-  & 1393.08 & 1089.47 & 1198.06 & 1127.42 & 1091.39\\ 
-4000  & 16577.07 & 15642.54 & 15642.54 & 15642.54 & 15642.54\\ 
-  & 5.37 & 5.37 & 5.37 & 5.37 & 5.37\\ \hline 
-  & 1404.10 & 1115.77 & 1115.64 & 1186.75 & 1250.11\\ 
-8000  & 16575.84 & 15641.31 & 15641.31 & 15641.31 & 15641.31\\ 
-  & 5.37 & 5.37 & 5.37 & 5.37 & 5.37\\ \hline 
-  & 1545.75 & 1457.71 & 1443.14 & 1252.26 & 1331.52\\ 
-16000  & 16573.39 & 15638.87 & 15638.87 & 15638.87 & 15638.87\\ 
-  & 5.37 & 5.37 & 5.37 & 5.37 & 5.37\\ \hline 
-%  &  &  &  &  & \\ 
-%32000  &  &  &  &  & \\ 
-%  &  &  &  &  & \\ \hline 
-%  &  &  &  &  & \\ 
-%64000  &  &  &  &  & \\ 
-%  &  &  &  &  & \\ \hline 
-\end{tabular}
-\end{table}
-
 \cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{table}[th]
@@ -671,43 +622,6 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 \end{tabular}
 \end{table}
 }%%%%%%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%%%
-
-\begin{table}[th]
-\caption{messages.sdb}
-\label{tab:messages.sdb}
-\centering
-\begin{tabular}{|c||c|c|c|c|c|}
-\hline
-init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
-       & 337.44  & 438.29  & 292.88  & 295.68  & 292.05 \\
-Manual & 8316.77 & 8355.71 & 8313.52 & 8297.47 & 8297.04 \\
-       & 0.62    & 0.62    & 0.62    & 0.52    & 0.52  \\ \hline
-  & 123.88 & 127.76 & 130.17 & 125.52 & 124.45\\ 
-500  & 8098.46 & 8098.46 & 8098.46 & 8098.46 & 8098.46\\ 
-  & 0.67 & 0.67 & 0.67 & 0.67 & 0.67\\ \hline 
-  & 432.61 & 418.64 & 425.35 & 442.23 & 444.56\\ 
-1000  & 9346.35 & 8443.28 & 8549.67 & 8544.63 & 8541.95\\ 
-  & 1.10 & 1.10 & 1.24 & 1.24 & 1.24\\ \hline 
-  & 3935.54 & 3640.04 & 3983.46 & 3695.27 & 3643.84\\ 
-2000  & 10881.17 & 10881.17 & 10881.17 & 10881.17 & 10881.17\\ 
-  & 2.48 & 2.48 & 2.48 & 2.48 & 2.48\\ \hline 
-  & 868.20 & 881.52 & 885.64 & 910.99 & 925.19\\ 
-4000  & 7936.66 & 7936.66 & 7936.66 & 7936.66 & 7936.66\\ 
-  & 0.57 & 0.57 & 0.57 & 0.57 & 0.57\\ \hline 
-  & 245.05 & 242.79 & 249.90 & 244.78 & 248.62\\ 
-8000  & 7932.71 & 7932.71 & 7932.71 & 7932.71 & 7932.71\\ 
-  & 0.48 & 0.48 & 0.48 & 0.48 & 0.48\\ \hline 
-  & 717.57 & 758.57 & 696.82 & 760.00 & 698.15\\ 
-16000  & 7995.88 & 7932.65 & 7932.65 & 7932.65 & 7932.65\\ 
-  & 0.57 & 0.48 & 0.48 & 0.48 & 0.48\\ \hline 
-%  &  &  &  &  & \\ 
-%32000  &  &  &  &  & \\ 
-%  &  &  &  &  & \\ \hline 
-%  &  &  &  &  & \\ 
-%64000  &  &  &  &  & \\ 
-%  &  &  &  &  & \\ \hline 
-\end{tabular}
-\end{table}
 
 \cut{%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{table}[th]
@@ -848,22 +762,221 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 
 \cleardoublepage
 }%%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%%%%%
+\begin{table}[th]
+\caption{$N$ vs. $M$ - eventstream.current}
+\label{tab:eventstream.current}
+\centering
+\begin{tabular}{|c||c|c|c|c|c|}
+\hline
+$N$\textbackslash $M$& 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
+       & 3.37     & 3.00    & 3.00    & 3.00    & 3.00 \\ 
+Manual & 10199.04 & 9763.39 & 9763.39 & 9763.39 & 9742.43 \\
+(300) & 442.18  & 827.66  & 897.30 & 910.00 & 868.01 \\ \hline
+     & 5.05 & 5.05 & 5.05 & 5.05 & 5.05\\
+500  & 16119.06 & 15184.53 & 15184.53 & 15184.53 & 15184.53\\ 
+(0.30)  & 927.84 & 1286.60 & 1117.60 & 1147.43 & 1118.18\\ \hline 
+  & 5.05 & 5.05 & 5.05 & 5.05 & 5.05\\ 
+1000  & 16118.88 & 15184.35 & 15184.35 & 15184.35 & 15184.35\\ 
+(0.89)  & 962.74 & 1088.59 & 1086.97 & 1113.33 & 1115.03\\ \hline 
+  & 5.05 & 5.05 & 5.05 & {\bf 5.05} & 5.05\\ 
+2000  & 16118.52 & 15183.99 & 15183.99 & {\bf 15183.99} & 15183.99\\ 
+(2.24)  & 934.40 & 1117.25 & 1120.37 & {\bf 1100.55} & 1114.62\\ \hline 
+  & 5.37 & 5.37 & 5.37 & 5.37 & 5.37\\ 
+4000  & 16577.07 & 15642.54 & 15642.54 & 15642.54 & 15642.54\\ 
+(9.34)  & 1393.08 & 1089.47 & 1198.06 & 1127.42 & 1091.39\\ \hline 
+  & 5.37 & 5.37 & 5.37 & 5.37 & 5.37\\ 
+8000  & 16575.84 & 15641.31 & 15641.31 & 15641.31 & 15641.31\\ 
+(36.63)  & 1404.10 & 1115.77 & 1115.64 & 1186.75 & 1250.11\\ \hline 
+  & 5.37 & 5.37 & 5.37 & 5.37 & 5.37\\ 
+16000  & 16573.39 & 15638.87 & 15638.87 & 15638.87 & 15638.87\\ 
+(164.38)  & 1545.75 & 1457.71 & 1443.14 & 1252.26 & 1331.52\\ \hline 
+%  &  &  &  &  & \\ 
+%32000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
+%  &  &  &  &  & \\ 
+%64000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
+\end{tabular}
+\end{table}
+\begin{table}[th]
+\caption{$N$ vs. $M$ - messages.sdb}
+\label{tab:messages.sdb}
+\centering
+\begin{tabular}{|c||c|c|c|c|c|}
+\hline
+$N$\textbackslash $M$& 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
+       & 0.62    & 0.62    & 0.62    & 0.52    & 0.52  \\ 
+Manual & 8316.77 & 8355.71 & 8313.52 & 8297.47 & 8297.04 \\
+(300) & 337.44  & 438.29  & 292.88  & 295.68  & 292.05 \\\hline
+  & 0.67 & 0.67 & 0.67 & 0.67 & 0.67\\
+500  & 8098.46 & 8098.46 & 8098.46 & 8098.46 & 8098.46\\ 
+(2.13)  & 123.88 & 127.76 & 130.17 & 125.52 & 124.45\\ \hline 
+  & 1.10 & 1.10 & 1.24 & 1.24 & 1.24\\ 
+1000  & 9346.35 & 8443.28 & 8549.67 & 8544.63 & 8541.95\\ 
+(5.75)  & 432.61 & 418.64 & 425.35 & 442.23 & 444.56\\ \hline 
+  & 2.48 & 2.48 & 2.48 & 2.48 & 2.48\\ 
+2000  & 10881.17 & 10881.17 & 10881.17 & 10881.17 & 10881.17\\ 
+(6.55)  & 3935.54 & 3640.04 & 3983.46 & 3695.27 & 3643.84\\ \hline 
+  & 0.57 & 0.57 & 0.57 & 0.57 & 0.57\\ 
+4000  & 7936.66 & 7936.66 & 7936.66 & 7936.66 & 7936.66\\ 
+(16.26)  & 868.20 & 881.52 & 885.64 & 910.99 & 925.19\\ \hline 
+  & 0.48 & 0.48 & 0.48 & 0.48 & 0.48\\ 
+8000  & 7932.71 & 7932.71 & 7932.71 & 7932.71 & 7932.71\\ 
+(74.20)  & 245.05 & 242.79 & 249.90 & 244.78 & 248.62\\ \hline 
+  & 0.57 & 0.48 & {\bf 0.48} & 0.48 & 0.48\\ 
+16000  & 7995.88 & 7932.65 & {\bf 7932.65} & 7932.65 & 7932.65\\ 
+(585.03)  & 717.57 & 758.57 & {\bf 696.82} & 760.00 & 698.15\\ \hline 
+%  &  &  &  &  & \\ 
+%32000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
+%  &  &  &  &  & \\ 
+%64000  &  &  &  &  & \\ 
+%  &  &  &  &  & \\ \hline 
+\end{tabular}
+\end{table}
+
+To understand the interplay of parameters $N$ and $M$,
+We did the following experiment. For each of the 10 small files,
+we double $N$ from 500 to up to 32000, and then
+for each $N$, we quadruple $M$ from 25 to 6400. 
+We record the learning time, the MDL score
+and the normalized distance score of the description learned with
+each pair of the settings. Due to space constraints, we only show
+the results for \cd{eventstream.current} and \cd{messages.sdb} in
+\tblref{tab:eventstream.current} and \tblref{tab:messages.sdb}.
+Each table represents a two-dimensional array, in which the $N$
+increases downward and the $M$ increases to the right.
+Each table cell contains three numbers: the distance score, the MDL score
+and the total learning time in seconds. The number in parenthesis in the first column
+is the time to learn the initial batch in seconds, which is the same across all
+$M$'s. As a baseline, we add a ``Manual'' row. 
+A human expert was given
+only the first 500 records of the data and was asked to write a \pads{}
+description that correctly parses the 500 records. The timings in the manual
+row are the time it took the expert to produce the initial description, and the
+time to learn the entire data source beginning with that description. 
+We highlight the best result in each table. For example, the best description
+for \cd{message.sdb} is learned with $N=16000$ and $M=400$. 
+Note that all the learned descriptions can parse the original data
+without any error and therefore achieves 100\% accuracy. 
+Below summarizes some of the findings from analyzing these results.
+
+If a description takes a long time to learn, it is probably very verbose and low
+quality. This is because complex descriptions are usually not what people want
+and take more time to parse data.
+
+In general, as $M$ goes up, the total learning time
+increases, too. This is because with smaller batch sizes, descriptions are 
+updated more frequently and often refined earlier. Subsequently these
+refined descriptions parse more efficiently earlier in the whole learning process
+hence result in less time. However, this phenomenon is not prominent with larger
+$N$ as the initial description learned from such large
+initial batch was already good enough to cover most of the remaining data,
+and thus no more incremental updates is needed.
 
 \begin{table}[th]
 \centering
-\caption{Pertubation of lines 1000-2000 in messages.sdb}
+\caption{Perturbation of lines 1000-2000 in messages.sdb}
+\label{tab:perturb}
 \begin{tabular}{|c|c|c|c|c|} \hline 
-Perturbation & init/inc & Time (sec) & Score & Dist \\ \hline 
+Perturbation & $N$/$M$ & Time (s) & MDL & Dist \\ \hline \hline
  \multirow{2}{*}{orig}& 1000/25 & 442.05 & 9346.35 & 1.10 \\ \cline{2-5} 
 & 2000/25 & 3833.25 & 10785.36 & 2.24 \\ \hline 
- \multirow{2}{*}{1}& 1000/25 & 446.77 & 9346.35 & 1.34 \\ \cline{2-5} 
+ \multirow{2}{*}{1}& 1000/25 & 446.77 & 9346.35 & 1.10 \\ \cline{2-5} 
 & 2000/25 & 3794.09 & 10785.36 & 2.24 \\ \hline 
- \multirow{2}{*}{2}& 1000/25 & 441.06 & 9346.35 & 1.34 \\ \cline{2-5} 
+ \multirow{2}{*}{2}& 1000/25 & 441.06 & 9346.35 & 1.10 \\ \cline{2-5} 
 & 2000/25 & 3733.61 & 10785.36 & 2.24 \\ \hline 
- \multirow{2}{*}{3} & 1000/25 & 438.94 & 9346.35 & 1.34 \\ \cline{2-5} 
+ \multirow{2}{*}{3} & 1000/25 & 438.94 & 9346.35 & 1.10 \\ \cline{2-5} 
 & 2000/25 & 3658.91 & 10785.36 & 2.24 \\ \hline 
 \end{tabular}
 \end{table}
+
+Nothing significant can be said about the effect of increasing $N$ on
+the performance. In \cd{eventstream.current}, both MDL and distance scores seem to be
+going up (worse) as $N$ increases. But in \cd{messages.sdb}, the quality
+of the description goes down and then up again as $N$ increases. To find out
+why description quality was particularly bad when $N$ is 1000 and 2000 for
+\cd{message.sdb}, we perturb the order of 1000th to 2000th record in the data
+three times and re-run the algorithm on the perturbed data with $N$ set at
+1000 or 2000 and $M$ fixed at 25. The result in \tblref{tab:perturb}
+shows that such perturbations does not have significant effects on the learning
+in this occasion.
+
+To illustrate the quality of learned description and the difference with the
+gold description, we show the gold description and the best
+learned description of \cd{messages.sdb} in \figref{fig:gold-messages.sdb}
+and \figref{fig:best-messages.sdb}. The learned description maintains a top-level
+structure almost identical to the gold description, except the gold description
+has slightly more refined details about the {\tt message\_t} type, which was
+represented by {\tt Popt Struct\_6113} and the blob at the end.
+
+\begin{figure}[th]
+\centering
+{\footnotesize
+\begin{verbatim}
+Pstruct proc_id_t {
+        '[';
+        Puint32 id;
+        ']';
+}
+Pstruct daemon_t {
+        Pstring_SE (:"/[:\\[]/":) name;
+        Popt proc_id_t v_proc_id;
+        ':';
+}
+Pstruct msg_body_t {
+        daemon_t v_daemon_pri;
+        Pwhite v_space;
+        Pstring_SE(:Peor:) v_msg;
+};
+Punion message_t  {
+        msg_body_t v_normal_msg;
+        Pstring_SE(:Peor:) v_other_msg;
+};
+Precord Pstruct entry_t {
+        Pdate  v_date;
+        ' ';
+        Ptime v_time;
+        ' ';
+        Pstring(:' ':) v_id;
+        ' ';
+        message_t v_message;
+};
+Psource Parray entries_t {
+        entry_t[];
+};
+\end{verbatim}
+}
+\caption{Gold description of messages.sdb}
+\label{fig:gold-messages.sdb}
+\end{figure}
+
+\begin{figure}[th]
+\centering
+{\footnotesize
+\begin{verbatim}
+Pstruct Struct_6113 {
+        Pstring(:':':)  v_blob_5869;
+        ':';
+};
+Precord Pstruct Struct_5671 {
+        Pdate  v_date_1;
+        ' ';
+        Ptime  v_time_6;
+        ' ';
+        Pstring (:' ':) v_string_33;
+        ' ';
+        Popt Struct_6113 v_opt_6096;
+        Pstring_SE(:Peor:)  v_blob_6095;
+};
+Psource Parray entries_t {
+        Struct_5671[];
+};
+\end{verbatim}
+}
+\caption{Best learned description of messages.sdb}
+\label{fig:best-messages.sdb}
+\end{figure}
 
 \subsection{Scaling performance}
 %\subsubsection{Scaling tests}
@@ -876,16 +989,27 @@ Perturbation & init/inc & Time (sec) & Score & Dist \\ \hline
 \begin{figure}
 \includegraphics[width=\columnwidth]{scale-uc}
 %\epsfig{file=scale-uc.eps, width=\columnwidth}
-\caption{Scaling Results with Union Clustering}
+\caption{Learning time vs percentage of data sources}
+\label{fig:scale}
 \end{figure}
 
+In this experiment, we evaluate how the algorithm scales with increasing data size.
+For each of the small files, using $N$/$M$ that produces the best result, 
+we record the total running time for learning 20\%, 40\%, up to 100\% of the data
+file and the results are depicted in \figref{fig:scale}. The algorithm enjoys
+near linear scale-up for all sources except \cd{4046.xls}, which flattens after 40\% of
+data. The cause of this anomaly is its small size relative to its complexity. 
+Learning the initial description takes a lot of time.
+After the algorithm learns the first 40\% of the data, the description was updated to a
+fairly simply one due to \cd{BlobFinding}, the parsing the remaining data gives no error
+and takes negligible amount of time. 
 
-\subsection{Large files}
+\subsection{Large data sources}
 \cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{table*}[th]
 \caption{Default results}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
-Data & wc Time & Blob Time & Learn Time & Score & Dist & Accuracy & Reparse time & PADS time \\ \hline
+Data & wc Time & Blob Time & Learn Time & MDL & Dist & Accuracy & Reparse time & PADS time \\ \hline
 cosmosLog\_csm.exe.log & 34 & 89 & 13016.48 & 22554.07& 0.951 & 100\% & 9789.43 & 481 \\ \hline
 dalpiv.dat & 82 & 211 & 72244.29 & 45730.82 & 0.865 & 100\% & 2218.91 & 771 \\ \hline
 free\_impressions.dat.cleaned & 14 & 46 & 2682.78 & 6062.39 & 0.89 & 100\% & 3485.53 & 504 \\ \hline
@@ -897,14 +1021,35 @@ vshkap2.log & 66 & 175 & 22466.57 & 10063.71 & 1.75 & 100\% & 13892.47 & 2205 \\
 }%%%%%%%%%%%%%%%%%%%%%%end of cut %%%%%%%%%%
 
 \begin{table*}[th]
+\centering
 \caption{Large data sources}
+\label{tab:large}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
-Data & wc Time & Blob Time & Learn Time & Score & Dist & Accuracy & Reparse time & PADS time \\ \hline
-cosmosLog\_csm.exe.log & 4 & 89 & 1040.42 & 21301.34 & 0.805 & 100\% & 1225.12 & 430 \\ \hline
-dalpiv.dat & 82 & 278 & 4012.07 & 45785.72 & 0.865 & 100\% & 2195.59 & 767 \\ \hline
-free\_impressions.dat.cleaned & 15 & 46 & 2701.21 & 6062.39 & 0.89 & 100\% & 4031.68 & 493 \\ \hline
-liberty & 175 & 677 & 21143.57 & 8790.85 & 0.722 & 100\% & 20850.88 & 8036 \\ \hline
-redstorm & 191 & 719 & 55547.56 & 13837.73 & 0.707 & 100\% & 24735.80 & 9791 \\ \hline
-vshkap2.log & 57 & 174 & 23337.36 & 10063.71 & 1.750 & 100\% & 14651.37 & 2163 \\ \hline
+Data &  MDL & Dist & Accuracy & Learn Time (s) & \cd{parse} time (s) & PADS time (s) & {\tt wc} Time (s) & {\tt Pstring} Time (s)\\ \hline \hline
+cosmosLog\_csm.exe.log &  21301.34 & 0.805 & 100\% & 1040.42 & 1225.12 & 430 & 34 & 89 \\ \hline
+dalpiv.dat & 45785.72 & 0.865 & 100\% & 4012.07 &  2195.59 & 767 & 82 & 278 \\ \hline
+free\_impressions.dat & 6062.39 & 0.89 & 100\% & 2701.21 & 4031.68 & 493 & 15 & 46 \\ \hline
+liberty & 8790.85 & 0.722 & 100\% & 21143.57 & 20850.88 & 8036 & 175 & 677 \\ \hline
+redstorm & 13837.73 & 0.707 & 100\% & 55547.56 & 24735.80 & 9791 & 191 & 719 \\ \hline
+vshkap2.log & 10063.71 & 1.750 & 100\% & 23337.36 & 14651.37 & 2163 & 57 & 174  \\ \hline
 \end{tabular}
 \end{table*}
+
+Our last experiment learns a description with $N=2000$
+and $M = 100$ for each of the six 
+large data sources in the benchmark, 
+and records the learning time, MDL and distance scores, and accuracy in
+\tblref{tab:large}. In addition, \cd{Reparse time} is the time it takes
+the \cd{parse} function in the algorithm to parse the entire data using the
+learned description; \cd{PADS time} is the time it takes the generated \pads{}
+parse to parse the same data. To put these parsing times in perspective,
+We also list the time to count the total number of lines in the data using 
+the Unix {\tt wc -l} command, and the time to parse the whole data using
+the simple \pads{} type {\tt Pstring(:Peor:)}, 
+which is essentially a string that
+describes the entire line. The result shows that the incremental
+learning algorithm can learn the format of a 30GB file in a few hours, which
+previously takes days and weeks for a person to produce manually. Furthermore,
+the learned descriptions are all correct with respect to their original
+raw data.
+
