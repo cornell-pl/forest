@@ -41,7 +41,6 @@ which means the parsing of the array elements and separators
 continues until no more progress can be made in
 the input. We will not elaborate these semantics because of lack of space.
 
-
 \subsection{MDL score and description rewriting}
 In the prototype system, we define the MDL score for a particular
 \pads{} description \cd{D} as:
@@ -102,6 +101,20 @@ data line. It uses this table to determine whether to merge
 adjacent \cd{Opt} nodes during rewriting. 
 \figref{fig:opts} illustrates the effect of this rule.  In the figure,
 $S$ denotes a struct and $B$ a base token.
+
+\subsection{Initial batch and incremental batches}
+We mentioned in Section \ref{sec:algo}, that we can learn an initial
+description from any $N$ records from the source. In the implementation,
+we simply take the {\em first} $N$ records from the source. The potential
+problem with this
+is that the final description could be skewed toward the first part of the
+data. We choose to do this nonetheless because we do not want to make 
+the assumption that we have the whole data file before we start learning
+the description.  Furthermore, instead of learning the error data and 
+updating the description every $M$ records which is indicated in 
+\figref{fig:inc-learning}, we defer this till we have seen $M$ bad records.
+ This avoids invoking the \cd{update\_desc} function unnecessarily when
+there is no error data.
 
 \subsection{Performance}
 The pseudo-code in \figref{fig:inc-learning} suggests the number of

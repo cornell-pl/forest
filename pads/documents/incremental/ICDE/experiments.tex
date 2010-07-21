@@ -4,12 +4,14 @@
 To evaluate the performance of our prototype system and to understand the
 trade-offs in setting the various paramters in the algorithm, we ran a number
 of experiments using 16 data sources. These sources are divided into two groups:
-{\em large files} with 6 sources each larger than 1GB, 
-and {\em small files} with 10 sources each under 1GB. 
+six {\em large files} each more than 1GB, 
+and ten {\em smaller files} each under 1GB. 
 Table \ref{tab:sources} lists the names of these data sources, their sizes,
 number lines and brief descriptions. Our experiments are
 conducted on a 2.4GHz, 64-bit quad-core Intel Xeon Processor 
-running Linux version 2.6.18 with 46 GBs of memory.
+running Linux version 2.6.18 with 46 GBs of memory. Note that because our
+system is single-threaded, only only of the four cores are effectively
+used.
 
 \begin{table*}[th]
 \centering
