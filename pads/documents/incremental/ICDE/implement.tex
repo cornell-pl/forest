@@ -82,13 +82,14 @@ similar to the dynamic programming techniques used in
 Earley Parsers \cite{earley-parser}. 
 
 To understand the impact that different values of $k$ can have,
-consider $k=1$, \ie{}, discard all erroneous parses except
+consider $k=1$, which causes the system to discard all erroneous parses except
 the one with the best parse metric. This strategy significantly reduces the
 cost of the parsing and aggregation operations, but we have found
-that in practice,
-it usually results in sub-optimal overall parse structures. 
-For example, suppose the current top-level description \cd{D} when learning 
-the \ai{} format is:
+in practice that it usually results in sub-optimal overall parse structures. 
+For example, suppose the description in \figref{fig:kcutoff}
+is the current top-level description \cd{D} when learning 
+the \ai{} format.
+\begin{figure}
 \begin{code}
 \kw{Precord} \kw{Pstruct} entry_t \{
          Phostname      host;
@@ -103,13 +104,17 @@ the \ai{} format is:
    ' ';  Pint           length;
 \};
 \end{code}
-Recall also that all the constants in the description such as
-\cd{' '} and \cd{'-'} are used as sync tokens during
-parsing. Now, suppose \cd{D} is used to parse the second record 
+\caption{Example description \texttt{D}}
+\label{fig:kcutoff}
+\vskip -2ex
+\end{figure}
+Recall that constants in descriptions, such as
+\cd{' '} and \cd{'-'}, are used as sync tokens during
+parsing. Now, suppose  we use \cd{D} to parse the second record 
 in \figref{fig:ai}.
-\cd{D} parses the above data without error until it
-reaches the second dash in \cd{D}. It expects a sync token
-'-', but instead sees a string \cd{amnesty} in the input.
+\cd{D} parses the data without error until it
+reaches the second dash in \cd{D}. The description then expects a sync token
+'-', but instead sees a string \cd{amnesty}.
 According to the semantics of sync tokens, given in \figref{fig:parse-sem},
 there can be two possible parses:
 
@@ -127,7 +132,7 @@ or:
 }
 
 In the first parse, the parser skips 26 characters before finding a \cd{'-'} token.
-In the second parse, the parser returns failure and consumes no characters
+In the second, the parser returns failure and consumes no characters
 from the input.
 According to our ranking function on parse metrics, 
 the first parse is better and therefore the
