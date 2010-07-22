@@ -59,35 +59,35 @@ aggregates is of the order $O(m ^ n)$, where $m$ is the maximum number of
 parses for a line of input  and $n$ is the number of lines to
 aggregate.  Clearly, this algorithm will not scale 
 unless $m$ and $n$ are bounded.  To deal with this problem,
-We have implemented several optimizations to limit the number of 
+we have implemented several optimizations to limit the number of 
 parses and aggregates. 
 
-One main optimization involves culling parses based on 
-the parse metric $m$. 
+One key optimization culls parses based on 
+the parse metric \cd{m}. 
 %Metric $m_1$ is better than $m_2$ if $m_1$ is perfect and $m_2$ is not, 
 %or if $m_1 > m_2$.
-To be more precise, the parse function returns a list of
-{\em parse triples} $(r,~m,~j)$, where $r$ is the data representation of
-the parse, $m$ is the metric associated with $r$, and
-$j$ is the position in the input after the parse.
-We define a \cd{clean} function that first partitions the
+To be more precise, the \kw{parse} function returns a list of
+{\em parse triples} \cd{(r,m,j)}, where \cd{r} is the data representation of
+the parse, \cd{m} is the metric associated with \cd{r}, and
+\cd{j} is the position in the input after the parse.
+We define a \kw{clean} function that first partitions the
 triples into groups that share the same 
 {\em span}, \ie{}, the substring of the input consumed by the parse.
-For each group, \cd{clean} retains all perfect parses. If 
-none exists, it retains the best $k$ non-perfect parses in the group. 
+For each group, \kw{clean} retains all perfect parses. If 
+none exist, it retains the best $k$ non-perfect parses in the group. 
 We justify discarding the other triples because
-given a description $d$ and a fixed span, we always
+given a description \cd{D} and a fixed span, we always
 prefer the parse with the best metric. This idea is
 similar to the dynamic programming techniques used in 
 Earley Parsers \cite{earley-parser}. 
 
 To understand the impact that different values of $k$ can have,
-consider $k=1$.  In other words, discard all erroneous parses except
+consider $k=1$, \ie{}, discard all erroneous parses except
 the one with the best parse metric. This strategy significantly reduces the
 cost of the parsing and aggregation operations, but we have found
 that in practice,
 it usually results in sub-optimal overall parse structures. 
-For example, suppose the current top level description \cd{D} when learning 
+For example, suppose the current top-level description \cd{D} when learning 
 the \ai{} format is:
 \begin{code}
 \kw{Precord} \kw{Pstruct} entry_t \{
@@ -110,7 +110,7 @@ in \figref{fig:ai}.
 \cd{D} parses the above data without error until it
 reaches the second dash in \cd{D}. It expects a sync token
 '-', but instead sees a string \cd{amnesty} in the input.
-According to the semantics of sync token in \figref{fig:parse-sem},
+According to the semantics of sync tokens, given in \figref{fig:parse-sem},
 there can be two possible parses:
 
 \noindent
@@ -126,8 +126,8 @@ or:
 \verb#(Fail, (1, 0, 0))#
 }
 
-In the first parse, 26 characters are skipped before a \cd{'-'} is found.
-In the second parse, a failure is returned and no characters are consumed
+In the first parse, the parser skips 26 characters before finding a \cd{'-'} token.
+In the second parse, the parser returns failure and consumes no characters
 from the input.
 According to our ranking function on parse metrics, 
 the first parse is better and therefore the
@@ -135,7 +135,7 @@ second one is discarded. Unfortunately, this strategy causes the parsing of the
 remaining types up to \verb#"] "# to fail, thereby giving a bad overall parse.
 If we keep the second parse and continue with it, the next sync token 
 \verb#" ["# will be able to recover after skipping \cd{kim} and succeed
-in parsing the rest of the types hence giving a better overall parse.
+in parsing the rest of the types, hence giving a better overall parse.
 Therefore, in the implementation, we have chosen $k$ to be small 
 (for speed) but larger than one (for quality).
 
@@ -149,8 +149,8 @@ with this optimization turned off.
 
 A third optimization is memoization.
 The program keeps a global memo table indexed by the pair of a
-description \cd{D} and the beginning position for parsing \cd{D} which
-stores the result for parsing \cd{D} at the specific position.
+description \cd{D} and the beginning position for parsing \cd{D}.  This table
+stores the result for parsing according to \cd{D} at the specific position.
 %% Finally, we bound the total number of aggregates the
 %% algorithm can produce by selecting the top
 %% $k$ aggregates with the fewest number of \cd{Opt} and \cd{Learn}
