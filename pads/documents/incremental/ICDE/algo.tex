@@ -292,31 +292,31 @@ rules to improve the overall structure.
 \cdmath\small
 \kw{Base}:
 (Int (atoi s), m) $\in$ L(Pint,E,s,s')
-  if m = (0,0,len(s))
-(Error, (1,0,0)) $\in$ L(Pint,E,"",s'), 
+  if m = (0,1,0,len(s))
+(Error, (1,0,0,0)) $\in$ L(Pint,E,"",s'), 
   if s $\in$ L((+|-)?[0-9]+) 
   and L([0-9]) $\cap$ prefix(s') = \{\}
 (Str s, m) $\in$ L(PstringME(re),E,s,s'),
   if s $\in$ L(re) 
-  and m = (0,0,len(s)) 
+  and m = (0,1,0,len(s)) 
   and s.s'' $\not\in$ L(re) and s'' $\in$ prefix(s') 
 (Error, m) $\in$ L(PstringME(re),E,"",s'), 
   if "" $\not\in$ L(re)
-  and m = (1,0,0)
+  and m = (1,0,0,0)
 (Str s, m) $\in$ L(PstringFW(e),E,s,s') 
   if E(e) = Int k and s = c1...ck
-  and m = (0,0,len(s))
-(Error, (1,0,0)) $\in$ L(PstringFW(e),E,"",s') 
+  and m = (0,1,0,len(s))
+(Error, (1,0,0,0)) $\in$ L(PstringFW(e),E,"",s') 
   if E(e) $\ne$ Int k for any k
-(Error, (1,0,0)) $\in$ L(PstringFW(e),E,"",s') 
+(Error, (1,0,0,0)) $\in$ L(PstringFW(e),E,"",s') 
   if E(e) = Int k and k > 0
 \mbox{}
 \kw{Sync}:
-(Good, (0,0,len(s))) $\in$ L(Sync(s),E,s,s')
+(Good, (0,1,0,len(s))) $\in$ L(Sync(s),E,s,s')
 (Recovered s1, m) $\in$ L(Sync(s2),E,s,s')
-  if s=s1.s2 and s2 $\not\in$ prefix(s1.s2)
-  and m = (1,len(s1),len(s2))
-(Fail, (1,0,0)) $\in$ L(Sync(s2),E,"",s')
+  if s=s1.s2 and s2 $\not\in$ sprefix(s1.s2)
+  and m = (1,0,len(s1),len(s2))
+(Fail, (1,0,0,0)) $\in$ L(Sync(s2),E,"",s')
 \mbox{}
 \kw{Pair}:
 (PairR (R1,R2), (m1 + m2)) 
@@ -365,7 +365,6 @@ rules to improve the overall structure.
 %%   if (R, m) $\in$ L(D, E, "", s')
 
 
-
 \subsection{Parsing}
 \label{sec:parse}
 Our parser is a top-down recursive descent parser
@@ -383,19 +382,26 @@ $x$ to parse trees $R$.  This environment is used to record the
 binding of variables to parse trees introduced by PADS dependent
 pair construct.
 The {\em parse metric} $m$ measures the quality of a parse. It is a 
-triple: ($e$, $s$, $c$), where the $e$ is the number of tokens
-with parse errors, $s$ is the number of 
+4-tuple: ($e$, $g$, $s$, $c$), where the $e$ is the number of tokens
+with parse errors, $g$ is the number of tokens parsed correctly,
+$s$ is the number of 
 characters skipped during \cd{Sync} token recovery, 
 and $c$ is the number of characters correctly parsed. 
 To sum two parse metrics, we sum their components:
-$(e1, s1, c1) + (e2, s2, c2) = (e1 + e2, s1 + s2, c1 + c2)$.
+$(e_1, g_1, s_1, c_1) + (e_2, g_2, s_2, c_2) = 
+(e_1 + e_2, g_1 + g_2, s_1 + s_2, c_1 + c_2)$.
 We compare parse metrics by comparing the ratios of correctly
-parsed characters against erroneous tokens and skipped characters:
-\[
-(e1, s1, c1) \ge (  e2, s2, c2)~ \rm{iff}~ \frac{c_1}{s_1+c_1} \ge \frac{c_2}{s_2 + c_2}
-\]
+parsed characters against erroneous tokens and imaginery number of
+skipped tokens, where the skipped tokens are computed by the
+fraction of the number of the skipped character over the estimated token
+length:
+\begin{eqnarray*}
+(e_1, g_1, s_1, c_1) &\ge& (e_2, g_2, s_2, c_2)~ \rm{iff} \\
+\frac{c_1}{e_1+\frac{s_1}{\max((s_1+c_1)/(e_1+g_1), 1)}} &\ge& 
+\frac{c_2}{e_2+\frac{s_2}{\max((s_2+c_2)/(e_2+g_2), 1)}} 
+\end{eqnarray*}
 
-%% \subsection{Aggregation}
+%%\subsection{Aggregation}
 %% \begin{figure}[t]
 %% \centering
 %% \begin{code}
