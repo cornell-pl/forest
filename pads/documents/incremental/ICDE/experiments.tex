@@ -955,6 +955,7 @@ $N$ as the initial description learned from such large
 initial batch was already good enough to cover most of the remaining data,
 and thus no more incremental updates is needed.
 
+\cut{%%%%%%%%%%%%%%% CUT perturbation %%%%%%%%%%%%%%%
 \begin{table}[th]
 \centering
 \caption{Perturbation of lines 1000-2000 in messages.sdb}
@@ -971,17 +972,44 @@ Perturbation & $N$/$M$ & Time (s) & MDL & Dist \\ \hline \hline
 & 2000/25 & 3658.91 & 10785.36 & 2.24 \\ \hline 
 \end{tabular}
 \end{table}
+}%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%%%
 
 Nothing significant can be said about the effect of increasing $N$ on
 the performance. In \cd{eventstream.current}, both MDL and distance scores increase
 ({\em i.e.,} get worse) as $N$ increases. But in \cd{messages.sdb}, the quality
-of the description goes down and then up again as $N$ increases. To find out
-why description quality was particularly bad when $N$ is 1000 and 2000 for
-\cd{message.sdb}, we perturbed the order of 1000th to 2000th record in the data
-three times and re-ran the algorithm on the perturbed data with $N$ set at
-1000 or 2000 and $M$ fixed at 25. The result in \tblref{tab:perturb}
-shows that such perturbations do not have significant effects on the learning
-process.
+of the description goes down and then up again as $N$ increases. By examining the
+initial descriptions of \cd{messages.sdb} learned for different $N$'s,
+we found that those learned at $N=1000$ and $N=2000$ are significantly more verbose than  
+the one at $N=500$. Then at $N=16000$, the initial description becomes simple again.
+The different combinations of records at these configurations apparently contributed to 
+the varying result from \learnpads{} algorithm. One thing we do know from this exercise is that
+the incremental algorithm is sensitive to the quality of the initial description.
+This is because the changes we make to the current description during each iteration
+happen at the leaves of the syntax tree so the backbone of the initial description
+will be retained in the final description. 
+
+%To find out why description quality was particularly bad when $N$ is 1000 and 2000 for
+%\cd{message.sdb}, we perturbed the order of 1000th to 2000th record in the data
+%three times and re-ran the algorithm on the perturbed data with $N$ set at
+%1000 or 2000 and $M$ fixed at 25. The result in \tblref{tab:perturb}
+%shows that such perturbations do not have significant effects on the learning
+%process.
+
+\begin{figure}[th]
+\centering
+\includegraphics[width=\columnwidth]{adc}
+\caption{Effects of $w$ on description quality}
+\label{fig:adc}
+\end{figure}
+
+To determine the effects of the weight $w$ in the MDL score on the quality
+of the learning descriptions, we pick four smaller sources, and learn
+descriptions for them with $w$ set at 1, 5, 10, 100 and 1000, while
+keeping the other parameters the same. The results in \figref{fig:adc}
+showed that setting $w$ to a very small or very large number either
+results in bad descriptions with high edit distance score, or
+timeouts at runtime (description was too complex to parse in reasonable time).
+Therefore, we choose $w = 10$ for practicality.
 
 To illustrate the quality of learned description and the difference between it
 and the gold description, we show the gold description and the best
