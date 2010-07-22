@@ -5,15 +5,15 @@ There is a long history of research in {\em grammar induction},
 the process of discovering grammars from example data.  
 Vidal~\cite{vidal:gisurvey} and
 De La Higuera~\cite{higuera01current} both give surveys
-of research in the area.  One way preliminary way research in this area
-may be subdivided is by analyzing what kinds of inputs
+of research in the area.  One way  research in this area
+may be categorized is by analyzing what kinds of inputs
 the various algorithms require.  Some algorithms
 require positive and negative examples to discover a grammar, some
-algorithms require manual labelling of example data, some algorithms
+algorithms require manual labeling of example data, some algorithms
 require answers to various kinds of queries.  Our system only
 requires positive examples (negative examples of ad hoc data sources 
 are not available in practice), does not ask users to answer queries,
-and does not require labelling (files are too simply too
+and does not require labeling (files are too
 big and change form at arbitrarily deep points within).  
 
 Given that we work only with positive examples, there
@@ -38,7 +38,8 @@ proven it is possible to scale the algorithms up
 to the point that they may be applied to massive industrial data
 sets, and empirically evaluated the results.
 
-The incremental elements of our algorithm design are partly
+The adaptations of our algorithm to incremental processing 
+are partly
 inspired by traditional compiler error detection and correction
 techniques.  In particular, the idea of using synchronizing tokens
 as a means for accumulating chunks of unknown/unparseable data
@@ -58,9 +59,8 @@ regular grammars from positive examples and membership queries.
 This algorithm works quite differently than ours:  it operates over
 automata and it uses membership queries, which ours does not.
 More broadly speaking, Parekh and Honavar and many other related algorithms
-work provide beautiful theoretical guarantees.  In contrast, we have
-not studied the theoretical properties of our algorithms, but have
-instead focused on implementation, empirical 
+provide beautiful theoretical guarantees.  In contrast, we have
+focused on implementation, empirical 
 evaluation and scaling to support massive data sets.
 
 Another place in which grammar induction is used is in information
@@ -91,7 +91,7 @@ Other related information-extraction efforts
 are those that attempt to identify tabular data 
 either from free-form text~\cite{Ng+:texttables,Pinto+:texttables} or
 from web pages~\cite{Lerman+:webtables}.  These approaches typically
-use hand-labelled examples to train machine learning systems to
+use hand-labeled examples to train machine learning systems to
 identify the tables.  They then use heuristics specific to tabular
 data to extract the tuples contained within those tables.  The portion
 of this work related to identifying structured data from within more
