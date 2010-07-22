@@ -4,13 +4,12 @@
 To evaluate the performance of our prototype system and to understand the
 trade-offs in setting the various parameters in the algorithm, we ran a number
 of experiments using 16 data sources. These sources are divided into two groups:
-six {\em large files} each more than 1GB, 
-and ten {\em smaller files} each under 1GB. 
-Table \ref{tab:sources} lists the names of these data sources, their sizes,
-number of lines and brief descriptions. Our experiments are
+six {\em large files}, each more than 1GB, 
+and ten {\em smaller files}, each under 1GB. 
+Table \ref{tab:sources} lists the names of these data sources, the file sizes,
+the number of lines, and brief descriptions. Our experiments were
 conducted on a 2.4GHz machine with 24 GBs of memory and two 64-bit quad-core Intel Xeon Processors 
-running Linux version 2.6.18. Our
-system is single-threaded, so we effectively used only one of the eight available cores.
+running Linux version 2.6.18. Our system is single-threaded, so we effectively used only one of the eight available cores.
 
 \begin{table*}[t]
 \centering
@@ -46,33 +45,30 @@ We are generally interested in two kinds of performance measures:
 
 The time to learn can be further
 broken down into two components: time to learn the initial description,
-and the time to incrementally learn the rest of the data.
+and the time to incrementally learn a description for the rest of the data.
 
 The quality of the description can be measured in three ways:
 the {\em MDL score} of the description, the {\em edit distance} between the learned
-description and a gold description written by human expert, and the {\em accuracy}
-of the learned description.  MDL score 
-provides a completely mechanical way to quantify both the
-precision and the compactness of a description.  A smaller MDL score is better.
-However, while MDL is useful, it does not necessarily correspond
-perfectly with a human ranking of descriptions.
-Hence, the second metric, the edit distance measures the distance of
-the learned description from a description constructed by an expert
-by hand.  We call the expert description, the {\em gold description}.
-The distance measure is a {\em normalized edit distance} score:
+description and a ``gold description'' written by human expert, and the {\em accuracy}
+of the learned description.  The MDL score~\cite{mdlbook} 
+provides a fully automated way to quantify both the
+precision and the compactness of a description, with smaller MDL scores corresponding to better descriptions.
+However, while MDL is useful, it is best seen as a proxy measure, since humans may prefer a description with a higher MDL score if that description better captures the human being's intuitions. 
+
+
+To address this concern, we use edit distance to measure how close the learned description is to something a human being might write.
+This metric counts the number of edits necessary to convert the learned description into a ``gold description'' written by a human being, where an edit can be either an insertion or deletion of a node in the description. 
+More precisely, the distance measure is a {\em normalized edit distance} score:
 \[normal\_dist(D) = \frac{edit\_dist(D, D_{gold})}{|D_{gold}|}\]
 where $|D|$ denotes the total number of nodes in $D$.
-Of course, the edit distance measure may also be imperfect as there are
-perhaps a number of different but equally ``good'' ways 
+Of course, the edit distance measure may also be imperfect as there can be a number of different but equally ``good'' ways 
 to craft a gold description.  Nevertheless, we have found this measure
-adds information above and beyond what we gain strictly from the MDL score.
-Finally, our system would not be very useful if the learned description 
-does not describe the original data correctly. Therefore,
-the accuracy measures the percentage of the original data that
-can be parsed without any error using the learned description.
+adds information to what we gain from the MDL score alone.
 
-The rest of this section presents the results 
-from several experiments.
+Finally, our system would not be very useful if the learned description 
+did not describe the original data correctly. Therefore, we also use an accuracy measure, 
+which reports the number of lines in the original data source that the learned description parses without errors.
+
 
 \subsection{Large data sources}
 \cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -90,19 +86,18 @@ vshkap2.log & 66 & 175 & 22466.57 & 10063.71 & 1.75 & 100\% & 13892.47 & 2205 \\
 \end{table*}
 }%%%%%%%%%%%%%%%%%%%%%%end of cut %%%%%%%%%%
 
-Our first experiment learns a description with $N=2000$
-and $M = 100$ for each of the six 
-large data sources in the benchmark, 
-and records the learning time, MDL and distance scores, and accuracy in
-\tblref{tab:large}. In addition, \cd{Reparse time} is the time it takes
-the \cd{parse} function in the algorithm to parse the entire data using the
-learned description; \cd{PADS time} is the time it takes the generated \pads{}
-parse to parse the same data. To put these parsing times in perspective,
-We also list the time to count the total number of lines in the data using 
-the Unix {\tt wc -l} command, and the time to parse the whole data using
-the simple \pads{} type {\tt Pstring(:Peor:)}, 
-which is essentially a string that
-describes the entire line. The result shows that the incremental
+Our first experiment learns a description for each of the six large data sources in the benchmark.  
+We set the initial batch size $N$ to be 2000 and the incremental batch size $M$ to be 100.
+\tblref{tab:large} reports the MDL and distance scores, the accuracy, and the total learning time.
+In addition, it report various times to parse the data.
+The \cd{parse} time is the time it takes
+the algorithm's \kw{parse} function to parse the source data using the
+learned description. The \cd{PADS time} is the time it takes the generated \pads{}
+parser to parse the same data. To put these parsing times in perspective,
+we list the time to count the total number of lines using 
+the Unix {\tt wc -l} command and the time to parse the data using
+the simple \pads{} type {\tt Pstring(:Peor:)}, which parses each line as a newline-terminated string.
+The result shows that the incremental
 learning algorithm can learn the format of a 30GB file in a few hours.  Importantly,
 the learned descriptions are all correct with respect to their original
 raw data.
@@ -113,13 +108,13 @@ raw data.
 \caption{Large data sources}
 \label{tab:large}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
-Data &  MDL & Dist & Accuracy & Learn Time (s) & \cd{parse} time (s) & PADS time (s) & {\tt wc} Time (s) & {\tt Pstring} Time (s)\\ \hline \hline
-cosmosLog\_csm.exe.log &  21301.34 & 0.805 & 100\% & 1040.42 & 1225.12 & 430 & 34 & 89 \\ \hline
-dalpiv.dat & 45785.72 & 0.865 & 100\% & 4012.07 &  2195.59 & 767 & 82 & 278 \\ \hline
-free\_impressions.dat & 6062.39 & 0.89 & 100\% & 2701.21 & 4031.68 & 493 & 15 & 46 \\ \hline
-liberty & 8790.85 & 0.722 & 100\% & 21143.57 & 20850.88 & 8036 & 175 & 677 \\ \hline
-redstorm & 13837.73 & 0.707 & 100\% & 55547.56 & 24735.80 & 9791 & 191 & 719 \\ \hline
-vshkap2.log & 10063.71 & 1.750 & 100\% & 23337.36 & 14651.37 & 2163 & 57 & 174  \\ \hline
+Data &  MDL & Dist & Accuracy & Learn Time (s) & \cd{parse} time (s) & PADS time (s) & {\tt wc} time (s) & {\tt Pstring} time (s)\\ \hline \hline
+cosmosLog\_csm.exe.log &  21301.34 & 0.805 & 100\% &  1040 & 1225  &  430 &  34 & 89 \\ \hline
+dalpiv.dat             & 45785.72  & 0.865 & 100\% &  4012 & 2196  &  767 &  82 & 278 \\ \hline
+free\_impressions.dat  & 6062.39   & 0.89  & 100\% &  2701 & 4032  &  493 &  15 & 46 \\ \hline
+liberty                & 8790.85   & 0.722 & 100\% & 21144 & 20851 & 8036 & 175 & 677 \\ \hline
+redstorm               & 13837.73  & 0.707 & 100\% & 55548 & 24736 & 9791 & 191 & 719 \\ \hline
+vshkap2.log            & 10063.71  & 1.750 & 100\% & 23337 & 14651 & 2163 &  57 & 174  \\ \hline
 \end{tabular}
 \end{table*}
 
@@ -132,17 +127,18 @@ vshkap2.log & 10063.71 & 1.750 & 100\% & 23337.36 & 14651.37 & 2163 & 57 & 174  
 %\end{figure}
 
 \subsection{Scaling performance}
-In the next experiment, we evaluate how the algorithm scales with increasing data size.
-For each of the small files, using parameters $N$ (size of data fragment used
-to learn the initial description) and $M$ (increment size) that produces the best result, 
-we record the total running time for learning 20\%, 40\%, etc. up to 100\% of the data
-file.  The results are presented in \figref{fig:scale}. The algorithm enjoys
+In the next experiment, we evaluate how the algorithm scales with increasing data size by running
+the system on increasingly large fractions of each of the small data files, starting with 20\% and ending with 100\%.
+For a given data source, we empirically determined which values of the batch-size parameters $N$ and $M$ give the best result, and then used those values for this experiment.  \figref{fig:scale} plots the resulting total learning time versus the percentage of the data file used in learning.   The graph shows the algorithm enjoys
 near linear scale-up for all sources except \cd{4046.xls}, which flattens after 40\% of
-data. The cause of this anomaly is its small size relative to its complexity. 
+data.  The \emph{BlobFinding} rule is the cause of this anomaly: learning the initial description takes a relatively long time, but after the algorithm sees the first 40\% of the data, the \emph{BlobFinding} rule simplifies the description to one that parses much more quickly and correctly parses the rest of the data.  
+
+\cut{
+The cause of this anomaly is its small size relative to its complexity. 
 Learning the initial description takes a lot of time.
 After the algorithm learns the first 40\% of the data, the description was updated to a
 fairly simply one due to \cd{BlobFinding}. Parsing the remaining data resulted in no
-additional errors and took minimal further time. 
+additional errors and took minimal further time. }
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{scale-uc}
@@ -916,14 +912,17 @@ Manual & 8316.77 & 8355.71 & 8313.52 & 8297.47 & 8297.04 \\
 \end{table}
 
 To understand the interplay of parameters $N$ and $M$,
-We did the following experiment. For each of the 10 small files,
-we double $N$ from 500 to up to 32000, and then
-for each $N$, we quadruple $M$ from 25 to 6400. 
-We record the learning time, the MDL score
-and the normalized distance score of the description learned with
-each pair of the settings. Due to space constraints, we only show
+we did the following experiment. For each of the 10 small files,
+we repeatedly doubled $N$ from 500 to 32000. 
+For each $N$, we repeatedly quadrupled $M$ from 25 to 6400.  
+For each resulting pair of $N$ and $M$, we ran the learning system on each data file and
+recorded the learning time, the MDL score
+and the normalized distance score. 
+All the learned descriptions parse the original data
+without error and therefore achieve 100\% accuracy. 
+Because of space constraints, we show only
 the results for \cd{eventstream.current} and \cd{messages.sdb} in
-\tblref{tab:eventstream.current} and \tblref{tab:messages.sdb}.
+\tblref{tab:eventstream.current} and \tblref{tab:messages.sdb}, respectively.
 Each table represents a two-dimensional array, in which the $N$
 increases downward and the $M$ increases to the right.
 Each table cell contains three numbers: the distance score, the MDL score
@@ -937,22 +936,20 @@ row are the time it took the expert to produce the initial description, and the
 time to learn the entire data source beginning with that description. 
 We highlight the best result in each table. For example, the best description
 for \cd{message.sdb} is learned with $N=16000$ and $M=400$. 
-Note that all the learned descriptions can parse the original data
-without any error and therefore achieves 100\% accuracy. 
-Below summarizes some of the findings from analyzing these results.
+In the rest of this section, we summarize some of the findings from analyzing these results.
 
 %If a description takes a long time to learn, it is probably very verbose and low
 %quality. This is because complex descriptions are usually not what people want
 %and take more time to parse data.
 
-In general, as $M$ goes up, the total learning time
-increases, too. This is because with smaller batch sizes, descriptions are 
-updated more frequently and often refined earlier. Subsequently these
-refined descriptions parse more efficiently earlier in the whole learning process
-hence result in less time. However, this phenomenon is not prominent with larger
-$N$ as the initial description learned from such large
-initial batch was already good enough to cover most of the remaining data,
-and thus no more incremental updates is needed.
+In general, as $M$ goes up, the total learning time increases. 
+With smaller batch sizes, the system updates descriptions 
+more frequently, often simplifying them. These simplified descriptions 
+parse more efficiently and
+hence require less time. When $N$ is large, this phenomenon is not as prominent 
+because the initial description learned from large
+initial batches is often good enough to cover most of the remaining data,
+and thus no incremental updates are needed.
 
 \cut{%%%%%%%%%%%%%%% CUT perturbation %%%%%%%%%%%%%%%
 \begin{table}[th]
@@ -973,7 +970,8 @@ Perturbation & $N$/$M$ & Time (s) & MDL & Dist \\ \hline \hline
 \end{table}
 }%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%%%
 
-Nothing significant can be said about the effect of increasing $N$ on
+We have not been able to conclude anything about the
+effect of increasing the initial batch size $N$ on
 the performance. In \cd{eventstream.current}, both MDL and distance scores increase
 ({\em i.e.,} get worse) as $N$ increases. But in \cd{messages.sdb}, the quality
 of the description goes down and then up again as $N$ increases. By examining the
@@ -981,7 +979,7 @@ initial descriptions of \cd{messages.sdb} learned for different $N$'s,
 we found that those learned at $N=1000$ and $N=2000$ are significantly more verbose than  
 the one at $N=500$. Then at $N=16000$, the initial description becomes simple again.
 The different combinations of records at these configurations apparently contributed to 
-the varying result from \learnpads{} algorithm. One thing we do know from this exercise is that
+the varying result. One thing we do know from this exercise is that
 the incremental algorithm is sensitive to the quality of the initial description.
 This is because the changes we make to the current description during each iteration
 happen at the leaves of the syntax tree so the backbone of the initial description
@@ -1002,10 +1000,10 @@ will be retained in the final description.
 \end{figure}
 
 To determine the effects of the weight $w$ in the MDL score on the quality
-of the learning descriptions, we pick four smaller sources, and learn
+of the learning descriptions, we pick four smaller sources and learn
 descriptions for them with $w$ set at 1, 5, 10, 100 and 1000, while
 keeping the other parameters the same. The results in \figref{fig:adc}
-showed that setting $w$ to a very small or very large number either
+show that setting $w$ to a very small or very large number either
 results in bad descriptions with high edit distance score, or
 timeouts at runtime (description was too complex to parse in reasonable time).
 Therefore, we choose $w = 10$ for practicality.
@@ -1021,27 +1019,27 @@ represented by {\tt Popt Struct\_6113} and the blob at the end.
 \begin{figure}[t]
 \centering
 {\footnotesize
-\begin{verbatim}
-Pstruct proc_id_t {
+\begin{code}
+\kw{Pstruct} proc_id_t \{
         '[';
         Puint32 id;
         ']';
-}
-Pstruct daemon_t {
+\};
+\kw{Pstruct} daemon_t \{
         Pstring_SE (:"/[:\\[]/":) name;
         Popt proc_id_t v_proc_id;
         ':';
-}
-Pstruct msg_body_t {
+\};
+\kw{Pstruct} msg_body_t \{
         daemon_t v_daemon_pri;
         Pwhite v_space;
         Pstring_SE(:Peor:) v_msg;
-};
-Punion message_t  {
+\};
+\kw{Punion} message_t  \{
         msg_body_t v_normal_msg;
         Pstring_SE(:Peor:) v_other_msg;
-};
-Precord Pstruct entry_t {
+\};
+\kw{Precord} \kw{Pstruct} entry_t \{
         Pdate  v_date;
         ' ';
         Ptime v_time;
@@ -1049,25 +1047,26 @@ Precord Pstruct entry_t {
         Pstring(:' ':) v_id;
         ' ';
         message_t v_message;
-};
-Psource Parray entries_t {
+\};
+\kw{Psource} \kw{Parray} entries_t \{
         entry_t[];
-};
-\end{verbatim}
-}
+\};
+\end{code}
+}\vskip -0.1ex
 \caption{Gold description of messages.sdb}
 \label{fig:gold-messages.sdb}
 \end{figure}
 
 \begin{figure}[t]
 \centering
+\vskip 2ex
 {\footnotesize
-\begin{verbatim}
-Pstruct Struct_6113 {
+\begin{code}
+\kw{Pstruct} Struct_6113 \{
         Pstring(:':':)  v_blob_5869;
         ':';
-};
-Precord Pstruct Struct_5671 {
+\};
+\kw{Precord} \kw{Pstruct} Struct_5671 \{
         Pdate  v_date_1;
         ' ';
         Ptime  v_time_6;
@@ -1076,12 +1075,12 @@ Precord Pstruct Struct_5671 {
         ' ';
         Popt Struct_6113 v_opt_6096;
         Pstring_SE(:Peor:)  v_blob_6095;
-};
-Psource Parray entries_t {
+\};
+\kw{Psource} \kw{Parray} entries_t \{
         Struct_5671[];
-};
-\end{verbatim}
-}
+\};
+\end{code}
+}\vskip -0.1ex
 \caption{Best learned description of messages.sdb}
 \label{fig:best-messages.sdb}
 \end{figure}
