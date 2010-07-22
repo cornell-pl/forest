@@ -38,7 +38,7 @@ data was missing or unions where a new type of data was discovered).
 It then uses the original \learnpads{} algorithm to infer descriptions
 for the aggregated portions of bad data. 
 
-In the rest of this section, we present the algorithm in more detail.
+In the following, we present the algorithm in more detail.
 
 \cut{
 Intuitively, the incremental learning algorithm takes an initial
@@ -189,7 +189,7 @@ An array description
 \cd{Array(D, s, t)} has an element type described by \cd{D}, a separator
 string \cd{s} that appears between array elements, and a
 terminator string \cd{t}. Finally, \cd{Option D} indicates \cd{D} is 
-an optional data element.  To resolve ambiguities, unions are
+optional.  To resolve ambiguities, unions are
 biased towards their first element, arrays are biased towards a longest match
 semantics and options are biased towards matching as opposed to not matching.
 
@@ -215,10 +215,9 @@ The aggregation structure mirrors the structure of the description \cd{D}
 with two additional nodes: an \cd{Opt} node and a \cd{Learn} node. 
 %Note the difference between {\tt Opt} nodes and {\tt OptionA} nodes. The latter 
 %just corresponds to the description {\tt Option D}. 
-The \cd{Learn} nodes accumulate extra, unparseable data 
-whose structure must be learned.
-The \cd{Opt} nodes do the opposite: they denote the fact that
-certain data items were missing.  One of the invariants 
+The \cd{Learn} nodes accumulate extra data whose structure must be learned.
+The \cd{Opt} nodes do the opposite: they mark were data were missing.  
+An invariant
 of the aggregation structure is that
 newly inserted \cd{Opt} nodes always wrap either a \cd{BaseA} or 
 a \cd{SyncA} node.
@@ -252,27 +251,27 @@ incremental_step(D, xs) =
 
 \figref{fig:inc-learning} gives pseudo-code for the {\em incremental
   learning step}.  The input to this step is the current description
-\cd{D} and a batch of data records \cd{xs}.  The \cd{init\_aggregate}
+\cd{D} and a batch of data records \cd{xs}.  The \kw{init\_aggregate}
 function initializes an empty aggregate according to description
 \cd{D}.  During parsing, the algorithm iteratively updates a list of
 possible aggregates \cd{As}, seeded with the initial aggregate of
 \cd{D}.  For each data record \cd{x}, the algorithm uses the
-\cd{parse} function to produce a list \cd{Rs} of possible parses.  It
-then calls the \cd{aggregate} function to merge each parse \cd{R} in
+\kw{parse} function to produce a list \cd{Rs} of possible parses.  It
+then calls the \kw{aggregate} function to merge each parse \cd{R} in
 the current list of parses with each aggregate \cd{A} in the current
 list of aggregates.  (We use `\cd{::}' to denote prepending an element
 onto the front of a list.)  When the system finishes parsing all the
-input data, the algorithm uses the \cd{select\_best} function to
+input data, the algorithm uses the \kw{select\_best} function to
 select the best aggregate from the list of candidate aggregates
-\cd{as}.  The \cd{select\_best} function counts the total number of
+\cd{As}.  The \kw{select\_best} function counts the total number of
 \cd{Opt} and \cd{Learn} nodes in each of the aggregates, and returns
 the one with the smallest number.
 The idea is that the aggregate with the smallest number of added nodes is 
-more likely to represent a new description
-that is the closer to the original description. 
-Finally, the \cd{update\_desc} function uses the structure of the best
+more likely to represent a description
+that is the close to the original description. 
+Finally, the \kw{update\_desc} function uses the structure of the best
 aggregate to update the previous description \cd{D} to produce the new
-current description \cd{D'}.  The \cd{update\_desc} function works by
+current description \cd{D'}.  The \kw{update\_desc} function works by
 doing two things.
 First, it converts the aggregate structure back to a \pads{} description
 with \cd{Opt} nodes translated to \cd{Poption} types. In addition,
@@ -281,7 +280,7 @@ algorithm to learn a sub-description for the data collected
 at each of the \cd{Learn} nodes
 and replaces these \cd{Learn} nodes with these new sub-descriptions. 
 Second, it uses rewriting
-rules to improve the overall structure.
+rules to improve the overall description.
 %We will discuss these rewriting rules in more
 %detail in \secref{sec:imp}.
 
@@ -301,8 +300,7 @@ rules to improve the overall structure.
   and m = (0,1,0,len(s)) 
   and s.s'' $\not\in$ L(re) and s'' $\in$ prefix(s') 
 (Error, m) $\in$ L(PstringME(re),E,"",s'), 
-  if "" $\not\in$ L(re)
-  and m = (1,0,0,0)
+  if "" $\not\in$ L(re) and m = (1,0,0,0)
 (Str s, m) $\in$ L(PstringFW(e),E,s,s') 
   if E(e) = Int k and s = c1...ck
   and m = (0,1,0,len(s))
@@ -325,11 +323,11 @@ rules to improve the overall structure.
   and (R2, m2) $\in$ L(D2,E[x $\arrow$ R1],s2,s')
 \mbox{}
 \kw{Main parse function}:
-\kw{parse}(D, s) = \{R | (R, m) $\in$ L(D,.,s,"")\} 
+\kw{parse}(D, s) = \{R | (R, m) $\in$ L(D,$\epsilon$,s,"")\} 
 \end{code}
 %and for all (R',m') $\in$ L(D,.,s,""), m <= m'
 }
-\caption{Parsing (excerpts)}
+\caption{Definition of \kw{parse} function (excerpts)}
 \label{fig:parse-sem}
 %\end{center}
 \end{figure}
@@ -370,18 +368,19 @@ rules to improve the overall structure.
 Our parser is a top-down recursive descent parser
 that performs error detection and recovery using synchronizing tokens.
 \figref{fig:parse-sem} describes the most important elements
-of the parsing algorithm.  For simplicity and brevity,
-the algorithm is described abstractly
-using a relation with the form 
-$(R, m) \in L(D, E, s, s')$.  This relation may be
-read as affirming that ``within an environment $E$, a description $D$
-can be parsed, generating parse tree $R$ with correctness metric $m$, 
-while consuming string $s$, and stopping prior to consuming lookhead 
-string $s'$''.  The environment $E$ is a mapping from variable names
-$x$ to parse trees $R$.  This environment is used to record the
-binding of variables to parse trees introduced by PADS dependent
-pair construct.
-The {\em parse metric} $m$ measures the quality of a parse. It is a 
+of the parsing algorithm.  For simplicity and brevity, we
+describe the algorithm abstractly
+using a relation of the form 
+${\texttt{(R,m)} \in \texttt{L(D,E,s,s')}}$.  This relation may be
+read ``using description \cd{D} and operating within the environment \cd{E},
+parsing the input \cd{I = s.s'} will consume input prefix \cd{s} and leave \cd{s'} as the residual input, 
+returning the parse tree \cd{R} and correctness metric \cd{m}.''  We use the symbol `\cd{.}' to denote string concatenation. 
+The environment \cd{E} is a mapping from variable names
+\cd{x} to parse trees \cd{R}.  This environment stores the
+binding of variables to parse trees that the PADS dependent
+pair construct introduces.   We use the symbol `$\epsilon$' to denote the empty environment.
+
+The {\em parse metric} \cd{m} measures the quality of a parse. It is a 
 4-tuple: ($e$, $g$, $s$, $c$), where the $e$ is the number of tokens
 with parse errors, $g$ is the number of tokens parsed correctly,
 $s$ is the number of 
@@ -391,14 +390,15 @@ To sum two parse metrics, we sum their components:
 $(e_1, g_1, s_1, c_1) + (e_2, g_2, s_2, c_2) = 
 (e_1 + e_2, g_1 + g_2, s_1 + s_2, c_1 + c_2)$.
 We compare parse metrics by comparing the ratios of correctly
-parsed characters against erroneous tokens and imaginery number of
-skipped tokens, where the skipped tokens are computed by the
-fraction of the number of the skipped character over the estimated token
+parsed characters against erroneous tokens and the estimated number of
+skipped tokens.  We estimate the number of skipped tokens
+by computing the
+fraction of the number of skipped characters over the estimated token
 length:
 \begin{eqnarray*}
 (e_1, g_1, s_1, c_1) &\ge& (e_2, g_2, s_2, c_2)~ \rm{iff} \\
 \frac{c_1}{e_1+\frac{s_1}{\max((s_1+c_1)/(e_1+g_1), 1)}} &\ge& 
-\frac{c_2}{e_2+\frac{s_2}{\max((s_2+c_2)/(e_2+g_2), 1)}} 
+\frac{c_2}{e_2+\frac{s_2}{\max((s_2+c_2)/(e_2+g_2), 1)}} \\
 \end{eqnarray*}
 
 %%\subsection{Aggregation}
@@ -655,32 +655,30 @@ sync node, then recovered data $r$ will be added to the list under $l$.
 
 \subsection{Description Rewriting}
 Once we have successfully parsed, aggregated and relearned a new
-chunk of data, we optimize the newly generated description for
-presentation to the user (or simply to ready it for the next incremental
-learning phase).  Our original non-incremental
+chunk of data, we optimize the new description using rewriting rules.  
+Our original non-incremental
 algorithm already had such an optimization
 phase; we have modified and tuned the algorithm for use in
 the incremental system.
 
-Description rewriting is based on opitimizing an information-theoretic
-Minimum Description Length (MDL) score, which is defined over descriptions
+Description rewriting is based on optimizing an information-theoretic
+Minimum Description Length (MDL) score~\cite{mdlbook}, which is defined over descriptions
 \cd{D} as:
-\[\mbox{\rm{MDL}}(D) = \costdescription{D} + w \times \acostdata{D}{x_1, \ldots, x_k},\]
+%\[\mbox{\rm{MDL}(\texttt{D})} = \costdescription{D} + w \times \acostdata{D}{x_1, \ldots, x_k},\]
 where $\costdescription{D}$ is called the {\em type complexity} of \cd{D}
 and $\acostdata{D}{x_1, \ldots, x_k}$ is called the {\em atomic data 
 complexity}.  The type complexity is a measure of the size of the 
 abstract syntax of \cd{D}.  The atomic data 
-complexity of  data records $x_1, \ldots, x_k$ relative to \cd{D} 
+complexity of data records $x_1, \ldots, x_k$ relative to \cd{D} 
 is the number of bits required
-to transmit an {\em average} data record given that 
-the receiver already possesses the description \cd{D}.
+to transmit an {\em average} data record given the description \cd{D}.
 The MDL score of \cd{D} is the weighted sum of these two components.  
 Our experiments indicate a weight $w$ of approximately 10 is effective
 in our domain.
 
-Given a rewriting rule that rewrites  \cd{D} to \cd{D'}, the
-rule is used if and only if \cd{MDL(D)} $\leq$ \cd{MDL(D')}.
-Rewriting continues until no further rule can be used.
+Given a rewriting rule that rewrites \cd{D} to \cd{D'}, the
+rule fires if and only if \rm{MDL}(\texttt{D}) $\leq$ \rm{MDL}(\texttt{D'}).
+Rewriting continues until no further rule can fire.
 Hence, our rewriting strategy is a greedy local
 search.
 
@@ -699,27 +697,27 @@ search.
 %% Most of the rules are data-independent and inherited from \learnpads{}, such as 
 %% removing degenerate lists and flattening nested structs and unions.
 
-The old system contained many MDL-based rewriting rules such as rules
-to flattening nested structs and unions, to remove degenerate cases and
-empty nodes, and a number of others.
-One important new rewriting is called {\em BlobFinding}. 
+The original learning system contains many MDL-based rewriting rules, for example,
+to flatten nested structs and unions and
+to refine ranged types.
+{\em BlobFinding} is an important new rewriting rule. 
 This rule takes a given sub-description \cd{D} and uses a heuristic to 
-determine if it is overly verbose and needs to be simplified. 
+determine if the type complexity of \cd{D} is too high relative to the amount of data it covers.
 The heuristic is that if the height of \cd{D} is larger than \cd{minBlobHeight}
-(which is empiracally determined), and there is a special constant string 
-or pattern \cd{re} immediately following
-\cd{D} in the whole description, then we rewrite \cd{D} to 
+(which is empirically determined), and there is an identifiable constant string 
+or pattern \cd{re} that immediately follows
+\cd{D}, then we rewrite \cd{D} to 
 \cd{Pstring\_SE(:re:)}.
-\cd{Pstring\_SE} is a \pads{} base type that is similar to \cd{Pstring},
+Description \cd{Pstring\_SE} is a \pads{} base type that is similar to \cd{Pstring},
 except it uses a stopping regular pattern as opposed to a stopping character
-to mark the termination of a string. This rule is tremendously helpful
+to indicate termination. This rule is tremendously helpful
 in controlling the size and
-complexity of the learned description.  Without it, descriptions sometimes
-grow quite large and complex, data processing slows, and the algorithms
-fail to scale.
+complexity of learned descriptions.  Without it, descriptions can
+grow in complexity to the point where parsing is slow and the algorithm fails to scale.
 
-We also introduce a new {\em data dependent} rule called {\em MergeOpts}
-to optimize a type pattern that occurs frequently during incremental
+
+We also introduced a new {\em data dependent} rewriting rule called {\em MergeOpts}
+to optimize a pattern that occurs frequently in descriptions during incremental
 learning.  Recall that the aggregate function
 introduces \cd{Opt} nodes above a \cd{BaseA} or \cd{SyncA} node 
 whenever the corresponding \cd{Base} or \cd{Sync} token in 
