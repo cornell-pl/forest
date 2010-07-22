@@ -282,8 +282,8 @@ at each of the \cd{Learn} nodes
 and replaces these \cd{Learn} nodes with these new sub-descriptions. 
 Second, it uses rewriting
 rules to improve the overall structure.
-We will discuss these rewriting rules in more
-detail in \secref{sec:imp}.
+%We will discuss these rewriting rules in more
+%detail in \secref{sec:imp}.
 
 \begin{figure}[t]
 %\begin{center}
@@ -506,7 +506,7 @@ parsed characters against erroneous tokens and skipped characters:
 %% $A + R \goto A'$ where $A$ is the initial aggregate data structure,
 %% $R$ is the parse tree and $A'$ is the new aggregate.
 
-\subsection{An Example}
+\subsection{An Example of Parsing and Aggregation}
 To illustrate the parsing and aggregation phases of the algorithm, we
 introduce a simple example.
 Suppose we have a description $d$, comprised of a pair of an integer and a sync token ``\cd{*}'',
@@ -646,4 +646,87 @@ sync node, then recovered data $r$ will be added to the list under $l$.
 % - update original description
 % - rewriting rules (data independent, data dependent, OptsTable)
 
+
+\subsection{Description Rewriting}
+Once we have successfully parsed, aggregated and relearned a new
+chunk of data, we optimize the newly generated description for
+presentation to the user (or simply to ready it for the next incremental
+learning phase).  Our original non-incremental
+algorithm already had such an optimization
+phase; we have modified and tuned the algorithm for use in
+the incremental system.
+
+Description rewriting is based on opitimizing an information-theoretic
+Minimum Description Length (MDL) score, which is defined over descriptions
+\cd{D} as:
+\[\mbox{\rm{MDL}}(D) = \costdescription{D} + w \times \acostdata{D}{x_1, \ldots, x_k},\]
+where $\costdescription{D}$ is called the {\em type complexity} of \cd{D}
+and $\acostdata{D}{x_1, \ldots, x_k}$ is called the {\em atomic data 
+complexity}.  The type complexity is a measure of the size of the 
+abstract syntax of \cd{D}.  The atomic data 
+complexity of  data records $x_1, \ldots, x_k$ relative to \cd{D} 
+is the number of bits required
+to transmit an {\em average} data record given that 
+the receiver already possesses the description \cd{D}.
+The MDL score of \cd{D} is the weighted sum of these two components.  
+Our experiments indicate a weight $w$ of approximately 10 is effective
+in our domain.
+
+Given a rewriting rule that rewrites  \cd{D} to \cd{D'}, the
+rule is used if and only if \cd{MDL(D)} $\leq$ \cd{MDL(D')}.
+Rewriting continues until no further rule can be used.
+Hence, our rewriting strategy is a greedy local
+search.
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=\columnwidth]{opts}
+%\epsfig{file=opts.eps,width=\columnwidth}
+\caption{MergeOpts rewriting rule}\label{fig:opts}
+\end{center}
+\vskip -2ex
+\end{figure}
+
+%% When the incremental learning algorithm produces a refined description
+%% from an aggregate, the algorithm applies rewriting rules
+%% to the new description to improve its quality and readability.
+%% Most of the rules are data-independent and inherited from \learnpads{}, such as 
+%% removing degenerate lists and flattening nested structs and unions.
+
+The old system contained many MDL-based rewriting rules such as rules
+to flattening nested structs and unions, to remove degenerate cases and
+empty nodes, and a number of others.
+One important new rewriting is called {\em BlobFinding}. 
+This rule takes a given sub-description \cd{D} and uses a heuristic to 
+determine if it is overly verbose and needs to be simplified. 
+The heuristic is that if the height of \cd{D} is larger than \cd{minBlobHeight}
+(which is empiracally determined), and there is a special constant string 
+or pattern \cd{re} immediately following
+\cd{D} in the whole description, then we rewrite \cd{D} to 
+\cd{Pstring\_SE(:re:)}.
+\cd{Pstring\_SE} is a \pads{} base type that is similar to \cd{Pstring},
+except it uses a stopping regular pattern as opposed to a stopping character
+to mark the termination of a string. This rule is tremendously helpful
+in controlling the size and
+complexity of the learned description.  Without it, descriptions sometimes
+grow quite large and complex, data processing slows, and the algorithms
+fail to scale.
+
+We also introduce a new {\em data dependent} rule called {\em MergeOpts}
+to optimize a type pattern that occurs frequently during incremental
+learning.  Recall that the aggregate function
+introduces \cd{Opt} nodes above a \cd{BaseA} or \cd{SyncA} node 
+whenever the corresponding \cd{Base} or \cd{Sync} token in 
+the description failed to 
+parse. When faced with an entirely new form of data, 
+the algorithm is likely to introduce a series of \cd{Opt} nodes as
+each type in the original description fails in succession. 
+The {\em MergeOpts} rule collapses these consecutive \cd{Opt} nodes if they
+are correlated, \ie{}, either they are all always present or all always
+absent.  To verify this correlation, the algorithm maintains a
+table that records the branching decisions when parsing each
+data line. It uses this table to determine whether to merge
+adjacent \cd{Opt} nodes during rewriting. 
+\figref{fig:opts} illustrates the effect of this rule.  In the figure,
+$S$ denotes a struct and $B$ a base token.
 
