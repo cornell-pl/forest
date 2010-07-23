@@ -307,11 +307,11 @@ rules to improve the overall description.
   if x $\in$ prefix(s') then x $\not\in$ L(re)
 (Str s, m) $\in$ L(PstringFW(e),E,s,s') 
   if E(e) = Int k and s = c1...ck
-  and m = (0,1,0,len(s))
+  and m = (0,1,0,k)
 (Error, (1,0,0,0)) $\in$ L(PstringFW(e),E,"",s') 
-  if E(e) $\ne$ Int k for any k
+  if E(e) $\ne$ Int k for any k > 0
 (Error, (1,0,0,0)) $\in$ L(PstringFW(e),E,"",s') 
-  if E(e) = Int k and k > 0
+  if E(e) = Int k and k > 0 and len(s') < k
 \mbox{}
 \kw{Sync}:
 (Good, (0,1,0,len(s))) $\in$ L(Sync(s),E,s,s')
