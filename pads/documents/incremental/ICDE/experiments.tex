@@ -847,7 +847,7 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 $N$\textbackslash $M$& 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
        & 3.37     & 3.00    & 3.00    & 3.00    & 3.00 \\ 
 Manual & 10199.04 & 9763.39 & 9763.39 & 9763.39 & 9742.43 \\
-(300) & 442.18  & 827.66  & 897.30 & 910.00 & 868.01 \\ \hline
+(3600) & 442.18  & 827.66  & 897.30 & 910.00 & 868.01 \\ \hline
      & 5.05 & 5.05 & 5.05 & 5.05 & 5.05\\
 500  & 16119.06 & 15184.53 & 15184.53 & 15184.53 & 15184.53\\ 
 (0.30)  & 927.84 & 1286.60 & 1117.60 & 1147.43 & 1118.18\\ \hline 
@@ -883,7 +883,7 @@ Manual & 10199.04 & 9763.39 & 9763.39 & 9763.39 & 9742.43 \\
 $N$\textbackslash $M$& 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
        & 0.62    & 0.62    & 0.62    & 0.52    & 0.52  \\ 
 Manual & 8316.77 & 8355.71 & 8313.52 & 8297.47 & 8297.04 \\
-(300) & 337.44  & 438.29  & 292.88  & 295.68  & 292.05 \\\hline
+(3600) & 337.44  & 438.29  & 292.88  & 295.68  & 292.05 \\\hline
   & 0.67 & 0.67 & 0.67 & 0.67 & 0.67\\
 500  & 8098.46 & 8098.46 & 8098.46 & 8098.46 & 8098.46\\ 
 (2.13)  & 123.88 & 127.76 & 130.17 & 125.52 & 124.45\\ \hline 
@@ -933,7 +933,8 @@ $M$'s. As a baseline, we add a ``Manual'' row.
 A human expert was given
 only the first 500 records of the data and was asked to write a \pads{}
 description that correctly parses the 500 records. The timings in the manual
-row are the time it took the expert to produce the initial description, and the
+row are the time it took the expert to produce the initial description 
+(which was estimated to be an hour), and the
 time to learn the entire data source beginning with that description. 
 We highlight the best result in each table. For example, the best description
 for \cd{message.sdb} is learned with $N=16000$ and $M=400$. 
