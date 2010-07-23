@@ -101,8 +101,9 @@ a new description for the next iteration.
 \kw{Basic notation}:
 c          (a string character)	
 s1.s2      (concatenation of strings)
-prefix(s)  (set of prefixes of s)
-sprefix(s) (set of strict prefixes of s)
+first(s)    (first character of s)
+sprefix(s)  (set of strict prefixes of s) 
+len(s)     (length of s)
 \end{code}
 \begin{code}
 \kw{Descriptions}:
@@ -291,10 +292,13 @@ rules to improve the overall description.
 \cdmath\small
 \kw{Base}:
 (Int (atoi s), m) $\in$ L(Pint,E,s,s')
-  if m = (0,1,0,len(s))
-(Error, (1,0,0,0)) $\in$ L(Pint,E,"",s'), 
   if s $\in$ L((+|-)?[0-9]+) 
-  and L([0-9]) $\cap$ prefix(s') = \{\}
+  and first(s') $\not\in$ \{0,..,9\}
+  and m = (0,1,0,len(s))
+(Error, (1,0,0,0)) $\in$ L(Pint,E,"",s'),
+  if prefix(s') $\not\in$ L((+|-)?[0-9]+) 
+
+
 (Str s, m) $\in$ L(PstringME(re),E,s,s'),
   if s $\in$ L(re) 
   and m = (0,1,0,len(s)) 
