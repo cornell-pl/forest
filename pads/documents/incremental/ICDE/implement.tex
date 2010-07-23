@@ -66,10 +66,11 @@ One key optimization culls parses based on
 the parse metric \cd{m}. 
 %Metric $m_1$ is better than $m_2$ if $m_1$ is perfect and $m_2$ is not, 
 %or if $m_1 > m_2$.
-To be more precise, the \kw{parse} function returns a list of
+To be more precise, we instrument the implementation of the \kw{parse} function 
+to return a list of 
 {\em parse triples} \cd{(r,m,j)}, where \cd{r} is the data representation of
 the parse, \cd{m} is the metric associated with \cd{r}, and
-\cd{j} is the position in the input after the parse.
+\cd{j} is the position in the input after the parse rather than just representations.
 We define a \kw{clean} function that first partitions the
 triples into groups that share the same 
 {\em span}, \ie{}, the substring of the input consumed by the parse.

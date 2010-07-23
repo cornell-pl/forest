@@ -526,12 +526,12 @@ Suppose we have a description $d$, comprised of a pair of an integer and a sync 
 and we are given the following three lines of new input: ``5*'' and
 ``abc*'' and ``8\$''.
 \figref{fig:parse} shows the three data representations that result
-from parsing the lines, which we call $r_1$, $r_2$ and $r_3$,
+from parsing the lines, which we call $R1$, $R2$ and $R3$,
 respectively. Notice the first line parsed without errors, the second
 line contains an error for \cd{Pint} and some unparsable data ``{\tt
   abc}'', and the third contains a \cd{Fail} node because the
 sync token \cd{*} was missing.  \figref{fig:aggregate} shows the aggregation
-of $r_1$ to $r_3$ starting from an empty aggregate. In
+of $R1$ to $R3$ starting from an empty aggregate. In
 general, \cd{Error} and \cd{Fail} nodes in the data representation
 trigger the creation of \cd{Opt} nodes in the aggregate, while
 unparsable data is collected in \cd{Learn} nodes.
