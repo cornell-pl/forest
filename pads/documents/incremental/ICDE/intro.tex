@@ -98,21 +98,22 @@ an iteration, make changes to it (\eg{}, renaming the
 automatically generated variable names), and insert the revised description back into the loop.
 
 The main contributions of this paper are:
-\begin{itemize}
-\item We present a novel inference algorithm capable of
-combining automatic learning with human modification and thus creating 
-more accurate and readable descriptions suitable for documentation.
-\item We formalize the incremental step through an operational semantics of 
-parsing and aggregation functions.
-\item We test the system on over 16 different ad hoc data formats and
-show that it can learn a correct description from a source larger than
-30GB in a few hours.
-\item We analyze the experimental results to demonstrate how system parameters affect 
-performance.
-\end{itemize}
+\begin{enumerate}
+\item The design of a new system for generation of data descriptions
+and end-to-end ad hoc data processing tools from example data.  
+The system is incremental and interactive, allowing it to process
+streaming data a chunk at a time, and allowing users to intercede
+to correct, adapt or modify intermediate results. 
+\item The engineering and optimization of algorithms that allow
+the system to handle large, industrial data sources of 30GB or
+more in a matter of a few hours.
+\item The evaluation and analysis of the system
+on 16 different examples drawn from
+various industrial data sources.
+\end{enumerate}
 
 We presented an earlier version of this material in an informal workshop last year~\cite{wasl09:fisher+}. 
-Unlike the earlier paper, this paper presents a detailed empirical analysis of the correctness and scalability of the system
+Unlike the earlier paper, this paper presents a detailed empirical analysis of the correctness and scalability of the system,
 as well as describing the algorithm in more detail.
 
 In the rest of the paper, we give a brief overview of \pads{} and the original

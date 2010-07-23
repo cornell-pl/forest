@@ -11,10 +11,9 @@ the various algorithms require.  Some algorithms
 require positive and negative examples to discover a grammar, some
 algorithms require manual labeling of example data, some algorithms
 require answers to various kinds of queries.  Our system only
-requires positive examples (negative examples of ad hoc data sources 
+requires positive examples (negative examples 
 are not available in practice), does not ask users to answer queries,
-and does not require labeling (files are too
-big and change form at arbitrarily deep points within).  
+and does not require labeling.  
 
 Given that we work only with positive examples, there
 are still a number of possible approaches we could take.
@@ -93,11 +92,12 @@ either from free-form text~\cite{Ng+:texttables,Pinto+:texttables} or
 from web pages~\cite{Lerman+:webtables}.  These approaches typically
 use hand-labeled examples to train machine learning systems to
 identify the tables.  They then use heuristics specific to tabular
-data to extract the tuples contained within those tables.  The portion
-of this work related to identifying structured data from within more
-free-form documents is complementary to ours.  The portion responsible
-for deconstructing the identified tables uses more specific
-domain-knowledge related to the form of tables than we do.
+data to extract the tuples contained within those tables.  
+% The portion
+% of this work related to identifying structured data from within more
+% free-form documents is complementary to ours.  The portion responsible
+% for deconstructing the identified tables uses more specific
+% domain-knowledge related to the form of tables than we do.
 
 Many researchers have studied the problem of learning
 a schema such as a DTD or XSchema from a collection 
