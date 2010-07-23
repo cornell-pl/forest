@@ -104,7 +104,6 @@ s1.s2        (concatenation of strings)
 first(s)     (first character of s)
 prefix(s)    (set of prefixes of s) 
 sprefix(s)   (set of strict prefixes of s)
-substring(s) (set of substrings of s) 
 len(s)       (length of s)
 \end{code}
 \begin{code}
@@ -321,7 +320,7 @@ rules to improve the overall description.
   and s3.s2 $\not\in$ sprefix(s1.s2) for any s3
   and m = (1,0,len(s1),len(s2))
 (Fail, (1,0,0,0)) $\in$ L(Sync(s),E,"",s')
-  if s $\not\in$ substring(s')
+  if s $\not\in$ prefix(s')
 \mbox{}
 \kw{Pair}:
 (PairR (R1,R2), (m1 + m2)) 
