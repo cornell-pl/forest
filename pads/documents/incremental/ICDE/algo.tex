@@ -14,8 +14,8 @@ description subsumes \cd{D} and describes the $M$
 new records.  In addition, the algorithm attempts to preserve as much
 of the structure of \cd{D} as possible, so users supplying initial
 descriptions can recognize the resulting descriptions. 
-The algorithm then takes \cd{D'}
-to be the new candidate description and repeats the process until it
+The algorithm then makes \cd{D'}
+the new candidate description and repeats the process until it
 has consumed all the input data.
 The initial description \cd{D} can either be supplied by a user or it
 can be inferred automatically by applying the original algorithm to
@@ -148,8 +148,9 @@ A :: =
 | Learn [s]
 \end{code}
 }
+\vskip -2ex
 \caption{Preliminary data structures used in incremental inference}
-\label{fig:data-structures}
+\label{fig:data-structures}\vskip -2ex
 \end{figure}
 
 \cut{%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -252,7 +253,7 @@ incremental_step(D, xs) =
 \end{figure}
 
 \figref{fig:inc-learning} gives pseudo-code for the {\em incremental
-  learning step}.  The input to this step is the current description
+  learning step}.  The input  is the current description
 \cd{D} and a batch of data records \cd{xs}.  The \kw{init\_aggregate}
 function initializes an empty aggregate according to description
 \cd{D}.  During parsing, the algorithm iteratively updates a list of
