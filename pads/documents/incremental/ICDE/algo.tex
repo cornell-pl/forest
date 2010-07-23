@@ -102,6 +102,7 @@ a new description for the next iteration.
 c          (a string character)	
 s1.s2      (concatenation of strings)
 first(s)    (first character of s)
+prefix(s)   (set of prefixes of s) 
 sprefix(s)  (set of strict prefixes of s) 
 len(s)     (length of s)
 \end{code}
@@ -292,17 +293,16 @@ rules to improve the overall description.
 \cdmath\small
 \kw{Base}:
 (Int (atoi s), m) $\in$ L(Pint,E,s,s')
-  if s $\in$ L((+|-)?[0-9]+) 
-  and first(s') $\not\in$ \{0,..,9\}
+  if re = (+|-)?[0-9]+
+  and s $\in$ L(re) 
+  and s'' $\in$ prefix(s') and s.s'' $\not\in$ L(re)
   and m = (0,1,0,len(s))
 (Error, (1,0,0,0)) $\in$ L(Pint,E,"",s'),
-  if prefix(s') $\not\in$ L((+|-)?[0-9]+) 
-
-
+  if prefix(s') $\not\subseteq$ L((+|-)?[0-9]+) 
 (Str s, m) $\in$ L(PstringME(re),E,s,s'),
   if s $\in$ L(re) 
+  and s'' $\in$ prefix(s') and s.s'' $\not\in$ L(re) 
   and m = (0,1,0,len(s)) 
-  and s.s'' $\not\in$ L(re) and s'' $\in$ prefix(s') 
 (Error, m) $\in$ L(PstringME(re),E,"",s'), 
   if "" $\not\in$ L(re) and m = (1,0,0,0)
 (Str s, m) $\in$ L(PstringFW(e),E,s,s') 
