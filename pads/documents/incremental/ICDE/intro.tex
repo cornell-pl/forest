@@ -92,11 +92,10 @@ modified description that extends the initial description and covers the new
 data. The initial description may be supplied by the user or automatically
 generated using the original \learnpads{} system. This iterative architecture
 enables the learning of a very large data source by partitioning it 
-into many smaller batches and updating the description from one batch to next. 
-It also allows the user to take the output description at the end of
-an iteration, make manual changes to it (e.g. renaming the 
-automatically generated variable names to more human-friendly
-ones), and insert the revised description back into the loop.
+into smaller batches and updating the description from one batch to the next. 
+It also allows the user to take the description output at the end of
+an iteration, make changes to it (\eg{}, renaming the 
+automatically generated variable names), and insert the revised description back into the loop.
 
 The main contributions of this paper are:
 \begin{itemize}
@@ -107,7 +106,7 @@ more accurate and readable descriptions suitable for documentation.
 parsing and aggregation functions.
 \item We test the system on over 16 different ad hoc data formats and
 show that it can learn a correct description from a source larger than
-30GB in a matter of a few hours.
+30GB in a few hours.
 \item We analyze the experimental results to demonstrate how system parameters affect 
 performance.
 \end{itemize}
