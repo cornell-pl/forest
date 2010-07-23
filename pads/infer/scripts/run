@@ -1,0 +1,8 @@
+#!/bin/bash
+increment -f free_clickthroughs.dat.cleaned -output gen > free_clickthroughs.dat.cleaned.inc.txt
+increment -f strace_jaccn.dat -output gen > strace_jaccn.dat.inc.txt
+increment -f thirdpartycontent.log -output gen > thirdpartycontent.log.inc.txt
+increment -f LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv -i 1000 -l 50 -output gen > LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv.inc.txt
+increment -f LA-UR-06-1446-MX16-NODE-NOZ.TXT -l 200 -output gen > LA-UR-06-1446-MX16-NODE-NOZ.TXT.inc.txt
+increment -f messages.sdb -output gen > messages.sdb.inc.txt
+increment -f searchevents.dat.cleaned -output gen > searchevents.dat.cleaned.inc.txt

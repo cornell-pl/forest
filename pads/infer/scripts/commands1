@@ -1,0 +1,19 @@
+#!/bin/bash
+#wasl-run.pl 4000 100 free_clickthroughs.dat.cleaned -scale -u 0.5 >> scale.results.uc_0.5
+#wasl-run.pl 2000 6400 thirdpartycontent.log -scale -u 0.5 >> scale.results.uc_0.5
+#wasl-run.pl 2000 1600 eventstream.current -scale -u 0.5 >> scale.results.uc_0.5
+#wasl-run.pl 2000 400 strace_jaccn.dat -scale -u 0.5 >> scale.results.uc_0.5
+#wasl-run.pl 500 1600 LA-UR-06-1446-MX16-NODE-NOZ.TXT -scale -u 0.5 >> scale.results.uc_0.5
+#wasl-run.pl 1000 6400  LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv -scale -u 0.5 >> scale.results.uc_0.5
+#wasl-run.pl 16000 100 messages.sdb -scale -u 0.5 >> scale.results.uc_0.5
+#wasl-run.pl 8000 100 HALO_have2impression.log.1 -scale -u 0.5 >> scale.results.uc_0.5
+wasl-run.pl 8000 400 4046.xls -scale >> scale.results.txt
+wasl-run.pl 2000 400 searchevents.dat.cleaned -scale >> scale.results.txt
+#nohup wasl-run.pl 4000 200 free_clickthroughs.dat.cleaned -scale -u 0.15 >> scale.results.uc_0.5
+#nohup wasl-run.pl 2000 50 thirdpartycontent.log -scale -u 0.15 >> scale.results.uc_0.5
+#nohup wasl-run.pl 4000 250 strace_jaccn.dat -scale -u 0.15 >> scale.results.uc_0.5
+#nohup wasl-run.pl 4000 150 LA-UR-06-1446-MX16-NODE-NOZ.TXT -scale -u 0.15 >> scale.results.uc_0.5
+#nohup wasl-run.pl 32000 100 LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv -scale -u 0.15 >> scale.results.uc_0.5
+#nohup wasl-run.pl 500 100 4046.xls -scale -u 0.15 >> scale.results.uc_0.5
+#nohup wasl-run.pl 2000 150 searchevents.dat.cleaned -scale -u 0.15 >> scale.results.uc_0.5
+#nohup wasl-run.pl 8000 100 messages.sdb -scale -u 0.15 >> scale.results.uc_0.5
