@@ -298,13 +298,13 @@ rules to improve the overall description.
   and s'' $\in$ prefix(s') and s.s'' $\not\in$ L(re)
   and m = (0,1,0,len(s))
 (Error, (1,0,0,0)) $\in$ L(Pint,E,"",s'),
-  if prefix(s') $\not\subseteq$ L((+|-)?[0-9]+) 
+  if x $\in$ prefix(s') then x $\not\in$ L((+|-)?[0-9]+) 
 (Str s, m) $\in$ L(PstringME(re),E,s,s'),
   if s $\in$ L(re) 
   and s'' $\in$ prefix(s') and s.s'' $\not\in$ L(re) 
   and m = (0,1,0,len(s)) 
-(Error, m) $\in$ L(PstringME(re),E,"",s'), 
-  if "" $\not\in$ L(re) and m = (1,0,0,0)
+(Error, (1,0,0,0)) $\in$ L(PstringME(re),E,"",s'), 
+  if x $\in$ prefix(s') then x $\not\in$ L(re)
 (Str s, m) $\in$ L(PstringFW(e),E,s,s') 
   if E(e) = Int k and s = c1...ck
   and m = (0,1,0,len(s))
