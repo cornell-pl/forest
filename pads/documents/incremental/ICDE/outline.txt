@@ -71,3 +71,4 @@ Format Inference of Very Large Ad Hoc Data
   2. scales up to large numbers. The degree of scale depends in part on
      the complexity of the desciption...
 
+http://www.padsproj.org/incremental-learning.html
