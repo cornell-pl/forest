@@ -67,7 +67,8 @@ adds information to what we gain from the MDL score alone.
 
 Finally, our system would not be very useful if the learned description 
 did not describe the original data correctly. Therefore, we also use an accuracy measure, 
-which reports the number of lines in the original data source that the learned description parses without errors.
+which reports the percentage of original data source that the 
+learned description parses without errors.
 
 
 \subsection{Large data sources}
@@ -129,7 +130,11 @@ vshkap2.log            & 10063.71  & 1.750 & 100\% & 23337 & 14651 & 2163 &  57 
 \subsection{Scaling performance}
 In the next experiment, we evaluate how the algorithm scales with increasing data size by running
 the system on increasingly large fractions of each of the small data files, starting with 20\% and ending with 100\%.
-For a given data source, we empirically determined which values of the batch-size parameters $N$ and $M$ give the best result, and then used those values for this experiment.  \figref{fig:scale} plots the resulting total learning time versus the percentage of the data file used in learning.   The graph shows the algorithm enjoys
+For a given data source, we empirically determined which values of the batch-size parameters $N$ and $M$ give the best result when learning the entire source, 
+and then used those values for this experiment.  
+\figref{fig:scale} plots the resulting total learning time versus the 
+percentage of the data file used in learning.   
+The graph shows the algorithm enjoys
 near linear scale-up for all sources except \cd{4046.xls}, which flattens after 40\% of
 data.  The \emph{BlobFinding} rule is the cause of this anomaly: learning the initial description takes a relatively long time, but after the algorithm sees the first 40\% of the data, the \emph{BlobFinding} rule simplifies the description to one that parses much more quickly and correctly parses the rest of the data.  
 
@@ -144,6 +149,7 @@ additional errors and took minimal further time. }
 \includegraphics[width=\columnwidth]{scale-uc}
 %\epsfig{file=scale-uc.eps, width=\columnwidth}
 \caption{Learning time vs percentage of data sources}
+\vskip -2ex
 \label{fig:scale}
 \end{figure}
 
@@ -937,8 +943,10 @@ row are the time it took the expert to produce the initial description
 (which was estimated to be an hour), and the
 time to learn the entire data source beginning with that description. 
 We highlight the best result in each table. For example, the best description
-for \cd{message.sdb} is learned with $N=16000$ and $M=400$. 
-In the rest of this section, we summarize some of the findings from analyzing these results.
+for \cd{message.sdb} is learned with $N=16000$ and $M=400$ which are the
+parameters used for the scaling test of this source. 
+In the rest of this section, we summarize some of the findings 
+from analyzing these results.
 
 %If a description takes a long time to learn, it is probably very verbose and low
 %quality. This is because complex descriptions are usually not what people want
@@ -1009,6 +1017,7 @@ and then to invoke the system on the rest of the data.
 \centering
 \includegraphics[width=\columnwidth]{adc}
 \caption{Effects of $w$ on description quality}
+\vskip -2ex
 \label{fig:adc}
 \end{figure}
 

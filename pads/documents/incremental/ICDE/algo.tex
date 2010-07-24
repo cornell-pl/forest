@@ -7,16 +7,26 @@ Given a candidate description \cd{D}, the new algorithm uses \cd{D} to parse
 the records in the data source.  
 It discards records that parse successfully, since these records are
 already covered by \cd{D}, but it collects records that fail to parse.
-When the algorithm accumulates $M$ such records, where $M$ is a
-parameter of the algorithm, it invokes the incremental learning step,
-described below, to produce a refined description \cd{D'}.  This refined
+Specifically, if a portion of a record fails to parse,
+that failure will be detected at a particular node in \cd{D}.
+These failed portions are collected
+in an aggregation data structure \cd{A} that mirrors the the structure
+of \cd{D}. When the algorithm accumulates $M$ such records, where $M$ is a
+parameter of the algorithm, it transforms \cd{D} to accommodate the places 
+where differences were found (\ie, by introducing options where a piece of
+data was missing or unions where a new type of data was discovered).
+It then uses the original \learnpads{} algorithm to infer descriptions
+for the aggregated portions of bad data, and merge these new
+sub-descriptions into the transformed description to produce a new,
+refined description \cd{D'}. This refined
 description subsumes \cd{D} and describes the $M$
 new records.  In addition, the algorithm attempts to preserve as much
 of the structure of \cd{D} as possible, so users supplying initial
 descriptions can recognize the resulting descriptions. 
 The algorithm then makes \cd{D'}
 the new candidate description and repeats the process until it
-has consumed all the input data.
+has consumed all the input data. We call the main loop in 
+\figref{fig:overview} the {\em incremental learning step}.
 The initial description \cd{D} can either be supplied by a user or it
 can be inferred automatically by applying the original algorithm to
 $N$ records selected from the data source, where $N$ is another
@@ -24,7 +34,7 @@ parameter.
 %Currently, the system selects a mix of $N/3$ consecutive lines
 %taken from the beginning, middle, and end of the data source. 
 
-
+\cut{%%%%%%%%%%%%%%%%
 Intuitively, the incremental learning step works by attempting to
 parse each of the $M$ records according to the current description
 \cd{D}.  It discards the portions of each record that parse correctly.
@@ -37,6 +47,7 @@ differences were found (\ie, by introducing options where a piece of
 data was missing or unions where a new type of data was discovered).
 It then uses the original \learnpads{} algorithm to infer descriptions
 for the aggregated portions of bad data. 
+}%%%%%%%%%% end of cut
 
 In the following, we present the algorithm in more detail.
 
@@ -68,6 +79,7 @@ a new description for the next iteration.
 %\epsfig{file=overview.eps,width=0.9\columnwidth}
 \caption{An Overview of the Incremental Learning Framework}
 \label{fig:overview}
+\vskip -2ex
 \end{figure}
 
 %To address these problems, 
@@ -250,6 +262,7 @@ incremental_step(D, xs) =
 \end{codebox}
 \caption{Pseudo-code for the incremental learning step}
 \label{fig:inc-learning}
+\vskip -2ex
 \end{figure}
 
 \figref{fig:inc-learning} gives pseudo-code for the {\em incremental
@@ -671,7 +684,7 @@ the incremental system.
 Description rewriting is based on optimizing an information-theoretic
 Minimum Description Length (MDL) score~\cite{mdlbook}, which is defined over descriptions
 \cd{D} as:
-%\[\mbox{\rm{MDL}(\texttt{D})} = \costdescription{D} + w \times \acostdata{D}{x_1, \ldots, x_k},\]
+\[\mbox{\rm{MDL}(\texttt{D})} = \costdescription{D} + w \times \acostdata{D}{x_1, \ldots, x_k},\]
 where $\costdescription{D}$ is called the {\em type complexity} of \cd{D}
 and $\acostdata{D}{x_1, \ldots, x_k}$ is called the {\em atomic data 
 complexity}.  The type complexity is a measure of the size of the 
