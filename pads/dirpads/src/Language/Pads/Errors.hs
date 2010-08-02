@@ -12,6 +12,8 @@ data ErrMsg =
  | RegexMatchFail String
  | TransformToDstFail String String String
  | TransformToSrcFail String String String
+ | UnderlyingTypedefFail
+ | TypedefFail
    deriving (Typeable, Data, Eq)
 
 {- XXX-KSF: fix pretty printing to use pretty printing combinators rather than string ++ -}
@@ -24,6 +26,8 @@ instance Pretty ErrMsg where
   ppr (TransformToDstFail s1 s2 s3) = text ("Parsing transform " ++ s1 ++ " failed on input: " ++ s2 ++ s3)
   ppr (TransformToSrcFail s1 s2 s3) = text ("Printing transform "++ s1 ++ " failed on input: " ++ s2 ++ s3)
   ppr (RecordError s)        = text s
+  ppr UnderlyingTypedefFail  = text "Predicate is true, but underlying type had an error."
+  ppr TypedefFail            = text "Predicate is false."
 
 data ErrInfo = ErrInfo { msg      :: ErrMsg,
                          position :: Maybe S.Pos }

@@ -122,12 +122,13 @@ baseTypesList = [
   ("PstringSE", (''String,  [''S.RE]))
  ]
 
+
 baseTypesMap :: M.Map String (Name, [Name]) = M.fromList baseTypesList
 
 {- XXX: These declarations should be generated from table above . -}
 {- XXX: Default values should be defined to use parameter, so for example, we can generate a string of the proper length. -}
 newtype Pint = Pint Int
-  deriving (Eq, Show, Data, Typeable, Num)
+  deriving (Eq, Show, Data, Typeable, Num, Ord)
 
 instance Pads Pint Base_md where
   parsePP = pint_parseM
@@ -285,8 +286,9 @@ satisfy p = primPads loop
           else
             ([],s)
 
-digitListToInt :: [Char] -> Int
-digitListToInt = foldl (\a d ->10*a + (Char.digitToInt d)) 0
+digitListToInt :: Bool->[Char] -> Int
+digitListToInt isNeg digits = let raw = foldl (\a d ->10*a + (Char.digitToInt d)) 0 digits
+   in if isNeg then negate raw else raw
 
 
 recordBegin,recordEnd :: PadsParser (Maybe String)
@@ -379,9 +381,11 @@ pint_parseM = do
      if isEor then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pint") (Just initPos))
       else do  
           c <- peakHeadP 
+          let isNeg = c == '-'
+          if isNeg then takeHeadP else peakHeadP
           digits <- satisfy Char.isDigit
           if null digits then badReturn (def, mkErrBasePD (E.FoundWhenExpecting (mkStr c) "Pint") (Just initPos))
-            else goodReturn (Pint $ digitListToInt digits, cleanBasePD)
+            else goodReturn (Pint $ digitListToInt isNeg digits, cleanBasePD)
 
 
 pcharLit_parseM :: Char -> PadsParser Base_md
@@ -435,7 +439,14 @@ genRepMD ty = case ty of
   Precord ty   -> genRepMD ty
   Papp ty arg  -> genRepMD ty
   Ptrans tySrc tyDest exp -> genRepMD tyDest    -- rep and md for transform are rep and md for destination type
+  Ptypedef pat ty pred -> genRepMDTypedef ty          
 
+{- Generate a representation and meta-data type for a typedef. -}
+genRepMDTypedef :: PadsTy -> (TH.Type, TH.Type)
+genRepMDTypedef ty = 
+  let (rep_ty, md_orig) = genRepMD ty
+      md_ty = tyListToTupleTy [(ConT ''Base_md), md_orig]    -- md is a pair of a base md for the typedef and the underlying md.
+  in (rep_ty, md_ty)
 
 {- Generate a representation and meta-data types for a tuple -}
 genRepMDTuple :: [PadsTy] -> (TH.Type, TH.Type)
@@ -524,6 +535,34 @@ parseE ty = case ty of
   Precord ty   -> mkParseRecord ty
   Papp ty argE -> mkParseTyApp ty argE
   Ptrans tySrc tyDest exp -> mkParseTyTrans tySrc tyDest exp
+  Ptypedef pat ty pred -> mkParseTyTypedef pat ty pred
+
+{-
+  do { (rep,md_orig) <- parseTy
+       let pat = rep
+       let ty_md = if pred then Base_md {numErrors = numErrors md_orig, errInfo = Nothing }
+                          else Base_md {numErrors = 1 + numErrors md_orig, errInfo = Just "Typedef predicate failed." }
+       return (rep, (b_md,md_orig))
+-}
+
+mkParseTyTypedef :: TH.Pat -> PadsTy -> TH.Exp -> Q TH.Exp
+mkParseTyTypedef pat tyBase pred = do
+  baseE <- parseE tyBase
+  let baseEQ = return baseE
+  let predQ  = return (TH.LamE [pat, TH.VarP (TH.mkName "rep"), TH.VarP (TH.mkName "md")] pred)    -- abstract on bound variables
+  {- Why can't I define buildError and getLocOpt outside of the quasi-quote? -}
+  [| do (b_rep, b_md @ Base_md{numErrors = b_errors, errInfo = b_errInfo} ) <- $baseEQ 
+        let getLocOpt errInfo = case errInfo of 
+                            Nothing -> Nothing
+                            Just e -> E.position e
+        let buildError pred n errInfo = if n == 0    then Nothing
+                                  else if pred then Just (E.ErrInfo {msg = E.UnderlyingTypedefFail, position = getLocOpt errInfo})
+                                  else              Just (E.ErrInfo {msg = E.TypedefFail,           position = getLocOpt errInfo})
+        let (predVal, totErrors) = if $predQ b_rep b_rep b_md    -- apply to bind values to bound variables.
+                                      then (True, b_errors) else (False, 1+b_errors)
+        let tdef_md = Base_md {numErrors = totErrors, errInfo = buildError predVal totErrors b_errInfo }
+
+        return (b_rep, (tdef_md,b_md)) |]
 
 mkParseTyTrans :: PadsTy -> PadsTy -> TH.Exp -> Q TH.Exp
 mkParseTyTrans tySrc tyDest exp = do

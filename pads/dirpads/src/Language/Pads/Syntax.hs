@@ -11,6 +11,7 @@ data PadsTy = Plit Char
             | Precord PadsTy
             | Papp PadsTy TH.Exp
             | Ptrans PadsTy PadsTy TH.Exp   {- Src, Dest, and pair of functions to do transformation -}
+            | Ptypedef TH.Pat PadsTy TH.Exp  {- pattern bound to underlying type, underlying type, predicate -}
    deriving (Eq, Data, Typeable)
 
 newtype PadsDecl = PadsDecl (Id, Maybe TH.Pat, PadsTy)

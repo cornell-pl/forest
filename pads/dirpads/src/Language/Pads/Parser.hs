@@ -17,8 +17,8 @@ import Language.Haskell.Meta as LHM
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}"],
-                                           reservedNames   = ["Precord", "Ptrans", "Pusing"]})
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::"],
+                                           reservedNames   = ["Precord", "Ptrans", "Pusing", "Pwhere"]})
 
 whiteSpace  = PT.whiteSpace  lexer
 identifier  = PT.identifier  lexer
@@ -88,11 +88,25 @@ transformTy = do { reserved "Ptrans"
                    Right expTH -> return (Ptrans srcTy dstTy expTH)
                  } <?> "transform"
 
+typedefTy :: Parser PadsTy
+typedefTy = do { str1 <- manyTill anyChar (reservedOp "::")
+               ; pat <- case LHM.parsePat str1 of
+                             (Left err) -> unexpected ("Failed to parse Haskell pattern in Pwhere declaration: " ++ err)
+                             (Right patTH) -> return patTH
+               ; ty <- padsTy
+               ; reserved "Pwhere"
+               ; str2 <- manyTill anyChar eof
+               ; case LHM.parseExp str2 of
+                      Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Pwhere declaration.")
+                      Right expTH -> return (Ptypedef pat ty expTH)
+               } <?> "where"
+
 padsTy :: Parser PadsTy
 padsTy = recordTy
      <|> transformTy 
      <|> tupleTy
      <|> try fnAppTy
+     <|> try typedefTy
      <|> litTy
      <|> idTy
      <?> "pads type"
