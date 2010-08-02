@@ -89,6 +89,33 @@ strhex32FW_result3 = phex32FW_parseS 4 input3_hex32FW    -- Prints error message
 input_hexpair = "aa,bbb"
 hexpair_result = hexPair_parseS input_hexpair
 
+[pads| IntRange = x :: Pint Pwhere 0 <= x && x <= 256 |]
+input_intRange24 = "24"
+input_intRange0  = "0"
+input_intRange256 = "256"
+input_intRangeLow = "-23"
+input_intRangeHigh = "512"
+input_intRangeBad  = "aaa"
+
+result_intRange24 = intRange_parseS input_intRange24
+result_intRange0  = intRange_parseS input_intRange0
+result_intRange256 = intRange_parseS input_intRange256
+result_intRangeLow = intRange_parseS input_intRangeLow
+result_intRangeHigh = intRange_parseS input_intRangeHigh
+result_intRangeBad  = intRange_parseS input_intRangeBad
+
+{- Note that the special variables "rep" and "md" are in scope in the body of the predicate. -}
+{- Here rep is bound to the same value as x; md is the meta-data descriptor for the underyling type. -}
+
+[pads| IntRangeP (low::Pint, high::Pint) = x :: Pint Pwhere low <= x && rep <= high && (numErrors md == 0)|]
+
+result_intRangeP24 = intRangeP_parseS (0, 256) input_intRange24 
+result_intRangeP0  = intRangeP_parseS (0, 256) input_intRange0  
+result_intRangeP256 = intRangeP_parseS (0, 256) input_intRange256 
+result_intRangePLow = intRangeP_parseS (0, 256) input_intRangeLow 
+result_intRangePHigh = intRangeP_parseS (0, 256) input_intRangeHigh 
+result_intRangePBad  = intRangeP_parseS (0, 256) input_intRangeBad 
+
 
 ---- Play space
 
