@@ -8,10 +8,11 @@ import Language.Haskell.TH as TH
 data PadsTy = Plit Char 
             | Pname String
             | Ptuple [PadsTy] 
-            | Precord PadsTy
+            | Pline PadsTy
             | Papp PadsTy TH.Exp
             | Ptrans PadsTy PadsTy TH.Exp   {- Src, Dest, and pair of functions to do transformation -}
             | Ptypedef TH.Pat PadsTy TH.Exp  {- pattern bound to underlying type, underlying type, predicate -}
+            | Precord String [(Maybe String,PadsTy, Maybe TH.Exp)]
    deriving (Eq, Data, Typeable)
 
 newtype PadsDecl = PadsDecl (Id, Maybe TH.Pat, PadsTy)

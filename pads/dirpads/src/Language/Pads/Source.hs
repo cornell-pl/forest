@@ -50,18 +50,18 @@ data RE = RE String
 
 {- Called when current is empty.
    Should not be called when atEOF is already set. -}
-getNextRecord_newline (s @ Source {current, rest, atEOF, loc = Loc{lineNumber, byteOffset}}) = 
+getNextLine_newline (s @ Source {current, rest, atEOF, loc = Loc{lineNumber, byteOffset}}) = 
       if atEOF then s
       else if B.null rest then
             (Source {current = B.empty, rest = rest, atEOF = True, loc = Loc{lineNumber, byteOffset=0}})
-      else  (Source {current = nextRecord, rest=residual, atEOF = False, loc = Loc{lineNumber=lineNumber+1, byteOffset=0}})
-        where (nextRecord, raw_residual) = B.break (\c->c == '\n') rest
+      else  (Source {current = nextLine, rest=residual, atEOF = False, loc = Loc{lineNumber=lineNumber+1, byteOffset=0}})
+        where (nextLine, raw_residual) = B.break (\c->c == '\n') rest
               residual = B.drop 1 raw_residual
 
-padsSourceFromString str = getNextRecord_newline (Source{current = B.empty,
+padsSourceFromString str = getNextLine_newline (Source{current = B.empty,
                                                          rest    = B.pack str,
-                                                         atEOF   = False,   -- if string is empty, will be made True by getNextRecord_newline 
-                                                         loc     = Loc{ lineNumber = -1,   -- will be incremeneted to 0 by getNextRecord_newline
+                                                         atEOF   = False,   -- if string is empty, will be made True by getNextLine_newline 
+                                                         loc     = Loc{ lineNumber = -1,   -- will be incremeneted to 0 by getNextLine_newline
                                                                         byteOffset = 0}})
 
 padsSourceToString (Source {current, rest, ..}) = B.unpack (B.concat [current,rest])
@@ -119,11 +119,10 @@ scanTo chr (src @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
 eqCurrent :: Source -> Source -> Bool
 eqCurrent s s'= current s == current s'
 
-recordBegin :: Source -> (Maybe String, Source)
-recordBegin s = (Nothing, s)
+lineBegin :: Source -> (Maybe String, Source)
+lineBegin s = (Nothing, s)
 
-recordEnd :: Source -> (Maybe String, Source)
-recordEnd s = 
+lineEnd :: Source -> (Maybe String, Source)
+lineEnd s = 
   if atEOF s then (Just "Found EOF when looking for EOR", s)
-             else (Nothing, getNextRecord_newline s)
-  
+             else (Nothing, getNextLine_newline s)

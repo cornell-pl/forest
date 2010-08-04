@@ -291,30 +291,30 @@ digitListToInt isNeg digits = let raw = foldl (\a d ->10*a + (Char.digitToInt d)
    in if isNeg then negate raw else raw
 
 
-recordBegin,recordEnd :: PadsParser (Maybe String)
-recordBegin = primPads S.recordBegin
-recordEnd = primPads S.recordEnd
+lineBegin,lineEnd :: PadsParser (Maybe String)
+lineBegin = primPads S.lineBegin
+lineEnd = primPads S.lineEnd
 
-doRecordEnd = do
-  rendErr <- recordEnd
+doLineEnd = do
+  rendErr <- lineEnd
   case rendErr of
     Nothing -> return cleanBasePD
     Just err -> do p <- getPos
-                   badReturn (mkErrBasePD (E.RecordError err) (Just p))
+                   badReturn (mkErrBasePD (E.LineError err) (Just p))
 
-doRecordBegin = do
-  rbegErr <- recordBegin
+doLineBegin = do
+  rbegErr <- lineBegin
   case rbegErr of
     Nothing -> return cleanBasePD
     Just err -> do p <- getPos
-                   badReturn (mkErrBasePD (E.RecordError err) (Just p))
+                   badReturn (mkErrBasePD (E.LineError err) (Just p))
 
 
-parseRecord :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
-parseRecord p = do 
-   bmd <- doRecordBegin
+parseLine :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
+parseLine p = do 
+   bmd <- doLineBegin
    (r,md) <- p
-   emd <- doRecordEnd
+   emd <- doLineEnd
    let hmd = get_md_header md
    let new_hd = mergeBaseMDs [bmd,hmd,emd]
    let new_md = replace_md_header md new_hd
@@ -418,40 +418,74 @@ make_pads_declarations (PadsDecl (id, pat, padsTy)) = do
    let ty_name    = getTyName    p_name
    let md_ty_name = getMDName    p_name
    let parse_name = getParseName p_name
-   let (ty,md_ty) = genRepMD padsTy       -- Generate reprsentation and meta-data types for padsTy
    let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
-   let ty_decl        ::  Dec  = mk_newTyD    ty_name    ty
-   let md_ty_decl     ::  Dec  = mk_TySynD md_ty_name md_ty
-   let padsInstance   :: [Dec] = genPadsInstance      ty_name md_ty parse_name  arg_info_opt
-   parseM :: [Dec] <- genPadsParseM        parse_name ty_name md_ty_name padsTy arg_info_opt
-   parseS :: [Dec] <- genPadsParseS p_name parse_name ty_name md_ty_name padsTy arg_info_opt
-   return ([ty_decl, md_ty_decl]  ++ 
+   let (ty_decl, md_ty_decls, md_ty) = genRepMDDecl padsTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
+   let padsInstance   :: [Dec] = genPadsInstance      parse_name    ty_name md_ty             arg_info_opt
+   parseM :: [Dec]            <- genPadsParseM        parse_name    ty_name md_ty_name padsTy arg_info_opt
+   parseS :: [Dec]            <- genPadsParseS p_name parse_name    ty_name md_ty_name padsTy arg_info_opt
+   return ([ty_decl]    ++
+           md_ty_decls  ++ 
            padsInstance ++  
-           parseM ++ 
+           parseM       ++ 
            parseS )
 
-{- Functions for generation representation and meta-data types -}
-genRepMD ::  PadsTy -> (TH.Type, TH.Type)
-genRepMD ty = case ty of
+{- Functions for generating representation and meta-data declarations and meta-data type. -}
+
+genRepMDDecl :: PadsTy -> Name -> Name -> (TH.Dec, [TH.Dec], TH.Type)
+genRepMDDecl ty ty_name md_ty_name = case ty of
+  Precord _ tys -> genRepMDDeclStruct ty_name md_ty_name tys
+  other -> let (rep,md) = genRepMDTy other
+           in  (mk_newTyD ty_name rep, [mk_TySynD md_ty_name md], md)
+
+{- Generate type and meta-data representations. -}
+genRepMDTy ::  PadsTy -> (TH.Type, TH.Type)
+genRepMDTy ty = case ty of
   Plit char    -> (ConT ''(),  ConT ''Base_md)
   Pname p_name -> (ConT (getTyName p_name), ConT (getMDName p_name))
   Ptuple tys   -> genRepMDTuple tys
-  Precord ty   -> genRepMD ty
-  Papp ty arg  -> genRepMD ty
-  Ptrans tySrc tyDest exp -> genRepMD tyDest    -- rep and md for transform are rep and md for destination type
-  Ptypedef pat ty pred -> genRepMDTypedef ty          
+  Pline ty   -> genRepMDTy ty
+  Papp ty arg  -> genRepMDTy ty
+  Ptrans tySrc tyDest exp -> genRepMDTy tyDest    -- rep and md for transform are rep and md for destination type
+  Ptypedef pat ty pred -> genRepMDTypedef ty
+  Precord _ tys   ->   error "Lines can only appear at the top level."
 
 {- Generate a representation and meta-data type for a typedef. -}
 genRepMDTypedef :: PadsTy -> (TH.Type, TH.Type)
 genRepMDTypedef ty = 
-  let (rep_ty, md_orig) = genRepMD ty
-      md_ty = tyListToTupleTy [(ConT ''Base_md), md_orig]    -- md is a pair of a base md for the typedef and the underlying md.
+  let (rep_ty, md_orig) = genRepMDTy ty
+      md_ty = tyListToTupleTy [ConT ''Base_md, md_orig]    -- md is a pair of a base md for the typedef and the underlying md.
   in (rep_ty, md_ty)
+
+{- Generate a representation and meta-data type for a struct. -}
+genRepMDDeclStruct :: Name -> Name -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> (TH.Dec, [TH.Dec], TH.Type)
+genRepMDDeclStruct ty_name md_ty_name fields = 
+  let (vsts', md_vsts') = unzip $ flattenMaybeList $ map genRepMDField fields
+      derives      = [''Show, ''Eq, ''Typeable, ''Data]
+      ty_con       = TH.RecC ty_name vsts'
+      ty_decl      = TH.DataD [] ty_name [] [ty_con] derives
+      inner_md_name = getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
+      imd_con       = TH.RecC inner_md_name md_vsts'
+      imd_decl      = TH.DataD [] inner_md_name [] [imd_con] derives   -- declaration of line for nested components
+      imd_ty        = TH.ConT inner_md_name
+      md_ty         = tyListToTupleTy [ConT ''Base_md, imd_ty]
+      md_decl       = mk_TySynD md_ty_name md_ty
+  in if length vsts' == 0 then 
+        error ("Error: Struct " ++ (show ty_name) ++ " must contain at least one named field.")
+     else 
+        (ty_decl, [imd_decl,md_decl], md_ty)
+ 
+type VST = (TH.Name, TH.Strict, TH.Type)
+genRepMDField :: (Maybe String, PadsTy, Maybe TH.Exp) -> Maybe (VST, VST)
+genRepMDField (Nothing, ty, exp)  = Nothing
+genRepMDField (Just str, ty, exp) = let
+   (rep_ty, md_ty) = genRepMDTy ty
+   in Just ((getFieldName   str, TH.NotStrict, rep_ty),
+            (getFieldMDName str, TH.NotStrict, md_ty))
 
 {- Generate a representation and meta-data types for a tuple -}
 genRepMDTuple :: [PadsTy] -> (TH.Type, TH.Type)
 genRepMDTuple tys = 
-  let (tys', mds') = unzip (map genRepMD tys)
+  let (tys', mds') = unzip (map genRepMDTy tys)
       r_tys = filter (\t -> t /= ConT ''()) tys'
       ty =  case r_tys of          -- Construct rep type for a tuple.
              []   -> ConT ''()     -- Tuple contained no non-singleton types, so its rep is the unit type.
@@ -467,7 +501,7 @@ genRepMDTuple tys =
   in
       (ty, md_ty)
 
-genPadsInstance ty_name md_ty parse_name mpat_info = 
+genPadsInstance parse_name ty_name md_ty mpat_info = 
   let (inst, parsePP) = case mpat_info of
                           Nothing -> (AppT (AppT (ConT ''Pads) (ConT ty_name)) md_ty,   -- Pads RepTy MDTy
                                       mkName "parsePP")
@@ -508,6 +542,11 @@ genPadsParseM parse_name rep_name pd_name padsTy mpat_info = do
    let funD = ValD (VarP parse_name) (NormalB bodyE) []
    return [sigD, funD]
 
+wrapRep :: Name -> PadsTy -> TH.Exp -> TH.Exp
+wrapRep repN ty repE = case ty of
+  Precord _ _ -> repE
+  otherwise   -> AppE  (ConE repN) repE
+
 {-
  Generate body of parseM function, which has the form:
   do (rep,md) <- rhsE
@@ -521,7 +560,7 @@ genParseBody repN mdN ty = do
    let (repE,repP) = genPE repName
    let (mdE, mdP)  = genPE mdName
    let doParseS    = BindS (TupP [repP,mdP]) rhsE
-   let frepE       = AppE  (ConE repN) repE
+   let frepE       = wrapRep repN ty repE 
    let resultE     = TupE [frepE,mdE]
    let finalS      = NoBindS (AppE (VarE 'return) resultE)
    return (DoE [doParseS, finalS])
@@ -529,11 +568,12 @@ genParseBody repN mdN ty = do
 {- Given a PadsTy ty, return the haskell expression that parses ty. -}
 parseE :: PadsTy -> Q TH.Exp
 parseE ty = case ty of
-  Plit c       -> return (AppE (VarE(getParseName "PcharLit")) (LitE (CharL c)))   -- Note the type of this expression has a different pattern: (no rep).
-  Pname p_name -> return (VarE (getParseName p_name))
-  Ptuple tys   -> mkParseTuple tys
-  Precord ty   -> mkParseRecord ty
-  Papp ty argE -> mkParseTyApp ty argE
+  Plit c         -> return (AppE (VarE(getParseName "PcharLit")) (LitE (CharL c)))   -- Note the type of this expression has a different pattern: (no rep).
+  Pname p_name   -> return (VarE (getParseName p_name))
+  Ptuple tys     -> mkParseTuple tys
+  Precord str fields -> mkParseRecord str fields
+  Pline ty       -> mkParseLine ty
+  Papp ty argE   -> mkParseTyApp ty argE
   Ptrans tySrc tyDest exp -> mkParseTyTrans tySrc tyDest exp
   Ptypedef pat ty pred -> mkParseTyTypedef pat ty pred
 
@@ -557,7 +597,7 @@ mkParseTyTypedef pat tyBase pred = do
                             Just e -> E.position e
         let buildError pred n errInfo = if n == 0    then Nothing
                                   else if pred then Just (E.ErrInfo {msg = E.UnderlyingTypedefFail, position = getLocOpt errInfo})
-                                  else              Just (E.ErrInfo {msg = E.TypedefFail,           position = getLocOpt errInfo})
+                                  else              Just (E.ErrInfo {msg = E.PredicateFailure,      position = getLocOpt errInfo})
         let (predVal, totErrors) = if $predQ b_rep b_rep b_md    -- apply to bind values to bound variables.
                                       then (True, b_errors) else (False, 1+b_errors)
         let tdef_md = Base_md {numErrors = totErrors, errInfo = buildError predVal totErrors b_errInfo }
@@ -582,16 +622,110 @@ mkParseTyApp ty argE = do
   return (AppE parseFnE argE) 
 
 {-
-The representation of Precord ty is the same as the representation for ty.
-The meta-data structure of a Precord ty is the same as the meta-data structure for ty.
+The representation of Pline ty is the same as the representation for ty.
+The meta-data structure of a Pline ty is the same as the meta-data structure for ty.
 TODO: Report error if underlying type has no representation. 
 -}
 
-mkParseRecord :: PadsTy -> Q TH.Exp
-mkParseRecord ty = do
+mkParseLine :: PadsTy -> Q TH.Exp
+mkParseLine ty = do
    rhsE <- parseE ty
-   return (AppE (VarE 'parseRecord) rhsE)
+   return (AppE (VarE 'parseLine) rhsE)
 
+
+
+{- 
+Invariants: literal can't have a field name or a predicate; no field name, no predicate
+   stmts to parse each field of a record
+   do
+    (field_name, field_name_raw_md) <- parse_1             -- if field_name exists, not a literal, predicate
+    let raw_bmd_1 = get_md_header field_name_raw_md
+    let bmd_1 = if pred_1 then raw_bmd_1
+                else addPredFailureMD raw_bmd_1
+    let field_name_md = replace_md_header field_name_raw_md bmd_1
+    ...
+    (field_name, field_name_md) <- parse_field_name        -- if field_name exists, not a literal, no predicate
+    let bmd_field_name = get_md_header field_name_md
+    ... 
+    md_i <- parse_i                                        -- no field name, literal field, no predicate
+    let bmd_i = get_md_header md_i
+    ...
+    (rep_j,md_j) <- parse_j                                -- no field name, not literal, no predicate
+    let bmd_j = get_md_header md_j
+
+    let top_md = mergeBaseMDs [bmd_1,...bmd_n]
+    let name_md = Name_md{name_1 = field_name_md, ... }
+    return (rep,(top_md,name_md))
+-}
+
+mkParseRecord :: String -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q TH.Exp
+mkParseRecord str fields = do
+  (repEs,mdEs,bmdEs, stmts) <- mkParseFields fields
+  let tyName             = mkName str
+  let top_md             = mkName "top_md"
+  let (top_mdE, top_mdP) = genPE top_md
+  let headerE            = AppE (VarE 'mergeBaseMDs) (ListE bmdEs)
+  let mdS                = LetS [ValD top_mdP (NormalB headerE) []]
+  let repE               = RecConE tyName repEs
+  let inner_md_name      = getStructInnerMDName tyName   -- ty name is the same as the declared pads type name
+  let mdE                = TupE [top_mdE, RecConE inner_md_name mdEs]
+  let resultE            = TupE [repE,mdE]
+  let finalS             = NoBindS (AppE (VarE 'return) resultE)
+  return (DoE (stmts ++ [mdS,finalS]))
+
+
+mkParseField :: (Maybe String, PadsTy, Maybe TH.Exp) -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
+mkParseField (labelM, ty, predM) = do
+   repName     <- case labelM of { Nothing -> genRepName; Just str -> return $ getFieldName   str}
+   mdName      <- case labelM of { Nothing -> genMdName;  Just str -> return $ getFieldMDName str}
+   bmdName     <- genBMdName 
+   let (repE, repP) = genPE repName
+   let ( mdE,  mdP) = genPE mdName
+   let (bmdE, bmdP) = genPE bmdName
+   rhsE        <- parseE ty
+   case (labelM,ty,predM) of 
+    (Nothing, _,  Just p)      ->  error "Predicates cannot modify unnamed fields in records."
+    (Just str, Plit c, _)      ->  error "Named fields cannot have literal types in records."
+    (Nothing, Plit c, Nothing) ->  let                                         -- Parse unnamed, literal struct field
+       stmt1 = BindS mdP rhsE                                                  -- No rep for literals
+       stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
+       in return([], [], bmdE, [stmt1,stmt2])                                  -- No rep or md to include in result
+    (Nothing, _, Nothing)      ->  let                                         -- Parse unnamed, non-literal struct field
+       stmt1 = BindS (TupP [repP,mdP]) rhsE                                    -- rep and md exist for non-literal types
+       stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
+       in return([], [], bmdE, [stmt1,stmt2])                                  -- No rep or md to include in result
+    (Just str, ty, Nothing)    -> let                                          -- Parse named, non-literal struct field, no predicate
+       stmt1 = BindS (TupP [repP,mdP]) rhsE                                    -- rep and md exist for non-literal types
+       stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
+       in return([(repName,repE)], [(mdName,mdE)], bmdE, [stmt1,stmt2])       -- Include named rep and md in result
+    (Just str, ty, Just pred)    -> do                                         -- Parse named, non-literal struct field, predicate
+      raw_mdName      <- genMdName
+      raw_bmdName     <- genBMdName 
+      let (rawMDE, rawMDP)   = genPE raw_mdName
+      let (rawBMDE, rawBMDP) = genPE raw_bmdName
+      let predTestE      = TH.CondE pred rawBMDE (AppE (VarE 'addPredFailureMD) rawBMDE)    -- if pred then rawBMD else addPredFailureMD rawBMD
+      let replaceHeaderE = AppE (AppE (VarE 'replace_md_header) rawMDE) bmdE                -- replace_md_header rawMD bmd
+      let stmt1 = BindS (TupP [repP,rawMDP]) rhsE
+      let stmt2 = LetS [ValD rawBMDP (NormalB (AppE (VarE 'get_md_header) rawMDE)) []]
+      let stmt3 = LetS [ValD bmdP (NormalB predTestE)  []] 
+      let stmt4 = LetS [ValD mdP  (NormalB replaceHeaderE) []]
+      return ([(repName,repE)], [(mdName,mdE)], bmdE, [stmt1,stmt2,stmt3,stmt4])       -- Include named rep and md in result
+
+mkParseFields :: [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q ([FieldExp], [FieldExp], [TH.Exp], [Stmt])
+mkParseFields [] = return ([],[],[],[])
+mkParseFields (field:fields) = do
+  (rep_field,   md_field,  bmd_field,  stmts_field)  <- mkParseField  field
+  (reps_fields, md_fields, bmd_fields, stmts_fields) <- mkParseFields fields
+  return (rep_field++reps_fields, md_field++md_fields, bmd_field:bmd_fields, stmts_field++stmts_fields)
+
+addPredFailureMD :: Base_md -> Base_md
+addPredFailureMD (Base_md{numErrors, errInfo}) = 
+  let errInfo' = case errInfo of
+                  Nothing -> E.ErrInfo {msg = E.PredicateFailure, position = Nothing}
+                  Just e ->  e
+  in Base_md{numErrors = numErrors + 1, errInfo = Just errInfo'}
+       
+       
 {- 
    stmts to parse each element of tuple:
    do
@@ -673,6 +807,11 @@ mergeMaybe m1 m2 = case (m1,m2) of
   (Just d1, Just d2) -> Just (d1,d2)
   _ -> error "mergeMaybe given two maybes in different states."
 
+flattenMaybeList xs = case xs of
+  [] -> []
+  (Nothing: xxs) -> flattenMaybeList xxs
+  (Just x : xxs) -> x : flattenMaybeList xxs
+
 mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
     where con = NormalC ty_name [(NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
           derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data]
@@ -694,7 +833,7 @@ patToTy pat = case pat of
   BangP  p    -> patToTy p
   AsP n p     -> patToTy p
   WildP       -> error "Wild card patterns are not supported in PADS declarations."
-  RecP name fieldPats -> ConT name   {-  I think this is the correct represtentation of a record type. -}
+  RecP name fieldPats -> ConT name   {-  I think this is the correct represtentation of a line type. -}
   ListP pats  -> tyListToListTy (map patToTy pats)
   SigP p ty   -> ty
   
@@ -721,7 +860,7 @@ patToExp pat = case pat of
   BangP  p    -> patToExp p
   AsP n p     -> VarE n
   WildP       -> error "Wild card patterns are not supported in PADS declarations. Can't convert to expression"
-  RecP name fieldPats -> RecConE name (map fieldPatToExp fieldPats)   {-  I think this is the correct represtentation of a record type. -}
+  RecP name fieldPats -> RecConE name (map fieldPatToExp fieldPats)   {-  I think this is the correct represtentation of a line type. -}
   ListP pats  -> ListE (map patToExp pats)
   SigP p ty   -> patToExp p
 
@@ -729,7 +868,6 @@ fieldPatToExp (n,p) = (n, patToExp p)
 
 
 {- Name manipulation functions -}
--- genUniqueName base (i::Int) = mkName (base++(show i))
 genUniqueName base = newName base
 genRepName = genUniqueName "rep" 
 genMdName  = genUniqueName "md" 
@@ -737,6 +875,12 @@ genBMdName = genUniqueName "bmd"
 getMDName pname = case M.lookup pname baseTypesMap of
          Nothing -> mkName ((strToUpper pname) ++ "_md")
          Just _ -> ''Base_md                  -- Built-in base type        
+getStructInnerMDName name = 
+  let str = show name
+  in mkName (str++"_inner_md")
+getFieldMDName str = mkName (str++"_md")
+getFieldName str = mkName str
+
 getTyName pname = mkName  (strToUpper pname)
 {-
 XXXgetTyName pname = case M.lookup pname baseTypesMap of

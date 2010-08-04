@@ -13,12 +13,13 @@ import Text.Parsec.Language
 import Text.ParserCombinators.Parsec.Language 
 import Text.ParserCombinators.Parsec.Pos
 import Language.Haskell.Meta as LHM
+import Language.Haskell.TH as TH
 
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::"],
-                                           reservedNames   = ["Precord", "Ptrans", "Pusing", "Pwhere"]})
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>"],
+                                           reservedNames   = ["Pline", "Ptrans", "Pusing", "Pwhere"]})
 
 whiteSpace  = PT.whiteSpace  lexer
 identifier  = PT.identifier  lexer
@@ -27,6 +28,12 @@ reservedOp  = PT.reservedOp  lexer
 charLiteral = PT.charLiteral lexer
 commaSep1   = PT.commaSep1   lexer
 parens      = PT.parens      lexer
+braces      = PT.braces      lexer
+
+replaceName :: String -> PadsTy -> PadsTy
+replaceName str ty = case ty of
+  Precord _ body -> Precord str body
+  otherwise -> ty
 
 padsDecl :: Parser PadsDecl
 padsDecl = do { id <- identifier
@@ -36,7 +43,7 @@ padsDecl = do { id <- identifier
                             (_, Left err) -> unexpected ("Failed to parse Haskell pattern: " ++ err)
                             (_, Right patTH) -> return (Just patTH)
               ; ty <- padsTy
-              ; return (PadsDecl(Id id,pat,ty))
+              ; return (PadsDecl(Id id,pat, replaceName id ty))
               }
 
 
@@ -64,16 +71,57 @@ fnAppTy = do { ty <- fnTy
              } <?> "type function application"
 
 
-recordTy :: Parser PadsTy
-recordTy = do { reserved "Precord"
+lineTy :: Parser PadsTy
+lineTy = do { reserved "Pline"
               ; ty <- padsTy
-              ; return (Precord ty)
-              } <?> "record type"
+              ; return (Pline ty)
+              } <?> "line type"
 
 tupleTy :: Parser PadsTy
 tupleTy = do { tys <- parens padsTyList
              ; return (Ptuple tys)
              } <?> "tuple type"
+
+padsTyList :: Parser [PadsTy]
+padsTyList = commaSep1 padsTy
+
+recordTy :: Parser PadsTy
+recordTy = do { fields <- braces fieldList
+              ; return (Precord "" fields)   -- empty string is placeholder for record name, which will be filled in at decl level.
+              } <?> "record type"
+
+fieldList :: Parser [(Maybe String, PadsTy, Maybe TH.Exp)]
+fieldList = commaSep1 field
+
+{- Records 
+[pads| Request = { i1 :: Pint, 
+                         ',',
+                   i2 :: Pint Pwhere <| i1 == i2 } |> |]
+-}
+
+field :: Parser (Maybe String, PadsTy, Maybe TH.Exp)
+field = do { idM <- optionMaybe $ try fieldLabel
+           ; ty  <- padsTy
+           ; predM <- optionMaybe fieldPredicate
+           ; return (idM, ty, predM)
+           }
+        
+
+fieldLabel :: Parser String
+fieldLabel = do { id <- identifier
+                ; reservedOp "::"
+                ; return id
+                }
+
+fieldPredicate :: Parser TH.Exp
+fieldPredicate = do { reserved   "Pwhere"
+                    ; reservedOp "<|"
+                    ; str <- manyTill anyChar (reservedOp "|>")
+                    ; case LHM.parseExp str of
+                     Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in record declaration.")
+                     Right expTH -> return expTH
+                    }
+
 
 transformTy :: Parser PadsTy
 transformTy = do { reserved "Ptrans"
@@ -102,17 +150,16 @@ typedefTy = do { str1 <- manyTill anyChar (reservedOp "::")
                } <?> "where"
 
 padsTy :: Parser PadsTy
-padsTy = recordTy
+padsTy = lineTy
      <|> transformTy 
      <|> tupleTy
+     <|> recordTy
      <|> try fnAppTy
      <|> try typedefTy
      <|> litTy
      <|> idTy
      <?> "pads type"
 
-padsTyList :: Parser [PadsTy]
-padsTyList = commaSep1 padsTy
 
 
 runLex :: Show a => PS.Parser a -> String -> IO()
