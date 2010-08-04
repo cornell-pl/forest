@@ -38,7 +38,7 @@ test3 = TestCase(assertEqual "bar2_result" bar2_expects (show bar2_result))
 
 
 
-[pads|BazR = Precord (Pint, ',',Pint) |]                  -- type that consumes a record boundary.
+[pads|BazR = Pline (Pint, ',',Pint) |]                  -- type that consumes a line boundary.
 bazr_result = bazR_parseS "33,33:"
 bazr_expects = "((BazR (Pint 33,Pint 33),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),\"\")"
 
@@ -125,7 +125,7 @@ re_results2 = RE.matchRegexAll re "caaaab"
 
 
 optIntP = parseOpt pint_parseM (0,cleanBasePD)
-optIntPRec = parseRecord optIntP
+optIntPRec = parseLine optIntP
 
 input2 = "33\n\n43"
 optIntP_results = parseAllS optIntP input2

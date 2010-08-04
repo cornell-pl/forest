@@ -28,7 +28,7 @@ bar_result = bar_parseS "256,12|23;456:"
 bar2_result = bar2_parseS "56,23:46;29"
 -- ((Bar2 (Pint 56,(Pint 23,Pint 46),Pint 29),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),Errors: 0,Errors: 0))),"")
 
-[pads|BazR = Precord (Pint, ',',Pint) |]                  -- type that consumes a record boundary.
+[pads|BazR = Pline (Pint, ',',Pint) |]                  -- type that consumes a line boundary.
 bazr_result = bazR_parseS "33,33:"
 -- ((BazR (Pint 33,Pint 33),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
 
@@ -117,6 +117,30 @@ result_intRangePHigh = intRangeP_parseS (0, 256) input_intRangeHigh
 result_intRangePBad  = intRangeP_parseS (0, 256) input_intRangeBad 
 
 
+[pads| Request (bound::Pint) = 
+           { i1 :: Pint, ',',
+             i2 :: Pint Pwhere <| i1 + i2 <= bound |> } |]
+
+input_Request = "24,45"
+result_Request = request_parseS 100 input_Request
+
+
+{-
+data TestRecord = TestRecord{i::Pint, j::Pint}
+data TestRecord_inner_md = TestRecord_inner_md{i_md::Base_md, j_md::Base_md}
+
+x = do
+   (i, i_md) <- pint_parseM
+   let bmd_0 = Language.Pads.Padsc.get_md_header i_md
+   md_1 <- pcharLit_parseM ','
+   let bmd_2 = Language.Pads.Padsc.get_md_header md_1
+   (j, j_md) <- pint_parseM
+   let bmd_3 = Language.Pads.Padsc.get_md_header j_md
+   let top_md = Language.Pads.Padsc.mergeBaseMDs [bmd_0, bmd_2, bmd_3]
+   return (TestRecord{i = i, j = j},
+          (top_md, TestRecord_inner_md{i_md = i_md, j_md = j_md}))
+-}
+
 ---- Play space
 
 first (x::Pint) = "hello"
@@ -127,7 +151,7 @@ re_results2 = BRE.matchRegexAllS re "caaaab"
 
 
 optIntP = parseOpt pint_parseM (0,cleanBasePD)
-optIntPRec = parseRecord optIntP
+optIntPRec = parseLine optIntP
 
 input2 = "33\n\n43"
 optIntP_results = parseAllS optIntP input2
@@ -142,8 +166,6 @@ teQ :: IO Exp = return te
 
 
 {- 
-[pads| Request = { i1 :: Pint, ',',
-                   i2 :: Pint where i1 == i2 } |]
 
 which leads to parsing code like:
   do { (rep_i1, md_i1) <- parse_PintM
@@ -168,7 +190,7 @@ which leads to parsing code like:
                    url     :: Pstring('"'), '"', ' ',
                    version :: Version, '"'
                  } where checkVersion method version |]
--}
+
 
 
 checkVersion method version = 
@@ -177,8 +199,8 @@ checkVersion method version =
     UNLINK -> major version == 1 && minor version == 0
     _ -> True
 
-
-{-  Will generate: -}
+-}
+{-  Will generate: 
 data Method = GET | PUT | LINK | UNLINK | POST
   deriving (Eq, Ord)
 
@@ -191,3 +213,4 @@ data Request = Request { method  :: Method
                        , version :: Version 
                        } deriving (Eq, Ord)
 
+-}
