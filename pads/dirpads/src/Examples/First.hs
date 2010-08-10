@@ -124,22 +124,39 @@ result_intRangePBad  = intRangeP_parseS (0, 256) input_intRangeBad
 input_Request = "24,45"
 result_Request = request_parseS 100 input_Request
 
+--            | Punion  String [(Maybe String, PadsTy, Maybe TH.Exp)]
 
-{-
-data TestRecord = TestRecord{i::Pint, j::Pint}
-data TestRecord_inner_md = TestRecord_inner_md{i_md::Base_md, j_md::Base_md}
 
-x = do
-   (i, i_md) <- pint_parseM
-   let bmd_0 = Language.Pads.Padsc.get_md_header i_md
-   md_1 <- pcharLit_parseM ','
-   let bmd_2 = Language.Pads.Padsc.get_md_header md_1
-   (j, j_md) <- pint_parseM
-   let bmd_3 = Language.Pads.Padsc.get_md_header j_md
-   let top_md = Language.Pads.Padsc.mergeBaseMDs [bmd_0, bmd_2, bmd_3]
-   return (TestRecord{i = i, j = j},
-          (top_md, TestRecord_inner_md{i_md = i_md, j_md = j_md}))
--}
+
+[pads| Id = Punion { Numeric Pint 
+                   | Alpha   Pstring(:',':) } |] 
+input_IdInt = "23"
+result_IdInt = id_parseS input_IdInt
+
+input_IdStr = "hello"
+result_IdStr = id_parseS input_IdStr
+
+
+[pads| Id2 (bound::Pint ) = 
+        Punion { Numeric2 Pint Pwhere <| numeric2 <= bound |> 
+               | Alpha2   Pstring(:',':) } |] 
+input_IdInt2 = "23"
+result_IdInt2 = id2_parseS 10 input_IdInt2
+
+input_IdStr2 = "hello"
+result_IdStr2 = id2_parseS 10 input_IdStr2
+
+{- Fix the notation of arguments ? -}
+[pads| Id3  = 
+        Punion { Numeric3 IntRangeP(:(1,10):)
+               | Lit3     ','}  |] 
+input_IdInt3 = "3"
+result_IdInt3 = id3_parseS input_IdInt3
+
+input_IdStr3 = ","
+result_IdStr3 = id3_parseS input_IdStr3
+
+
 
 ---- Play space
 
