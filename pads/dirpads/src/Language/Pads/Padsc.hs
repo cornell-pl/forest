@@ -187,6 +187,9 @@ eitherP :: PadsParser a -> PadsParser a -> PadsParser a
 eitherP p q = PadsParser $ \s -> 
    runPP p s `appendResult` runPP q s 
 
+choiceP :: [PadsParser a] -> PadsParser a
+choiceP ps = foldr1 eitherP ps
+
 {- 
 This combinator seems natural because it is the unit for eitherP, but it breaks the 
 invariant on Result.  So, either we don't need failP or the invariant is wrong.
@@ -434,6 +437,7 @@ make_pads_declarations (PadsDecl (id, pat, padsTy)) = do
 genRepMDDecl :: PadsTy -> Name -> Name -> (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDecl ty ty_name md_ty_name = case ty of
   Precord _ tys -> genRepMDDeclStruct ty_name md_ty_name tys
+  Punion  _ tys -> genRepMDDeclUnion  ty_name md_ty_name tys
   other -> let (rep,md) = genRepMDTy other
            in  (mk_newTyD ty_name rep, [mk_TySynD md_ty_name md], md)
 
@@ -470,10 +474,38 @@ genRepMDDeclStruct ty_name md_ty_name fields =
       md_ty         = tyListToTupleTy [ConT ''Base_md, imd_ty]
       md_decl       = mk_TySynD md_ty_name md_ty
   in if length vsts' == 0 then 
-        error ("Error: Struct " ++ (show ty_name) ++ " must contain at least one named field.")
+        error ("Error: Record " ++ (show ty_name) ++ " must contain at least one named field.")
      else 
         (ty_decl, [imd_decl,md_decl], md_ty)
  
+
+{- Generate a representation and meta-data type for a union. -}
+genRepMDDeclUnion :: Name -> Name -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> (TH.Dec, [TH.Dec], TH.Type)
+genRepMDDeclUnion ty_name md_ty_name branches = 
+  let (cons', md_cons') = unzip $ map genRepMDUnion branches
+      derives      = [''Show, ''Eq, ''Typeable, ''Data]
+      ty_decl      = TH.DataD [] ty_name [] cons' derives
+      inner_md_name = getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
+      imd_decl      = TH.DataD [] inner_md_name [] md_cons' derives   -- declaration of line for nested components
+      imd_ty        = TH.ConT inner_md_name
+      md_ty         = tyListToTupleTy [ConT ''Base_md, imd_ty]
+      md_decl       = mk_TySynD md_ty_name md_ty
+  in if length cons' == 0 then 
+        error ("Error: Union " ++ (show ty_name) ++ " must contain at least one named field.")
+     else 
+        (ty_decl, [imd_decl,md_decl], md_ty)
+ 
+{-
+  runQ [d| data FooUnion = UBar Int | Baz String |]
+  [DataD [] FooUnion [] [NormalC UBar [(NotStrict,ConT GHC.Types.Int)],NormalC Baz [(NotStrict,ConT GHC.Base.String)]] []]
+-}
+genRepMDUnion :: (Maybe String, PadsTy, Maybe TH.Exp) -> (TH.Con, TH.Con)
+genRepMDUnion (Nothing, ty, exp)  = error "Unions are required to have names for all branches."
+genRepMDUnion (Just str, ty, exp) = let
+   (rep_ty, md_ty) = genRepMDTy ty
+   in (TH.NormalC (getBranchNameU   str) [(TH.NotStrict, rep_ty)],
+       TH.NormalC (getBranchMDNameU str) [(TH.NotStrict,  md_ty)])
+
 type VST = (TH.Name, TH.Strict, TH.Type)
 genRepMDField :: (Maybe String, PadsTy, Maybe TH.Exp) -> Maybe (VST, VST)
 genRepMDField (Nothing, ty, exp)  = Nothing
@@ -545,6 +577,7 @@ genPadsParseM parse_name rep_name pd_name padsTy mpat_info = do
 wrapRep :: Name -> PadsTy -> TH.Exp -> TH.Exp
 wrapRep repN ty repE = case ty of
   Precord _ _ -> repE
+  Punion  _ _ -> repE
   otherwise   -> AppE  (ConE repN) repE
 
 {-
@@ -571,7 +604,8 @@ parseE ty = case ty of
   Plit c         -> return (AppE (VarE(getParseName "PcharLit")) (LitE (CharL c)))   -- Note the type of this expression has a different pattern: (no rep).
   Pname p_name   -> return (VarE (getParseName p_name))
   Ptuple tys     -> mkParseTuple tys
-  Precord str fields -> mkParseRecord str fields
+  Precord str fields   -> mkParseRecord str fields
+  Punion  str branches -> mkParseUnion  str branches
   Pline ty       -> mkParseLine ty
   Papp ty argE   -> mkParseTyApp ty argE
   Ptrans tySrc tyDest exp -> mkParseTyTrans tySrc tyDest exp
@@ -633,7 +667,56 @@ mkParseLine ty = do
    return (AppE (VarE 'parseLine) rhsE)
 
 
+mkParseUnion :: String -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q TH.Exp
+mkParseUnion str branches = do
+  parseEs     <- mkParseBranches str branches   
+  return (AppE (VarE 'choiceP) (ListE parseEs))       -- choiceP [parse1, ..., parsen]
 
+mkParseBranches :: String -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q [TH.Exp]
+mkParseBranches str branches = mapM (mkParseBranch str) branches
+
+mkParseBranch :: String -> (Maybe String, PadsTy, Maybe TH.Exp) -> Q TH.Exp
+mkParseBranch str (Nothing, padsTy, predM) = error ("Union ("++ str ++ ") branch is missing a name.")
+mkParseBranch str (Just name, padsTy, predM) = do
+   let repName  = getBranchNameL   name
+   let mdName   = getBranchMDNameL name
+   bmdName1     <- genBMdName 
+   bmdName2     <- genBMdName 
+   let (repE,  repP)  = genPE repName
+   let ( mdE,  mdP)   = genPE mdName
+   let (bmd1E, bmd1P) = genPE bmdName1
+   let (bmd2E, bmd2P) = genPE bmdName2
+   rhsE        <- parseE padsTy
+   case (predM,padsTy) of
+    (Just pred, Plit c) -> error ("Union "++ str ++ ": literal branch can't have a predicate.")
+    (Nothing, Plit c)  -> let
+       stmtPrs = BindS mdP rhsE                                                   -- md <- parse
+       frepE   = TH.AppE (TH.ConE (getBranchNameU   name)) (TH.TupE [])           -- . inject value into data type: Foo ()
+       imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type: Foo_md md
+       fmdE    = TupE [mdE,  imdE]                                                -- . build final md: (md, Foo_md md)
+       resultE = TupE [frepE,fmdE]                                                -- . build final result: (Foo (), (md, Foo_md md))
+       stmtRet = NoBindS (AppE (VarE 'return) resultE)                            -- return (Foo (), (md, Foo_md md))
+       in return (TH.DoE [stmtPrs,stmtRet])
+    (Nothing, _) -> let
+       stmtPrs = BindS (TupP [repP,mdP]) rhsE                                     -- (rep, md) <- parse
+       stmtGmd = LetS [ValD bmd1P (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- let mbd1 = get_md_header md
+       frepE   = TH.AppE (TH.ConE (getBranchNameU   name)) repE                   -- . inject value into data type: Foo rep
+       imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type: Foo_md md
+       fmdE    = TupE [bmd1E,imdE]                                                -- . build final md: (bmd1, Foo_md md)
+       resultE = TupE [frepE,fmdE]                                                -- . build final result: 
+       stmtRet = NoBindS (AppE (VarE 'return) resultE)                            -- return (Foo rep, (bmd1, Foo_md md))
+       in return (TH.DoE [stmtPrs,stmtGmd,stmtRet])
+    (Just pred,_) -> let
+       stmtPrs = BindS (TupP [repP,mdP]) rhsE                                     -- (rep,md) <- parse
+       stmtGmd = LetS [ValD bmd1P (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- let mbd1 = get_md_header md
+       predTestE = TH.CondE pred bmd1E (AppE (VarE 'addPredFailureMD) bmd1E)      -- . build predicate test 
+       stmtPred  = LetS [ValD bmd2P (NormalB predTestE)  []]                      -- let mbd2 = if pred then bmd1 else addPredFailureMD bmd1
+       frepE   = TH.AppE (TH.ConE (getBranchNameU   name)) repE                   -- . inject value into data type: Foo rep
+       imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type:    Foo_md md
+       fmdE    = TupE [bmd2E,imdE]                                                -- . build final md:              (mbd2, Foo_md md)
+       resultE = TupE [frepE,fmdE]                                                -- . build final result           (Foo rep, (md2, Foo_md md))
+       stmtRet = NoBindS (AppE (VarE 'return) resultE)                            -- return (Foo rep, (md2, Foo_md md))
+       in return (TH.DoE [stmtPrs,stmtGmd,stmtPred,stmtRet])                      
 {- 
 Invariants: literal can't have a field name or a predicate; no field name, no predicate
    stmts to parse each field of a record
@@ -880,6 +963,12 @@ getStructInnerMDName name =
   in mkName (str++"_inner_md")
 getFieldMDName str = mkName (str++"_md")
 getFieldName str = mkName str
+
+getBranchMDNameU str = mkName ((strToUpper str)++"_md")
+getBranchNameU str = mkName (strToUpper str)
+
+getBranchMDNameL str = mkName ((strToLower str)++"_md")
+getBranchNameL   str = mkName  (strToLower str)
 
 getTyName pname = mkName  (strToUpper pname)
 {-

@@ -18,8 +18,8 @@ import Language.Haskell.TH as TH
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>"],
-                                           reservedNames   = ["Pline", "Ptrans", "Pusing", "Pwhere"]})
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|"],
+                                           reservedNames   = ["Pline", "Ptrans", "Pusing", "Pwhere", "Punion"]})
 
 whiteSpace  = PT.whiteSpace  lexer
 identifier  = PT.identifier  lexer
@@ -30,9 +30,11 @@ commaSep1   = PT.commaSep1   lexer
 parens      = PT.parens      lexer
 braces      = PT.braces      lexer
 
+
 replaceName :: String -> PadsTy -> PadsTy
 replaceName str ty = case ty of
   Precord _ body -> Precord str body
+  Punion  _ body -> Punion  str body
   otherwise -> ty
 
 padsDecl :: Parser PadsDecl
@@ -85,6 +87,22 @@ tupleTy = do { tys <- parens padsTyList
 padsTyList :: Parser [PadsTy]
 padsTyList = commaSep1 padsTy
 
+unionTy :: Parser PadsTy
+unionTy = do { reserved "Punion"
+             ; branches <- braces branchList
+             ; return (Punion "" branches)
+             } <?> "union type"
+
+branchList :: Parser [(Maybe String, PadsTy, Maybe TH.Exp)]
+branchList = sepBy1  branch (reservedOp "|")
+
+branch :: Parser (Maybe String, PadsTy, Maybe TH.Exp)
+branch = do { id <- identifier
+            ; ty  <- padsTy
+            ; predM <- optionMaybe fieldPredicate
+            ; return (Just id, ty, predM)
+            }
+
 recordTy :: Parser PadsTy
 recordTy = do { fields <- braces fieldList
               ; return (Precord "" fields)   -- empty string is placeholder for record name, which will be filled in at decl level.
@@ -118,7 +136,7 @@ fieldPredicate = do { reserved   "Pwhere"
                     ; reservedOp "<|"
                     ; str <- manyTill anyChar (reservedOp "|>")
                     ; case LHM.parseExp str of
-                     Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in record declaration.")
+                     Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ ".")
                      Right expTH -> return expTH
                     }
 
@@ -154,6 +172,7 @@ padsTy = lineTy
      <|> transformTy 
      <|> tupleTy
      <|> recordTy
+     <|> unionTy
      <|> try fnAppTy
      <|> try typedefTy
      <|> litTy
