@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
 module Language.Pads.Padsc where
 
-import Language.Pads.Syntax 
+import Language.Pads.Syntax as PS
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax
 import Data.Data
@@ -224,6 +224,16 @@ parseAllS p inputS =
       Good ((r,rest):alternates) -> r
       Bad (r,rest) -> r
 
+{-
+
+meta p s = PadsParser $ \s ->
+   case runPP p s of    
+
+idea:
+ turn Good gs with meta-data problems into Bad
+ in either onFail or appendResult
+
+-}
 
 
 onFail :: PadsParser a -> PadsParser a -> PadsParser a
@@ -267,6 +277,13 @@ peakHeadP = queryPads S.head
 
 takeHeadP :: PadsParser Char
 takeHeadP = primPads S.takeHead
+
+takeHeadStrP :: String -> PadsParser Bool
+takeHeadStrP str = primPads (S.takeHeadStr str)
+
+-- Return string is junk before found string
+scanStrP :: String -> PadsParser (Maybe String)
+scanStrP str = primPads (S.scanStr str)
 
 takeP :: Int -> PadsParser String
 takeP n = primPads (S.take (fromInteger $ toInteger n))
@@ -410,7 +427,22 @@ pcharLit_parseM c = do
                       else badReturn (mkErrBasePD (E.MissingLiteral     cStr) (Just errPos))
 
 
-  
+pstrLit_parseM :: String -> PadsParser Base_md
+pstrLit_parseM s = do 
+  initPos <- getPos
+  isEof <- isEofP
+  if isEof then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOF" s) (Just initPos))
+   else do 
+     isEor <- isEorP
+     if isEor then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOR" s) (Just initPos))
+      else do
+         match <- scanStrP s
+         errPos <- getPos
+         case match of
+           Nothing   -> badReturn (mkErrBasePD (E.MissingLiteral     s) (Just errPos))
+           Just []   -> goodReturn cleanBasePD
+           Just junk -> badReturn (mkErrBasePD (E.ExtraBeforeLiteral s) (Just errPos))
+   
 
 {- Code generation routines -}
 make_pads_declarations :: PadsDecl -> Q [Dec]
@@ -444,14 +476,14 @@ genRepMDDecl ty ty_name md_ty_name = case ty of
 {- Generate type and meta-data representations. -}
 genRepMDTy ::  PadsTy -> (TH.Type, TH.Type)
 genRepMDTy ty = case ty of
-  Plit char    -> (ConT ''(),  ConT ''Base_md)
+  Plit  _      -> (ConT ''(),  ConT ''Base_md)
   Pname p_name -> (ConT (getTyName p_name), ConT (getMDName p_name))
   Ptuple tys   -> genRepMDTuple tys
-  Pline ty   -> genRepMDTy ty
+  Pline ty     -> genRepMDTy ty
   Papp ty arg  -> genRepMDTy ty
   Ptrans tySrc tyDest exp -> genRepMDTy tyDest    -- rep and md for transform are rep and md for destination type
-  Ptypedef pat ty pred -> genRepMDTypedef ty
-  Precord _ tys   ->   error "Lines can only appear at the top level."
+  Ptypedef pat ty pred    -> genRepMDTypedef ty
+  Precord _ tys ->   error "Lines can only appear at the top level."
 
 {- Generate a representation and meta-data type for a typedef. -}
 genRepMDTypedef :: PadsTy -> (TH.Type, TH.Type)
@@ -601,7 +633,8 @@ genParseBody repN mdN ty = do
 {- Given a PadsTy ty, return the haskell expression that parses ty. -}
 parseE :: PadsTy -> Q TH.Exp
 parseE ty = case ty of
-  Plit c         -> return (AppE (VarE(getParseName "PcharLit")) (LitE (CharL c)))   -- Note the type of this expression has a different pattern: (no rep).
+  Plit (PS.CharL c)    -> return (AppE (VarE(getParseName "PcharLit")) (LitE (TH.CharL   c)))   -- Note the type of this expression has a different pattern: (no rep).
+  Plit (PS.StringL s)  -> return (AppE (VarE(getParseName "PstrLit"))  (LitE (TH.StringL s)))   -- Note the type of this expression has a different pattern: (no rep).
   Pname p_name   -> return (VarE (getParseName p_name))
   Ptuple tys     -> mkParseTuple tys
   Precord str fields   -> mkParseRecord str fields
@@ -688,8 +721,8 @@ mkParseBranch str (Just name, padsTy, predM) = do
    let (bmd2E, bmd2P) = genPE bmdName2
    rhsE        <- parseE padsTy
    case (predM,padsTy) of
-    (Just pred, Plit c) -> error ("Union "++ str ++ ": literal branch can't have a predicate.")
-    (Nothing, Plit c)  -> let
+    (Just pred, Plit l) -> error ("Union "++ str ++ ": literal branch can't have a predicate.")
+    (Nothing,   Plit l) -> let
        stmtPrs = BindS mdP rhsE                                                   -- md <- parse
        frepE   = TH.AppE (TH.ConE (getBranchNameU   name)) (TH.TupE [])           -- . inject value into data type: Foo ()
        imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type: Foo_md md
@@ -768,8 +801,8 @@ mkParseField (labelM, ty, predM) = do
    rhsE        <- parseE ty
    case (labelM,ty,predM) of 
     (Nothing, _,  Just p)      ->  error "Predicates cannot modify unnamed fields in records."
-    (Just str, Plit c, _)      ->  error "Named fields cannot have literal types in records."
-    (Nothing, Plit c, Nothing) ->  let                                         -- Parse unnamed, literal struct field
+    (Just str, Plit l, _)      ->  error "Named fields cannot have literal types in records."
+    (Nothing,  Plit l, Nothing) ->  let                                         -- Parse unnamed, literal struct field
        stmt1 = BindS mdP rhsE                                                  -- No rep for literals
        stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
        in return([], [], bmdE, [stmt1,stmt2])                                  -- No rep or md to include in result
@@ -867,7 +900,7 @@ mkParseTyB ty = do
    let (bmdE, bmdP) = genPE bmdName
    rhsE        <- parseE ty
    let (resultEs,stmt1) =  case ty of
-        Plit c ->    ([],     BindS  mdP              rhsE)
+        Plit l ->    ([],     BindS  mdP              rhsE)
         otherwise -> ([repE], BindS (TupP [repP,mdP]) rhsE)
    let stmt2    = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
    return (resultEs, mdE,bmdE,[stmt1,stmt2])
@@ -923,8 +956,8 @@ patToTy pat = case pat of
 litToTy :: TH.Lit -> TH.Type
 litToTy lit = 
   let name = case lit of
-       CharL c       -> ''Char
-       StringL s     -> ''String
+       Language.Haskell.TH.Syntax.CharL c       -> ''Char
+       Language.Haskell.TH.Syntax.StringL s     -> ''String
        IntegerL i    -> ''Integer
        RationalL r   -> ''Rational
        IntPrimL  i   -> ''Integer

@@ -6,12 +6,16 @@ import Text.PrettyPrint.Mainland
 import Language.Pads.Syntax
 import Language.Pads.Padsc
 
-instance Pretty PadsTy where
-    ppr (Ptuple tys) = parens (commasep (map ppr tys))
-    ppr (Plit c) | isPrint c   = text $ show c
+instance Pretty Lit where
+   ppr (CharL c) | isPrint c   = text $ show c
                  | ord c == 0  = squotes $ text $ "\\0"
                  | otherwise   = squotes $ text $
                                  "\\x" ++ showHex (ord c) ""
+   ppr (StringL s) = text $ show s
+
+instance Pretty PadsTy where
+    ppr (Ptuple tys) = parens (commasep (map ppr tys))
+    ppr (Plit l) = ppr l
     ppr (Pname s) = text s
 
 whitesep = sep space

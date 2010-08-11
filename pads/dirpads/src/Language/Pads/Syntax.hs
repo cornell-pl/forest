@@ -5,7 +5,10 @@ module Language.Pads.Syntax where
 import Data.Generics
 import Language.Haskell.TH as TH
 
-data PadsTy = Plit Char 
+data Lit    = CharL Char | StringL String
+  deriving (Eq, Data, Typeable)
+
+data PadsTy = Plit Language.Pads.Syntax.Lit
             | Pname String
             | Ptuple [PadsTy] 
             | Pline PadsTy

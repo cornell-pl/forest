@@ -71,6 +71,44 @@ head  (Source{current,..}) = B.head current
 takeHead (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
        (B.head current, Source{current=B.tail current,rest,atEOF,loc=Loc{byteOffset=byteOffset+1,lineNumber}})
 
+takeHeadStr :: String -> Source -> (Bool, Source)
+takeHeadStr str (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
+   let pstr = B.pack str 
+   in if B.isPrefixOf pstr current
+      then let (res,source) = Language.Pads.Source.take (B.length pstr) s
+            in (True, source)            
+      else (False, s)
+
+
+breakSubstring :: B.ByteString -- ^ String to search for
+               -> B.ByteString -- ^ String to search in
+               -> (B.ByteString,B.ByteString) -- ^ Head and tail of string broken at substring
+breakSubstring pat src = search 0 src
+  where
+    -- STRICT2(search)
+    search :: Int64 -> B.ByteString -> (B.ByteString, B.ByteString)
+    search a b | a `seq` b `seq` False = undefined
+    search n s
+        | B.null s             = (src,B.empty)      -- not found
+        | pat `B.isPrefixOf` s = (B.take n src,s)
+        | otherwise            = search (n+1) (B.tail s)
+
+
+{- 
+  Nothing  = didn't find string; source is unaffected
+  Maybe [] = matched immediately; source advanced over matched string
+  Maybe junk = matched after finding str; source advanced over junk and str
+-}
+scanStr :: String -> Source -> (Maybe String, Source)
+scanStr str (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
+  let pat = B.pack str
+      (before,after) = breakSubstring pat current
+  in if B.null after then (Nothing, s)
+     else let len = B.length pat
+          in (Just (B.unpack before), Source{current= B.drop len after, rest, atEOF,loc =Loc{byteOffset=byteOffset+len,lineNumber}})
+
+                
+
 take n (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
      let (head, tail) = B.splitAt n current
          newOffset    = byteOffset + (B.length head)

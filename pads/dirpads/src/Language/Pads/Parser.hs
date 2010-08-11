@@ -2,7 +2,7 @@ module Language.Pads.Parser where
 
 import Data.Map as Map
 
-import Language.Pads.Syntax
+import Language.Pads.Syntax as S
 
 import Text.Parsec
 import qualified Text.Parsec.String as PS
@@ -19,16 +19,17 @@ type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|"],
-                                           reservedNames   = ["Pline", "Ptrans", "Pusing", "Pwhere", "Punion"]})
+                                           reservedNames   = ["Line", "Trans", "using", "where", "data"]})
 
-whiteSpace  = PT.whiteSpace  lexer
-identifier  = PT.identifier  lexer
-reserved    = PT.reserved    lexer
-reservedOp  = PT.reservedOp  lexer
-charLiteral = PT.charLiteral lexer
-commaSep1   = PT.commaSep1   lexer
-parens      = PT.parens      lexer
-braces      = PT.braces      lexer
+whiteSpace    = PT.whiteSpace  lexer
+identifier    = PT.identifier  lexer
+reserved      = PT.reserved    lexer
+reservedOp    = PT.reservedOp  lexer
+charLiteral   = PT.charLiteral lexer
+stringLiteral = PT.stringLiteral  lexer
+commaSep1     = PT.commaSep1   lexer
+parens        = PT.parens      lexer
+braces        = PT.braces      lexer
 
 
 replaceName :: String -> PadsTy -> PadsTy
@@ -38,16 +39,36 @@ replaceName str ty = case ty of
   otherwise -> ty
 
 padsDecl :: Parser PadsDecl
-padsDecl = do { id <- identifier
-              ; str <- manyTill anyChar (reservedOp "=")
-              ; pat <- case (Prelude.null str, LHM.parsePat str) of 
+padsDecl =   tyDecl
+         <|> dataDecl
+
+
+dataDecl :: Parser PadsDecl
+dataDecl = do { reserved "data"
+              ; id <- identifier
+              ; pat <- param
+              ; padsTy <- dataTy id
+              ; return (PadsDecl(Id id, pat, padsTy))
+              } <?> "Data Declaration"
+
+tyDecl :: Parser PadsDecl
+tyDecl = do { id <- identifier
+            ; pat <- param
+            ; ty <- padsTy
+            ; return (PadsDecl(Id id, pat, replaceName id ty))
+            } <?> "Type Declaration"
+
+param :: Parser (Maybe TH.Pat)
+param = do { str <- manyTill anyChar (reservedOp "=")
+           ; pat <- case (Prelude.null str, LHM.parsePat str) of 
                             (True, _) -> return Nothing
                             (_, Left err) -> unexpected ("Failed to parse Haskell pattern: " ++ err)
                             (_, Right patTH) -> return (Just patTH)
-              ; ty <- padsTy
-              ; return (PadsDecl(Id id,pat, replaceName id ty))
-              }
+           ; return pat                            
+           }
 
+dataTy :: String -> Parser PadsTy
+dataTy str = unionTy str 
 
 
 idTy   :: Parser PadsTy
@@ -55,9 +76,19 @@ idTy   = do { base <- identifier
             ; return (Pname base)
             } <?> "named type"
 
+charlitTy :: Parser S.Lit
+charlitTy = do { c <- charLiteral
+               ; return (S.CharL c)
+               } <?> "character literal type"
+
+strlitTy :: Parser S.Lit
+strlitTy = do { s <- stringLiteral
+               ; return (S.StringL s)
+               } <?> "string literal type"
+
 litTy :: Parser PadsTy
-litTy = do { c <- charLiteral
-           ; return (Plit c)
+litTy = do { lit <- charlitTy <|> strlitTy
+           ; return (Plit lit)
            } <?> "literal type"
 
 fnTy   :: Parser PadsTy
@@ -74,7 +105,7 @@ fnAppTy = do { ty <- fnTy
 
 
 lineTy :: Parser PadsTy
-lineTy = do { reserved "Pline"
+lineTy = do { reserved "Line"
               ; ty <- padsTy
               ; return (Pline ty)
               } <?> "line type"
@@ -87,11 +118,10 @@ tupleTy = do { tys <- parens padsTyList
 padsTyList :: Parser [PadsTy]
 padsTyList = commaSep1 padsTy
 
-unionTy :: Parser PadsTy
-unionTy = do { reserved "Punion"
-             ; branches <- braces branchList
-             ; return (Punion "" branches)
-             } <?> "union type"
+unionTy :: String -> Parser PadsTy
+unionTy str = do { branches <- branchList
+                 ; return (Punion str branches)
+                 } <?> "data type"
 
 branchList :: Parser [(Maybe String, PadsTy, Maybe TH.Exp)]
 branchList = sepBy1  branch (reservedOp "|")
@@ -132,7 +162,7 @@ fieldLabel = do { id <- identifier
                 }
 
 fieldPredicate :: Parser TH.Exp
-fieldPredicate = do { reserved   "Pwhere"
+fieldPredicate = do { reserved   "where"
                     ; reservedOp "<|"
                     ; str <- manyTill anyChar (reservedOp "|>")
                     ; case LHM.parseExp str of
@@ -142,28 +172,28 @@ fieldPredicate = do { reserved   "Pwhere"
 
 
 transformTy :: Parser PadsTy
-transformTy = do { reserved "Ptrans"
+transformTy = do { reserved "Trans"
                  ; reservedOp "{" 
                  ; srcTy <- padsTy
                  ; reservedOp "<=>" 
                  ; dstTy <- padsTy
-                 ; reserved "Pusing"
+                 ; reserved "using"
                  ; str <- manyTill anyChar (reservedOp "}")
                  ; case LHM.parseExp str of
-                   Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Ptrans.")
+                   Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Trans.")
                    Right expTH -> return (Ptrans srcTy dstTy expTH)
                  } <?> "transform"
 
 typedefTy :: Parser PadsTy
 typedefTy = do { str1 <- manyTill anyChar (reservedOp "::")
                ; pat <- case LHM.parsePat str1 of
-                             (Left err) -> unexpected ("Failed to parse Haskell pattern in Pwhere declaration: " ++ err)
+                             (Left err) -> unexpected ("Failed to parse Haskell pattern in where declaration: " ++ err)
                              (Right patTH) -> return patTH
                ; ty <- padsTy
-               ; reserved "Pwhere"
+               ; reserved "where"
                ; str2 <- manyTill anyChar eof
                ; case LHM.parseExp str2 of
-                      Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Pwhere declaration.")
+                      Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in where declaration.")
                       Right expTH -> return (Ptypedef pat ty expTH)
                } <?> "where"
 
@@ -172,7 +202,6 @@ padsTy = lineTy
      <|> transformTy 
      <|> tupleTy
      <|> recordTy
-     <|> unionTy
      <|> try fnAppTy
      <|> try typedefTy
      <|> litTy
