@@ -41,5 +41,5 @@ pqausiquote1 p
                    (pparse1 p make_pads_declarations)
 
 pads :: QuasiQuoter
-pads  = pqausiquote1 P.padsDecl
+pads  = pqausiquote1 P.padsDecls
     

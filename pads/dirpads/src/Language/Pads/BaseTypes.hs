@@ -36,4 +36,4 @@ int2HexStr size (Pint x,md) = if (length result == size) && wasPos  then (Pstrin
    stutter c n = if n <= 0 then [] else c : (stutter c (n-1))
    result = (stutter '0' padding) ++ temp
 
-[pads| Phex32FW (size :: Int)  = Trans { PstringFW(: size :)  <=> Pint using (hexStr2Int,int2HexStr size) } |]  
+[pads| type Phex32FW (size :: Int)  = Trans { PstringFW(: size :)  <=> Pint using (hexStr2Int,int2HexStr size) } |]  

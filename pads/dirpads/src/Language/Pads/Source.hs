@@ -65,7 +65,7 @@ padsSourceFromString str = getNextLine_newline (Source{current = B.empty,
                                                                         byteOffset = 0}})
 
 padsSourceToString (Source {current, rest, ..}) = B.unpack (B.concat [current,rest])
-isEOF (Source{atEOF,..}) = atEOF
+isEOF (Source{current,rest,..}) = B.null current && B.null rest
 isEOR (Source{current,..}) = B.null current
 head  (Source{current,..}) = B.head current 
 takeHead (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 

@@ -182,6 +182,10 @@ instance Monad PadsParser where
                                          Bad v -> Bad v
 badReturn  r = PadsParser $ \bs -> Bad (r,bs)
 goodReturn r = PadsParser $ \bs -> Good [(r,bs)]
+mdReturn r @ (rep,md) = PadsParser $ \bs -> 
+    if numErrors (get_md_header md) == 0 
+    then Good [(r,bs)]
+    else Bad (r,bs)
 
 eitherP :: PadsParser a -> PadsParser a -> PadsParser a
 eitherP p q = PadsParser $ \s -> 
@@ -264,13 +268,6 @@ ifEofP p = do
   b <- isEofP
   if b then return ([],[]) else p
 
-isEorP :: PadsParser Bool
-isEorP = queryPads S.isEOR
-
-ifEorP :: PadsParser ([rep],[md]) -> PadsParser ([rep],[md])
-ifEorP p = do
-  b <- isEorP
-  if b then return ([],[]) else p
 
 peakHeadP :: PadsParser Char 
 peakHeadP = queryPads S.head
@@ -310,6 +307,14 @@ digitListToInt :: Bool->[Char] -> Int
 digitListToInt isNeg digits = let raw = foldl (\a d ->10*a + (Char.digitToInt d)) 0 digits
    in if isNeg then negate raw else raw
 
+isEorP :: PadsParser Bool
+isEorP = queryPads S.isEOR
+
+ifEorP :: PadsParser ([rep],[md]) -> PadsParser ([rep],[md])
+ifEorP p = do
+  b <- isEorP
+  if b then return ([],[]) else p
+
 
 lineBegin,lineEnd :: PadsParser (Maybe String)
 lineBegin = primPads S.lineBegin
@@ -339,6 +344,23 @@ parseLine p = do
    let new_hd = mergeBaseMDs [bmd,hmd,emd]
    let new_md = replace_md_header md new_hd
    return (r,new_md)
+
+parseJustRep p = do
+  (r,md) <- p
+  let bmd = get_md_header md
+  let result = (Just r, (bmd, Just md))
+  mdReturn result
+
+parseJustNoRep p = do
+  md <- p
+  let result = (Just (), (md, Just md))
+  mdReturn result
+
+parseNothing :: PadsParser (Maybe t, (Base_md, Maybe s))
+parseNothing = return (Nothing, (cleanBasePD, Nothing))
+
+parseMaybeRep   p = choiceP [parseJustRep   p, parseNothing]
+parseMaybeNoRep p = choiceP [parseJustNoRep p, parseNothing]
 
 pstringFW_parseM :: Int -> PadsParser (PstringFW, Base_md)
 pstringFW_parseM n = do 
@@ -442,11 +464,24 @@ pstrLit_parseM s = do
            Nothing   -> badReturn (mkErrBasePD (E.MissingLiteral     s) (Just errPos))
            Just []   -> goodReturn cleanBasePD
            Just junk -> badReturn (mkErrBasePD (E.ExtraBeforeLiteral s) (Just errPos))
+
+peorLit_parseM :: PadsParser Base_md
+peorLit_parseM = doLineEnd
+
+peofLit_parseM :: PadsParser Base_md
+peofLit_parseM = do
+  initPos <- getPos
+  isEof <- isEofP
+  if isEof then goodReturn cleanBasePD
+           else badReturn (mkErrBasePD ( E.ExtraBeforeLiteral "Eof")(Just initPos))
    
 
 {- Code generation routines -}
-make_pads_declarations :: PadsDecl -> Q [Dec]
-make_pads_declarations (PadsDecl (id, pat, padsTy)) = do
+make_pads_declarations :: [PadsDecl] -> Q [Dec]
+make_pads_declarations ds = fmap concat (mapM make_pads_declaration ds)
+
+make_pads_declaration :: PadsDecl -> Q [Dec]
+make_pads_declaration (PadsDecl (id, pat, padsTy)) = do
    let p_name = case id of
                    Id str -> str
                    AntiId str -> error "Did not expect antiquotation in defining context."
@@ -480,6 +515,7 @@ genRepMDTy ty = case ty of
   Pname p_name -> (ConT (getTyName p_name), ConT (getMDName p_name))
   Ptuple tys   -> genRepMDTuple tys
   Pline ty     -> genRepMDTy ty
+  Pmaybe ty    -> genRepMDMaybe ty
   Papp ty arg  -> genRepMDTy ty
   Ptrans tySrc tyDest exp -> genRepMDTy tyDest    -- rep and md for transform are rep and md for destination type
   Ptypedef pat ty pred    -> genRepMDTypedef ty
@@ -490,6 +526,15 @@ genRepMDTypedef :: PadsTy -> (TH.Type, TH.Type)
 genRepMDTypedef ty = 
   let (rep_ty, md_orig) = genRepMDTy ty
       md_ty = tyListToTupleTy [ConT ''Base_md, md_orig]    -- md is a pair of a base md for the typedef and the underlying md.
+  in (rep_ty, md_ty)
+
+{- Generate a representation and meta-data type for maybe. -}
+genRepMDMaybe :: PadsTy -> (TH.Type, TH.Type)
+genRepMDMaybe ty = 
+  let (rep_orig, md_orig) = genRepMDTy ty
+      rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
+      md'_ty = AppT (ConT ''Maybe) md_orig                  -- underyling md is Maybe of md of nested type
+      md_ty  = tyListToTupleTy [ConT ''Base_md, md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
   in (rep_ty, md_ty)
 
 {- Generate a representation and meta-data type for a struct. -}
@@ -535,8 +580,9 @@ genRepMDUnion :: (Maybe String, PadsTy, Maybe TH.Exp) -> (TH.Con, TH.Con)
 genRepMDUnion (Nothing, ty, exp)  = error "Unions are required to have names for all branches."
 genRepMDUnion (Just str, ty, exp) = let
    (rep_ty, md_ty) = genRepMDTy ty
-   in (TH.NormalC (getBranchNameU   str) [(TH.NotStrict, rep_ty)],
-       TH.NormalC (getBranchMDNameU str) [(TH.NotStrict,  md_ty)])
+   rep_arg = if rep_ty == ConT ''() then [] else [(TH.NotStrict,  rep_ty)]
+   in (TH.NormalC (getBranchNameU   str) rep_arg,
+       TH.NormalC (getBranchMDNameU str) [(TH.NotStrict, md_ty)])
 
 type VST = (TH.Name, TH.Strict, TH.Type)
 genRepMDField :: (Maybe String, PadsTy, Maybe TH.Exp) -> Maybe (VST, VST)
@@ -635,11 +681,14 @@ parseE :: PadsTy -> Q TH.Exp
 parseE ty = case ty of
   Plit (PS.CharL c)    -> return (AppE (VarE(getParseName "PcharLit")) (LitE (TH.CharL   c)))   -- Note the type of this expression has a different pattern: (no rep).
   Plit (PS.StringL s)  -> return (AppE (VarE(getParseName "PstrLit"))  (LitE (TH.StringL s)))   -- Note the type of this expression has a different pattern: (no rep).
+  Plit  PS.EorL        -> return       (VarE(getParseName "PeorLit"))                           -- Note the type of this expression has a different pattern: (no rep).
+  Plit  PS.EofL        -> return       (VarE(getParseName "PeofLit"))                           -- Note the type of this expression has a different pattern: (no rep).
   Pname p_name   -> return (VarE (getParseName p_name))
   Ptuple tys     -> mkParseTuple tys
   Precord str fields   -> mkParseRecord str fields
   Punion  str branches -> mkParseUnion  str branches
   Pline ty       -> mkParseLine ty
+  Pmaybe ty      -> mkParseMaybe ty
   Papp ty argE   -> mkParseTyApp ty argE
   Ptrans tySrc tyDest exp -> mkParseTyTrans tySrc tyDest exp
   Ptypedef pat ty pred -> mkParseTyTypedef pat ty pred
@@ -699,6 +748,13 @@ mkParseLine ty = do
    rhsE <- parseE ty
    return (AppE (VarE 'parseLine) rhsE)
 
+mkParseMaybe :: PadsTy -> Q TH.Exp 
+mkParseMaybe ty = do
+  rhsE <- parseE ty
+  case ty of
+    Plit l    -> return (AppE (VarE 'parseMaybeNoRep) rhsE)
+    otherwise -> return (AppE (VarE 'parseMaybeRep)   rhsE)
+
 
 mkParseUnion :: String -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q TH.Exp
 mkParseUnion str branches = do
@@ -724,11 +780,11 @@ mkParseBranch str (Just name, padsTy, predM) = do
     (Just pred, Plit l) -> error ("Union "++ str ++ ": literal branch can't have a predicate.")
     (Nothing,   Plit l) -> let
        stmtPrs = BindS mdP rhsE                                                   -- md <- parse
-       frepE   = TH.AppE (TH.ConE (getBranchNameU   name)) (TH.TupE [])           -- . inject value into data type: Foo ()
+       frepE   = TH.ConE (getBranchNameU   name)                                  -- . inject value into data type: Foo 
        imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type: Foo_md md
        fmdE    = TupE [mdE,  imdE]                                                -- . build final md: (md, Foo_md md)
-       resultE = TupE [frepE,fmdE]                                                -- . build final result: (Foo (), (md, Foo_md md))
-       stmtRet = NoBindS (AppE (VarE 'return) resultE)                            -- return (Foo (), (md, Foo_md md))
+       resultE = TupE [frepE,fmdE]                                                -- . build final result: (Foo, (md, Foo_md md))
+       stmtRet = NoBindS (AppE (VarE 'mdReturn) resultE)                            -- return (Foo, (md, Foo_md md))
        in return (TH.DoE [stmtPrs,stmtRet])
     (Nothing, _) -> let
        stmtPrs = BindS (TupP [repP,mdP]) rhsE                                     -- (rep, md) <- parse
@@ -737,7 +793,7 @@ mkParseBranch str (Just name, padsTy, predM) = do
        imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type: Foo_md md
        fmdE    = TupE [bmd1E,imdE]                                                -- . build final md: (bmd1, Foo_md md)
        resultE = TupE [frepE,fmdE]                                                -- . build final result: 
-       stmtRet = NoBindS (AppE (VarE 'return) resultE)                            -- return (Foo rep, (bmd1, Foo_md md))
+       stmtRet = NoBindS (AppE (VarE 'mdReturn) resultE)                            -- return (Foo rep, (bmd1, Foo_md md))
        in return (TH.DoE [stmtPrs,stmtGmd,stmtRet])
     (Just pred,_) -> let
        stmtPrs = BindS (TupP [repP,mdP]) rhsE                                     -- (rep,md) <- parse
@@ -748,7 +804,7 @@ mkParseBranch str (Just name, padsTy, predM) = do
        imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type:    Foo_md md
        fmdE    = TupE [bmd2E,imdE]                                                -- . build final md:              (mbd2, Foo_md md)
        resultE = TupE [frepE,fmdE]                                                -- . build final result           (Foo rep, (md2, Foo_md md))
-       stmtRet = NoBindS (AppE (VarE 'return) resultE)                            -- return (Foo rep, (md2, Foo_md md))
+       stmtRet = NoBindS (AppE (VarE 'mdReturn) resultE)                            -- return (Foo rep, (md2, Foo_md md))
        in return (TH.DoE [stmtPrs,stmtGmd,stmtPred,stmtRet])                      
 {- 
 Invariants: literal can't have a field name or a predicate; no field name, no predicate

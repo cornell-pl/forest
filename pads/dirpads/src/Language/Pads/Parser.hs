@@ -13,13 +13,13 @@ import Text.Parsec.Language
 import Text.ParserCombinators.Parsec.Language 
 import Text.ParserCombinators.Parsec.Pos
 import Language.Haskell.Meta as LHM
-import Language.Haskell.TH as TH
+import Language.Haskell.TH as TH hiding (CharL, StringL)
 
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|"],
-                                           reservedNames   = ["Line", "Trans", "using", "where", "data"]})
+                                           reservedNames   = ["Line", "Trans", "using", "where", "data", "type", "Eor", "Eof", "Maybe"]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -38,6 +38,10 @@ replaceName str ty = case ty of
   Punion  _ body -> Punion  str body
   otherwise -> ty
 
+padsDecls :: Parser [PadsDecl]
+padsDecls = do { decls <- many1 padsDecl
+               ; return decls}
+
 padsDecl :: Parser PadsDecl
 padsDecl =   tyDecl
          <|> dataDecl
@@ -52,7 +56,8 @@ dataDecl = do { reserved "data"
               } <?> "Data Declaration"
 
 tyDecl :: Parser PadsDecl
-tyDecl = do { id <- identifier
+tyDecl = do { reserved "type"
+            ; id <- identifier
             ; pat <- param
             ; ty <- padsTy
             ; return (PadsDecl(Id id, pat, replaceName id ty))
@@ -86,8 +91,25 @@ strlitTy = do { s <- stringLiteral
                ; return (S.StringL s)
                } <?> "string literal type"
 
+eorlitTy :: Parser S.Lit
+eorlitTy = do {reserved "Eor"
+              ; return S.EorL
+              }
+
+eoflitTy :: Parser S.Lit
+eoflitTy = do {reserved "Eof"
+              ; return S.EofL
+              }
+
+lit :: Parser S.Lit 
+lit =   charlitTy
+    <|> strlitTy
+    <|> eorlitTy
+    <|> eoflitTy
+    <?> "literal"
+
 litTy :: Parser PadsTy
-litTy = do { lit <- charlitTy <|> strlitTy
+litTy = do { lit <- lit
            ; return (Plit lit)
            } <?> "literal type"
 
@@ -126,10 +148,13 @@ unionTy str = do { branches <- branchList
 branchList :: Parser [(Maybe String, PadsTy, Maybe TH.Exp)]
 branchList = sepBy1  branch (reservedOp "|")
 
+
+
 branch :: Parser (Maybe String, PadsTy, Maybe TH.Exp)
-branch = do { id <- identifier
-            ; ty  <- padsTy
+branch = do { id    <- identifier
+            ; tyM   <- optionMaybe padsTy
             ; predM <- optionMaybe fieldPredicate
+            ; let ty = case tyM of {Nothing -> Plit (S.StringL id); Just ty' -> ty'}
             ; return (Just id, ty, predM)
             }
 
@@ -182,7 +207,7 @@ transformTy = do { reserved "Trans"
                  ; case LHM.parseExp str of
                    Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Trans.")
                    Right expTH -> return (Ptrans srcTy dstTy expTH)
-                 } <?> "transform"
+                 } <?> "transform type"
 
 typedefTy :: Parser PadsTy
 typedefTy = do { str1 <- manyTill anyChar (reservedOp "::")
@@ -195,13 +220,20 @@ typedefTy = do { str1 <- manyTill anyChar (reservedOp "::")
                ; case LHM.parseExp str2 of
                       Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in where declaration.")
                       Right expTH -> return (Ptypedef pat ty expTH)
-               } <?> "where"
+               } <?> "where type"
+
+maybeTy :: Parser PadsTy 
+maybeTy = do { reserved "Maybe"
+             ; ty <- padsTy
+             ; return (Pmaybe ty)
+             } <?> "maybe type"
 
 padsTy :: Parser PadsTy
 padsTy = lineTy
      <|> transformTy 
      <|> tupleTy
      <|> recordTy
+     <|> maybeTy
      <|> try fnAppTy
      <|> try typedefTy
      <|> litTy

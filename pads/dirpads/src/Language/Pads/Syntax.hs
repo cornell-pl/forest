@@ -3,14 +3,15 @@
 module Language.Pads.Syntax where
 
 import Data.Generics
-import Language.Haskell.TH as TH
+import Language.Haskell.TH  as TH hiding (Lit,CharL,StringL) 
 
-data Lit    = CharL Char | StringL String
+data Lit    = CharL Char | StringL String  | EorL | EofL
   deriving (Eq, Data, Typeable)
 
-data PadsTy = Plit Language.Pads.Syntax.Lit
+data PadsTy = Plit Lit
             | Pname String
             | Ptuple [PadsTy] 
+            | Pmaybe PadsTy
             | Pline PadsTy
             | Papp PadsTy TH.Exp
             | Ptrans PadsTy PadsTy TH.Exp   {- Src, Dest, and pair of functions to do transformation -}
