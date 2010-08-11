@@ -28,7 +28,7 @@ bar_result = bar_parseS "256,12|23;456:"
 bar2_result = bar2_parseS "56,23:46;29"
 -- ((Bar2 (Pint 56,(Pint 23,Pint 46),Pint 29),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),Errors: 0,Errors: 0))),"")
 
-[pads|BazR = Pline (Pint, ',',Pint) |]                  -- type that consumes a line boundary.
+[pads|BazR = Line (Pint, ',',Pint) |]                  -- type that consumes a line boundary.
 bazr_result = bazR_parseS "33,33:"
 -- ((BazR (Pint 33,Pint 33),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
 
@@ -89,7 +89,7 @@ strhex32FW_result3 = phex32FW_parseS 4 input3_hex32FW    -- Prints error message
 input_hexpair = "aa,bbb"
 hexpair_result = hexPair_parseS input_hexpair
 
-[pads| IntRange = x :: Pint Pwhere 0 <= x && x <= 256 |]
+[pads| IntRange = x :: Pint where 0 <= x && x <= 256 |]
 input_intRange24 = "24"
 input_intRange0  = "0"
 input_intRange256 = "256"
@@ -107,7 +107,7 @@ result_intRangeBad  = intRange_parseS input_intRangeBad
 {- Note that the special variables "rep" and "md" are in scope in the body of the predicate. -}
 {- Here rep is bound to the same value as x; md is the meta-data descriptor for the underyling type. -}
 
-[pads| IntRangeP (low::Pint, high::Pint) = x :: Pint Pwhere low <= x && rep <= high && (numErrors md == 0)|]
+[pads| IntRangeP (low::Pint, high::Pint) = x :: Pint where low <= x && rep <= high && (numErrors md == 0)|]
 
 result_intRangeP24 = intRangeP_parseS (0, 256) input_intRange24 
 result_intRangeP0  = intRangeP_parseS (0, 256) input_intRange0  
@@ -118,8 +118,9 @@ result_intRangePBad  = intRangeP_parseS (0, 256) input_intRangeBad
 
 
 [pads| Request (bound::Pint) = 
-           { i1 :: Pint, ',',
-             i2 :: Pint Pwhere <| i1 + i2 <= bound |> } |]
+     {      i1 :: Pint, 
+       ',', i2 :: Pint where <| i1 + i2 <= bound |>  
+     } |]
 
 input_Request = "24,45"
 result_Request = request_parseS 100 input_Request
@@ -128,8 +129,9 @@ result_Request = request_parseS 100 input_Request
 
 
 
-[pads| Id = Punion { Numeric Pint 
-                   | Alpha   Pstring(:',':) } |] 
+[pads| data Id =  Numeric Pint 
+               |  Alpha   Pstring(:',':)  |] 
+
 input_IdInt = "23"
 result_IdInt = id_parseS input_IdInt
 
@@ -137,9 +139,9 @@ input_IdStr = "hello"
 result_IdStr = id_parseS input_IdStr
 
 
-[pads| Id2 (bound::Pint ) = 
-        Punion { Numeric2 Pint Pwhere <| numeric2 <= bound |> 
-               | Alpha2   Pstring(:',':) } |] 
+[pads| data Id2 (bound::Pint ) = 
+            Numeric2 Pint where <| numeric2 <= bound |> 
+          | Alpha2   Pstring(:',':) |] 
 input_IdInt2 = "23"
 result_IdInt2 = id2_parseS 10 input_IdInt2
 
@@ -147,16 +149,19 @@ input_IdStr2 = "hello"
 result_IdStr2 = id2_parseS 10 input_IdStr2
 
 {- Fix the notation of arguments ? -}
-[pads| Id3  = 
-        Punion { Numeric3 IntRangeP(:(1,10):)
-               | Lit3     ','}  |] 
+[pads| data Id3  = Numeric3 IntRangeP(:(1,10):)
+                 | Lit3     ','                 |] 
 input_IdInt3 = "3"
 result_IdInt3 = id3_parseS input_IdInt3
 
 input_IdStr3 = ","
 result_IdStr3 = id3_parseS input_IdStr3
 
-
+[pads| Version = {"HTTP/", 
+                   major :: Pint, '.',
+                   minor :: Pint} |]
+input_Version = "HTTP/1.2"
+result_Version = version_parseS input_Version
 
 ---- Play space
 
