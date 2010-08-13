@@ -35,9 +35,10 @@ cleanBasePD = Base_md {numErrors = 0, errInfo = Nothing }
 mkErrBasePD msg pos = Base_md {numErrors = 1, 
                                errInfo = Just (E.ErrInfo{msg=msg,position=pos}) }
 
-mergeBaseMDs = Data.List.foldl1 (\(Base_md {numErrors=num1,errInfo=i1}) (Base_md {numErrors=num2,errInfo=i2}) ->
-                                  (Base_md {numErrors=num1 + num2,
-                                            errInfo= Nothing })) 
+mergeBaseMDs mds = case mds of 
+                     [] -> cleanBasePD
+                     otherwise ->  Data.List.foldl1 (\(Base_md {numErrors=num1,errInfo=i1}) (Base_md {numErrors=num2,errInfo=i2}) ->
+                                                          (Base_md {numErrors=num1 + num2, errInfo= Nothing })) mds
 
 {- Generic function for computing the default for any type supporting Data a interface -}
 getConstr :: DataType -> Constr
@@ -72,6 +73,12 @@ instance PadsMD (Base_md,b) where
   replace_md_header (h1,b) h2 = (h2,b)
 
 {-
+instance PadsMD md => PadsMD (rep,md) where
+  get_md_header (r,md) = get_md_header md
+  replace_md_header (r,md1) md2 = (r,replace_md_header md1 md2)
+-}
+
+{-
 We'd like to have a type class like the following so that we can have a single name for the PADS parsers instead
 of having to have pads_foo, pads_bar, etc.  
 
@@ -90,9 +97,11 @@ The compiler would need to call the type-specific versions, though.
   loss of abstraction, or could be generated...  Omit for now.
 -}
 
-class Data pads => Pads pads md | pads -> md  where
+class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
   def :: pads
   def = gdef
+  getMetaD :: (rep, md) -> Base_md
+  getMetaD (rep, md) = get_md_header md
   parsePP  :: PadsParser(pads,md)
   parseS   :: String -> ((pads, md), String) 
   parseS cs = case (runPP parsePP  (S.padsSourceFromString cs)) of
@@ -116,6 +125,8 @@ class Data pads => Pads1 arg pads md | pads->md, pads->arg where
 
 baseTypesList = [
   ("Pint",      (''Int,     [])),
+  ("Pchar",     (''Char,    [])),
+  ("Pdigit",    (''Int,    [])),
   ("Pstring",   (''String,  [''Char])),
   ("PstringFW", (''String,  [''Int])),
   ("PstringME", (''String,  [''S.RE])),
@@ -128,10 +139,23 @@ baseTypesMap :: M.Map String (Name, [Name]) = M.fromList baseTypesList
 {- XXX: These declarations should be generated from table above . -}
 {- XXX: Default values should be defined to use parameter, so for example, we can generate a string of the proper length. -}
 newtype Pint = Pint Int
-  deriving (Eq, Show, Data, Typeable, Num, Ord)
+  deriving (Eq, Show, Data, Typeable, Num, Ord, Integral, Real, Enum)
+newtype Pchar = Pchar Char
+  deriving (Eq, Show, Data, Typeable, Ord)
+newtype Pdigit = Pdigit Int
+  deriving (Eq, Show, Data, Typeable, Num, Ord, Integral, Real, Enum)
+
+instance Pretty Pchar where
+  ppr (Pchar c) = text (show c)
 
 instance Pads Pint Base_md where
   parsePP = pint_parseM
+
+instance Pads Pchar Base_md where
+  parsePP = pchar_parseM
+
+instance Pads Pdigit Base_md where
+  parsePP = pdigit_parseM
 
 newtype Pstring    = Pstring    String
   deriving (Eq, Show, Data, Typeable)
@@ -187,6 +211,8 @@ mdReturn r @ (rep,md) = PadsParser $ \bs ->
     then Good [(r,bs)]
     else Bad (r,bs)
 
+
+
 eitherP :: PadsParser a -> PadsParser a -> PadsParser a
 eitherP p q = PadsParser $ \s -> 
    runPP p s `appendResult` runPP q s 
@@ -201,7 +227,6 @@ invariant on Result.  So, either we don't need failP or the invariant is wrong.
 failP :: PadsParser [a]
 failP = PadsParser $ \s -> Good []
 -}
-
 
 
 productive :: PadsParser a -> PadsParser (Maybe a)
@@ -356,6 +381,44 @@ parseJustNoRep p = do
   let result = (Just (), (md, Just md))
   mdReturn result
 
+many1 p = do {x <-p; xs <- many p; return (x:xs)}
+
+many :: PadsParser a -> PadsParser [a]
+many p = scan id
+       where scan f = do { x <- p     
+                         ; scan (\tail -> f (x:tail))
+                         } 
+                      `onFail`
+                         (return (f []))
+
+parseMany :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
+parseMany p = scan id
+       where scan f = do { (r,m) <- p     
+                         ; if (numErrors (get_md_header m)) == 0 then scan (\tail -> f ((r,m):tail)) else badReturn [(r,m)]
+                         } 
+                      `onFail`
+                         (return (f []))
+
+{-
+parseManySepRep p = scan id
+      where scan f = do { 
+
+parseSep :: (PadsMD md, PadsMD mdSep) => PadsParser (rep,md) -> PadsParser(repSep, mdSep) -> PadsParser [(rep,md)]
+parseSep p sep = scan id
+      where scan f = undefined
+--          do { (r,m) <- p
+--
+-}
+
+parseListNoTermNoSep :: PadsMD md => PadsParser (rep,md) -> PadsParser ([rep], (Base_md, [md]))
+parseListNoTermNoSep p = do 
+  elems <- parseMany p
+  let (reps, mds) = unzip elems
+  let hmds = map get_md_header mds
+  let md = (mergeBaseMDs hmds, mds)
+  return (reps,md)
+                        
+
 parseNothing :: PadsParser (Maybe t, (Base_md, Maybe s))
 parseNothing = return (Nothing, (cleanBasePD, Nothing))
 
@@ -411,6 +474,32 @@ pstring_parseM c = do
       else do  
           str <- satisfy (\c'-> c /= c')
           goodReturn (Pstring str, cleanBasePD)
+
+
+pchar_parseM :: PadsParser (Pchar, Base_md)
+pchar_parseM  = do 
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pchar") (Just initPos))
+   else do 
+     isEor <- isEorP
+     if isEor then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pchar") (Just initPos))
+      else do  
+          c <- takeHeadP
+          goodReturn (Pchar c, cleanBasePD)
+
+pdigit_parseM :: PadsParser (Pdigit, Base_md)
+pdigit_parseM  = do 
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pdigit") (Just initPos))
+   else do 
+     isEor <- isEorP
+     if isEor then badReturn (def, mkErrBasePD (E.FoundWhenExpecting "EOR" "Pdigit") (Just initPos))
+      else do  
+          c <- takeHeadP
+          if isDigit c then goodReturn (Pdigit (digitToInt c), cleanBasePD)
+                       else badReturn  (def, mkErrBasePD (E.FoundWhenExpecting [c] "Pdigit") (Just initPos))
 
 
 pint_parseM :: PadsParser (Pint,Base_md)
@@ -516,10 +605,23 @@ genRepMDTy ty = case ty of
   Ptuple tys   -> genRepMDTuple tys
   Pline ty     -> genRepMDTy ty
   Pmaybe ty    -> genRepMDMaybe ty
+  Plist ty sep term -> genRepMDList ty
   Papp ty arg  -> genRepMDTy ty
   Ptrans tySrc tyDest exp -> genRepMDTy tyDest    -- rep and md for transform are rep and md for destination type
   Ptypedef pat ty pred    -> genRepMDTypedef ty
   Precord _ tys ->   error "Lines can only appear at the top level."
+
+{- Generate a representation and meta-data for a list:
+  type list = [ty] 
+  type list_md = (baseMD, [ty_md])
+-}
+genRepMDList :: PadsTy -> (TH.Type, TH.Type)
+genRepMDList ty =
+  let (rep_orig, md_orig) = genRepMDTy ty
+      rep_ty    = TH.AppT TH.ListT rep_orig
+      md_nested = TH.AppT TH.ListT  md_orig
+      md_ty = tyListToTupleTy [ConT ''Base_md, md_nested]    
+  in (rep_ty, md_ty)
 
 {- Generate a representation and meta-data type for a typedef. -}
 genRepMDTypedef :: PadsTy -> (TH.Type, TH.Type)
@@ -687,6 +789,7 @@ parseE ty = case ty of
   Ptuple tys     -> mkParseTuple tys
   Precord str fields   -> mkParseRecord str fields
   Punion  str branches -> mkParseUnion  str branches
+  Plist ty sep term    -> mkParseList ty sep term
   Pline ty       -> mkParseLine ty
   Pmaybe ty      -> mkParseMaybe ty
   Papp ty argE   -> mkParseTyApp ty argE
@@ -755,6 +858,11 @@ mkParseMaybe ty = do
     Plit l    -> return (AppE (VarE 'parseMaybeNoRep) rhsE)
     otherwise -> return (AppE (VarE 'parseMaybeRep)   rhsE)
 
+mkParseList :: PadsTy -> (Maybe PadsTy) -> (Maybe TermCond) -> Q TH.Exp
+mkParseList ty sep term = do 
+  rhsE <- parseE ty
+  case (sep,term) of 
+    (Nothing,Nothing) -> return (AppE (VarE 'parseListNoTermNoSep)   rhsE)
 
 mkParseUnion :: String -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q TH.Exp
 mkParseUnion str branches = do

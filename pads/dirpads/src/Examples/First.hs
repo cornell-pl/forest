@@ -4,19 +4,23 @@
     arrays
     switched unions
     defaults in unions
+    stringln base type
     regular expression literals (wait until new release of ghc)
     refactor code in Padsc.hs : parsing monad, etc.
     add routines to access files
     fix import declarations so don't have to include more than one file in First.hs
+    add pretty printing for reps and pds
+    improve error messages
 -}
 
 module Examples.First where
 
 import Language.Pads.Padsc
 import Language.Pads.BaseTypes
-
 import Language.Pads.Quote
 import Language.Pads.Source
+
+import Data.Char
 
 import Language.Haskell.TH as TH
 import Language.Haskell.Meta
@@ -24,6 +28,10 @@ import Language.Pads.Pretty
 import Text.PrettyPrint.Mainland
 import qualified Text.Regex.ByteString as BRE
 
+
+
+[pads| type MyChar = Pchar |]
+myChar_result = myChar_parseS "ab"
 
 [pads| type IntPair = (Pint, '|', Pint) |]
 
@@ -99,7 +107,9 @@ strhex32FW_result3 = phex32FW_parseS 4 input3_hex32FW    -- Prints error message
 input_hexpair = "aa,bbb"
 hexpair_result = hexPair_parseS input_hexpair
 
-[pads| type  IntRange = x :: Pint where 0 <= x && x <= 256 |]
+
+
+[pads| type  IntRange = x :: Pint where <| 0 <= x && x <= 256 |> |]
 input_intRange24 = "24"
 input_intRange0  = "0"
 input_intRange256 = "256"
@@ -117,7 +127,7 @@ result_intRangeBad  = intRange_parseS input_intRangeBad
 {- Note that the special variables "rep" and "md" are in scope in the body of the predicate. -}
 {- Here rep is bound to the same value as x; md is the meta-data descriptor for the underyling type. -}
 
-[pads| type  IntRangeP (low::Pint, high::Pint) = x :: Pint where low <= x && rep <= high && (numErrors md == 0)|]
+[pads| type  IntRangeP (low::Pint, high::Pint) = x :: Pint where <| low <= x && rep <= high && (numErrors md == 0) |> |]
 
 result_intRangeP24 = intRangeP_parseS (0, 256) input_intRange24 
 result_intRangeP0  = intRangeP_parseS (0, 256) input_intRange0  
@@ -125,6 +135,8 @@ result_intRangeP256 = intRangeP_parseS (0, 256) input_intRange256
 result_intRangePLow = intRangeP_parseS (0, 256) input_intRangeLow 
 result_intRangePHigh = intRangeP_parseS (0, 256) input_intRangeHigh 
 result_intRangePBad  = intRangeP_parseS (0, 256) input_intRangeBad 
+
+
 
 
 [pads| type  Record (bound::Pint) = 
@@ -229,8 +241,27 @@ result_opt_test_j = opt_test_parseS input_opt_test_j
 input_opt_test_n = "34||56"
 result_opt_test_n = opt_test_parseS input_opt_test_n
        
--- [pads| type Entries = [Pint] with (sep ','; term eof; length 10)  |]
+-- [pads| type Entries = [Pint] with sep (:',':) and term (:eor:)         |]
+-- [pads| type Entries = [Pint] with sep (:',':) and term (:noSep:)       |]
+-- [pads| type Entries = [Pint] with sep (:',':) and term (:length exp:)  |]
+-- [pads| type Entries = [Pint] with sep (:',':) |]    -- keep parsing until get an error in element type
 
+
+[pads| type Entries_nosep_noterm = [PstringFW(:3:)] |]
+input_entries_nosep_noterm = "123456789"
+result_entries_nosep_noterm = entries_nosep_noterm_parseS input_entries_nosep_noterm
+
+[pads| type Entries_nosep_noterm2 = [Pchar] |]
+input_entries_nosep_noterm2 = ""
+result_entries_nosep_noterm2 = entries_nosep_noterm2_parseS input_entries_nosep_noterm2
+
+pCharToInt (Pchar c) = digitToInt c
+
+[pads| type  EvenInt = x :: Pdigit where <| x `mod` 2 == 0 |> 
+       type  EvenInts = [EvenInt] |]
+input_evenInts = "2465"
+result_evenInt = evenInt_parseS input_evenInts
+result_evenInts = evenInts_parseS input_evenInts
 
 ---- Play space
 

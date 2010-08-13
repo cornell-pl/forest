@@ -1,9 +1,9 @@
 module Language.Pads.Parser where 
 
-import Data.Map as Map
 
 import Language.Pads.Syntax as S
 
+import Control.Monad (msum)
 import Text.Parsec
 import qualified Text.Parsec.String as PS
 import Text.Parsec.Error
@@ -18,8 +18,9 @@ import Language.Haskell.TH as TH hiding (CharL, StringL)
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|"],
-                                           reservedNames   = ["Line", "Trans", "using", "where", "data", "type", "Eor", "Eof", "Maybe"]})
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|" ],
+                                           reservedNames   = ["Line", "Trans", "using", "where", "data", "type", "Eor", 
+                                                              "Eof", "Maybe", "with", "sep", "term", "and" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -30,6 +31,7 @@ stringLiteral = PT.stringLiteral  lexer
 commaSep1     = PT.commaSep1   lexer
 parens        = PT.parens      lexer
 braces        = PT.braces      lexer
+brackets      = PT.brackets    lexer
 
 
 replaceName :: String -> PadsTy -> PadsTy
@@ -216,7 +218,8 @@ typedefTy = do { str1 <- manyTill anyChar (reservedOp "::")
                              (Right patTH) -> return patTH
                ; ty <- padsTy
                ; reserved "where"
-               ; str2 <- manyTill anyChar eof
+               ; reservedOp "<|"
+               ; str2 <- manyTill anyChar (reservedOp "|>")
                ; case LHM.parseExp str2 of
                       Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in where declaration.")
                       Right expTH -> return (Ptypedef pat ty expTH)
@@ -228,12 +231,77 @@ maybeTy = do { reserved "Maybe"
              ; return (Pmaybe ty)
              } <?> "maybe type"
 
+--       | Plist  PadsTy (Maybe PadsTy) (Maybe TermCond)
+-- [pads| type Entries = [Pint] with sep (:',':) and term (:eof:)         |]
+-- [pads| type Entries = [Pint] with sep (:',':) and term (:noSep:)       |]
+-- [pads| type Entries = [Pint] with sep (:',':) and term (:length exp:)  |]
+-- [pads| type Entries = [Pint] with sep (:',':) |]    -- keep parsing until get an error in element type
+
+sortModifier (Left sep) =   (Just sep, Nothing)
+sortModifier (Right term) = (Nothing, Just term)
+sortModifiers mods = 
+    let (seps, terms) = unzip $ map sortModifier mods
+    in  (msum seps, msum terms)
+
+sep :: Parser PadsTy
+sep = do { reserved "sep"
+         ; reservedOp "(:"
+         ; ty <- padsTy
+         ; reservedOp ":)"
+         ; return ty 
+         } <?> "separator"
+     
+termKind :: Parser TermCond
+termKind = do { reserved "length"
+              ; str <- manyTill anyChar (reservedOp ":)")
+              ; case LHM.parseExp str of
+                      Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in list length declaration.")
+                      Right expTH -> return (LengthTC expTH)
+              }
+       <|> do { reserved "noSep"
+              ; reservedOp ":)"
+              ; return NoSepTC
+              }
+       <|> do { ty <- padsTy
+              ; reservedOp ":)"
+              ; return (TyTC ty)
+              }
+
+term :: Parser TermCond
+term = do { reserved "term"
+          ; reservedOp "(:"
+          ; termKind
+          } <?> "terminator"
+  
+
+listMod :: Parser (Either PadsTy TermCond)
+listMod =   do { sepMod <- sep
+                ; return (Left sepMod) }
+         <|> do { termMod <- term
+                ; return (Right termMod) }
+         <?> "list modifier"
+
+listMods :: Parser (Maybe PadsTy, Maybe TermCond)
+listMods = do { reservedOp "with"
+               ; modifiers <- sepBy1 listMod (reservedOp "and")
+               ;  return (sortModifiers modifiers)
+               }
+         <|> (return (Nothing, Nothing))
+         <?> "list modifiers"
+
+listTy :: Parser PadsTy
+listTy = do { elementTy <- brackets padsTy
+             ; (sepM, termM) <- listMods
+             ; return (Plist elementTy sepM termM)
+             } <?> "list type"    
+
 padsTy :: Parser PadsTy
 padsTy = lineTy
      <|> transformTy 
      <|> tupleTy
      <|> recordTy
      <|> maybeTy
+     <|> listTy
      <|> try fnAppTy
      <|> try typedefTy
      <|> litTy
