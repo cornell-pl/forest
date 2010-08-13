@@ -44,6 +44,13 @@ r = parseExp z
 Right v = r
 resultS = liftM ppr (return v)
 
+str = "let b = True in if b then 3+4 else x"
+parse_result = parseExp str
+Right te = parse_result
+teQ :: IO Exp = return te
+
+
+
 Is there a way to get the system to show the TH representation
 of declarations and types?
  -- runQ [d| type T = () |] >>= print
