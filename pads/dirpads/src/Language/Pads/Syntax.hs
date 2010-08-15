@@ -8,7 +8,7 @@ import Language.Haskell.TH  as TH hiding (Lit,CharL,StringL)
 data Lit    = CharL Char | StringL String  | EorL | EofL
   deriving (Eq, Data, Typeable, Show)
 
-data TermCond = TyTC PadsTy | NoSepTC | LengthTC TH.Exp
+data TermCond = TyTC PadsTy | LengthTC TH.Exp
   deriving (Eq, Data, Typeable, Show)
 
 data PadsTy = Plit Lit
@@ -16,6 +16,7 @@ data PadsTy = Plit Lit
             | Ptuple [PadsTy] 
             | Pmaybe PadsTy
             | Pline PadsTy
+            | Ptry PadsTy
             | Papp PadsTy TH.Exp
             | Ptrans PadsTy PadsTy TH.Exp   {- Src, Dest, and pair of functions to do transformation -}
             | Ptypedef TH.Pat PadsTy TH.Exp  {- pattern bound to underlying type, underlying type, predicate -}

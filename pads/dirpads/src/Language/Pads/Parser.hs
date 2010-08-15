@@ -20,7 +20,8 @@ type Parser = PS.Parser
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|" ],
                                            reservedNames   = ["Line", "Trans", "using", "where", "data", "type", "Eor", 
-                                                              "Eof", "Maybe", "with", "sep", "term", "and" ]})
+                                                              "Eof", "Maybe", "with", "sep", "term", "and", "length", "of",
+                                                              "Try" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -233,8 +234,7 @@ maybeTy = do { reserved "Maybe"
 
 --       | Plist  PadsTy (Maybe PadsTy) (Maybe TermCond)
 -- [pads| type Entries = [Pint] with sep (:',':) and term (:eof:)         |]
--- [pads| type Entries = [Pint] with sep (:',':) and term (:noSep:)       |]
--- [pads| type Entries = [Pint] with sep (:',':) and term (:length exp:)  |]
+-- [pads| type Entries = [Pint] with sep (:',':) and term (:length of exp:)  |]
 -- [pads| type Entries = [Pint] with sep (:',':) |]    -- keep parsing until get an error in element type
 
 sortModifier (Left sep) =   (Just sep, Nothing)
@@ -253,19 +253,16 @@ sep = do { reserved "sep"
      
 termKind :: Parser TermCond
 termKind = do { reserved "length"
+              ; reserved "of"
               ; str <- manyTill anyChar (reservedOp ":)")
               ; case LHM.parseExp str of
                       Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in list length declaration.")
                       Right expTH -> return (LengthTC expTH)
               }
-       <|> do { reserved "noSep"
-              ; reservedOp ":)"
-              ; return NoSepTC
-              }
        <|> do { ty <- padsTy
               ; reservedOp ":)"
               ; return (TyTC ty)
-              }
+              } <?> "term kind"
 
 term :: Parser TermCond
 term = do { reserved "term"
@@ -295,6 +292,12 @@ listTy = do { elementTy <- brackets padsTy
              ; return (Plist elementTy sepM termM)
              } <?> "list type"    
 
+tryTy :: Parser PadsTy
+tryTy = do { reservedOp "Try"  
+           ; ty <- padsTy
+           ; return (Ptry ty)
+           } <?> "try type"
+
 padsTy :: Parser PadsTy
 padsTy = lineTy
      <|> transformTy 
@@ -302,6 +305,7 @@ padsTy = lineTy
      <|> recordTy
      <|> maybeTy
      <|> listTy
+     <|> tryTy
      <|> try fnAppTy
      <|> try typedefTy
      <|> litTy

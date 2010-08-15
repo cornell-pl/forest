@@ -35,10 +35,15 @@ cleanBasePD = Base_md {numErrors = 0, errInfo = Nothing }
 mkErrBasePD msg pos = Base_md {numErrors = 1, 
                                errInfo = Just (E.ErrInfo{msg=msg,position=pos}) }
 
-mergeBaseMDs mds = case mds of 
+shallowBaseMDs mds = case mds of 
                      [] -> cleanBasePD
                      otherwise ->  Data.List.foldl1 (\(Base_md {numErrors=num1,errInfo=i1}) (Base_md {numErrors=num2,errInfo=i2}) ->
                                                           (Base_md {numErrors=num1 + num2, errInfo= Nothing })) mds
+
+mergeBaseMDs mds = case mds of 
+                     [] -> cleanBasePD
+                     otherwise ->  Data.List.foldl1 (\(Base_md {numErrors=num1,errInfo=i1}) (Base_md {numErrors=num2,errInfo=i2}) ->
+                                                          (Base_md {numErrors=num1 + num2, errInfo= E.maybeMergeErrInfo i1 i2 })) mds
 
 {- Generic function for computing the default for any type supporting Data a interface -}
 getConstr :: DataType -> Constr
@@ -272,6 +277,14 @@ onFail p q = PadsParser $ \s ->
                Good [] -> runPP q s
                Good v  -> Good v
 
+replaceSource :: S.Source -> (Result (a,S.Source)) -> (Result (a,S.Source))
+replaceSource s res = case res of
+  Good gs     -> Good $ map (\(v,_)->(v,s)) gs
+  Bad  (a,_)  -> Bad (a,s)
+
+parseTry :: PadsParser a -> PadsParser a
+parseTry p = PadsParser $ \s ->  replaceSource s (runPP p s)
+
 
 parseOpt :: PadsParser a -> a -> PadsParser a
 parseOpt p x = p `onFail` return x
@@ -345,41 +358,33 @@ lineBegin,lineEnd :: PadsParser (Maybe String)
 lineBegin = primPads S.lineBegin
 lineEnd = primPads S.lineEnd
 
+doLineEnd :: PadsParser ((), Base_md)
 doLineEnd = do
   rendErr <- lineEnd
   case rendErr of
-    Nothing -> return cleanBasePD
+    Nothing -> goodReturn ((), cleanBasePD)
     Just err -> do p <- getPos
-                   badReturn (mkErrBasePD (E.LineError err) (Just p))
+                   badReturn ((), mkErrBasePD (E.LineError err) (Just p))
 
+doLineBegin :: PadsParser ((), Base_md)
 doLineBegin = do
   rbegErr <- lineBegin
   case rbegErr of
-    Nothing -> return cleanBasePD
+    Nothing -> return ((), cleanBasePD)
     Just err -> do p <- getPos
-                   badReturn (mkErrBasePD (E.LineError err) (Just p))
+                   badReturn ((), mkErrBasePD (E.LineError err) (Just p))
 
 
 parseLine :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
 parseLine p = do 
-   bmd <- doLineBegin
-   (r,md) <- p
-   emd <- doLineEnd
+   (_,bmd) <- doLineBegin
+   (r, md) <- p
+   (_,emd) <- doLineEnd
    let hmd = get_md_header md
    let new_hd = mergeBaseMDs [bmd,hmd,emd]
    let new_md = replace_md_header md new_hd
    return (r,new_md)
 
-parseJustRep p = do
-  (r,md) <- p
-  let bmd = get_md_header md
-  let result = (Just r, (bmd, Just md))
-  mdReturn result
-
-parseJustNoRep p = do
-  md <- p
-  let result = (Just (), (md, Just md))
-  mdReturn result
 
 many1 p = do {x <-p; xs <- many p; return (x:xs)}
 
@@ -399,31 +404,125 @@ parseMany p = scan id
                       `onFail`
                          (return (f []))
 
-{-
-parseManySepRep p = scan id
-      where scan f = do { 
 
-parseSep :: (PadsMD md, PadsMD mdSep) => PadsParser (rep,md) -> PadsParser(repSep, mdSep) -> PadsParser [(rep,md)]
-parseSep p sep = scan id
-      where scan f = undefined
---          do { (r,m) <- p
---
--}
+parseSepBy1 :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseSepBy1 sep p = do { rm <- p
+                       ; rms <- parseMany (sep >> p)
+                       ; return (rm : rms)
+                       }
 
-parseListNoTermNoSep :: PadsMD md => PadsParser (rep,md) -> PadsParser ([rep], (Base_md, [md]))
-parseListNoTermNoSep p = do 
-  elems <- parseMany p
+parseSepBy :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseSepBy sep p = parseSepBy1 sep p `onFail` (return [])
+
+parseCount :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseCount n p  | n <= 0    = return []
+                | otherwise = sequence (replicate n p)
+
+parseCountSep :: (PadsMD md) => Int -> PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseCountSep n sep p  | n <= 0    = return []
+                       | otherwise = sequence (p : replicate (n - 1)  (sep>>p))
+
+parseManyTill :: (PadsMD md, PadsMD mdTerm) =>  PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseManyTill term p = scan
+                     where 
+                       scan = do { term; return [] }
+                          `onFail` 
+                              do { b <- isEofP
+                                 ; if b then goodReturn [] else badReturn [] }
+                          `onFail` 
+                              do { rm <- p; rms <- scan; return (rm:rms) }
+
+parseManyTillSep :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) =>  
+                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseManyTillSep sep term p = (termOrEof []) `onFail` scan
+                     where 
+                       scan = do { (rep, md) <- p
+                                 ; sepPos <- getPos
+                                 ; sepResult <- scanForUntil [] sep (termOrEof [(rep,md)])
+                                 ; case sepResult of
+                                     Left [] ->       -- Found termination condition, no extra junk.  We're done.
+                                          goodReturn [(rep,md)]
+                                     Left junk  ->    -- Found termination condition; but there was extra junk
+                                          do { let mdSep   = mkErrBasePD (E.ExtraStuffBeforeTy junk "seperator" ) (Just sepPos)
+                                             ; let mdHead  = get_md_header md
+                                             ; let mergeMD = mergeBaseMDs [mdHead,mdSep]
+                                             ; let md'     = replace_md_header md mergeMD 
+                                             ; badReturn [(rep,md')]
+                                             }
+                                     Right [] ->     -- Found separator, no extra junk.  Look for next element.
+                                          do { rms <- scan 
+                                             ; return ((rep,md):rms) }   
+                                     Right junk ->   -- Found separator, but with extra junk.  Look for next element
+                                          do { let mdSep   = mkErrBasePD (E.ExtraStuffBeforeTy junk "seperator" ) (Just sepPos)
+                                             ; let mdHead  = get_md_header md
+                                             ; let mergeMD = mergeBaseMDs [mdHead,mdSep]
+                                             ; let md'     = replace_md_header md mergeMD 
+                                             ; rms <- scan
+                                             ; badReturn ((rep,md'):rms)
+                                             }
+                                 }
+                       termOrEof r = do { term; goodReturn r }
+                          `onFail` 
+                                     do { b <- isEofP
+                                        ; if b then goodReturn r else badReturn r }
+
+
+scanForUntil s sep end = do { end        
+                            ; goodReturn (Left (reverse s))
+                            }
+                       `onFail` 
+                         do { sep
+                            ; goodReturn (Right (reverse s))
+                            } 
+                       `onFail`
+                         do { c <- takeHeadP
+                            ; scanForUntil (c:s) sep end
+                            }
+
+
+
+parseList p combine = do 
+  elems <- combine p
   let (reps, mds) = unzip elems
   let hmds = map get_md_header mds
   let md = (mergeBaseMDs hmds, mds)
   return (reps,md)
-                        
+
+parseListNoTermNoSep :: PadsMD md => PadsParser (rep,md) -> PadsParser ([rep], (Base_md, [md]))
+parseListNoTermNoSep p = parseList p parseMany
+
+parseListNoTermSep :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListNoTermSep sep p = parseList p (parseSepBy sep)
+
+parseListTermLengthNoSep :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermLengthNoSep i p = parseList p (parseCount i)
+
+parseListTermLengthSep :: (PadsMD md, PadsMD mdSep) => Int -> PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermLengthSep n sep p = parseList p (parseCountSep n sep)
+
+parseListTermNoSep :: (PadsMD md, PadsMD mdTerm) => 
+                     PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermNoSep term p = parseList p (parseManyTill term)
+
+parseListTermSep :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) => 
+                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermSep sep term p = parseList p (parseManyTillSep sep term)
+
+
+
 
 parseNothing :: PadsParser (Maybe t, (Base_md, Maybe s))
 parseNothing = return (Nothing, (cleanBasePD, Nothing))
+                        
+parseJust :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
+parseJust p = do
+  (r,md) <- p
+  let bmd = get_md_header md
+  let result = (Just r, (bmd, Just md))
+  mdReturn result
 
-parseMaybeRep   p = choiceP [parseJustRep   p, parseNothing]
-parseMaybeNoRep p = choiceP [parseJustNoRep p, parseNothing]
+parseMaybe :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
+parseMaybe p = choiceP [parseJust p, parseNothing]
 
 pstringFW_parseM :: Int -> PadsParser (PstringFW, Base_md)
 pstringFW_parseM n = do 
@@ -519,50 +618,57 @@ pint_parseM = do
             else goodReturn (Pint $ digitListToInt isNeg digits, cleanBasePD)
 
 
-pcharLit_parseM :: Char -> PadsParser Base_md
+pcharLit_parseM :: Char -> PadsParser ((), Base_md)
 pcharLit_parseM c = do 
   let cStr = mkStr c
   initPos <- getPos
   isEof <- isEofP
-  if isEof then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOF" cStr) (Just initPos))
+  if isEof then badReturn ((), mkErrBasePD (E.FoundWhenExpecting "EOF" cStr) (Just initPos))
    else do 
      isEor <- isEorP
-     if isEor then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOR" cStr) (Just initPos))
+     if isEor then badReturn ((), mkErrBasePD (E.FoundWhenExpecting "EOR" cStr) (Just initPos))
       else do
          c' <- takeHeadP 
-         if c == c' then goodReturn cleanBasePD
+         if c == c' then goodReturn ((),cleanBasePD)
           else do
            foundIt <- scanP c
            errPos <- getPos
-           if foundIt then badReturn (mkErrBasePD (E.ExtraBeforeLiteral cStr) (Just errPos))
-                      else badReturn (mkErrBasePD (E.MissingLiteral     cStr) (Just errPos))
+           if foundIt then badReturn ((), mkErrBasePD (E.ExtraBeforeLiteral cStr) (Just errPos))
+                      else badReturn ((), mkErrBasePD (E.MissingLiteral     cStr) (Just errPos))
 
 
-pstrLit_parseM :: String -> PadsParser Base_md
+pstrLit_parseM :: String -> PadsParser ((), Base_md)
 pstrLit_parseM s = do 
   initPos <- getPos
   isEof <- isEofP
-  if isEof then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOF" s) (Just initPos))
+  if isEof then badReturn ((), mkErrBasePD (E.FoundWhenExpecting "EOF" s) (Just initPos))
    else do 
      isEor <- isEorP
-     if isEor then badReturn (mkErrBasePD (E.FoundWhenExpecting "EOR" s) (Just initPos))
+     if isEor then badReturn ((), mkErrBasePD (E.FoundWhenExpecting "EOR" s) (Just initPos))
       else do
          match <- scanStrP s
          errPos <- getPos
          case match of
-           Nothing   -> badReturn (mkErrBasePD (E.MissingLiteral     s) (Just errPos))
-           Just []   -> goodReturn cleanBasePD
-           Just junk -> badReturn (mkErrBasePD (E.ExtraBeforeLiteral s) (Just errPos))
+           Nothing   -> badReturn  ((), mkErrBasePD (E.MissingLiteral     s) (Just errPos))
+           Just []   -> goodReturn ((), cleanBasePD)
+           Just junk -> badReturn  ((), mkErrBasePD (E.ExtraBeforeLiteral s) (Just errPos))
 
-peorLit_parseM :: PadsParser Base_md
-peorLit_parseM = doLineEnd
+peorLit_parseM :: PadsParser ((), Base_md)
+peorLit_parseM = do 
+  initPos <- getPos
+  isEof <- isEofP
+  if isEof then badReturn ((), mkErrBasePD (E.FoundWhenExpecting "EOF" "EOR") (Just initPos))
+   else do 
+     isEor <- isEorP
+     if isEor then doLineEnd
+              else badReturn ((), mkErrBasePD (E.LineError "Expecting EOR") (Just initPos))
 
-peofLit_parseM :: PadsParser Base_md
+peofLit_parseM :: PadsParser ((), Base_md)
 peofLit_parseM = do
   initPos <- getPos
   isEof <- isEofP
-  if isEof then goodReturn cleanBasePD
-           else badReturn (mkErrBasePD ( E.ExtraBeforeLiteral "Eof")(Just initPos))
+  if isEof then goodReturn ((), cleanBasePD)
+           else badReturn  ((), (mkErrBasePD ( E.ExtraBeforeLiteral "Eof")(Just initPos)))
    
 
 {- Code generation routines -}
@@ -606,6 +712,7 @@ genRepMDTy ty = case ty of
   Pline ty     -> genRepMDTy ty
   Pmaybe ty    -> genRepMDMaybe ty
   Plist ty sep term -> genRepMDList ty
+  Ptry ty      -> genRepMDTy ty                  -- rep and md for try type are same as for underlying type
   Papp ty arg  -> genRepMDTy ty
   Ptrans tySrc tyDest exp -> genRepMDTy tyDest    -- rep and md for transform are rep and md for destination type
   Ptypedef pat ty pred    -> genRepMDTypedef ty
@@ -688,7 +795,7 @@ genRepMDUnion (Just str, ty, exp) = let
 
 type VST = (TH.Name, TH.Strict, TH.Type)
 genRepMDField :: (Maybe String, PadsTy, Maybe TH.Exp) -> Maybe (VST, VST)
-genRepMDField (Nothing, ty, exp)  = Nothing
+genRepMDField (Nothing,  ty, exp)  = Nothing
 genRepMDField (Just str, ty, exp) = let
    (rep_ty, md_ty) = genRepMDTy ty
    in Just ((getFieldName   str, TH.NotStrict, rep_ty),
@@ -781,15 +888,16 @@ genParseBody repN mdN ty = do
 {- Given a PadsTy ty, return the haskell expression that parses ty. -}
 parseE :: PadsTy -> Q TH.Exp
 parseE ty = case ty of
-  Plit (PS.CharL c)    -> return (AppE (VarE(getParseName "PcharLit")) (LitE (TH.CharL   c)))   -- Note the type of this expression has a different pattern: (no rep).
-  Plit (PS.StringL s)  -> return (AppE (VarE(getParseName "PstrLit"))  (LitE (TH.StringL s)))   -- Note the type of this expression has a different pattern: (no rep).
-  Plit  PS.EorL        -> return       (VarE(getParseName "PeorLit"))                           -- Note the type of this expression has a different pattern: (no rep).
-  Plit  PS.EofL        -> return       (VarE(getParseName "PeofLit"))                           -- Note the type of this expression has a different pattern: (no rep).
+  Plit (PS.CharL c)    -> return (AppE (VarE(getParseName "PcharLit")) (LitE (TH.CharL   c)))   
+  Plit (PS.StringL s)  -> return (AppE (VarE(getParseName "PstrLit"))  (LitE (TH.StringL s)))   
+  Plit  PS.EorL        -> return       (VarE(getParseName "PeorLit"))                           
+  Plit  PS.EofL        -> return       (VarE(getParseName "PeofLit"))                           
   Pname p_name   -> return (VarE (getParseName p_name))
   Ptuple tys     -> mkParseTuple tys
   Precord str fields   -> mkParseRecord str fields
   Punion  str branches -> mkParseUnion  str branches
   Plist ty sep term    -> mkParseList ty sep term
+  Ptry  ty       -> mkParseTry ty
   Pline ty       -> mkParseLine ty
   Pmaybe ty      -> mkParseMaybe ty
   Papp ty argE   -> mkParseTyApp ty argE
@@ -846,6 +954,11 @@ The meta-data structure of a Pline ty is the same as the meta-data structure for
 TODO: Report error if underlying type has no representation. 
 -}
 
+mkParseTry :: PadsTy -> Q TH.Exp
+mkParseTry ty = do
+   rhsE <- parseE ty
+   return (AppE (VarE 'parseTry) rhsE)
+
 mkParseLine :: PadsTy -> Q TH.Exp
 mkParseLine ty = do
    rhsE <- parseE ty
@@ -854,15 +967,23 @@ mkParseLine ty = do
 mkParseMaybe :: PadsTy -> Q TH.Exp 
 mkParseMaybe ty = do
   rhsE <- parseE ty
-  case ty of
-    Plit l    -> return (AppE (VarE 'parseMaybeNoRep) rhsE)
-    otherwise -> return (AppE (VarE 'parseMaybeRep)   rhsE)
+  return (AppE (VarE 'parseMaybe) rhsE)
 
 mkParseList :: PadsTy -> (Maybe PadsTy) -> (Maybe TermCond) -> Q TH.Exp
 mkParseList ty sep term = do 
   rhsE <- parseE ty
   case (sep,term) of 
-    (Nothing,Nothing) -> return (AppE (VarE 'parseListNoTermNoSep)   rhsE)
+    (Nothing,  Nothing) -> return (AppE (VarE 'parseListNoTermNoSep)   rhsE)
+    (Just sep, Nothing) -> do sepE <- parseE sep
+                              return (AppE (AppE (VarE 'parseListNoTermSep) sepE) rhsE)
+    (Nothing,  Just (LengthTC lenE)) ->  return (AppE (AppE (VarE 'parseListTermLengthNoSep) lenE) rhsE)
+    (Just sep, Just (LengthTC lenE)) ->  do sepE <- parseE sep
+                                            return (AppE (AppE (AppE (VarE 'parseListTermLengthSep) lenE) sepE) rhsE)
+    (Nothing,  Just (TyTC term    ))  -> do termE <- parseE term
+                                            return (AppE (AppE (VarE 'parseListTermNoSep) termE) rhsE)
+    (Just sep, Just (TyTC term    ))  -> do sepE <- parseE sep
+                                            termE <- parseE term
+                                            return (AppE (AppE (AppE (VarE 'parseListTermSep) sepE) termE) rhsE)
 
 mkParseUnion :: String -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q TH.Exp
 mkParseUnion str branches = do
@@ -887,7 +1008,7 @@ mkParseBranch str (Just name, padsTy, predM) = do
    case (predM,padsTy) of
     (Just pred, Plit l) -> error ("Union "++ str ++ ": literal branch can't have a predicate.")
     (Nothing,   Plit l) -> let
-       stmtPrs = BindS mdP rhsE                                                   -- md <- parse
+       stmtPrs = BindS (TupP [repP,mdP]) rhsE                                     -- (rep, md) <- parse
        frepE   = TH.ConE (getBranchNameU   name)                                  -- . inject value into data type: Foo 
        imdE    = TH.AppE (TH.ConE (getBranchMDNameU name))  mdE                   -- . inject md into data type: Foo_md md
        fmdE    = TupE [mdE,  imdE]                                                -- . build final md: (md, Foo_md md)
@@ -953,7 +1074,10 @@ mkParseRecord str fields = do
   let finalS             = NoBindS (AppE (VarE 'return) resultE)
   return (DoE (stmts ++ [mdS,finalS]))
 
-
+{- XXX
+    - Why can't predicates modify unamed fields?
+    - Can we rewrite these blocks in Haskell code?
+-}
 mkParseField :: (Maybe String, PadsTy, Maybe TH.Exp) -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
 mkParseField (labelM, ty, predM) = do
    repName     <- case labelM of { Nothing -> genRepName; Just str -> return $ getFieldName   str}
@@ -963,22 +1087,17 @@ mkParseField (labelM, ty, predM) = do
    let ( mdE,  mdP) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
    rhsE        <- parseE ty
-   case (labelM,ty,predM) of 
-    (Nothing, _,  Just p)      ->  error "Predicates cannot modify unnamed fields in records."
-    (Just str, Plit l, _)      ->  error "Named fields cannot have literal types in records."
-    (Nothing,  Plit l, Nothing) ->  let                                         -- Parse unnamed, literal struct field
-       stmt1 = BindS mdP rhsE                                                  -- No rep for literals
-       stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
-       in return([], [], bmdE, [stmt1,stmt2])                                  -- No rep or md to include in result
-    (Nothing, _, Nothing)      ->  let                                         -- Parse unnamed, non-literal struct field
+   case (labelM,predM) of 
+    (Nothing, Just p)      ->  error "Predicates cannot modify unnamed fields in records."
+    (Nothing, Nothing)      ->  let                                         -- Parse unnamed, non-literal struct field
        stmt1 = BindS (TupP [repP,mdP]) rhsE                                    -- rep and md exist for non-literal types
        stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
        in return([], [], bmdE, [stmt1,stmt2])                                  -- No rep or md to include in result
-    (Just str, ty, Nothing)    -> let                                          -- Parse named, non-literal struct field, no predicate
+    (Just str, Nothing)    -> let                                          -- Parse named, non-literal struct field, no predicate
        stmt1 = BindS (TupP [repP,mdP]) rhsE                                    -- rep and md exist for non-literal types
        stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
        in return([(repName,repE)], [(mdName,mdE)], bmdE, [stmt1,stmt2])       -- Include named rep and md in result
-    (Just str, ty, Just pred)    -> do                                         -- Parse named, non-literal struct field, predicate
+    (Just str, Just pred)    -> do                                         -- Parse named, non-literal struct field, predicate
       raw_mdName      <- genMdName
       raw_bmdName     <- genBMdName 
       let (rawMDE, rawMDP)   = genPE raw_mdName
@@ -1046,10 +1165,6 @@ mkParseTupleB (ty:tys) = do
       TH.Exp : expression that stores base level meta data 
      [Stmt]  : list of statements to do parsing for PadsTy.
 
-    Plit c:
-     md <- parseE
-     bmd <- get_md_header md
-    others
      (rep,md) <- parseE
      bmd <- get_md_header md
 
@@ -1063,9 +1178,10 @@ mkParseTyB ty = do
    let ( mdE,  mdP) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
    rhsE        <- parseE ty
-   let (resultEs,stmt1) =  case ty of
-        Plit l ->    ([],     BindS  mdP              rhsE)
-        otherwise -> ([repE], BindS (TupP [repP,mdP]) rhsE)
+   let resultEs =  case ty of
+        Plit l ->    []
+        otherwise -> [repE]
+   let stmt1    = BindS (TupP [repP,mdP]) rhsE
    let stmt2    = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
    return (resultEs, mdE,bmdE,[stmt1,stmt2])
    
