@@ -131,7 +131,7 @@ class Data pads => Pads1 arg pads md | pads->md, pads->arg where
 baseTypesList = [
   ("Pint",      (''Int,     [])),
   ("Pchar",     (''Char,    [])),
-  ("Pdigit",    (''Int,    [])),
+  ("Pdigit",    (''Int,     [])),
   ("Pstring",   (''String,  [''Char])),
   ("PstringFW", (''String,  [''Int])),
   ("PstringME", (''String,  [''S.RE])),
@@ -669,6 +669,9 @@ peofLit_parseM = do
   isEof <- isEofP
   if isEof then goodReturn ((), cleanBasePD)
            else badReturn  ((), (mkErrBasePD ( E.ExtraBeforeLiteral "Eof")(Just initPos)))
+
+pvoidLit_parseM :: PadsParser ((), Base_md)
+pvoidLit_parseM = goodReturn ((), cleanBasePD)
    
 
 {- Code generation routines -}
@@ -700,6 +703,7 @@ genRepMDDecl :: PadsTy -> Name -> Name -> (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDecl ty ty_name md_ty_name = case ty of
   Precord _ tys -> genRepMDDeclStruct ty_name md_ty_name tys
   Punion  _ tys -> genRepMDDeclUnion  ty_name md_ty_name tys
+  Pswitch _ _ caseTys -> genRepMDDeclUnion ty_name md_ty_name (map (\(e,ty) -> ty) caseTys)
   other -> let (rep,md) = genRepMDTy other
            in  (mk_newTyD ty_name rep, [mk_TySynD md_ty_name md], md)
 
@@ -865,6 +869,7 @@ wrapRep :: Name -> PadsTy -> TH.Exp -> TH.Exp
 wrapRep repN ty repE = case ty of
   Precord _ _ -> repE
   Punion  _ _ -> repE
+  Pswitch _ _ _ -> repE
   otherwise   -> AppE  (ConE repN) repE
 
 {-
@@ -892,10 +897,12 @@ parseE ty = case ty of
   Plit (PS.StringL s)  -> return (AppE (VarE(getParseName "PstrLit"))  (LitE (TH.StringL s)))   
   Plit  PS.EorL        -> return       (VarE(getParseName "PeorLit"))                           
   Plit  PS.EofL        -> return       (VarE(getParseName "PeofLit"))                           
+  Plit  PS.VoidL       -> return       (VarE(getParseName "PvoidLit"))            
   Pname p_name   -> return (VarE (getParseName p_name))
   Ptuple tys     -> mkParseTuple tys
   Precord str fields   -> mkParseRecord str fields
   Punion  str branches -> mkParseUnion  str branches
+  Pswitch str exp branches -> mkParseSwitch  str exp branches
   Plist ty sep term    -> mkParseList ty sep term
   Ptry  ty       -> mkParseTry ty
   Pline ty       -> mkParseLine ty
@@ -984,6 +991,15 @@ mkParseList ty sep term = do
     (Just sep, Just (TyTC term    ))  -> do sepE <- parseE sep
                                             termE <- parseE term
                                             return (AppE (AppE (AppE (VarE 'parseListTermSep) sepE) termE) rhsE)
+
+mkParseSwitch :: String -> TH.Exp -> [(TH.Pat, (Maybe String, PadsTy, Maybe TH.Exp))] -> Q TH.Exp
+mkParseSwitch str testE pat_branches = let
+  (pats, branches) = unzip pat_branches
+  in do parseEs <- mkParseBranches str branches
+        let pat_parses = zip pats parseEs
+        let matches = map (\(pat,exp) -> Match pat (NormalB exp) []) pat_parses
+        return (CaseE testE matches)
+
 
 mkParseUnion :: String -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q TH.Exp
 mkParseUnion str branches = do

@@ -18,10 +18,10 @@ import Language.Haskell.TH as TH hiding (CharL, StringL)
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|" ],
-                                           reservedNames   = ["Line", "Trans", "using", "where", "data", "type", "Eor", 
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->" ],
+                                           reservedNames   = ["Line", "Trans", "using", "where", "data", "type", "Eor", "Void",
                                                               "Eof", "Maybe", "with", "sep", "term", "and", "length", "of",
-                                                              "Try" ]})
+                                                              "Try", "case" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -76,7 +76,8 @@ param = do { str <- manyTill anyChar (reservedOp "=")
            }
 
 dataTy :: String -> Parser PadsTy
-dataTy str = unionTy str 
+dataTy str =   unionTy str 
+           <|> switchTy str
 
 
 idTy   :: Parser PadsTy
@@ -104,11 +105,17 @@ eoflitTy = do {reserved "Eof"
               ; return S.EofL
               }
 
+voidlitTy :: Parser S.Lit
+voidlitTy = do {reserved "Void"
+              ; return S.VoidL
+              }
+
 lit :: Parser S.Lit 
 lit =   charlitTy
     <|> strlitTy
     <|> eorlitTy
     <|> eoflitTy
+    <|> voidlitTy
     <?> "literal"
 
 litTy :: Parser PadsTy
@@ -143,10 +150,45 @@ tupleTy = do { tys <- parens padsTyList
 padsTyList :: Parser [PadsTy]
 padsTyList = commaSep1 padsTy
 
+--            | Pswitch String TH.Exp [(TH.Pat, FieldInfo)]
+{-
+[pads| data Switch (which :: Pint) =  
+         case <| which |> of
+             0 ->         Even Pint  where <| even `mod` 2 == 0 |>
+           | 1 ->         Comma   ','
+           | otherwise -> Missing Pvoid |] 
+-}
+
+switchTy :: String -> Parser PadsTy
+switchTy str = do { reservedOp "case"
+                  ; reserved "<|"
+                  ; str <- manyTill anyChar (reservedOp "|>")
+                  ; caseE <- case LHM.parseExp str of
+                                Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ ".")
+                                Right expTH -> return expTH
+                  ; reservedOp "of"
+                  ; branches <- switchBranchList
+                  ; return (Pswitch str caseE branches)
+                  } <?> "switch type"
+
+switchBranchList :: Parser [(TH.Pat, FieldInfo)]
+switchBranchList = sepBy1 switchBranch (reservedOp "|")
+
+switchBranch :: Parser (TH.Pat, FieldInfo)
+switchBranch = do { str <- manyTill anyChar (reservedOp "->")
+                  ; pat <- case LHM.parsePat str of 
+                            (Left err)    -> unexpected ("Failed to parse Haskell pattern: " ++ err)
+                            (Right patTH) -> return patTH
+                  ; br <- branch
+                  ; return (pat, br)
+                  } <?> "switchBrach"
+
+
 unionTy :: String -> Parser PadsTy
 unionTy str = do { branches <- branchList
                  ; return (Punion str branches)
                  } <?> "data type"
+
 
 branchList :: Parser [(Maybe String, PadsTy, Maybe TH.Exp)]
 branchList = sepBy1  branch (reservedOp "|")

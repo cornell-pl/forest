@@ -1,16 +1,15 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DeriveDataTypeable #-}
 
 {- Still to do:
-    switched unions
-    defaults in unions
-    stringln base type
-    regular expression literals (wait until new release of ghc)
-    refactor code in Padsc.hs : parsing monad, etc.
     add routines to access files
+    refactor code in Padsc.hs : parsing monad, etc.
     fix import declarations so don't have to include more than one file in First.hs
     add pretty printing for reps and pds
     improve error messages
     if a [pads| foo |] declaration doesn't start on the first column, get a weird error message
+    regular expression literals (wait until new release of ghc)
+    stringln base type (can express with regular expression; wait til new release of ghc)
+    polymorphic types
 -}
 
 module Examples.First where
@@ -409,3 +408,62 @@ result_tryTestDB = tryTestD_parseS input_tryTestDB
 input_ListWithTry = "cat123"
 result_ListWithTry = listWithTry_parseS input_ListWithTry
 -- ((ListWithTry ([Pchar 'c',Pchar 'a',Pchar 't'],Pdigit 1),(Errors: 0,((Errors: 0,[Errors: 0,Errors: 0,Errors: 0]),Errors: 0))),"23")
+
+[pads| type WithVoid = (Pchar, ',', Void, '|') |]
+input_WithVoid = "a,|rest"
+result_WithVoid = withVoid_parseS input_WithVoid
+-- ((WithVoid (Pchar 'a'),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0,Errors: 0))),"rest")
+
+[pads| data VoidOpt   = PDigit Pdigit | Pcolor "red" | Pnothing Void 
+       type VoidEntry = (VoidOpt, PstringFW(:3:))                    |]
+input_voidEntry1 = "9abcdef"
+result_voidEntry1 = voidEntry_parseS input_voidEntry1
+-- ((VoidEntry (PDigit (Pdigit 9),PstringFW "abc"),(Errors: 0,((Errors: 0,PDigit_md Errors: 0),Errors: 0))),"def")
+
+input_voidEntry2 = "redabcdef"
+result_voidEntry2 = voidEntry_parseS input_voidEntry2
+-- ((VoidEntry (Pcolor,PstringFW "abc"),(Errors: 0,((Errors: 0,Pcolor_md Errors: 0),Errors: 0))),"def")
+
+input_voidEntry3 = "abcdef"
+result_voidEntry3 = voidEntry_parseS input_voidEntry3
+-- ((VoidEntry (Pnothing,PstringFW "abc"),(Errors: 0,((Errors: 0,Pnothing_md Errors: 0),Errors: 0))),"def")
+
+[pads| data Switch (which :: Int) =  
+         case <| which |> of
+             0 ->         Even Pint  where <| even `mod` 2 == 0 |>
+           | 1 ->         Comma   ','
+           | otherwise -> Missing Void |] 
+input_switch0 = "2hello"
+input_switch1 = ",hello"
+input_switchOther = "hello"
+
+result_switch0 = switch_parseS 0 input_switch0
+-- ((Even (Pint 2),(Errors: 0,Even_md Errors: 0)),"hello")
+result_switch1 = switch_parseS 1 input_switch1
+-- ((Comma,(Errors: 0,Comma_md Errors: 0)),"hello")
+result_switchOther = switch_parseS 2 input_switchOther
+-- ((Missing,(Errors: 0,Missing_md Errors: 0)),"hello")
+
+[pads| data MyBody (which::Pint) = 
+         case <| which |> of
+            0         -> First Pint
+          | 1         -> Second Pstring(:',':)
+          | otherwise -> Other Void
+
+       type MyEntry = { header  :: Pint, ','
+                      , body    :: MyBody(:header:), ','
+                      , trailer :: Pchar}  
+
+       type MyData = [Line MyEntry]       |]
+
+input_myData = "0,23,a\n1,hello,b\n2,,c"
+result_myData = myData_parseS input_myData
+{-
+((MyData [MyEntry {header = Pint 0, body = First (Pint 23), trailer = Pchar 'a'},
+          MyEntry {header = Pint 1, body = Second (Pstring "hello"), trailer = Pchar 'b'},
+          MyEntry {header = Pint 2, body = Other, trailer = Pchar 'c'}],
+ (Errors: 0,[(Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,First_md Errors: 0), trailer_md = Errors: 0}),
+             (Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,Second_md Errors: 0), trailer_md = Errors: 0}),
+             (Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,Other_md Errors: 0), trailer_md = Errors: 0})])),"")
+
+-}
