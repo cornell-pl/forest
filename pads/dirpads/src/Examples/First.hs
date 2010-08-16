@@ -19,12 +19,7 @@ import Language.Pads.BaseTypes
 import Language.Pads.Quote
 import Language.Pads.Source
 
-import Data.Char
 
-import Language.Haskell.TH as TH
-import Language.Haskell.Meta
-import Language.Pads.Pretty
-import Text.PrettyPrint.Mainland
 import qualified Text.Regex.ByteString as BRE
 
 ---- Play space

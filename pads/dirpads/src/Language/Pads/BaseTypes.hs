@@ -8,6 +8,7 @@ import qualified Data.Char as C
 import qualified Data.List as L
 import Language.Pads.Quote
 import Language.Pads.Padsc
+import Language.Pads.MetaData
 
 hexStr2Int :: S.Pos -> (PstringFW, Base_md) -> (Pint, Base_md)
 hexStr2Int src_pos (PstringFW s,md) = if good then (Pint (intList2Int ints 0), md)
