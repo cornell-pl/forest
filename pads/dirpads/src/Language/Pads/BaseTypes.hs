@@ -2,17 +2,21 @@
 
 module Language.Pads.BaseTypes where
 
-import qualified Language.Pads.Source as S
-import qualified Language.Pads.Errors as E
+import Language.Pads.Source
+import Language.Pads.Errors 
+import Language.Pads.Generic
+import Language.Pads.MetaData
+import Language.Pads.CoreBaseTypes
+import Language.Pads.Quote
+
 import qualified Data.Char as C
 import qualified Data.List as L
-import Language.Pads.Quote
-import Language.Pads.Padsc
-import Language.Pads.MetaData
 
-hexStr2Int :: S.Pos -> (PstringFW, Base_md) -> (Pint, Base_md)
+
+
+hexStr2Int :: Pos -> (PstringFW, Base_md) -> (Pint, Base_md)
 hexStr2Int src_pos (PstringFW s,md) = if good then (Pint (intList2Int ints 0), md)
-                                      else (0, mkErrBasePD  (E.TransformToDstFail "StrHex" s " (non-hex digit)") (Just src_pos))
+                                      else (0, mkErrBasePD  (TransformToDstFail "StrHex" s " (non-hex digit)") (Just src_pos))
   where
     hc2int c = if C.isHexDigit c then (C.digitToInt c,True) else (0,False)
     (ints,bools) = unzip (map hc2int s)
@@ -25,9 +29,9 @@ int2HexStr :: Int -> (Pint, Base_md) -> (PstringFW, Base_md)
 int2HexStr size (Pint x,md) = if (length result == size) && wasPos  then (PstringFW result, md)       
                               else if not wasPos then 
                                    (PstringFW (Prelude.take size result),    
-                                    mkErrBasePD (E.TransformToSrcFail "StrHex" (show x) (" (Expected positive number)")) Nothing)
+                                    mkErrBasePD (TransformToSrcFail "StrHex" (show x) (" (Expected positive number)")) Nothing)
                               else (PstringFW (Prelude.take size result),
-                                    mkErrBasePD (E.TransformToSrcFail "StrHex" (show x) (" (too big to fit in "++ (show size) ++" characters)")) Nothing)
+                                    mkErrBasePD (TransformToSrcFail "StrHex" (show x) (" (too big to fit in "++ (show size) ++" characters)")) Nothing)
   where
    cvt rest a = if rest < 16 then reverse $ (C.intToDigit rest) : a
                 else cvt (rest `div` 16) (C.intToDigit (rest `mod` 16) : a)

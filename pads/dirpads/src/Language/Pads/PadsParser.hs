@@ -117,7 +117,7 @@ queryPads :: (S.Source -> a) -> PadsParser a
 queryPads f = PadsParser $ \s -> Good [(f s,s)]
 
 getPos :: PadsParser S.Pos
-getPos = queryPads S.getPos
+getPos = queryPads S.getSrcPos
 
 isEofP :: PadsParser Bool 
 isEofP = queryPads S.isEOF
@@ -176,8 +176,8 @@ ifEorP p = do
 
 
 lineBegin,lineEnd :: PadsParser (Maybe String)
-lineBegin = primPads S.lineBegin
-lineEnd = primPads S.lineEnd
+lineBegin = primPads S.srcLineBegin
+lineEnd = primPads S.srcLineEnd
 
 doLineEnd :: PadsParser ((), Base_md)
 doLineEnd = do

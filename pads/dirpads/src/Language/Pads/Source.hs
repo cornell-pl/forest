@@ -139,10 +139,10 @@ span p (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
 tail  (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
        (Source{current=B.tail current,rest,atEOF,loc=Loc{byteOffset=byteOffset+1,lineNumber}})
 
-getPos (Source {current, rest, atEOF, loc}) = 
+getSrcPos (Source {current, rest, atEOF, loc}) = 
    Pos {line=current, begin = loc, end = Nothing }
 scanTo chr (src @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
-     let (Pos {line,begin,..}) = getPos src
+     let (Pos {line,begin,..}) = getSrcPos src
          (skipped, residual) = B.break (\c->c==chr) current
          (found,remaining,newByteOffset) =   
             if B.null residual then   -- Reached EOR w/o finding chr
@@ -157,10 +157,10 @@ scanTo chr (src @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
 eqCurrent :: Source -> Source -> Bool
 eqCurrent s s'= current s == current s'
 
-lineBegin :: Source -> (Maybe String, Source)
-lineBegin s = (Nothing, s)
+srcLineBegin :: Source -> (Maybe String, Source)
+srcLineBegin s = (Nothing, s)
 
-lineEnd :: Source -> (Maybe String, Source)
-lineEnd s = 
+srcLineEnd :: Source -> (Maybe String, Source)
+srcLineEnd s = 
   if atEOF s then (Just "Found EOF when looking for EOR", s)
              else (Nothing, getNextLine_newline s)

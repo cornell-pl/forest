@@ -1,19 +1,15 @@
 module Language.Pads.Quote
-    (pads,
-     pqausiquote1)
+    (pads)
     where
 
 import Prelude hiding (exp, init)
-
-import qualified Data.ByteString.Char8 as B hiding (init, inits)
-import Data.Generics
 import Foreign (unsafePerformIO)
+
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 
+import Language.Pads.CodeGen
 import qualified Language.Pads.Parser as P
-import qualified Language.Pads.Syntax as C
-import Language.Pads.Padsc
 
 
 parse :: Monad m
