@@ -9,6 +9,7 @@ where
 import Language.Pads.MetaData
 import Language.Pads.PadsParser
 import qualified Language.Pads.Source as S
+import qualified Data.ByteString.Lazy.Char8 as B
 
 import Data.Data
 
@@ -22,6 +23,14 @@ class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
   parseS cs = case (runPP parsePP  (S.padsSourceFromString cs)) of
                  Good ((r,rest):alternates) -> (r, S.padsSourceToString rest)  
                  Bad   (r,rest)             -> (r, S.padsSourceToString rest)  
+  parseFile :: FilePath -> IO (pads, md)
+  parseFile file = do
+       { bs <- B.readFile file
+       ; let ps = S.padsSourceFromByteString bs
+       ; case runPP parsePP ps of
+                 Good ((r,rest):alternates) -> return r
+                 Bad   (r,rest)             -> return r
+       }
 
 
 class Data pads => Pads1 arg pads md | pads->md, pads->arg where
@@ -32,6 +41,14 @@ class Data pads => Pads1 arg pads md | pads->md, pads->arg where
   parseS1 arg cs = case (runPP (parsePP1 arg)) (S.padsSourceFromString cs) of
                       Good ((r,rest):alternates) -> (r, S.padsSourceToString rest)  
                       Bad   (r,rest)             -> (r, S.padsSourceToString rest)  
+  parseFile1 :: arg-> FilePath -> IO (pads, md)
+  parseFile1 arg file = do
+       { bs <- B.readFile file
+       ; let ps = S.padsSourceFromByteString bs
+       ; case runPP (parsePP1 arg) ps of
+                 Good ((r,rest):alternates) -> return r
+                 Bad   (r,rest)             -> return r
+       }
 
 
 

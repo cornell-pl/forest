@@ -141,7 +141,7 @@ takeHeadStrP str = primPads (S.takeHeadStr str)
 scanStrP :: String -> PadsParser (Maybe String)
 scanStrP str = primPads (S.scanStr str)
 
-takeP :: Int -> PadsParser String
+takeP :: Integral a => a -> PadsParser String
 takeP n = primPads (S.take (fromInteger $ toInteger n))
 
 regexMatchP :: S.RE -> PadsParser (Maybe String)

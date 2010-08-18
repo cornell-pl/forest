@@ -44,6 +44,11 @@ r = parseExp z
 Right v = r
 resultS = liftM ppr (return v)
 
+
+{- Pretty prints a list of declarations -}
+ppP d = liftM ppr_list (runQ d)
+
+
 str = "let b = True in if b then 3+4 else x"
 parse_result = parseExp str
 Right te = parse_result

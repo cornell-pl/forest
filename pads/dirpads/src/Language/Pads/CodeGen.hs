@@ -63,7 +63,7 @@ genRepMDTy ty = case ty of
   Papp ty arg  -> genRepMDTy ty
   Ptrans tySrc tyDest exp -> genRepMDTy tyDest    -- rep and md for transform are rep and md for destination type
   Ptypedef pat ty pred    -> genRepMDTypedef ty
-  Precord _ tys ->   error "Lines can only appear at the top level."
+  Precord _ tys ->   error "Records can only appear at the top level."
 
 {- Generate a representation and meta-data for a list:
   type list = [ty] 

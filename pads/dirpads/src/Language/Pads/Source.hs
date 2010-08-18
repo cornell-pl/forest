@@ -58,11 +58,15 @@ getNextLine_newline (s @ Source {current, rest, atEOF, loc = Loc{lineNumber, byt
         where (nextLine, raw_residual) = B.break (\c->c == '\n') rest
               residual = B.drop 1 raw_residual
 
-padsSourceFromString str = getNextLine_newline (Source{current = B.empty,
-                                                         rest    = B.pack str,
-                                                         atEOF   = False,   -- if string is empty, will be made True by getNextLine_newline 
-                                                         loc     = Loc{ lineNumber = -1,   -- will be incremeneted to 0 by getNextLine_newline
-                                                                        byteOffset = 0}})
+padsSourceFromByteString :: B.ByteString -> Source
+padsSourceFromByteString bs = 
+             getNextLine_newline (Source{current = B.empty,
+                                         rest    = bs,
+                                         atEOF   = False,   -- if string is empty, will be made True by getNextLine_newline 
+                                         loc     = Loc{ lineNumber = -1,   -- will be incremeneted to 0 by getNextLine_newline
+                                                        byteOffset = 0}})
+
+padsSourceFromString str = padsSourceFromByteString (B.pack str)
 
 padsSourceToString (Source {current, rest, ..}) = B.unpack (B.concat [current,rest])
 isEOF (Source{current,rest,..}) = B.null current && B.null rest
