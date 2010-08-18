@@ -1,24 +1,21 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DeriveDataTypeable #-}
 
 {- Still to do:
-    add routines to access files
-    refactor code in Padsc.hs : parsing monad, etc.
-    fix import declarations so don't have to include more than one file in First.hs
+    write desecription for ai data.
     add pretty printing for reps and pds
     improve error messages
+    revise test suite to cover new cases and compare values semantically rather than as strings
     if a [pads| foo |] declaration doesn't start on the first column, get a weird error message
     regular expression literals (wait until new release of ghc)
     stringln base type (can express with regular expression; wait til new release of ghc)
+    add pretty printers
     polymorphic types
 -}
 
 module Examples.First where
 
 import Language.Pads.Padsc
-import Language.Pads.BaseTypes
-import Language.Pads.Quote
-import Language.Pads.Source
-
+import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Text.Regex.ByteString as BRE
 
@@ -27,6 +24,7 @@ re = BRE.mkRegexWithOptsS "^a+" True True
 re_results1 = BRE.matchRegexAllS re "aaaab"
 re_results2 = BRE.matchRegexAllS re "caaaab"
 
+data Student = Student { name :: String, number:: Int}
 
 ---- PADS EXAMPLES
 
@@ -461,4 +459,32 @@ result_myData = myData_parseS input_myData
              (Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,Second_md Errors: 0), trailer_md = Errors: 0}),
              (Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,Other_md Errors: 0), trailer_md = Errors: 0})])),"")
 
+-}
+
+pintToInt (Pint i) = i
+[pads| type HP = { student_num  :: Pint , ',', 
+                   student_name :: PstringFW(:pintToInt student_num:) }
+       type HP_data = [Line HP] |]   
+
+input_hp_data = "8,Hermione\n3,Ron\n5,Harry"
+test_hp_data = hP_data_parseS input_hp_data
+{-
+   ((HP_data [HP {student_num = Pint 8, student_name = PstringFW "Hermione"},
+              HP {student_num = Pint 3, student_name = PstringFW "Ron"},
+              HP {student_num = Pint 5, student_name = PstringFW "Harry"}],
+    (Errors: 0,[(Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
+                (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
+                (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0})])),"")
+-}
+
+test_file = "/Users/kfisher/pads/dirpads/src/Examples/test_file"
+result_hp_data_file_parse :: (HP_data, HP_data_md) = unsafePerformIO $
+                                                     parseFile test_file
+{-
+  (HP_data [HP {student_num = Pint 8, student_name = PstringFW "Hermione"},
+            HP {student_num = Pint 3, student_name = PstringFW "Ron"},
+            HP {student_num = Pint 5, student_name = PstringFW "Harry"}],
+  (Errors: 0,[(Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
+              (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
+              (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0})]))
 -}
