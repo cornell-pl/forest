@@ -1,17 +1,19 @@
 {- Still to do:
-    for Mark: examples of pretty printing for reps and pds
-    for Mark: examples of how to add Data deriving to types that don't already have it
-  
-    onFail:  add back? onFail Good [] case
+    make it possible for record annotation to come immediately before struct or union.
+    stringln base type (can express with regular expression; wait til new release of ghc)
+    add function to repeated call record parser
 
-    improve error messages
     revise test suite to cover new cases and compare values semantically rather than as strings
       -- add cases for regular expressions after new release of ghc
-    if a [pads| foo |] declaration doesn't start on the first column, get a weird error message
     regular expression literals (wait until new release of ghc)
-    stringln base type (can express with regular expression; wait til new release of ghc)
-    add pretty printers
+
+    if a [pads| foo |] declaration doesn't start on the first column, get a weird error message
+
+    add pretty printers for reps and pds
+    add pretty printers for pads data.
+    improve error messages
     polymorphic types
+    recursive types
 -}
 
 module Examples.First where

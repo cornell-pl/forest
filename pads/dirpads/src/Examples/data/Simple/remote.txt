@@ -1,0 +1,4 @@
+europe,2
+france,3
+england,4
+china,3

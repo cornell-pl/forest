@@ -363,15 +363,6 @@ padsTy = lineTy
 
 
 
-runLex :: Show a => PS.Parser a -> String -> IO()
-runLex p input 
-  = parseTest (do { whiteSpace
-                  ; x <- p
-                  ; eof
-                  ; return x
-                  }) input
-
-
 
 parse :: PS.Parser a -> SourceName -> Line -> Column -> String -> Either ParseError a
 parse p fileName line column input 
@@ -381,11 +372,4 @@ parse p fileName line column input
                   ; eof
                   ; return x
                   }) fileName input
-
-
-
-simple :: PS.Parser Char
-simple = letter
-
-result = parseTest simple " hello"
 
