@@ -111,6 +111,8 @@ RP: string set
 PD: meta pd
 
 exedir =def=
-  first(second(< y:dir, < x : { f::file | f in "*.exe" }, Pred(size(y) = size(x)) >))
+  first(second(< y:dir, < x : { f::file | f in "*.exe" }, 
+                          Pred(size(y) = size(x)) >))
 
 -- note that the rep here is the set of string contents of all the .exe files 
+

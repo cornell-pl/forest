@@ -1,7 +1,6 @@
 +------------+
 | DATA MODEL |
 +------------+
-
 n ::= ...            -- STRINGS
 
 p,q ::=              -- PATHS
@@ -31,7 +30,7 @@ T ::= -- FILESYSTEM CONTENTS
 F ::= -- FILESYSTEM
   | { r |-> m * T }
 
-xDefinition: F is WELL-FORMED if and only if it is a path-prefix-closed
+Definition: F is WELL-FORMED if and only if it is a path-prefix-closed
 finite map from normal paths to T and for all normal paths r in dom(F) 
 either 
   (1) F(r) = m * dir{n1,...,nk} or 
@@ -41,7 +40,6 @@ either
 +--------+
 | SYNTAX |
 +--------+
-
 s ::=                -- SPECIFICATION
     | k              -- constant (e.g., dir, file, link, csv, xml, ascii, etc.)
     | Adhoc(b)       -- PADS-described data
@@ -60,7 +58,6 @@ e ::= ...
 +-----------+
 | SEMANTICS |
 +-----------+
-
 We assume a collection of type-indexed evaluation functions for expressions
 
   eval_tau : env * F * norm path * exp -> env * tau
@@ -100,13 +97,10 @@ F;e |= s ==> (v,d)
 = No RP --> PD Functional Dependency =
 ======================================
 
-DAVE:  I decided that we didn't
-need to enforce this invariant in
-this part of the theory.  It just
-seemed messy.  So now there is no
-such functional dependency.  The
-rep and pd types can be calculated
-from the pads description.
+DAVE: I decided that we didn't need to enforce this invariant in this
+part of the theory.  It just seemed messy.  So now there is no such
+functional dependency.  The rep and pd types can be calculated from
+the pads description.
 
 ============
 = CONSTANT =
@@ -174,7 +168,7 @@ eval_norm_path(E,F,r,e) = (_,r')
 eval_norm_path({},F,r,p) = (_,r'')
 r' = r'' 
 ----------------------------------------------------------
-E;F;r |= ^e ==> (r'',(b,m))
+E;F;r |= ^e ==> (r'',(true,m))
 
 F(r) = m,file(_) or 
 F(r) = m,dir(_)  
