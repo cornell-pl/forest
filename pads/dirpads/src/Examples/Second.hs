@@ -9,12 +9,19 @@ import Test.HUnit
 
 --setupTest (a,b,c)  = TestCase(assertEqual a b (show c))
 
+getTotalErrors :: PadsMD md => md -> Int
+getTotalErrors md = numErrors $ get_md_header md
+mdToError ((rep,md), residual) = (rep, getTotalErrors md, residual)
+mkTestCase s expected seen = TestCase(assertEqual  "intPair_resultV" expected  (mdToError seen))
 
 [pads| type IntPair = (Pint, '|', Pint) |]
 
 intPair_result = intPair_parseS "12|23"
 intPair_expects = "((IntPair (Pint 12,Pint 23),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),\"\")"
-test1 = TestCase(assertEqual  "intPair_result" intPair_expects (show intPair_result))
+test1  = TestCase(assertEqual  "intPair_result" intPair_expects (show intPair_result))
+intPair_expectsV = (IntPair (Pint 12,Pint 23), 0, "")
+test1V = TestCase(assertEqual  "intPair_resultV" intPair_expectsV (mdToError intPair_result))
+test1V' = mkTestCase "intPair_result1V'" intPair_expectsV intPair_result
 
 [pads| type Bar = (Pint, ',', IntPair, ';', Pint) |]            -- reference to another named type
 bar_result = bar_parseS "256,12|23;456:"

@@ -1,6 +1,6 @@
 GHCI options:
 Babylon:/Users/kfisher/pads/dirpads/language-c-quote>
-~/sw/ghc-head/bin/ghci -package parsec -XQuasiQuotes -XTemplateHaskell -XDeriveDataTypeable -XScopedTypeVariables -XMultiParamTypeClasses -XFunctionalDependencies -XFlexibleInstances -XUndecidableInstances -XNamedFieldPuns -XRecordWildCards -XStandaloneDeriving
+~/sw/ghc-head/bin/ghci -package derive -package parsec -package iproute -XQuasiQuotes -XTemplateHaskell -XDeriveDataTypeable -XScopedTypeVariables -XMultiParamTypeClasses -XFunctionalDependencies -XFlexibleInstances -XUndecidableInstances -XNamedFieldPuns -XRecordWildCards -XStandaloneDeriving
 or
 Prelude> :set -XScopedTypeVariables
 Prelude> :set -XTemplateHaskell
@@ -9,6 +9,11 @@ etc
 Modules to load: 
 :m + Language.Haskell.TH
 :m + Monad
+
+At record boundary, commit to choice
+commit (Good xs) = let x = head xs in seq x (Good [x])
+commit (Good (x:xs)) =  seq x (Good [x])
+commit (Good (x:xs)) =  Good [x]
 
 
 Updating head version:

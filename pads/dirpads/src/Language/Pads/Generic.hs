@@ -24,14 +24,7 @@ class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
                  Good ((r,rest):alternates) -> (r, S.padsSourceToString rest)  
                  Bad   (r,rest)             -> (r, S.padsSourceToString rest)  
   parseFile :: FilePath -> IO (pads, md)
-  parseFile file = do
-       { bs <- B.readFile file
-       ; let ps = S.padsSourceFromByteString bs
-       ; case runPP parsePP ps of
-                 Good ((r,rest):alternates) -> return r
-                 Bad   (r,rest)             -> return r
-       }
-
+  parseFile file = parseFileWith parsePP file
 
 class Data pads => Pads1 arg pads md | pads->md, pads->arg where
   def1 :: arg -> pads
@@ -42,10 +35,13 @@ class Data pads => Pads1 arg pads md | pads->md, pads->arg where
                       Good ((r,rest):alternates) -> (r, S.padsSourceToString rest)  
                       Bad   (r,rest)             -> (r, S.padsSourceToString rest)  
   parseFile1 :: arg-> FilePath -> IO (pads, md)
-  parseFile1 arg file = do
+  parseFile1 arg file = parseFileWith (parsePP1 arg) file
+
+
+parseFileWith p file = do
        { bs <- B.readFile file
        ; let ps = S.padsSourceFromByteString bs
-       ; case runPP (parsePP1 arg) ps of
+       ; case runPP p ps of
                  Good ((r,rest):alternates) -> return r
                  Bad   (r,rest)             -> return r
        }
@@ -69,3 +65,5 @@ gdef = def_help
      =   let ty = dataTypeOf (def_help)
              constr = getConstr ty
          in fromConstrB gdef constr 
+
+

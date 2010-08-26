@@ -12,6 +12,7 @@ import Language.Haskell.TH.Syntax
 import qualified Data.Map as M
 import Data.Data
 
+
 import Text.PrettyPrint.Mainland as PP   
 
 import Monad
@@ -33,6 +34,7 @@ baseTypesList = [
  ]
 
 
+
 baseTypesMap :: M.Map String (Name, [Name]) = M.fromList baseTypesList
 
 {- XXX: These declarations should be generated from table above . -}
@@ -43,6 +45,7 @@ newtype Pchar = Pchar Char
   deriving (Eq, Show, Data, Typeable, Ord)
 newtype Pdigit = Pdigit Int
   deriving (Eq, Show, Data, Typeable, Num, Ord, Integral, Real, Enum)
+
 
 instance Pretty Pchar where
   ppr (Pchar c) = text (show c)
@@ -168,7 +171,7 @@ pint_parseM = do
       else do  
           c <- peakHeadP 
           let isNeg = c == '-'
-          if isNeg then takeHeadP else peakHeadP
+          when isNeg (takeHeadP >> return ())
           digits <- satisfy Char.isDigit
           if null digits then badReturn (def, mkErrBasePD (E.FoundWhenExpecting (mkStr c) "Pint") (Just initPos))
             else goodReturn (Pint $ digitListToInt isNeg digits, cleanBasePD)

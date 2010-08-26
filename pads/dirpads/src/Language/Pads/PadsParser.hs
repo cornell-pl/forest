@@ -8,6 +8,7 @@ import Char
 {- Parsing Monad -}
 {- Invariant: Good [] never arises -}
 data Result a =  Good [a] | Bad a
+  deriving Show
 newtype PadsParser a = PadsParser (S.Source -> Result (a,S.Source))
 
 runPP :: PadsParser t -> S.Source -> Result (t, S.Source)
@@ -18,6 +19,12 @@ appendResult (Good r) (Good s) = Good (r++s)
 appendResult (Good r) _ = Good r
 appendResult _ (Good r) = Good r
 appendResult (Bad r1) (Bad r2) = Bad r1
+
+alwaysSucceeds :: PadsParser a -> PadsParser a
+alwaysSucceeds (PadsParser p)= PadsParser $ \s -> reallyGood (p s)
+
+reallyGood ~(Good (x:xs)) = Good (x:xs)
+
 
 concatResult = foldr appendResult (Bad (error "Should never arise: empty good list"))
 
@@ -37,7 +44,12 @@ mdReturn r @ (rep,md) = PadsParser $ \bs ->
     then Good [(r,bs)]
     else Bad (r,bs)
 
-
+commit :: PadsParser a -> PadsParser a
+commit p = PadsParser $ \bs -> 
+               case runPP p bs of
+                  Good [] -> Good []
+                  Good (x:xs) -> Good [x]      
+                  Bad x   -> Bad x
 
 eitherP :: PadsParser a -> PadsParser a -> PadsParser a
 eitherP p q = PadsParser $ \s -> 
@@ -95,7 +107,7 @@ onFail :: PadsParser a -> PadsParser a -> PadsParser a
 onFail p q = PadsParser $ \s -> 
              case runPP p s of 
                Bad a   -> runPP q s
-               Good [] -> runPP q s
+--               Good [] -> runPP q s
                Good v  -> Good v
 
 replaceSource :: S.Source -> (Result (a,S.Source)) -> (Result (a,S.Source))
@@ -197,7 +209,7 @@ doLineBegin = do
 
 
 parseLine :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
-parseLine p = do 
+parseLine p = commit $ do 
    (_,bmd) <- doLineBegin
    (r, md) <- p
    (_,emd) <- doLineEnd
@@ -217,9 +229,19 @@ many p = scan id
                       `onFail`
                          (return (f []))
 
+parseMany' :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
+parseMany' p =  alwaysSucceeds (
+                      do { (r,m) <- p     
+                         ; rms <- parseMany' p
+                         ; return ((r,m):rms)  
+                         } 
+                      `onFail`
+                         return [])
+
 parseMany :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
 parseMany p = scan id
-       where scan f = do { (r,m) <- p     
+       where scan f = alwaysSucceeds $ 
+                      do { (r,m) <- p     
                          ; if (numErrors (get_md_header m)) == 0 then scan (\tail -> f ((r,m):tail)) else badReturn [(r,m)]
                          } 
                       `onFail`
@@ -302,6 +324,8 @@ scanForUntil s sep end = do { end
 
 
 
+
+parseList  :: (Monad m, PadsMD b) =>  t -> (t -> m [(a, b)]) -> m ([a], (Base_md, [b]))
 parseList p combine = do 
   elems <- combine p
   let (reps, mds) = unzip elems
@@ -344,3 +368,4 @@ parseJust p = do
 
 parseMaybe :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
 parseMaybe p = choiceP [parseJust p, parseNothing]
+

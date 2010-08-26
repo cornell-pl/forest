@@ -1,10 +1,12 @@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, DeriveDataTypeable #-}
-
 {- Still to do:
-    write desecription for ai data.
-    add pretty printing for reps and pds
+    for Mark: examples of pretty printing for reps and pds
+    for Mark: examples of how to add Data deriving to types that don't already have it
+  
+    onFail:  add back? onFail Good [] case
+
     improve error messages
     revise test suite to cover new cases and compare values semantically rather than as strings
+      -- add cases for regular expressions after new release of ghc
     if a [pads| foo |] declaration doesn't start on the first column, get a weird error message
     regular expression literals (wait until new release of ghc)
     stringln base type (can express with regular expression; wait til new release of ghc)
@@ -15,6 +17,7 @@
 module Examples.First where
 
 import Language.Pads.Padsc
+import Test.HUnit
 import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Text.Regex.ByteString as BRE
@@ -24,55 +27,94 @@ re = BRE.mkRegexWithOptsS "^a+" True True
 re_results1 = BRE.matchRegexAllS re "aaaab"
 re_results2 = BRE.matchRegexAllS re "caaaab"
 
-data Student = Student { name :: String, number:: Int}
-
 ---- PADS EXAMPLES
+
+tests = TestList[ TestLabel "MyChar"  myChar_test
+                , TestLabel "IntPair" intPair_test 
+                , TestLabel "Bar"     bar_test 
+                , TestLabel "Bar2"    bar2_test 
+                , TestLabel "Bazr"    bazr_test 
+                , TestLabel "MyInt"   myInt_test 
+                , TestLabel "StrTy"   strTy_test 
+                , TestLabel "StrTy1"  strTy1_test 
+                , TestLabel "Baz"     baz_test 
+                , TestLabel "Phex32FW"  phex32FW_test 
+                ---- Add cases for regular expressions
+                , TestLabel "IntRange" test_intRange24
+                , TestLabel "IntRange" test_intRange0
+                , TestLabel "IntRange" test_intRange256
+                , TestLabel "IntRange" test_intRangeLow
+                , TestLabel "IntRange" test_intRangeHigh
+                , TestLabel "IntRange" test_intRangeBad
+                , TestLabel "IntRangeP" test_intRangeP24
+                , TestLabel "IntRangeP" test_intRangeP0
+                , TestLabel "IntRangeP" test_intRangeP256
+                , TestLabel "IntRangeP" test_intRangePLow
+                , TestLabel "IntRangeP" test_intRangePHigh
+                , TestLabel "IntRangeP" test_intRangePBad
+                , TestLabel "Record" test_Record
+                , TestLabel "IdInt" test_IdInt
+                ]
+tests_result = runTestTT tests
+
+getTotalErrors :: PadsMD md => md -> Int
+getTotalErrors md = numErrors $ get_md_header md
+mdToError ((rep,md), residual) = (rep, getTotalErrors md, residual)
+mkTestCase s expected seen = TestCase(assertEqual s expected  (mdToError seen))
 
 [pads| type MyChar = Pchar |]
 myChar_result = myChar_parseS "ab"
+myChar_expects = (MyChar (Pchar 'a'), 0,"b")
+myChar_test = mkTestCase "myChar" myChar_expects myChar_result
 
 [pads| type IntPair = (Pint, '|', Pint) |]
-
 intPair_result = intPair_parseS "12|23"
--- ((IntPair (Pint 12,Pint 23),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
+intPair_expects =  (IntPair (Pint 12,Pint 23), 0,"")
+intPair_test = mkTestCase "intPair" intPair_expects intPair_result
 
 [pads| type Bar = (Pint, ',', IntPair, ';', Pint) |]            -- reference to another named type
-bar_result = bar_parseS "256,12|23;456:"
--- ((Bar (Pint 256,IntPair (Pint 12,Pint 23),Pint 456),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),Errors: 0,Errors: 0))),":")
+bar_result  = bar_parseS "256,12|23;456:"
+bar_expects =  (Bar (Pint 256,IntPair (Pint 12,Pint 23),Pint 456),0, ":")
+bar_test = mkTestCase "bar" bar_expects bar_result
 
 [pads| type Bar2 = (Pint, ',', (Pint,':',Pint), ';', Pint) |]   -- nested tuple type.
-bar2_result = bar2_parseS "56,23:46;29"
--- ((Bar2 (Pint 56,(Pint 23,Pint 46),Pint 29),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),Errors: 0,Errors: 0))),"")
+bar2_result  = bar2_parseS "56,23:46;29"
+bar2_expects = (Bar2 (Pint 56,(Pint 23,Pint 46),Pint 29), 0 ,"")
+bar2_test    = mkTestCase "bar2" bar2_expects bar2_result
 
 [pads| type BazR = Line (Pint, ',',Pint) |]                  -- type that consumes a line boundary.
 bazr_result = bazR_parseS "33,33:"
--- ((BazR (Pint 33,Pint 33),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
+bazr_expects = (BazR (Pint 33,Pint 33),0,"")
+bazr_test    = mkTestCase "bazr" bazr_expects bazr_result
 
-bazr_input = "33,44\n55,66\n"
-bazr_results = parseAllS bazR_parseM bazr_input
--- ([BazR (Pint 33,Pint 44),BazR (Pint 55,Pint 66)],[(Errors: 0,(Errors: 0,Errors: 0,Errors: 0)),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))])
 
-[pads| type MyInt = Pint |]
-myInt_result = myInt_parseS "23"
--- ((MyInt (Pint 23),Errors: 0),"")
+[pads| type MyInt = Pint |]                                     -- Integer base type
+myInt_result  = myInt_parseS "23"
+myInt_expects = (MyInt (Pint 23),0,"")
+myInt_test    = mkTestCase "myInt" myInt_expects myInt_result
 
+
+{- String base types -}
 testStrLen = 2
 computeLen x = x - 1
 [pads| type StrTy = PstringFW(:testStrLen + (computeLen 4):) |]
-
 inputStrTy = "catdog"
-strty_results = strTy_parseS inputStrTy
--- ((StrTy (PstringFW "catdo"),Errors: 0),"g")
+strTy_results = strTy_parseS inputStrTy
+strTy_expects = (StrTy (PstringFW "catdo"), 0,"g")
+strTy_test    = mkTestCase "strTy" strTy_expects strTy_results
 
 [pads| type StrTy1 = Pstring(:'o':) |]
-strty1_results = strTy1_parseS inputStrTy
--- ((StrTy1 (Pstring "catd"),Errors: 0),"og")
+strTy1_results = strTy1_parseS inputStrTy
+strTy1_expects = (StrTy1 (Pstring "catd"),0,"og")
+strTy1_test    = mkTestCase "strTy1" strTy1_expects strTy1_results
 
 [pads| type Baz = (PstringFW(:3:),',',Pint) |]
 input_baz  = "cat,123"
 baz_results = baz_parseS input_baz
--- ((Baz (PstringFW "cat",Pint 123),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
+baz_expects = (Baz (PstringFW "cat",Pint 123),0,"")
+baz_test    = mkTestCase "baz" baz_expects baz_results
 
+{- Regular expression types -}
 [pads| type StrME = PstringME(:RE "a+":) |]
 input_strME = "aaaab"
 strME_results = strME_parseS input_strME
@@ -93,7 +135,9 @@ strHex_result = strHex_parseS input_strHex
 
 {- Testing for Phex32FW, which is in Pads.Language.BaseTypes -}
 input_hex32FW = "12bc34"  
-strhex32FW_result = phex32FW_parseS 4 input_hex32FW   -- ((Phex32FW (Pint 4796),Errors: 0),"34")
+phex32FW_results = phex32FW_parseS 4 input_hex32FW   
+phex32FW_expects = (Phex32FW (Pint 4796), 0, "34")
+phex32FW_test    = mkTestCase "phex32FW" phex32FW_expects phex32FW_results
 
 input2_hex32FW = "00bc34"  
 strhex32FW_result2 = phex32FW_parseS 4 input2_hex32FW    -- ((Phex32FW (Pint 188),Errors: 0),"34")
@@ -106,45 +150,69 @@ input_hexpair = "aa,bbb"
 hexpair_result = hexPair_parseS input_hexpair
 
 
+{- Constrained types -}
+[pads| type  IntRange = constrain x :: Pint where <| 0 <= x && x <= 256 |> |]
+intRange24_input = "24"
+intRange0_input  = "0"
+intRange256_input = "256"
+intRangeLow_input = "-23"
+intRangeHigh_input = "512"
+intRangeBad_input  = "aaa"
 
-[pads| type  IntRange = x :: Pint where <| 0 <= x && x <= 256 |> |]
-input_intRange24 = "24"
-input_intRange0  = "0"
-input_intRange256 = "256"
-input_intRangeLow = "-23"
-input_intRangeHigh = "512"
-input_intRangeBad  = "aaa"
+result_intRange24 = intRange_parseS intRange24_input
+expect_intRange24 = (IntRange (Pint 24),0,"")
+test_intRange24   =  mkTestCase "IntRange24" expect_intRange24 result_intRange24
 
-result_intRange24 = intRange_parseS input_intRange24
--- ((IntRange (Pint 24),(Errors: 0,Errors: 0)),"")
-result_intRange0  = intRange_parseS input_intRange0
--- ((IntRange (Pint 0),(Errors: 0,Errors: 0)),"")
-result_intRange256 = intRange_parseS input_intRange256
--- ((IntRange (Pint 256),(Errors: 0,Errors: 0)),"")
-result_intRangeLow = intRange_parseS input_intRangeLow
--- ((IntRange (Pint (-23)),(Errors: 1 Predicate is false.,Errors: 0)),"")
-result_intRangeHigh = intRange_parseS input_intRangeHigh
--- ((IntRange (Pint 512),(Errors: 1 Predicate is false.,Errors: 0)),"")
-result_intRangeBad  = intRange_parseS input_intRangeBad
--- ((IntRange (Pint 0),(Errors: 1 Predicate is true, but underlying type had an error. at: Line: 0, Offset: 0,Errors: 1 Encountered 'a' when expecting Pint. at: Line: 0, Offset: 0)),"aaa")
+result_intRange0  = intRange_parseS intRange0_input
+expect_intRange0  = (IntRange (Pint 0),0,"")
+test_intRange0    = mkTestCase "IntRange0" expect_intRange0 result_intRange0
+
+result_intRange256 = intRange_parseS intRange256_input
+expect_intRange256 = (IntRange (Pint 256),0,"")
+test_intRange256   = mkTestCase "IntRange256" expect_intRange256 result_intRange256
+
+result_intRangeLow = intRange_parseS intRangeLow_input
+expect_intRangeLow = (IntRange (Pint (-23)),1,"")
+test_intRangeLow   = mkTestCase "IntRangeLow" expect_intRangeLow result_intRangeLow
+
+result_intRangeHigh = intRange_parseS intRangeHigh_input
+expect_intRangeHigh = (IntRange (Pint 512),1,"")
+test_intRangeHigh   = mkTestCase "IntRangeHigh" expect_intRangeHigh result_intRangeHigh
+
+result_intRangeBad  = intRange_parseS intRangeBad_input
+expect_intRangeBad  = (IntRange (Pint 0),1,"aaa")
+test_intRangeBad    = mkTestCase "IntRangeBad" expect_intRangeBad result_intRangeBad
 
 {- Note that the special variables "rep" and "md" are in scope in the body of the predicate. -}
 {- Here rep is bound to the same value as x; md is the meta-data descriptor for the underyling type. -}
 
-[pads| type  IntRangeP (low::Pint, high::Pint) = x :: Pint where <| low <= x && rep <= high && (numErrors md == 0) |> |]
+[pads| type  IntRangeP (low::Pint, high::Pint) = constrain x :: Pint where <| low <= x && rep <= high && (numErrors md == 0) |> |]
 
-result_intRangeP24 = intRangeP_parseS (0, 256) input_intRange24 
--- ((IntRangeP (Pint 24),(Errors: 0,Errors: 0)),"")
-result_intRangeP0  = intRangeP_parseS (0, 256) input_intRange0  
--- ((IntRangeP (Pint 0),(Errors: 0,Errors: 0)),"")
-result_intRangeP256 = intRangeP_parseS (0, 256) input_intRange256 
--- ((IntRangeP (Pint 256),(Errors: 0,Errors: 0)),"")
-result_intRangePLow = intRangeP_parseS (0, 256) input_intRangeLow 
--- ((IntRangeP (Pint (-23)),(Errors: 1 Predicate is false.,Errors: 0)),"")
-result_intRangePHigh = intRangeP_parseS (0, 256) input_intRangeHigh 
--- ((IntRangeP (Pint 512),(Errors: 1 Predicate is false.,Errors: 0)),"")
-result_intRangePBad  = intRangeP_parseS (0, 256) input_intRangeBad 
--- ((IntRangeP (Pint 512),(Errors: 1 Predicate is false.,Errors: 0)),"")
+result_intRangeP24 = intRangeP_parseS (0, 256) intRange24_input
+expect_intRangeP24 = (IntRangeP (Pint 24),0,"")
+test_intRangeP24 = mkTestCase "IntRangeP24" expect_intRangeP24 result_intRangeP24
+
+result_intRangeP0  = intRangeP_parseS (0, 256) intRange0_input 
+expect_intRangeP0 = (IntRangeP (Pint 0),0,"")
+test_intRangeP0 = mkTestCase "IntRangeP0" expect_intRangeP0 result_intRangeP0
+
+result_intRangeP256 = intRangeP_parseS (0, 256) intRange256_input
+expect_intRangeP256 = (IntRangeP (Pint 256),0,"")
+test_intRangeP256 = mkTestCase "IntRangeP256" expect_intRangeP256 result_intRangeP256
+
+result_intRangePLow = intRangeP_parseS (0, 256) intRangeLow_input
+expect_intRangePLow = (IntRangeP (Pint (-23)), 1, "")
+test_intRangePLow   = mkTestCase "IntRangePLow" expect_intRangePLow result_intRangePLow
+
+
+result_intRangePHigh = intRangeP_parseS (0, 256) intRangeHigh_input
+expect_intRangePHigh = (IntRangeP (Pint 512), 1,"")
+test_intRangePHigh   = mkTestCase "IntRangePHigh" expect_intRangePHigh result_intRangePHigh
+
+
+result_intRangePBad  = intRangeP_parseS (0, 256) intRangeBad_input
+expect_intRangePBad  = (IntRangeP (Pint 0), 2,"aaa")
+test_intRangePBad    = mkTestCase "IntRangePBad" expect_intRangePBad result_intRangePBad
 
 
 
@@ -156,15 +224,16 @@ result_intRangePBad  = intRangeP_parseS (0, 256) input_intRangeBad
 
 input_Record = "24,45"
 result_Record = record_parseS 100 input_Record
--- ((Record {i1 = Pint 24, i2 = Pint 45},(Errors: 0,Record_inner_md {i1_md = Errors: 0, i2_md = Errors: 0})),"")
-
+expect_Record = ((Record {i1 = Pint 24, i2 = Pint 45},0,"")
+test_Record   = mkTestCase "Record" expect_Record result_Record
 
 [pads| data Id =  Numeric Pint 
                |  Alpha   Pstring(:',':)  |] 
 
 input_IdInt = "23"
 result_IdInt = id_parseS input_IdInt
--- ((Numeric (Pint 23),(Errors: 0,Numeric_md Errors: 0)),"")
+expect_IdInt = (Numeric (Pint 23),0,"")
+test_IdInt = mkTestCase "IdInt" expect_IdInt result_IdInt
 
 input_IdStr = "hello"
 result_IdStr = id_parseS input_IdStr
@@ -301,7 +370,7 @@ result_entries_nosep_noterm2 = entries_nosep_noterm2_parseS input_entries_nosep_
 
 
 
-[pads| type  EvenInt = x :: Pdigit where <| x `mod` 2 == 0 |> 
+[pads| type  EvenInt = constrain x :: Pdigit where <| x `mod` 2 == 0 |> 
        type  EvenInts = [EvenInt] |]
 input_evenInts = "2465"
 result_evenInt = evenInt_parseS input_evenInts

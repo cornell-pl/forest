@@ -21,7 +21,7 @@ lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->" ],
                                            reservedNames   = ["Line", "Trans", "using", "where", "data", "type", "Eor", "Void",
                                                               "Eof", "Maybe", "with", "sep", "term", "and", "length", "of",
-                                                              "Try", "case" ]})
+                                                              "Try", "case", "constrain" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -39,6 +39,7 @@ replaceName :: String -> PadsTy -> PadsTy
 replaceName str ty = case ty of
   Precord _ body -> Precord str body
   Punion  _ body -> Punion  str body
+  Pswitch _ cse body -> Pswitch str cse body
   otherwise -> ty
 
 padsDecls :: Parser [PadsDecl]
@@ -68,16 +69,17 @@ tyDecl = do { reserved "type"
 
 param :: Parser (Maybe TH.Pat)
 param = do { str <- manyTill anyChar (reservedOp "=")
-           ; pat <- case (Prelude.null str, LHM.parsePat str) of 
-                            (True, _) -> return Nothing
-                            (_, Left err) -> unexpected ("Failed to parse Haskell pattern: " ++ err)
-                            (_, Right patTH) -> return (Just patTH)
+           ; pat <- if Prelude.null str then return Nothing
+                    else case LHM.parsePat str of 
+                              Left err    -> unexpected ("Failed to parse Haskell pattern: " ++ err)
+                              Right patTH -> return (Just patTH)
            ; return pat                            
            }
 
 dataTy :: String -> Parser PadsTy
 dataTy str =   unionTy str 
            <|> switchTy str
+           <|> recordTy2 str
 
 
 idTy   :: Parser PadsTy
@@ -150,15 +152,6 @@ tupleTy = do { tys <- parens padsTyList
 padsTyList :: Parser [PadsTy]
 padsTyList = commaSep1 padsTy
 
---            | Pswitch String TH.Exp [(TH.Pat, FieldInfo)]
-{-
-[pads| data Switch (which :: Pint) =  
-         case <| which |> of
-             0 ->         Even Pint  where <| even `mod` 2 == 0 |>
-           | 1 ->         Comma   ','
-           | otherwise -> Missing Pvoid |] 
--}
-
 switchTy :: String -> Parser PadsTy
 switchTy str = do { reservedOp "case"
                   ; reserved "<|"
@@ -204,9 +197,22 @@ branch = do { id    <- identifier
             }
 
 recordTy :: Parser PadsTy
-recordTy = do { fields <- braces fieldList
+recordTy = do { reservedOp "{"
+              ; fields <- fieldList
+              ; reservedOp "}"
               ; return (Precord "" fields)   -- empty string is placeholder for record name, which will be filled in at decl level.
               } <?> "record type"
+
+recordTy2 :: String -> Parser PadsTy
+recordTy2 str = do { 
+                   --id <- identifier ; 
+                   reservedOp "{"
+--                   ; if str == id then return () else error ("Record name ("++ id ++") must match declared type name: (" ++str ++").")
+                   ; fields <- fieldList
+                   ; reservedOp "}"
+                   ; return (Precord str fields)   -- empty string is placeholder for record name, which will be filled in at decl level.
+                   } <?> "record2 type"
+
 
 fieldList :: Parser [(Maybe String, PadsTy, Maybe TH.Exp)]
 fieldList = commaSep1 field
@@ -236,8 +242,8 @@ fieldPredicate = do { reserved   "where"
                     ; reservedOp "<|"
                     ; str <- manyTill anyChar (reservedOp "|>")
                     ; case LHM.parseExp str of
-                     Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ ".")
-                     Right expTH -> return expTH
+                       Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ ".")
+                       Right expTH -> return expTH
                     }
 
 
@@ -254,19 +260,20 @@ transformTy = do { reserved "Trans"
                    Right expTH -> return (Ptrans srcTy dstTy expTH)
                  } <?> "transform type"
 
-typedefTy :: Parser PadsTy
-typedefTy = do { str1 <- manyTill anyChar (reservedOp "::")
-               ; pat <- case LHM.parsePat str1 of
+typedefTy:: Parser PadsTy
+typedefTy= do     { reserved "constrain"
+                  ; str1 <- manyTill anyChar (reservedOp "::")
+                  ; pat <- case LHM.parsePat str1 of
                              (Left err) -> unexpected ("Failed to parse Haskell pattern in where declaration: " ++ err)
                              (Right patTH) -> return patTH
-               ; ty <- padsTy
-               ; reserved "where"
-               ; reservedOp "<|"
-               ; str2 <- manyTill anyChar (reservedOp "|>")
-               ; case LHM.parseExp str2 of
+                  ; ty <- padsTy
+                  ; reserved "where"
+                  ; reservedOp "<|"
+                  ; str2 <- manyTill anyChar (reservedOp "|>")
+                  ; case LHM.parseExp str2 of
                       Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in where declaration.")
                       Right expTH -> return (Ptypedef pat ty expTH)
-               } <?> "where type"
+                  } <?> "where type"
 
 maybeTy :: Parser PadsTy 
 maybeTy = do { reserved "Maybe"
@@ -349,7 +356,7 @@ padsTy = lineTy
      <|> listTy
      <|> tryTy
      <|> try fnAppTy
-     <|> try typedefTy
+     <|> typedefTy
      <|> litTy
      <|> idTy
      <?> "pads type"
