@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
 module Language.Pads.Accum where
 import Language.Pads.Padsc  hiding (empty)
 
@@ -14,7 +14,7 @@ class Accum rep md where
   insertMany :: [(rep,md)] -> AccumRep rep md -> AccumRep rep md 
   insertMany vals init = foldr insert init vals
   insertAll :: [(rep,md)] -> AccumRep rep md 
-  insertAll vals = insertMany empty
+  insertAll vals = insertMany vals empty 
 
 instance Accum Pint Base_md where
   data AccumRep Pint Base_md = AccumRepPint (IntAccum)

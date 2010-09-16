@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable #-}
+
 module Examples.Syn where
 import Language.Pads.Padsc
 import Language.Pads.Parser
@@ -13,8 +15,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 
 [pads| data Date_t = {day::Pint}  
-       type Hours_t = constrain h :: Pint where <| 0 <= h && h < 24 |>   
- |]
+       type Hours_t = constrain h :: Pint where <| 0 <= h && h < 24 |>    |]
 
 
 

@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable #-}
+
 module Language.Pads.MetaData where
 
 import qualified Language.Pads.Errors as E
@@ -15,7 +17,7 @@ data Base_md = Base_md { numErrors :: Int
 
 
 {- Meta data type class -}
-class PadsMD md where
+class Data md => PadsMD md where
   get_md_header :: md -> Base_md
   replace_md_header :: md -> Base_md -> md
 
@@ -23,7 +25,7 @@ instance PadsMD Base_md where
   get_md_header b = b
   replace_md_header old new = new
 
-instance PadsMD (Base_md,b) where
+instance Data b => PadsMD (Base_md,b) where
   get_md_header (h,b) = h
   replace_md_header (h1,b) h2 = (h2,b)
 

@@ -119,9 +119,6 @@ parseTry :: PadsParser a -> PadsParser a
 parseTry p = PadsParser $ \s ->  replaceSource s (runPP p s)
 
 
-parseOpt :: PadsParser a -> a -> PadsParser a
-parseOpt p x = p `onFail` return x
-
 primPads :: (S.Source -> (a,S.Source)) -> PadsParser a
 primPads f = PadsParser $ \s -> Good [f s]
 
@@ -164,6 +161,9 @@ regexStopP re = primPads (S.regexStop re)
 
 scanP :: Char -> PadsParser Bool
 scanP c = primPads (\s -> let (f,r,e) = S.scanTo c s in (f,r))
+
+getAllP :: PadsParser String
+getAllP = primPads S.drainSource
 
 satisfy p = primPads loop
  where loop s = if S.isEOF s || S.isEOR s then ([],s) else
@@ -218,25 +218,6 @@ parseLine p = commit $ do
    let new_md = replace_md_header md new_hd
    return (r,new_md)
 
-
-many1 p = do {x <-p; xs <- many p; return (x:xs)}
-
-many :: PadsParser a -> PadsParser [a]
-many p = scan id
-       where scan f = do { x <- p     
-                         ; scan (\tail -> f (x:tail))
-                         } 
-                      `onFail`
-                         (return (f []))
-
-parseMany' :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
-parseMany' p =  alwaysSucceeds (
-                      do { (r,m) <- p     
-                         ; rms <- parseMany' p
-                         ; return ((r,m):rms)  
-                         } 
-                      `onFail`
-                         return [])
 
 parseMany :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
 parseMany p = scan id

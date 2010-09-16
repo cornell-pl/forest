@@ -1,5 +1,10 @@
 GHCI options:
 Babylon:/Users/kfisher/pads/dirpads/language-c-quote>
+
+~/ghc-head/bin/ghci -XQuasiQuotes -XTemplateHaskell 
+
+~/sw/ghc-head/bin/ghci -package derive -package parsec  -package unix -package iproute
+
 ~/sw/ghc-head/bin/ghci -package derive -package parsec -package iproute -XQuasiQuotes -XTemplateHaskell -XDeriveDataTypeable -XScopedTypeVariables -XMultiParamTypeClasses -XFunctionalDependencies -XFlexibleInstances -XUndecidableInstances -XNamedFieldPuns -XRecordWildCards -XStandaloneDeriving
 or
 Prelude> :set -XScopedTypeVariables
@@ -10,14 +15,20 @@ Modules to load:
 :m + Language.Haskell.TH
 :m + Monad
 
-At record boundary, commit to choice
-commit (Good xs) = let x = head xs in seq x (Good [x])
-commit (Good (x:xs)) =  seq x (Good [x])
-commit (Good (x:xs)) =  Good [x]
+Libraries we use:
+syb
+regex-posix
+regex-base
+mtl
+haskell-src-exts
+cpphs
+HUnit
+parsec
 
 
 Updating head version:
 ./darcs-all pull -a
+make maintainer-clean
 perl boot
 ./configure --prefix /Users/kfisher/ghc-headXXX
 make
@@ -75,10 +86,31 @@ follow instructions in readmes
 remember to do -w to set which version of ghc system is for.
 
 To install a package for head version of ghc:
-Babylon:/Users/kfisher> ~/.cabal/bin/cabal install parsec -w ~/sw/ghc-head/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-head/bin/haddock
+Babylon:/Users/kfisher> ~/.cabal/bin/cabal install parsec --global -w ~/sw/ghc-head2/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-head2/bin/haddock
+
+ ~/.cabal/bin/cabal install parsec  -w ~/ghc-head/bin/ghc --with-haddock=/Users/kfisher/ghc-head/bin/haddock --package-db=/Users/kfisher/ghc-head/lib/ghc-6.13.20100831/package.conf.d
 
 To install local package for head version of ghc
 ~/.cabal/bin/cabal install  -w ~/sw/ghc-head/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-head/bin/haddock
+
+Installing by libraries by hand 
+cabal unpack <package>
+cd <package>
+<inplace-ghc> --make Setup.lhs -o Setup
+./Setup configure -w ~/ghc-head/bin/ghc --with-haddock=/Users/kfisher/ghc-head/bin/haddock --package-db=/Users/kfisher/ghc-head/lib/ghc-6.13.20100831/package.conf.d
+./Setup build
+./Setup register --inplace
+Points to note here:
+
+The first step can be done manually, by downloading a zip file from Hackage, or by doing a darcs get from the appropriate repo. For example:
+darcs get http://darcs.haskell.org/packages/parallel
+Nevertheless, cabal unpack should work for any Hackage package, even if Cabal has changed a bit. (Because fetching and unpacking is one of Cabal's less sophisticated operations.)
+It is important to compile Setup.lhs with your shiny new inplace GHC, not your installed GHC. Your inplace GHC has the most up-to-date Cabal library, and that is what you want to link Setup.lhs against.
+The --global flag has the same purpose as in Plan A
+The --inplace flag to register tells Cabal not to copy the compiled package, but rather to leave it right where it is, and register this location in the package database in your GHC build tree
+
+
+cabal unpack package to untar package in current directory
 
 *****************************************************************
 To generate docs during cabal build:

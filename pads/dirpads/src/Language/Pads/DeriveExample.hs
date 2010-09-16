@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes, TemplateHaskell, MultiParamTypeClasses, DeriveDataTypeable #-}
 module Language.Pads.DeriveExample where
 
 import Data.DeriveTH                 -- Library for deriving instances for existing types
@@ -34,9 +35,9 @@ pip_parseM :: PadsParser (Pip, Base_md)
 pip_parseM = undefined                          -- **** Needs to be defined ******
 
 {- Make UTCTime an instance of Typeable and Data -}
-(derive makeDataAbstract ''DiffTime)
-(derive makeData         ''UTCTime)
-(derive makeData         ''Day)
+--(derive makeDataAbstract ''DiffTime)
+-- (derive makeData         ''UTCTime)
+-- (derive makeData         ''Day)
 
 {- Example declarations to make Ptime a Pads base type -}
 instance Pretty UTCTime where

@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, TemplateHaskell, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable #-}
 module Language.Pads.CoreBaseTypes where
 
 import Language.Pads.Generic
@@ -27,6 +27,7 @@ baseTypesList = [
   ("Pint",      (''Int,     [])),
   ("Pchar",     (''Char,    [])),
   ("Pdigit",    (''Int,     [])),
+  ("PtextDocument", (''String,  [])),
   ("Pstring",   (''String,  [''Char])),
   ("PstringFW", (''String,  [''Int])),
   ("PstringME", (''String,  [''S.RE])),
@@ -45,7 +46,13 @@ newtype Pchar = Pchar Char
   deriving (Eq, Show, Data, Typeable, Ord)
 newtype Pdigit = Pdigit Int
   deriving (Eq, Show, Data, Typeable, Num, Ord, Integral, Real, Enum)
+newtype Ptext    = Ptext String
+  deriving (Eq, Show, Data, Typeable)
 
+type Pint_md = Base_md
+type Pchar_md = Base_md
+type Pdigit_md = Base_md
+type Ptext_md = Base_md
 
 instance Pretty Pchar where
   ppr (Pchar c) = text (show c)
@@ -59,6 +66,9 @@ instance Pads Pchar Base_md where
 instance Pads Pdigit Base_md where
   parsePP = pdigit_parseM
 
+instance Pads Ptext Base_md where
+  parsePP = ptext_parseM
+
 newtype Pstring    = Pstring    String
   deriving (Eq, Show, Data, Typeable)
 newtype PstringFW = PstringFW String
@@ -67,6 +77,11 @@ newtype PstringME = PstringME String
   deriving (Eq, Show, Data, Typeable)
 newtype PstringSE = PstringSE String
   deriving (Eq, Show, Data, Typeable)
+
+type Pstring_md = Base_md
+type PstringFW_md = Base_md
+type PstringME_md = Base_md
+type PstringSE_md = Base_md
 
 instance Pads1 Char Pstring Base_md where 
   parsePP1 = pstring_parseM 
@@ -132,6 +147,11 @@ pstring_parseM c = do
       else do  
           str <- satisfy (\c'-> c /= c')
           goodReturn (Pstring str, cleanBasePD)
+
+ptext_parseM :: PadsParser (Ptext, Base_md)
+ptext_parseM = do
+  document <- getAllP
+  goodReturn (Ptext document, cleanBasePD)
 
 
 pchar_parseM :: PadsParser (Pchar, Base_md)

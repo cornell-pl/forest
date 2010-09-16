@@ -1,4 +1,6 @@
-{-# LANGUAGE TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeSynonymInstances, GeneralizedNewtypeDeriving, QuasiQuotes, TemplateHaskell, DeriveDataTypeable, 
+             ScopedTypeVariables, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
+             UndecidableInstances, NamedFieldPuns, RecordWildCards, StandaloneDeriving   #-}
 module Language.Pads.Padsc (
      module Language.Pads.Source,
      module Language.Pads.Errors,

@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell, NamedFieldPuns, ScopedTypeVariables, RecordWildCards #-}
+
 module Language.Pads.CodeGen where
 
 import Language.Pads.Syntax as PS
@@ -5,6 +7,7 @@ import Language.Pads.MetaData
 import Language.Pads.Generic
 import Language.Pads.PadsParser
 import Language.Pads.CoreBaseTypes
+import Language.Pads.TH
 import qualified Language.Pads.Errors as E
 import qualified Language.Pads.Source as S
 
@@ -436,6 +439,7 @@ mkParseRecord str fields = do
 {- XXX
     - Why can't predicates modify unamed fields?
     - Can we rewrite these blocks in Haskell code?
+    - TEST: meta-data field names are not in scope in predicates.  Change to match forest code.
 -}
 mkParseField :: (Maybe String, PadsTy, Maybe TH.Exp) -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
 mkParseField (labelM, ty, predM) = do
@@ -457,17 +461,17 @@ mkParseField (labelM, ty, predM) = do
        stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]  -- Read out header of resulting parse descriptor
        in return([(repName,repE)], [(mdName,mdE)], bmdE, [stmt1,stmt2])       -- Include named rep and md in result
     (Just str, Just pred)    -> do                                         -- Parse named, non-literal struct field, predicate
-      raw_mdName      <- genMdName
+      final_mdName    <- genMdName
       raw_bmdName     <- genBMdName 
-      let (rawMDE, rawMDP)   = genPE raw_mdName
+      let (finalMDE, finalMDP)   = genPE final_mdName
       let (rawBMDE, rawBMDP) = genPE raw_bmdName
       let predTestE      = TH.CondE pred rawBMDE (AppE (VarE 'addPredFailureMD) rawBMDE)    -- if pred then rawBMD else addPredFailureMD rawBMD
-      let replaceHeaderE = AppE (AppE (VarE 'replace_md_header) rawMDE) bmdE                -- replace_md_header rawMD bmd
-      let stmt1 = BindS (TupP [repP,rawMDP]) rhsE
-      let stmt2 = LetS [ValD rawBMDP (NormalB (AppE (VarE 'get_md_header) rawMDE)) []]
+      let replaceHeaderE = AppE (AppE (VarE 'replace_md_header) mdE) bmdE                -- replace_md_header rawMD bmd
+      let stmt1 = BindS (TupP [repP,mdP]) rhsE
+      let stmt2 = LetS [ValD rawBMDP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
       let stmt3 = LetS [ValD bmdP (NormalB predTestE)  []] 
-      let stmt4 = LetS [ValD mdP  (NormalB replaceHeaderE) []]
-      return ([(repName,repE)], [(mdName,mdE)], bmdE, [stmt1,stmt2,stmt3,stmt4])       -- Include named rep and md in result
+      let stmt4 = LetS [ValD finalMDP  (NormalB replaceHeaderE) []]
+      return ([(repName,repE)], [(mdName,finalMDE)], bmdE, [stmt1,stmt2,stmt3,stmt4])       -- Include named rep and md in result
 
 mkParseFields :: [(Maybe String, PadsTy, Maybe TH.Exp)] -> Q ([FieldExp], [FieldExp], [TH.Exp], [Stmt])
 mkParseFields [] = return ([],[],[],[])
@@ -544,79 +548,6 @@ mkParseTyB ty = do
    let stmt2    = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
    return (resultEs, mdE,bmdE,[stmt1,stmt2])
 
-
-{- Helper functions -}   
-
-omapFstChar f [] = []
-mapFstChar f (c:cs) = (f c) : cs
-
-strToUpper = mapFstChar toUpper
-strToLower = mapFstChar toLower
-
-mergeMaybe m1 m2 = case (m1,m2) of
-  (Nothing, Nothing) -> Nothing
-  (Just d1, Just d2) -> Just (d1,d2)
-  _ -> error "mergeMaybe given two maybes in different states."
-
-flattenMaybeList xs = case xs of
-  [] -> []
-  (Nothing: xxs) -> flattenMaybeList xxs
-  (Just x : xxs) -> x : flattenMaybeList xxs
-
-
-mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
-    where con = NormalC ty_name [(NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
-          derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data]
-
-mk_TySynD ty_name ty = TySynD ty_name [] ty
-
-arrowTy ty1 ty2 = AppT (AppT ArrowT     ty1  ) ty2
-tyListToTupleTy (ty:tys) = foldl AppT (AppT (TupleT (1 + length tys) ) ty) tys
-tyListToListTy  tys      = foldl AppT ListT                                tys
-
-{- XXX: need to add location information so can report location of error messages. -}
-patToTy :: TH.Pat -> TH.Type
-patToTy pat = case pat of
-  LitP l      -> litToTy l
-  VarP n      -> error ("Variable "++ (showName n) ++ " needs a type annotation.")
-  TupP pats   -> tyListToTupleTy (map patToTy pats)
-  InfixP p1 n p2 -> error ("Infix constructor "++ (showName n) ++ " application needs a type annotation.")
-  TildeP p    -> patToTy p
-  BangP  p    -> patToTy p
-  AsP n p     -> patToTy p
-  WildP       -> error "Wild card patterns are not supported in PADS declarations."
-  RecP name fieldPats -> ConT name   {-  I think this is the correct represtentation of a line type. -}
-  ListP pats  -> tyListToListTy (map patToTy pats)
-  SigP p ty   -> ty
-  
-litToTy :: TH.Lit -> TH.Type
-litToTy lit = 
-  let name = case lit of
-       Language.Haskell.TH.Syntax.CharL c       -> ''Char
-       Language.Haskell.TH.Syntax.StringL s     -> ''String
-       IntegerL i    -> ''Integer
-       RationalL r   -> ''Rational
-       IntPrimL  i   -> ''Integer
-       WordPrimL i   -> ''Integer
-       FloatPrimL f  -> ''Rational
-       DoublePrimL d -> ''Rational
-  in ConT name
-
-patToExp :: TH.Pat -> TH.Exp
-patToExp pat = case pat of
-  LitP l      -> LitE l
-  VarP n      -> VarE n
-  TupP pats   -> TupE (map patToExp pats)
-  InfixP p1 n p2 -> InfixE (Just (patToExp p1)) (VarE n) (Just (patToExp p2))
-  TildeP p    -> patToExp p
-  BangP  p    -> patToExp p
-  AsP n p     -> VarE n
-  WildP       -> error "Wild card patterns are not supported in PADS declarations. Can't convert to expression"
-  RecP name fieldPats -> RecConE name (map fieldPatToExp fieldPats)   {-  I think this is the correct represtentation of a line type. -}
-  ListP pats  -> ListE (map patToExp pats)
-  SigP p ty   -> patToExp p
-
-fieldPatToExp (n,p) = (n, patToExp p)
 
 
 {- Name manipulation functions -}

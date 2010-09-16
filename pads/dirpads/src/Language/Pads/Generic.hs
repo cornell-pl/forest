@@ -1,6 +1,10 @@
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables #-}
+
 module Language.Pads.Generic (
       Pads(..), 
       Pads1(..), 
+      parseFileWith,
+      parseFileWithRaw,
       gdef
    )
 
@@ -8,9 +12,10 @@ where
 
 import Language.Pads.MetaData
 import Language.Pads.PadsParser
+import qualified Language.Pads.Errors as E
 import qualified Language.Pads.Source as S
 import qualified Data.ByteString.Lazy.Char8 as B
-
+import qualified Control.Exception as CE
 import Data.Data
 
 class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
@@ -26,7 +31,7 @@ class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
   parseFile :: FilePath -> IO (pads, md)
   parseFile file = parseFileWith parsePP file
 
-class Data pads => Pads1 arg pads md | pads->md, pads->arg where
+class (Data pads, PadsMD md) => Pads1 arg pads md | pads->md, pads->arg where
   def1 :: arg -> pads
   def1 =  \_ -> gdef
   parsePP1  :: arg -> PadsParser(pads,md)
@@ -38,7 +43,16 @@ class Data pads => Pads1 arg pads md | pads->md, pads->arg where
   parseFile1 arg file = parseFileWith (parsePP1 arg) file
 
 
+parseFileWith  :: (Data rep, PadsMD md) => PadsParser (rep,md) -> FilePath -> IO (rep,md)
 parseFileWith p file = do
+   result <- CE.try (parseFileWithRaw p file)
+   case result of
+     Left (e::CE.SomeException) -> return (gdef, replace_md_header gdef
+                                                 (mkErrBasePD (E.FileError (show e) file) Nothing))
+     Right r -> return r
+
+parseFileWithRaw :: PadsParser (rep,md) -> FilePath -> IO (rep,md)
+parseFileWithRaw p file = do
        { bs <- B.readFile file
        ; let ps = S.padsSourceFromByteString bs
        ; case runPP p ps of

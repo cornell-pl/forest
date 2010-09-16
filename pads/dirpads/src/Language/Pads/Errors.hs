@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns, DeriveDataTypeable #-}
+
 module Language.Pads.Errors where
 import Text.PrettyPrint.Mainland as PP
 import qualified Language.Pads.Source as S
@@ -15,6 +17,7 @@ data ErrMsg =
  | UnderlyingTypedefFail
  | PredicateFailure
  | ExtraStuffBeforeTy String String
+ | FileError String String
    deriving (Typeable, Data, Eq)
 
 {- XXX-KSF: fix pretty printing to use pretty printing combinators rather than string ++ -}
@@ -30,7 +33,7 @@ instance Pretty ErrMsg where
   ppr (LineError s)        = text s
   ppr UnderlyingTypedefFail  = text "Predicate is true, but underlying type had an error."
   ppr PredicateFailure       = text "Predicate is false."
-
+  ppr (FileError err file) = text ("Problem with file: " ++ file ++ "("++ err ++ ").")
 
 data ErrInfo = ErrInfo { msg      :: ErrMsg,
                          position :: Maybe S.Pos }

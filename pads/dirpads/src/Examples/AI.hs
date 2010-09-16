@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable #-}
 
 module Examples.AI where
 import Language.Pads.Padsc
@@ -67,7 +67,7 @@ ai_file_length = Prelude.length ai_rep
 ai_file_take n  = Prelude.take n ai_rep
 
 unGood (Good xs) = xs
-example = Prelude.take 2 $ fst $ Prelude.head $ unGood $ runPP (parseMany' pdigit_parseM) (padsSourceFromString str)
+example = Prelude.take 2 $ fst $ Prelude.head $ unGood $ runPP (parseMany pdigit_parseM) (padsSourceFromString str)
 
 str = "1234cnbdav duisc djnklcndjkalscnj dkxbvc daseasklfhasdjkhfaksjdhflakjsdhfkjlahsdfkljahsdlfkhasdkjfhaklsjdhflkashdfjkhjmzb"++ undefined
 example2 =  (padsSourceFromString ("abc\nd" ++ undefined))

@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
+
 {- Still to do:
     make it possible for record annotation to come immediately before struct or union.
     stringln base type (can express with regular expression; wait til new release of ghc)
@@ -55,7 +57,36 @@ tests = TestList[ TestLabel "MyChar"  myChar_test
                 , TestLabel "IntRangeP" test_intRangePHigh
                 , TestLabel "IntRangeP" test_intRangePBad
                 , TestLabel "Record" test_Record
-                , TestLabel "IdInt" test_IdInt
+                , TestLabel "Id" test_IdInt
+                , TestLabel "Id" test_IdStr
+                , TestLabel "Id" test_IdInt2
+                , TestLabel "Id" test_IdStr2
+                , TestLabel "Id3" test_IdInt3
+                , TestLabel "Id3" test_IdLit3
+                , TestLabel "Ab_or_a" test_Ab_or_a
+                , TestLabel "AB_test" test_AB_test1
+                , TestLabel "AB_test" test_AB_test2
+                , TestLabel "Method" test_method_get
+                , TestLabel "Method" test_method_put
+                , TestLabel "Method" test_method_link
+                , TestLabel "Method" test_method_post
+                , TestLabel "Version" test_version
+                , TestLabel "Request" test_request_G
+                , TestLabel "Request" test_request_B
+                , TestLabel "Eor" test_eor_test
+                , TestLabel "Eof" test_eof_test_G
+                , TestLabel "Eof" test_eof_test_B
+                , TestLabel "Opt" test_opt_test_j
+                , TestLabel "Opt" test_opt_test_n
+                , TestLabel "List" test_entries_nosep_noterm
+                , TestLabel "List" test_entries_nosep_noterm'
+                , TestLabel "List" test_entries_nosep_noterm2
+                , TestLabel "List" test_evenInt
+                , TestLabel "List" test_evenInts
+                , TestLabel "List" test_digitListG
+                , TestLabel "List" test_digitList2G
+                , TestLabel "List" test_digitListB
+                , TestLabel "Doc"  myDoc_test
                 ]
 tests_result = runTestTT tests
 
@@ -63,6 +94,9 @@ getTotalErrors :: PadsMD md => md -> Int
 getTotalErrors md = numErrors $ get_md_header md
 mdToError ((rep,md), residual) = (rep, getTotalErrors md, residual)
 mkTestCase s expected seen = TestCase(assertEqual s expected  (mdToError seen))
+
+mdFileToError (rep,md) = (rep, getTotalErrors md)
+mkFileTestCase s expected seen = TestCase(assertEqual s expected (mdFileToError seen))
 
 [pads| type MyChar = Pchar |]
 myChar_result = myChar_parseS "ab"
@@ -226,7 +260,7 @@ test_intRangePBad    = mkTestCase "IntRangePBad" expect_intRangePBad result_intR
 
 input_Record = "24,45"
 result_Record = record_parseS 100 input_Record
-expect_Record = ((Record {i1 = Pint 24, i2 = Pint 45},0,"")
+expect_Record = (Record {i1 = Pint 24, i2 = Pint 45},0,"")
 test_Record   = mkTestCase "Record" expect_Record result_Record
 
 [pads| data Id =  Numeric Pint 
@@ -239,18 +273,22 @@ test_IdInt = mkTestCase "IdInt" expect_IdInt result_IdInt
 
 input_IdStr = "hello"
 result_IdStr = id_parseS input_IdStr
--- ((Alpha (Pstring "hello"),(Errors: 0,Alpha_md Errors: 0)),"")
+expect_IdStr = (Alpha (Pstring "hello"),0,"")
+test_IdStr = mkTestCase "IdAlpha" expect_IdStr result_IdStr
 
 [pads| data Id2 (bound::Pint ) = 
             Numeric2 Pint where <| numeric2 <= bound |> 
           | Alpha2   Pstring(:',':) |] 
 input_IdInt2 = "23"
 result_IdInt2 = id2_parseS 10 input_IdInt2
--- ((Alpha2 (Pstring "23"),(Errors: 0,Alpha2_md Errors: 0)),"")
+expect_IdInt2 =  (Alpha2 (Pstring "23"),0,"")
+test_IdInt2 = mkTestCase "IdInt2" expect_IdInt2 result_IdInt2
 
 input_IdStr2 = "hello"
 result_IdStr2 = id2_parseS 10 input_IdStr2
--- ((Alpha2 (Pstring "hello"),(Errors: 0,Alpha2_md Errors: 0)),"")
+expect_IdStr2 = (Alpha2 (Pstring "hello"),0,"")
+test_IdStr2 = mkTestCase "IdAlpha2" expect_IdStr2 result_IdStr2
+
 
 
 [pads| data Id3  = Numeric3  IntRangeP(:(1,10):)
@@ -258,24 +296,32 @@ result_IdStr2 = id2_parseS 10 input_IdStr2
                  | Lit3     ','                 |] 
 input_IdInt3 = "24"
 result_IdInt3 = id3_parseS input_IdInt3
--- ((Numeric3a (Pint 24),(Errors: 0,Numeric3a_md Errors: 0)),"")
+expect_IdInt3 = (Numeric3a (Pint 24),0,"")
+test_IdInt3 = mkTestCase "IdInt3" expect_IdInt2 result_IdInt2
 
-input_IdStr3 = ","
-result_IdStr3 = id3_parseS input_IdStr3
--- ((Lit3,(Errors: 0,Lit3_md Errors: 0)),"")
+input_IdLit3 = ","
+result_IdLit3 = id3_parseS input_IdLit3
+expect_IdLit3 = (Lit3,0,"")
+test_IdLit3 = mkTestCase "IdLit3" expect_IdLit3 result_IdLit3
+
+
 
 [pads| data Ab_or_a = AB "ab" | A "a" |]
 input_AB = "ab"
 result_Ab_or_a = ab_or_a_parseS input_AB
--- ((AB,(Errors: 0,AB_md Errors: 0)),"")
+expect_Ab_or_a = (AB,0,"")
+test_Ab_or_a = mkTestCase "Ab_or_a" expect_Ab_or_a result_Ab_or_a
 
 [pads| type  AB_test = { field_AB  :: Ab_or_a , 'b'} |]
 input_AB_test1 = "abb"
-input_AB_test2 = "ab"
 result_AB_test1 = aB_test_parseS input_AB_test1
--- ((AB_test {field_AB = AB},(Errors: 0,AB_test_inner_md {field_AB_md = (Errors: 0,AB_md Errors: 0)})),"")
+expect_AB_test1 =  (AB_test {field_AB = AB},0,"")
+test_AB_test1 = mkTestCase "AB_test1" expect_AB_test1 result_AB_test1
+
+input_AB_test2 = "ab"
 result_AB_test2 = aB_test_parseS input_AB_test2
--- ((AB_test {field_AB = A},(Errors: 0,AB_test_inner_md {field_AB_md = (Errors: 0,A_md Errors: 0)})),"")
+expect_AB_test2 = (AB_test {field_AB = A},0,"")
+test_AB_test2 = mkTestCase "AB_test2" expect_AB_test2 result_AB_test2
 
 [pads| data Method  = GET | PUT | LINK | UNLINK | POST  
        type Version = {"HTTP/", 
@@ -298,60 +344,69 @@ checkVersion method version =
 
 input_method_get = "GET"
 result_method_get = method_parseS input_method_get
--- ((GET,(Errors: 0,GET_md Errors: 0)),"")
+expect_method_get = (GET,0,"")
+test_method_get = mkTestCase "Method_get" expect_method_get result_method_get
+
 input_method_put = "PUT"
 result_method_put = method_parseS input_method_put
--- ((PUT,(Errors: 0,PUT_md Errors: 0)),"")
+expect_method_put = (PUT,0,"")
+test_method_put = mkTestCase "Method_put" expect_method_put result_method_put
+
+
 input_method_link = "LINK"
 result_method_link = method_parseS input_method_link
+expect_method_link = (LINK,0,"")
+test_method_link = mkTestCase "Method_link" expect_method_link result_method_link
+
+
 input_method_post = "POST"
 result_method_post = method_parseS input_method_post
--- ((POST,(Errors: 0,POST_md Errors: 0)),"")
+expect_method_post = (POST,0,"")
+test_method_post = mkTestCase "Method_post" expect_method_post result_method_post
 
-input_Version = "HTTP/1.2"
-result_Version = version_parseS input_Version
--- ((Version {major = Pint 1, minor = Pint 2},(Errors: 0,Version_inner_md {major_md = Errors: 0, minor_md = Errors: 0})),"")
+
+input_version = "HTTP/1.2"
+result_version = version_parseS input_version
+expect_version = (Version {major = Pint 1, minor = Pint 2},0,"")
+test_version = mkTestCase "Version" expect_version result_version
 
 input_request_G = "\"PUT /www.google.com HTTP/1.0\""
 result_request_G = request_parseS input_request_G
-{- ((Request {method = PUT, url = Pstring "/www.google.com", version = Version {major = Pint 1, minor = Pint 0}},
-    (Errors: 0,Request_inner_md {method_md = (Errors: 0,PUT_md Errors: 0), 
-                                    url_md = Errors: 0, 
-                                    version_md = (Errors: 0,Version_inner_md {major_md = Errors: 0,  
-                                                                              minor_md = Errors: 0})})),"")
--}
+expect_request_G = (Request {method = PUT, url = Pstring "/www.google.com", version = Version {major = Pint 1, minor = Pint 0}}, 0, "")
+test_request_G = mkTestCase "Request_G" expect_request_G result_request_G
 
 input_request_B = "\"LINK /www.google.com HTTP/1.3\""
 result_request_B = request_parseS input_request_B
-{-
-   ((Request {method = LINK, url = Pstring "/www.google.com", version = Version {major = Pint 1, minor = Pint 3}},
-    (Errors: 1,Request_inner_md {method_md = (Errors: 0,LINK_md Errors: 0), 
-                                    url_md = Errors: 0,         
-                                version_md = (Errors: 1 Predicate is false., Version_inner_md {major_md = Errors: 0, 
-                                                                                               minor_md = Errors: 0})})),"")
--}
+expect_request_B =  (Request {method = LINK, url = Pstring "/www.google.com", version = Version {major = Pint 1, minor = Pint 3}},1, "")
+test_request_B = mkTestCase "Request_B" expect_request_B result_request_B
 
 [pads| type Eor_Test = (Pint, Eor, Pint) |]
 input_eor_test = "23\n56"
 result_eor_test = eor_Test_parseS input_eor_test
--- ((Eor_Test (Pint 23,Pint 56),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0))),"")
+expect_eor_test = (Eor_Test (Pint 23,Pint 56),0,"")
+test_eor_test   = mkTestCase "Eor_Test" expect_eor_test result_eor_test
 
 [pads| type Eof_Test = (Pint, Eor, Pint, Eof) |]
 input_eof_test_G = "23\n56"
 result_eof_test_G = eof_Test_parseS input_eof_test_G
--- ((Eof_Test (Pint 23,Pint 56),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0,Errors: 0))),"")
+expect_eof_test_G = (Eof_Test (Pint 23,Pint 56),0,"")
+test_eof_test_G = mkTestCase "Eof_TestG" expect_eof_test_G result_eof_test_G
+
 input_eof_test_B = "23\n56ab"
 result_eof_test_B = eof_Test_parseS input_eof_test_B
--- ((Eof_Test (Pint 23,Pint 56),(Errors: 1,(Errors: 0,Errors: 0,Errors: 0,Errors: 1 Extra bytes before literal: Eof. at: Line: 1, Offset: 2))),"ab")
+expect_eof_test_B = (Eof_Test (Pint 23,Pint 56), 1,"ab")
+test_eof_test_B = mkTestCase "Eof_TestB" expect_eof_test_B result_eof_test_B
 
 [pads| type Opt_test = (Pint, '|', Maybe Pint, '|', Pint) |]
 input_opt_test_j = "34|35|56"
 result_opt_test_j = opt_test_parseS input_opt_test_j
--- ((Opt_test (Pint 34,Just (Pint 35),Pint 56),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,Just Errors: 0),Errors: 0,Errors: 0))),"")
+expect_opt_test_j = (Opt_test (Pint 34,Just (Pint 35),Pint 56),0,"")
+test_opt_test_j = mkTestCase "Opt_test_j" expect_opt_test_j result_opt_test_j
 
 input_opt_test_n = "34||56"
 result_opt_test_n = opt_test_parseS input_opt_test_n
--- ((Opt_test (Pint 34,Nothing,Pint 56),(Errors: 0,(Errors: 0,Errors: 0,(Errors: 0,Nothing),Errors: 0,Errors: 0))),"")
+expect_opt_test_n = (Opt_test (Pint 34,Nothing,Pint 56),0,"")
+test_opt_test_n = mkTestCase "Opt_test_n" expect_opt_test_n result_opt_test_n
        
 
 {- LIST EXAMPLES -}
@@ -359,27 +414,31 @@ result_opt_test_n = opt_test_parseS input_opt_test_n
 [pads| type Entries_nosep_noterm = [PstringFW(:3:)] |]
 input_entries_nosep_noterm = "123456789"
 result_entries_nosep_noterm = entries_nosep_noterm_parseS input_entries_nosep_noterm
--- ((Entries_nosep_noterm [PstringFW "123",PstringFW "456",PstringFW "789"],(Errors: 0,[Errors: 0,Errors: 0,Errors: 0])),"")
+expect_entries_nosep_noterm = (Entries_nosep_noterm [PstringFW "123",PstringFW "456",PstringFW "789"],0,"")
+test_entries_nosep_noterm = mkTestCase "NoSep_NoTerm" expect_entries_nosep_noterm result_entries_nosep_noterm
 
 input_entries_nosep_noterm' = "1234567890"
 result_entries_nosep_noterm' = entries_nosep_noterm_parseS input_entries_nosep_noterm'
--- ((Entries_nosep_noterm [PstringFW "123",PstringFW "456",PstringFW "789"],(Errors: 0,[Errors: 0,Errors: 0,Errors: 0])),"0")
+expect_entries_nosep_noterm' = (Entries_nosep_noterm [PstringFW "123",PstringFW "456",PstringFW "789"],0,"0")
+test_entries_nosep_noterm' = mkTestCase "NoSep_NoTerm'" expect_entries_nosep_noterm' result_entries_nosep_noterm'
 
 [pads| type Entries_nosep_noterm2 = [Pchar] |]
 input_entries_nosep_noterm2 = ""
 result_entries_nosep_noterm2 = entries_nosep_noterm2_parseS input_entries_nosep_noterm2
--- ((Entries_nosep_noterm2 [],(Errors: 0,[])),"")
-
+expect_entries_nosep_noterm2 = (Entries_nosep_noterm2 [],0,"")
+test_entries_nosep_noterm2 = mkTestCase "NoSep_NoTerm2" expect_entries_nosep_noterm2 result_entries_nosep_noterm2
 
 
 [pads| type  EvenInt = constrain x :: Pdigit where <| x `mod` 2 == 0 |> 
        type  EvenInts = [EvenInt] |]
 input_evenInts = "2465"
 result_evenInt = evenInt_parseS input_evenInts
--- ((EvenInt (Pdigit 2),(Errors: 0,Errors: 0)),"465")
+expect_evenInt = (EvenInt (Pdigit 2),0,"465")
+test_evenInt = mkTestCase "EvenInt" expect_evenInt result_evenInt
 
 result_evenInts = evenInts_parseS input_evenInts
--- ((EvenInts [EvenInt (Pdigit 2),EvenInt (Pdigit 4),EvenInt (Pdigit 6)],(Errors: 0,[(Errors: 0,Errors: 0),(Errors: 0,Errors: 0),(Errors: 0,Errors: 0)])),"5")
+expect_evenInts = (EvenInts [EvenInt (Pdigit 2),EvenInt (Pdigit 4),EvenInt (Pdigit 6)],0,"5")
+test_evenInts = mkTestCase "EvenInts" expect_evenInts result_evenInts
 
 
 [pads| type DigitList = [Pdigit] with sep (:',':) |]
@@ -387,14 +446,16 @@ input_digitListG = "1,2,3"
 input_digitList2G = "1,2,3|fed"
 input_digitListB = "1,b,3"
 result_digitListG = digitList_parseS input_digitListG
--- ((DigitList [Pdigit 1,Pdigit 2,Pdigit 3],(Errors: 0,[Errors: 0,Errors: 0,Errors: 0])),"")
+expect_digitListG = (DigitList [Pdigit 1,Pdigit 2,Pdigit 3],0,"")
+test_digitListG = mkTestCase "DigitListG" expect_digitListG result_digitListG
 
 result_digitList2G = digitList_parseS input_digitList2G
--- ((DigitList [Pdigit 1,Pdigit 2,Pdigit 3],(Errors: 0,[Errors: 0,Errors: 0,Errors: 0])),"|fed")
+expect_digitList2G = (DigitList [Pdigit 1,Pdigit 2,Pdigit 3],0,"|fed")
+test_digitList2G = mkTestCase "DigitList2G" expect_digitList2G result_digitList2G
 
 result_digitListB = digitList_parseS input_digitListB
--- ((DigitList [Pdigit 1],(Errors: 0,[Errors: 0])),",b,3")
-
+expect_digitListB = (DigitList [Pdigit 1],0,",b,3")
+test_digitListB = mkTestCase "DigitListB" expect_digitListB result_digitListB
 
 [pads| type DigitListLen (x::Int) = [Pdigit] with term (:length of x + 1 :)  |]
 input_digitListLenG = "123456"
@@ -559,3 +620,9 @@ result_hp_data_file_parse :: (HP_data, HP_data_md) = unsafePerformIO $
               (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
               (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0})]))
 -}
+
+[pads| type MyDoc = PtextDocument |]
+myDoc_input_file = "/Users/kfisher/pads/dirpads/src/Examples/test_file"
+myDoc_result :: (PtextDocument, Base_md) = unsafePerformIO $ parseFile myDoc_input_file
+myDoc_expects = (PtextDocument "8,Hermione3,Ron\n5,Harry\n",0)
+myDoc_test = mkFileTestCase "myDoc" myDoc_expects myDoc_result

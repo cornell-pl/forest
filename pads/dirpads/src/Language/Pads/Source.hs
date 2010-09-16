@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns, RecordWildCards, DeriveDataTypeable #-}
+
 module Language.Pads.Source where
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Int
@@ -66,9 +68,14 @@ padsSourceFromByteString bs =
                                          loc     = Loc{ lineNumber = -1,   -- will be incremeneted to 0 by getNextLine_newline
                                                         byteOffset = 0}})
 
+
 padsSourceFromString str = padsSourceFromByteString (B.pack str)
 
 padsSourceToString (Source {current, rest, ..}) = B.unpack (B.concat [current,rest])
+drainSource :: Source -> (String, Source)
+drainSource (s @ Source {current, rest, atEOF, loc=loc_orig}) = (padsSourceToString s,   
+                                                        Source {current = B.empty, rest = B.empty, atEOF = True, loc = loc_orig})
+
 isEOF (Source{current,rest,..}) = B.null current && B.null rest
 isEOR (Source{current,..}) = B.null current
 head  (Source{current,..}) = B.head current 
