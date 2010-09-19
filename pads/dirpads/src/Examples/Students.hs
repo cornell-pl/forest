@@ -37,16 +37,16 @@ type Course =
 
 type Middle_name = { ws, middle :: /a-zA-Z*\.?/ } 
 
-type Name = 
-  { lastname :: /[a-zA-Z]*/, ',', ws?
-    firsname :: /[a-zA-Z]*/, 
-    middlename :: Opt Middle_name
+type Name(myname::String) = 
+  { lastname :: /[a-zA-Z]*/, ',', ws? where <| lastname == myname |>
+  , firsname :: /[a-zA-Z]*/ 
+  , middlename :: Opt Middle_name
   }
 
 type School = AB | BSE
 
-type Person =
-  { name   :: Name, ws
+type Person (myname::String) =
+  { name   :: Name(myname), ws
   , school :: School, ws, '\''
   , year   :: /[0-9][0-9]/
   }
@@ -57,8 +57,8 @@ type Header = ArrayFixed (Line /.*/) 7
 -- throw away everything else
 type Junk = ArrayLongest (Line /.*/)
 
-type Student = 
-  { person :: Line Person
+type Student (name::String) = 
+  { person :: Line (Person(name))
   , Header  -- omit this
   , courses :: ArrayLongest (Line Course)
   , Junk  -- omit this too
@@ -83,7 +83,7 @@ regexp withdrawn = /WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal/
 -- students associated with a particular major
 -- I'm using a new comprehension form "id <= /regexp/ where boolean-exp"
 -- to mean match regexp against file names in current directory
-type Major = [: s :: File (Student_data name) 
+type Major = [: s :: File (Student name) 
               | s <= /(?<name>:.*).txt/ where not (template s) :]
 
 {- alternate form, if we didn't have regexp binding:
@@ -91,7 +91,7 @@ type Major = [: s :: File (Student_data name)
 -- deletes the ".txt" from the end of the file name
 delete_terminator s = ...
 
-type Major = [: s :: File (Student_data(delete_terminator s)) 
+type Major = [: s :: File (Student(delete_terminator s)) 
               | s <- matches (RE "/(?<name>:.*)\.txt/") 
               where not (template s) :]
 
