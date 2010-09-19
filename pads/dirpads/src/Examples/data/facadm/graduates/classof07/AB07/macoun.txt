@@ -1,0 +1,42 @@
+MACOUN, Jamie           AB '07
+- - - - - - - - - - - - - - - - - - -
+Type    Yr  Course     Grade
+         1             A+ to F
+d        2             P  (  Pass )
+t  D  p  3             INC
+o  .  .  4  Dept  xxx  N  (Not Avail)
+- - - - - - - - - - - - - - - - - - -
+d . . 1 MAT 191 B+
+t . . 1 JPN 454 F
+t . . 1 MAT 240 INC
+o . . 1 JPN 350 AUD
+d . . 1 PHY 307 B+
+t . . 1 MAT 116 A+
+o . . 1 ORF 444 A+
+t . . 1 JPN 445 C+
+o . . 2 CHM 442 N
+d . . 2 ORF 385 B+
+t . . 2 HST 268 A
+o . . 2 HST 130 A-
+o . . 2 COS 111 AUD
+d D . 2 PHY 443 INC
+t D . 2 HST 254 F
+o . . 2 ORF 316 AUD
+d D . 3 PHY 491 C
+d D . 3 CHM 498 C+
+d D . 3 PHY 125 P
+d D . 3 JPN 271 N
+o . . 3 MAT 392 A-
+o . . 3 ORF 486 A-
+d D . 3 COS 162 AUD
+o . . 3 COS 350 C+
+d D . 3 MAT 127 N
+d D . 4 PHY 141 B
+o . . 4 ORF 427 AUD
+d D . 4 PHY 277 C-
+o  .  .  4  ART   101
+o  .  .  4  DAN   211
+o  .  .  4  ECO   100
+o  .  .  4  MUS   103
+d . . 4 PHY 299 N
+d . . 4 ORF 381 F

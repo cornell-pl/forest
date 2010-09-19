@@ -1,0 +1,35 @@
+ALLISON, JASON		BSE '08
+- - - - - - - - - - - - - - - - - - -
+Type    Yr  Course     Grade
+         1             A+ to F
+d        2             P  (  Pass )
+t  D  p  3             INC
+o  .  .  4  Dept  xxx  N  (Not Avail)
+- - - - - - - - - - - - - - - - - - -
+t . . 1 HST 262 N
+t . . 1 COS 265 N
+o . . 1 ORF 393 A
+o . . 1 PHY 316 A
+o . . 1 JPN 437 N
+d . . 1 ORF 421 F
+o . . 1 ORF 177 C
+t . . 1 ORF 455 N
+t . . 1 ORF 123 A-
+o . . 2 COS 423 N
+d . . 2 JPN 184 N
+d D . 2 JPN 293 N
+t . . 2 MAT 147 P
+t . . 2 CHM 288 F
+o . . 2 MAT 316 B+
+d . . 2 ORF 406 P
+t D . 2 MAT 210 C+
+o . . 2 PHY 382 B+
+d D . 3 JPN 345 N
+d D . 3 CHM 441 INC
+o . . 3 MAT 238 B
+o . . 3 PHY 134 A+
+d  D  .  3  COS   436  
+d  D  .  3  COS   471a
+t  .  .  3  ORF   105
+o  .  .  3  PHI   202
+

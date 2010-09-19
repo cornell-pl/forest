@@ -1,0 +1,29 @@
+KESSEL, PHIL	   BSE   '11
+- - - - - - - - - - - - - - - - - - -
+Type    Yr  Course     Grade
+         1             A+ to F
+d        2             P  (  Pass )
+t  D  p  3             INC
+o  .  .  4  Dept  xxx  N  (Not Avail)
+- - - - - - - - - - - - - - - - - - -
+t . . 1 ORF 125 C-
+o . . 1 JPN 357 C
+o . . 1 PHY 344 N
+o . . 1 PHY 120 P
+d . . 1 CHM 219 C-
+o . . 1 CHM 190 N
+o . . 1 MAT 194 A+
+t . . 1 HST 409 A
+o . . 1 HST 149 C
+d . . 2 JPN 184 A+
+t . . 2 MAT 265 A-
+o . . 2 HST 424 C
+o . . 2 CHM 199 A
+t . . 2 MAT 302 N
+d . . 2 HST 484 F
+o . . 2 PHY 437 C-
+o  .  .  2  PSY   330 
+
+
+~
+
