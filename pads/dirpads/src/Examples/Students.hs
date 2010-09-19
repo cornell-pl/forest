@@ -144,7 +144,7 @@ type Classof = {'classof', year :: /[0-9][0-9]/}
 ]
 
 [forest|
-type Major = [: s :: File (Student_data (year s)) | s <= Classof :]
+type Grads = [: dir :: Clss (year dir) | dir <= Classof :]
 ]
 
 -}
