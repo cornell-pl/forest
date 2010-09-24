@@ -3,9 +3,16 @@
 {- To do:
    implement pre-processor type constructor
    implement tar, gzip, etc. type constructors
+   implement symbolic links
+   debug CVS example
    build pretty printer for directory values and meta-data
    library for manipulating times and permissions
    explore laziness in loading directory files
+   implement glob patterns in addition to regular expressions?
+   implement patterns in physical names for simple records?
+   make relative paths work as arguments to ty_load
+   make escape syntax consistent
+   incorporate pads meta-data error counts into forest error counts.
 
    DONE fix meta-data error propagation to match pads
    DONE implement nested directories
@@ -14,7 +21,7 @@
    DONE implement constraints
    DONE implement dependencies
    DONE implement set comprehension directories
-
+   DONE implement matching comprehensions
 -}
 
 module Examples.Simple where
@@ -25,9 +32,13 @@ import Language.Haskell.TH
 import Language.Forest.Syntax
 import Language.Forest.CodeGen
 import System.Time.Utils
+
+
 import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Haskell.Meta as LHM
+import Text.Regex
+import Data.Maybe
 
 [pads| type Entry_t = (Pstring(:',':), ',', Pint)
        type Hosts_t = [Line Entry_t]                  |]
@@ -67,6 +78,20 @@ host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple"
 (nested_remote_rep, nested_remote_md) = unsafePerformIO $ nested_d_load "remote" host_dir
 (nested_local_rep, nested_local_md) = unsafePerformIO $ nested_d_load "local" host_dir
 
+re = RE ".*[.]txt"
+
+
+[forest| type Match_d = Directory
+             { files is [: h :: File Ptext | h <- matches (RE ".*[.]txt") where h /= "local.txt" :] }
+       |]
+
+(match_rep, match_md) = unsafePerformIO $ match_d_load  host_dir
+
+{-
+Given a regular expression and a list of strings, return list of strings that match entire regular expression
+-}
+
+sample_list = ["remote.txt", "local.txt", "quantum"]
 {-
 Nested_d {hostIndex = Hosts_t [Entry_t (Pstring "quantum",Pint 2),
                                Entry_t (Pstring "babylon",Pint 3),

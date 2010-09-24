@@ -2,17 +2,18 @@
 
 {- Still to do:
     make it possible for record annotation to come immediately before struct or union.
-    stringln base type (can express with regular expression; wait til new release of ghc)
     add function to repeated call record parser
+    change type -> newtype, add type with same semantics as Haskell?
 
-    revise test suite to cover new cases and compare values semantically rather than as strings
-      -- add cases for regular expressions after new release of ghc
     regular expression literals (wait until new release of ghc)
 
+    BUGS:
     if a [pads| foo |] declaration doesn't start on the first column, get a weird error message
+    if union declaration starts with "type", get weird error message.
+    bad error message if pass a string argument to a Pstring
+    change unit test to not depend on kfisher path
 
     add pretty printers for reps and pds
-    add pretty printers for pads data.
     improve error messages
     polymorphic types
     recursive types
@@ -86,7 +87,34 @@ tests = TestList[ TestLabel "MyChar"  myChar_test
                 , TestLabel "List" test_digitListG
                 , TestLabel "List" test_digitList2G
                 , TestLabel "List" test_digitListB
+                , TestLabel "List" test_digitListLenG
+                , TestLabel "List" test_digitListLenB
+                , TestLabel "List" test_digitListLenSepG
+                , TestLabel "List" test_digitListLenSepB
+                , TestLabel "List" test_digitListTermG
+                , TestLabel "List" test_digitListTermB
+                , TestLabel "List" test_digitListTermSepG
+                , TestLabel "List" test_digitListTermSepB
+                , TestLabel "Try"  test_tryTest
+                , TestLabel "Try"  test_tryTestDG
+                , TestLabel "Try"  test_tryTestDB
+                , TestLabel "Try"  test_ListWithTry
+                , TestLabel "Void" test_WithVoid
+                , TestLabel "Void" test_voidEntry1
+                , TestLabel "Void" test_voidEntry2
+                , TestLabel "Void" test_voidEntry3
+                , TestLabel "Switch" test_switch0
+                , TestLabel "Switch" test_switch1
+                , TestLabel "Switch" test_switchOther
+                , TestLabel "Stringln" test_pstringln
+                , TestLabel "Compound" test_myData
+                , TestLabel "Compound" test_hp_data
+                , TestLabel "Doc"  test_hp_data_file_parse
                 , TestLabel "Doc"  myDoc_test
+                , TestLabel "Literal"  litRec_test
+                , TestLabel "Literal"  whiteSpace_test
+                , TestLabel "Literal"  whiteSpace2_test
+                , TestLabel "Regular Expression"  rE_ty_test
                 ]
 tests_result = runTestTT tests
 
@@ -462,66 +490,66 @@ input_digitListLenG = "123456"
 input_digitListLenB = "12a456"
 
 result_digitListLenG = digitListLen_parseS 4 input_digitListLenG
--- ((DigitListLen [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],(Errors: 0,[Errors: 0,Errors: 0,Errors: 0,Errors: 0,Errors: 0])),"6")
+expect_digitListLenG = (DigitListLen [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],0,"6")
+test_digitListLenG = mkTestCase "DigitListLenG" expect_digitListLenG result_digitListLenG
+
 result_digitListLenB = digitListLen_parseS 4 input_digitListLenB
-{- ((DigitListLen [Pdigit 1,Pdigit 2,Pdigit 0,Pdigit 4,Pdigit 5],
-    (Errors: 1,[Errors: 0,Errors: 0,Errors: 1 Encountered a when expecting Pdigit. at: Line: 0, Offset: 2,Errors: 0,Errors: 0])),"6")
--}
+expect_digitListLenB = (DigitListLen [Pdigit 1,Pdigit 2,Pdigit 0,Pdigit 4,Pdigit 5],1 ,"6")
+test_digitListLenB = mkTestCase "DigitListLenB" expect_digitListLenB result_digitListLenB
+
 
 [pads| type DigitListLenSep (x::Int) = [Pdigit] with term (:length of x + 1 :) and sep(:"ab":) |]
 input_digitListLenSepG = "1ab2ab3ab4ab5ab6ab7ab"
 input_digitListLenSepB = "1ab2ab3abDab5ab6ab7ab"
 result_digitListLenSepG = digitListLenSep_parseS 4 input_digitListLenSepG
--- ((DigitListLenSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],(Errors: 0,[Errors: 0,Errors: 0,Errors: 0,Errors: 0,Errors: 0])),"ab6ab7ab")
+expect_digitListLenSepG = (DigitListLenSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],0,"ab6ab7ab")
+test_digitListLenSepG = mkTestCase "DigitListLenSepG" expect_digitListLenSepG result_digitListLenSepG
 
 result_digitListLenSepB = digitListLenSep_parseS 4 input_digitListLenSepB
-{-
-  ((DigitListLenSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 0,Pdigit 5],
-   (Errors: 1,[Errors: 0,Errors: 0,Errors: 0,Errors: 1 Encountered D when expecting Pdigit. at: Line: 0, Offset: 9,Errors: 0])),"ab6ab7ab")
--}
+expect_digitListLenSepB = (DigitListLenSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 0,Pdigit 5],1,"ab6ab7ab")
+test_digitListLenSepB = mkTestCase "DigitListLenSepB" expect_digitListLenSepB result_digitListLenSepB
+
 
 [pads| type DigitListTerm = [Pdigit] with term (:Eor:)|]
 input_digitListTermG = "12345\nhello"
 result_digitListTermG = digitListTerm_parseS input_digitListTermG
--- ((DigitListTerm [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],(Errors: 0,[Errors: 0,Errors: 0,Errors: 0,Errors: 0,Errors: 0])),"hello")
+expect_digitListTermG = (DigitListTerm [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],0,"hello")
+test_digitListTermG = mkTestCase "DigitListTermG" expect_digitListTermG result_digitListTermG
 
 input_digitListTermB = "12345,h"
 result_digitListTermB = digitListTerm_parseS input_digitListTermB
-{-
-   ((DigitListTerm [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5,Pdigit 0,Pdigit 0],
-    (Errors: 2,[Errors: 0,Errors: 0,Errors: 0,Errors: 0,Errors: 0,
-                Errors: 1 Encountered , when expecting Pdigit. at: Line: 0, Offset: 5,
-                Errors: 1 Encountered h when expecting Pdigit. at: Line: 0, Offset: 6])),"")
--}
+expect_digitListTermB = (DigitListTerm [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5,Pdigit 0,Pdigit 0],2,"")
+test_digitListTermB   = mkTestCase "DigitListTermB" expect_digitListTermB result_digitListTermB
 
 [pads| type DigitListTermSep = [Pdigit] with sep(:'|':) and term (:';':) |]
 input_digitListTermSepG = "1|2|3|4|5|6;hello"
 result_digitListTermSepG = digitListTermSep_parseS input_digitListTermSepG 
-{-  ((DigitListTermSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5,Pdigit 6],
-    (Errors: 0,[Errors: 0,Errors: 0,Errors: 0,Errors: 0,Errors: 0,Errors: 0])),"hello")
--}
+expect_digitListTermSepG = (DigitListTermSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5,Pdigit 6], 0,"hello")
+test_digitListTermSepG = mkTestCase "digitListTermSepG" expect_digitListTermSepG result_digitListTermSepG
 
 input_digitListTermSepB = "1|2|3|4|56;hello"
 result_digitListTermSepB = digitListTermSep_parseS input_digitListTermSepB
-{-
-    ((DigitListTermSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],
-    (Errors: 1 Extra bytes: 6 before seperator. at: Line: 0, Offset: 9,
-      [Errors: 0,Errors: 0,Errors: 0,Errors: 0,Errors: 1 Extra bytes: 6 before seperator. at: Line: 0, Offset: 9])),"hello")
--}
+expect_digitListTermSepB = (DigitListTermSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],1,"hello")
+test_digitListTermSepB =   mkTestCase "digitListTermSepB" expect_digitListTermSepB result_digitListTermSepB
 
 
 [pads| type TryTest = (Try Pchar, PstringFW(:3:)) |]
 input_tryTest = "abc123"
 result_tryTest = tryTest_parseS input_tryTest
--- ((TryTest (Pchar 'a',PstringFW "abc"),(Errors: 0,(Errors: 0,Errors: 0))),"123")
+expect_tryTest = (TryTest (Pchar 'a',PstringFW "abc"),0,"123")
+test_tryTest = mkTestCase "tryTest" expect_tryTest result_tryTest
 
 [pads| type TryTestD = (Try Pdigit, PstringFW(:3:)) |]
 input_tryTestDG = "123abc"
 result_tryTestDG = tryTestD_parseS input_tryTestDG
--- ((TryTestD (Pdigit 1,PstringFW "123"),(Errors: 0,(Errors: 0,Errors: 0))),"abc")
+expect_tryTestDG = (TryTestD (Pdigit 1,PstringFW "123"),0,"abc")
+test_tryTestDG = mkTestCase "tryTestDG" expect_tryTestDG result_tryTestDG
 
 input_tryTestDB = "abc123"
 result_tryTestDB = tryTestD_parseS input_tryTestDB
+expect_tryTestDB = (TryTestD (Pdigit 0,PstringFW "abc"),1, "123")
+test_tryTestDB = mkTestCase "tryTestDB" expect_tryTestDB result_tryTestDB
+
 {- ((TryTestD (Pdigit 0,PstringFW "abc"),
     (Errors: 1 Encountered a when expecting Pdigit. at: Line: 0, Offset: 0,(Errors: 1 Encountered a when expecting Pdigit. at: Line: 0, Offset: 0,Errors: 0))),"123")
 
@@ -532,26 +560,31 @@ result_tryTestDB = tryTestD_parseS input_tryTestDB
 [pads| type ListWithTry = ([Pchar] with term (:Try Pdigit:), Pdigit) |]
 input_ListWithTry = "cat123"
 result_ListWithTry = listWithTry_parseS input_ListWithTry
--- ((ListWithTry ([Pchar 'c',Pchar 'a',Pchar 't'],Pdigit 1),(Errors: 0,((Errors: 0,[Errors: 0,Errors: 0,Errors: 0]),Errors: 0))),"23")
+expect_ListWithTry = (ListWithTry ([Pchar 'c',Pchar 'a',Pchar 't'],Pdigit 1),0,"23")
+test_ListWithTry = mkTestCase "ListWithTry" expect_ListWithTry result_ListWithTry
 
 [pads| type WithVoid = (Pchar, ',', Void, '|') |]
 input_WithVoid = "a,|rest"
 result_WithVoid = withVoid_parseS input_WithVoid
--- ((WithVoid (Pchar 'a'),(Errors: 0,(Errors: 0,Errors: 0,Errors: 0,Errors: 0))),"rest")
+expect_WithVoid =  (WithVoid (Pchar 'a'),0,"rest")
+test_WithVoid = mkTestCase "WithVoid" expect_WithVoid result_WithVoid
 
 [pads| data VoidOpt   = PDigit Pdigit | Pcolor "red" | Pnothing Void 
        type VoidEntry = (VoidOpt, PstringFW(:3:))                    |]
 input_voidEntry1 = "9abcdef"
 result_voidEntry1 = voidEntry_parseS input_voidEntry1
--- ((VoidEntry (PDigit (Pdigit 9),PstringFW "abc"),(Errors: 0,((Errors: 0,PDigit_md Errors: 0),Errors: 0))),"def")
+expect_voidEntry1 = (VoidEntry (PDigit (Pdigit 9),PstringFW "abc"),0,"def")
+test_voidEntry1 = mkTestCase "VoidEntry1" expect_voidEntry1 result_voidEntry1
 
 input_voidEntry2 = "redabcdef"
 result_voidEntry2 = voidEntry_parseS input_voidEntry2
--- ((VoidEntry (Pcolor,PstringFW "abc"),(Errors: 0,((Errors: 0,Pcolor_md Errors: 0),Errors: 0))),"def")
+expect_voidEntry2 = (VoidEntry (Pcolor,PstringFW "abc"),0,"def")
+test_voidEntry2 = mkTestCase "VoidEntry2" expect_voidEntry2 result_voidEntry2
 
 input_voidEntry3 = "abcdef"
 result_voidEntry3 = voidEntry_parseS input_voidEntry3
--- ((VoidEntry (Pnothing,PstringFW "abc"),(Errors: 0,((Errors: 0,Pnothing_md Errors: 0),Errors: 0))),"def")
+expect_voidEntry3 =  (VoidEntry (Pnothing,PstringFW "abc"),0,"def")
+test_voidEntry3 = mkTestCase "VoidEntry3" expect_voidEntry3 result_voidEntry3
 
 [pads| data Switch (which :: Int) =  
          case <| which |> of
@@ -563,11 +596,20 @@ input_switch1 = ",hello"
 input_switchOther = "hello"
 
 result_switch0 = switch_parseS 0 input_switch0
--- ((Even (Pint 2),(Errors: 0,Even_md Errors: 0)),"hello")
+expect_switch0 =  (Even (Pint 2),0,"hello")
+test_switch0 = mkTestCase "switch0" expect_switch0 result_switch0
+
 result_switch1 = switch_parseS 1 input_switch1
--- ((Comma,(Errors: 0,Comma_md Errors: 0)),"hello")
+expect_switch1 = (Comma,0,"hello")
+test_switch1 = mkTestCase "switch1" expect_switch1 result_switch1
+
 result_switchOther = switch_parseS 2 input_switchOther
--- ((Missing,(Errors: 0,Missing_md Errors: 0)),"hello")
+expect_switchOther = (Missing,0,"hello")
+test_switchOther = mkTestCase "switchOther" expect_switchOther result_switchOther
+
+result_pstringln = pstringln_parseS "hello\ngoodbye"
+expect_pstringln = (Pstringln (PstringSE "hello"),0,"goodbye")
+test_pstringln = mkTestCase "pstringln" expect_pstringln result_pstringln
 
 [pads| data MyBody (which::Pint) = 
          case <| which |> of
@@ -583,15 +625,11 @@ result_switchOther = switch_parseS 2 input_switchOther
 
 input_myData = "0,23,a\n1,hello,b\n2,,c"
 result_myData = myData_parseS input_myData
-{-
-((MyData [MyEntry {header = Pint 0, body = First (Pint 23), trailer = Pchar 'a'},
-          MyEntry {header = Pint 1, body = Second (Pstring "hello"), trailer = Pchar 'b'},
-          MyEntry {header = Pint 2, body = Other, trailer = Pchar 'c'}],
- (Errors: 0,[(Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,First_md Errors: 0), trailer_md = Errors: 0}),
-             (Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,Second_md Errors: 0), trailer_md = Errors: 0}),
-             (Errors: 0,MyEntry_inner_md {header_md = Errors: 0, body_md = (Errors: 0,Other_md Errors: 0), trailer_md = Errors: 0})])),"")
+expect_myData = (MyData [MyEntry {header = Pint 0, body = First (Pint 23), trailer = Pchar 'a'},
+                         MyEntry {header = Pint 1, body = Second (Pstring "hello"), trailer = Pchar 'b'},
+                         MyEntry {header = Pint 2, body = Other, trailer = Pchar 'c'}],0, "")
+test_myData = mkTestCase "MyData" expect_myData result_myData
 
--}
 
 pintToInt (Pint i) = i
 [pads| type HP = { student_num  :: Pint , ',', 
@@ -599,30 +637,53 @@ pintToInt (Pint i) = i
        type HP_data = [Line HP] |]   
 
 input_hp_data = "8,Hermione\n3,Ron\n5,Harry"
-test_hp_data = hP_data_parseS input_hp_data
-{-
-   ((HP_data [HP {student_num = Pint 8, student_name = PstringFW "Hermione"},
-              HP {student_num = Pint 3, student_name = PstringFW "Ron"},
-              HP {student_num = Pint 5, student_name = PstringFW "Harry"}],
-    (Errors: 0,[(Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
-                (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
-                (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0})])),"")
--}
+result_hp_data = hP_data_parseS input_hp_data
+expect_hp_data = (HP_data [HP {student_num = Pint 8, student_name = PstringFW "Hermione"},
+                           HP {student_num = Pint 3, student_name = PstringFW "Ron"},
+                           HP {student_num = Pint 5, student_name = PstringFW "Harry"}], 0, "")
+test_hp_data = mkTestCase "HP Data" expect_hp_data result_hp_data
+
+
 
 test_file = "/Users/kfisher/pads/dirpads/src/Examples/test_file"
 result_hp_data_file_parse :: (HP_data, HP_data_md) = unsafePerformIO $
                                                      parseFile test_file
-{-
+expect_hp_data_file_parse = 
   (HP_data [HP {student_num = Pint 8, student_name = PstringFW "Hermione"},
             HP {student_num = Pint 3, student_name = PstringFW "Ron"},
-            HP {student_num = Pint 5, student_name = PstringFW "Harry"}],
-  (Errors: 0,[(Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
-              (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0}),
-              (Errors: 0,HP_inner_md {student_num_md = Errors: 0, student_name_md = Errors: 0})]))
--}
+            HP {student_num = Pint 5, student_name = PstringFW "Harry"}], 0)
+test_hp_data_file_parse = mkFileTestCase "HP file" expect_hp_data_file_parse result_hp_data_file_parse
 
-[pads| type MyDoc = PtextDocument |]
+
+
+[pads| type MyDoc = Ptext |]
 myDoc_input_file = "/Users/kfisher/pads/dirpads/src/Examples/test_file"
-myDoc_result :: (PtextDocument, Base_md) = unsafePerformIO $ parseFile myDoc_input_file
-myDoc_expects = (PtextDocument "8,Hermione3,Ron\n5,Harry\n",0)
+myDoc_result :: (Ptext, Base_md) = unsafePerformIO $ parseFile myDoc_input_file
+myDoc_expects = (Ptext "8,Hermione3,Ron\n5,Harry\n",0)
 myDoc_test = mkFileTestCase "myDoc" myDoc_expects myDoc_result
+
+acomma = ","
+[pads| data LitRec = { fstField :: Pint, acomma, sndField :: Pint} |]
+litRec_input = "12,34"
+litRec_result = litRec_parseS litRec_input
+litRec_expects = (LitRec {fstField = Pint 12, sndField = Pint 34},0,"")
+litRec_test = mkTestCase "Haskell identifier literal" litRec_expects litRec_result
+
+[pads| type WhiteSpace = (Pint, RE "[ \t]+", Pint) |]
+whiteSpace_input = "12      34"
+whiteSpace_result = whiteSpace_parseS whiteSpace_input
+whiteSpace_expects = (WhiteSpace (Pint 12,Pint 34),0,"")
+whiteSpace_test = mkTestCase "regular expression literal" whiteSpace_expects whiteSpace_result
+
+ws = RE "[ \t]+"
+[pads| type WhiteSpace2 = (Pint, ws, Pint) |]
+whiteSpace2_input = "12      34"
+whiteSpace2_result = whiteSpace2_parseS whiteSpace2_input
+whiteSpace2_expects = (WhiteSpace2 (Pint 12,Pint 34),0,"")
+whiteSpace2_test = mkTestCase "Haskell expression regular expression literal" whiteSpace2_expects whiteSpace2_result
+
+[pads| type RE_ty = (/"[tod]"/, ws, /"a+"/) |]
+rE_ty_input = "t  aaaa"
+rE_ty_result = rE_ty_parseS rE_ty_input
+rE_ty_expects = (RE_ty (PstringME "t",PstringME "aaaa"),0,"")
+rE_ty_test = mkTestCase "regular expression abbreviation for PstringME" rE_ty_expects rE_ty_result
