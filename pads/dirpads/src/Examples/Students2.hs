@@ -1,5 +1,15 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
+
+-- TODOS
+--     { students is [: filename :: File (Student (: name student :)) | 
+--                     (filename, student) <= matches Student_filename where not (template filename) :] }
+
+-- IDEA: use [| haskell-exp |] uniformly as the escape to haskell expressions
+-- NOTE: don't use / to escape regular expressions because of file path interactions.
+-- How to specify fields that match a regular expression but have a single representation.
+
+
 module Examples.Students where
 
 import Language.Pads.Padsc
@@ -17,63 +27,117 @@ ows =  RE "[ \t]*"
 junk = RE ".*"
 grade_RE = RE "[ABCD][+-]?|F|AUD|N|INC|P"
 
-[pads| type White = PstringME(:ws:) |]
-white_result = white_parseS "     h"
+transferRE = RE "TRANSFER|Transfer"
+leaveRE = RE "LEAVE|Leave"
+withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
-[pads| type Junk = PstringME(:junk:) |]
-junk_result = junk_parseS "233(34h\nfred"
-
-[pads| type Grade = PstringME(:grade_RE:) 
-       type Grades = [Grade] with sep (:'|':) |]
-grades_result = grades_parseS "A+|B-|C|F|AUD|N|INC|P"
 
 [pads| 
+  type Grade_t = Maybe PstringME(:grade_RE:)
 
-type Grade_t = Maybe PstringME(:grade_RE:)
+  data Course = 
+    { sort         :: /"[dto]"/,           ws
+    , departmental :: /"[.D]"/,            ws
+    , passfail     :: /"[.p]"/,            ws
+    , level        :: /"[1234]"/,          ws
+    , department   :: /"[A-Z][A-Z][A-Z]"/, ws
+    , number       :: Pint where <| 100 <= number && number < 600 |>, ws
+    , grade        :: Grade,               junk                               -- why doesn't this work if there is a maybe?
+    } 
 
-data Course = 
-  { sort         :: /"[dto]"/,           ws
-  , departmental :: /"[.D]"/,            ws
-  , passfail     :: /"[.p]"/,            ws
-  , level        :: /"[1234]"/,          ws
-  , department   :: /"[A-Z][A-Z][A-Z]"/, ws
-  , number       :: Pint where <| 100 <= number && number < 600 |>, ws
-  , grade        :: Grade,               junk                               -- why doesn't this work if there is a maybe?
-  } 
+  data Middle_name = {' ', middle :: /"[a-zA-Z]+[.]?"/ }           
+ 
+  data Student_Name(myname::String) = 
+    { lastname  :: /"[a-zA-Z]*"/  where <| toString lastname ==  myname |>,  ',', ows     -- yuck; we have too many different types.
+    , firstname :: /"[a-zA-Z]*"/ 
+    , middlename :: Maybe Middle_name
+    }
 
-data Middle_name = {' ', middle :: /"[a-zA-Z]+[.]?"/ }           -- probably the middle name shouldn't be nullable
+  data School = AB | BSE
 
-data Student_Name(myname::String) = 
-  { lastname  :: /"[a-zA-Z]*"/  where <| toString lastname ==  myname |>,  ',', ows     -- yuck; we have too many different types.
-  , firstname :: /"[a-zA-Z]*"/ 
-  , middlename :: Maybe Middle_name
-  }
+  data Person (myname::String) =
+    { fullname   :: Student_Name(:myname:), ws
+    , school     :: School,                 ws, '\''
+    , year       :: /"[0-9][0-9]"/
+    }
 
-data School = AB | BSE
+  type Header  = [Line /".*"/] with term (: length of  7 :)
+  type Trailer = [Line /".*"/] with term (: Eof :)
 
-data Person (myname::String) =
-  { fullname   :: Student_Name(:myname:), ws
-  , school     :: School,                 ws, '\''
-  , year       :: /"[0-9][0-9]"/
-  }
+  data Student (name::String) = 
+    { person :: Line (Person(:name:))
+    , Header  
+    , courses :: [Line Course]
+    , Junk  
+    }
+|]
 
-type Header  = [Line /".*"/] with term (: length of  7 :)
-type Trailer = [Line /".*"/] with term (: Eof :)
 
-data Student (name::String) = 
-  { person :: Line (Person(:name:))
-  , Header  
-  , courses :: [Line Course]
-  , Junk  
-  }
+
+[forest|
+  -- Directory containing all students in a particular major.
+  type Major_d = Directory 
+       { students is [: s :: File (Student (: getName s :)) | s <- matches (RE "[A-Za-z]*.txt") where not (template s) :] }
+
+
+  -- Directory containing all students in a particular year
+  type Class_d (year :: String) = Directory
+    { bse is ("BSE" ++ year) :: Major_d
+    , ab  is "AB"  ++ year :: Major_d   
+    , transfer is  [: t :: Major_d | t <- matches (RE "TRANSFER|transfer") :]      --, transfer matches (RE "TRANSFER|transfer") :: Maybe Major_d 
+    , withdrawn is [: w :: Major_d | w <- matches withdrawnRE :]
+    , leave is     [: l :: Major_d | l <- matches leaveRE :] 
+    }
+
+
+  -- Directory for all graduated students
+  type Grads_d = Directory 
+    { classes is  [: aclass :: Class_d (: getYear aclass  :)  | aclass <- matches (RE "classof[0-9][0-9]") :] }
+
+  -- Root of the hierarchy
+  type PrincetonCS_d = Directory
+    { classof10 :: Class_d (: "10" :)
+    , classof11 :: Class_d (: "11" :)
+    , graduates :: Grads_d
+    }
 |]
 
 student_input_file = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof10/AB10/APPS.txt"
 student_result :: (Student, Student_md) = unsafePerformIO $ parseFile1 "APPS" student_input_file
 
+finger_input_file = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/WITHDREW/finger.txt"
+finger_result :: (Student, Student_md) = unsafePerformIO $ parseFile1 "finger" finger_input_file
+
 course_input = "d D . 3 JPN 238 INC"
 course_result = course_parseS course_input
 
+major_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/AB11"
+(major_rep, major_md) = unsafePerformIO $ major_d_load  major_dir
+
+withdrawn_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/WITHDREW"
+(withdrawnt_rep, withdrawnt_md) = unsafePerformIO $ major_d_load  withdrawn_dir
+
+class_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11"
+(class_rep, class_md) = unsafePerformIO $ (class_d_load "11") class_dir
+
+class07_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates/classof07"
+(class07_rep, class07_md) = unsafePerformIO $ (class_d_load "07") class07_dir
+
+class10_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof10"
+(class10_rep, class10_md) = unsafePerformIO $ (class_d_load "10") class10_dir
+
+class11_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11"
+(class11_rep, class11_md) = unsafePerformIO $ (class_d_load "11") class11_dir
+
+grad_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates"
+(grad_rep, grad_md) = unsafePerformIO $ grads_d_load grad_dir
+
+cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
+(cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
+
+
+
+-- Auxiliary code
 template s = or [ s == "SSSS.txt"
                 , s == "SSS.txt"
                 , s == "sxx.txt"
@@ -87,94 +151,5 @@ splitExt s = let (dne, dotgeb) = Prelude.break (== '.') (reverse s)
                  tser -> (reverse tser, reverse dne)
 
 getName = fst . splitExt
+getYear s = reverse (Prelude.take 2 (reverse s))
 
-
-[forest|
-type Major_d = Directory 
-     { students is [: s :: File (Student (: getName s :)) | s <- matches (RE "[A-Z]*.txt") where not (template s) :] }
-|]
-
-major_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/AB11"
-(major_rep, major_md) = unsafePerformIO $ major_d_load  major_dir
-
-
-{-
--- another alternate using pads notation:
--- What should the representation type be for this list?
-
-[pads|
-type Student_file = {name :: /.*/, ".txt"}
-|]
-
-[forest|
-type Major = [: s :: File (Student(name s)) 
-              | s <= Student_file 
-              where not (template s) :]
-|]
--}
-
-
-transfer = RE "TRANSFER|Transfer"
-leave = RE "LEAVE|Leave"
-withdrawn = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal"
-
--- directory containing all students in a particular year
--- Opt is supposed to be an option type
-
-[forest|
-type Clss (year :: String) = Directory
-  { bse is "BSE" ++ year :: Major
-  , ab  is "AB" ++ year :: Major
-  , transfer matches transfer :: Maybe Major 
-  , withdrawn matches withdrawn :: Maybe Major 
-  , leave matches leave :: Maybe Major 
-  }
-|]
-
-{-
--- directory for all graduated students
--- using regexp matching again
-type Grads = [: dir :: Clss year 
-              | dir <= /classof(?<year>:[0-9][0-9])/ :]
-
-{- alternate without regexp matching:
-
--- function that returns last two digits of string s
--- don't know haskell indentation conventions for let
--- s must have at least 2 digits.  should use some kind of assert.
-lasttwodigits s = 
-  let n = length s in
-  [s!!(n-2) , s!!(n-1)]
-
-type Grads = [: dir :: Clss (lasttwodigits dir) 
-              | dir <- matches (RE "/classof[0-9][0-9]/") :]
-
-
-another alternate using pads notation:
-
-[pads|
-type Classof = {'classof', year :: /[0-9][0-9]/}
-]
-
-[forest|
-type Grads = [: dir :: Clss (year dir) | dir <= Classof :]
-]
-
--}
-
-
--- top of the hierarchy
-type Top = Directory
-  { classof10 :: Clss "10"
-  , classof11 :: Clss "11"
-  , graduates :: Grads
-  }
-
-|]
-
--- the following two lines just copied without thought from other examples
-
-host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
-
-(fac_rep, fac_md) = unsafePerformIO $ Top_load "remote" host_dir
--}

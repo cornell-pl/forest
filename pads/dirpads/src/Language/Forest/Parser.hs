@@ -14,12 +14,13 @@ import Text.ParserCombinators.Parsec.Pos
 import Language.Haskell.Meta as LHM
 import Language.Haskell.TH as TH hiding (CharL)
 import Data.Char
+import Data.Maybe
 
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-"],
-                                           reservedNames   = ["is", "File", "Directory", "type" ]})
+                                           reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -53,15 +54,53 @@ forestDecl = do { reserved "type"
 forestTy :: Parser ForestTy
 forestTy =   directoryTy
          <|> fileTy
+         <|> maybeTy
+         <|> try fnAppTy
          <|> namedTy
          <?> "Forest type"
 
+fnTy   :: Parser ForestTy
+fnTy   =  namedTy
+
+fnAppTy :: Parser ForestTy
+fnAppTy = do { ty <- fnTy
+             ; reservedOp "(:"
+             ; str <- manyTill anyChar (reservedOp ":)") 
+             ; case LHM.parseExp str of
+                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Forest application")
+                 Right expTH -> return (Fapp ty expTH)
+             } <?> "type function application"
+
+maybeTy :: Parser ForestTy
+maybeTy = do { reserved "Maybe"
+             ; ty <- forestTy
+             ; return (FMaybe ty)
+             } <?> "Forest Maybe type"
+
 fileTy :: Parser ForestTy
 fileTy = do { reserved "File"
-            ; id <- identifier
-            ; return (File id)
+            ; fileBodyTyParens
             } 
           <?> "Forest File type"
+
+fileBodyTyParens :: Parser ForestTy
+fileBodyTyParens =   parens fileBodyTy
+                 <|> fileBodyTy
+
+fileBodyTy :: Parser ForestTy
+fileBodyTy = do { id <- identifier
+                ; arg <- optionMaybe forestArg
+                ; return (File (id, arg))
+                }
+
+forestArg :: Parser TH.Exp
+forestArg = do { reservedOp "(:"
+               ; argStr <- manyTill anyChar (reserved ":)")
+               ; generatorE <- case LHM.parseExp argStr of
+                             (Left err)    -> unexpected ("Failed to parse Haskell argument expression:" ++ err)
+                             (Right expTH) -> return expTH
+               ; return generatorE
+               }
 
 namedTy :: Parser ForestTy
 namedTy = do { id <- identifier
@@ -106,31 +145,10 @@ simpleField internal_name = do
            } <?> "Simple Forest Field"
 
 
-oldcompField :: String -> Parser Field
-oldcompField internal_name = do
-          { reserved "is" 
-          ; reservedOp "[:"
-          ; str <- manyTill anyChar (reservedOp "::") 
-          ; externalE <- case LHM.parseExp str of
-                             (Left err)    -> unexpected ("Failed to parse Haskell expression in directory declaration for field " ++ internal_name ++ ":" ++ err)
-                             (Right expTH) -> return expTH
-          ; forest_ty <- forestTy
-          ; reservedOp "|"
-          ; strPat <- manyTill anyChar (reservedOp "<-")  
-          ; generatorP <- case LHM.parsePat strPat of 
-                              Left err    -> unexpected ("Failed to parse Haskell pattern in directory declaration for field "  ++ internal_name ++ ":" ++ err)
-                              Right patTH -> return patTH
-          ; strGen <- manyTill anyChar (reservedOp ":]")
-          ; generatorE <- case LHM.parseExp strGen of
-                                (Left err)    -> unexpected ("Failed to parse Haskell generator expression in directory declaration for field " 
-                                                            ++ internal_name ++ ":" ++ err)
-                                (Right expTH) -> return expTH
-          ; return (Comp (internal_name, externalE, forest_ty, generatorP, generatorE, Nothing))
-          }
-
-compBodyWhere :: String -> Parser (TH.Exp, Maybe TH.Exp)
+compBodyWhere :: String -> Parser (Bool, TH.Exp, Maybe TH.Exp)
 compBodyWhere internal_name = do
-     { genStr <- manyTill anyChar (reserved "where")
+     { isMatch <- optionMaybe (reserved "matches")
+     ; genStr <- manyTill anyChar (reserved "where")
      ; generatorE <- case LHM.parseExp genStr of
                              (Left err)    -> unexpected ("Failed to parse Haskell generator expression in directory declaration for field " 
                                                           ++ internal_name ++ ":" ++ err)
@@ -140,31 +158,33 @@ compBodyWhere internal_name = do
                              (Left err)    -> unexpected ("Failed to parse Haskell generator predicate in directory declaration for field " 
                                                           ++ internal_name ++ ":" ++ err)
                              (Right expTH) -> return expTH
-     ; return (generatorE, Just predE)
+     ; return (isJust isMatch, generatorE, Just predE)
      }
 
-compBodyNoWhere :: String -> Parser (TH.Exp, Maybe TH.Exp)
+compBodyNoWhere :: String -> Parser (Bool, TH.Exp, Maybe TH.Exp)
 compBodyNoWhere internal_name = do 
-     { genStr <- manyTill anyChar eof
+     { isMatch <- optionMaybe (reserved "matches")
+     ; genStr <- manyTill anyChar eof
      ; generatorE <- case LHM.parseExp genStr of
                              (Left err)    -> unexpected ("Failed to parse Haskell generator expression in directory declaration for field " 
                                                           ++ internal_name ++ ":" ++ err)
                              (Right expTH) -> return expTH
-     ; return (generatorE, Nothing)
+     ; return (isJust isMatch, generatorE, Nothing)
      }
 
-compBody :: String -> Parser(TH.Exp, Maybe TH.Exp)
+compBody :: String -> Parser(Bool, TH.Exp, Maybe TH.Exp)
 compBody internal_name =  
          (try (compBodyWhere internal_name))
      <|> (compBodyNoWhere internal_name)
 
-compToEnd :: String -> Parser(TH.Exp, Maybe TH.Exp)
+compToEnd :: String -> Parser(Generator, Maybe TH.Exp)
 compToEnd internal_name = do 
      { compBodyStr <- manyTill anyChar (reservedOp ":]")
-     ; (externalE, predOptE) <- case PP.parse (compBody internal_name) "" compBodyStr of
+     ; (isMatch, externalE, predOptE) <- case PP.parse (compBody internal_name) "" compBodyStr of
                   Left err -> unexpected ("Failed to parse body for field "++ (internal_name) ++ ". " ++ (show err))
                   Right x -> return x
-     ; return (externalE, predOptE)
+     ; let externalGen = if isMatch then Matches externalE else Explicit externalE
+     ; return (externalGen, predOptE)
      }
 
 
@@ -186,6 +206,7 @@ compField internal_name = do
           ; return (Comp (internal_name, externalE, forest_ty, generatorP, generatorE, predEOpt))
           }
 
+{-
 newcompFieldUsingHSetComps :: String -> Parser Field
 newcompFieldUsingHSetComps internal_name = do
           { reserved "is" 
@@ -208,17 +229,6 @@ newcompFieldUsingHSetComps internal_name = do
                               (Right expTH) -> return expTH
           ; return (Comp (internal_name, externalE, forest_ty, generatorP, compE, Nothing))
           }
-
-{-
-*Examples.Simple Language.Haskell.TH Data.Map Monad> runQ [e| [x | x <- ls, True] |]
-CompE [BindS (VarP x_0) (VarE ls_1632294373),NoBindS (ConE GHC.Bool.True),NoBindS (VarE x_0)]
--}
-
-{-
-[forest | type Nested_d (file_name :: String) = Directory 
-               { hostIndex is (file_name++".txt")  :: File Hosts_t 
-               , hosts is [: h :: File PtextDocument | h <- getNames (hostIndex) :]
-               }  |]
 -}
 
 fieldPredicate :: Parser TH.Exp
@@ -286,3 +296,11 @@ test = Language.Forest.Parser.parse forestDecls filename line column input
               line = 0
               column = 0
               input = "type Hosts_f  = File Hosts_t\ntype Simple_d = Directory\n{ local  is \"local.txt\"  :: File Hosts_t\n, remote is \"remote.txt\" :: Hosts_f }"   
+
+test2 = Language.Forest.Parser.parse forestDecls filename line column input 
+        where filename = "test"
+              line = 0
+              column = 0
+              input = "type Grads_d = Directory  { classes is  [: aclass :: Class_d (: \"07\"   :)  | aclass <- matches (RE \"classof[0-9][0-9]\") :] }"
+
+

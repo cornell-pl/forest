@@ -13,6 +13,7 @@
    make relative paths work as arguments to ty_load
    make escape syntax consistent
    incorporate pads meta-data error counts into forest error counts.
+   get gdef to work for representations involving a map (right now raises exception if directory doesn't exist)
 
    DONE fix meta-data error propagation to match pads
    DONE implement nested directories

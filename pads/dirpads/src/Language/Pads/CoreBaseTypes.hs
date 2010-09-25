@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, TemplateHaskell, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, TemplateHaskell, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable, TypeSynonymInstances #-}
 module Language.Pads.CoreBaseTypes where
 
 import Language.Pads.Generic
@@ -95,7 +95,20 @@ instance Pads1 S.RE PstringME Base_md where
 instance Pads1 S.RE PstringSE Base_md where
   parsePP1 = pstringSE_parseM
 
+class ToString a where
+  toString :: a -> String
 
+instance ToString Pstring where
+  toString (Pstring s) = s
+
+instance ToString PstringFW where
+  toString (PstringFW s) = s
+ 
+instance ToString PstringME where
+  toString (PstringME s) = s
+
+instance ToString PstringSE where
+  toString (PstringSE s) = s
 
 
 pstringFW_parseM :: Int -> PadsParser (PstringFW, Base_md)
@@ -195,6 +208,24 @@ pint_parseM = do
           digits <- satisfy Char.isDigit
           if null digits then badReturn (def, mkErrBasePD (E.FoundWhenExpecting (mkStr c) "Pint") (Just initPos))
             else goodReturn (Pint $ digitListToInt isNeg digits, cleanBasePD)
+
+class LitParse a where
+  litParse :: a -> PadsParser ((), Base_md)
+
+instance LitParse Char where
+  litParse = pcharLit_parseM
+
+instance LitParse String where
+  litParse = pstrLit_parseM
+
+instance LitParse S.RE where
+  litParse = preLit_parseM
+
+
+preLit_parseM :: S.RE -> PadsParser ((), Base_md)
+preLit_parseM re = do { (match, md) <- pstringME_parseM re
+                      ; if numErrors md == 0 then goodReturn ((), md) else badReturn ((), md)
+                      }
 
 
 pcharLit_parseM :: Char -> PadsParser ((), Base_md)

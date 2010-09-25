@@ -5,7 +5,7 @@ module Language.Pads.Syntax where
 import Data.Generics
 import Language.Haskell.TH  as TH hiding (Lit,CharL,StringL) 
 
-data Lit    = CharL Char | StringL String  | EorL | EofL | VoidL
+data Lit    = CharL Char | StringL String  | EorL | EofL | VoidL | RegL String
   deriving (Eq, Data, Typeable, Show)
 
 data TermCond = TyTC PadsTy | LengthTC TH.Exp
@@ -15,6 +15,7 @@ type FieldInfo = (Maybe String, PadsTy, Maybe TH.Exp)
 
 data PadsTy = Plit Lit
             | Pname String
+            | Phexp String
             | Ptuple [PadsTy] 
             | Pmaybe PadsTy
             | Pline PadsTy

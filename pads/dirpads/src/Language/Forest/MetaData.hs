@@ -4,15 +4,20 @@ module Language.Forest.MetaData where
 import System.Posix.Files
 import System.Posix.User
 import System.Posix.Types
+import System.Posix.Directory
+import Text.Regex
 import qualified Control.Exception as CE
 
 import Data.Data
+import Data.Maybe
 import Data.List hiding (group)
 
 import Data.DeriveTH                 -- Library for deriving instances for existing types
 
 import Text.PrettyPrint.Mainland as PP hiding (group)
 
+import Language.Pads.Source
+import Language.Pads.Generic
 import Language.Forest.Errors
 
 {- Base type library support -}
@@ -55,7 +60,7 @@ get_kind  x = kind $ fileInfo $ fst x
 
 
 {- Meta data type class -}
-class ForestMD md where
+class Data md => ForestMD md where
   get_fmd_header :: md -> Forest_md
   replace_fmd_header :: md -> Forest_md -> md
 
@@ -63,7 +68,7 @@ instance ForestMD Forest_md where
   get_fmd_header b = b
   replace_fmd_header old new = new
 
-instance ForestMD (Forest_md,b) where
+instance Data b => ForestMD (Forest_md,b) where
   get_fmd_header (h,b) = h
   replace_fmd_header (h1,b) h2 = (h2,b)
 
@@ -76,6 +81,8 @@ instance Pretty Forest_md where
 
 cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = errorFileInfo}
 errorForestMD = Forest_md {numErrors = 1, errorMsg = Nothing, fileInfo = errorFileInfo}
+missingPathForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MissingFile path), fileInfo = errorFileInfo}
+
 mergeErrors m1 m2 = case (m1,m2) of
             (Nothing,Nothing) -> Nothing
             (Just a, _) -> Just a
@@ -143,3 +150,55 @@ errorFileInfo  = FileInfo
      , mode     = -1
      , kind = UnknownK
      }
+
+{-
+[forest| type MatchDirectory_d = Directory
+             { files is [: h :: Pfile Ptext | h <- matches (RE ".*[.]txt") where h /= "local.txt" :] }
+       |]
+-}
+getMatchingFiles :: FilePath -> RE -> IO [FilePath]
+getMatchingFiles path re = do 
+  { files <- getFiles path
+  ; return (filterByRegex re files)
+  }
+
+filterByRegex (RE regStr) candidates = 
+  let re = mkRegexWithOpts ('^':regStr++"$") True True
+      matchOne str = isJust (matchRegex re str)
+  in Prelude.filter matchOne candidates
+
+{- Get a list of the files in the argument directory. -}
+getFiles :: FilePath -> IO [FilePath]
+getFiles path = do 
+  { dirStream <- openDirStream path
+  ; answer <- get_files dirStream
+  ; closeDirStream dirStream
+  ; return answer
+  } where get_files dirStream = do
+                     { file <- readDirStream dirStream
+                     ; if file == [] then return []
+                                     else do { files <- get_files dirStream
+                                             ; return (file : files)
+                                             } 
+                     }
+
+checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
+checkPath path ifExists = do 
+   { exists <-  fileExist path
+   ; if not exists then 
+       do { def_md <- gdef
+          ; let new_md = replace_fmd_header def_md (missingPathForestMD path)
+          ; return (gdef, new_md)
+          }
+     else ifExists
+   }
+
+
+
+doLoadMaybe :: ForestMD md =>  IO (rep,md) -> IO (Maybe rep, (Forest_md, Maybe md))
+doLoadMaybe f = do
+   (r,fmd) <- f 
+   let bfmd = get_fmd_header fmd
+   if numErrors bfmd == 0 
+       then return (Just r, (bfmd, Just fmd))
+       else return (Nothing, (cleanForestMD, Nothing))

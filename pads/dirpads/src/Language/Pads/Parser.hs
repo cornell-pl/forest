@@ -13,7 +13,8 @@ import Text.Parsec.Language
 import Text.ParserCombinators.Parsec.Language 
 import Text.ParserCombinators.Parsec.Pos
 import Language.Haskell.Meta as LHM
-import Language.Haskell.TH as TH hiding (CharL, StringL)
+import Language.Haskell.TH as TH hiding (CharL)
+import Data.Char
 
 type Parser = PS.Parser
 
@@ -34,6 +35,14 @@ parens        = PT.parens      lexer
 braces        = PT.braces      lexer
 brackets      = PT.brackets    lexer
 
+lowerId :: Parser String
+lowerId = try (do { id <- identifier
+                  ; if (isLower . head) id then return id else parserZero })
+
+upperId :: Parser String
+upperId = try (do { id <- identifier
+                  ; if (isUpper . head) id then return id else parserZero })
+
 
 replaceName :: String -> PadsTy -> PadsTy
 replaceName str ty = case ty of
@@ -53,7 +62,7 @@ padsDecl =   tyDecl
 
 dataDecl :: Parser PadsDecl
 dataDecl = do { reserved "data"
-              ; id <- identifier
+              ; id <- upperId
               ; pat <- param
               ; padsTy <- dataTy id
               ; return (PadsDecl(Id id, pat, padsTy))
@@ -61,7 +70,7 @@ dataDecl = do { reserved "data"
 
 tyDecl :: Parser PadsDecl
 tyDecl = do { reserved "type"
-            ; id <- identifier
+            ; id <- upperId
             ; pat <- param
             ; ty <- padsTy
             ; return (PadsDecl(Id id, pat, replaceName id ty))
@@ -83,9 +92,14 @@ dataTy str =   unionTy str
 
 
 idTy   :: Parser PadsTy
-idTy   = do { base <- identifier
+idTy   = do { base <- upperId
             ; return (Pname base)
             } <?> "named type"
+
+hidTy :: Parser PadsTy
+hidTy =  do { hid <- lowerId
+            ; return (Phexp hid)
+            } <?> "haskell identifier literal"
 
 charlitTy :: Parser S.Lit
 charlitTy = do { c <- charLiteral
@@ -103,7 +117,7 @@ eorlitTy = do {reserved "Eor"
               }
 
 eoflitTy :: Parser S.Lit
-eoflitTy = do {reserved "Eof"
+eoflitTy = do { reserved "Eof"
               ; return S.EofL
               }
 
@@ -112,12 +126,19 @@ voidlitTy = do {reserved "Void"
               ; return S.VoidL
               }
 
+reglitTy :: Parser S.Lit
+reglitTy = do { reserved "RE"
+              ; s <- stringLiteral
+              ; return (S.RegL s)
+              }
+
 lit :: Parser S.Lit 
 lit =   charlitTy
     <|> strlitTy
     <|> eorlitTy
     <|> eoflitTy
     <|> voidlitTy
+    <|> reglitTy
     <?> "literal"
 
 litTy :: Parser PadsTy
@@ -189,7 +210,7 @@ branchList = sepBy1  branch (reservedOp "|")
 
 
 branch :: Parser (Maybe String, PadsTy, Maybe TH.Exp)
-branch = do { id    <- identifier
+branch = do { id    <- upperId
             ; tyM   <- optionMaybe padsTy
             ; predM <- optionMaybe fieldPredicate
             ; let ty = case tyM of {Nothing -> Plit (S.StringL id); Just ty' -> ty'}
@@ -232,7 +253,7 @@ field = do { idM <- optionMaybe $ try fieldLabel
         
 
 fieldLabel :: Parser String
-fieldLabel = do { id <- identifier
+fieldLabel = do { id <- lowerId
                 ; reservedOp "::"
                 ; return id
                 }
@@ -347,6 +368,13 @@ tryTy = do { reservedOp "Try"
            ; return (Ptry ty)
            } <?> "try type"
 
+reTy :: Parser PadsTy
+reTy = do { reservedOp "/"
+          ; s <- stringLiteral
+          ; reservedOp "/"
+          ; return (Papp (Pname "PstringME") (AppE (ConE (mkName "RE")) (LitE (TH.StringL s))))   
+          } <?> "regular expression type"
+
 padsTy :: Parser PadsTy
 padsTy = lineTy
      <|> transformTy 
@@ -357,8 +385,10 @@ padsTy = lineTy
      <|> tryTy
      <|> try fnAppTy
      <|> typedefTy
+     <|> reTy
      <|> litTy
      <|> idTy
+     <|> hidTy
      <?> "pads type"
 
 

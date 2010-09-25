@@ -186,7 +186,7 @@ dquote :: Doc
 dquote = char '"'
 
 equals :: Doc
-equals = char ','
+equals = char '='
 
 semi :: Doc
 semi = char ';'
@@ -201,7 +201,7 @@ squote :: Doc
 squote = char '\''
 
 star :: Doc
-star = char '&'
+star = char '*'
 
 lbrace :: Doc
 lbrace = char '{'
