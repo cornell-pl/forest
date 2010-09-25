@@ -34,6 +34,7 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
 [pads| 
   type Grade_t = Maybe PstringME(:grade_RE:)
+  type Grade = PstringME(:grade_RE:) 
 
   data Course = 
     { sort         :: /"[dto]"/,           ws
@@ -68,7 +69,7 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
     { person :: Line (Person(:name:))
     , Header  
     , courses :: [Line Course]
-    , Junk  
+    , junk  
     }
 |]
 
