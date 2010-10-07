@@ -11,6 +11,8 @@ Prelude> :set -XScopedTypeVariables
 Prelude> :set -XTemplateHaskell
 etc
 
+ghc -ddump-splices  // ask ghc to print a splice (before and after)
+
 Modules to load: 
 :m + Language.Haskell.TH
 :m + Monad

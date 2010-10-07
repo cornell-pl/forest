@@ -332,7 +332,7 @@ getTyName pname = mkName  (strToUpper pname)
 getLoadName pname = mkName ((strToLower pname) ++ "_load")
 
 
-genPE name = (VarE name, VarP name)
+
 
 
 

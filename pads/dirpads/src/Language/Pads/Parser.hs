@@ -30,6 +30,7 @@ reserved      = PT.reserved    lexer
 reservedOp    = PT.reservedOp  lexer
 charLiteral   = PT.charLiteral lexer
 stringLiteral = PT.stringLiteral  lexer
+integer       = PT.integer     lexer
 commaSep1     = PT.commaSep1   lexer
 parens        = PT.parens      lexer
 braces        = PT.braces      lexer
@@ -76,6 +77,15 @@ tyDecl = do { reserved "type"
             ; return (PadsDecl(Id id, pat, replaceName id ty))
             } <?> "Type Declaration"
 
+haskellExp :: Parser (TH.Exp)
+haskellExp = do 
+   { reservedOp "<|"
+   ; str <- manyTill anyChar (reservedOp "|>") 
+   ; case LHM.parseExp str of
+                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
+                 Right expTH -> return expTH
+   } <?> "haskell expression"
+
 param :: Parser (Maybe TH.Pat)
 param = do { str <- manyTill anyChar (reservedOp "=")
            ; pat <- if Prelude.null str then return Nothing
@@ -96,15 +106,25 @@ idTy   = do { base <- upperId
             ; return (Pname base)
             } <?> "named type"
 
-hidTy :: Parser PadsTy
-hidTy =  do { hid <- lowerId
-            ; return (Phexp hid)
+hidlitTy :: Parser S.Lit
+hidlitTy =  do { hid <- lowerId
+            ; return (Hid hid)
             } <?> "haskell identifier literal"
+
+hexplitTy :: Parser S.Lit
+hexplitTy =  do { hexp <- haskellExp
+                ; return (Hexp hexp)
+                } <?> "haskell expression literal"
 
 charlitTy :: Parser S.Lit
 charlitTy = do { c <- charLiteral
                ; return (S.CharL c)
                } <?> "character literal type"
+
+intlitTy :: Parser S.Lit
+intlitTy = do { i <- integer
+               ; return (S.IntL i)
+               } <?> "integer literal type"
 
 strlitTy :: Parser S.Lit
 strlitTy = do { s <- stringLiteral
@@ -139,6 +159,9 @@ lit =   charlitTy
     <|> eoflitTy
     <|> voidlitTy
     <|> reglitTy
+    <|> intlitTy
+    <|> hidlitTy
+    <|> hexplitTy
     <?> "literal"
 
 litTy :: Parser PadsTy
@@ -151,11 +174,8 @@ fnTy   =  idTy
 
 fnAppTy :: Parser PadsTy
 fnAppTy = do { ty <- fnTy
-             ; reservedOp "(:"
-             ; str <- manyTill anyChar (reservedOp ":)") 
-             ; case LHM.parseExp str of
-                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Pads application")
-                 Right expTH -> return (Papp ty expTH)
+             ; lit <- lit <|> parens lit
+             ; return (Papp ty (litToExp lit))
              } <?> "type function application"
 
 
@@ -303,9 +323,9 @@ maybeTy = do { reserved "Maybe"
              } <?> "maybe type"
 
 --       | Plist  PadsTy (Maybe PadsTy) (Maybe TermCond)
--- [pads| type Entries = [Pint] with sep (:',':) and term (:eof:)         |]
--- [pads| type Entries = [Pint] with sep (:',':) and term (:length of exp:)  |]
--- [pads| type Entries = [Pint] with sep (:',':) |]    -- keep parsing until get an error in element type
+-- [pads| type Entries = [Pint] with sep ',' ) and term (:eof:)         |]
+-- [pads| type Entries = [Pint] with sep ',' and term (:length of exp:)  |]
+-- [pads| type Entries = [Pint] with sep ',' |]    -- keep parsing until get an error in element type
 
 sortModifier (Left sep) =   (Just sep, Nothing)
 sortModifier (Right term) = (Nothing, Just term)
@@ -315,28 +335,22 @@ sortModifiers mods =
 
 sep :: Parser PadsTy
 sep = do { reserved "sep"
-         ; reservedOp "(:"
          ; ty <- padsTy
-         ; reservedOp ":)"
          ; return ty 
          } <?> "separator"
      
 termKind :: Parser TermCond
 termKind = do { reserved "length"
               ; reserved "of"
-              ; str <- manyTill anyChar (reservedOp ":)")
-              ; case LHM.parseExp str of
-                      Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in list length declaration.")
-                      Right expTH -> return (LengthTC expTH)
+              ; lit <- lit
+              ; return (LengthTC (litToExp lit))
               }
        <|> do { ty <- padsTy
-              ; reservedOp ":)"
               ; return (TyTC ty)
               } <?> "term kind"
 
 term :: Parser TermCond
 term = do { reserved "term"
-          ; reservedOp "(:"
           ; termKind
           } <?> "terminator"
   
@@ -388,7 +402,6 @@ padsTy = lineTy
      <|> reTy
      <|> litTy
      <|> idTy
-     <|> hidTy
      <?> "pads type"
 
 

@@ -81,3 +81,26 @@ gdef = def_help
          in fromConstrB gdef constr 
 
 
+-- ad hoc case for partiular type construct extB
+-- empty (syb library)
+{-
+empty :: forall a. Data a => a
+empty = general 
+      `extB` char 
+      `extB` int
+      `extB` integer
+      `extB` float 
+      `extB` double where
+  -- Generic case
+  general :: Data a => a
+  general = fromConstrB empty (indexConstr (dataTypeOf general) 1)
+  
+  -- Base cases
+  char    = '\NUL'
+  int     = 0      :: Int
+  integer = 0      :: Integer
+  float   = 0.0    :: Float
+  double  = 0.0    :: Double
+-}
+
+

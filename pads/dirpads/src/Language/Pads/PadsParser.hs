@@ -174,7 +174,7 @@ satisfy p = primPads loop
           else
             ([],s)
 
-digitListToInt :: Bool->[Char] -> Int
+digitListToInt :: Bool -> [Char] -> Int
 digitListToInt isNeg digits = let raw = foldl (\a d ->10*a + (Char.digitToInt d)) 0 digits
    in if isNeg then negate raw else raw
 

@@ -27,7 +27,7 @@ baseTypesList = [
   ("Pint",      (''Int,     [])),
   ("Pchar",     (''Char,    [])),
   ("Pdigit",    (''Int,     [])),
-  ("PtextDocument", (''String,  [])),
+  ("Ptext",     (''String,  [])),
   ("Pstring",   (''String,  [''Char])),
   ("PstringFW", (''String,  [''Int])),
   ("PstringME", (''String,  [''S.RE])),

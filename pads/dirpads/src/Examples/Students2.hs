@@ -2,10 +2,9 @@
 
 
 -- TODOS
---     { students is [: filename :: File (Student (: name student :)) | 
---                     (filename, student) <= matches Student_filename where not (template filename) :] }
+--     { students is [ filename :: File (Student <| name student |>) | 
+--                     (filename, student) <= matches Student_filename where not (template filename) ] }
 
--- IDEA: use [| haskell-exp |] uniformly as the escape to haskell expressions
 -- NOTE: don't use / to escape regular expressions because of file path interactions.
 -- How to specify fields that match a regular expression but have a single representation.
 
@@ -21,6 +20,7 @@ import System.Time.Utils
 import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Haskell.Meta as LHM
+import Data.Map
 
 ws = RE "[ \t]+"
 ows =  RE "[ \t]*"
@@ -33,8 +33,8 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
 
 [pads| 
-  type Grade_t = Maybe PstringME(:grade_RE:)
-  type Grade = PstringME(:grade_RE:) 
+  type Grade_t = Maybe (PstringME grade_RE)
+  type Grade = PstringME grade_RE 
 
   data Course = 
     { sort         :: /"[dto]"/,           ws
@@ -57,19 +57,18 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
   data School = AB | BSE
 
   data Person (myname::String) =
-    { fullname   :: Student_Name(:myname:), ws
+    { fullname   :: Student_Name myname,    ws
     , school     :: School,                 ws, '\''
     , year       :: /"[0-9][0-9]"/
     }
 
-  type Header  = [Line /".*"/] with term (: length of  7 :)
-  type Trailer = [Line /".*"/] with term (: Eof :)
-
+  type Header  = [Line /".*"/] with term length of 7 
+  type Trailer = [Line /".*"/] with term Eof 
   data Student (name::String) = 
-    { person :: Line (Person(:name:))
+    { person :: Line (Person name)
     , Header  
     , courses :: [Line Course]
-    , junk  
+    , Trailer
     }
 |]
 
@@ -78,30 +77,39 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 [forest|
   -- Directory containing all students in a particular major.
   type Major_d = Directory 
-       { students is [: s :: File (Student (: getName s :)) | s <- matches (RE "[A-Za-z]*.txt") where not (template s) :] }
-
+       { students is [ s :: File (Student <| getName s |>) | s <- matches (RE "[A-Za-z]*.txt") where <| not (template s) |> ] }
 
   -- Directory containing all students in a particular year
   type Class_d (year :: String) = Directory
-    { bse is ("BSE" ++ year) :: Major_d
-    , ab  is "AB"  ++ year :: Major_d   
-    , transfer is  [: t :: Major_d | t <- matches (RE "TRANSFER|transfer") :]      --, transfer matches (RE "TRANSFER|transfer") :: Maybe Major_d 
-    , withdrawn is [: w :: Major_d | w <- matches withdrawnRE :]
-    , leave is     [: l :: Major_d | l <- matches leaveRE :] 
+    { bse is <|"BSE" ++ year|> :: Major_d
+    , ab  is <|"AB"  ++ year|> :: Major_d   
+    , transfer is  [ t :: Major_d | t <- matches (RE "TRANSFER|transfer") ]      
+    , withdrawn is [ w :: Major_d | w <- matches withdrawnRE ]
+    , leave is     [ l :: Major_d | l <- matches leaveRE ] 
     }
-
 
   -- Directory for all graduated students
   type Grads_d = Directory 
-    { classes is  [: aclass :: Class_d (: getYear aclass  :)  | aclass <- matches (RE "classof[0-9][0-9]") :] }
+    { classes is  [ aclass :: Class_d <| getYear aclass |>  | aclass <- matches (RE "classof[0-9][0-9]") ] }
 
   -- Root of the hierarchy
   type PrincetonCS_d = Directory
-    { classof10 :: Class_d (: "10" :)
-    , classof11 :: Class_d (: "11" :)
+    { classof10 :: Class_d  "10" 
+    , classof11 :: Class_d  "11" 
     , graduates :: Grads_d
     }
 |]
+
+cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
+(cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
+
+Grads_d grads = graduates cs_rep
+grads07 = grads ! "classof07" 
+Major_d bse_grads07 = bse grads07
+clark = bse_grads07 ! "clark.txt"
+errs = fst cs_md
+
+
 
 student_input_file = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof10/AB10/APPS.txt"
 student_result :: (Student, Student_md) = unsafePerformIO $ parseFile1 "APPS" student_input_file
@@ -132,9 +140,6 @@ class11_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11"
 
 grad_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates"
 (grad_rep, grad_md) = unsafePerformIO $ grads_d_load grad_dir
-
-cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
-(cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
 
 
 

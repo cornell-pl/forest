@@ -5,6 +5,7 @@ module Language.Pads.TH where
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax
 import Data.Data
+import Control.Monad
 import Char
 
 
@@ -34,8 +35,32 @@ mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
 mk_TySynD ty_name ty = TySynD ty_name [] ty
 
 arrowTy ty1 ty2 = AppT (AppT ArrowT     ty1  ) ty2
-tyListToTupleTy (ty:tys) = foldl AppT (AppT (TupleT (1 + length tys) ) ty) tys
+
 tyListToListTy  tys      = foldl AppT ListT                                tys
+
+tyListToTupleTy (ty:tys) = foldl AppT (AppT (TupleT (1 + length tys) ) ty) tys
+
+
+tupleTyToListofTys (AppT (TupleT n) ty) = (n, collect ty)
+  where collect (AppT ty' tys') = ty' : (collect tys')
+        collect ty = [ty]
+
+tupleTyToListofTys ty = collect ty []
+  where collect (TupleT n) acc = (n, acc)
+        collect (AppT tys ty) acc = collect tys (ty:acc)
+
+genPE name = (VarE name, VarP name)
+
+doGenPE str = do {
+  ; name <- newName str
+  ; return (VarE name, VarP name)
+  }
+
+doGenPEs :: Int -> String -> Q([TH.Exp], [TH.Pat])
+doGenPEs n str = do 
+  { varpats <- replicateM n (doGenPE str)
+  ; return (unzip varpats)
+  }
 
 {- XXX: need to add location information so can report location of error messages. -}
 patToTy :: TH.Pat -> TH.Type

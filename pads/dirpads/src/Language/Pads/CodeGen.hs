@@ -57,7 +57,6 @@ genRepMDDecl ty ty_name md_ty_name = case ty of
 genRepMDTy ::  PadsTy -> (TH.Type, TH.Type)
 genRepMDTy ty = case ty of
   Plit  _      -> (ConT ''(),  ConT ''Base_md)
-  Phexp id     -> (ConT ''(),  ConT ''Base_md)
   Pname p_name -> (ConT (getTyName p_name), ConT (getMDName p_name))
   Ptuple tys   -> genRepMDTuple tys
   Pline ty     -> genRepMDTy ty
@@ -240,13 +239,10 @@ genParseBody repN mdN ty = do
 {- Given a PadsTy ty, return the haskell expression that parses ty. -}
 parseE :: PadsTy -> Q TH.Exp
 parseE ty = case ty of
-  Plit (PS.CharL c)    -> return (AppE (VarE 'litParse) (LitE (TH.CharL   c)))   
-  Plit (PS.StringL s)  -> return (AppE (VarE 'litParse) (LitE (TH.StringL s)))   
-  Plit (PS.RegL s)     -> return (AppE (VarE 'litParse) (AppE (ConE (mkName "RE")) (LitE (TH.StringL s))))   
   Plit  PS.EorL        -> return       (VarE(getParseName "PeorLit"))                           
   Plit  PS.EofL        -> return       (VarE(getParseName "PeofLit"))                           
   Plit  PS.VoidL       -> return       (VarE(getParseName "PvoidLit"))            
-  Phexp id             -> return (AppE (VarE 'litParse) (VarE (TH.mkName id)))
+  Plit  l              -> return (AppE (VarE 'litParse) (litToExp l))
   Pname p_name   -> return (VarE (getParseName p_name))
   Ptuple tys     -> mkParseTuple tys
   Precord str fields   -> mkParseRecord str fields
@@ -546,7 +542,6 @@ mkParseTyB ty = do
    rhsE        <- parseE ty
    let resultEs =  case ty of
         Plit l ->    []
-        Phexp l ->   []
         otherwise -> [repE]
    let stmt1    = BindS (TupP [repP,mdP]) rhsE
    let stmt2    = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
@@ -579,6 +574,6 @@ getTyName pname = mkName  (strToUpper pname)
 getParseName pname = mkName ((strToLower pname) ++ "_parseM")
 getParseSName pname = mkName ((strToLower pname) ++ "_parseS")
 
-genPE name = (VarE name, VarP name)
+
 
 

@@ -2,15 +2,19 @@
 
 module Examples.AI where
 import Language.Pads.Padsc
+import Language.Pads.GenPretty       
+
 import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Data.ByteString.Lazy.Char8 as B
 
 [pads| type IP_t = (Pint, '.', Pint, '.', Pint, '.', Pint)
-       type Host_t = Pstring(:' ':)
+       type Host_t = Pstring ' '
        data Source_t = IP IP_t | Host Host_t  
 
-       data ID_t = Missing '-' | Id Pstring(:' ':)
+       type IPList_t = [IP_t]
+
+       data ID_t = Missing '-' | Id (Pstring ' ')
 
        data Month_t = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec  
 
@@ -27,7 +31,7 @@ import qualified Data.ByteString.Lazy.Char8 as B
        data Method_t  = GET | PUT | POST | HEAD | DELETE
                       | LINK | UNLINK      -- obsolete after http 1.0
    
-       type URL_t = Pstring(:' ':) 
+       type URL_t = Pstring ' ' 
        type Version_t  = {"HTTP/", major :: Pint, '.', minor :: Pint}  |]
 
 checkVersion :: Method_t -> Version_t -> Bool
@@ -38,7 +42,7 @@ checkVersion method version =
     _ -> True
 
 [pads| type Request_t = { '"',  method  :: Method_t,       
-                          ' ',  url     :: Pstring(:' ':), 
+                          ' ',  url     :: Pstring ' ', 
                           ' ',  version :: Version_t  where <| checkVersion method version |>, 
                           '"'
                         }  
@@ -73,49 +77,55 @@ str = "1234cnbdav duisc djnklcndjkalscnj dkxbvc daseasklfhasdjkhfaksjdhflakjsdhf
 example2 =  (padsSourceFromString ("abc\nd" ++ undefined))
 example3 = B.pack str
 
-pint_ppr (Pint x) = ppr x
-
-instance Pretty Pint where
- ppr = pint_ppr 
-
-pstring_ppr (Pstring s) = ppr s
-instance Pretty Pstring where
- ppr = pstring_ppr
 
 
-tuple_ppr ds = (text "(" <//>
---                    align (sep comma (map ppr ds )) <//>        
-                    align (sep comma ds ) <//>        
-                text ")")
+--mkPrettyInstance ''Pint
 
-record_ppr docs = (text "{" <//>
-                    align (sep comma docs) <//>        
-                 text "}")
 
-iP_t_ppr (IP_t (r1,r2,r3,r4)) =  group $ hang 2 (text "IP_t" <+/> (tuple_ppr [ppr r1, ppr r2, ppr r3, ppr r4]))
+--iP_t_ppr (IP_t (r1,r2,r3,r4)) = namedtuple_ppr "IP_t" [ppr r1, ppr r2, ppr r3, ppr r4]
+-- instance Pretty IP_t where
+-- ppr = iP_t_ppr
 
-instance Pretty IP_t where
- ppr = iP_t_ppr
+--mkPrettyInstance ''IP_t
 
-host_t_ppr (Host_t h) = hang 2 (text "Host_t" <+/> ppr h)
+-- iPList_t_ppr (IPList_t tys) = namedlist_ppr "IPList_t" (map ppr tys)
 
-instance Pretty Host_t where
- ppr = host_t_ppr
 
+--mkPrettyInstance ''IPList_t
+ipList = IPList_t [IP_t (1,2,3,4), IP_t(34,54,67,89)]
+-- ipdoc = iPList_t_ppr ipList
+
+
+-- host_t_ppr (Host_t h) = hang 2 (text "Host_t" <+/> ppr h)
+
+-- instance Pretty Host_t where
+--  ppr = host_t_ppr
+
+
+--mkPrettyInstance ''Host_t
+
+{-
 source_t_ppr source = case source of
   IP ip     -> hang 2 (text "IP" <+/> iP_t_ppr ip)
   Host host -> hang 2 (text "Host" <+/> host_t_ppr host)
 
 instance Pretty Source_t where
   ppr = source_t_ppr
+-}
 
+-- mkPrettyInstance ''Source_t
+
+{-
 iD_t_ppr id = case id of
   Missing -> text ("Missing")
   Id s    -> hang 2 (text "Id" <+/> pstring_ppr s)
 
 instance Pretty ID_t where
   ppr = iD_t_ppr
+-}
 
+--mkPrettyInstance ''ID_t
+{-
 month_t_ppr month = case month of
   Jan -> text "Jan"
   Feb -> text "Feb"
@@ -127,13 +137,18 @@ month_t_ppr month = case month of
   Oct -> text "Nov"
   Dec -> text "Dec"
 
+
 instance Pretty Month_t where
   ppr = month_t_ppr
+-}
+--mkPrettyInstance ''Hours_t
 
+{-
 hours_t_ppr (Hours_t hours) = pint_ppr hours
 instance Pretty Hours_t where
   ppr = hours_t_ppr
-
+-}
+{-
 minutes_t_ppr (Minutes_t minutes) = pint_ppr minutes
 instance Pretty Minutes_t where
   ppr = minutes_t_ppr
@@ -141,21 +156,27 @@ instance Pretty Minutes_t where
 seconds_t_ppr (Seconds_t seconds) = pint_ppr seconds
 instance Pretty Seconds_t where
   ppr = seconds_t_ppr
+-}
 
+{-
 time_t_ppr (Time_t{hours, minutes, seconds}) = let
   hours_p   = text "hours"   <+> equals <+> (hours_t_ppr   hours)
   minutes_p = text "minutes" <+> equals <+> (minutes_t_ppr minutes)
   seconds_p = text "seconds" <+> equals <+> (seconds_t_ppr seconds)
-  in hang 2 (text "Time_t" <+/>  record_ppr [hours_p, minutes_p, seconds_p])
+  in hang 2 (text "Time_t" <+/>  recordbody_ppr [hours_p, minutes_p, seconds_p])
 
 instance Pretty Time_t where
   ppr = time_t_ppr
+-}
 
+-- mkPrettyInstance ''Time_t
+
+{-
 date_t_ppr (Date_t{day, month, year}) = let
   day_p    = text "day"   <+> equals <+> (pint_ppr   day)
   month_p  = text "month" <+> equals <+> (month_t_ppr month)
   year_p   = text "year"  <+> equals <+> (pint_ppr year)
-  in hang 2 (text "Date_t" <+/>  record_ppr [day_p, month_p, year_p])
+  in hang 2 (text "Date_t" <+/>  recordbody_ppr [day_p, month_p, year_p])
 
 instance Pretty Date_t where
   ppr = date_t_ppr
@@ -167,12 +188,27 @@ instance Pretty TimeZone_t where
 timeStamp_t_ppr (TimeStamp_t (d,t,tz)) =  group $ hang 2 (text "TimeStamp_t" <+/> (tuple_ppr [ppr d, ppr t, ppr tz]))
 instance Pretty TimeStamp_t where
   ppr = timeStamp_t_ppr
+-}
 
-doc = iP_t_ppr (IP_t(123,45,67,88))
-ip_s80 = pretty 80 doc
-ip_s10 = pretty 15 doc
+-- mkPrettyInstance ''Time_t
+
+-- mkPrettyInstance ''AI_t
+
+--doc = iP_t_ppr (IP_t(123,45,67,88))
+--ip_s80 = pretty 80 doc
+--ip_s10 = pretty 15 doc
+
+--doc_source_IP = source_t_ppr (IP (IP_t(123,45,67,88)))
+--doc_s80_IP = pretty 80 doc_source_IP
+--doc_s15_IP = pretty 15 doc_source_IP
+--doc_source_Host = source_t_ppr (Host (Host_t (Pstring "Babylon")))
+--doc_s80_Host = pretty 80 doc_source_Host
+--doc_s15_Host = pretty 15 doc_source_Host
+
+--doc_id = iD_t_ppr (Missing)
+--doc_s80_id = pretty 80 doc_id
 
 test = text "IP_t" <+/> (align ((text "nice") <+/> (text "world") <+/> (text "hello") ))
 
 time1 = Time_t{hours= Hours_t(Pint 23), minutes= Minutes_t(Pint 24), seconds= Seconds_t(Pint 34)}
-time1_doc = time_t_ppr time1
+--time1_doc = time_t_ppr time1

@@ -16,6 +16,9 @@ import Language.Haskell.TH as TH hiding (CharL)
 import Data.Char
 import Data.Maybe
 
+import qualified Language.Pads.Parser as PadsP
+import Language.Pads.Syntax
+
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
@@ -51,6 +54,16 @@ forestDecl = do { reserved "type"
                 ; return (ForestDecl(id, pat, replaceName id ty))
                 } <?> "Forest Declaration"
 
+haskellExp :: Parser (TH.Exp)
+haskellExp = do 
+   { reservedOp "<|"
+   ; str <- manyTill anyChar (reservedOp "|>") 
+   ; case LHM.parseExp str of
+                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
+                 Right expTH -> return expTH
+   } <?> "haskell expression"
+
+
 forestTy :: Parser ForestTy
 forestTy =   directoryTy
          <|> fileTy
@@ -64,11 +77,8 @@ fnTy   =  namedTy
 
 fnAppTy :: Parser ForestTy
 fnAppTy = do { ty <- fnTy
-             ; reservedOp "(:"
-             ; str <- manyTill anyChar (reservedOp ":)") 
-             ; case LHM.parseExp str of
-                 Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ " in Forest application")
-                 Right expTH -> return (Fapp ty expTH)
+             ; exp <- forestArg
+             ; return (Fapp ty exp)
              } <?> "type function application"
 
 maybeTy :: Parser ForestTy
@@ -93,14 +103,15 @@ fileBodyTy = do { id <- identifier
                 ; return (File (id, arg))
                 }
 
+forestArgR :: Parser TH.Exp
+forestArgR = do
+   { lit <- PadsP.lit
+   ; return (litToExp lit)
+   }
+
 forestArg :: Parser TH.Exp
-forestArg = do { reservedOp "(:"
-               ; argStr <- manyTill anyChar (reserved ":)")
-               ; generatorE <- case LHM.parseExp argStr of
-                             (Left err)    -> unexpected ("Failed to parse Haskell argument expression:" ++ err)
-                             (Right expTH) -> return expTH
-               ; return generatorE
-               }
+forestArg = forestArgR <|> parens forestArgR
+
 
 namedTy :: Parser ForestTy
 namedTy = do { id <- identifier
@@ -145,99 +156,40 @@ simpleField internal_name = do
            } <?> "Simple Forest Field"
 
 
-compBodyWhere :: String -> Parser (Bool, TH.Exp, Maybe TH.Exp)
-compBodyWhere internal_name = do
+
+compBody :: Parser(Generator, Maybe TH.Exp)
+compBody =  do
      { isMatch <- optionMaybe (reserved "matches")
-     ; genStr <- manyTill anyChar (reserved "where")
-     ; generatorE <- case LHM.parseExp genStr of
-                             (Left err)    -> unexpected ("Failed to parse Haskell generator expression in directory declaration for field " 
-                                                          ++ internal_name ++ ":" ++ err)
-                             (Right expTH) -> return expTH
-     ; predStr <- manyTill anyChar eof
-     ; predE <- case LHM.parseExp predStr of
-                             (Left err)    -> unexpected ("Failed to parse Haskell generator predicate in directory declaration for field " 
-                                                          ++ internal_name ++ ":" ++ err)
-                             (Right expTH) -> return expTH
-     ; return (isJust isMatch, generatorE, Just predE)
+     ; generatorE <- forestArg
+     ; predE <- optionMaybe fieldPredicate
+     ; if isJust isMatch 
+          then return (Matches generatorE, predE)
+          else return (Explicit generatorE, predE)
      }
 
-compBodyNoWhere :: String -> Parser (Bool, TH.Exp, Maybe TH.Exp)
-compBodyNoWhere internal_name = do 
-     { isMatch <- optionMaybe (reserved "matches")
-     ; genStr <- manyTill anyChar eof
-     ; generatorE <- case LHM.parseExp genStr of
-                             (Left err)    -> unexpected ("Failed to parse Haskell generator expression in directory declaration for field " 
-                                                          ++ internal_name ++ ":" ++ err)
-                             (Right expTH) -> return expTH
-     ; return (isJust isMatch, generatorE, Nothing)
-     }
-
-compBody :: String -> Parser(Bool, TH.Exp, Maybe TH.Exp)
-compBody internal_name =  
-         (try (compBodyWhere internal_name))
-     <|> (compBodyNoWhere internal_name)
-
-compToEnd :: String -> Parser(Generator, Maybe TH.Exp)
-compToEnd internal_name = do 
-     { compBodyStr <- manyTill anyChar (reservedOp ":]")
-     ; (isMatch, externalE, predOptE) <- case PP.parse (compBody internal_name) "" compBodyStr of
-                  Left err -> unexpected ("Failed to parse body for field "++ (internal_name) ++ ". " ++ (show err))
-                  Right x -> return x
-     ; let externalGen = if isMatch then Matches externalE else Explicit externalE
-     ; return (externalGen, predOptE)
-     }
 
 
 compField :: String -> Parser Field
 compField internal_name = do
           { reserved "is" 
-          ; reservedOp "[:"
-          ; str <- manyTill anyChar (reservedOp "::") 
-          ; externalE <- case LHM.parseExp str of
-                             (Left err)    -> unexpected ("Failed to parse Haskell expression in directory declaration for field " ++ internal_name ++ ":" ++ err)
-                             (Right expTH) -> return expTH
+          ; reservedOp "["
+          ; externalE <- forestArg
+          ; reservedOp "::"
           ; forest_ty <- forestTy
           ; reservedOp "|"
           ; strPat <- manyTill anyChar (reservedOp "<-")  
           ; generatorP <- case LHM.parsePat strPat of 
                               Left err    -> unexpected ("Failed to parse Haskell pattern in directory declaration for field "  ++ internal_name ++ ":" ++ err)
                               Right patTH -> return patTH
-          ; (generatorE, predEOpt) <- compToEnd internal_name
+          ; (generatorE, predEOpt) <- compBody
+          ; reservedOp "]"
           ; return (Comp (internal_name, externalE, forest_ty, generatorP, generatorE, predEOpt))
           }
 
-{-
-newcompFieldUsingHSetComps :: String -> Parser Field
-newcompFieldUsingHSetComps internal_name = do
-          { reserved "is" 
-          ; reservedOp "[:"
-          ; str <- manyTill anyChar (reservedOp "::") 
-          ; externalE <- case LHM.parseExp str of
-                             (Left err)    -> unexpected ("Failed to parse Haskell expression in directory declaration for field " ++ internal_name ++ ":" ++ err)
-                             (Right expTH) -> return expTH
-          ; forest_ty <- forestTy
-          ; reservedOp "|"
-          ; strPat <- manyTill anyChar (reservedOp "<-") 
-          ; generatorP <- case LHM.parsePat strPat of 
-                              Left err    -> unexpected ("Failed to parse Haskell pattern in directory declaration for field "  ++ internal_name ++ ":" ++ err)
-                              Right patTH -> return patTH 
-          ; strGen <- manyTill anyChar (reservedOp ":]")  
-          ; let input = "[" ++ str ++ "|" ++ strPat ++ "<-" ++ strGen ++ "]"
-          ; compE <- case LHM.parseExp input of
-                              (Left err)    -> unexpected ("Failed to parse Haskell generator expression in directory declaration for field " 
-                                                          ++ internal_name ++ ":" ++ err)
-                              (Right expTH) -> return expTH
-          ; return (Comp (internal_name, externalE, forest_ty, generatorP, compE, Nothing))
-          }
--}
 
 fieldPredicate :: Parser TH.Exp
 fieldPredicate = do { reserved   "where"
-                    ; reservedOp "<|"
-                    ; str <- manyTill anyChar (reservedOp "|>")
-                    ; case LHM.parseExp str of
-                       Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err ++ ".")
-                       Right expTH -> return expTH
+                    ; haskellExp
                     }
 externalName :: String -> Parser TH.Exp
 externalName internal = 
@@ -247,10 +199,9 @@ externalName internal =
 explicitExternalName :: String -> Parser TH.Exp
 explicitExternalName internal = do 
     { reserved "is"
-    ; str <- manyTill anyChar (reservedOp "::") 
-    ; case LHM.parseExp str of
-               (Left err) -> unexpected ("Failed to parse Haskell expression in directory declaration for field " ++ internal ++ ":" ++ err)
-               (Right expTH) -> return expTH
+    ; nameE <- forestArg
+    ; reservedOp "::"                 
+    ; return nameE
     }      
            
 implicitExternalName :: String -> Parser TH.Exp

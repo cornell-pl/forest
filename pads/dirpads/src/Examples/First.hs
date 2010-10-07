@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- Still to do:
+    add parsing support for integer literals
     make it possible for record annotation to come immediately before struct or union.
     add function to repeated call record parser
     change type -> newtype, add type with same semantics as Haskell?
@@ -12,6 +13,8 @@
     if union declaration starts with "type", get weird error message.
     bad error message if pass a string argument to a Pstring
     change unit test to not depend on kfisher path
+    If RE literal appears, tab characters are not treated property; stringLiteral does not have the same behavior as Haskell's string literal behavior.
+        (See examples in Students2.hs)
 
     add pretty printers for reps and pds
     improve error messages
@@ -161,39 +164,39 @@ myInt_test    = mkTestCase "myInt" myInt_expects myInt_result
 {- String base types -}
 testStrLen = 2
 computeLen x = x - 1
-[pads| type StrTy = PstringFW(:testStrLen + (computeLen 4):) |]
+[pads| type StrTy = PstringFW <| testStrLen + (computeLen 4) |> |]
 inputStrTy = "catdog"
 strTy_results = strTy_parseS inputStrTy
 strTy_expects = (StrTy (PstringFW "catdo"), 0,"g")
 strTy_test    = mkTestCase "strTy" strTy_expects strTy_results
 
-[pads| type StrTy1 = Pstring(:'o':) |]
+[pads| type StrTy1 = Pstring 'o' |]
 strTy1_results = strTy1_parseS inputStrTy
 strTy1_expects = (StrTy1 (Pstring "catd"),0,"og")
 strTy1_test    = mkTestCase "strTy1" strTy1_expects strTy1_results
 
-[pads| type Baz = (PstringFW(:3:),',',Pint) |]
+[pads| type Baz = (PstringFW 3,',',Pint) |]
 input_baz  = "cat,123"
 baz_results = baz_parseS input_baz
 baz_expects = (Baz (PstringFW "cat",Pint 123),0,"")
 baz_test    = mkTestCase "baz" baz_expects baz_results
 
 {- Regular expression types -}
-[pads| type StrME = PstringME(:RE "a+":) |]
+[pads| type StrME = PstringME (RE "a+") |]
 input_strME = "aaaab"
 strME_results = strME_parseS input_strME
 
-[pads| type  StrSE = PstringSE(:RE "b|c":) |]
+[pads| type  StrSE = PstringSE (RE "b|c") |]
 input_strSE_1 = "aaaab"
 input_strSE_2 = "aaaac"
 strSE_results_1 = strSE_parseS input_strSE_1
 strSE_results_2 = strSE_parseS input_strSE_2
 
-[pads| type  StrP1 (x::Int) = PstringFW(:x - 1 :) |]
+[pads| type  StrP1 (x::Int) = PstringFW <|x - 1|> |]
 input_strP1 = "abcd"
 strP1_result = strP1_parseS 3 input_strP1
 
-[pads| type  StrHex = PstringME(:RE "[0-9A-Fa-f]+":) |]
+[pads| type  StrHex = PstringME(RE "[0-9A-Fa-f]+") |]
 input_strHex = "12abcds"
 strHex_result = strHex_parseS input_strHex
 
@@ -209,7 +212,7 @@ strhex32FW_result2 = phex32FW_parseS 4 input2_hex32FW    -- ((Phex32FW (Pint 188
 input3_hex32FW = "gbc34"  
 strhex32FW_result3 = phex32FW_parseS 4 input3_hex32FW    -- Prints error message
 
-[pads| type  HexPair = (Phex32FW(:2:), ',', Phex32FW(:3:)) |]
+[pads| type  HexPair = (Phex32FW 2, ',', Phex32FW 3) |]
 input_hexpair = "aa,bbb"
 hexpair_result = hexPair_parseS input_hexpair
 
@@ -292,7 +295,7 @@ expect_Record = (Record {i1 = Pint 24, i2 = Pint 45},0,"")
 test_Record   = mkTestCase "Record" expect_Record result_Record
 
 [pads| data Id =  Numeric Pint 
-               |  Alpha   Pstring(:',':)  |] 
+               |  Alpha   (Pstring ',')  |] 
 
 input_IdInt = "23"
 result_IdInt = id_parseS input_IdInt
@@ -304,9 +307,9 @@ result_IdStr = id_parseS input_IdStr
 expect_IdStr = (Alpha (Pstring "hello"),0,"")
 test_IdStr = mkTestCase "IdAlpha" expect_IdStr result_IdStr
 
-[pads| data Id2 (bound::Pint ) = 
+[pads| data Id2 (bound::Pint) = 
             Numeric2 Pint where <| numeric2 <= bound |> 
-          | Alpha2   Pstring(:',':) |] 
+          | Alpha2   (Pstring ',') |] 
 input_IdInt2 = "23"
 result_IdInt2 = id2_parseS 10 input_IdInt2
 expect_IdInt2 =  (Alpha2 (Pstring "23"),0,"")
@@ -319,7 +322,7 @@ test_IdStr2 = mkTestCase "IdAlpha2" expect_IdStr2 result_IdStr2
 
 
 
-[pads| data Id3  = Numeric3  IntRangeP(:(1,10):)
+[pads| data Id3  = Numeric3  IntRangeP <|(1,10)|>
                  | Numeric3a Pint
                  | Lit3     ','                 |] 
 input_IdInt3 = "24"
@@ -365,7 +368,7 @@ checkVersion method version =
     _ -> True
 
 [pads| type Request = { '"',  method  :: Method,       
-                        ' ',  url     :: Pstring(:' ':), 
+                        ' ',  url     :: Pstring ' ', 
                         ' ',  version :: Version where <| checkVersion method version |>, 
                         '"'
                       }  |]
@@ -439,7 +442,7 @@ test_opt_test_n = mkTestCase "Opt_test_n" expect_opt_test_n result_opt_test_n
 
 {- LIST EXAMPLES -}
 
-[pads| type Entries_nosep_noterm = [PstringFW(:3:)] |]
+[pads| type Entries_nosep_noterm = [PstringFW 3] |]
 input_entries_nosep_noterm = "123456789"
 result_entries_nosep_noterm = entries_nosep_noterm_parseS input_entries_nosep_noterm
 expect_entries_nosep_noterm = (Entries_nosep_noterm [PstringFW "123",PstringFW "456",PstringFW "789"],0,"")
@@ -469,7 +472,7 @@ expect_evenInts = (EvenInts [EvenInt (Pdigit 2),EvenInt (Pdigit 4),EvenInt (Pdig
 test_evenInts = mkTestCase "EvenInts" expect_evenInts result_evenInts
 
 
-[pads| type DigitList = [Pdigit] with sep (:',':) |]
+[pads| type DigitList = [Pdigit] with sep ',' |]
 input_digitListG = "1,2,3"
 input_digitList2G = "1,2,3|fed"
 input_digitListB = "1,b,3"
@@ -485,7 +488,7 @@ result_digitListB = digitList_parseS input_digitListB
 expect_digitListB = (DigitList [Pdigit 1],0,",b,3")
 test_digitListB = mkTestCase "DigitListB" expect_digitListB result_digitListB
 
-[pads| type DigitListLen (x::Int) = [Pdigit] with term (:length of x + 1 :)  |]
+[pads| type DigitListLen (x::Int) = [Pdigit] with term length of <|x + 1 |>  |]
 input_digitListLenG = "123456"
 input_digitListLenB = "12a456"
 
@@ -498,7 +501,7 @@ expect_digitListLenB = (DigitListLen [Pdigit 1,Pdigit 2,Pdigit 0,Pdigit 4,Pdigit
 test_digitListLenB = mkTestCase "DigitListLenB" expect_digitListLenB result_digitListLenB
 
 
-[pads| type DigitListLenSep (x::Int) = [Pdigit] with term (:length of x + 1 :) and sep(:"ab":) |]
+[pads| type DigitListLenSep (x::Int) = [Pdigit] with term length of <|x + 1|>  and sep "ab" |]
 input_digitListLenSepG = "1ab2ab3ab4ab5ab6ab7ab"
 input_digitListLenSepB = "1ab2ab3abDab5ab6ab7ab"
 result_digitListLenSepG = digitListLenSep_parseS 4 input_digitListLenSepG
@@ -510,7 +513,7 @@ expect_digitListLenSepB = (DigitListLenSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 0,
 test_digitListLenSepB = mkTestCase "DigitListLenSepB" expect_digitListLenSepB result_digitListLenSepB
 
 
-[pads| type DigitListTerm = [Pdigit] with term (:Eor:)|]
+[pads| type DigitListTerm = [Pdigit] with term Eor|]
 input_digitListTermG = "12345\nhello"
 result_digitListTermG = digitListTerm_parseS input_digitListTermG
 expect_digitListTermG = (DigitListTerm [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5],0,"hello")
@@ -521,7 +524,7 @@ result_digitListTermB = digitListTerm_parseS input_digitListTermB
 expect_digitListTermB = (DigitListTerm [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5,Pdigit 0,Pdigit 0],2,"")
 test_digitListTermB   = mkTestCase "DigitListTermB" expect_digitListTermB result_digitListTermB
 
-[pads| type DigitListTermSep = [Pdigit] with sep(:'|':) and term (:';':) |]
+[pads| type DigitListTermSep = [Pdigit] with sep '|' and term ';' |]
 input_digitListTermSepG = "1|2|3|4|5|6;hello"
 result_digitListTermSepG = digitListTermSep_parseS input_digitListTermSepG 
 expect_digitListTermSepG = (DigitListTermSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 4,Pdigit 5,Pdigit 6], 0,"hello")
@@ -533,13 +536,13 @@ expect_digitListTermSepB = (DigitListTermSep [Pdigit 1,Pdigit 2,Pdigit 3,Pdigit 
 test_digitListTermSepB =   mkTestCase "digitListTermSepB" expect_digitListTermSepB result_digitListTermSepB
 
 
-[pads| type TryTest = (Try Pchar, PstringFW(:3:)) |]
+[pads| type TryTest = (Try Pchar, PstringFW 3) |]
 input_tryTest = "abc123"
 result_tryTest = tryTest_parseS input_tryTest
 expect_tryTest = (TryTest (Pchar 'a',PstringFW "abc"),0,"123")
 test_tryTest = mkTestCase "tryTest" expect_tryTest result_tryTest
 
-[pads| type TryTestD = (Try Pdigit, PstringFW(:3:)) |]
+[pads| type TryTestD = (Try Pdigit, PstringFW 3) |]
 input_tryTestDG = "123abc"
 result_tryTestDG = tryTestD_parseS input_tryTestDG
 expect_tryTestDG = (TryTestD (Pdigit 1,PstringFW "123"),0,"abc")
@@ -557,7 +560,7 @@ test_tryTestDB = mkTestCase "tryTestDB" expect_tryTestDB result_tryTestDB
 -}
 
 
-[pads| type ListWithTry = ([Pchar] with term (:Try Pdigit:), Pdigit) |]
+[pads| type ListWithTry = ([Pchar] with term (Try Pdigit), Pdigit) |]
 input_ListWithTry = "cat123"
 result_ListWithTry = listWithTry_parseS input_ListWithTry
 expect_ListWithTry = (ListWithTry ([Pchar 'c',Pchar 'a',Pchar 't'],Pdigit 1),0,"23")
@@ -570,7 +573,7 @@ expect_WithVoid =  (WithVoid (Pchar 'a'),0,"rest")
 test_WithVoid = mkTestCase "WithVoid" expect_WithVoid result_WithVoid
 
 [pads| data VoidOpt   = PDigit Pdigit | Pcolor "red" | Pnothing Void 
-       type VoidEntry = (VoidOpt, PstringFW(:3:))                    |]
+       type VoidEntry = (VoidOpt, PstringFW 3)                    |]
 input_voidEntry1 = "9abcdef"
 result_voidEntry1 = voidEntry_parseS input_voidEntry1
 expect_voidEntry1 = (VoidEntry (PDigit (Pdigit 9),PstringFW "abc"),0,"def")
@@ -614,11 +617,11 @@ test_pstringln = mkTestCase "pstringln" expect_pstringln result_pstringln
 [pads| data MyBody (which::Pint) = 
          case <| which |> of
             0         -> First Pint
-          | 1         -> Second Pstring(:',':)
+          | 1         -> Second (Pstring ',')
           | otherwise -> Other Void
 
        type MyEntry = { header  :: Pint, ','
-                      , body    :: MyBody(:header:), ','
+                      , body    :: MyBody header, ','
                       , trailer :: Pchar}  
 
        type MyData = [Line MyEntry]       |]
@@ -633,7 +636,7 @@ test_myData = mkTestCase "MyData" expect_myData result_myData
 
 pintToInt (Pint i) = i
 [pads| type HP = { student_num  :: Pint , ',', 
-                   student_name :: PstringFW(:pintToInt student_num:) }
+                   student_name :: PstringFW <|pintToInt student_num|> }
        type HP_data = [Line HP] |]   
 
 input_hp_data = "8,Hermione\n3,Ron\n5,Harry"
@@ -669,11 +672,13 @@ litRec_result = litRec_parseS litRec_input
 litRec_expects = (LitRec {fstField = Pint 12, sndField = Pint 34},0,"")
 litRec_test = mkTestCase "Haskell identifier literal" litRec_expects litRec_result
 
-[pads| type WhiteSpace = (Pint, RE "[ \t]+", Pint) |]
+
+[pads| type WhiteSpace = (Pint, <|RE "[ \t]+"|>, Pint) |]
 whiteSpace_input = "12      34"
 whiteSpace_result = whiteSpace_parseS whiteSpace_input
 whiteSpace_expects = (WhiteSpace (Pint 12,Pint 34),0,"")
 whiteSpace_test = mkTestCase "regular expression literal" whiteSpace_expects whiteSpace_result
+
 
 ws = RE "[ \t]+"
 [pads| type WhiteSpace2 = (Pint, ws, Pint) |]

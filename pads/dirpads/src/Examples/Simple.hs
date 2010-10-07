@@ -41,7 +41,7 @@ import Language.Haskell.Meta as LHM
 import Text.Regex
 import Data.Maybe
 
-[pads| type Entry_t = (Pstring(:',':), ',', Pint)
+[pads| type Entry_t = (Pstring ',', ',', Pint)
        type Hosts_t = [Line Entry_t]                  |]
 
 getName (Entry_t (Pstring s, _)) = s
@@ -57,8 +57,8 @@ getHost (Hosts_t hs) = case hs of
 
          type Simple_d (file_name :: String ) = Directory 
                          { local  is "local.txt"              :: File Hosts_t where <| (get_owner local_md) == "kfisher" |> 
-                         , remote is (file_name ++ ".txt")    :: Hosts_f 
-                         , nested is (getHost local)          :: Scores_d     where <| (get_group nested_md) == (get_owner local_md) |> 
+                         , remote is <|file_name ++ ".txt"|>  :: Hosts_f 
+                         , nested is <|getHost local|>        :: Scores_d     where <| (get_group nested_md) == (get_owner local_md) |> 
                          }    |] 
 
 
@@ -72,8 +72,8 @@ host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple"
 
 
 [forest| type Nested_d (file_name :: String) = Directory 
-               { hostIndex is (file_name++".txt")  :: File Hosts_t 
-               , hosts is [: h :: Scores_d | h <- getNames (hostIndex) where h /= "china" :]
+               { hostIndex is <|file_name++".txt"|>  :: File Hosts_t 
+               , hosts is [ h :: Scores_d | h <- <| getNames hostIndex |>  where <| h /= "china"|> ]
                }  |]
 
 (nested_remote_rep, nested_remote_md) = unsafePerformIO $ nested_d_load "remote" host_dir
@@ -83,7 +83,7 @@ re = RE ".*[.]txt"
 
 
 [forest| type Match_d = Directory
-             { files is [: h :: File Ptext | h <- matches (RE ".*[.]txt") where h /= "local.txt" :] }
+             { files is [ h :: File Ptext | h <- matches (RE ".*[.]txt") where <| h /= "local.txt"|> ] }
        |]
 
 (match_rep, match_md) = unsafePerformIO $ match_d_load  host_dir
