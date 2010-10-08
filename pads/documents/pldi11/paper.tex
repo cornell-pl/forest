@@ -1,0 +1,190 @@
+%\documentclass[fleqn]{article}
+\documentclass[natbib]{sigplanconf}
+%\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+\usepackage{epsfig}
+\usepackage{code} 
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+
+\conferenceinfo{PLDI'11,}{} 
+\copyrightyear{2011} 
+\copyrightdata{} 
+
+\title{Forest:  A Language and Toolkit For Managing File System Fragments}
+
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@research.att.com}}
+\authorinfo{Nate Foster}{
+	   Cornell University}
+       {\mono{jnfoster@cs.cornell.edu}}
+\authorinfo{David Walker}{
+	   Princeton University}
+       {\mono{{dpw}@CS.Princeton.EDU}}
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+\input{abstract}
+\end{abstract}
+
+\category{D.3.m}{Programming languages}{Miscellaneous}
+
+\terms
+Languages, Algorithms
+
+\keywords
+Data description languages, file systems, domain specific languages, ad hoc data
+
+
+\section {Introduction}
+\label{sec:intro}
+
+Bogus cite~\cite{fisher+:pads}
+
+Define the problem:
+
+\begin{itemize}
+\item Data accumulates over time in sets of files organized in
+hierarchically structured file systems.  Show table of examples.
+\item Problem: no documentation
+\item Problem: errors. No tools for consistency checking/ error dection
+\item Problem: data encoded in combination of file and directory names as
+well as internally to files
+\item Problem: data is large: complicates infrastructure for
+getting data in to and out of programs.  can't even use standard unix tools like ls * due to overexpansion
+on command line.
+\end{itemize}
+
+Goal: to make programming with data on disk as easy as programming with a
+data structure within your program
+
+State the Contributions:
+
+\begin{itemize}
+\item Concept:  the idea to extend a modern programming language with
+fully integrated linguistic features for describing file system fragments
+and for automatically generating programming infrastructure from such 
+descriptions.
+
+\item Description Language Design:  we have carefully chosen Forest programming
+features based on our analysis of a number of examples.  The design
+is expressive, concise and tastefully integrated into Haskell.
+It lowers the barrier to programming with data on disk.  We give example
+.
+
+\item Tool Generation:  tools are automatically generated so that programmers
+may begin working with their described data immediately and easily.  List
+tools generated.  We illustrate the use of these tools on examples.
+
+\item Implementation: a fully functional extension of Haskell.  
+We evaluate its performance briefly?  Side-comment: the implementation
+acts as a case study in *extensive,* practical,
+domain-specific language design in modern languages by
+combining a number of experimental features of Haskell such
+as quasi-quoting, template haskell, etc.
+
+\item Semantics: we have a semantics for a core calculus.  This
+guides our implementation decisions.  Unlike parser generators,
+which are based on grammars over sequences, this is based
+on a classical logic over trees.
+\end{itemize}
+
+\section{Example Data sources}
+\label{sec:review}
+
+Brief description of student data example.  Brief description of Coral data
+as well?
+
+\section{Forest Design}
+\label{sec:review}
+
+Describe the following features using the Student data example. 
+Describe both the on-disk representation and the in-memory 
+representation (emphasize rep, but mention pds are available).
+
+\begin{itemize}
+\item Pads haskell features.  Note: related to PADS/ML and PADS/C but
+a completely new design and implementation for Haskell.
+\item Record directories, concrete and computed name matching
+\item Dependency, Constraints and Parameters
+\item Comprehensions and matching
+\item Maybe, Unions
+\end{itemize}
+
+\section{Programming with Forest}
+\label{sec:exp}
+
+\begin{itemize}
+\item describe how to use/loade described data into memory
+\item describe lazy semantics
+\item explain tools currently available
+\item show example program to analyze student data
+\end{itemize}
+
+\section{Implementation}
+
+\begin{itemize}
+\item explain implementation components: quasi-quoting, template haskell, etc.
+\item explain generic programming strategy
+\item evaluated performance: lazy vs. not? -- we need a graph
+\end{itemize}
+
+\section{Language Semantics}
+\label{sec:exp}
+
+Show calculus syntax and semantic definitions.  I can't decide if this
+is weak and if we should dedicate the space to more important things.
+I suppose we'll see when we write the paper.
+
+\section{Related Work}
+\label{sec:related}
+
+Microsoft LINQ: Language-integrated query.  Similar high-level goal:
+support smooth, language-integrated data management.  Different 
+implementation and language design.
+
+vs PADS:  
+\begin{itemize}
+\item our data structures are larger --> lazy parsing
+\item our nice design hides differences between structure inside /
+outside of files
+\item our semantics based on classical tree logic matching trees vs. 
+recursive descent parser matching sequences.
+\end{itemize}
+
+\section{Conclusions}
+\label{sec:conclusion}
+
+
+\section*{Acknowledgments}
+
+This material is based upon work 
+supported under NSF grant CCF-1016937.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of the NSF.
+
+%\newpage
+
+%\bibliographystyle{plainnat}
+\bibliographystyle{abbrv}
+\bibliography{pads}
+
+%\input{appendix}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+

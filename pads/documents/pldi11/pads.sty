@@ -1,0 +1,561 @@
+% pads.sty
+%% Command file for pads core calculus papers
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pads}
+
+\RequirePackage{xspace}
+\RequirePackage{math-cmds}
+\RequirePackage{proof}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{multirow}
+
+%\RequirePackage{inference-rules}
+
+\newcommand{\gD}{\Delta\xspace}
+\newcommand{\gG}{\Gamma\xspace}
+\newcommand{\gM}{\textrm{M}\xspace}
+\newcommand{\gP}{\Pi\xspace}
+\newcommand{\gS}{\Sigma\xspace}
+
+\newcommand{\ga}{\alpha\xspace}
+\newcommand{\gb}{\beta\xspace}
+\newcommand{\gk}{\kappa\xspace}
+\newcommand{\gl}{\lambda\xspace}
+\newcommand{\gm}{\mu\xspace}
+\newcommand{\gn}{\nu\xspace}
+\newcommand{\gp}{\pi\xspace}
+\newcommand{\go}{\omega\xspace}
+\newcommand{\gs}{\sigma\xspace}
+\newcommand{\gt}{\tau\xspace}
+
+\newcommand{\mth}[1]{$#1$}
+\newcommand{\turn}{\mathrel{\vdash}}
+\newcommand{\fv}[1]{\mathsf{FV}(#1)}
+\newcommand{\ftv}[1]{\mathsf{FTV}(#1)}
+\newcommand{\dom}[1]{\mathsf{dom}(#1)}
+\newcommand{\ltran}{{\{\!|}}
+\newcommand{\rtran}{{|\!\}}}
+\newcommand{\lsem}{{[\![}}
+\newcommand{\rsem}{{]\!]}}
+
+% code-font vertical bar
+\newcommand{\cvb}{\mathrel{\mbox{\tt |}}}
+% code-font equals
+\newcommand{\ceq}{\mathrel{\mbox{\tt =}}}
+
+  %% parser type of a context
+\newcommand{\ptyc}[1]{\lsem#1\rsem_{\text{PT}}}
+\def\itsem[#1]{\lsem#1\rsem_{\text{rep}}}
+\def\itpdsem[#1]{\lsem#1\rsem_{\text{PD}}}
+\def\itbdsem[#1]{\lsem#1\rsem_{\text{body}}}
+\def\kTrans[#1,#2]{\ptyc {#2{:}#1}}
+\def\tTrans[#1]{\lsem#1\rsem}
+%\def\pdtTrans[#1]{\lsem#1\rsem_{pd}}
+\def\stsem[#1,#2,#3]{#2 \turn #1 : #3}
+\def\ddck[#1,#2,#3,#4]{#2 \turn_{#4} #1 : #3}
+%% \def\trans[#1,#2,#3]{\lsem#1\rsem^{#2}_{#3}}
+\def\trans[#1,#2,#3]{\lsem#1\rsem}
+\def\arrTrans[#1,#2]{\lsem#1\rsem^{#2}_{array}}
+\def\sTrans[#1,#2]{\lsem#1\rsem^{#2}_{scan}}
+\newcommand{\ityeq}[2]{#1 \equiv #2}
+\newcommand{\asub}[2]{#1(#2)} %% apply a substitution
+\newcommand{\wfd}[2]{#1 \turn #2 \; \mathsf{ok}}
+\newcommand{\fnm}[1]{$\mathsf{#1}$} %% function name
+\newcommand{\kwd}[1]{\mathtt{#1}} %% keyword
+\newcommand{\codefont}[1]{\mathtt{#1}} %% a piece of code
+\newcommand{\nrm}[1]{\mathnormal {#1}} %% normal math
+
+%% Meta-variables
+  %% contractiveness
+\newcommand{\mcon}{c}
+\newcommand{\const}{c}
+\newcommand{\var}{x}
+\newcommand{\kind}{\gk}    %% kind
+\newcommand{\ty}{\gt}      %% type
+\newcommand{\tyval}{\gn}   %% a fully reduced type
+\newcommand{\ity}{\gs}     %% internal language type
+\newcommand{\ctxt}{\gG}    %% context
+\newcommand{\pctxt}{\gD}   %% context for poly. vars
+\newcommand{\rctxt}{\gM}   %% context for rec. vars
+\newcommand{\dmn}{D}       %% semantic domain
+\newcommand{\obj}{o}       %% semantic object
+\newcommand{\data}{B}      %% external data
+\newcommand{\loc}{\ell}    %% location
+\newcommand{\off}{\go}     %% offset
+\newcommand{\term}{{term}} %% term
+\newcommand{\bterm}{{bt}}  %% back term
+\newcommand{\expr}{e}      %% expression
+\newcommand{\itmv}{t}      %% ipads type meta-variable
+
+%% PADS core language syntax
+% \newcommand{\pterm}{\kwd{term}} 
+  %% The kind of types, *.
+\newcommand{\kty}{\mathsf{T}}
+  %% contractive
+\newcommand{\con}{y}
+  %% non-contractive
+\newcommand{\ncon}{n}
+\newcommand{\pvar}{x} 
+\newcommand{\ptyvar}{\ga}
+% \newcommand{\plam}[3]{\gl #1{:}#2.#3}
+\newcommand{\plam}[3]{\gl #1.#3}
+\newcommand{\plamA}[2]{\gl^* #1.#2}
+\newcommand{\papp}[2]{#1 \, #2}
+\newcommand{\pbase}[1]{C(#1)} 
+\newcommand{\pnone}{\kwd{true}}
+\newcommand{\ptrue}{\kwd{unit}}
+\newcommand{\pbot}{\kwd{bottom}}
+\newcommand{\pfalse}{\pbot}
+\newcommand{\psig}[3]{\gS \, #1{:}#2.#3} 
+%\newcommand{\psum}[3]{#1 +_{#2} #3} 
+\newcommand{\psum}[3]{#1 + #3} 
+\newcommand{\pand}[2]{#1 \, \& \, #2}
+\newcommand{\pseq}[3]{#1 \, \kwd{seq}(#2,#3)}
+\newcommand{\pterm}[2]{#1,#2}
+\newcommand{\pset}[3]{\{#1{:}#2 \,|\, #3\}} 
+\newcommand{\pcomputen}{\kwd{compute}}
+\newcommand{\pcompute}[2]{\pcomputen{}(#1{:}#2)}
+\newcommand{\pabsorbn}{\kwd{absorb}}
+\newcommand{\pabsorb}[1]{\pabsorbn{}(#1)}
+\newcommand{\pnotn}{\kwd{not}}
+\newcommand{\pnot}[1]{\pnotn{}(#1)}
+\newcommand{\pscann}{\kwd{scan}}
+\newcommand{\pscan}[1]{\pscann{}(#1)}
+\newcommand{\ptransform}[3]{#1 \; #2 \rightsquigarrow #3}
+\newcommand{\pmu}[2]{\gm #1.#2}
+
+%% \newcommand{\p}[]{}
+
+  %% generic base-type interface macro
+\newcommand{\Igen}[1]{\mathcal{B}_{\text{#1}}}
+  %% base type kind interface
+\newcommand{\Ikind}{\Igen {kind}}
+  %% base type rep type interface
+\newcommand{\Irty}{\Igen {type}}
+  %% base type pd type interface
+\newcommand{\Ipdty}{\Igen {pdType}}
+  %% Base type implementation interface
+\newcommand{\Iimp}{\Igen {imp}}
+  %% constant type interface
+\newcommand{\Icty}{\Igen {cty}}
+  %% operator type interface
+\newcommand{\Iopty}{\Igen {opty}}
+\newcommand{\defty}[2]{{\rm Ty}(#1) = #2}
+
+% Terminator syntax
+  % bw plus
+\newcommand{\BWp}[1]{\text{BW+}(#1)}
+  % bw minus
+\newcommand{\BWm}[1]{\text{BW-}(#1)}
+  % fw
+\newcommand{\FW}[1]{\text{FW}(#1)}
+  % terminator combination
+\newcommand{\tand}{\mathrel{\&\&}}
+
+
+  % Internal language name
+\newcommand{\implang}{host\xspace}
+ %% capitalized version
+\newcommand{\Implang}{Host\xspace}
+
+% Internal language types syntax
+\newcommand{\tyface}[1]{\mathtt{#1}}
+
+\newcommand{\ibasety}{a}
+\newcommand{\ibitsty}{\tyface{bits}}
+\newcommand{\iunitty}{\tyface{unit}}
+\newcommand{\ioffty}{\tyface{offset}}
+\newcommand{\ispty}{\tyface{span}}
+\newcommand{\ilocty}{\tyface{loc}}
+\newcommand{\iecty}{\tyface{errcode}}
+  % int type. ``ty'' appended to avoid conflict with amsmath.iint.
+\newcommand{\iintty}{\tyface{int}}
+\newcommand{\iboolty}{\tyface{bool}}
+\newcommand{\iprodty}[2]{#1 * #2}
+  % deprecated version of \iprodty
+\newcommand{\iprod}[2]{\iprodty {#1}{#2}}
+  %% infix version - just the operator
+\newcommand{\iprodi}{*}
+\newcommand{\isum}[2]{#1 + #2}
+  % type for arrays
+\newcommand{\iseqty}[1]{#1 \, \tyface{seq}}
+  % deprecated version of \iarrty
+\newcommand{\iseq}[1]{\iseqty {#1}}
+\newcommand{\iarrow}[2]{#1 \rightarrow #2}
+\newcommand{\iarrowi}{\rightarrow}
+\newcommand{\ioparrow}[2]{#1 \rightharpoonup #2}
+\newcommand{\imu}[2]{\gm #1.#2}
+  % noval type
+\newcommand{\invty}{\tyface{none}}
+  % error type
+\newcommand{\ierrty}[1]{#1 \; \tyface{error}}
+  % standard pd type
+\newcommand{\ipty}[1]{\iprod {\tyface{pd\_hdr}}{#1}}
+\newcommand{\pdtyvar}[1]{{#1}\, \mbox{s.t.}\, \ispdty {#1}}
+\newcommand{\pdtyvars}[2]{#1,#2\; \mbox{s.t.}\; \ispdty {#1},\ispdty {#2}}
+% has header ddc ty vars
+%\newcommand{\hdtvs}[2]{#1,#2\; \mbox{s.t.}\; \ispdty {\itpdsem[{#1}]},\ispdty {\itpdsem[{#2}]}}
+\newcommand{\hdtvs}[2]{#1,#2}
+\newcommand{\iaptyname}{\tyface{arr\_pd}}
+\newcommand{\iapty}[1]{\ipty {(\iaptyname \; #1)}}
+\newcommand{\ityvar}{\ga}
+
+%% Internal language term syntax
+\newcommand{\iconst}{\codefont{c}}
+\newcommand{\ivar}{\codefont{x}}
+\newcommand{\iexp}{\codefont{e}}
+\newcommand{\idata}{\codefont B}
+\newcommand{\iuval}{\codefont{()}}
+\newcommand{\iok}{\codefont{ok}}
+\newcommand{\iecerr}{\codefont{err}}
+\newcommand{\iecpc}{\codefont{fail}}
+\newcommand{\iop}[1]{{op}(#1)}
+\newcommand{\inotop}{\codefont{not}}
+\newcommand{\isizeofop}{\codefont{sizeof}}
+\newcommand{\isizeof}[1]{\isizeofop(#1)}
+% \newcommand{\iinl}[2]{\kwd{inl}_{#1} \; #2}
+% \newcommand{\iinr}[2]{\kwd{inr}_{#1} \; #2}
+\newcommand{\iinl}[1]{\codefont{inl} \; #1}
+  % deprecated version:
+\newcommand{\iinld}[2]{\codefont{inl} \; #2}
+\newcommand{\iinr}[1]{\codefont{inr} \; #1}
+  % deprecated version:
+\newcommand{\iinrd}[2]{\codefont{inr} \; #2}
+\newcommand{\icase}[4]
+  {\codefont{case} \; #1 \; \codefont{of} \, (\codefont{inl \, x} \Rightarrow #3
+    \, | \, \codefont{inr \, x}  \Rightarrow #4) }
+  % more general version
+\newcommand{\icaseg}[5]
+  {\codefont{case} \; #1 \; \codefont{of} \, (\codefont{inl \, #2} \Rightarrow #3
+    \cvb \codefont{inr \, #4}  \Rightarrow #5) }
+% \newcommand{\icase}[4]
+%   {\kwd{case} \; #1 : #2 \; \kwd{of} \, (\kwd{inl} \, x \Rightarrow #3
+%     \, | \, \kwd{inr} \, x  \Rightarrow #4) }
+\newcommand{\ilam}[3]{\gl \codefont{#1}.#3}
+%\newcommand{\ilam}[3]{\gl #1{:}#2.#3}
+\newcommand{\ipair}[2]{(#1,#2)}
+\newcommand{\itup}[1]{\codefont({#1}\codefont)}
+\newcommand{\ictup}[1]{\codefont{(#1)}}
+\newcommand{\ipi}[2]{\codefont{\gp_{#1}} \, #2}
+\newcommand{\iarr}[1]{\codefont{[}#1\codefont{]}}
+\newcommand{\ieseq}{\codefont{[]}}
+\newcommand{\iappend}[2]{#1 \; @ \; #2}
+%%\newcommand{\isub}[2]{\codefont{sub_{#1}} \; #2}
+\newcommand{\isub}[2]{#1\,\codefont{[{#2}]}}
+\newcommand{\ifoldr}[3]{\codefont{foldr} \; #1 \, #2 \, #3}
+\newcommand{\iroll}[2]{\codefont{roll}(#1,#2)}
+\newcommand{\iunroll}[1]{\codefont{unroll}(#1)}
+\newcommand{\iapp}[2]{#1 \; #2}
+\newcommand{\iappi}{\;}
+  %% Exception
+\newcommand{\ifail}{\codefont{fail}}
+  %% Plain error, no value.
+\newcommand{\ierr}{\codefont{none}}
+  %% Error with value.
+\newcommand{\ierror}[1]{\codefont{error}(#1)}
+\newcommand{\iexamine}[1]{\codefont{examine}(#1)}
+\newcommand{\itrue}{\codefont{true}}
+\newcommand{\ifalse}{\codefont{false}}
+\newcommand{\ilet}[2]{\codefont{let \; #1} \ceq #2 \; \codefont{in}}
+%\newcommand{\icasess}[1]{\codefont{case} \; #1 \; \codefont{of}}
+%\newcommand{\ipattss}[2]{| \; \codefont{#1} \Rightarrow \codefont{#2}}
+\newcommand{\iif}[1]{\codefont{if} \; {#1}}
+\newcommand{\ithen}[1]{\codefont{then} \; #1}
+\newcommand{\ielse}[1]{\codefont{else} \; #1}
+\newcommand{\iin}{\codefont{in}}
+% \newcommand{\iletinend}[2]{
+%   \codefont{let} \\ \quad
+%   \begin{array}{l}
+%     #1
+%   \end{array} \\
+%   \codefont{in} \\ \quad
+%   \begin{array}{l}
+%     #2
+%   \end{array} \\
+%   \codefont{end}
+% }
+% \newcommand{\ival}[2]{\codefont{val} \; #1 = #2}
+\newcommand{\ifun}[3]{\codefont{fun} \; \codefont{#1 \; #2} \ceq {#3}}
+\newcommand{\iletfun}[3]{\codefont{letfun} \; \codefont{#1 \; #2} \ceq #3}
+\newcommand{\ifunand}[3]{\codefont{and} \; \codefont{#1 \, #2} \ceq #3}
+\newcommand{\ior}[2]{#1 \; \codefont{or} \; #2}
+\newcommand{\iori}{\; \codefont{or} \;}
+\newcommand{\iandi}{\; \codefont{and} \;}
+
+%% Semantic Domain syntax
+  %% semantic definition
+%\newcommand{sbox
+\newcommand{\sdefm}[1]{\gather* #1\endgather}
+\newcommand{\sdef}[1]{\begin{array}{l}#1\end{array}}
+\newcommand{\sfn}[3]{\ilam {\codefont{#1}}{#2}{#3}}
+  %% recursive function
+\newcommand{\sfun}[4]{\text{fun} \, #1(#2{:}#3).#4}
+  %% prefix application macro
+\newcommand{\sappp}[2]{\iapp {#1}{#2}}
+  %% infix application (just a space).
+\newcommand{\sapp}{\iappi}
+\def\spair<#1>{\itup {#1}} 
+\newcommand{\spi}[2]{\ipi {#1} {#2}}
+\newcommand{\strue}{\codefont{true}}
+  %% Equivalence in sem. dom.
+\newcommand{\semeq}{\mathrel{==}}
+  %% Semantics Domains
+\newcommand{\extdom}{\tyface{bits}}
+\newcommand{\intdom}{\tyface{IV}}
+\newcommand{\locdom}{\tyface{Loc}}
+\newcommand{\offdom}{\ioffty}
+\newcommand{\consdom}{\tyface{Consume}}
+\newcommand{\modedom}{\tyface{Mode}}
+
+% Built-ins
+  %% rep and pd constructors themselves (i.e. not applied).
+\newcommand{\newrepf}[1]{\codefont{R_{#1}}}
+\newcommand{\newpdf}[1]{\codefont{P_{#1}}}
+  %% generic rep constructor
+\newcommand{\newrep}[2]{\newrepf{#1}(\codefont{#2})}
+  %% generic pd constructor
+\newcommand{\newpd}[2]{\newpdf{#1}(\codefont{#2})}
+  %% EoF predicate
+\newcommand{\eofpred}[1]{\codefont{EoF(#1)}}
+  %% isOk function
+\newcommand{\pdok}[1]{\codefont{isOk(#1)}}
+  %% isErr function
+\newcommand{\pderr}[1]{\codefont{isErr(#1)}}
+\newcommand{\isdone}[1]{\codefont{isDone} \sapp \ictup{#1}}
+\newcommand{\maxec}[2]{\codefont{max\_ec} \iappi #1 \iappi #2}
+\newcommand{\scanmax}{\codefont{SCAN\_MAX}}
+
+%% Abbreviations
+\newcommand{\lampair}[1]{\gl \spair<\codefont{\data},\off>.#1}
+%\newcommand{\funpair}[2]{\text{fun} \, #1\spair<\data,\off>.#2}
+
+%% Misc. operations
+  %% well typed judgment
+\def\wellty(#1,#2,#3){#1 \turn #2 : #3}
+  %% extended context
+\newcommand{\ectxt}[1]{\ctxt,{#1}}
+  %% extended rec. context
+\newcommand{\erctxt}[2]{\rctxt,{#1}{=}\pmu {#1} {#2}}
+  %% truth judgment
+\newcommand{\tjudge}[2]{#1 \vDash #2}
+  %% negated truth judgment
+\newcommand{\tnjudge}[2]{#1 \nvDash #2}
+  %% ok parse descr. judgment
+\newcommand{\okjudge}[1]{\vDash #1 \; \kwd{ok}}
+  %% err parse descr. judgment
+\newcommand{\errjudge}[1]{\vDash #1 \; \kwd{err}}
+  %% instruction-level dynamic semantics ``steps to''.
+\newcommand{\stepstoi}{\hookrightarrow_i}
+  %% top-level dynamic semantics ``steps to''.
+\newcommand{\stepsto}{\hookrightarrow}
+  %% Klean-closure of top-level ``steps to''.
+\newcommand{\kstepsto}{\stepsto^*}
+  %% indicates a problem to be fixed.
+\newcommand{\fixme}{\mathbf{???}}
+  %% error correllation ind. hypothesis
+\newcommand{\ecpred}[2]{\mathrm{EC}(#1:#2)}
+  %% pd error count
+\newcommand{\pecnt}[1]{\mathrm{PEC}( \, #1)}
+  %% Type preservation predicate.
+\newcommand{\tppred}[2]{\mathrm{TP}_{#1}(#2)}
+  %% Deep error correlation relation
+\newcommand{\dcorr}[2]{\mathrm{DeepCorr}(#1,#2)}
+  %% Another error correlation relation (generic)
+\newcommand{\corrg}[2]{\mathrm{Corr}(#1,#2)}
+  %% Another error correlation relation
+\newcommand{\corr}[3]{\mathrm{Corr}_{#1}(#2,#3)}
+  %% Clean closure version of correlation relation
+\newcommand{\corrkl}[3]{\mathrm{Corr^*}_{#1}(#2,#3)}
+  %% Error Correlation predicate.
+\newcommand{\cepred}[2]{\mathrm{CE}_{#1}(#2)}
+  %% Function Error Correlation predicate.
+\newcommand{\cefpred}[2]{\mathrm{CE}_{#1}(#2)}
+  %% Cannonical Formas pred.
+\newcommand{\canfm}[3]{\mathrm{CF_{#1}}(#2,#3)}
+  %% Is-pd predicate:
+\newcommand{\ispdty}[1]{\mathrm{hh}(#1)}
+  %% No Errors predicate
+\newcommand{\noerr}[1]{\mathrm{Correct}(#1)}
+
+  %% BW termination judgment
+\newcommand{\btjudge}[3]{#1 \vDash #2 \Rightarrow #3}
+  %% termination judgment
+\newcommand{\ttjudge}[4]{#1 \vDash #2 (#3) \Rightarrow #4}
+  %% negated termination judgment
+\newcommand{\ttnjudge}[3]{#1 \nvDash #2 (#3)}
+
+  %% inverse infer
+\newcommand{\iinfer}[2]{\infer{#2}{#1}}
+
+%% The following macros are taken from the pads manual, 
+%% file defs.tex.
+
+%% dave added a couple here.
+
+  %% keywords and PADSL types: added micro space on either side
+\newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
+\newcommand{\padskw}[1]{\text{\/\/\bftt{#1}\/\/}}
+\newcommand{\cd}[1]{\texttt{#1}}
+
+\newcommand{\Pbase}[1]{\padskw{C}(#1)} 
+\newcommand{\Pomit}{\padskw{Pomit}}
+\newcommand{\Pcompute}{\padskw{Pcompute}}
+\newcommand{\Pendian}{\padskw{Pendian}}
+\newcommand{\Pstruct}{\padskw{Pstruct}}
+\newcommand{\Punion}{\padskw{Punion}}
+\newcommand{\Popt}{\padskw{Popt}}
+\newcommand{\Pchar}{\padskw{Pchar}}
+\newcommand{\Pbyte}{\padskw{Pbyte}}
+\newcommand{\Pdate}{\padskw{Pdate}}
+\newcommand{\Puint}{\padskw{Puint32}}
+\newcommand{\Pip}{\padskw{Pip}}
+\newcommand{\Pstring}{\padskw{Pstring}}
+\newcommand{\Prec}{\padskw{Prec}}
+\newcommand{\Pfun}{\padskw{Pfun}}
+\newcommand{\Parray}{\padskw{Parray}}
+\newcommand{\Palternate}{\padskw{Palternate}}
+\newcommand{\Ptypedef}{\padskw{Ptypedef}}
+\newcommand{\Penum}{\padskw{Penum}}
+\newcommand{\Pwhere}{\padskw{Pwhere}}
+\newcommand{\Palt}{\padskw{Palt}}
+\newcommand{\Pparsecheck}{\padskw{Pparsecheck}}
+\newcommand{\Pterm}{\padskw{Pterm}}
+\newcommand{\Psep}{\padskw{Psep}}
+\newcommand{\Pre}{\padskw{Pre}}
+\newcommand{\Pnosep}{\padskw{Pnosep}}
+\newcommand{\Plongest}{\padskw{Plongest}}
+\newcommand{\Plast}{\padskw{Plast}}
+\newcommand{\Pended}{\padskw{Pended}}
+\newcommand{\Peor}{\padskw{Pnl}}
+\newcommand{\Peof}{\padskw{Peof}}
+\newcommand{\Pforall}{\padskw{Pforall}}
+\newcommand{\Pfrom}{\padskw{Pfrom}}
+\newcommand{\Pin}{\padskw{Pin}}
+\newcommand{\Precord}{\padskw{Precord}}
+\newcommand{\Psource}{\padskw{Psource}}
+\newcommand{\Pcase}{\padskw{Pcase}}
+\newcommand{\Pswitch}{\padskw{Pswitch}}
+\newcommand{\Pdefault}{\padskw{Pdefault}}
+\newcommand{\Psome}{\padskw{Psome}}
+\newcommand{\Pnone}{\padskw{Pnone}}
+\newcommand{\Pcharclass}{\padskw{Pcharclass}}
+\newcommand{\Pprefix}{\padskw{Pprefix}}
+\newcommand{\Plit}[1]{\padskw{Plit} \; #1}
+\newcommand{\Poverlay}{\padskw{Poverlay}}
+\newcommand{\Pwith}{\padskw{with}}
+
+  %% IPADS Parray 
+\newcommand{\iParray}[4]{#1 \; \Parray{}(#2,#3)}
+
+  %% Conversion from surface language to core calculus
+\newcommand{\cipads}{\Downarrow}
+\newcommand{\conv}[2]{#1 \cipads #2}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                 Environments                     %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% empty environment used for scoping of declarations.
+\newenvironment{scope}{}{}
+
+%% Environment for typesetting BNF grammars. Uses display math mode.
+\newenvironment{bnf}
+     {%% local command definitions:
+        %% BNF definition symbol
+      \def\->{\rightarrow}
+%%      \def\::={{::=} &}
+%      \def\::={\bnfdef &}
+      \def\::={\mathrel{::=} &}
+      \def\|{\bnfalt}
+      \newcommand{\name}[1]{\text{##1}}
+      % name spanning multiple rows
+%      \newcommand{\mname}[2]{\multirow{##2}{*}{\begin{tabular}{l}##1\end{tabular}}}
+      \newcommand{\mname}[2]{\multirow{##2}{.6in}{##1}}
+        %% non-terminal
+      \newcommand{\nont}[1]{\mathit{##1}}
+      \newcommand{\meta}[1]{& \mathit{##1} &}
+      \newcommand{\descr}[1]{& \text{// ##1}}
+      \newcommand{\opt}[1]{ [##1] }
+      \newcommand{\opnon}[1]{\opt{\nont{##1}}}
+      \newcommand{\none}{\epsilon}
+      \newcommand{\nwln}{\\ &&&}
+      \newcommand{\nlalt}{\\ && \| &}
+      \[\begin{array}{lrcll}
+     }
+     {\end{array}\]}
+
+%% Environment for typesetting BNF grammars. Uses standard text mode.
+\newenvironment{bnft}
+     {%% local command definitions:
+        %% BNF definition symbol
+      \def\->{$\rightarrow$}
+      \def\::={{::=} &}
+      \def\|{\ $\mid$ \ }
+      \newcommand{\name}[1]{\textit{##1} &}
+        %% non-terminal
+      \newcommand{\nont}[1]{\textit{##1}}
+      \newcommand{\meta}[1]{}
+      \newcommand{\descr}[1]{& // ##1}
+      \newcommand{\opt}[1]{ [##1] }
+      \newcommand{\opnon}[1]{\opt{\nont{##1}}}
+      \newcommand{\none}{$\epsilon$}
+      \newcommand{\nwln}{\\ &&}
+      \newcommand{\nlalt}{\\ & \| &}
+%      \newcommand{\meta}[1]{##1 &}
+%      \newcommand{\nwln}{\\ &&&}
+%      \newcommand{\nlalt}{\\ && \| &}
+%      \begin{tabular}{lrcll}
+      \begin{tabular}{lcll}
+     }
+     {\end{tabular}}
+
+\newenvironment{semdef}
+    {%% local command definitions:
+       %% arrow kind
+     \def\->{\rightarrow}
+     \allowdisplaybreaks
+     \gather}
+    {\endgather}
+
+%% \newenvironment{semdef}
+%%     {%% local command definitions:
+%%        %% arrow kind
+%%      \def\->{\rightarrow}
+%%      \[\begin{array}{l}\allowdisplaybreaks
+%%     }
+%%     {\end{array}\]}
+
+% future tag macro. does nothing now.
+\newcommand{\stag}[1]{}
+\newenvironment{semcasedef}[1]{
+        %% label for an alternative.
+      \newcommand{\altlbl}[1]{\qquad \text{(Case ##1:)}}
+        %% value of an alternative.
+      \newcommand{\altval}[1]{\quad ##1}
+        %% semantic let: let a variable/pattern equal a value
+      \newcommand{\slet}[2]{\texttt{let} \; ##1 = ##2 \; \texttt{in}}
+     \tag{#1}
+     \begin{array}{l}}
+    {\end{array}}
+
+%% \newenvironment{semrule}
+%%     {\begin{array}{l}}
+%%     {\end{array}}
+
+\newenvironment{semcond}
+    {% Local command definitions:
+       %% ``if'' condition
+     \newcommand{\cif}{\text{if} &}
+       %% ``and'' condition
+     \newcommand{\cand}{\text{and} &}
+       %% let a variable/pattern equal a value
+     \newcommand{\vlet}[2]{##2 = ##1}
+     %\qquad
+     \begin{array}{ll}}
+    {\end{array}}
+
+\newcommand{\phide}[1]{}
+\newcommand{\preplace}[2]{#2}
+\newcommand{\pext}[1]{}
