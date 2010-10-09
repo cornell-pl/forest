@@ -14,8 +14,8 @@ data ErrMsg =
  | RegexMatchFail String
  | TransformToDstFail String String String
  | TransformToSrcFail String String String
- | UnderlyingTypedefFail
- | PredicateFailure
+ | FUnderlyingTypedefFail
+ | FPredicateFailure
  | ExtraStuffBeforeTy String String
  | FileError String String
    deriving (Typeable, Data, Eq)
@@ -31,8 +31,8 @@ instance Pretty ErrMsg where
   ppr (TransformToDstFail s1 s2 s3) = text ("Parsing transform " ++ s1 ++ " failed on input: " ++ s2 ++ s3)
   ppr (TransformToSrcFail s1 s2 s3) = text ("Printing transform "++ s1 ++ " failed on input: " ++ s2 ++ s3)
   ppr (LineError s)        = text s
-  ppr UnderlyingTypedefFail  = text "Predicate is true, but underlying type had an error."
-  ppr PredicateFailure       = text "Predicate is false."
+  ppr FUnderlyingTypedefFail  = text "Forest predicate is true, but underlying type had an error."
+  ppr FPredicateFailure       = text "Forest predicate is false."
   ppr (FileError err file) = text ("Problem with file: " ++ file ++ "("++ err ++ ").")
 
 data ErrInfo = ErrInfo { msg      :: ErrMsg,

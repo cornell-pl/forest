@@ -5,6 +5,7 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Data.Int
 import Data.Data
 import Text.PrettyPrint.Mainland as PP
+import Language.Pads.RegExp
 import qualified Text.Regex.ByteString as BRE
 
 {- Input source abstraction -}
@@ -46,9 +47,6 @@ instance Pretty Source where
     ppr (Source{current, rest, ..}) = text "Current:" <+> text (show current)
                                 
 
-{- Regular expression support -}
-data RE = RE String
-  deriving (Eq, Data, Typeable, Show)
 
 {- Called when current is empty.
    Should not be called when atEOF is already set. -}
@@ -124,6 +122,12 @@ take n (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
      let (head, tail) = B.splitAt n current
          newOffset    = byteOffset + (B.length head)
      in (B.unpack head, Source{current=tail,rest,atEOF,loc=Loc{byteOffset=byteOffset+newOffset,lineNumber}})
+
+
+testRegexMatch (RE raw) str = 
+     let re = BRE.mkRegexWithOpts (B.pack ("^("++raw++")")) True True    -- append ^ to indicate we want to match at the beginning of the string.
+         bstr = B.pack str
+     in BRE.matchRegexAll re bstr
 
 
 regexMatch (RE re_str_raw) (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 

@@ -4,8 +4,6 @@
 -- TODOS
 --     { students is [ filename :: File (Student <| name student |>) | 
 --                     (filename, student) <= matches Student_filename where not (template filename) ] }
-
--- NOTE: don't use / to escape regular expressions because of file path interactions.
 -- How to specify fields that match a regular expression but have a single representation.
 
 
@@ -22,6 +20,8 @@ import System.IO.Unsafe (unsafePerformIO)
 import Language.Haskell.Meta as LHM
 import Data.Map
 
+import Language.Pads.GenPretty
+
 ws = RE "[ \t]+"
 ows =  RE "[ \t]*"
 junk = RE ".*"
@@ -32,25 +32,43 @@ leaveRE = RE "LEAVE|Leave"
 withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
 
+-- Auxiliary code
+template s = or [ s == "SSSS.txt"
+                , s == "SSS.txt"
+                , s == "sxx.txt"
+                , s == "sss.txt"
+                , s == "ssss.txt" ]
+
+splitExt s = let (dne, dotgeb) = Prelude.break (== '.') (reverse s) 
+             in case dotgeb of 
+                 [] -> (reverse dne, [])
+                 '.':tser -> (reverse tser, reverse dne)
+                 tser -> (reverse tser, reverse dne)
+
+getName = fst . splitExt
+getYear s = reverse (Prelude.take 2 (reverse s))
+
+
+
 [pads| 
   type Grade_t = Maybe (PstringME grade_RE)
   type Grade = PstringME grade_RE 
 
   data Course = 
-    { sort         :: /"[dto]"/,           ws
-    , departmental :: /"[.D]"/,            ws
-    , passfail     :: /"[.p]"/,            ws
-    , level        :: /"[1234]"/,          ws
-    , department   :: /"[A-Z][A-Z][A-Z]"/, ws
+    { sort         :: re "[dto]",           ws
+    , departmental :: re "[.D]",            ws
+    , passfail     :: re "[.p]",            ws
+    , level        :: re "[1234]",          ws
+    , department   :: re "[A-Z][A-Z][A-Z]", ws
     , number       :: Pint where <| 100 <= number && number < 600 |>, ws
     , grade        :: Grade,               junk                               -- why doesn't this work if there is a maybe?
     } 
 
-  data Middle_name = {' ', middle :: /"[a-zA-Z]+[.]?"/ }           
+  data Middle_name = {' ', middle :: re "[a-zA-Z]+[.]?" }           
  
   data Student_Name(myname::String) = 
-    { lastname  :: /"[a-zA-Z]*"/  where <| toString lastname ==  myname |>,  ',', ows     -- yuck; we have too many different types.
-    , firstname :: /"[a-zA-Z]*"/ 
+    { lastname  :: re "[a-zA-Z]*"  where <| toString lastname ==  myname |>,  ',', ows     -- yuck; we have too many different types.
+    , firstname :: re "[a-zA-Z]*" 
     , middlename :: Maybe Middle_name
     }
 
@@ -59,11 +77,11 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
   data Person (myname::String) =
     { fullname   :: Student_Name myname,    ws
     , school     :: School,                 ws, '\''
-    , year       :: /"[0-9][0-9]"/
+    , year       :: re "[0-9][0-9]"
     }
 
-  type Header  = [Line /".*"/] with term length of 7 
-  type Trailer = [Line /".*"/] with term Eof 
+  type Header  = [Line (re ".*")] with term length of 7 
+  type Trailer = [Line (re ".*")] with term Eof 
   data Student (name::String) = 
     { person :: Line (Person name)
     , Header  
@@ -90,7 +108,8 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
   -- Directory for all graduated students
   type Grads_d = Directory 
-    { classes is  [ aclass :: Class_d <| getYear aclass |>  | aclass <- matches (RE "classof[0-9][0-9]") ] }
+    { classes is  [ aclass :: Class_d <| getYear aclass |>  
+                           | aclass <- matches (RE "classof[0-9][0-9]") ] }
 
   -- Root of the hierarchy
   type PrincetonCS_d = Directory
@@ -100,15 +119,24 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
     }
 |]
 
+mkPrettyInstance ''PrincetonCS_d
+mkPrettyInstance ''PrincetonCS_d_md
+
 cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
 
 Grads_d grads = graduates cs_rep
 grads07 = grads ! "classof07" 
 Major_d bse_grads07 = bse grads07
-clark = bse_grads07 ! "clark.txt"
+
 errs = fst cs_md
 
+
+clark = bse_grads07 ! "clark.txt"
+clark_doc = student_ppr clark
+clark_output n = pretty n clark_doc
+
+ppBseGrads07 n = putStrLn (pretty n (major_d_ppr (bse grads07)))
 
 
 student_input_file = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof10/AB10/APPS.txt"
@@ -142,20 +170,4 @@ grad_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates"
 (grad_rep, grad_md) = unsafePerformIO $ grads_d_load grad_dir
 
 
-
--- Auxiliary code
-template s = or [ s == "SSSS.txt"
-                , s == "SSS.txt"
-                , s == "sxx.txt"
-                , s == "sss.txt"
-                , s == "ssss.txt" ]
-
-splitExt s = let (dne, dotgeb) = Prelude.break (== '.') (reverse s) 
-             in case dotgeb of 
-                 [] -> (reverse dne, [])
-                 '.':tser -> (reverse tser, reverse dne)
-                 tser -> (reverse tser, reverse dne)
-
-getName = fst . splitExt
-getYear s = reverse (Prelude.take 2 (reverse s))
 

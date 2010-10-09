@@ -454,6 +454,15 @@ instance (Pretty a, Pretty b, Pretty c) => Pretty (a, b, c) where
 instance (Pretty a, Pretty b, Pretty c, Pretty d) => Pretty (a, b, c, d) where
     ppr (a, b, c, d) = parens $ commasep [ppr a, ppr b, ppr c, ppr d]
 
+instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e) => Pretty (a, b, c, d, e) where
+    ppr (a, b, c, d, e) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e]
+
+instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f) => Pretty (a, b, c, d, e, f) where
+    ppr (a, b, c, d, e, f) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e, ppr f]
+
+instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f, Pretty g) => Pretty (a, b, c, d, e, f,g) where
+    ppr (a, b, c, d, e, f, g) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e, ppr f, ppr g]
+
 instance Pretty a => Pretty (Maybe a) where
     pprPrec _ Nothing  = empty
     pprPrec p (Just a) = pprPrec p a

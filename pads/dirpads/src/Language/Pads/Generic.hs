@@ -1,11 +1,12 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts #-}
 
 module Language.Pads.Generic (
       Pads(..), 
       Pads1(..), 
       parseFileWith,
       parseFileWithRaw,
-      gdef
+      gdef,
+      myempty
    )
 
 where
@@ -17,6 +18,8 @@ import qualified Language.Pads.Source as S
 import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Control.Exception as CE
 import Data.Data
+import Data.Generics.Aliases (extB)
+import Data.Map
 
 class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
   def :: pads
@@ -79,6 +82,26 @@ gdef = def_help
      =   let ty = dataTypeOf (def_help)
              constr = getConstr ty
          in fromConstrB gdef constr 
+
+myempty :: forall a. Data a => a
+myempty = general 
+      `extB` char 
+      `extB` int
+      `extB` integer
+      `extB` float 
+      `extB` double where
+--      `extB` map 
+  -- Generic case
+  general :: Data a => a
+  general = fromConstrB myempty (indexConstr (dataTypeOf general) 1)
+  
+  -- Base cases
+  char    = '\NUL'
+  int     = 0      :: Int
+  integer = 0      :: Integer
+  float   = 0.0    :: Float
+  double  = 0.0    :: Double
+--  map     = Data.Map.empty  :: Map b c
 
 
 -- ad hoc case for partiular type construct extB

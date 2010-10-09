@@ -4,6 +4,7 @@
    implement pre-processor type constructor
    implement tar, gzip, etc. type constructors
    implement symbolic links
+   implement Map/List constructor form for comprehension
    debug CVS example
    build pretty printer for directory values and meta-data
    library for manipulating times and permissions
@@ -11,10 +12,12 @@
    implement glob patterns in addition to regular expressions?
    implement patterns in physical names for simple records?
    make relative paths work as arguments to ty_load
-   make escape syntax consistent
    incorporate pads meta-data error counts into forest error counts.
    get gdef to work for representations involving a map (right now raises exception if directory doesn't exist)
+   implement regular expression primitives
+   implement ls tool
 
+   DONE make escape syntax consistent
    DONE fix meta-data error propagation to match pads
    DONE implement nested directories
    DONE implement making second name optional if first name is a legal haskell record field label

@@ -275,8 +275,8 @@ mkParseTyTypedef pat tyBase pred = do
                             Nothing -> Nothing
                             Just e -> E.position e
         let buildError pred n errInfo = if n == 0    then Nothing
-                                  else if pred then Just (E.ErrInfo {msg = E.UnderlyingTypedefFail, position = getLocOpt errInfo})
-                                  else              Just (E.ErrInfo {msg = E.PredicateFailure,      position = getLocOpt errInfo})
+                                  else if pred then Just (E.ErrInfo {msg = E.FUnderlyingTypedefFail, position = getLocOpt errInfo})
+                                  else              Just (E.ErrInfo {msg = E.FPredicateFailure,      position = getLocOpt errInfo})
         let (predVal, totErrors) = if $predQ b_rep b_rep b_md    -- apply to bind values to bound variables.
                                       then (True, b_errors) else (False, 1+b_errors)
         let tdef_md = Base_md {numErrors = totErrors, errInfo = buildError predVal totErrors b_errInfo }
@@ -482,7 +482,7 @@ mkParseFields (field:fields) = do
 addPredFailureMD :: Base_md -> Base_md
 addPredFailureMD (Base_md{numErrors, errInfo}) = 
   let errInfo' = case errInfo of
-                  Nothing -> E.ErrInfo {msg = E.PredicateFailure, position = Nothing}
+                  Nothing -> E.ErrInfo {msg = E.FPredicateFailure, position = Nothing}
                   Just e ->  e
   in Base_md{numErrors = numErrors + 1, errInfo = Just errInfo'}
        

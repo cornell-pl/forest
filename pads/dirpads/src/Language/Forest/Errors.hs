@@ -10,9 +10,10 @@ data ErrMsg = ForestError String
             | MissingFile String
      deriving (Typeable, Data, Show, Eq)
 
-{- XXX-KSF: fix pretty printing to use pretty printing combinators rather than string ++ -}
+{- XXX-KSF: fix pretty printing to use pretty printing combinators rather than string ++ 
 instance Pretty ErrMsg where
   ppr (ForestError str) = text ("Forest error: " ++ str ++ ".")
   ppr (ForestIOException str)   = text ("Forest IO Exception: " ++ str ++ ".")
   ppr (MissingFile str)   = text ("Forest error: Missing file: " ++ str ++ ".")
 
+-}

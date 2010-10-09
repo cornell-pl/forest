@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables #-}
+{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables, TypeSynonymInstances #-}
 module Language.Forest.MetaData where
 
 import System.Posix.Files
@@ -9,15 +9,18 @@ import Text.Regex
 import qualified Control.Exception as CE
 
 import Data.Data
+import Data.Generics.Builders
 import Data.Maybe
 import Data.List hiding (group)
 
 import Data.DeriveTH                 -- Library for deriving instances for existing types
 
-import Text.PrettyPrint.Mainland as PP hiding (group)
+import Text.PrettyPrint.Mainland as PP hiding (group, empty)
 
 import Language.Pads.Source
+import Language.Pads.RegExp 
 import Language.Pads.Generic
+import Language.Pads.GenPretty
 import Language.Forest.Errors
 
 {- Base type library support -}
@@ -25,6 +28,8 @@ import Language.Forest.Errors
 -- (derive makeDataAbstract ''COff)
 -- (derive makeDataAbstract ''EpochTime)
 -- (derive makeDataAbstract ''FileMode)
+
+
 
 data FileType = SimpleK | DirectoryK | SymLinkK | UnknownK
  deriving (Eq, Show, Data, Typeable)
@@ -44,11 +49,25 @@ data FileInfo = FileInfo { owner :: String
 (derive makeTypeable     ''FileInfo)
 (derive makeDataAbstract ''FileInfo)
 
+instance Pretty COff where
+ ppr = text . show 
+
+instance Pretty EpochTime where
+ ppr = text . show
+
+instance Pretty FileMode where
+ ppr = text . show
+
+--instance Pretty FileType where
+-- ppr = text . show
+
+
 data Forest_md = Forest_md { numErrors :: Int
                            , errorMsg  :: Maybe ErrMsg
                            , fileInfo  :: FileInfo 
                            }
    deriving (Typeable, Data, Eq, Show)
+
 
 get_owner x = owner $ fileInfo $ fst x
 get_group x = group $ fileInfo $ fst x
@@ -186,9 +205,9 @@ checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
 checkPath path ifExists = do 
    { exists <-  fileExist path
    ; if not exists then 
-       do { def_md <- gdef
+       do { def_md <- myempty
           ; let new_md = replace_fmd_header def_md (missingPathForestMD path)
-          ; return (gdef, new_md)
+          ; return (myempty, new_md)
           }
      else ifExists
    }

@@ -3,9 +3,10 @@
 module Language.Pads.Syntax where
 
 import Data.Generics
+import Language.Pads.RegExp
 import qualified Language.Haskell.TH  as TH 
 
-data Lit    = CharL Char | StringL String  | EorL | EofL | VoidL | RegL String | Hid String | Hexp TH.Exp | IntL Integer
+data Lit    = CharL Char | StringL String  | EorL | EofL | VoidL | RegL RE | Hid String | Hexp TH.Exp | IntL Integer
   deriving (Eq, Data, Typeable, Show)
 
 litToExp :: Lit -> TH.Exp
@@ -13,9 +14,15 @@ litToExp lit = case lit of
   CharL   c -> TH.LitE (TH.CharL   c)
   StringL s -> TH.LitE (TH.StringL s)
   IntL    i -> TH.LitE (TH.IntegerL i)
-  RegL    r -> TH.AppE (TH.ConE (TH.mkName "RE")) (TH.LitE (TH.StringL r))
+--  RegL    r -> TH.AppE (TH.ConE (TH.mkName "RE")) (TH.LitE (TH.StringL r))
+  RegL    r -> reToExp r
   Hid    id -> TH.VarE (TH.mkName id)
   Hexp  exp -> exp
+
+reToExp :: RE -> TH.Exp
+reToExp re = case re of
+  RE s -> TH.AppE (TH.ConE (TH.mkName "RE")) (TH.LitE (TH.StringL s))
+  ReName id -> TH.VarE (TH.mkName id)
 
 data TermCond = TyTC PadsTy | LengthTC TH.Exp
   deriving (Eq, Data, Typeable, Show)

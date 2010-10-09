@@ -6,81 +6,149 @@ import Language.Haskell.TH as TH hiding (ppr)
 import Language.Pads.TH
 import qualified Data.List as L
 import qualified Data.Set as S
+import qualified Data.Map as M
 import Control.Monad
+
+import System.Posix.Types
+import Data.Word
+import Data.Int
+import Language.Pads.Errors
+import Language.Pads.MetaData
+
 
 getTyNames :: TH.Type ->  S.Set TH.Name
 getTyNames ty  = case ty of
+    ForallT tvb cxt ty' -> getTyNames ty'
+    VarT name -> S.empty
     ConT name -> S.singleton name
     TupleT i -> S.empty
     ArrowT -> S.empty
     ListT -> S.empty
     AppT t1 t2 -> (getTyNames t1) `S.union` (getTyNames t2)
+    SigT ty kind -> getTyNames ty
 
 getTyNamesFromCon :: TH.Con -> S.Set TH.Name
 getTyNamesFromCon con = case con of
   (NormalC name stys) -> S.unions (map (\(_,ty)   -> getTyNames ty) stys)
   (RecC name vstys)   -> S.unions (map (\(_,_,ty) -> getTyNames ty) vstys)
-  (InfixC st1 name st2) -> getTyNames(snd st1) `S.union` getTyNames(snd st2)
+  (InfixC st1 name st2) -> (getTyNames(snd st1)) `S.union` (getTyNames(snd st2))
   (ForallC tvb cxt con) -> getTyNamesFromCon con
 
-mkPrettyInstance :: TH.Name -> Q ([TH.Dec])
-mkPrettyInstance ty_name = do
-      if ty_name `elem` [''Pint, ''Pchar, ''Pdigit, ''Ptext, ''Pstring, ''PstringFW, ''PstringME, ''PstringSE]
-      then return [] 
+
+
+getNamedTys :: TH.Name -> Q [TH.Name]
+getNamedTys ty_name = do 
+   { result <- getNamedTys' S.empty (S.singleton ty_name)
+   ; return (S.toList result)
+   }
+
+
+getNamedTys' :: S.Set TH.Name -> S.Set TH.Name -> Q (S.Set TH.Name)
+getNamedTys' answers worklist = 
+ if S.null worklist then return answers
+ else do
+   { let (ty_name, worklist') = S.deleteFindMin worklist
+   ; let answers' = S.insert ty_name answers
+   ; info <- reify ty_name
+   ; case info of
+        TyConI (NewtypeD [] ty_name' [] con derives) -> do
+           { let all_nested = getTyNamesFromCon con
+           ; let new_nested = all_nested `S.difference` answers'
+           ; let new_worklist = worklist' `S.union` new_nested
+           ; getNamedTys' answers' new_worklist
+           }
+        TyConI (DataD [] ty_name' [] cons derives) -> do  
+           { let all_nested = S.unions (map getTyNamesFromCon cons)
+           ; let new_nested = all_nested `S.difference` answers'
+           ; let new_worklist = worklist' `S.union` new_nested
+           ; getNamedTys' answers' new_worklist
+           }
+        TyConI (TySynD _ _ _ ) -> do {report True ("getTyNames: unimplemented TySynD case " ++ (nameBase ty_name)); return answers'} 
+        TyConI (ForeignD _) -> do {report True ("getTyNames: unimplemented ForeignD case " ++ (nameBase ty_name)); return answers'} 
+        PrimTyConI _ _ _ -> return answers
+        otherwise -> do {report True ("getTyNames: pattern didn't match for " ++ (nameBase ty_name)); return answers'} 
+   }
+
+baseTypeNames = S.fromList [ ''Pint, ''Pchar, ''Pdigit, ''Ptext, ''Pstring, ''PstringFW, ''PstringME 
+                           , ''PstringSE, ''String, ''Char, ''COff, ''EpochTime, ''FileMode, ''Int, ''Word, ''Int64
+                           , ''Language.Pads.Errors.ErrInfo
+                           ]
+
+mkPrettyInstance :: TH.Name -> Q [TH.Dec]
+mkPrettyInstance ty_name = mkPrettyInstance' (S.singleton ty_name) baseTypeNames []
+
+mkPrettyInstance' :: S.Set TH.Name -> S.Set TH.Name -> [TH.Dec] -> Q [TH.Dec]
+mkPrettyInstance' worklist done decls = 
+  if S.null worklist then return decls
+  else do 
+      let (ty_name, worklist') = S.deleteFindMin worklist
+      if ty_name `S.member` done then mkPrettyInstance' worklist' done decls
       else do 
          let tyBaseName = nameBase ty_name
          let baseStr = strToLower tyBaseName
          let specificPprName = mkName (baseStr ++ "_ppr")
          let funName = mkName (strToLower (tyBaseName ++ "_ppr"))
+         let inst = AppT (ConT ''Pretty) (ConT ty_name)   
+         let genericPprName = mkName "ppr"
+         let ppr_method = ValD (VarP genericPprName) (NormalB (VarE specificPprName)) []
+         let instD = InstanceD [] inst [ppr_method]
+         let newDone = S.insert ty_name done
          info <- reify ty_name
-         decls <- case info of 
+         (nestedTyNames, decls') <- case info of 
                    TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, AppT ListT ty)]) derives) -> do -- List
                      { let nestedTyNames = getTyNames ty
-                     ; report True ("list case " ++ (nameBase ty_name''))
-                     ; nestedDecls <- mapM mkPrettyInstance (S.toList nestedTyNames)
+--                     ; report True ("list case " ++ (nameBase ty_name))
                      ; (itemsE,itemsP) <- doGenPE "list"
                      ; let mapE  = AppE (AppE (VarE 'map) (VarE 'ppr)) itemsE
                      ; let bodyE = AppE (AppE (VarE 'namedlist_ppr) (nameToStrLit ty_name)) mapE
                      ; let argP = ConP (mkName tyBaseName) [itemsP]
                      ; let clause = Clause [argP] (NormalB bodyE) []
-                     ; return (concat nestedDecls ++ [FunD specificPprName [clause]] )
+                     ; return (nestedTyNames, [instD, FunD specificPprName [clause]])
                      }
-                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ConT core_name)]) derives) -> do
+                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ConT core_name)]) derives) -> do  -- App, Typedef
                      { (argP, body) <- mkPatBody tyBaseName
+--                     ; report True ("app, typedef case " ++ (nameBase ty_name))
                      ; let clause = Clause [argP] body []	
-                     ; return [FunD specificPprName [clause]] 
+                     ; return (S.singleton core_name, [instD, FunD specificPprName [clause]]) 
                      }
-                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ty)]) derives) -> do
+                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ty)]) derives) -> do    -- Tuple
                      { let nestedTyNames = getTyNames ty
-                     ; nestedDecls <- mapM mkPrettyInstance (S.toList nestedTyNames)
+--                     ; report True ("tuple case " ++ (nameBase ty_name))
                      ; let (len, tys) = tupleTyToListofTys ty
                      ; (exps, pats) <- doGenPEs len "tuple"
                      ; let bodyE = AppE (AppE (VarE 'namedtuple_ppr) (LitE (StringL tyBaseName)))  (pprListEs exps)
                      ; let argP = ConP (mkName tyBaseName) [TupP pats]
                      ; let clause = Clause [argP] (NormalB bodyE) []	
-                     ; return (concat nestedDecls ++ [FunD specificPprName [clause]])
+                     ; return (nestedTyNames, [instD, FunD specificPprName [clause]])
                      }
                    TyConI (DataD [] ty_name' [] cons  derives) | isDataType cons -> do
                      { let nestedTyNames = S.unions (map getTyNamesFromCon cons)
-                     ; nestedDecls <- mapM mkPrettyInstance (S.toList nestedTyNames)
                      ; (exp, pat) <- doGenPE "case_arg"
                      ; matches <- mapM mkClause cons
                      ; let caseE = CaseE exp matches
                      ; let clause = Clause [pat] (NormalB caseE) []	
-                     ; return (concat nestedDecls ++ [FunD specificPprName [clause]] )
+                     ; return (nestedTyNames, [instD, FunD specificPprName [clause]] )
                      } 
                    TyConI (DataD [] ty_name' [] cons  derives) | isRecordType cons -> do
-                     { report (length cons /= 1) ("GenPretty: record " ++ (nameBase ty_name')  ++ " did not have a single constructor.")
-                     ; let nestedTyNames = S.unions (map getTyNamesFromCon cons)
-                     ; nestedDecls <- mapM mkPrettyInstance (S.toList nestedTyNames)
+                     { let nestedTyNames = S.unions (map getTyNamesFromCon cons)
+--                   ; report (length cons /= 1) ("GenPretty: record " ++ (nameBase ty_name')  ++ " did not have a single constructor.")
                      ; clause <- mkRecord (L.head cons)
-                     ; return (concat nestedDecls ++ [FunD specificPprName [clause]])
+                     ; return (nestedTyNames, [instD, FunD specificPprName [clause]])
                      } 
-                   otherwise -> do {report True "pattern didn't match"; return []} 
-         let inst = AppT (ConT ''Pretty) (ConT ty_name)   
-         let genericPprName = mkName "ppr"
-         let ppr_method = ValD (VarP genericPprName) (NormalB (VarE specificPprName)) []
-         return (decls ++ [InstanceD [] inst [ppr_method]])
+                   TyConI (DataD _ ty_name' _ cons  derives) -> do
+                    {
+--                      report True ("DataD pattern didn't match for"++(nameBase ty_name)) 
+                    ; return (S.empty, [])} 
+                   TyConI (TySynD ty_name' [] ty) -> do 
+                     { let nestedTyNames = getTyNames ty
+--                     ; report True ("tysyn for"++(nameBase ty_name)) 
+                     ; return (nestedTyNames, [])} 
+                   otherwise -> do {report True ("pattern didn't match for"++(nameBase ty_name)) ; return (S.empty, [])} 
+         let newWorklist = worklist `S.union` nestedTyNames
+         let newDecls = decls'++decls
+         mkPrettyInstance' newWorklist newDone newDecls
+
+
 
 isDataType cons = case cons of
   [] -> False
@@ -132,14 +200,6 @@ mkField (field_name, _, ty) = do
 
 nameToStrLit name = LitE (StringL (nameBase name))
 
---FieldPat = (Name, Pat)
--- RecC Name [VarStrictType]
--- VarStrictType = (Name, Strict, Type)
-
---source_t_ppr source = case source of
---  IP ip     -> namedty_ppr "IP" (ppr ip) 
---  Host host -> namedty_ppr "Host" (ppr host)
-
 
 
 
@@ -153,6 +213,14 @@ namedtuple_ppr name pprls = group $ hang 2 (text name <+/> (tuple_ppr pprls))
 list_ppr ds = (text "[" <//>
                     align (sep comma ds ) <//>        
                 text "]")
+
+instance (Pretty a, Pretty b)  => Pretty (M.Map a b) where
+  ppr = map_ppr 
+map_ppr d = list_ppr (map ppr (M.toList d))
+
+string_ppr :: String -> Doc
+string_ppr = ppr
+
 
 namedlist_ppr :: String -> [Doc] -> Doc
 namedlist_ppr name pprls = group $ hang 2 (text name <+/> (list_ppr pprls))
@@ -172,6 +240,21 @@ pstring_ppr (Pstring s) = ppr s
 instance Pretty Pstring where
  ppr = pstring_ppr
 
+instance Pretty PstringME where
+ ppr (PstringME s) = ppr s
+
+instance Pretty PstringSE where
+ ppr (PstringSE s) = ppr s
+
+--instance Pretty String where
+-- ppr = pstring_ppr
+
+--instance Pretty a => Pretty (Maybe a) where
+-- ppr = maybe_ppr
+
+maybe_ppr d = case d of 
+  Nothing -> text "Nothing"
+  Just a -> ppr a
 
 
 tuple_ppr ds = (text "(" <//>
@@ -185,11 +268,3 @@ field_ppr field_name ppr = text field_name   <+> equals <+> ppr
 record_ppr str pprs  = namedty_ppr str (recordbody_ppr pprs)
 
 
-{-
-time_t_ppr (Time_t{hours, minutes, seconds}) = let
-  hours_p   = text "hours"   <+> equals <+> (hours_t_ppr   hours)
-  minutes_p = text "minutes" <+> equals <+> (minutes_t_ppr minutes)
-  seconds_p = text "seconds" <+> equals <+> (seconds_t_ppr seconds)
-  in hang 2 (text "Time_t" <+/>  recordbody_ppr [hours_p, minutes_p, seconds_p])
-
--}

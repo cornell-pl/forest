@@ -3,6 +3,7 @@ module Language.Pads.Parser where
 
 import Language.Pads.Syntax as S
 
+
 import Control.Monad (msum)
 import Text.Parsec
 import qualified Text.Parsec.String as PS
@@ -12,9 +13,11 @@ import qualified Text.Parsec.Token as PT
 import Text.Parsec.Language
 import Text.ParserCombinators.Parsec.Language 
 import Text.ParserCombinators.Parsec.Pos
+import Text.Parsec.Expr
 import Language.Haskell.Meta as LHM
 import Language.Haskell.TH as TH hiding (CharL)
 import Data.Char
+import Language.Pads.RegExp as PRE 
 
 type Parser = PS.Parser
 
@@ -149,8 +152,18 @@ voidlitTy = do {reserved "Void"
 reglitTy :: Parser S.Lit
 reglitTy = do { reserved "RE"
               ; s <- stringLiteral
-              ; return (S.RegL s)
+              ; return (S.RegL (RE s))
               }
+
+reglitTy2 :: Parser S.Lit
+reglitTy2 = do 
+   { reserved "re"
+   ; str <- manyTill (noneOf " ") (oneOf " \t\n")
+   ; whiteSpace
+   ; case Text.Parsec.parse reP "" str of
+         Left err -> unexpected ("Failed to parse regular expression: " ++ str)
+         Right s  -> return (S.RegL s)
+   }
 
 lit :: Parser S.Lit 
 lit =   charlitTy
@@ -159,6 +172,7 @@ lit =   charlitTy
     <|> eoflitTy
     <|> voidlitTy
     <|> reglitTy
+--    <|> reglitTy2           Doesn't really work; can't find end of regular expression
     <|> intlitTy
     <|> hidlitTy
     <|> hexplitTy
@@ -383,7 +397,13 @@ tryTy = do { reservedOp "Try"
            } <?> "try type"
 
 reTy :: Parser PadsTy
-reTy = do { reservedOp "/"
+reTy = do { reserved "re"
+          ; s <- stringLiteral
+          ; return (Papp (Pname "PstringME") (AppE (ConE (mkName "RE")) (LitE (TH.StringL s))))   
+          } <?> "regular expression type"
+
+reTy' :: Parser PadsTy
+reTy' = do { reservedOp "/"
           ; s <- stringLiteral
           ; reservedOp "/"
           ; return (Papp (Pname "PstringME") (AppE (ConE (mkName "RE")) (LitE (TH.StringL s))))   
@@ -400,11 +420,118 @@ padsTy = lineTy
      <|> try fnAppTy
      <|> typedefTy
      <|> reTy
+     <|> reTy'
      <|> litTy
      <|> idTy
      <?> "pads type"
 
+{-
 
+regexp foo = rb compiles to foo = RE (re rb) re :: our syntax ->
+ String rep of regular expression
+
+rb ::= <foo> | [^set] | [set] | char | rb+ | rb* |   rb1|rb2  | (rb) | rb1 rb2 | rb?  | .  
+set ::= char | set set | char-char |  (escape sequences for ], -, and escape character \
+
+setitem ::= char | char-char 
+rawset ::= setitem rawset?  
+set ::= ^rawset | rawset
+
+ab*
+
+rel3    :: rel3 + rel2 | rel2
+rel2    :: rel2 rel1 | rel1
+rel1    :: rel1+ | rel1* | rel1? | primre
+primre :: = <foo> | set | char | (re) | .
+
+-}
+
+reP :: Parser RE
+reP = buildExpressionParser table primRE
+
+table = [  [ postfix "+" (.+.), postfix "*" (.*.), postfix "?" (.?.) ]
+        ,  [ binary'    (.&.) AssocLeft ]
+        ,  [ binary "|" (.|.) AssocLeft]
+        ]
+      where
+         postfix  name fun       = Postfix (do{reservedOp name; return fun})
+         binary   name fun assoc = Infix   (do{reservedOp name; return fun}) assoc
+         binary'       fun assoc = Infix   (do{return fun}) assoc
+          
+
+parenRE :: Parser RE
+parenRE = do 
+    { re <- parens reP
+    ; return (PRE.re_parens re)
+    }
+
+primRE :: Parser RE
+primRE = setRE
+--     <|> namedRE
+     <|> parenRE
+     <|> dotRE
+     <|> charRE
+
+dotRE :: Parser RE
+dotRE = do
+  { char '.'
+  ; return (RE ".")
+  }
+
+charRE  :: Parser RE
+charRE = do
+  { c <- noneOf "()+?*[<."
+  ; return (RE [c])
+  }
+    
+
+
+namedRE :: Parser RE
+namedRE = do
+   { char '<'
+   ; id <- identifier
+   ; char '>'
+   ; return (ReName id)
+   }     
+
+setRE :: Parser RE
+setRE = do
+   { char '['
+   ; (isPos, set) <- set
+   ; char ']'
+   ; if isPos then return (charClass set)
+              else return (opCharClass set)
+   }
+
+set :: Parser (Bool, [Char])
+set = do 
+     { char '^'
+     ; rs <- rawset
+     ; return (False, rs)
+     }
+ <|> do 
+     { rs <- rawset
+     ; return (True, rs)
+     }
+
+rawset :: Parser [Char]
+rawset = do { sets <- many1 setitem
+            ; return (concat sets)
+            }
+
+
+-- XXX this needs to be fixed to handle escaping characters correctly
+setitem :: Parser [Char]
+setitem = try (do
+     { c1 <- alphaNum
+     ; char '-'
+     ; c2 <- alphaNum
+     ; return [c1..c2]
+     } )
+  <|> do 
+     { c <- noneOf "-]\\"
+     ; return [c]
+     } <?> "setitem"
 
 
 parse :: PS.Parser a -> SourceName -> Line -> Column -> String -> Either ParseError a

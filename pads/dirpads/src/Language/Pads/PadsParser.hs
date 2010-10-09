@@ -3,6 +3,7 @@ module Language.Pads.PadsParser where
 import qualified Language.Pads.Source as S
 import qualified Language.Pads.Errors as E
 import Language.Pads.MetaData
+import Language.Pads.RegExp
 import Char
 
 {- Parsing Monad -}
@@ -153,10 +154,10 @@ scanStrP str = primPads (S.scanStr str)
 takeP :: Integral a => a -> PadsParser String
 takeP n = primPads (S.take (fromInteger $ toInteger n))
 
-regexMatchP :: S.RE -> PadsParser (Maybe String)
+regexMatchP ::RE -> PadsParser (Maybe String)
 regexMatchP re = primPads (S.regexMatch re)
 
-regexStopP :: S.RE -> PadsParser (Maybe String)
+regexStopP :: RE -> PadsParser (Maybe String)
 regexStopP re = primPads (S.regexStop re)
 
 scanP :: Char -> PadsParser Bool

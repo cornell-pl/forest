@@ -4,6 +4,7 @@ module Language.Pads.CoreBaseTypes where
 import Language.Pads.Generic
 import Language.Pads.MetaData
 import Language.Pads.PadsParser
+import Language.Pads.RegExp
 import qualified Language.Pads.Source as S
 import qualified Language.Pads.Errors as E
 
@@ -11,7 +12,6 @@ import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax
 import qualified Data.Map as M
 import Data.Data
-
 
 import Text.PrettyPrint.Mainland as PP   
 
@@ -30,8 +30,8 @@ baseTypesList = [
   ("Ptext",     (''String,  [])),
   ("Pstring",   (''String,  [''Char])),
   ("PstringFW", (''String,  [''Int])),
-  ("PstringME", (''String,  [''S.RE])),
-  ("PstringSE", (''String,  [''S.RE]))
+  ("PstringME", (''String,  [''RE])),
+  ("PstringSE", (''String,  [''RE]))
  ]
 
 
@@ -89,10 +89,10 @@ instance Pads1 Char Pstring Base_md where
 instance Pads1 Int PstringFW Base_md where 
   parsePP1  = pstringFW_parseM 
 
-instance Pads1 S.RE PstringME Base_md where
+instance Pads1 RE PstringME Base_md where
   parsePP1 = pstringME_parseM
 
-instance Pads1 S.RE PstringSE Base_md where
+instance Pads1 RE PstringSE Base_md where
   parsePP1 = pstringSE_parseM
 
 class ToString a where
@@ -125,7 +125,7 @@ pstringFW_parseM n = do
             else goodReturn (PstringFW str, cleanBasePD)
 
 
-pstringME_parseM :: S.RE -> PadsParser (PstringME, Base_md)
+pstringME_parseM :: RE -> PadsParser (PstringME, Base_md)
 pstringME_parseM re = do 
   initPos <- getPos
   isEof <- isEofP 
@@ -138,7 +138,7 @@ pstringME_parseM re = do
 
 
 
-pstringSE_parseM :: S.RE -> PadsParser (PstringSE, Base_md)
+pstringSE_parseM :: RE -> PadsParser (PstringSE, Base_md)
 pstringSE_parseM re = do 
   initPos <- getPos
   isEof <- isEofP 
@@ -218,11 +218,11 @@ instance LitParse Char where
 instance LitParse String where
   litParse = pstrLit_parseM
 
-instance LitParse S.RE where
+instance LitParse RE where
   litParse = preLit_parseM
 
 
-preLit_parseM :: S.RE -> PadsParser ((), Base_md)
+preLit_parseM :: RE -> PadsParser ((), Base_md)
 preLit_parseM re = do { (match, md) <- pstringME_parseM re
                       ; if numErrors md == 0 then goodReturn ((), md) else badReturn ((), md)
                       }
@@ -282,7 +282,6 @@ peofLit_parseM = do
 
 pvoidLit_parseM :: PadsParser ((), Base_md)
 pvoidLit_parseM = goodReturn ((), cleanBasePD)
-   
 
 
 {- Helper functions -}

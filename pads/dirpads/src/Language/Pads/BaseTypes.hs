@@ -7,6 +7,7 @@ import Language.Pads.Generic
 import Language.Pads.MetaData
 import Language.Pads.CoreBaseTypes
 import Language.Pads.Quote
+import Language.Pads.RegExp
 
 import qualified Data.Char as C
 import qualified Data.List as L
