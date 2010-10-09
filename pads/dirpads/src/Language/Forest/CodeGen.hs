@@ -182,7 +182,7 @@ loadSimple (internal, externalE, forestTy, predM) pathE = do
 
 
 loadCompound :: CompField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
-loadCompound (internal, externalE, forestTy, generatorP, generatorGen, optPredE) pathE = do
+loadCompound (internal, tyCompNameOpt, externalE, forestTy, generatorP, generatorGen, optPredE) pathE = do
    let repName = mkName internal
    let mdName  = mkName (internal++"_md")
    bmdName <- newName (internal++"_bmd")
@@ -204,10 +204,29 @@ loadCompound (internal, externalE, forestTy, generatorP, generatorGen, optPredE)
                   Nothing -> [] 
                   Just predE -> [NoBindS predE]
    let compE = CompE ([BindS generatorP generatorE] ++ predSs ++ [ NoBindS compResultE])
-   let buildMapsE = AppE (VarE 'insertRepMDs) compE
+   let buildMapsE = case tyCompNameOpt of
+                     Nothing  -> AppE (VarE 'insertRepMDsList) compE
+                     Just str -> AppE (VarE 'insertRepMDsMap) compE
    let mapStmt = BindS (TupP [repP, mdP, bmdP])  buildMapsE
    return ([(repName,repE)], [(mdName,mdE)], bmdE, genStmts++[mapStmt])       -- Include named rep and md in result
 
+
+
+insertRepMDsList :: ForestMD b => [(String, IO (a,b))] -> IO ([(String, a)], [(String, b)], Forest_md)
+insertRepMDsList inputs = do 
+    let (paths, rep_mdIOs) = unzip inputs
+    rep_mds <- sequence rep_mdIOs
+    let (reps, mds) = unzip rep_mds
+    let repList = zip paths reps
+    let mdList = zip paths mds
+    let bmdList = Prelude.map get_fmd_header mds
+    let bmd = mergeForestMDs bmdList
+    return (repList, mdList, bmd)
+
+insertRepMDsMap :: ForestMD b => [(String, IO (a,b))] -> IO (Map String a, Map String b, Forest_md)
+insertRepMDsMap inputs = do 
+    (repList, mdList, bmd) <- insertRepMDsList inputs
+    return (fromList repList, fromList mdList, bmd)
 
 insertRepMDs :: ForestMD b => [(String, IO (a,b))] -> IO (Map String a, Map String b, Forest_md)
 insertRepMDs inputs = do 
@@ -219,8 +238,6 @@ insertRepMDs inputs = do
     let bmdList = Prelude.map get_fmd_header mds
     let bmd = mergeForestMDs bmdList
     return (fromList repList, fromList mdList, bmd)
-
-
 
 
 
@@ -290,13 +307,17 @@ genRepMDField (Simple (internal, external, ty, predM)) = let
    (rep_ty, md_ty) = genRepMDTy ty
    in ((getFieldName   internal, TH.NotStrict, rep_ty),
        (getFieldMDName internal, TH.NotStrict, md_ty))
-genRepMDField (Comp (internal, externalE, ty, generatorP, generatorE, optPredE)) = let
+genRepMDField (Comp (internal, tyConNameOpt, externalE, ty, generatorP, generatorE, optPredE)) = let
    (rng_rep_ty, rng_md_ty) = genRepMDTy ty
-   (rep_ty, md_ty) = (mkStringMapTy rng_rep_ty, mkStringMapTy rng_md_ty)
+   (rep_ty, md_ty) = case tyConNameOpt of 
+                      Nothing ->  (mkStringListTy rng_rep_ty, mkStringListTy rng_md_ty)
+                      Just str -> (mkStringConTy (mkName str) rng_rep_ty, mkStringConTy (mkName str) rng_md_ty) 
    in ((getFieldName   internal, TH.NotStrict, rep_ty),
        (getFieldMDName internal, TH.NotStrict, md_ty))
 
-mkStringMapTy ty = AppT (AppT (ConT ''Map) (ConT ''String)) ty
+mkStringConTy con ty = AppT (AppT (ConT con) (ConT ''String)) ty
+mkStringListTy ty = AppT ListT (tyListToTupleTy [ConT ''String, ty])
+
 
 {- Generate type and meta-data representations. -}
 genRepMDTy ::  ForestTy -> (TH.Type, TH.Type)

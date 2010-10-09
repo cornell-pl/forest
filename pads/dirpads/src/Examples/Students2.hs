@@ -32,23 +32,6 @@ leaveRE = RE "LEAVE|Leave"
 withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
 
--- Auxiliary code
-template s = or [ s == "SSSS.txt"
-                , s == "SSS.txt"
-                , s == "sxx.txt"
-                , s == "sss.txt"
-                , s == "ssss.txt" ]
-
-splitExt s = let (dne, dotgeb) = Prelude.break (== '.') (reverse s) 
-             in case dotgeb of 
-                 [] -> (reverse dne, [])
-                 '.':tser -> (reverse tser, reverse dne)
-                 tser -> (reverse tser, reverse dne)
-
-getName = fst . splitExt
-getYear s = reverse (Prelude.take 2 (reverse s))
-
-
 
 [pads| 
   type Grade_t = Maybe (PstringME grade_RE)
@@ -95,7 +78,8 @@ getYear s = reverse (Prelude.take 2 (reverse s))
 [forest|
   -- Directory containing all students in a particular major.
   type Major_d = Directory 
-       { students is [ s :: File (Student <| getName s |>) | s <- matches (RE "[A-Za-z]*.txt") where <| not (template s) |> ] }
+       { students is Map [ s :: File (Student <| getName s |>) 
+                         | s <- matches (RE "[A-Za-z]*.txt") where <| not (template s) |> ] }
 
   -- Directory containing all students in a particular year
   type Class_d (year :: String) = Directory
@@ -108,8 +92,8 @@ getYear s = reverse (Prelude.take 2 (reverse s))
 
   -- Directory for all graduated students
   type Grads_d = Directory 
-    { classes is  [ aclass :: Class_d <| getYear aclass |>  
-                           | aclass <- matches (RE "classof[0-9][0-9]") ] }
+    { classes is  Map [ aclass :: Class_d <| getYear aclass |>  
+                      | aclass <- matches (RE "classof[0-9][0-9]") ] }
 
   -- Root of the hierarchy
   type PrincetonCS_d = Directory
@@ -118,6 +102,25 @@ getYear s = reverse (Prelude.take 2 (reverse s))
     , graduates :: Grads_d
     }
 |]
+
+-- Auxiliary code
+template s = or [ s == "SSSS.txt"
+                , s == "SSS.txt"
+                , s == "sxx.txt"
+                , s == "sss.txt"
+                , s == "ssss.txt" ]
+
+splitExt s = let (dne, dotgeb) = Prelude.break (== '.') (reverse s) 
+             in case dotgeb of 
+                 [] -> (reverse dne, [])
+                 '.':tser -> (reverse tser, reverse dne)
+                 tser -> (reverse tser, reverse dne)
+
+getName = fst . splitExt
+getYear s = reverse (Prelude.take 2 (reverse s))
+
+
+
 
 mkPrettyInstance ''PrincetonCS_d
 mkPrettyInstance ''PrincetonCS_d_md

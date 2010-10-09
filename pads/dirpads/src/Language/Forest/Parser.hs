@@ -172,6 +172,7 @@ compBody =  do
 compField :: String -> Parser Field
 compField internal_name = do
           { reserved "is" 
+          ; repTyConName <- optionMaybe (identifier)
           ; reservedOp "["
           ; externalE <- forestArg
           ; reservedOp "::"
@@ -183,7 +184,7 @@ compField internal_name = do
                               Right patTH -> return patTH
           ; (generatorE, predEOpt) <- compBody
           ; reservedOp "]"
-          ; return (Comp (internal_name, externalE, forest_ty, generatorP, generatorE, predEOpt))
+          ; return (Comp (internal_name, repTyConName, externalE, forest_ty, generatorP, generatorE, predEOpt))
           }
 
 
