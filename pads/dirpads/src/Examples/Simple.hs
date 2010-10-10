@@ -4,7 +4,6 @@
    implement pre-processor type constructor
    implement tar, gzip, etc. type constructors
    implement symbolic links
-   implement Map/List constructor form for comprehension
    debug CVS example
    build pretty printer for directory values and meta-data
    library for manipulating times and permissions
@@ -17,6 +16,7 @@
    implement regular expression primitives
    implement ls tool
 
+   DONE implement Map/List constructor form for comprehension
    DONE make escape syntax consistent
    DONE fix meta-data error propagation to match pads
    DONE implement nested directories
@@ -76,7 +76,7 @@ host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple"
 
 [forest| type Nested_d (file_name :: String) = Directory 
                { hostIndex is <|file_name++".txt"|>  :: File Hosts_t 
-               , hosts is [ h :: Scores_d | h <- <| getNames hostIndex |>  where <| h /= "china"|> ]
+               , hosts is Map [ h :: Scores_d | h <- <| getNames hostIndex |>  where <| h /= "china"|> ]
                }  |]
 
 (nested_remote_rep, nested_remote_md) = unsafePerformIO $ nested_d_load "remote" host_dir
@@ -86,7 +86,7 @@ re = RE ".*[.]txt"
 
 
 [forest| type Match_d = Directory
-             { files is [ h :: File Ptext | h <- matches (RE ".*[.]txt") where <| h /= "local.txt"|> ] }
+             { files is Map [ h :: File Ptext | h <- matches (RE ".*[.]txt") where <| h /= "local.txt"|> ] }
        |]
 
 (match_rep, match_md) = unsafePerformIO $ match_d_load  host_dir

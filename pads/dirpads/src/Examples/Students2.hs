@@ -103,6 +103,7 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
     }
 |]
 
+
 -- Auxiliary code
 template s = or [ s == "SSSS.txt"
                 , s == "SSS.txt"
@@ -122,8 +123,8 @@ getYear s = reverse (Prelude.take 2 (reverse s))
 
 
 
-mkPrettyInstance ''PrincetonCS_d
-mkPrettyInstance ''PrincetonCS_d_md
+--mkPrettyInstance ''PrincetonCS_d
+--mkPrettyInstance ''PrincetonCS_d_md
 
 cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
@@ -136,14 +137,15 @@ errs = fst cs_md
 
 
 clark = bse_grads07 ! "clark.txt"
-clark_doc = student_ppr clark
-clark_output n = pretty n clark_doc
+--clark_doc = student_ppr clark
+--clark_output n = pretty n clark_doc
 
-ppBseGrads07 n = putStrLn (pretty n (major_d_ppr (bse grads07)))
+--ppBseGrads07 n = putStrLn (pretty n (major_d_ppr (bse grads07)))
 
 
 student_input_file = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof10/AB10/APPS.txt"
 student_result :: (Student, Student_md) = unsafePerformIO $ parseFile1 "APPS" student_input_file
+-- (Student apps apps_courses, sfmd) = unsafePerformIO $ load1 "APPS" student_input_file
 
 finger_input_file = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/WITHDREW/finger.txt"
 finger_result :: (Student, Student_md) = unsafePerformIO $ parseFile1 "finger" finger_input_file

@@ -1,4 +1,5 @@
-{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables, TypeSynonymInstances #-}
+{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables, 
+    TypeSynonymInstances #-}
 module Language.Forest.MetaData where
 
 import System.Posix.Files
@@ -22,6 +23,7 @@ import Language.Pads.RegExp
 import Language.Pads.Generic
 import Language.Pads.GenPretty
 import Language.Forest.Errors
+
 
 {- Base type library support -}
 
@@ -61,12 +63,25 @@ instance Pretty FileMode where
 --instance Pretty FileType where
 -- ppr = text . show
 
+fileInfo_def = FileInfo { owner = ""
+                        , group = ""
+                        , size = 0
+                        , access_time = 0
+                        , mod_time = 0
+                        , mode = 0
+                        , kind = UnknownK       
+                        }
 
 data Forest_md = Forest_md { numErrors :: Int
                            , errorMsg  :: Maybe ErrMsg
                            , fileInfo  :: FileInfo 
                            }
    deriving (Typeable, Data, Eq, Show)
+
+forest_md_def = Forest_md{ numErrors = 1
+                         , errorMsg = Nothing
+                         , fileInfo = fileInfo_def
+                         }
 
 
 get_owner x = owner $ fileInfo $ fst x
@@ -91,12 +106,7 @@ instance Data b => ForestMD (Forest_md,b) where
   get_fmd_header (h,b) = h
   replace_fmd_header (h1,b) h2 = (h2,b)
 
-{-
-pprForestMD Forest_md {numErrors=num} = text "Errors:" <+> PP.ppr num 
 
-instance Pretty Forest_md where
-  ppr = pprForestMD 
--}
 
 cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = errorFileInfo}
 errorForestMD = Forest_md {numErrors = 1, errorMsg = Nothing, fileInfo = errorFileInfo}
@@ -157,6 +167,7 @@ getForestMD path = do
                                           }
                             })
          }
+
 
 
 errorFileInfo :: FileInfo

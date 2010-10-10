@@ -68,12 +68,17 @@ forestTy :: Parser ForestTy
 forestTy =   directoryTy
          <|> fileTy
          <|> maybeTy
+         <|> gzipTy
          <|> try fnAppTy
          <|> namedTy
+         <|> parenTy
          <?> "Forest type"
 
 fnTy   :: Parser ForestTy
 fnTy   =  namedTy
+
+parenTy :: Parser ForestTy
+parenTy = parens forestTy
 
 fnAppTy :: Parser ForestTy
 fnAppTy = do { ty <- fnTy
@@ -86,6 +91,12 @@ maybeTy = do { reserved "Maybe"
              ; ty <- forestTy
              ; return (FMaybe ty)
              } <?> "Forest Maybe type"
+
+gzipTy :: Parser ForestTy
+gzipTy = do { reserved "Gzip"
+             ; ty <- forestTy
+             ; return (Gzip ty)
+             } <?> "Forest Gzip type"
 
 fileTy :: Parser ForestTy
 fileTy = do { reserved "File"

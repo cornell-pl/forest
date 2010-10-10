@@ -10,6 +10,7 @@ newtype ForestDecl = ForestDecl (String, Maybe TH.Pat, ForestTy)
 
 data ForestTy = Directory DirectoryTy 
               | File FileTy 
+              | Gzip ForestTy
               | Named String 
               | FMaybe ForestTy
               | Fapp ForestTy TH.Exp
