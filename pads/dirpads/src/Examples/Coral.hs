@@ -83,9 +83,15 @@ status_re = RE "[0-9]+"
 |]
 
 [forest|
-  type Top = Directory 
+  type LogDir = Directory 
     { coral_log is "coralwebsrv.log" :: File CoralFile }
+
+  type SiteDir = Directory
+    { dates is [ d :: LogDir | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] }
+
+  type TopDir = Directory
+    { sites is [ s :: SiteDir | s <- matches (RE "[^.].*") ] }
+
 |]
 
-coral_dir = "/Users/nate/coral/cornell.edu/2010_01_02_00_01"
-(c_rep,c_md) = unsafePerformIO $ top_load coral_dir
+(c_rep,c_md) = unsafePerformIO $ topDir_load "/Users/nate/coral"
