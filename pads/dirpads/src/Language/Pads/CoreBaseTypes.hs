@@ -57,6 +57,9 @@ type Ptext_md = Base_md
 instance Pretty Pchar where
   ppr (Pchar c) = text (show c)
 
+instance Pretty Ptext where
+  ppr (Ptext str) = text str
+
 instance Pads Pint Base_md where
   parsePP = pint_parseM
 

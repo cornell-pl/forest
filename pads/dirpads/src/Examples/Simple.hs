@@ -1,21 +1,22 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
-   implement pre-processor type constructor
-   implement tar, gzip, etc. type constructors
-   implement symbolic links
-   debug CVS example
-   build pretty printer for directory values and meta-data
-   library for manipulating times and permissions
    explore laziness in loading directory files
+   get gdef to work for representations involving a map (right now raises exception if directory doesn't exist)
+   library for manipulating times and permissions
+   make relative paths work as arguments to ty_load
    implement glob patterns in addition to regular expressions?
    implement patterns in physical names for simple records?
-   make relative paths work as arguments to ty_load
    incorporate pads meta-data error counts into forest error counts.
-   get gdef to work for representations involving a map (right now raises exception if directory doesn't exist)
    implement regular expression primitives
    implement ls tool
+   implement pre-processor type constructor
+   debug CVS example: too many file handles open
+   change "type" to "newtype"?  (ask david and nate)
 
+   DONE implement symbolic links
+   DONE build pretty printer for directory values and meta-data
+   DONE implement tar, gzip, etc. type constructors
    DONE implement Map/List constructor form for comprehension
    DONE make escape syntax consistent
    DONE fix meta-data error propagation to match pads
@@ -62,6 +63,9 @@ getHost (Hosts_t hs) = case hs of
                          { local  is "local.txt"              :: File Hosts_t where <| (get_owner local_md) == "kfisher" |> 
                          , remote is <|file_name ++ ".txt"|>  :: Hosts_f 
                          , nested is <|getHost local|>        :: Scores_d     where <| (get_group nested_md) == (get_owner local_md) |> 
+                         , mylink_sym is "mylink"             :: SymLink      where <| mylink_sym == "quantum2" |>
+                         , mylink                             :: Scores_d
+--                         , mylink                             :: SymLink Scores_d   where <| sym_link mylink == "quantum" |>
                          }    |] 
 
 

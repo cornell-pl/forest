@@ -3,13 +3,19 @@ module Language.Forest.ForestIO where
 import Language.Pads.Padsc
 import Language.Forest.MetaData
 import Language.Forest.Generic
+import Language.Forest.Errors
 import System.FilePath.Posix
+import System.Posix.Files
 import System.Cmd
 import System.Exit
 import System.Directory
 import System.IO
+import Text.Regex
+
+import qualified Control.Exception as CE
 
 import Data.Data
+import Data.Maybe
 
 
 fileload :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
@@ -75,8 +81,8 @@ tarload load path = checkPath path (do
                   }
                  ExitFailure errCode -> do
                   { let newMD = updateForestMDwith md [systemErrorForestMD errCode]
-                  ; let md' = replace_fmd_header gdef newMD      -- This won't work until we get generic default working on maps, etc.
-                  ; return (gdef, md')
+                  ; let md' = replace_fmd_header myempty newMD      -- This won't work until we get generic default working on maps, etc.
+                  ; return (myempty, md')
                   }
   ; setCurrentDirectory savedCurDir
   ; remove tempDir
@@ -104,4 +110,52 @@ gzipload' load path = checkPath path (do
         }
   })
 
+doLoadSymLink :: FilePath -> IO(FilePath, (Forest_md, Base_md))
+doLoadSymLink path = checkPath path (do
+    md <- getForestMD path
+    fpEither <- CE.try (readSymbolicLink path)
+    case fpEither of
+        Left (e::CE.SomeException) -> return
+                ("", 
+                 (updateForestMDwith md 
+                   [Forest_md { Language.Forest.MetaData.numErrors = 1
+                              , errorMsg = Just (ForestIOException (show e))
+                              , fileInfo = errorFileInfo
+                              }],
+                  cleanBasePD))
+        Right fp -> return
+                (fp, (md,cleanBasePD))
+  )
+
+
+
+doLoadMaybe :: ForestMD md =>  IO (rep,md) -> IO (Maybe rep, (Forest_md, Maybe md))
+doLoadMaybe f = do
+   (r,fmd) <- f 
+   let bfmd = get_fmd_header fmd
+   if Language.Forest.MetaData.numErrors bfmd == 0 
+       then return (Just r, (bfmd, Just fmd))
+       else return (Nothing, (cleanForestMD, Nothing))
+
+checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
+checkPath path ifExists = do 
+   { exists <-  fileExist path
+   ; if not exists then 
+       do { def_md <- myempty
+          ; let new_md = replace_fmd_header def_md (missingPathForestMD path)
+          ; return (myempty, new_md)
+          }
+     else ifExists
+   }
+
+getMatchingFiles :: FilePath -> RE -> IO [FilePath]
+getMatchingFiles path re = do 
+  { files <- getDirectoryContents path
+  ; return (filterByRegex re files)
+  }
+
+filterByRegex (RE regStr) candidates = 
+  let re = mkRegexWithOpts ('^':regStr++"$") True True
+      matchOne str = isJust (matchRegex re str)
+  in Prelude.filter matchOne candidates
 

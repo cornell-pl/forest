@@ -336,9 +336,10 @@ maybeTy = do { reserved "Maybe"
              ; return (Pmaybe ty)
              } <?> "maybe type"
 
+
 --       | Plist  PadsTy (Maybe PadsTy) (Maybe TermCond)
--- [pads| type Entries = [Pint] with sep ',' ) and term (:eof:)         |]
--- [pads| type Entries = [Pint] with sep ',' and term (:length of exp:)  |]
+-- [pads| type Entries = [Pint] with sep ',' and term eof         |]
+-- [pads| type Entries = [Pint] with sep ',' and term length of exp  |]
 -- [pads| type Entries = [Pint] with sep ',' |]    -- keep parsing until get an error in element type
 
 sortModifier (Left sep) =   (Just sep, Nothing)

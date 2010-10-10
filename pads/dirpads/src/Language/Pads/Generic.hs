@@ -18,7 +18,7 @@ import qualified Language.Pads.Source as S
 import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Control.Exception as CE
 import Data.Data
-import Data.Generics.Aliases (extB)
+import Data.Generics.Aliases (extB, ext1B)
 import Data.Map
 
 class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
@@ -89,8 +89,9 @@ myempty = general
       `extB` int
       `extB` integer
       `extB` float 
-      `extB` double where
---      `extB` map 
+      `extB` double 
+      `ext1B` map 
+      `ext1B` list where
   -- Generic case
   general :: Data a => a
   general = fromConstrB myempty (indexConstr (dataTypeOf general) 1)
@@ -101,29 +102,10 @@ myempty = general
   integer = 0      :: Integer
   float   = 0.0    :: Float
   double  = 0.0    :: Double
---  map     = Data.Map.empty  :: Map b c
+  list :: Data b => [b]
+  list    = [myempty]
+  map :: (Data b) => StringMap b
+  map = Data.Map.empty
 
-
--- ad hoc case for partiular type construct extB
--- empty (syb library)
-{-
-empty :: forall a. Data a => a
-empty = general 
-      `extB` char 
-      `extB` int
-      `extB` integer
-      `extB` float 
-      `extB` double where
-  -- Generic case
-  general :: Data a => a
-  general = fromConstrB empty (indexConstr (dataTypeOf general) 1)
-  
-  -- Base cases
-  char    = '\NUL'
-  int     = 0      :: Int
-  integer = 0      :: Integer
-  float   = 0.0    :: Float
-  double  = 0.0    :: Double
--}
-
+type StringMap a = Data.Map.Map String a
 

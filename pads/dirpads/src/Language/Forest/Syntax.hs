@@ -14,6 +14,7 @@ data ForestTy = Directory DirectoryTy
               | Tar ForestTy
               | Named String 
               | FMaybe ForestTy
+              | SymLink
               | Fapp ForestTy TH.Exp
    deriving (Eq, Data, Typeable, Show)
 

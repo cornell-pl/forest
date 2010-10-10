@@ -68,12 +68,20 @@ forestTy :: Parser ForestTy
 forestTy =   directoryTy
          <|> fileTy
          <|> maybeTy
+         <|> symLinkTy
          <|> gzipTy
          <|> tarTy
          <|> try fnAppTy
          <|> namedTy
          <|> parenTy
          <?> "Forest type"
+
+symLinkTy :: Parser ForestTy 
+symLinkTy = do 
+   { reserved "SymLink"
+   ; return SymLink
+   } <?> "symbolic link type"
+
 
 fnTy   :: Parser ForestTy
 fnTy   =  namedTy
