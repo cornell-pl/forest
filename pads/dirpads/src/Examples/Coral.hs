@@ -2,20 +2,15 @@
 
 module Examples.Coral where
 
-import Language.Pads.Generic
 import Language.Pads.Padsc
 import Language.Forest.Forestc
-import Language.Haskell.TH
-import Language.Forest.Syntax
-import Language.Forest.CodeGen
-import System.Time.Utils
+import Language.Pads.GenPretty
+
+import Data.Map (fromListWith)
+
 import System.IO.Unsafe (unsafePerformIO)
 
-import Language.Haskell.Meta as LHM
-import Data.Map
-
 comma_ws = RE ",[ \t]*"
-
 status_re = RE "[0-9]+"
 
 [pads|
@@ -84,14 +79,46 @@ status_re = RE "[0-9]+"
 
 [forest|
   type LogDir = Directory 
-    { coral_log is "coralwebsrv.log" :: File CoralFile }
+    { coral_log is "coralwebsrv.log.gz" :: Gzip (File CoralFile) }
 
   type SiteDir = Directory
     { dates is [ d :: LogDir | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] }
 
   type TopDir = Directory
     { sites is [ s :: SiteDir | s <- matches (RE "[^.].*") ] }
-
 |]
 
-(c_rep,c_md) = unsafePerformIO $ topDir_load "/Users/nate/coral"
+load_logs () = fst (unsafePerformIO $ topDir_load "/Users/nate/coral")
+
+get_stats e = 
+  case payload e of 
+    In i -> in_stats i
+    Out o -> out_stats o
+
+get_total e = 
+  case stats_total $ get_stats e of 
+    Pint n -> n
+
+get_entries :: LogDir -> [Entry]
+get_entries (LogDir (CoralFile (Entries es))) = es
+
+get_hosts :: TopDir -> [(String,SiteDir)]
+get_hosts (TopDir p) = p
+
+get_date w = Prelude.take 10 w
+
+get_dates :: SiteDir -> [(String,LogDir)]
+get_dates (SiteDir p) = p
+
+-- map 
+by_host tdir = 
+   [ (host,get_total e) | (host,hdir) <- get_hosts tdir,
+                          (_,ldir) <- get_dates hdir,
+                          e <- get_entries ldir ]
+by_date tdir = 
+   [ (get_date datetime,get_total e) | (host,hdir) <- get_hosts tdir,
+                                       (datetime,ldir) <- get_dates hdir,
+                                       e <- get_entries ldir ]
+
+-- reduce (using a map to accumulate)
+go m = fromListWith (+) (m (load_logs ()))
