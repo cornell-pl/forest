@@ -25,16 +25,30 @@ fileload1 arg path = do
 --XXX need to handle possible failues; although we can assume that file exists.
 gunzip :: FilePath -> IO(FilePath)  
 gunzip path = do
-  { exitCode <- system ("gunzip "++path)
-  ; return (dropExtension path)
+  { let (root, ext) = splitExtension path
+  ; let cmd = "gzip " ++ path ++ " -c > " ++ root 
+  ; putStrLn cmd
+  ; exitCode <- system cmd
+  ; putStrLn root
+  ; return root
   }
 
 gzip :: FilePath -> IO()
 gzip path = do
- { -- (root, ext) <- splitExtension path
- ; exitCode <- system ("gzip " ++ path)
+ { exitCode <- system ("gzip " ++ path)
  ; return ()
  }
+
+gzipload'  :: (ForestMD md, Data rep) =>  (FilePath -> IO (rep, md)) -> FilePath -> IO (rep, md)
+gzipload' load path = checkPath path (do 
+  { md <- getForestMD path
+  ; newpath <- gunzip path
+  ; (rep, md_zip) <- load newpath
+  ; let md' = replace_fmd_header md_zip md
+--  ; gzip newpath
+  ; return (rep, md')
+  })
+
 
 gzipload :: Forest rep md =>  FilePath -> IO(rep, md)
 gzipload path = checkPath path (do 
@@ -45,15 +59,3 @@ gzipload path = checkPath path (do
   ; gzip newpath
   ; return (rep, md')
   })
-
-gzipload'  :: (ForestMD md, Data rep) =>
-     (FilePath -> IO (rep, md)) -> FilePath -> IO (rep, md)
-gzipload' load path = checkPath path (do 
-  { md <- getForestMD path
-  ; newpath <- gunzip path
-  ; (rep, md_zip) <- load newpath
-  ; let md' = replace_fmd_header md_zip md
-  ; gzip newpath
-  ; return (rep, md')
-  })
-
