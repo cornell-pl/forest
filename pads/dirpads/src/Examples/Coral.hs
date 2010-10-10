@@ -23,21 +23,22 @@ status_re = RE "[0-9]+"
 
   type Byte = constrain x :: Pint where <| 0 <= x && x <= 256 |>
 
-  type IP = (Byte,'.',Byte,'.',Byte,'.', Byte)  
-  
-  type IP_Port = (IP,':',Pint)
+  type IP_Port = 
+    { '"', 
+      ip :: (Byte,'.',Byte,'.',Byte,'.', Byte), ":",
+      port :: Pint, '"' }
 
   type Status = PstringME(status_re)
 
   type Statistics = 
-    { ssize       :: Pint,      comma_ws
-    , sproxy      :: /"[01]"/,   comma_ws
-    , slevel      :: Pint,      comma_ws
-    , slookup     :: Pint,      comma_ws
-    , sxfer       :: Pint,      comma_ws
-    , stotal      :: Pint }
+    { stats_size       :: Pint,      comma_ws
+    , stats_proxy      :: /"[01]"/,  comma_ws
+    , stats_level      :: Pint,      comma_ws
+    , stats_lookup     :: Pint,      comma_ws
+    , stats_xfer       :: Pint,      comma_ws
+    , stats_total      :: Pint }
 
-  type NoQuote = PstringME (RE "[^\"]")
+  type NoQuote = PstringME (RE "[^\"]*")
 
   type Generic = ('"',NoQuote,'"')
 
@@ -45,38 +46,46 @@ status_re = RE "[0-9]+"
 
   data Header = 
     { version       :: /"[12]"/,        comma_ws
-    , time          :: Time    ,        comma_ws }
+    , time          :: Time     }
 
   data Request = 
    { src       :: IP_Port, comma_ws
    , dst       :: IP_Port, comma_ws
    , url       :: Url } 
 
-  data In = 
-     { "IN",                 comma_ws 
-     , in_req    :: Request, comma_ws
-     , status1   :: Status,  comma_ws
-     , status2   :: Status,  comma_ws
-     , in_stats  :: Statistics }    
+  data InData =
+    { "\"IN\"",               comma_ws
+    , in_req     :: Request,  comma_ws
+    , in_status1 :: Status,   comma_ws
+    , in_status2 :: Status,   comma_ws
+    , in_stats   :: Statistics }
 
-  data Out = 
-     { "OUT",                            comma_ws 
-     , remote      :: /"\"(REM|LOC)\""/, comma_ws
-     , out_req     :: Request,           comma_ws
-     , url2        :: Url,               comma_ws
-     , status      :: Status,            comma_ws
-     , out_stats   :: Statistics,        comma_ws
-     , x_forwarded :: Generic,           comma_ws
-     , via         :: Generic }
+  data OutData = 
+    { "\"OUT\"",                          comma_ws 
+    , out_remote    :: /"\"(REM|LOC)\""/, comma_ws
+    , out_req       :: Request,           comma_ws
+    , out_referrer  :: Url,               comma_ws
+    , out_status    :: Status,            comma_ws
+    , out_stats     :: Statistics,        comma_ws
+    , out_forwarded :: Generic,           comma_ws
+    , out_via       :: Generic  }
 
-  type InOut = Out
+  data InOut = In InData | Out OutData
 
   data Entry = 
-     { header :: Header, 
-       payload :: InOut }
+    { header :: Header,   comma_ws
+    , payload :: InOut
+    , Eor }
 
   type Entries = [Entry] with term Eor
+  
+  type CoralFile = (Entries, Eof)
 |]
 
-coral_input_file = "/home/nate/coral-sample.log"
-(res,md) = unsafePerformIO $ parseFile1 "coral-sample" coral_input_file
+[forest|
+  type Top = Directory 
+    { coral_log is "coralwebsrv.log" :: File CoralFile }
+|]
+
+coral_dir = "/Users/nate/coral/cornell.edu/2010_01_02_00_01"
+(c_rep,c_md) = unsafePerformIO $ top_load coral_dir
