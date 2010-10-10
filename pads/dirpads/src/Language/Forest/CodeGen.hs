@@ -98,6 +98,7 @@ defE ty = do
                                 Just argE ->   return (AppE (VarE 'def1) argE)
   Directory dirTy -> defDirectory dirTy 
   Gzip ty -> defE ty
+  Tar  ty -> defE ty
   FMaybe forestTy -> return (ConE 'Nothing)
   Fapp (Named f_name) argE  -> return (AppE (VarE (getDefName f_name)) argE)
 
@@ -190,6 +191,7 @@ rawLoadE ty pathE = case ty of
                                 Nothing ->     return (AppE (VarE 'fileload) pathE)
                                 Just argE ->   return (AppE (AppE (VarE 'fileload1) argE) pathE)
   Gzip ty         -> loadGzip ty pathE
+  Tar  ty         -> loadTar  ty pathE
   Directory dirTy -> loadDirectory dirTy pathE
   FMaybe forestTy -> loadMaybe forestTy pathE
   Fapp (Named f_name) argE  -> return (AppE (AppE (VarE (getLoadName f_name)) argE) pathE)   -- XXX should add type checking to ensure that ty is expecting an argument
@@ -201,6 +203,15 @@ loadGzip ty pathE = do
   ; rawE <- loadE ty newPathE
   ; let rhsE =  LamE [newPathP] rawE
   ; return (AppE (AppE (VarE 'gzipload') rhsE) pathE)
+  }
+
+loadTar :: ForestTy -> TH.Exp -> Q TH.Exp
+loadTar ty pathE = do
+  { newPathName <- newName "new_path"
+  ; let (newPathE, newPathP) = genPE newPathName
+  ; rawE <- loadE ty newPathE
+  ; let rhsE =  LamE [newPathP] rawE
+  ; return (AppE (AppE (VarE 'tarload) rhsE) pathE)
   }
 
 {-
@@ -409,6 +420,7 @@ genRepMDTy ty = case ty of
     Directory _          -> error "Forest: Directory declarations must appear at the top level."
     File (ty_name,arg)   -> (ConT (getTyName ty_name), tyListToTupleTy [ConT ''Forest_md, ConT (getMDName ty_name)])
     Gzip ty              -> genRepMDTy ty
+    Tar  ty              -> genRepMDTy ty
     Named ty_name        -> (ConT (getTyName ty_name), ConT (getMDName ty_name))
     FMaybe ty            -> genRepMDMaybe ty
     Fapp ty arg          -> genRepMDTy ty

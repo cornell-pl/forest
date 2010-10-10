@@ -8,6 +8,7 @@ data ErrMsg = ForestError String
             | ForestIOException String
             | PredicateFailure
             | MissingFile String
+            | SystemError Int
      deriving (Typeable, Data, Show, Eq)
 
 {- XXX-KSF: fix pretty printing to use pretty printing combinators rather than string ++ 

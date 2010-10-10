@@ -12,7 +12,7 @@ import qualified Control.Exception as CE
 import Data.Data
 import Data.Generics.Builders
 import Data.Maybe
-import Data.List hiding (group)
+import Data.List hiding (group, unzip, zip)
 
 import Data.DeriveTH                 -- Library for deriving instances for existing types
 
@@ -111,6 +111,7 @@ instance Data b => ForestMD (Forest_md,b) where
 cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = errorFileInfo}
 errorForestMD = Forest_md {numErrors = 1, errorMsg = Nothing, fileInfo = errorFileInfo}
 missingPathForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MissingFile path), fileInfo = errorFileInfo}
+systemErrorForestMD i = Forest_md {numErrors = 1, errorMsg = Just (SystemError i), fileInfo = errorFileInfo}
 
 mergeErrors m1 m2 = case (m1,m2) of
             (Nothing,Nothing) -> Nothing
