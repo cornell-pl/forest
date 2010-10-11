@@ -2,7 +2,6 @@
 
 {- To do:
    explore laziness in loading directory files
-   get gdef to work for representations involving a map (right now raises exception if directory doesn't exist)
    library for manipulating times and permissions
    make relative paths work as arguments to ty_load
    implement glob patterns in addition to regular expressions?
@@ -14,6 +13,7 @@
    debug CVS example: too many file handles open
    change "type" to "newtype"?  (ask david and nate)
 
+   DONE get gdef to work for representations involving a map (right now raises exception if directory doesn't exist)
    DONE implement symbolic links
    DONE build pretty printer for directory values and meta-data
    DONE implement tar, gzip, etc. type constructors

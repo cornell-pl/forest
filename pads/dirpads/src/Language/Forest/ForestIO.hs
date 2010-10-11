@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Language.Forest.ForestIO where
 
 import Language.Pads.Padsc
@@ -10,6 +11,13 @@ import System.Cmd
 import System.Exit
 import System.Directory
 import System.IO
+-- import Data.Time.Clock (getCurrentTime :: IO UTCTime)
+-- import Data.Time.Clock.Posix (getPOSIXTime:: IO POSIXTime)
+
+-- EpochTime = CTime
+-- Defined in Data.Time.Clock.POSIX
+-- posixSecondsToUTCTime (realToFrac :: POSIXTime)
+
 import Text.Regex
 
 import qualified Control.Exception as CE
@@ -104,9 +112,9 @@ gzipload' load path = checkPath path (do
         }
       ExitFailure errCode -> do
         { let newMD = updateForestMDwith md [systemErrorForestMD errCode]
-        ; let md' = replace_fmd_header gdef newMD                      -- This won't work until we get generic default working on maps, etc.
+        ; let md' = replace_fmd_header myempty newMD                      
         ; remove newpath
-        ; return (gdef, md')
+        ; return (myempty, md')
         }
   })
 
@@ -141,7 +149,7 @@ checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
 checkPath path ifExists = do 
    { exists <-  fileExist path
    ; if not exists then 
-       do { def_md <- myempty
+       do { let def_md = myempty
           ; let new_md = replace_fmd_header def_md (missingPathForestMD path)
           ; return (myempty, new_md)
           }

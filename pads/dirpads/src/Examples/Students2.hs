@@ -11,7 +11,7 @@ module Examples.Students where
 
 import Language.Pads.Padsc
 import Language.Forest.Forestc
-import Language.Haskell.TH
+import Language.Haskell.TH hiding (ppr)
 import Language.Forest.Syntax
 import Language.Forest.CodeGen
 import System.Time.Utils
@@ -21,6 +21,7 @@ import Language.Haskell.Meta as LHM
 import Data.Map
 
 import Language.Pads.GenPretty
+import Text.PrettyPrint.Mainland
 
 ws = RE "[ \t]+"
 ows =  RE "[ \t]*"
@@ -123,11 +124,17 @@ getYear s = reverse (Prelude.take 2 (reverse s))
 
 
 
---mkPrettyInstance ''PrincetonCS_d
---mkPrettyInstance ''PrincetonCS_d_md
+mkPrettyInstance ''PrincetonCS_d
+mkPrettyInstance ''PrincetonCS_d_md
 
 cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
+
+grad09_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates/classof09"
+(grad09_rep, grad09_md) = unsafePerformIO $ (class_d_load "09") grad09_dir
+
+majorBSE09_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates/classof09/BSE09"
+(bse09_rep, bse09_md) = unsafePerformIO $ major_d_load  majorBSE09_dir
 
 Grads_d grads = graduates cs_rep
 grads07 = grads ! "classof07" 
@@ -135,13 +142,14 @@ Major_d bse_grads07 = bse grads07
 
 errs = fst cs_md
 
+errsP = pretty 80 (ppr errs)
+
 
 clark = bse_grads07 ! "clark.txt"
---clark_doc = student_ppr clark
---clark_output n = pretty n clark_doc
+clark_doc = student_ppr clark
+clark_output n = putStrLn (pretty n clark_doc)
 
---ppBseGrads07 n = putStrLn (pretty n (major_d_ppr (bse grads07)))
-
+ppBseGrads07 n = putStrLn (pretty n (major_d_ppr (bse grads07)))
 
 student_input_file = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof10/AB10/APPS.txt"
 student_result :: (Student, Student_md) = unsafePerformIO $ parseFile1 "APPS" student_input_file

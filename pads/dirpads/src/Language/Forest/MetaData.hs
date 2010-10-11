@@ -5,16 +5,22 @@ module Language.Forest.MetaData where
 import System.Posix.Files
 import System.Posix.User
 import System.Posix.Types
+import Foreign.C.Types
 import System.Posix.Directory
+import System.Posix.Time
 import System.Directory
 import Text.Regex
+import System.Time.Utils
+import Data.Time.Clock.POSIX
+import Data.Time.Clock
+
 import qualified Control.Exception as CE
 
 import Data.Data
 import Data.Generics.Builders
-import Data.List hiding (group, unzip, zip)
-
 import Data.DeriveTH                 -- Library for deriving instances for existing types
+
+import Data.List hiding (group, unzip, zip)
 
 import Text.PrettyPrint.Mainland as PP hiding (group, empty)
 
@@ -29,30 +35,36 @@ import Language.Forest.Errors
 
 
 
-data FileType = SimpleK | DirectoryK | UnknownK
+data FileType = UnknownK | SimpleK | DirectoryK 
  deriving (Eq, Show, Data, Typeable)
+
+(derive makeDataAbstract ''COff)
+(derive makeDataAbstract ''CMode)
+(derive makeDataAbstract ''CTime)
 
 data FileInfo = FileInfo { owner :: String
                          , group :: String
                          , size  :: COff
                          , access_time :: EpochTime
                          , mod_time :: EpochTime
+                         , read_time :: EpochTime
                          , mode :: FileMode
                          , isSymLink :: Bool
                          , kind :: FileType
                          }
-       deriving (Eq, Show)
+       deriving (Eq, Show, Data, Typeable)
 
 {- Function System.Time.Utils.epochToClockTime converts EpochTime to CalendarTime -}
 
-(derive makeTypeable     ''FileInfo)
-(derive makeDataAbstract ''FileInfo)
+
+-- instance Pretty UTCTime where
+-- ppr = text . show
 
 instance Pretty COff where
  ppr = text . show 
 
 instance Pretty EpochTime where
- ppr = text . show
+ ppr = text . show . epochToClockTime 
 
 instance Pretty FileMode where
  ppr = text . show
@@ -64,6 +76,7 @@ fileInfo_def = FileInfo { owner = ""
                         , group = ""
                         , size = 0
                         , access_time = 0
+                        , read_time = 0
                         , mod_time = 0
                         , mode = 0
                         , isSymLink = False
@@ -76,6 +89,7 @@ errorFileInfo  = FileInfo
      , group = ""
      , size  = -1
      , access_time = -1
+     , read_time = -1
      , mod_time = -1
      , mode     = -1
      , isSymLink = False
@@ -99,6 +113,7 @@ get_owner x = owner $ fileInfo $ fst x
 get_group x = group $ fileInfo $ fst x
 get_size  x = size $ fileInfo $ fst x
 get_access_time  x = access_time $ fileInfo $ fst x
+get_read_time  x = read_time $ fileInfo $ fst x
 get_mod_time  x = mod_time $ fileInfo $ fst x
 get_mode  x = mode $ fileInfo $ fst x
 get_sym  x = isSymLink $ fileInfo $ fst x
@@ -167,6 +182,7 @@ getForestMD path = do
          ; let file_groupID = fileGroup fd
          ; groupEntry <- getGroupEntryForID file_groupID
          ; fdsym <- getSymbolicLinkStatus path
+         ; readTime <- epochTime
          ; return (Forest_md{ numErrors = 0
                             , errorMsg = Nothing
                             , fileInfo = FileInfo 
@@ -175,6 +191,7 @@ getForestMD path = do
                                           , size  = fileSize fd
                                           , access_time = accessTime fd
                                           , mod_time = modificationTime fd
+                                          , read_time = readTime
                                           , mode     =  fileMode fd
                                           , isSymLink = isSymbolicLink fdsym
                                           , kind  = fileStatusToKind fd

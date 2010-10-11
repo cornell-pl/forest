@@ -1,11 +1,11 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, Rank2Types #-}
 
 module Language.Pads.Generic (
       Pads(..), 
       Pads1(..), 
       parseFileWith,
       parseFileWithRaw,
-      gdef,
+--      gdef,
       myempty
    )
 
@@ -20,6 +20,10 @@ import qualified Control.Exception as CE
 import Data.Data
 import Data.Generics.Aliases (extB, ext1B)
 import Data.Map
+
+import System.Posix.Types
+import Foreign.C.Types
+
 
 class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
   def :: pads
@@ -83,6 +87,21 @@ gdef = def_help
              constr = getConstr ty
          in fromConstrB gdef constr 
 
+ext2 :: (Data a, Typeable2 t)
+     => c a
+     -> (forall d1 d2. (Data d1, Data d2) => c (t d1 d2))
+     -> c a
+ext2 def ext = maybe def id (dataCast2 ext)
+
+newtype B x = B {unB :: x}
+
+ext2B :: (Data a, Typeable2 t)
+      => a
+      -> (forall b1 b2. (Data b1, Data b2) => t b1 b2)
+      -> a
+ext2B def ext = unB ((B def) `ext2` (B ext))
+
+
 myempty :: forall a. Data a => a
 myempty = general 
       `extB` char 
@@ -90,7 +109,10 @@ myempty = general
       `extB` integer
       `extB` float 
       `extB` double 
-      `ext1B` map 
+      `extB` coff
+      `extB` epochTime
+      `extB` fileMode
+      `ext2B` map
       `ext1B` list where
   -- Generic case
   general :: Data a => a
@@ -102,10 +124,12 @@ myempty = general
   integer = 0      :: Integer
   float   = 0.0    :: Float
   double  = 0.0    :: Double
+  coff    = 0      :: COff
+  epochTime = 0    :: EpochTime
+  fileMode = 0     :: FileMode
   list :: Data b => [b]
-  list    = [myempty]
-  map :: (Data b) => StringMap b
+  list    = []
+  map :: Data.Map.Map k v
   map = Data.Map.empty
 
-type StringMap a = Data.Map.Map String a
 
