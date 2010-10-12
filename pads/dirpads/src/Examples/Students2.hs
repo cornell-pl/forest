@@ -130,6 +130,7 @@ mkPrettyInstance ''PrincetonCS_d_md
 cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
 
+doTar = tarFiles cs_md "CS.tar"
 
 -- Find all files mentioned in cs
 files = listFiles cs_md
