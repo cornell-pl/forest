@@ -1,3 +1,5 @@
+{- XXX  add error checking to all calls to system; wrap with failure -}
+
 {-# LANGUAGE ScopedTypeVariables #-}
 module Language.Forest.ForestIO where
 
@@ -39,6 +41,17 @@ fileload1 arg path = do
    return (rep, (fmd, md))
 
 
+tarFiles :: (ForestMD md) => md -> String -> IO ()
+tarFiles md name = do 
+ { let files = filter (\s->s /= "") (listFiles md)
+ ; td <- getTemporaryDirectory
+ ; (fp, handle) <- openTempFile td "ForestTarSpec"
+ ; mapM_ (hPutStrLn handle) files
+ ; hClose handle
+ ; let cmd = "tar -T " ++ fp ++ " -cf " ++ name
+ ; system cmd
+ ; removeFile fp
+ }
 
 getTempFile :: IO FilePath
 getTempFile = do 

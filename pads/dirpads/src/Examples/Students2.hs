@@ -130,6 +130,10 @@ mkPrettyInstance ''PrincetonCS_d_md
 cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
 
+
+-- Find all files mentioned in cs
+files = listFiles cs_md
+
 grad09_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates/classof09"
 (grad09_rep, grad09_md) = unsafePerformIO $ (class_d_load "09") grad09_dir
 

@@ -42,7 +42,8 @@ data FileType = UnknownK | SimpleK | DirectoryK
 (derive makeDataAbstract ''CMode)
 (derive makeDataAbstract ''CTime)
 
-data FileInfo = FileInfo { owner :: String
+data FileInfo = FileInfo { fullpath :: FilePath
+                         , owner :: String
                          , group :: String
                          , size  :: COff
                          , access_time :: EpochTime
@@ -72,7 +73,8 @@ instance Pretty FileMode where
 --instance Pretty FileType where
 -- ppr = text . show
 
-fileInfo_def = FileInfo { owner = ""
+fileInfo_def = FileInfo { fullpath = ""
+                        , owner = ""
                         , group = ""
                         , size = 0
                         , access_time = 0
@@ -85,7 +87,8 @@ fileInfo_def = FileInfo { owner = ""
 
 errorFileInfo :: FileInfo
 errorFileInfo  = FileInfo 
-     { owner = ""
+     { fullpath = ""
+     , owner = ""
      , group = ""
      , size  = -1
      , access_time = -1
@@ -108,7 +111,7 @@ forest_md_def = Forest_md{ numErrors = 1
                          , fileInfo = fileInfo_def
                          }
 
-
+get_fullpath x = fullpath $ fileInfo $ fst x
 get_owner x = owner $ fileInfo $ fst x
 get_group x = group $ fileInfo $ fst x
 get_size  x = size $ fileInfo $ fst x
@@ -186,7 +189,8 @@ getForestMD path = do
          ; return (Forest_md{ numErrors = 0
                             , errorMsg = Nothing
                             , fileInfo = FileInfo 
-                                          { owner = userName ownerEntry
+                                          { fullpath = path
+                                          , owner = userName ownerEntry
                                           , group = groupName groupEntry
                                           , size  = fileSize fd
                                           , access_time = accessTime fd
