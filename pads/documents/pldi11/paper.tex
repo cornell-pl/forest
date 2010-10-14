@@ -113,23 +113,45 @@ Describe both the on-disk representation and the in-memory
 representation (emphasize rep, but mention pds are available).
 
 \begin{itemize}
-\item Pads haskell features.  Note: related to PADS/ML and PADS/C but
+\item Overview: Files, Directories, and Symbolic Links
+\item Files
+\begin{itemize}
+\item Atomic file types: text, binary, plugins?
+\item Pads/haskell files.  Note: related to PADS/ML and PADS/C but
 a completely new design and implementation for Haskell.
+\end{itemize}
+\item Directories
+\begin{itemize}
 \item Record directories, concrete and computed name matching
 \item Dependency, Constraints and Parameters
 \item Comprehensions and matching
-\item Maybe, Unions
 \end{itemize}
+\item Symbolic links
+\item Maybe
+\item Unions    - We don't have these at the moment.  Should we add them?
+\item Gzip, Tar
+\end{itemize}
+
+Give list of examples we've coded in Forest.  Include universal rep?
 
 \section{Programming with Forest}
 \label{sec:exp}
 
 \begin{itemize}
-\item describe how to use/loade described data into memory
+\item meta data
 \item describe lazy semantics
-\item explain tools currently available
+\item describe how to use/load described data into memory
 \item show example program to analyze student data
 \end{itemize}
+
+\section{Tools}
+\label{sec:tools}
+\begin{itemize}
+\item tar, ...
+\item Graph representation giving status
+\item ??
+\end{itemize}
+
 
 \section{Implementation}
 
