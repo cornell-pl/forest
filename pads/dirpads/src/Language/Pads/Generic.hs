@@ -6,7 +6,8 @@ module Language.Pads.Generic (
       parseFileWith,
       parseFileWithRaw,
 --      gdef,
-      myempty
+      myempty,
+      doTime
    )
 
 where
@@ -23,6 +24,7 @@ import Data.Map
 
 import System.Posix.Types
 import Foreign.C.Types
+import System.CPUTime
 
 
 class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
@@ -133,3 +135,9 @@ myempty = general
   map = Data.Map.empty
 
 
+doTime a = do
+ { begin <- getCPUTime
+ ; v <- a
+ ; end <- getCPUTime
+ ; return (v, end-begin)
+ }

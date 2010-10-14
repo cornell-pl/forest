@@ -26,6 +26,8 @@ haskell-src-exts
 cpphs
 HUnit
 parsec
+dlist
+Glob
 
 
 Updating head version:

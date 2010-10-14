@@ -18,6 +18,7 @@ import Language.Haskell.Meta as LHM
 import Language.Haskell.TH as TH hiding (CharL)
 import Data.Char
 import Language.Pads.RegExp as PRE 
+import System.FilePath.Glob
 
 type Parser = PS.Parser
 
@@ -149,6 +150,13 @@ voidlitTy = do {reserved "Void"
               ; return S.VoidL
               }
 
+globlitTy :: Parser S.Lit
+globlitTy = do
+ { reserved "GL"
+ ; s <- stringLiteral
+ ; return (S.GlobL s)
+ }
+
 reglitTy :: Parser S.Lit
 reglitTy = do { reserved "RE"
               ; s <- stringLiteral
@@ -173,6 +181,7 @@ lit =   charlitTy
     <|> voidlitTy
     <|> reglitTy
 --    <|> reglitTy2           Doesn't really work; can't find end of regular expression
+    <|> globlitTy
     <|> intlitTy
     <|> hidlitTy
     <|> hexplitTy

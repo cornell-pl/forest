@@ -21,4 +21,6 @@ listPaths :: (ForestMD md) => md -> [FilePath]
 listPaths md = map fullpath (listify (\(_::FileInfo) -> True) md)
 
 listEmptyFiles md = listify (\(r::FileInfo) -> (fullpath r) == "") md
+
+
   

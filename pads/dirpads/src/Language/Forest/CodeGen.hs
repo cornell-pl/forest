@@ -275,7 +275,8 @@ loadSimple (internal, externalE, forestTy, predM) pathE = do
    let (repE, repP) = genPE repName
    let (mdE,  mdP ) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
-   let newPathE     = appendStringM pathE (appendStringM (mkStrLitM "/") externalE)
+   let newPathE     = AppE (AppE (VarE 'concatPath) pathE) externalE
+--   let newPathE     = appendStringM pathE (appendStringM (mkStrLitM "/") externalE)
    rhsE <- loadE forestTy newPathE
    case predM of 
      Nothing -> let
@@ -306,7 +307,8 @@ loadCompound (internal, tyCompNameOpt, externalE, forestTy, generatorP, generato
    let (mdE,  mdP ) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
    let (filesE, filesP) = genPE filesName
-   let newPathE     = appendStringM pathE (appendStringM (mkStrLitM "/") externalE)
+--   let newPathE     = appendStringM pathE (appendStringM (mkStrLitM "/") externalE)
+   let newPathE     = AppE (AppE (VarE 'concatPath) pathE ) externalE
    rhsE <- loadE forestTy newPathE
    let compResultE = TupE[externalE, rhsE]  
    let (generatorE, genStmts) = 
@@ -360,7 +362,7 @@ appendStringM str1E str2E =
 
 mkStrLitM s = LitE (StringL s)
 
-
+ 
 
 
 
@@ -458,11 +460,6 @@ getLoadName pname = mkName ((strToLower pname) ++ "_load")
 
 getDefName pname = mkName ((strToLower pname) ++ "_def")
 getMDDefName pname = mkName ((strToLower pname) ++ "_md_def")
-
-
-
-
-
 
 
 

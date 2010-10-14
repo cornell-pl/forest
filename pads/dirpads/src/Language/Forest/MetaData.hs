@@ -36,7 +36,12 @@ import Language.Forest.Errors
 
 
 data FileType = UnknownK | SimpleK | DirectoryK 
- deriving (Eq, Show, Data, Typeable)
+ deriving (Eq, Data, Typeable)
+
+instance Show FileType where
+ show UnknownK = "Unknown"
+ show SimpleK  = "File"
+ show DirectoryK = "Directory"
 
 (derive makeDataAbstract ''COff)
 (derive makeDataAbstract ''CMode)
@@ -53,13 +58,24 @@ data FileInfo = FileInfo { fullpath :: FilePath
                          , isSymLink :: Bool
                          , kind :: FileType
                          }
-       deriving (Eq, Show, Data, Typeable)
+       deriving (Eq, Data, Typeable)
 
 {- Function System.Time.Utils.epochToClockTime converts EpochTime to CalendarTime -}
 
+instance Show FileInfo where
+  show f = "FileInfo {" 
+                    ++  "fullpath = " ++ (fullpath f)     ++ ", "
+                    ++  "owner = "    ++ (owner f)        ++ ", "
+                    ++  "group = "    ++ (group f)        ++ ", "
+                    ++  "size = "     ++ (show $ size f)  ++ ", "
+                    ++  "access_time = "     ++ (show $ epochToClockTime $ access_time f)  ++ ", "
+                    ++  "mod_time = "        ++ (show $ epochToClockTime $ mod_time f)     ++ ", "
+                    ++  "read_time = "       ++ (show $ epochToClockTime $ read_time f)    ++ ", "
+                    ++  "mode = "            ++ (modeToModeString $ mode f)                ++ ", "
+                    ++  "isSymLink = "       ++ (show $ isSymLink f)                       ++ ", "
+                    ++  "kind = "            ++ (show $ kind f)                            ++ "}"
 
--- instance Pretty UTCTime where
--- ppr = text . show
+
 
 instance Pretty COff where
  ppr = text . show 
@@ -68,10 +84,8 @@ instance Pretty EpochTime where
  ppr = text . show . epochToClockTime 
 
 instance Pretty FileMode where
- ppr = text . show
+ ppr = text . modeToModeString
 
---instance Pretty FileType where
--- ppr = text . show
 
 fileInfo_def = FileInfo { fullpath = ""
                         , owner = ""
@@ -118,7 +132,8 @@ get_size  x = size $ fileInfo $ fst x
 get_access_time  x = access_time $ fileInfo $ fst x
 get_read_time  x = read_time $ fileInfo $ fst x
 get_mod_time  x = mod_time $ fileInfo $ fst x
-get_mode  x = mode $ fileInfo $ fst x
+get_mode   x = mode $ fileInfo $ fst x
+get_modes  x = modeToModeString $ mode $ fileInfo $ fst x
 get_sym  x = isSymLink $ fileInfo $ fst x
 get_kind  x = kind $ fileInfo $ fst x
 
@@ -168,6 +183,58 @@ updateForestMDwith base updates =  let
 fileStatusToKind fs = if isRegularFile fs then SimpleK 
                       else if isDirectory fs then DirectoryK
                       else UnknownK
+
+specialStringToMode special = 
+    case special of
+      '-' -> [regularFileMode]
+      'd' -> [directoryMode]
+      'b' -> [blockSpecialMode]
+      'c' -> [characterSpecialMode]
+      'l' -> [symbolicLinkMode]
+      'p' -> [namedPipeMode]
+      's' -> [socketMode]
+      '?' -> []
+
+modeStringToMode' :: String -> [FileMode]
+modeStringToMode' [special,or,ow,ox,gr,gw,gx,otr,otw,otx] = 
+                  specialM ++ ownerrM ++ ownerwM ++ ownerxM ++ grouprM ++ groupwM ++ groupxM  ++ otherrM ++ otherwM ++ otherxM
+  where  specialM = specialStringToMode special
+         ownerrM  = if or == 'r' then [ownerReadMode] else []
+         ownerwM  = if ow == 'w' then [ownerWriteMode] else []
+         ownerxM  = if ox == 'x' then [ownerExecuteMode] else []
+         grouprM  = if gr == 'r' then [groupReadMode] else []
+         groupwM  = if gw == 'w' then [groupWriteMode] else []
+         groupxM  = if gx == 'x' then [groupExecuteMode] else []
+         otherrM  = if otr == 'r' then [otherReadMode] else []
+         otherwM  = if otw == 'w' then [otherWriteMode] else []
+         otherxM  = if otx == 'x' then [otherExecuteMode] else []
+
+unionFileModeL modes = foldl1 unionFileModes modes
+
+
+modeStringToMode :: String -> FileMode
+modeStringToMode s = unionFileModeL $ modeStringToMode' s
+
+modeToModeString :: FileMode -> String
+modeToModeString mode = special ++ ownerr ++ ownerw ++ ownerx ++ groupr ++ groupw ++ groupx ++ otherr ++ otherw ++ otherx
+   where special = if intersectFileModes mode regularFileMode == regularFileMode then "-"
+                   else if intersectFileModes mode directoryMode == directoryMode then "d"
+                   else if intersectFileModes mode blockSpecialMode == blockSpecialMode then "b"
+                   else if intersectFileModes mode characterSpecialMode == characterSpecialMode then "c"
+                   else if intersectFileModes mode symbolicLinkMode == symbolicLinkMode then "l"
+                   else if intersectFileModes mode namedPipeMode == namedPipeMode then "p"
+                   else if intersectFileModes mode socketMode == socketMode then "s"
+                   else "?"
+         ownerr = if intersectFileModes mode ownerReadMode == ownerReadMode then "r" else "-"
+         ownerw = if intersectFileModes mode ownerWriteMode == ownerWriteMode then "w" else "-"
+         ownerx = if intersectFileModes mode ownerExecuteMode == ownerExecuteMode then "x" else "-"
+         groupr = if intersectFileModes mode groupReadMode == groupReadMode then "r" else "-"
+         groupw = if intersectFileModes mode groupWriteMode == groupWriteMode then "w" else "-"
+         groupx = if intersectFileModes mode groupExecuteMode == groupExecuteMode then "x" else "-"
+         otherr = if intersectFileModes mode otherReadMode == otherReadMode then "r" else "-"
+         otherw = if intersectFileModes mode otherWriteMode == otherWriteMode then "w" else "-"
+         otherx = if intersectFileModes mode otherExecuteMode == otherExecuteMode then "x" else "-"
+    
 
 {- Should raise no exceptions -}
 getForestMD :: FilePath -> IO Forest_md

@@ -1,8 +1,9 @@
-{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, NamedFieldPuns #-}
+{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, NamedFieldPuns, ScopedTypeVariables #-}
 
 module Examples.AI where
 import Language.Pads.Padsc hiding (str)
 import Language.Pads.GenPretty       
+import Control.Monad
 
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -66,6 +67,11 @@ ai_file = "/Users/kfisher/pads/padsc/examples/data/ai.3000"
 (ai_rep, ai_md) = let (AI_t rep, md) = unsafePerformIO $ parseFile ai_file in (rep,md)
 ai_file_length = Prelude.length ai_rep
 ai_file_take n  = Prelude.take n ai_rep
+result n  = do 
+     { (AI_t rep, md) <- (parseFile ai_file )
+     ; return (Prelude.take n ai_rep)
+     } 
+
 
 unGood (Good xs) = xs
 example = Prelude.take 2 $ fst $ Prelude.head $ unGood $ runPP (parseMany pdigit_parseM) (padsSourceFromString str)

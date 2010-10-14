@@ -11,7 +11,7 @@ module Examples.Students where
 
 import Language.Pads.Padsc
 import Language.Forest.Forestc
-import Language.Haskell.TH hiding (ppr)
+import Language.Haskell.TH hiding (ppr, match)
 import Language.Forest.Syntax
 import Language.Forest.CodeGen
 import System.Time.Utils
@@ -19,6 +19,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Haskell.Meta as LHM
 import Data.Map
+import System.FilePath.Glob
 
 import Language.Pads.GenPretty
 import Text.PrettyPrint.Mainland
@@ -80,7 +81,8 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
   -- Directory containing all students in a particular major.
   type Major_d = Directory 
        { students is Map [ s :: File (Student <| getName s |>) 
-                         | s <- matches (RE "[A-Za-z]*.txt") where <| not (template s) |> ] }
+--                         | s <- matches (RE "[A-Za-z]*.txt") where <| not (template s) |> ] }
+                         | s <- matches (GL "*.txt") where <| not (template s) |> ] }
 
   -- Directory containing all students in a particular year
   type Class_d (year :: String) = Directory
@@ -127,14 +129,27 @@ getYear s = reverse (Prelude.take 2 (reverse s))
 mkPrettyInstance ''PrincetonCS_d
 mkPrettyInstance ''PrincetonCS_d_md
 
-cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
+--cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
+cs_dir = "Examples/data/facadm"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
+
+cd_md md f = f $ snd md  -- should this change the paths?
+cd_rep rep f = f $ rep
+
+
 
 doTar = tarFiles cs_md "CS.tar"
 
 -- Find all files mentioned in cs
 files = listFiles cs_md
 
+globtest = "*.txt"
+testglob = compile globtest
+filtered = Prelude.filter (match testglob) ["foo.txt", "bar.exe", "haskell.hi"]
+
+gradglob = compile "Examples/data/facadm/graduates/*"
+gradlist = Prelude.filter (match gradglob) files
+matches = Prelude.filter (match gradglob) (listPaths cs_md)
 grad09_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates/classof09"
 (grad09_rep, grad09_md) = unsafePerformIO $ (class_d_load "09") grad09_dir
 

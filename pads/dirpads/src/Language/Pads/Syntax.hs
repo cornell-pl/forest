@@ -4,9 +4,10 @@ module Language.Pads.Syntax where
 
 import Data.Generics
 import Language.Pads.RegExp
+import System.FilePath.Glob
 import qualified Language.Haskell.TH  as TH 
 
-data Lit    = CharL Char | StringL String  | EorL | EofL | VoidL | RegL RE | Hid String | Hexp TH.Exp | IntL Integer
+data Lit    = CharL Char | StringL String  | EorL | EofL | VoidL | RegL RE | GlobL String | Hid String | Hexp TH.Exp | IntL Integer
   deriving (Eq, Data, Typeable, Show)
 
 litToExp :: Lit -> TH.Exp
@@ -16,6 +17,7 @@ litToExp lit = case lit of
   IntL    i -> TH.LitE (TH.IntegerL i)
 --  RegL    r -> TH.AppE (TH.ConE (TH.mkName "RE")) (TH.LitE (TH.StringL r))
   RegL    r -> reToExp r
+  GlobL   p -> TH.AppE (TH.ConE (TH.mkName "GL")) (TH.LitE (TH.StringL p))
   Hid    id -> TH.VarE (TH.mkName id)
   Hexp  exp -> exp
 

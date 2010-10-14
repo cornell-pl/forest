@@ -34,7 +34,7 @@ instance Monad PadsParser where
   p >>= f  = PadsParser $ \bs -> 
                case runPP p bs of
                   Good results -> 
-                       concatResult [runPP (f a) bs' | (a,bs') <- results ]
+                       concatResult [runPP (f a) bs' | (a,bs') <-  [ head results] ]
                   Bad (errVal,bs') -> case runPP (f errVal) bs' of
                                          Good results -> Bad (head results)   -- Should always succeed by Result invariant.
                                          Bad v -> Bad v

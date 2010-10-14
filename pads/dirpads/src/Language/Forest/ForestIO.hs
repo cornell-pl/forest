@@ -21,23 +21,25 @@ import System.IO
 -- posixSecondsToUTCTime (realToFrac :: POSIXTime)
 
 import Text.Regex
+import System.FilePath.Glob
 
 import qualified Control.Exception as CE
 
 import Data.Data
 import Data.Maybe
+import System.IO.Unsafe
 
 
 fileload :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
 fileload path = do
-   fmd       <- getForestMD path
-   (rep, md) <- parseFile path
+   fmd       <- unsafeInterleaveIO (getForestMD path)
+   (rep, md) <- unsafeInterleaveIO (parseFile path)
    return (rep, (fmd, md))
 
 fileload1 :: Pads1 arg pads md => arg -> FilePath -> IO (pads, (Forest_md, md))
 fileload1 arg path = do
-   fmd       <- getForestMD path
-   (rep, md) <- parseFile1 arg path
+   fmd       <- unsafeInterleaveIO (getForestMD path)
+   (rep, md) <- unsafeInterleaveIO (parseFile1 arg path)
    return (rep, (fmd, md))
 
 
@@ -169,14 +171,50 @@ checkPath path ifExists = do
      else ifExists
    }
 
-getMatchingFiles :: FilePath -> RE -> IO [FilePath]
-getMatchingFiles path re = do 
+data GL = GL String
+
+class Matching a where
+ getMatchingFiles :: FilePath -> a -> IO [FilePath]
+
+instance Matching RE where
+ getMatchingFiles = getMatchingFilesRE
+
+instance Matching GL where
+ getMatchingFiles = getMatchingFilesGlob
+
+getMatchingFilesRE :: FilePath -> RE -> IO [FilePath]
+getMatchingFilesRE path re = do 
   { files <- getDirectoryContents path
-  ; return (filterByRegex re files)
+  ; let matches = (filterByRegex re files)
+  ; return matches
   }
+
 
 filterByRegex (RE regStr) candidates = 
   let re = mkRegexWithOpts ('^':regStr++"$") True True
       matchOne str = isJust (matchRegex re str)
   in Prelude.filter matchOne candidates
 
+getMatchingFilesGlob :: FilePath -> GL -> IO [FilePath]
+getMatchingFilesGlob path (GL glob) = do 
+  { let gl = compile glob
+  ; files <- getDirectoryContents path
+  ; let matches = (Prelude.filter (match gl) files)
+  ; return matches
+  }
+
+
+
+getMatchingFilesGlob' :: FilePath -> GL -> IO [FilePath]
+getMatchingFilesGlob' path (GL glob) = do 
+  { let gl = compile glob
+  ; ([matches], unmatches) <- globDir [gl] path
+  ; return matches
+  }
+
+
+concatPath stem new = 
+  case new of
+   [] -> stem
+   ('/':rest) -> new
+   otherwise -> stem ++ "/" ++ new

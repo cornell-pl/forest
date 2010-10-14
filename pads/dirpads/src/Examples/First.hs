@@ -1,10 +1,12 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- Still to do:
-    add parsing support for integer literals
+    add parsing support for integer literals & globs
     make it possible for record annotation to come immediately before struct or union.
     add function to repeated call record parser
     change type -> newtype, add type with same semantics as Haskell?
+    improve speed
+    implement 
 
     regular expression literals (wait until new release of ghc)
 
