@@ -2,20 +2,23 @@
 
 {- To do:
    explore laziness in loading directory files
+   literate haskell
    library for manipulating times and permissions
       add `isCompatabile` comparator for FileModes
-   write a "unverisal description"
+   write a "unverisal description" w/binry and ascii
    TOOL: given file path, predicate on FMDs, depth limit, produce forest description
    TOOL: given a (rep,md), produce a dot graph (colored according to metadata)
    TOOL: lookup :: (Data a) => String -> Maybe a  (where a = String_t)
+   TOOL: check permissions
    implement patterns in physical names for simple records?
    incorporate pads meta-data error counts into forest error counts.
    implement regular expression primitives
    implement ls tool
    implement pre-processor type constructor
    debug CVS example: too many file handles open
-   change "type" to "newtype"?  (ask david and nate)
+   change "type" to "newtype"?  (ask david and nate)  explore whether types work
    extend syntax of Haskell identifiers to include qualified names (e.g., AI.AI.t)
+   clean up namespace
 
    DONE implement glob patterns in addition to regular expressions
    DONE make relative paths work as arguments to ty_load
@@ -50,7 +53,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import Language.Haskell.Meta as LHM
 import Text.Regex
 import Data.Maybe
---import Examples.AI 
+import Examples.AI 
 
 [pads| type SEntry_t = (Pstring ',', ',', Pint)
        type Hosts_t = [Line SEntry_t]                  |]
@@ -73,11 +76,11 @@ getHost (Hosts_t hs) = case hs of
                          , mylink_sym is "mylink"             :: SymLink      where <| mylink_sym == "quantum" |>
                          , mylink                             :: Scores_d
 --                         , mylink                             :: SymLink Scores_d   where <| sym_link mylink == "quantum" |>
---                         , airef  is ai_file                  :: File AI_t
+                         , airef  is ai_file                  :: File AI_t
                          }    |] 
 
-mkPrettyInstance ''Simple_d
-mkPrettyInstance ''Simple_d_md
+--mkPrettyInstance ''Simple_d
+--mkPrettyInstance ''Simple_d_md
 
 
 

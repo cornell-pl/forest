@@ -33,13 +33,13 @@ import System.IO.Unsafe
 fileload :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
 fileload path = do
    fmd       <- unsafeInterleaveIO (getForestMD path)
-   (rep, md) <- unsafeInterleaveIO (parseFile path)
+   ~(rep, md) <- unsafeInterleaveIO (parseFile path)
    return (rep, (fmd, md))
 
 fileload1 :: Pads1 arg pads md => arg -> FilePath -> IO (pads, (Forest_md, md))
 fileload1 arg path = do
    fmd       <- unsafeInterleaveIO (getForestMD path)
-   (rep, md) <- unsafeInterleaveIO (parseFile1 arg path)
+   ~(rep, md) <- unsafeInterleaveIO (parseFile1 arg path)
    return (rep, (fmd, md))
 
 
