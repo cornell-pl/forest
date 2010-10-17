@@ -184,9 +184,87 @@ a picture showing the Coral hierarchy
 \section{Forest Design}
 \label{sec:review}
 
-Describe the following features using the Student data example. 
-Describe both the on-disk representation and the in-memory 
-representation (emphasize rep, but mention pds are available).
+Forest is a domain-specific language embedded within Haskell using the
+Template Haskell extension mechanism~\cite{metahaskell}.  In a typical
+Forest description, Forest declarations will be interleaved with ordinary
+Haskell declarations.  To introduce new Forest declarations in amongst
+Haskell declarations,
+the programmer simply opens the Forest sublanguage scope:
+\begin{code}
+[forest| 
+  ... forest declarations ...
+|]
+\end{code}
+
+Once within the forest sublanguage, the programmer will write declarations
+that look and feel very much like extended Haskell type declarations.
+Each such type declaration serves three purposes: (1) it specifies how the user
+expects some fragment of the file system to appear, (2) like an ordinary type
+declaration, it describes the structure of the in-memory {\em representation} of that 
+file system fragment when it is read into a Haskell program, and (3) it describes 
+the structure of the {\em metadata} that is associated with reading the file system
+fragment into the Haskell program.  As we explain the different features of Forest, 
+readers should keep these three different aspects of Forest descriptions in mind.  
+The effectiveness of our design comes in part due to the fact that all three of these 
+elements may be specified in a single compact notation.
+
+\subsection{Simple Files}
+\label{sec:basics}
+
+The basic building blocks of any file system are the files themselves.  To get started,
+Forest provides several different ways to describe the {\em contents} files.  The simplest
+way is to choose from a collection of standard, built-in file descriptions:\footnote{Recall that
+any text following \cd{--} is a comment in Haskell.} 
+\noindent
+\begin{code}
+[forest| 
+  type MyText = File Ptext   -- a text file
+  type MyBin = File Pbin     -- a binary file
+  type Whatever = File Pany  -- any file at all
+|]
+\end{code}
+Each such declaration creates a name ({\it e.g.,} \cd{MyText}) that can be used in other
+more complex descriptions later.  It also generates several utility functions that may
+be used in the surrounding Haskell code, including functions 
+for loading files that match the given description.  
+
+Descriptions such as \cd{MyText} are useful when the user neither knows or cares much about
+the internal structure of the given file.  On the other hand, when the user does know and does
+care about the internal structure of a file, he or she will want to describe that structure,
+and will be able to do so using \padshaskell{}.  \padshaskell{} is another sublanguage,
+based on the PADS family of parser 
+generators~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml}, but 
+designed for use with Haskell and Forest.  \padshaskell{} declarations are introduced
+within the pads scope:
+\noindent
+\begin{code}
+[pads| 
+  ... pads declarations ...
+|]
+\end{code}
+These declarations are capable of generating parsers that may be referred
+to later within Forest.  For example, it is straightforward to use \padshaskell{} to generate
+a parser for student files such as the one shown in Figure~\ref{fig:student-file-example}
+(see the appendix for the description we use).
+Assuming that the parser for the file is named \cd{Student} and that it takes a single string parameter
+(\cd{n}, the student name), we can use it within Forest as follows.
+\begin{code}
+[forest| 
+  type MyStudent (n::String) = File (Student n) 
+|]
+\end{code}
+Using \padshaskell{} parsers in Forest not only helps specify the intended grammatical structure
+of a file, but it also generates a structured in-memory representation for Haskell programmers
+to traverse, query or otherwise manipulate.
+
+\subsection{File Qualifiers}
+\label{sec:basics}
+
+\begin{itemize}
+\item Gzip
+\item Symlinks
+\item Tar
+\end{itemize}
 
 \begin{itemize}
 \item Overview: Files, Directories, and Symbolic Links
@@ -212,6 +290,12 @@ Give list of examples we've coded in Forest.  Include universal rep?
 
 \section{Programming with Forest}
 \label{sec:exp}
+
+These utility functions may be called from the surrounding Haskell code as follows.
+\begin{code}
+dir = "Examples/data/text.txt"
+(text_rep, text_md) = unsafePerformIO $ (myText_load dir)
+\end{code}
 
 \begin{itemize}
 \item meta data
