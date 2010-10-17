@@ -1,59 +1,42 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-
--- TODOS
---     { students is [ filename :: File (Student <| name student |>) | 
---                     (filename, student) <= matches Student_filename where not (template filename) ] }
--- How to specify fields that match a regular expression but have a single representation.
-
-
 module Examples.Students where
 
 import Language.Pads.Padsc
 import Language.Forest.Forestc
-import Language.Haskell.TH hiding (ppr, match)
-import Language.Forest.Syntax
-import Language.Forest.CodeGen
-import System.Time.Utils
+import Language.Pads.GenPretty
+
+import Data.Map
 import System.IO.Unsafe (unsafePerformIO)
 
-import Language.Haskell.Meta as LHM
-import Data.Map
-import System.FilePath.Glob
 
-import Language.Pads.GenPretty
-import Text.PrettyPrint.Mainland
 
-ws = RE "[ \t]+"
-ows =  RE "[ \t]*"
+ws   = RE "[ \t]+"
+ows  = RE "[ \t]*"
 junk = RE ".*"
-grade_RE = RE "[ABCD][+-]?|F|AUD|N|INC|P"
-
-transferRE = RE "TRANSFER|Transfer"
-leaveRE = RE "LEAVE|Leave"
-withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
-
+space = ' '
+quote = '\''
+comma = ','
 
 
 [pads| 
-  type Grade_t = Maybe (PstringME grade_RE)
-  type Grade = PstringME grade_RE 
+  type Grade = Pre "[ABCD][+-]?|F|AUD|N|INC|P"
 
   data Course = 
-    { sort         :: re "[dto]",           ws
-    , departmental :: re "[.D]",            ws
-    , passfail     :: re "[.p]",            ws
-    , level        :: re "[1234]",          ws
-    , department   :: re "[A-Z][A-Z][A-Z]", ws
+    { sort         :: Pre "[dto]",           ws
+    , departmental :: Pre "[.D]",            ws
+    , passfail     :: Pre "[.p]",            ws
+    , level        :: Pre "[1234]",          ws
+    , department   :: Pre "[A-Z][A-Z][A-Z]", ws
     , number       :: Pint where <| 100 <= number && number < 600 |>, ws
-    , grade        :: Grade,               junk                               -- why doesn't this work if there is a maybe?
+    , grade        :: Grade,                 junk                               
     } 
 
-  data Middle_name = {' ', middle :: re "[a-zA-Z]+[.]?" }           
+  data Middle_name = {' ', middle :: Pre "[a-zA-Z]+[.]?" }           
  
   data Student_Name(myname::String) = 
-    { lastname  :: re "[a-zA-Z]*"  where <| toString lastname ==  myname |>,  ',', ows     -- yuck; we have too many different types.
-    , firstname :: re "[a-zA-Z]*" 
+    { lastname   :: Pre "[a-zA-Z]*"  where <| toString lastname ==  myname |>,  comma, ows     
+    , firstname  :: Pre "[a-zA-Z]*" 
     , middlename :: Maybe Middle_name
     }
 
@@ -61,36 +44,37 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
   data Person (myname::String) =
     { fullname   :: Student_Name myname,    ws
-    , school     :: School,                 ws, '\''
-    , year       :: re "[0-9][0-9]"
+    , school     :: School,                 ws, quote
+    , year       :: Pre "[0-9][0-9]"
     }
 
-  type Header  = [Line (re ".*")] with term length of 7 
-  type Trailer = [Line (re ".*")] with term Eof 
+  type Header  = [Line (Pre ".*")] with term length of 7 
+  type Trailer = [Line (Pre ".*")] with term Eof 
   data Student (name::String) = 
-    { person :: Line (Person name)
+    { person  :: Line (Person name)
     , Header  
     , courses :: [Line Course]
     , Trailer
     }
 |]
 
-
+transferRE  = RE "TRANSFER|Transfer"
+leaveRE     = RE "LEAVE|Leave"
+withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
 [forest|
   -- Directory containing all students in a particular major.
   type Major_d = Directory 
        { students is Map [ s :: File (Student <| getName s |>) 
---                         | s <- matches (RE "[A-Za-z]*.txt") where <| not (template s) |> ] }
                          | s <- matches (GL "*.txt") where <| not (template s) |> ] }
 
   -- Directory containing all students in a particular year
   type Class_d (year :: String) = Directory
     { bse is <|"BSE" ++ year|> :: Major_d
     , ab  is <|"AB"  ++ year|> :: Major_d   
-    , transfer is  [ t :: Major_d | t <- matches (RE "TRANSFER|transfer") ]      
+    , transfer is  [ t :: Major_d | t <- matches transferRE  ]      
     , withdrawn is [ w :: Major_d | w <- matches withdrawnRE ]
-    , leave is     [ l :: Major_d | l <- matches leaveRE ] 
+    , leave is     [ l :: Major_d | l <- matches leaveRE     ] 
     }
 
   -- Directory for all graduated students
@@ -143,13 +127,6 @@ doTar = tarFiles cs_md "CS.tar"
 -- Find all files mentioned in cs
 files = listFiles cs_md
 
-globtest = "*.txt"
-testglob = compile globtest
-filtered = Prelude.filter (match testglob) ["foo.txt", "bar.exe", "haskell.hi"]
-
-gradglob = compile "Examples/data/facadm/graduates/*"
-gradlist = Prelude.filter (match gradglob) files
-matches = Prelude.filter (match gradglob) (listPaths cs_md)
 grad09_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/graduates/classof09"
 (grad09_rep, grad09_md) = unsafePerformIO $ (class_d_load "09") grad09_dir
 

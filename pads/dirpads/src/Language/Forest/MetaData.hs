@@ -5,6 +5,8 @@ module Language.Forest.MetaData where
 import System.Posix.Files
 import System.Posix.User
 import System.Posix.Types
+import System.Process
+import GHC.IO.Handle
 import Foreign.C.Types
 import System.Posix.Directory
 import System.Posix.Time
@@ -35,12 +37,13 @@ import Language.Forest.Errors
 
 
 
-data FileType = UnknownK | SimpleK | DirectoryK 
+data FileType = UnknownK | AsciiK | BinaryK | DirectoryK 
  deriving (Eq, Data, Typeable)
 
 instance Show FileType where
  show UnknownK = "Unknown"
- show SimpleK  = "File"
+ show AsciiK  = "ASCII File"
+ show BinaryK  = "Binary File"
  show DirectoryK = "Directory"
 
 (derive makeDataAbstract ''COff)
@@ -180,9 +183,27 @@ updateForestMDwith base updates =  let
                   , errorMsg = mergeErrors errorMsgd errorMsgc
                   , fileInfo=infod})
 
-fileStatusToKind fs = if isRegularFile fs then SimpleK 
-                      else if isDirectory fs then DirectoryK
-                      else UnknownK
+
+isAscii :: FilePath -> IO Bool
+isAscii fp = do 
+  { let cmd = "file -i " ++ fp
+  ; (_, Just hout, _, ph) <-
+       createProcess (shell cmd){ std_out = CreatePipe }
+  ; result <- hGetLine hout
+  ; hClose hout
+  ; terminateProcess ph
+  ; return ("ascii" `Data.List.isSuffixOf` result)
+  }
+
+fileStatusToKind :: FilePath -> FileStatus -> IO FileType
+fileStatusToKind path fs = do
+    if isRegularFile fs then 
+      do { ascii <- isAscii path
+         ; if ascii then return AsciiK else return BinaryK
+         }
+    else if isDirectory fs then return DirectoryK
+    else return UnknownK
+   
 
 specialStringToMode special = 
     case special of
@@ -253,6 +274,7 @@ getForestMD path = do
          ; groupEntry <- getGroupEntryForID file_groupID
          ; fdsym <- getSymbolicLinkStatus path
          ; readTime <- epochTime
+         ; knd <- fileStatusToKind path fd
          ; return (Forest_md{ numErrors = 0
                             , errorMsg = Nothing
                             , fileInfo = FileInfo 
@@ -265,7 +287,7 @@ getForestMD path = do
                                           , read_time = readTime
                                           , mode     =  fileMode fd
                                           , isSymLink = isSymbolicLink fdsym
-                                          , kind  = fileStatusToKind fd
+                                          , kind  = knd
                                           }
                             })
          }

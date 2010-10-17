@@ -27,7 +27,7 @@ status_re = RE "[0-9]+"
 
   type Statistics = 
     { stats_size       :: Pint,      comma_ws
-    , stats_proxy      :: /"[01]"/,  comma_ws
+    , stats_proxy      :: Pre "[01]",  comma_ws
     , stats_level      :: Pint,      comma_ws
     , stats_lookup     :: Pint,      comma_ws
     , stats_xfer       :: Pint,      comma_ws
@@ -40,7 +40,7 @@ status_re = RE "[0-9]+"
   type Url = Generic
 
   data Header = 
-    { version       :: /"[12]"/,        comma_ws
+    { version       :: Pre "[12]",        comma_ws
     , time          :: Time     }
 
   data Request = 
@@ -56,13 +56,13 @@ status_re = RE "[0-9]+"
     , in_stats   :: Statistics }
 
   data OutData = 
-    { "\"OUT\"",                          comma_ws 
-    , out_remote    :: /"\"(REM|LOC)\""/, comma_ws
-    , out_req       :: Request,           comma_ws
-    , out_referrer  :: Url,               comma_ws
-    , out_status    :: Status,            comma_ws
-    , out_stats     :: Statistics,        comma_ws
-    , out_forwarded :: Generic,           comma_ws
+    { "\"OUT\"",                            comma_ws 
+    , out_remote    :: Pre "\"(REM|LOC)\"", comma_ws
+    , out_req       :: Request,             comma_ws
+    , out_referrer  :: Url,                 comma_ws
+    , out_status    :: Status,              comma_ws
+    , out_stats     :: Statistics,          comma_ws
+    , out_forwarded :: Generic,             comma_ws
     , out_via       :: Generic  }
 
   data InOut = In InData | Out OutData

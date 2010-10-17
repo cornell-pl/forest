@@ -5,6 +5,7 @@ import Language.Pads.Generic
 import Language.Pads.MetaData
 import Language.Pads.PadsParser
 import Language.Pads.RegExp
+
 import qualified Language.Pads.Source as S
 import qualified Language.Pads.Errors as E
 
@@ -18,7 +19,6 @@ import Text.PrettyPrint.Mainland as PP
 import Monad
 import Char
 
-
 {-  Base types 
     Pads type name, underlying representation type name, list of parameter types.
 -}
@@ -28,6 +28,8 @@ baseTypesList = [
   ("Pchar",     (''Char,    [])),
   ("Pdigit",    (''Int,     [])),
   ("Ptext",     (''String,  [])),
+  ("Pbinary",   (''S.RawStream,  [])),
+  ("Pre",       (''String,  [''String])),
   ("Pstring",   (''String,  [''Char])),
   ("PstringFW", (''String,  [''Int])),
   ("PstringME", (''String,  [''RE])),
@@ -48,17 +50,23 @@ newtype Pdigit = Pdigit Int
   deriving (Eq, Show, Data, Typeable, Num, Ord, Integral, Real, Enum)
 newtype Ptext    = Ptext String
   deriving (Eq, Show, Data, Typeable)
+newtype Pbinary  = Pbinary S.RawStream
+  deriving (Eq, Show, Data, Typeable)
 
 type Pint_md = Base_md
 type Pchar_md = Base_md
 type Pdigit_md = Base_md
 type Ptext_md = Base_md
+type Pbinary_md = Base_md
 
 instance Pretty Pchar where
   ppr (Pchar c) = text (show c)
 
 instance Pretty Ptext where
   ppr (Ptext str) = text str
+
+instance Pretty Pbinary where
+  ppr (Pbinary str) = text "Binary"
 
 instance Pads Pint Base_md where
   parsePP = pint_parseM
@@ -72,6 +80,11 @@ instance Pads Pdigit Base_md where
 instance Pads Ptext Base_md where
   parsePP = ptext_parseM
 
+instance Pads Pbinary Base_md where
+  parsePP = pbinary_parseM
+
+newtype Pre = Pre String
+  deriving (Eq, Show, Data, Typeable)
 newtype Pstring    = Pstring    String
   deriving (Eq, Show, Data, Typeable)
 newtype PstringFW = PstringFW String
@@ -81,10 +94,14 @@ newtype PstringME = PstringME String
 newtype PstringSE = PstringSE String
   deriving (Eq, Show, Data, Typeable)
 
+type Pre_md     = Base_md
 type Pstring_md = Base_md
 type PstringFW_md = Base_md
 type PstringME_md = Base_md
 type PstringSE_md = Base_md
+
+instance Pads1 String Pre Base_md where 
+  parsePP1 = pre_parseM 
 
 instance Pads1 Char Pstring Base_md where 
   parsePP1 = pstring_parseM 
@@ -100,6 +117,9 @@ instance Pads1 RE PstringSE Base_md where
 
 class ToString a where
   toString :: a -> String
+
+instance ToString Pre where
+  toString (Pre s) = s
 
 instance ToString Pstring where
   toString (Pstring s) = s
@@ -139,6 +159,16 @@ pstringME_parseM re = do
         Nothing  -> badReturn  (def1 re, mkErrBasePD (E.RegexMatchFail (show re)) (Just initPos))
         Just str -> goodReturn (PstringME str, cleanBasePD)
 
+pre_parseM :: String -> PadsParser (Pre, Base_md)
+pre_parseM sre = do 
+  initPos <- getPos
+  isEof <- isEofP 
+  if isEof then badReturn (def1 sre, mkErrBasePD (E.FoundWhenExpecting "EOF" "Pre") (Just initPos))
+   else do 
+      match <- regexMatchP (RE sre)
+      case match of 
+        Nothing  -> badReturn  (def1 sre, mkErrBasePD (E.RegexMatchFail sre) (Just initPos))
+        Just str -> goodReturn (Pre str, cleanBasePD)
 
 
 pstringSE_parseM :: RE -> PadsParser (PstringSE, Base_md)
@@ -168,6 +198,11 @@ ptext_parseM :: PadsParser (Ptext, Base_md)
 ptext_parseM = do
   document <- getAllP
   goodReturn (Ptext document, cleanBasePD)
+
+pbinary_parseM :: PadsParser (Pbinary, Base_md)
+pbinary_parseM = do
+  document <- getAllBinP
+  goodReturn (Pbinary document, cleanBasePD)
 
 
 pchar_parseM :: PadsParser (Pchar, Base_md)

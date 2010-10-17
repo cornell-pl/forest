@@ -8,6 +8,8 @@ import Text.PrettyPrint.Mainland as PP
 import Language.Pads.RegExp
 import qualified Text.Regex.ByteString as BRE
 
+type RawStream = B.ByteString
+
 {- Input source abstraction -}
 data Loc = Loc { lineNumber :: Int64,
                  byteOffset :: Int64 }
@@ -72,6 +74,10 @@ padsSourceFromString str = padsSourceFromByteString (B.pack str)
 padsSourceToString (Source {current, rest, ..}) = B.unpack (B.concat [current,rest])
 drainSource :: Source -> (String, Source)
 drainSource (s @ Source {current, rest, atEOF, loc=loc_orig}) = (padsSourceToString s,   
+                                                        Source {current = B.empty, rest = B.empty, atEOF = True, loc = loc_orig})
+
+rawSource :: Source -> (B.ByteString, Source) 
+rawSource (s @ Source {current, rest, atEOF, loc=loc_orig}) = (B.concat [current,rest],
                                                         Source {current = B.empty, rest = B.empty, atEOF = True, loc = loc_orig})
 
 isEOF (Source{current,rest,..}) = B.null current && B.null rest

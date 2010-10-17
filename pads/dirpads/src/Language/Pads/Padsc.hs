@@ -11,7 +11,8 @@ module Language.Pads.Padsc (
      module Language.Pads.CoreBaseTypes,
      module Language.Pads.Quote,
      module Language.Pads.BaseTypes,
-     module Text.PrettyPrint.Mainland
+--     module Text.PrettyPrint.Mainland hiding (comma)
+     ppr, pretty
   ) 
   where
 

@@ -163,6 +163,7 @@ reglitTy = do { reserved "RE"
               ; return (S.RegL (RE s))
               }
 
+{-
 reglitTy2 :: Parser S.Lit
 reglitTy2 = do 
    { reserved "re"
@@ -172,7 +173,7 @@ reglitTy2 = do
          Left err -> unexpected ("Failed to parse regular expression: " ++ str)
          Right s  -> return (S.RegL s)
    }
-
+-}
 lit :: Parser S.Lit 
 lit =   charlitTy
     <|> strlitTy
@@ -406,6 +407,7 @@ tryTy = do { reservedOp "Try"
            ; return (Ptry ty)
            } <?> "try type"
 
+{-
 reTy :: Parser PadsTy
 reTy = do { reserved "re"
           ; s <- stringLiteral
@@ -418,6 +420,7 @@ reTy' = do { reservedOp "/"
           ; reservedOp "/"
           ; return (Papp (Pname "PstringME") (AppE (ConE (mkName "RE")) (LitE (TH.StringL s))))   
           } <?> "regular expression type"
+-}
 
 padsTy :: Parser PadsTy
 padsTy = lineTy
@@ -429,8 +432,8 @@ padsTy = lineTy
      <|> tryTy
      <|> try fnAppTy
      <|> typedefTy
-     <|> reTy
-     <|> reTy'
+--     <|> reTy
+--     <|> reTy'
      <|> litTy
      <|> idTy
      <?> "pads type"

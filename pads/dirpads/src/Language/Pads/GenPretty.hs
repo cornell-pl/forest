@@ -14,7 +14,7 @@ import Data.Word
 import Data.Int
 import Language.Pads.Errors
 import Language.Pads.MetaData
-
+import Text.PrettyPrint.Mainland
 
 getTyNames :: TH.Type ->  S.Set TH.Name
 getTyNames ty  = case ty of
@@ -71,7 +71,7 @@ getNamedTys' answers worklist =
 
 baseTypeNames = S.fromList [ ''Pint, ''Pchar, ''Pdigit, ''Ptext, ''Pstring, ''PstringFW, ''PstringME 
                            , ''PstringSE, ''String, ''Char, ''COff, ''EpochTime, ''FileMode, ''Int, ''Word, ''Int64
-                           , ''Language.Pads.Errors.ErrInfo, ''Bool
+                           , ''Language.Pads.Errors.ErrInfo, ''Bool, ''Pbinary
                            ]
 
 mkPrettyInstance :: TH.Name -> Q [TH.Dec]

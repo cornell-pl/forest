@@ -689,8 +689,8 @@ whiteSpace2_result = whiteSpace2_parseS whiteSpace2_input
 whiteSpace2_expects = (WhiteSpace2 (Pint 12,Pint 34),0,"")
 whiteSpace2_test = mkTestCase "Haskell expression regular expression literal" whiteSpace2_expects whiteSpace2_result
 
-[pads| type RE_ty = (/"[tod]"/, ws, /"a+"/) |]
+[pads| type RE_ty = (Pre "[tod]", ws, Pre "a+") |]
 rE_ty_input = "t  aaaa"
 rE_ty_result = rE_ty_parseS rE_ty_input
-rE_ty_expects = (RE_ty (PstringME "t",PstringME "aaaa"),0,"")
+rE_ty_expects = (RE_ty (Pre "t",Pre "aaaa"),0,"")
 rE_ty_test = mkTestCase "regular expression abbreviation for PstringME" rE_ty_expects rE_ty_result

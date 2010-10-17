@@ -15,7 +15,7 @@ class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
  fdef1 :: arg -> rep
 
 listFiles :: (ForestMD md) => md -> [FilePath] 
-listFiles md = map fullpath (listify (\(r::FileInfo) -> (kind r) == SimpleK) md)
+listFiles md = map fullpath (listify (\(r::FileInfo) -> (kind r) `elem` [AsciiK, BinaryK]) md)
 
 listPaths :: (ForestMD md) => md -> [FilePath] 
 listPaths md = map fullpath (listify (\(_::FileInfo) -> True) md)

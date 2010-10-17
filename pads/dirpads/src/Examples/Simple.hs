@@ -19,6 +19,13 @@
    change "type" to "newtype"?  (ask david and nate)  explore whether types work
    extend syntax of Haskell identifiers to include qualified names (e.g., AI.AI.t)
    clean up namespace
+   Add padstypes to matches generator:
+      { students is [ filename :: File (Student <| name student |>) | 
+                    (filename, student) <= matches Student_filename where not (template filename) ] }
+   How to specify fields that match a regular expression but have a single representation.
+   BUG: Maybe followed by a regular expression: see Students4.hs Grades
+
+
 
    DONE implement glob patterns in addition to regular expressions
    DONE make relative paths work as arguments to ty_load
@@ -42,7 +49,7 @@ module Examples.Simple where
 
 import Language.Pads.Padsc
 import Language.Forest.Forestc
-import Language.Haskell.TH
+import Language.Haskell.TH hiding (ppr)
 import Language.Forest.Syntax
 import Language.Forest.CodeGen
 import System.Time.Utils
@@ -53,7 +60,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import Language.Haskell.Meta as LHM
 import Text.Regex
 import Data.Maybe
-import Examples.AI 
+-- import Examples.AI 
 
 [pads| type SEntry_t = (Pstring ',', ',', Pint)
        type Hosts_t = [Line SEntry_t]                  |]
@@ -75,12 +82,13 @@ getHost (Hosts_t hs) = case hs of
                          , nested is <|getHost local|>        :: Scores_d     where <| (get_group nested_md) == (get_owner local_md) |> 
                          , mylink_sym is "mylink"             :: SymLink      where <| mylink_sym == "quantum" |>
                          , mylink                             :: Scores_d
+                         , generic is "Generic.o"             :: File Pbinary
 --                         , mylink                             :: SymLink Scores_d   where <| sym_link mylink == "quantum" |>
-                         , airef  is ai_file                  :: File AI_t
+--                         , airef  is ai_file                  :: File AI_t
                          }    |] 
 
---mkPrettyInstance ''Simple_d
---mkPrettyInstance ''Simple_d_md
+mkPrettyInstance ''Simple_d
+mkPrettyInstance ''Simple_d_md
 
 
 

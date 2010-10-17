@@ -166,6 +166,9 @@ scanP c = primPads (\s -> let (f,r,e) = S.scanTo c s in (f,r))
 getAllP :: PadsParser String
 getAllP = primPads S.drainSource
 
+getAllBinP :: PadsParser S.RawStream
+getAllBinP = primPads S.rawSource
+
 satisfy p = primPads loop
  where loop s = if S.isEOF s || S.isEOR s then ([],s) else
           let c = S.head s in
