@@ -32,7 +32,7 @@ comma = ','
     , grade        :: Grade,                 junk                               
     } 
 
-  data Middle_name = {' ', middle :: Pre "[a-zA-Z]+[.]?" }           
+  data Middle_name = {space, middle :: Pre "[a-zA-Z]+[.]?" }           
  
   data Student_Name(myname::String) = 
     { lastname   :: Pre "[a-zA-Z]*"  where <| toString lastname ==  myname |>,  comma, ows     
@@ -66,7 +66,7 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
   -- Directory containing all students in a particular major.
   type Major_d = Directory 
        { students is Map [ s :: File (Student <| getName s |>) 
-                         | s <- matches (GL "*.txt") where <| not (template s) |> ] }
+                         | s <- matches (GL "*.txt") filteredBy not_template ] } 
 
   -- Directory containing all students in a particular year
   type Class_d (year :: String) = Directory
@@ -97,6 +97,9 @@ template s = or [ s == "SSSS.txt"
                 , s == "sxx.txt"
                 , s == "sss.txt"
                 , s == "ssss.txt" ]
+
+not_template = not . template
+
 
 splitExt s = let (dne, dotgeb) = Prelude.break (== '.') (reverse s) 
              in case dotgeb of 
