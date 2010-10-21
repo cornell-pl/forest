@@ -270,8 +270,11 @@ no difference between iterating over structured directories full of files or
 structured sequences of lines or tokens within a file.
 
 While the design of \padshaskell{} is interesting in its own right, the rest of this
-paper focuses on \forest{}.  Henceforth, any declarations should be assumed to
+paper focuses on \forest{}.  Henceforth, the reader should assume
+any unadorned declarations 
 occur within the \forest{} scope \cd{[forest| ... |]} unless otherwise noted.
+The reader should also assume any declarations prefixed by \cd{>} are ordinary
+Haskell declarations.
 
 \subsection{File Modifiers}
 \label{sec:file-modifiers}
@@ -298,16 +301,15 @@ type CoralLog = Gzip (Tar AllLogs)
 The simplest way to specify the contents of a directory is to use
 a record-like declaration.  For example, to specify the root directory
 of the student repository in Figure~\ref{fig:student-pic}, we might use
-the following declaration.  This declaration assumes that we already
-have a specification \cd{Class} (parameterized by a string denoting
-the class year)
-to specify the structure of a directory holding an entire class
-and \cd{Grads} to specify the structure of the directory holding
-all graduated classes.
+the following declaration.  This declaration assumes that we have already
+defined \cd{Class}, a description that specifies
+the structure of a directory holding data on a single class
+and \cd{Grads}, a description that specifies the structure of the directory holding
+all graduated classes.  The 
 \begin{code}
-type AllStudents = Directory
-  \{ seniors is "classof10" :: Class  "10" 
-  , juniors is "classof11" :: Class  "11" 
+type All = Directory
+  \{ seniors is "classof11" :: Class
+  , juniors is "classof12" :: Class 
   , grads is "graduates" :: Grads
   , notes is "README" :: File Ptext
   \}
@@ -320,14 +322,27 @@ or \cd{File Ptext}).
 In order for a directory to match the description, it must
 contain {\em at least} four items.  Those items must have the file or directory
 names given and the contents of each item must match the corresponding description.
-If a directory does match, \forest provides utilities to read the directory in
+If a directory does match, \forest{} provides utilities to read the directory in
 to memory and generate a convenient programmatic representation for it.  
 In this case, the type of the in-memory representation is a record type
 with labels \cd{seniors}, \cd{juniors}, {\em etc.} and with field types
 generated from the associated \forest{} subdescriptions \cd{Class}, \cd{Grads},
 {\em etc.}
 
-
+With simple descriptions like this one, it is common for users to want
+the label to be the same as the name of the file.  In such a case, users
+may write the following abbreviated description:
+\begin{code}
+type All = Directory
+  \{ classof11 :: Class
+  , classof12 :: Class 
+  , graduates :: Grads
+  , notes is "README" :: File Ptext
+  \}
+\end{code}
+Above, the name of the label is used as the expected file name.  We did not
+abbreviate \cd{notes} to \cd{README} because legal Haskell labels must start
+with lowercase letters.
 
 In the preceding paragraphs, we emphasized that a matching directory must contain
 {\em at least} four items.  We made the design choice to allow extra items in
@@ -344,6 +359,47 @@ the absence of files (as opposed to their presence), which can be important
 for security purposes in some cases.  However, we will see shortly that in the
 uncommon case that programmers want to specify absence information, they can
 do so using constraints.
+
+\subsection{Computed Pathes}
+\label{sec:computed-pathes}
+
+Both of the above descriptions are a good start for our application, but neither
+are ideal.  Every year, the directory for the graduating seniors 
+({\em i.e.,} \cd{classof11}) gets moved into the graduates directory,
+the juniors get promoted to seniors and a new junior class gets created.
+As it stands, this means we would also have to edit our description every year.
+An alternative is to parameterize our description with the current year and
+to construct the appropriate file names.  If we follow this strategy,
+we might arrive at the following specification for the top-level student directory:
+\begin{code}
+> clss y = "classof" ++  (toString y)
+\mbox{}
+type All (y::Integer) = Directory
+  \{ seniors is <|clss y|> :: Class
+  , juniors is <|clss (y+1)|> :: Class
+  , graduates :: Grads
+  , notes is "README" :: File Ptext
+  \}
+\end{code}
+%\begin{code}
+%type All (sy::String, jy::String) = Directory
+%  \{ seniors is <|"classof" ++ sy|> :: Class
+%  , juniors is <|"classof" ++ jy|> :: Class
+%  , graduates :: Grads
+%  , notes is "README" :: File Ptext
+%  \}
+%\end{code}
+In general in descriptions, \cd{<|...|>} can be used to escape back in to
+Haskell to perform arbitrary computations.  Note also that any description
+may be parameterized by specifying a legal Haskell identifier and its type.
+Parameterized specifications may be used by supplying their arguments
+in the usual way.  For example:
+\begin{code}
+type Root = All 11
+\end{code}
+\reminder{dpw: Do I need \cd{<|...|>} above?  Have I declared a tuple?  Should I
+Curry my\cd{All} declaration?}
+
 
 \begin{itemize}
 \item Overview: Files, Directories, and Symbolic Links
