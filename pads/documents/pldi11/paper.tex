@@ -295,6 +295,25 @@ to.  In this case, the following description will describe the contents of
 type CoralLog = Gzip (Tar AllLogs)
 \end{code}
 
+\subsection{Symbolic Links}
+\label{sec:symlinks}
+
+When symbolic links are present in the file system described,
+the default behavior is to read through the symbolic links to their
+targets.  Hence, the behavior of \forest{} will be intuitive to programmers who
+are used to working in a standard UNIX-link environment.  In addition, however, it is possible
+for programmers to explicitly specify that they expect a symbolic link in a particular
+position.  To do so, the programmer will use the \cd{SymLink} base type.  For
+example:
+\begin{code}
+type MyFile = SymLink
+\end{code}
+In \forest{}, any file system object may be described in multiple different ways.
+Hence, in the case of symbolic links, it is possible to use one declaration to
+specify the fact that an object is a symbolic link, and a second declaration to specify
+the nature of the target that link ({\em e.g.,} the target is a text file).  We will see such 
+a specification in later subsections.
+
 \subsection{Simple Directories}
 \label{sec:simple-directories}
 
@@ -305,7 +324,7 @@ the following declaration.  This declaration assumes that we have already
 defined \cd{Class}, a description that specifies
 the structure of a directory holding data on a single class
 and \cd{Grads}, a description that specifies the structure of the directory holding
-all graduated classes.  The 
+all graduated classes.   
 \begin{code}
 type All = Directory
   \{ seniors is "classof11" :: Class
@@ -316,18 +335,9 @@ type All = Directory
 \end{code}
 Above, each field of the record has three components:  (1) a label
 name ({\it e.g.,} seniors or juniors), (2) a file or directory name
-({\it e.g.,} "classof10" or "classof11"), and (3) a \forest{} description
-for the file or directory named ({\it e.g.,} \cd{Class  "10"} or \cd{Grads}
+({\it e.g.,} "classof11" or "classof12"), and (3) a \forest{} subdescription
+for the contents of the named object ({\it e.g.,} \cd{Class} or \cd{Grads}
 or \cd{File Ptext}).
-In order for a directory to match the description, it must
-contain {\em at least} four items.  Those items must have the file or directory
-names given and the contents of each item must match the corresponding description.
-If a directory does match, \forest{} provides utilities to read the directory in
-to memory and generate a convenient programmatic representation for it.  
-In this case, the type of the in-memory representation is a record type
-with labels \cd{seniors}, \cd{juniors}, {\em etc.} and with field types
-generated from the associated \forest{} subdescriptions \cd{Class}, \cd{Grads},
-{\em etc.}
 
 With simple descriptions like this one, it is common for users to want
 the label to be the same as the name of the file.  In such a case, users
@@ -344,21 +354,52 @@ Above, the name of the label is used as the expected file name.  We did not
 abbreviate \cd{notes} to \cd{README} because legal Haskell labels must start
 with lowercase letters.
 
-In the preceding paragraphs, we emphasized that a matching directory must contain
-{\em at least} four items.  We made the design choice to allow extra items in
-a directory because we found it common for directories to contain files that users
-simply do not care much about.  Rather than forcing users to describe such
-files, we simply allow them to go unmatched by the description.  For example,
-if programs do not need to extract information out of the README file and
-users do not really care whether it exists or not, they might well choose
-to omit it from the description.  We included it for illustrative purposes,
-but it is not of much use.
+\paragraph*{Matching.}
+In order for a directory to match a description like the one above, 
+each field of the record must match
+some object in the directory.  In other words, the matched object must have the
+name given and the contents of the object must match the corresponding subdescription.
 
-One might be concerned that this design choice makes it difficult to specify
+It is possible for the same object to to match multiple different fields of a description at
+the same time.  For example, if the "README" were a symbolic link, one might want to
+specify that using a pair of declarations:
+\begin{code}
+type All = Directory
+  \{ ...
+  , link is "README" :: SymLink
+  , notes is "README" :: File Ptext
+  \}
+\end{code}
+
+It is also possible for a directory to contain a number of objects that go unmatched by
+a description.  We made the design choice to allow extra items in
+a directory because we found it common for directories to contain files that users
+simply do not care much about.  Rather than forcing users to describe and discard such
+files, we allow them to go unmatched by the description.  For example,
+if programmers do not need to extract information out of the README file and
+users do not really care whether it exists or not, one might well choose
+to omit it from the description.  One might be concerned that this design choice makes it difficult to specify
 the absence of files (as opposed to their presence), which can be important
 for security purposes in some cases.  However, we will see shortly that in the
 uncommon case that programmers want to specify absence information, they can
 do so using constraints.
+
+When a directory does match a record declaration like this one, 
+\forest{} provides utilities to read the directory in
+to memory and generate a convenient programmatic representation for it.  
+In this case, the type of the in-memory representation is a record type
+with labels \cd{seniors}, \cd{juniors}, {\em etc.} and with field types
+generated from the associated \forest{} subdescriptions \cd{Class}, \cd{Grads},
+{\em etc.}  When the same object is described in two different ways, one may
+get two different in-memory representations of it.  For instance, in the example above,
+the \cd{link} field will hold a representation of the filepath that describes the target of the
+symbol link whereas the \cd{notes} field will hold a representation of the \cd{README}
+file itself ({\em i.e.,} a string of characters).
+
+When a directory does not match a record declaration, \forest{} will
+construct representations for the subparts that do match and will insert dummy values
+into the parts that do not match.  \forest{} will also record all errors encountered in the
+matching process in the object metadata.
 
 \subsection{Computed Pathes}
 \label{sec:computed-pathes}
@@ -372,11 +413,11 @@ An alternative is to parameterize our description with the current year and
 to construct the appropriate file names.  If we follow this strategy,
 we might arrive at the following specification for the top-level student directory:
 \begin{code}
-> clss y = "classof" ++  (toString y)
+> mkclass y = "classof" ++ (toString y)
 \mbox{}
 type All (y::Integer) = Directory
-  \{ seniors is <|clss y|> :: Class
-  , juniors is <|clss (y+1)|> :: Class
+  \{ seniors is <|mkclass y|> :: Class
+  , juniors is <|mkclass (y+1)|> :: Class
   , graduates :: Grads
   , notes is "README" :: File Ptext
   \}
@@ -397,31 +438,20 @@ in the usual way.  For example:
 \begin{code}
 type Root = All 11
 \end{code}
-\reminder{dpw: Do I need \cd{<|...|>} above?  Have I declared a tuple?  Should I
-Curry my\cd{All} declaration?}
 
+\subsection{Comprehensions}
+\label{sec:comprehensions}
 
-\begin{itemize}
-\item Overview: Files, Directories, and Symbolic Links
-\item Files
-\begin{itemize}
-\item Atomic file types: text, binary, plugins?
-\item Pads/haskell files.  Note: related to PADS/ML and PADS/C but
-a completely new design and implementation for Haskell.
-\end{itemize}
-\item Directories
-\begin{itemize}
-\item Record directories, concrete and computed name matching
-\item Dependency, Constraints and Parameters
-\item Comprehensions and matching
-\end{itemize}
-\item Symbolic links
-\item Maybe
-\item Unions    - We don't have these at the moment.  Should we add them?
-\item Gzip, Tar
-\end{itemize}
+\subsection{Constraints}
+\label{sec:constraints}
 
-Give list of examples we've coded in \forest{}.  Include universal rep?
+Universal description.  Mention recursion here too.
+
+Example illustrating the ability to enforce emptiness.  Eg: no binary files in this directory.
+
+\subsection{Putting it all together}
+
+Point to Figures with completed descriptions of Coral and Students directories.
 
 \section{Programming with \forest{}}
 \label{sec:exp}
