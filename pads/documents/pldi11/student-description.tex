@@ -1,0 +1,42 @@
+{
+\begin{code}
+tpl s = (s == "sss.txt") || (s == "sxx.txt")
+cYear s = 
+  toInteger (reverse (take 2 (reverse s)))
+mkclass y = "classof" ++ (toString y)
+\mbox{}
+transferRE  = RE "TRANSFER|Transfer"
+leaveRE     = RE "LEAVE|Leave"
+withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn"
+cRE         = RE "classof[0-9][0-9]"
+txt         = GL "*.txt"
+\mbox{}
+[pads|
+  data Student (name::String) = ...
+|]
+\mbox{}
+[forest|
+  type Major = Directory  
+    [ s :: File (Student <|getName s|>) 
+    | s <- matches txt where <|not (tpl s)|>]
+\mbox{}
+  type Grads = Directory 
+    [c :: Class <|cYear c|> | c <- matches cRE]
+\mbox{}
+  type Class (y::Integer) = Directory
+    \{ bse is <|"BSE" ++ (toString y)|> :: Major
+    , ab  is <|"AB"  ++ (toString y)|> :: Major   
+    , trans matches transRE :: Maybe Major      
+    , wd matches wdRE :: Maybe Major
+    , leave matches leaveRE :: Maybe Major 
+    \}
+\mbox{}
+  type All (y::Integer) = Directory
+    \{ seniors is <|mkclass y|> :: Class y
+    , juniors is <|mkclass (y+1)|> :: Class <|y+1|>
+    , graduates :: Grads
+    , notes is "README" :: File Ptext
+    \}
+|]
+\end{code}
+}

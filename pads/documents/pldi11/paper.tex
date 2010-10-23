@@ -18,7 +18,7 @@
 \copyrightyear{2011} 
 \copyrightdata{} 
 
-\title{Forest:  A Language and Toolkit For Managing File System Fragments}
+\title{Forest:  A Language and Toolkit For Programming with File System Fragments}
 
 \authorinfo{Kathleen Fisher}{
 	   AT\&T Labs Research}
@@ -214,13 +214,24 @@ the structure of the {\em metadata} that is associated with reading the file sys
 fragment into the Haskell program.  As we explain the different features of \forest{}, 
 readers should keep these three different aspects of \forest{} descriptions in mind.  
 The effectiveness of our design comes in part due to the fact that all three of these 
-elements may be specified in a single compact notation.
+elements may be specified in a single compact notation.  
+
+Readers should also be aware
+that the validity of every description is defined relative to a 
+{\em current path} or {\em current position} within the file system.  As 
+the system interprets a description against the file system, the current path
+will change from one directory or file path to the next.  In general, descriptions
+do not assume that the current path is a valid path in the file system.  When the current
+path is invalid, a description will generally\footnote{The \cd{Maybe} constructor,
+discussed in later subsections, is an example of an exception to the general rule.} 
+register an attempt to load from that
+path as an error in the associated metadata structure.
 
 \subsection{Simple Files}
 \label{sec:basics}
 
 The basic building blocks of any file system are the files themselves.  To get started,
-\forest{} provides several different ways to describe the {\em contents} files.  The simplest
+\forest{} provides several different ways to describe a file at the current position.  The simplest
 way is to choose from a collection of standard, built-in file descriptions:\footnote{Recall that
 any text following \cd{--} is a comment in Haskell.} 
 \noindent
@@ -231,7 +242,7 @@ any text following \cd{--} is a comment in Haskell.}
   type Whatever = File Pany  -- any file at all
 |]
 \end{code}
-Each such declaration creates a name ({\it e.g.,} \cd{MyText}) that can be used in other
+Each such declaration creates an identifier ({\it e.g.,} \cd{MyText}) that can be used in other
 more complex descriptions later.  It also generates several utility functions that may
 be used in the surrounding Haskell code, including functions 
 for loading files that match the given description.  
@@ -292,7 +303,7 @@ Likewise, suppose \cd{logs.tar.gz} is a gzipped tar file and suppose also that
 to.  In this case, the following description will describe the contents of
 \cd{logs.tar.gz} properly.
 \begin{code}
-type CoralLog = Gzip (Tar AllLogs)
+type CoralLogs = Gzip (Tar AllLogs)
 \end{code}
 
 \subsection{Symbolic Links}
@@ -301,8 +312,8 @@ type CoralLog = Gzip (Tar AllLogs)
 When symbolic links are present in the file system described,
 the default behavior is to read through the symbolic links to their
 targets.  Hence, the behavior of \forest{} will be intuitive to programmers who
-are used to working in a standard UNIX-link environment.  In addition, however, it is possible
-for programmers to explicitly specify that they expect a symbolic link in a particular
+are used to working in a standard UNIX-like environment.  In addition, however, it is possible
+for a programmer to explicitly specify that she expects a symbolic link in a particular
 position.  To do so, the programmer will use the \cd{SymLink} base type.  For
 example:
 \begin{code}
@@ -321,14 +332,14 @@ The simplest way to specify the contents of a directory is to use
 a record-like declaration.  For example, to specify the root directory
 of the student repository in Figure~\ref{fig:student-pic}, we might use
 the following declaration.  This declaration assumes that we have already
-defined \cd{Class}, a description that specifies
-the structure of a directory holding data on a single class
+defined \cd{Class n}, a parameterized description that specifies
+the structure of a directory holding data on the class of year \cd{n},
 and \cd{Grads}, a description that specifies the structure of the directory holding
 all graduated classes.   
 \begin{code}
 type All = Directory
-  \{ seniors is "classof11" :: Class
-  , juniors is "classof12" :: Class 
+  \{ seniors is "classof11" :: Class 11
+  , juniors is "classof12" :: Class 12
   , grads is "graduates" :: Grads
   , notes is "README" :: File Ptext
   \}
@@ -336,7 +347,7 @@ type All = Directory
 Above, each field of the record has three components:  (1) a label
 name ({\it e.g.,} seniors or juniors), (2) a file or directory name
 ({\it e.g.,} "classof11" or "classof12"), and (3) a \forest{} subdescription
-for the contents of the named object ({\it e.g.,} \cd{Class} or \cd{Grads}
+for the contents of the named object ({\it e.g.,} \cd{Class 11} or \cd{Grads}
 or \cd{File Ptext}).
 
 With simple descriptions like this one, it is common for users to want
@@ -344,25 +355,25 @@ the label to be the same as the name of the file.  In such a case, users
 may write the following abbreviated description:
 \begin{code}
 type All = Directory
-  \{ classof11 :: Class
-  , classof12 :: Class 
+  \{ classof11 :: Class 11
+  , classof12 :: Class 12
   , graduates :: Grads
   , notes is "README" :: File Ptext
   \}
 \end{code}
 Above, the name of the label is used as the expected file name.  We did not
-abbreviate \cd{notes} to \cd{README} because legal Haskell labels must start
+shorten \cd{notes is "README"} to \cd{README} because legal Haskell labels must start
 with lowercase letters.
 
 \paragraph*{Matching.}
-In order for a directory to match a description like the one above, 
-each field of the record must match
-some object in the directory.  In other words, the matched object must have the
-name given and the contents of the object must match the corresponding subdescription.
+In order for a file system object to match a description like the one above, it must be a
+directory and each field of the record must match.  A field matches when the given
+file name ({\em e.g.,} \cd{"README"}) is concatenated to the current path and the 
+object at that new path matches the field's subdescription.
 
-It is possible for the same object to to match multiple different fields of a description at
-the same time.  For example, if the "README" were a symbolic link, one might want to
-specify that using a pair of declarations:
+It is possible for the same file system object to to match multiple different fields of a description at
+the same time.  For example, if "README" were a symbolic link that pointed to a text file, one 
+might want to specify that using a pair of declarations:
 \begin{code}
 type All = Directory
   \{ ...
@@ -374,8 +385,7 @@ type All = Directory
 It is also possible for a directory to contain a number of objects that go unmatched by
 a description.  We made the design choice to allow extra items in
 a directory because we found it common for directories to contain files that users
-simply do not care much about.  Rather than forcing users to describe and discard such
-files, we allow them to go unmatched by the description.  For example,
+simply do not care much about.  For example,
 if programmers do not need to extract information out of the README file and
 users do not really care whether it exists or not, one might well choose
 to omit it from the description.  One might be concerned that this design choice makes it difficult to specify
@@ -401,7 +411,7 @@ construct representations for the subparts that do match and will insert dummy v
 into the parts that do not match.  \forest{} will also record all errors encountered in the
 matching process in the object metadata.
 
-\subsection{Computed Pathes}
+\subsection{Computed and Approximate Paths}
 \label{sec:computed-pathes}
 
 Both of the above descriptions are a good start for our application, but neither
@@ -416,8 +426,8 @@ we might arrive at the following specification for the top-level student directo
 > mkclass y = "classof" ++ (toString y)
 \mbox{}
 type All (y::Integer) = Directory
-  \{ seniors is <|mkclass y|> :: Class
-  , juniors is <|mkclass (y+1)|> :: Class
+  \{ seniors is <|mkclass y|> :: Class y
+  , juniors is <|mkclass (y+1)|> :: Class <|y+1|>
   , graduates :: Grads
   , notes is "README" :: File Ptext
   \}
@@ -430,28 +440,214 @@ type All (y::Integer) = Directory
 %  , notes is "README" :: File Ptext
 %  \}
 %\end{code}
-In general in descriptions, \cd{<|...|>} can be used to escape back in to
+In general, \cd{<|...|>} can be used to escape back in to
 Haskell to perform arbitrary computations.  Note also that any description
 may be parameterized by specifying a legal Haskell identifier and its type.
 Parameterized specifications may be used by supplying their arguments
-in the usual way.  For example:
+in the usual way.  When arguments are simple constants or variables,
+they may be supplied directly.  When arguments are more complex
+computed expressions, it is necessary to use explicit escapes back 
+in to Haskell.
+
+As repositories evolve over time, naming conventions may change.
+Alternatively, programmers simply may not care to specify certain names
+exactly.  To accomodate these possibilities, \forest{} includes mechanisms
+for approximate naming of files.  For example, in each class, there may
+(or may not) be some number of students that have withdrawn from the
+program, transferred to a different Princeton program on gone on
+temporary leave.  Over the years, slightly different directory names
+have been used to represent these situations.  Given this circumstance,
+we can use the following declarations to describe the class directory.
+\reminder{dpw: I edited out some of the withdrawn RE options to make it
+fit on a line.}
 \begin{code}
-type Root = All 11
+> transRE = RE "TRANSFER|Transfer"
+> leaveRE = RE "LEAVE|Leave"
+> wdRE    = RE "WITHDRAWN|WITHDRAWAL|Withdrawn"
+\mbox{}
+type Class (y::Integer) = Directory
+  \{ bse is <|"BSE" ++ (toString y)|> :: Major
+  , ab  is <|"AB"  ++ (toString y)|> :: Major   
+  , trans matches transRE :: Maybe Major      
+  , wd matches wdRE :: Maybe Major
+  , leave matches leaveRE :: Maybe Major 
+  \}
 \end{code}
+A field with the form \cd{<label> matches <regexp> :: T}
+finds the set of paths in the files system that match \cd{currentPath/} \cd{<regexp>}.
+If there are zero or one matches, the \cd{matches} form acts like the \cd{is} 
+form.\footnote{Recall that when 
+there are zero matches, the \cd{is} form attempts to match the type \cd{T} 
+against a non-existant file system object at a non-existant path.  This may or may not be
+an error, depending on \cd{T}.  The matches form constructs a non-existant path
+and behaves the same way.}  If there is more than one match, one of the many matches
+is selected non-deterministically, a multiple match error is registered in the metadata,
+and matching once again continues as in the \cd{is} form.
+
+In this example, the \cd{matches} form is combined with the \cd{Maybe T} constructor.
+\cd{Maybe T} succeeds and returns \cd{None} when the current path is not a path in the
+file system.  \cd{Maybe T} also succeeds, returning \cd{Just v} for some \cd{v},
+when applied to an object that matches \cd{T} at the current path.  \cd{Maybe T} 
+registers an error in the metadata when the current path exists but 
+the object at the current path does not properly match \cd{T}.
 
 \subsection{Comprehensions}
 \label{sec:comprehensions}
 
-\subsection{Constraints}
+Record directories allow programmers to specify a fixed number of file system objects.
+Comprehensions, on the other hand, allow programmers to specify arbitrary numbers
+of file system objects.  As an example, we might specify the contents of the
+\cd{Grads} directory from Figure~\ref{fig:student-file-example} as follows.
+\reminder{dpw: changed Prelude.take into take below for space reasons.}
+\reminder{dpw: perhaps the definition of getYear should use Haskell composition "." instead
+of all the parens? Also, I changed the type of the Class parameter to an integer. Hence, I needed the toInteger conversion -- it wasn't obvious to me from the Haskell docs if in fact toInteger will
+convert from a string to an integer. In the current Students2.hs (Oct. 23), all comprehensions
+are nested within records.  I unnested here. I can imagine syntax is a possible issue with doing
+that but not semantics.  The record wrapper does seem unnecessary overhead for the programmer.
+(But really, it just helps me with the explanation here, because it makes comprehensions orthogonal.}
+\begin{code}
+> cYear s = 
+>   toInteger (reverse (take 2 (reverse s)))
+> cRE = RE "classof[0-9][0-9]"
+\mbox{}
+type Grads = Directory 
+  [c :: Class <|cYear c|> | c <- matches cRE]
+\end{code}
+In the specification above, \cd{Grads} is a directory that contains a number of
+\cd{Class} subdirectories with names \cd{c} that match the regular expression
+\cd{cRE}.  The Haskell function \cd{cYear} extracts the last two digits from the
+name of the directory, converts the string digits to an integer year, and passes
+the year to the underlying \cd{Class} specification.
+More generally, comprehensions have the following form.
+\begin{code}
+[path :: T | id <- gen where pred]
+\end{code}
+Here, \cd{id} is bound to each of the strings generated by the \cd{gen},
+which may be a \cd{matches} function (used to match against the files
+at the current path) or may be some other list computed in Haskell. The allowed
+\cd{id}s may be filtered by \cd{pred} and they may be used in the computation
+\cd{path}.  Each such computed path is concatentated to the current path and
+used to match a file system object with type \cd{T}.  The predicate and path
+computation may also use the path metadata by referring to the variable
+\cd{id_md}, which will be in scope.  The in-memory representation of a comprehension
+is a list.
+
+Another example of a comprehension occurs in specification the \cd{Major} 
+directory.  These directories contain a list of student files, and one additional
+template file named \cd{sss.txt} or \cd{sxx.txt}.  The declaration below
+specifies all the student files except the template files.  Note that it uses
+a glob pattern as opposed to a regular expression
+to describe a set of text files.\footnote{A glob pattern
+is a pattern used to describe file paths in UNIX-based systems.  Such patterns include
+constant strings and wildcards \cd{*} and \cd{?}.} 
+\reminder{dpw: the actual description uses the Map combinator to convert the student
+list to a map in the representation.  that could be mentioned here but that is an orthogonal feature.
+I think it is better to have
+a section on transformations, dependent on the state of transforms in the implementation
+at submission time.}
+\begin{code}
+> tpl s = (s == "sss.txt") || (s == "sxx.txt")
+> txt = GL "*.txt"
+\mbox{}
+type Major = Directory  
+  [ s :: File (Student <|getName s|>) 
+  | s <- matches txt where <|not (tpl s)|>]
+\end{code}
+
+\subsection{Metadata and Constraints}
 \label{sec:constraints}
 
-Universal description.  Mention recursion here too.
+\reminder{dpw: is it "metadata" or "meta data"? I have used metadata.}
 
-Example illustrating the ability to enforce emptiness.  Eg: no binary files in this directory.
+\reminder{dpw: my writing throughout the entire section
+may be ambiguous with respect to the word "metadata".  I am 
+guessing there are two kinds of meta data: metadata for paths, which does
+not include error information and metadata for parsed objects, which does.
+Under what circumstances can you get at each kind?}
+
+Every file system object has metadata associated with it.  In general,
+if a \forest{} identifier \cd{id} refers to a path, the metadata for the object at that
+path is available through the identifier named \cd{id_md}. Figure~\ref{fig:metadata-components}
+lists a set of functions that extract useful information from metadata structures.
+Below, metadata functions used to write a universal description.
+Notice that the description also happens to be recursive, another useful feature of
+\forest{}.  In the case that a symbolic link creates a cycle in the file system, the Haskell
+in-memory representation will be an infinite data structure. 
+\begin{code}
+type Universal = Directory 
+  \{ asc is [ f :: File Ptext   
+           | f <- matches (GL "*") 
+           where <|get_kind f_md == AsciiK|>]
+  , bin is [ b :: File Pbinary
+           | b <- matches (GL "*") 
+           where <|get_kind b_md == BinaryK|>]
+  , dir is [ d :: Universal  
+           | d <- matches (GL "*") 
+           where <|get_kind d_md == DirectoryK|>]
+  , sym is [s :: SymLink      
+           | s <- matches (GL "*") 
+           where <|get_sym s_md == True|>]
+  \}
+\end{code}
+
+Metadata is also commonly used in {\em constraints}.  For example, if a user
+wants to ensure that all her text files are private,
+she might replace the use of \cd{File Ptext} in a description with \cd{PrivateFile}:
+\reminder{dpw: What is the precedence of "==" vs function application? Note use of "this"
+as a name is missing.}
+\begin{code}
+type PrivateFile = 
+  File Ptext 
+    where <|get_modes this_md == "-rw-------"|>
+\end{code}
+The \cd{PrivateFile} type matches any text file.  When the text file does
+not have the specified permissions, an error is registered in the metadata.
+\reminder{dpw: notice ambiguous/overlapping use of word metadata ...}
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{l|l}
+function name &  information \\
+\hline
+\cd{get_group} & object group\\
+\cd{get_kind} & the sort of file or directory \\
+\cd{get_modes} & permission string\\
+\cd{get_owner} & object owner\\
+\cd{get_size} & object size \\
+\end{tabular}
+\end{center}
+\caption{Metadata functions}
+\label{fig:metadata-components}
+\end{figure}
+
+TODO: there is a forward reference earlier in the paper to an example that shows
+how to enforce emptiness.
+
+\subsection{Representation Transformations}
+\label{sec:transforms}
+
+Map transform.  What else is implemented?  Can users specify their own transforms?
+If nothing else but map is there, perhaps we should omit
+discussing this feature?
 
 \subsection{Putting it all together}
 
-Point to Figures with completed descriptions of Coral and Students directories.
+The previous subsections explain most of the interesting features of \forest{}.
+These features are put to work in Figures~\ref{fig:student-description}
+and~\ref{fig:coral-description}.  A set of other descriptionsare available on 
+the \forest{} web site~\cite{forest-web-site}.
+
+\begin{figure}
+\input{student-description}
+\caption{\forest{} student description}
+\label{fig:student-description}
+\end{figure}
+
+\begin{figure}
+\input{coral-description}
+\caption{\forest{} coral description}
+\label{fig:coral-description}
+\end{figure}
 
 \section{Programming with \forest{}}
 \label{sec:exp}
