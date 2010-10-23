@@ -23,7 +23,7 @@ type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-"],
-                                           reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe" ]})
+                                           reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe", "as" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -183,14 +183,15 @@ simpleField internal_name = do
 
 
 
-compBody :: Parser(Generator, Maybe TH.Exp)
+compBody :: Parser(Generator, Maybe TH.Exp, Maybe TH.Exp)
 compBody =  do
      { isMatch <- optionMaybe (reserved "matches")
      ; generatorE <- forestArg
+     ; filterE <- optionMaybe filteredBy
      ; predE <- optionMaybe fieldPredicate
      ; if isJust isMatch 
-          then return (Matches generatorE, predE)
-          else return (Explicit generatorE, predE)
+          then return (Matches generatorE, filterE, predE)
+          else return (Explicit generatorE, filterE, predE)
      }
 
 
@@ -200,6 +201,7 @@ compField internal_name = do
           { reserved "is" 
           ; repTyConName <- optionMaybe (identifier)
           ; reservedOp "["
+          ; explicitFileName <- optionMaybe asPattern
           ; externalE <- forestArg
           ; reservedOp "::"
           ; forest_ty <- forestTy
@@ -208,11 +210,25 @@ compField internal_name = do
           ; generatorP <- case LHM.parsePat strPat of 
                               Left err    -> unexpected ("Failed to parse Haskell pattern in directory declaration for field "  ++ internal_name ++ ":" ++ err)
                               Right patTH -> return patTH
-          ; (generatorE, predEOpt) <- compBody
+          ; (generatorE, filterEOpt, predEOpt) <- compBody
           ; reservedOp "]"
-          ; return (Comp (internal_name, repTyConName, externalE, forest_ty, generatorP, generatorE, predEOpt))
+          ; let compField = CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorE filterEOpt predEOpt
+          ; return (Comp compField)
           }
 
+asPattern :: Parser String
+asPattern = try (do
+ { str <- identifier
+ ; reserved "as"
+ ; return str
+ }
+ )
+
+filteredBy :: Parser TH.Exp
+filteredBy = do { reserved   "filteredBy"
+--                ; haskellExp
+                ; forestArg
+                }
 
 fieldPredicate :: Parser TH.Exp
 fieldPredicate = do { reserved   "where"

@@ -160,6 +160,7 @@ cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = errorFi
 errorForestMD = Forest_md {numErrors = 1, errorMsg = Nothing, fileInfo = errorFileInfo}
 missingPathForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MissingFile path), fileInfo = errorFileInfo}
 systemErrorForestMD i = Forest_md {numErrors = 1, errorMsg = Just (SystemError i), fileInfo = errorFileInfo}
+notDirectoryForestMD path = Forest_md {numErrors = 1, errorMsg = Just (NotADirectory path), fileInfo = errorFileInfo}
 
 mergeErrors m1 m2 = case (m1,m2) of
             (Nothing,Nothing) -> Nothing

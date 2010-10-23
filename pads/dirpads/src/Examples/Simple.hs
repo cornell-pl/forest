@@ -1,11 +1,9 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
-   explore laziness in loading directory files
-   literate haskell
    library for manipulating times and permissions
       add `isCompatabile` comparator for FileModes
-   write a "unverisal description" w/binry and ascii
+   performance tuning
    TOOL: given file path, predicate on FMDs, depth limit, produce forest description
    TOOL: given a (rep,md), produce a dot graph (colored according to metadata)
    TOOL: lookup :: (Data a) => String -> Maybe a  (where a = String_t)
@@ -24,9 +22,10 @@
                     (filename, student) <= matches Student_filename where not (template filename) ] }
    How to specify fields that match a regular expression but have a single representation.
    BUG: Maybe followed by a regular expression: see Students4.hs Grades
+   literate haskell
 
-
-
+   DONE explore laziness in loading directory files
+   DONE write a "unverisal description" w/binry and ascii
    DONE implement glob patterns in addition to regular expressions
    DONE make relative paths work as arguments to ty_load
    DONE get gdef to work for representations involving a map (right now raises exception if directory doesn't exist)
@@ -83,12 +82,12 @@ getHost (Hosts_t hs) = case hs of
                          , mylink_sym is "mylink"             :: SymLink      where <| mylink_sym == "quantum" |>
                          , mylink                             :: Scores_d
                          , generic is "Generic.o"             :: File Pbinary
---                         , mylink                             :: SymLink Scores_d   where <| sym_link mylink == "quantum" |>
 --                         , airef  is ai_file                  :: File AI_t
                          }    |] 
 
 mkPrettyInstance ''Simple_d
 mkPrettyInstance ''Simple_d_md
+
 
 
 
@@ -100,10 +99,11 @@ host_file_take n  = Prelude.take n host_rep
 host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple"
 (simple_rep, simple_md) = unsafePerformIO $ simple_d_load "remote" host_dir
 
+notChina h = h /= "china"
 
 [forest| type Nested_d (file_name :: String) = Directory 
                { hostIndex is <|file_name++".txt"|>  :: File Hosts_t 
-               , hosts is Map [ h :: Scores_d | h <- <| getNames hostIndex |>  where <| h /= "china"|> ]
+               , hosts is Map  [ h :: Scores_d | h <- <| getNames hostIndex |>  filteredBy <| \h-> h /= "china"|> ]
                }  |]
 
 
@@ -115,7 +115,7 @@ re = RE ".*[.]txt"
 
 
 [forest| type Match_d = Directory
-             { files is Map [ h :: File Ptext | h <- matches (RE ".*[.]txt") where <| h /= "local.txt"|> ] }
+             { files is Map [ h :: File Ptext | h <- matches (RE ".*[.]txt") filteredBy <| \h-> h  /= "local.txt"|> ] }
        |]
 
 (match_rep, match_md) = unsafePerformIO $ match_d_load  host_dir

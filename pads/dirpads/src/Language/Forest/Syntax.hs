@@ -28,9 +28,19 @@ type BasicField = (String, TH.Exp, ForestTy, Maybe TH.Exp)  -- internal name, ex
 data Generator = Explicit TH.Exp | Matches TH.Exp
     deriving (Eq, Data, Typeable, Show)
 
-type CompField = (String, Maybe String, TH.Exp, ForestTy, TH.Pat, Generator, Maybe TH.Exp) 
-     -- internal name, optional type rep constructor name, 
-     -- external expression, description type, comp pattern, generator expression, optional generator predicate
+
+data CompField = CompField 
+        { internalName :: String
+        , tyConNameOpt :: Maybe String
+        , explicitName :: Maybe String
+        , externalE    :: TH.Exp
+        , descTy       :: ForestTy
+        , generatorP   :: TH.Pat
+        , generatorG   :: Generator
+        , filterEOpt   :: Maybe TH.Exp
+        , predEOpt     :: Maybe TH.Exp
+        }
+   deriving (Eq, Data, Typeable, Show)
 
 data Field = Simple BasicField
            | Comp  CompField

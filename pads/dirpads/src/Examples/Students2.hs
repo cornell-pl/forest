@@ -1,12 +1,15 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.Students where
+module Examples.Students2 where
 
 import Language.Pads.Padsc
 import Language.Forest.Forestc
 import Language.Pads.GenPretty
+import System.Directory
+import System.Environment (getArgs)
 
 import Data.Map
+import Data.List hiding (sort)
 import System.IO.Unsafe (unsafePerformIO)
 
 
@@ -123,9 +126,48 @@ cs_dir = "Examples/data/facadm"
 cd_md md f = f $ snd md  -- should this change the paths?
 cd_rep rep f = f $ rep
 
+princetonCS_d_tarFiles filePath name = do
+ { ~(rep,md) <- princetonCS_d_load filePath
+ ; tarFilesFromMD md name
+ }
+
+major_d_tarFiles filePath name = do
+ { ~(rep,md) <- major_d_load filePath
+ ; tarFilesFromMD md name
+ }
+
+grads_d_tarFiles filePath name = do
+ { ~(rep,md) <- grads_d_load filePath
+ ; tarFilesFromMD md name
+ }
+
+class_d_tarFiles arg filePath name = do
+ { ~(rep,md) <- class_d_load arg filePath
+ ; tarFilesFromMD md name
+ }
+
+getLoadArgs s = 
+  let (ty_name, arg) = Data.List.break (\c->c=='(') s
+  in case arg of 
+       [] -> (ty_name, Nothing)
+       '(':str -> if Data.List.last str == ')' then (ty_name, Just (init str)) 
+                  else error ("Argument to shell tool should be enclosed in parens.  Instead found:"++arg)
 
 
-doTar = tarFiles cs_md "CS.tar"
+doTar = do
+ { [descName, outputName] <- getArgs
+ ; absCurrentDir <- getCurrentDirectory
+ ; currentDir <- makeRelativeToCurrentDirectory absCurrentDir
+ ; case getLoadArgs descName of 
+      ("PrincetonCS_d", Nothing) -> princetonCS_d_tarFiles currentDir outputName
+      ("Grads_d", Nothing)       -> grads_d_tarFiles currentDir outputName
+      ("Major_d", Nothing)       -> major_d_tarFiles currentDir outputName
+      ("Class_d", Just arg)      -> class_d_tarFiles (read arg) currentDir outputName
+ }
+
+
+doTarFromMD = tarFilesFromMD cs_md "CS.tar"
+
 
 -- Find all files mentioned in cs
 files = listFiles cs_md

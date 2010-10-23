@@ -48,6 +48,14 @@ getEntries cvs =  let (Entries_f l) = entries cvs  in l
 getDirName  d = let (Pstring s) = dirname  d in s
 getFileName f = let (Pstring s) = filename f in s
 
+isDir entry  = case entry of {Dir _  -> True; otherwise -> False}
+isFile entry = case entry of {File _ -> True; otherwise -> False}
+               
+
+getDirs  cvs = map (\(Dir d)  -> d)   (filter isDir  (getEntries cvs))
+getFiles cvs = map (\(File f) -> f) (filter isFile (getEntries cvs))
+
+
 [forest| type CVS_d = Directory 
               { repository is "Repository" :: File Repository_f
               , root       is "Root"       :: File Root_f
@@ -56,8 +64,8 @@ getFileName f = let (Pstring s) = filename f in s
              
          type CVS_Repository_d = Directory
              { cvs         is "CVS"                 :: CVS_d
-             , dirs        is [ <| getDirName  d |> :: CVS_Repository_d | Dir  d <- <| getEntries cvs |> ]
-             , files       is [ <| getFileName f |> :: File Ptext       | File f <- <| getEntries cvs |> ]
+             , dirs        is [ n as <| getDirName  d |> :: CVS_Repository_d | d <- <| getDirs  cvs |> ]
+             , files       is [ <| getFileName f |> :: File Ptext       | f <- <| getFiles cvs |> ]
              } |]
 
 

@@ -63,7 +63,7 @@ instance Pretty Pchar where
   ppr (Pchar c) = text (show c)
 
 instance Pretty Ptext where
-  ppr (Ptext str) = text str
+  ppr (Ptext str) = text ("\"" ++ str++ "\"")
 
 instance Pretty Pbinary where
   ppr (Pbinary str) = text "Binary"

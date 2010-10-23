@@ -133,9 +133,9 @@ defSimple (internal, externalE, forestTy, predM) = do
    return [(repName, rhsE)]
 
 defCompound :: CompField -> Q [TH.FieldExp]
-defCompound (internal, tyCompNameOpt, externalE, forestTy, generatorP, generatorGen, optPredE) = do
-   let repName = mkName internal
-   let repE = case tyCompNameOpt of 
+defCompound (CompField {internalName,tyConNameOpt, ..})  = do
+   let repName = mkName internalName
+   let repE = case tyConNameOpt of 
            Nothing -> ListE []
            Just _  -> (VarE 'emptyMap)
    return [(repName, repE)]
@@ -252,7 +252,9 @@ loadRecord id fields pathE = do
   let mdE                = TupE [top_mdE, RecConE inner_md_name mdEs]
   let resultE            = TupE [repE,mdE]
   let finalS             = NoBindS (AppE (VarE 'return) resultE)
-  return (DoE (dir_mdS : stmts ++ [mdS,finalS]))
+  let ifDirE             = DoE (stmts ++ [mdS, finalS])
+  let chkDirS            = NoBindS(AppE (AppE (VarE 'checkIsDir ) dir_mdE)  ifDirE)
+  return (DoE [dir_mdS, chkDirS])
 
 
 loadFields :: [Field] -> TH.Exp -> Q ([FieldExp], [FieldExp], [TH.Exp], [Stmt])
@@ -276,7 +278,6 @@ loadSimple (internal, externalE, forestTy, predM) pathE = do
    let (mdE,  mdP ) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
    let newPathE     = AppE (AppE (VarE 'concatPath) pathE) externalE
---   let newPathE     = appendStringM pathE (appendStringM (mkStrLitM "/") externalE)
    rhsE <- loadE forestTy newPathE
    case predM of 
      Nothing -> let
@@ -298,38 +299,91 @@ loadSimple (internal, externalE, forestTy, predM) pathE = do
 
 
 loadCompound :: CompField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
-loadCompound (internal, tyCompNameOpt, externalE, forestTy, generatorP, generatorGen, optPredE) pathE = do
-   let repName = mkName internal
-   let mdName  = mkName (internal++"_md")
-   bmdName <- newName (internal++"_bmd")
-   filesName <- newName (internal++"_files")
+loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, filterEOpt, predEOpt}) pathE = do
+   let repName = mkName internalName
+   let mdName  = mkName (internalName++"_md")
+   bmdName <- newName (internalName++"_bmd")
+   filesName <- newName (internalName++"_files")
    let (repE, repP) = genPE repName
    let (mdE,  mdP ) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
    let (filesE, filesP) = genPE filesName
---   let newPathE     = appendStringM pathE (appendStringM (mkStrLitM "/") externalE)
    let newPathE     = AppE (AppE (VarE 'concatPath) pathE ) externalE
-   rhsE <- loadE forestTy newPathE
-   let compResultE = TupE[externalE, rhsE]  
+   rhsE <- loadE descTy newPathE
+   let getFilesE regexpE = case filterEOpt of 
+                            Nothing      -> (AppE (AppE (VarE 'getMatchingFiles) pathE) regexpE)
+                            Just filterE -> (AppE (AppE (AppE (VarE 'getMatchingFilesWithFilter) pathE) filterE) regexpE)
    let (generatorE, genStmts) = 
-          case generatorGen of 
+          case generatorG of 
                Explicit expE    -> (expE, [])
                Matches  regexpE -> (filesE,
-                                    [BindS filesP (AppE (AppE (VarE 'getMatchingFiles) pathE) regexpE)])
-
-   let predSs = case optPredE of
-                  Nothing -> [] 
-                  Just predE -> [NoBindS predE]
-   let compE = CompE ([BindS generatorP generatorE] ++ predSs ++ [ NoBindS compResultE])
-   let buildMapsE = case tyCompNameOpt of
-                     Nothing  -> AppE (VarE 'insertRepMDsList) compE
-                     Just str -> AppE (VarE 'insertRepMDsMap) compE
-   let mapStmt = BindS (TupP [repP, mdP, bmdP])  buildMapsE
+                                    [BindS filesP (getFilesE regexpE)])
+   let (hasPred, compResultE) = case predEOpt of
+                  Nothing ->    (False, TupE[externalE, rhsE])
+                  Just predE -> (True,  TupE[externalE, rhsE,  LamE [getRepMDPat explicitName externalE] predE])
+   let compE = CompE ([BindS generatorP generatorE, NoBindS compResultE])
+   let buildMapsE = case (hasPred, tyConNameOpt) of
+                     (False, Nothing)  -> AppE (VarE 'insertRepMDsList) compE
+                     (False, Just str) -> AppE (VarE 'insertRepMDsMap) compE
+                     (True, Nothing)   -> AppE (VarE 'insertRepMDsList') compE
+                     (True, Just str)  -> AppE (VarE 'insertRepMDsMap') compE
+   let mapStmt = BindS (TildeP (TupP [repP, mdP, bmdP]))  buildMapsE
    return ([(repName,repE)], [(mdName,mdE)], bmdE, genStmts++[mapStmt])       -- Include named rep and md in result
+
+getRepMDPat explicitName externalE = 
+  case explicitName of 
+      Just str -> TildeP (TupP[VarP (mkName str), VarP (mkName (str++"_md"))])
+      Nothing -> getRepMDPatFromExp externalE
+
+getRepMDPatFromExp externalE = case externalE of
+  VarE name -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_md"))])
+  otherwise -> error "Forest: Couldn't convert file expression to pattern; please supply an explicit name with 'name as exp' form"
+
 
 
 emptyMap :: Map a b
 emptyMap = Data.Map.empty
+
+
+insertRepMDsList'' :: ForestMD b => IO [(String, (a,b))] -> IO ([(String, a)], [(String, b)], Forest_md)
+insertRepMDsList'' inputs = do 
+    path_rep_mds <- inputs
+    let ~(paths, rep_mds) = unzip path_rep_mds
+    let ~(reps, mds) = unzip rep_mds
+    let repList = zip paths reps
+    let mdList = zip paths mds
+    let bmdList = Prelude.map get_fmd_header mds
+    let bmd = mergeForestMDs bmdList
+    return (repList, mdList, bmd)
+
+filterWPred :: [(String, IO (a,b), ((a,b) -> Bool))] -> IO [ (String, (a,b))] 
+filterWPred [] = return [] 
+filterWPred (~(name, action, pred):rest) = do 
+ { ~(rep,md) <- action
+ ; if pred (rep,md) then do 
+      { resRes <- filterWPred rest
+      ; return ((name,(rep,md)) : resRes)  
+      } 
+   else filterWPred rest
+ }
+
+
+insertRepMDsList' :: ForestMD b => [(String, IO (a,b), (a,b) -> Bool)] -> IO ([(String, a)], [(String, b)], Forest_md)
+insertRepMDsList' inputs = do 
+    inputs' <- filterWPred inputs               -- inputs' :: [(String, (a,b))]
+    let ~(paths, rep_mds) = unzip inputs'        -- paths :: [String], rep_mds:: [(a,b)]
+    let ~(reps, mds) = unzip rep_mds
+    let repList = zip paths reps
+    let mdList = zip paths mds
+    let bmdList = Prelude.map get_fmd_header mds
+    let bmd = mergeForestMDs bmdList
+    return (repList, mdList, bmd)
+
+insertRepMDsMap' :: ForestMD b => [(String, IO (a,b), (a,b)-> Bool)] -> IO (Map String a, Map String b, Forest_md)
+insertRepMDsMap' inputs = do 
+    (repList, mdList, bmd) <- insertRepMDsList' inputs
+    return (fromList repList, fromList mdList, bmd)
+
 
 insertRepMDsList :: ForestMD b => [(String, IO (a,b))] -> IO ([(String, a)], [(String, b)], Forest_md)
 insertRepMDsList inputs = do 
@@ -410,13 +464,13 @@ genRepMDField (Simple (internal, external, ty, predM)) = let
    (rep_ty, md_ty) = genRepMDTy ty
    in ((getFieldName   internal, TH.NotStrict, rep_ty),
        (getFieldMDName internal, TH.NotStrict, md_ty))
-genRepMDField (Comp (internal, tyConNameOpt, externalE, ty, generatorP, generatorE, optPredE)) = let
-   (rng_rep_ty, rng_md_ty) = genRepMDTy ty
+genRepMDField (Comp (CompField {internalName, tyConNameOpt, descTy, ..})) = let
+   (rng_rep_ty, rng_md_ty) = genRepMDTy descTy
    (rep_ty, md_ty) = case tyConNameOpt of 
                       Nothing ->  (mkStringListTy rng_rep_ty, mkStringListTy rng_md_ty)
                       Just str -> (mkStringConTy (mkName str) rng_rep_ty, mkStringConTy (mkName str) rng_md_ty) 
-   in ((getFieldName   internal, TH.NotStrict, rep_ty),
-       (getFieldMDName internal, TH.NotStrict, md_ty))
+   in ((getFieldName   internalName, TH.NotStrict, rep_ty),
+       (getFieldMDName internalName, TH.NotStrict, md_ty))
 
 mkStringConTy con ty = AppT (AppT (ConT con) (ConT ''String)) ty
 mkStringListTy ty = AppT ListT (tyListToTupleTy [ConT ''String, ty])

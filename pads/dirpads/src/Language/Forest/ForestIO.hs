@@ -43,8 +43,8 @@ fileload1 arg path = do
    return (rep, (fmd, md))
 
 
-tarFiles :: (ForestMD md) => md -> String -> IO ()
-tarFiles md name = do 
+tarFilesFromMD :: (ForestMD md) => md -> String -> IO ()
+tarFilesFromMD md name = do 
  { let files = filter (\s->s /= "") (listFiles md)
  ; td <- getTemporaryDirectory
  ; (fp, handle) <- openTempFile td "ForestTarSpec"
@@ -54,6 +54,9 @@ tarFiles md name = do
  ; system cmd
  ; removeFile fp
  }
+
+-- >ftar Universal.universal_d universe.tar
+-- >Universal-tar universal_d universe.tar
 
 getTempFile :: IO FilePath
 getTempFile = do 
@@ -171,16 +174,32 @@ checkPath path ifExists = do
      else ifExists
    }
 
+checkIsDir :: (Data rep, ForestMD md) => Forest_md -> IO(rep,md) -> IO(rep,md)
+checkIsDir fmd ifDir = 
+  if kind (fileInfo fmd) /= DirectoryK then (nonDir fmd) else ifDir
+
+nonDir :: (Data rep, ForestMD md) => Forest_md -> IO(rep,md) 
+nonDir fmd = do 
+  { let def_md = myempty
+  ; let new_md = replace_fmd_header def_md (notDirectoryForestMD (fullpath(fileInfo fmd)) )
+  ; return (myempty, new_md)
+  }
+
+
+
 data GL = GL String
 
 class Matching a where
- getMatchingFiles :: FilePath -> a -> IO [FilePath]
+ getMatchingFiles           :: FilePath -> a -> IO [FilePath]
+ getMatchingFilesWithFilter :: FilePath -> (FilePath -> Bool) -> a -> IO [FilePath]
 
 instance Matching RE where
- getMatchingFiles = getMatchingFilesRE
+ getMatchingFiles           = getMatchingFilesRE
+ getMatchingFilesWithFilter = getMatchingFilesWithFilterRE
 
 instance Matching GL where
  getMatchingFiles = getMatchingFilesGlob
+ getMatchingFilesWithFilter = getMatchingFilesWithFilterGlob
 
 getMatchingFilesRE :: FilePath -> RE -> IO [FilePath]
 getMatchingFilesRE path re = do 
@@ -189,6 +208,12 @@ getMatchingFilesRE path re = do
   ; return matches
   }
 
+getMatchingFilesWithFilterRE :: FilePath -> (FilePath -> Bool) -> RE -> IO [FilePath]
+getMatchingFilesWithFilterRE path afilter re = do 
+  { files <- getDirectoryContents path
+  ; let matches = (filterByRegex re files)
+  ; return (Prelude.filter afilter matches)
+  }
 
 filterByRegex (RE regStr) candidates = 
   let re = mkRegexWithOpts ('^':regStr++"$") True True
@@ -203,6 +228,15 @@ getMatchingFilesGlob path (GL glob) = do
   ; return matches
   }
 
+getMatchingFilesWithFilterGlob :: FilePath -> (FilePath -> Bool) -> GL -> IO [FilePath]
+getMatchingFilesWithFilterGlob path afilter (GL glob) = do 
+  { let gl = compile glob
+  ; files <- getDirectoryContents path
+  ; let matches = Prelude.filter (compFilter (match gl) afilter) files
+  ; return matches
+  }
+
+compFilter f1 f2 item =  f1 item && f2 item 
 
 
 getMatchingFilesGlob' :: FilePath -> GL -> IO [FilePath]

@@ -8,6 +8,7 @@ data ErrMsg = ForestError String
             | ForestIOException String
             | PredicateFailure
             | MissingFile String
+            | NotADirectory String
             | SystemError Int
      deriving (Typeable, Data, Show, Eq)
 
