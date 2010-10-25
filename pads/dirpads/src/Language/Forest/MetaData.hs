@@ -128,23 +128,33 @@ forest_md_def = Forest_md{ numErrors = 1
                          , fileInfo = fileInfo_def
                          }
 
-get_fullpath x = fullpath $ fileInfo $ fst x
-get_owner x = owner $ fileInfo $ fst x
-get_group x = group $ fileInfo $ fst x
-get_size  x = size $ fileInfo $ fst x
-get_access_time  x = access_time $ fileInfo $ fst x
-get_read_time  x = read_time $ fileInfo $ fst x
-get_mod_time  x = mod_time $ fileInfo $ fst x
-get_mode   x = mode $ fileInfo $ fst x
-get_modes  x = modeToModeString $ mode $ fileInfo $ fst x
-get_sym  x = isSymLink $ fileInfo $ fst x
-get_kind  x = kind $ fileInfo $ fst x
-
 
 {- Meta data type class -}
 class Data md => ForestMD md where
   get_fmd_header :: md -> Forest_md
   replace_fmd_header :: md -> Forest_md -> md
+  get_fullpath :: md -> String
+  get_fullpath md = fullpath $ fileInfo (get_fmd_header md)
+  get_owner :: md -> String
+  get_owner md = owner $ fileInfo (get_fmd_header md)
+  get_group :: md -> String
+  get_group md = group $ fileInfo (get_fmd_header md)
+  get_size :: md -> COff
+  get_size md = size $ fileInfo (get_fmd_header md)
+  get_access_time :: md -> EpochTime
+  get_access_time md = access_time $ fileInfo (get_fmd_header md)
+  get_mod_time :: md -> EpochTime
+  get_mod_time md = mod_time $ fileInfo (get_fmd_header md)
+  get_read_time :: md -> EpochTime
+  get_read_time md = read_time $ fileInfo (get_fmd_header md)
+  get_mode :: md -> FileMode
+  get_mode md = mode $ fileInfo (get_fmd_header md)
+  get_modes :: md -> String
+  get_modes md = modeToModeString $ mode $ fileInfo (get_fmd_header md)
+  get_isSym :: md -> Bool
+  get_isSym md = isSymLink $ fileInfo (get_fmd_header md)
+  get_kind :: md -> FileType
+  get_kind md = kind $ fileInfo (get_fmd_header md)
 
 instance ForestMD Forest_md where
   get_fmd_header b = b
@@ -187,7 +197,7 @@ updateForestMDwith base updates =  let
 
 isAscii :: FilePath -> IO Bool
 isAscii fp = do 
-  { let cmd = "file -i " ++ fp
+  { let cmd = "file -i -L " ++ fp
   ; (_, Just hout, _, ph) <-
        createProcess (shell cmd){ std_out = CreatePipe }
   ; result <- hGetLine hout
@@ -293,6 +303,8 @@ getForestMD path = do
                             })
          }
 
+getRelForestMD :: FilePath -> FilePath -> IO Forest_md
+getRelForestMD root local = getForestMD (root++"/"++local)
 
 
 

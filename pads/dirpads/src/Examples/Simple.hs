@@ -1,6 +1,10 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
+   redo comprenensions as discussed (f_att)  (where -> ',')
+   implement simple matches 
+   implement this form for typedefs in forest
+   add [] form for directory;    remove Directory keyword
    library for manipulating times and permissions
       add `isCompatabile` comparator for FileModes
    performance tuning
@@ -103,7 +107,7 @@ notChina h = h /= "china"
 
 [forest| type Nested_d (file_name :: String) = Directory 
                { hostIndex is <|file_name++".txt"|>  :: File Hosts_t 
-               , hosts is Map  [ h :: Scores_d | h <- <| getNames hostIndex |>  filteredBy <| \h-> h /= "china"|> ]
+               , hosts is Map  [ h :: Scores_d | h <- <| getNames hostIndex |>, <| h /= "china"|> ]
                }  |]
 
 
@@ -115,7 +119,7 @@ re = RE ".*[.]txt"
 
 
 [forest| type Match_d = Directory
-             { files is Map [ h :: File Ptext | h <- matches (RE ".*[.]txt") filteredBy <| \h-> h  /= "local.txt"|> ] }
+             { files is Map [ h :: File Ptext | h <- matches (RE ".*[.]txt"),  <| h  /= "local.txt"|> ] }
        |]
 
 (match_rep, match_md) = unsafePerformIO $ match_d_load  host_dir

@@ -69,7 +69,7 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
   -- Directory containing all students in a particular major.
   type Major_d = Directory 
        { students is Map [ s :: File (Student <| getName s |>) 
-                         | s <- matches (GL "*.txt") filteredBy not_template ] } 
+                         | s <- matches (GL "*.txt"),  <| (not . template) s |>  ] } 
 
   -- Directory containing all students in a particular year
   type Class_d (year :: String) = Directory
@@ -164,8 +164,9 @@ doTar = do
       ("Major_d", Nothing)       -> major_d_tarFiles currentDir outputName
       ("Class_d", Just arg)      -> class_d_tarFiles (read arg) currentDir outputName
  }
-
-
+{-
+StudentShell tar PrincetonCS_d CS.tar 
+-}
 doTarFromMD = tarFilesFromMD cs_md "CS.tar"
 
 

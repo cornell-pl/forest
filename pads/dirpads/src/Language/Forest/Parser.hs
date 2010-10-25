@@ -22,7 +22,7 @@ import Language.Pads.Syntax
 type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
-lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-"],
+lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-", ","],
                                            reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe", "as" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
@@ -183,15 +183,14 @@ simpleField internal_name = do
 
 
 
-compBody :: Parser(Generator, Maybe TH.Exp, Maybe TH.Exp)
+compBody :: Parser(Generator, Maybe TH.Exp)
 compBody =  do
      { isMatch <- optionMaybe (reserved "matches")
      ; generatorE <- forestArg
-     ; filterE <- optionMaybe filteredBy
-     ; predE <- optionMaybe fieldPredicate
+     ; predE <- optionMaybe compPredicate
      ; if isJust isMatch 
-          then return (Matches generatorE, filterE, predE)
-          else return (Explicit generatorE, filterE, predE)
+          then return (Matches  generatorE, predE)
+          else return (Explicit generatorE, predE)
      }
 
 
@@ -210,9 +209,9 @@ compField internal_name = do
           ; generatorP <- case LHM.parsePat strPat of 
                               Left err    -> unexpected ("Failed to parse Haskell pattern in directory declaration for field "  ++ internal_name ++ ":" ++ err)
                               Right patTH -> return patTH
-          ; (generatorE, filterEOpt, predEOpt) <- compBody
+          ; (generatorE, predEOpt) <- compBody
           ; reservedOp "]"
-          ; let compField = CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorE filterEOpt predEOpt
+          ; let compField = CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorE predEOpt
           ; return (Comp compField)
           }
 
@@ -224,11 +223,10 @@ asPattern = try (do
  }
  )
 
-filteredBy :: Parser TH.Exp
-filteredBy = do { reserved   "filteredBy"
---                ; haskellExp
-                ; forestArg
-                }
+compPredicate :: Parser TH.Exp
+compPredicate = do { reservedOp   ","
+                   ; haskellExp
+                   }
 
 fieldPredicate :: Parser TH.Exp
 fieldPredicate = do { reserved   "where"

@@ -298,37 +298,53 @@ loadSimple (internal, externalE, forestTy, predM) pathE = do
          return ([(repName,repE)], [(mdName,finalMDE)], bmdE, [stmt1,stmt2,stmt3,stmt4])       -- Include named rep and md in result
 
 
+
+
 loadCompound :: CompField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
-loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, filterEOpt, predEOpt}) pathE = do
+loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, predEOpt}) pathE = do
    let repName = mkName internalName
    let mdName  = mkName (internalName++"_md")
-   bmdName <- newName (internalName++"_bmd")
+   bmdName   <- newName (internalName++"_bmd")
    filesName <- newName (internalName++"_files")
+   metadatasName <- newName (internalName++"_metadatas")
+   fmName        <- newName (internalName++"_fm")
    let (repE, repP) = genPE repName
    let (mdE,  mdP ) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
    let (filesE, filesP) = genPE filesName
+   let (metadatasE, metadatasP) = genPE metadatasName
+   let (fmE, fmP) = genPE fmName
    let newPathE     = AppE (AppE (VarE 'concatPath) pathE ) externalE
    rhsE <- loadE descTy newPathE
-   let getFilesE regexpE = case filterEOpt of 
-                            Nothing      -> (AppE (AppE (VarE 'getMatchingFiles) pathE) regexpE)
-                            Just filterE -> (AppE (AppE (AppE (VarE 'getMatchingFilesWithFilter) pathE) filterE) regexpE)
-   let (generatorE, genStmts) = 
-          case generatorG of 
-               Explicit expE    -> (expE, [])
-               Matches  regexpE -> (filesE,
-                                    [BindS filesP (getFilesE regexpE)])
-   let (hasPred, compResultE) = case predEOpt of
-                  Nothing ->    (False, TupE[externalE, rhsE])
-                  Just predE -> (True,  TupE[externalE, rhsE,  LamE [getRepMDPat explicitName externalE] predE])
-   let compE = CompE ([BindS generatorP generatorE, NoBindS compResultE])
-   let buildMapsE = case (hasPred, tyConNameOpt) of
-                     (False, Nothing)  -> AppE (VarE 'insertRepMDsList) compE
-                     (False, Just str) -> AppE (VarE 'insertRepMDsMap) compE
-                     (True, Nothing)   -> AppE (VarE 'insertRepMDsList') compE
-                     (True, Just str)  -> AppE (VarE 'insertRepMDsMap') compE
+   let compResultE = TupE[externalE, rhsE]
+   let getFilesE regexpE = AppE (AppE (VarE 'getMatchingFiles) pathE) regexpE
+   let genStmts = case generatorG of 
+               Explicit expE    -> [LetS [ValD filesP (NormalB expE) []]]
+               Matches  regexpE -> [BindS filesP (getFilesE regexpE)]
+   let getRelFMDE = AppE (VarE 'getRelForestMD) pathE
+   let (generatorP', generatorE, predStmts, compPredStmts) = case predEOpt of
+                 Nothing ->    (generatorP, filesE, [], [])
+                 Just predE -> (getAttPat explicitName externalE,
+                                fmE, 
+                                [ BindS metadatasP  (AppE (AppE (VarE 'mapM) getRelFMDE) filesE)
+                                , LetS [(ValD fmP (NormalB (AppE (AppE (VarE 'zip) filesE) metadatasE) ) [])]],
+                                [NoBindS predE])
+   let compE = CompE ([BindS generatorP' generatorE]++ compPredStmts ++[NoBindS compResultE])
+   let buildMapsE = case tyConNameOpt of
+                     Nothing  -> AppE (VarE 'insertRepMDsList) compE
+                     Just str -> AppE (VarE 'insertRepMDsMap) compE
    let mapStmt = BindS (TildeP (TupP [repP, mdP, bmdP]))  buildMapsE
-   return ([(repName,repE)], [(mdName,mdE)], bmdE, genStmts++[mapStmt])       -- Include named rep and md in result
+   return ([(repName,repE)], [(mdName,mdE)], bmdE, genStmts++predStmts++[mapStmt])       -- Include named rep and md in result
+
+
+getAttPat explicitName externalE = 
+  case explicitName of 
+      Just str -> TildeP (TupP[VarP (mkName str), VarP (mkName (str++"_att"))])
+      Nothing -> getAttPatFromExp externalE
+
+getAttPatFromExp externalE = case externalE of
+  VarE name -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_att"))])
+  otherwise -> error "Forest: Couldn't convert file expression to pattern; please supply an explicit name with 'name as exp' form"
 
 getRepMDPat explicitName externalE = 
   case explicitName of 

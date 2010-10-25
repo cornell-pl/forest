@@ -37,7 +37,6 @@ data CompField = CompField
         , descTy       :: ForestTy
         , generatorP   :: TH.Pat
         , generatorG   :: Generator
-        , filterEOpt   :: Maybe TH.Exp
         , predEOpt     :: Maybe TH.Exp
         }
    deriving (Eq, Data, Typeable, Show)
