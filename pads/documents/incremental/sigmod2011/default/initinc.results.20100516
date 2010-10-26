@@ -1,0 +1,389 @@
+wasl-run.pl Arguments: -incsize
+
+**** Processing free_clickthroughs.dat.cleaned! ****
+wc -l elapse = 0.0366230010986328 secs
+Begin init/incremental size tests
+free_clickthroughs.dat.cleaned (init=500, inc=25): lntime = 22.06  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=500, inc=100): lntime = 23.81  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=500, inc=400): lntime = 33.60  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=500, inc=1600): lntime = 43.50  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=500, inc=6400): lntime = 43.16  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=1000, inc=25): lntime = 21.84  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=1000, inc=100): lntime = 24.12  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=1000, inc=400): lntime = 33.77  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=1000, inc=1600): lntime = 43.59  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=1000, inc=6400): lntime = 45.75  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=2000, inc=25): lntime = 21.27  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=2000, inc=100): lntime = 22.37  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=2000, inc=400): lntime = 21.38  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=2000, inc=1600): lntime = 20.94  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=2000, inc=6400): lntime = 22.22  rptime = NA  padstime = NA  blobtime = NA  tc = 431.64  adc = 484.43  score = 5275.94  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=4000, inc=25): lntime = 21.68  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=4000, inc=100): lntime = 21.63  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=4000, inc=400): lntime = 21.75  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=4000, inc=1600): lntime = 21.85  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=4000, inc=6400): lntime = 21.70  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=8000, inc=25): lntime = 24.11  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=8000, inc=100): lntime = 24.14  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=8000, inc=400): lntime = 24.41  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=8000, inc=1600): lntime = 24.26  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=8000, inc=6400): lntime = 24.38  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=16000, inc=25): lntime = 37.86  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=16000, inc=100): lntime = 39.15  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=16000, inc=400): lntime = 37.36  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=16000, inc=1600): lntime = 37.94  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=16000, inc=6400): lntime = 37.48  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=32000, inc=25): lntime = 113.83  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=32000, inc=100): lntime = 107.79  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=32000, inc=400): lntime = 109.23  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=32000, inc=1600): lntime = 107.75  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=32000, inc=6400): lntime = 107.70  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=64000, inc=25): lntime = 510.99  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=64000, inc=100): lntime = 510.04  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=64000, inc=400): lntime = 531.80  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=64000, inc=1600): lntime = 510.24  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+free_clickthroughs.dat.cleaned (init=64000, inc=6400): lntime = 534.57  rptime = NA  padstime = NA  blobtime = NA  tc = 388.47  adc = 488.41  score = 5272.57  dist = 0.19  accuracy = NA
+uncaught exception TimeOut [TimeOut]
+  raised at ../../smlnj-lib/Util/time-limit.sml:20.9-20.16
+free_clickthroughs.dat.cleaned (init=128000, inc=25): timed out
+End init/incremental size tests
+
+**** Processing thirdpartycontent.log! ****
+wc -l elapse = 0.350048065185547 secs
+Begin init/incremental size tests
+thirdpartycontent.log (init=500, inc=25): lntime = 39.04  rptime = NA  padstime = NA  blobtime = NA  tc = 349.90  adc = 869.15  score = 9041.38  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=500, inc=100): lntime = 38.29  rptime = NA  padstime = NA  blobtime = NA  tc = 349.90  adc = 869.15  score = 9041.38  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=500, inc=400): lntime = 38.54  rptime = NA  padstime = NA  blobtime = NA  tc = 349.90  adc = 869.15  score = 9041.38  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=500, inc=1600): lntime = 38.86  rptime = NA  padstime = NA  blobtime = NA  tc = 349.90  adc = 869.15  score = 9041.38  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=500, inc=6400): lntime = 38.75  rptime = NA  padstime = NA  blobtime = NA  tc = 349.90  adc = 869.15  score = 9041.38  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=1000, inc=25): lntime = 67.64  rptime = NA  padstime = NA  blobtime = NA  tc = 883.73  adc = 867.70  score = 9560.76  dist = 1.20  accuracy = NA
+thirdpartycontent.log (init=1000, inc=100): lntime = 67.42  rptime = NA  padstime = NA  blobtime = NA  tc = 883.73  adc = 867.70  score = 9560.76  dist = 1.20  accuracy = NA
+thirdpartycontent.log (init=1000, inc=400): lntime = 67.45  rptime = NA  padstime = NA  blobtime = NA  tc = 883.73  adc = 867.70  score = 9560.76  dist = 1.20  accuracy = NA
+thirdpartycontent.log (init=1000, inc=1600): lntime = 67.71  rptime = NA  padstime = NA  blobtime = NA  tc = 883.73  adc = 867.70  score = 9560.76  dist = 1.20  accuracy = NA
+thirdpartycontent.log (init=1000, inc=6400): lntime = 67.25  rptime = NA  padstime = NA  blobtime = NA  tc = 883.73  adc = 867.70  score = 9560.76  dist = 1.20  accuracy = NA
+thirdpartycontent.log (init=2000, inc=25): lntime = 28.82  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=2000, inc=100): lntime = 28.83  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=2000, inc=400): lntime = 28.84  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=2000, inc=1600): lntime = 28.64  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=2000, inc=6400): lntime = 28.75  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=4000, inc=25): lntime = 31.72  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=4000, inc=100): lntime = 31.47  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=4000, inc=400): lntime = 31.48  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=4000, inc=1600): lntime = 31.67  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=4000, inc=6400): lntime = 31.52  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=8000, inc=25): lntime = 37.77  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=8000, inc=100): lntime = 35.83  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=8000, inc=400): lntime = 35.61  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=8000, inc=1600): lntime = 35.62  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=8000, inc=6400): lntime = 35.55  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=16000, inc=25): lntime = 92.91  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=16000, inc=100): lntime = 91.30  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=16000, inc=400): lntime = 92.36  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=16000, inc=1600): lntime = 94.59  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=16000, inc=6400): lntime = 93.65  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=32000, inc=25): lntime = 231.29  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=32000, inc=100): lntime = 227.22  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=32000, inc=400): lntime = 235.68  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=32000, inc=1600): lntime = 251.48  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=32000, inc=6400): lntime = 241.52  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=64000, inc=25): lntime = 899.51  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=64000, inc=100): lntime = 888.39  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=64000, inc=400): lntime = 895.54  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=64000, inc=1600): lntime = 888.73  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+thirdpartycontent.log (init=64000, inc=6400): lntime = 886.84  rptime = NA  padstime = NA  blobtime = NA  tc = 367.98  adc = 867.02  score = 9038.22  dist = 0.55  accuracy = NA
+uncaught exception TimeOut [TimeOut]
+  raised at ../../smlnj-lib/Util/time-limit.sml:20.9-20.16
+thirdpartycontent.log (init=128000, inc=25): timed out
+End init/incremental size tests
+
+**** Processing eventstream.current! ****
+wc -l elapse = 2.99402499198914 secs
+Begin init/incremental size tests
+eventstream.current (init=500, inc=25): lntime = 771.56  rptime = NA  padstime = NA  blobtime = NA  tc = 4544.72  adc = 1147.22  score = 16016.90  dist = 6.47  accuracy = NA
+eventstream.current (init=500, inc=100): lntime = 1129.86  rptime = NA  padstime = NA  blobtime = NA  tc = 4127.07  adc = 1082.21  score = 14949.20  dist = 5.32  accuracy = NA
+eventstream.current (init=500, inc=400): lntime = 1064.14  rptime = NA  padstime = NA  blobtime = NA  tc = 4127.07  adc = 1082.21  score = 14949.20  dist = 5.32  accuracy = NA
+eventstream.current (init=500, inc=1600): lntime = 1064.82  rptime = NA  padstime = NA  blobtime = NA  tc = 4127.07  adc = 1082.21  score = 14949.20  dist = 5.32  accuracy = NA
+eventstream.current (init=500, inc=6400): lntime = 1079.70  rptime = NA  padstime = NA  blobtime = NA  tc = 4127.07  adc = 1082.21  score = 14949.20  dist = 5.32  accuracy = NA
+eventstream.current (init=1000, inc=25): lntime = 764.72  rptime = NA  padstime = NA  blobtime = NA  tc = 4260.71  adc = 1155.55  score = 15816.19  dist = 5.32  accuracy = NA
+eventstream.current (init=1000, inc=100): lntime = 1126.15  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.94  score = 15184.35  dist = 5.05  accuracy = NA
+eventstream.current (init=1000, inc=400): lntime = 1121.27  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.94  score = 15184.35  dist = 5.05  accuracy = NA
+eventstream.current (init=1000, inc=1600): lntime = 1105.52  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.94  score = 15184.35  dist = 5.05  accuracy = NA
+eventstream.current (init=1000, inc=6400): lntime = 1106.83  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.94  score = 15184.35  dist = 5.05  accuracy = NA
+eventstream.current (init=2000, inc=25): lntime = 747.93  rptime = NA  padstime = NA  blobtime = NA  tc = 4260.71  adc = 1155.51  score = 15815.83  dist = 5.32  accuracy = NA
+eventstream.current (init=2000, inc=100): lntime = 1116.85  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.90  score = 15183.99  dist = 5.05  accuracy = NA
+eventstream.current (init=2000, inc=400): lntime = 1098.70  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.90  score = 15183.99  dist = 5.05  accuracy = NA
+eventstream.current (init=2000, inc=1600): lntime = 1105.55  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.90  score = 15183.99  dist = 5.05  accuracy = NA
+eventstream.current (init=2000, inc=6400): lntime = 1110.98  rptime = NA  padstime = NA  blobtime = NA  tc = 4154.96  adc = 1102.90  score = 15183.99  dist = 5.05  accuracy = NA
+eventstream.current (init=4000, inc=25): lntime = 1227.79  rptime = NA  padstime = NA  blobtime = NA  tc = 4683.77  adc = 1179.17  score = 16475.50  dist = 6.79  accuracy = NA
+eventstream.current (init=4000, inc=100): lntime = 1110.77  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.17  score = 15460.89  dist = 5.74  accuracy = NA
+eventstream.current (init=4000, inc=400): lntime = 1109.46  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.17  score = 15460.89  dist = 5.74  accuracy = NA
+eventstream.current (init=4000, inc=1600): lntime = 1102.75  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.17  score = 15460.89  dist = 5.74  accuracy = NA
+eventstream.current (init=4000, inc=6400): lntime = 1115.54  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.17  score = 15460.89  dist = 5.74  accuracy = NA
+eventstream.current (init=8000, inc=25): lntime = 1244.07  rptime = NA  padstime = NA  blobtime = NA  tc = 4683.77  adc = 1179.12  score = 16474.98  dist = 6.79  accuracy = NA
+eventstream.current (init=8000, inc=100): lntime = 1130.73  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.12  score = 15460.37  dist = 5.74  accuracy = NA
+eventstream.current (init=8000, inc=400): lntime = 1137.79  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.12  score = 15460.37  dist = 5.74  accuracy = NA
+eventstream.current (init=8000, inc=1600): lntime = 1125.92  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.12  score = 15460.37  dist = 5.74  accuracy = NA
+eventstream.current (init=8000, inc=6400): lntime = 1137.29  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.12  score = 15460.37  dist = 5.74  accuracy = NA
+eventstream.current (init=16000, inc=25): lntime = 1363.05  rptime = NA  padstime = NA  blobtime = NA  tc = 4683.77  adc = 1179.02  score = 16473.96  dist = 6.79  accuracy = NA
+eventstream.current (init=16000, inc=100): lntime = 1262.70  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.01  score = 15459.34  dist = 5.74  accuracy = NA
+eventstream.current (init=16000, inc=400): lntime = 1303.50  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.01  score = 15459.34  dist = 5.74  accuracy = NA
+eventstream.current (init=16000, inc=1600): lntime = 1262.10  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.01  score = 15459.34  dist = 5.74  accuracy = NA
+eventstream.current (init=16000, inc=6400): lntime = 1295.53  rptime = NA  padstime = NA  blobtime = NA  tc = 4309.20  adc = 1115.01  score = 15459.34  dist = 5.74  accuracy = NA
+uncaught exception TimeOut [TimeOut]
+  raised at ../../smlnj-lib/Util/time-limit.sml:20.9-20.16
+eventstream.current (init=32000, inc=25): timed out
+End init/incremental size tests
+
+**** Processing strace_jaccn.dat! ****
+wc -l elapse = 0.0757958889007568 secs
+Begin init/incremental size tests
+strace_jaccn.dat (init=500, inc=25): lntime = 235.59  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.47  score = 7381.82  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=500, inc=100): lntime = 235.47  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.47  score = 7381.82  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=500, inc=400): lntime = 237.31  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.47  score = 7381.82  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=500, inc=1600): lntime = 238.53  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.47  score = 7381.82  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=500, inc=6400): lntime = 237.49  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.47  score = 7381.82  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=1000, inc=25): lntime = 236.30  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.43  score = 7381.36  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=1000, inc=100): lntime = 243.02  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.43  score = 7381.36  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=1000, inc=400): lntime = 241.56  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.43  score = 7381.36  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=1000, inc=1600): lntime = 246.84  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.43  score = 7381.36  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=1000, inc=6400): lntime = 241.23  rptime = NA  padstime = NA  blobtime = NA  tc = 1007.07  adc = 637.43  score = 7381.36  dist = 0.26  accuracy = NA
+strace_jaccn.dat (init=2000, inc=25): lntime = 58.09  rptime = NA  padstime = NA  blobtime = NA  tc = 160.22  adc = 708.65  score = 7246.68  dist = 0.12  accuracy = NA
+strace_jaccn.dat (init=2000, inc=100): lntime = 58.22  rptime = NA  padstime = NA  blobtime = NA  tc = 160.22  adc = 708.65  score = 7246.68  dist = 0.12  accuracy = NA
+strace_jaccn.dat (init=2000, inc=400): lntime = 58.74  rptime = NA  padstime = NA  blobtime = NA  tc = 160.22  adc = 708.65  score = 7246.68  dist = 0.12  accuracy = NA
+strace_jaccn.dat (init=2000, inc=1600): lntime = 57.56  rptime = NA  padstime = NA  blobtime = NA  tc = 160.22  adc = 708.65  score = 7246.68  dist = 0.12  accuracy = NA
+strace_jaccn.dat (init=2000, inc=6400): lntime = 58.80  rptime = NA  padstime = NA  blobtime = NA  tc = 160.22  adc = 708.65  score = 7246.68  dist = 0.12  accuracy = NA
+strace_jaccn.dat (init=4000, inc=25): lntime = 52.54  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 708.23  score = 7286.71  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=4000, inc=100): lntime = 52.88  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 708.23  score = 7286.71  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=4000, inc=400): lntime = 52.80  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 708.23  score = 7286.71  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=4000, inc=1600): lntime = 52.98  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 708.23  score = 7286.71  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=4000, inc=6400): lntime = 52.81  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 708.23  score = 7286.71  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=8000, inc=25): lntime = 177.43  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 707.45  score = 7278.96  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=8000, inc=100): lntime = 177.71  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 707.45  score = 7278.96  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=8000, inc=400): lntime = 195.38  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 707.45  score = 7278.96  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=8000, inc=1600): lntime = 177.78  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 707.45  score = 7278.96  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=8000, inc=6400): lntime = 177.62  rptime = NA  padstime = NA  blobtime = NA  tc = 204.45  adc = 707.45  score = 7278.96  dist = 0.15  accuracy = NA
+strace_jaccn.dat (init=16000, inc=25): lntime = 1716.79  rptime = NA  padstime = NA  blobtime = NA  tc = 3217.40  adc = 612.00  score = 9337.44  dist = 1.19  accuracy = NA
+strace_jaccn.dat (init=16000, inc=100): lntime = 1708.83  rptime = NA  padstime = NA  blobtime = NA  tc = 3217.40  adc = 612.00  score = 9337.44  dist = 1.19  accuracy = NA
+strace_jaccn.dat (init=16000, inc=400): lntime = 1798.74  rptime = NA  padstime = NA  blobtime = NA  tc = 3217.40  adc = 612.00  score = 9337.44  dist = 1.19  accuracy = NA
+strace_jaccn.dat (init=16000, inc=1600): lntime = 1707.60  rptime = NA  padstime = NA  blobtime = NA  tc = 3217.40  adc = 612.00  score = 9337.44  dist = 1.19  accuracy = NA
+strace_jaccn.dat (init=16000, inc=6400): lntime = 1705.33  rptime = NA  padstime = NA  blobtime = NA  tc = 3217.40  adc = 612.00  score = 9337.44  dist = 1.19  accuracy = NA
+uncaught exception TimeOut [TimeOut]
+  raised at ../../smlnj-lib/Util/time-limit.sml:20.9-20.16
+strace_jaccn.dat (init=32000, inc=25): timed out
+End init/incremental size tests
+
+**** Processing LA-UR-06-1446-MX16-NODE-NOZ.TXT! ****
+wc -l elapse = 0.255288124084473 secs
+Begin init/incremental size tests
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=500, inc=25): lntime = 1180.88  rptime = NA  padstime = NA  blobtime = NA  tc = 807.55  adc = 976.53  score = 10572.83  dist = 0.59  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=500, inc=100): lntime = 1154.12  rptime = NA  padstime = NA  blobtime = NA  tc = 807.55  adc = 976.53  score = 10572.83  dist = 0.59  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=500, inc=400): lntime = 1169.15  rptime = NA  padstime = NA  blobtime = NA  tc = 807.55  adc = 976.53  score = 10572.83  dist = 0.59  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=500, inc=1600): lntime = 1154.12  rptime = NA  padstime = NA  blobtime = NA  tc = 807.55  adc = 976.53  score = 10572.83  dist = 0.59  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=500, inc=6400): lntime = 1159.82  rptime = NA  padstime = NA  blobtime = NA  tc = 807.55  adc = 976.53  score = 10572.83  dist = 0.59  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=1000, inc=25): lntime = 157.06  rptime = NA  padstime = NA  blobtime = NA  tc = 438.50  adc = 1321.13  score = 13649.76  dist = 0.67  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=1000, inc=100): lntime = 185.63  rptime = NA  padstime = NA  blobtime = NA  tc = 438.50  adc = 1321.13  score = 13649.76  dist = 0.67  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=1000, inc=400): lntime = 123.20  rptime = NA  padstime = NA  blobtime = NA  tc = 467.37  adc = 1351.00  score = 13977.36  dist = 0.65  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=1000, inc=1600): lntime = 141.03  rptime = NA  padstime = NA  blobtime = NA  tc = 467.37  adc = 1351.00  score = 13977.36  dist = 0.65  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=1000, inc=6400): lntime = 306.10  rptime = NA  padstime = NA  blobtime = NA  tc = 467.37  adc = 1351.00  score = 13977.36  dist = 0.65  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=2000, inc=25): lntime = 779.84  rptime = NA  padstime = NA  blobtime = NA  tc = 1002.68  adc = 964.94  score = 10652.04  dist = 0.71  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=2000, inc=100): lntime = 782.27  rptime = NA  padstime = NA  blobtime = NA  tc = 1039.35  adc = 1202.03  score = 13059.61  dist = 0.73  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=2000, inc=400): lntime = 790.20  rptime = NA  padstime = NA  blobtime = NA  tc = 1112.58  adc = 984.15  score = 10954.11  dist = 0.78  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=2000, inc=1600): lntime = 786.88  rptime = NA  padstime = NA  blobtime = NA  tc = 1112.58  adc = 984.15  score = 10954.11  dist = 0.78  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=2000, inc=6400): lntime = 814.10  rptime = NA  padstime = NA  blobtime = NA  tc = 1112.58  adc = 984.15  score = 10954.11  dist = 0.78  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=4000, inc=25): lntime = 1501.05  rptime = NA  padstime = NA  blobtime = NA  tc = 1032.20  adc = 939.05  score = 10422.70  dist = 0.76  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=4000, inc=100): lntime = 1564.35  rptime = NA  padstime = NA  blobtime = NA  tc = 1071.31  adc = 1096.38  score = 12035.14  dist = 0.78  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=4000, inc=400): timed out
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=4000, inc=1600): timed out
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=4000, inc=6400): timed out
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=8000, inc=25): lntime = 1661.94  rptime = NA  padstime = NA  blobtime = NA  tc = 1106.64  adc = 718.26  score = 8289.28  dist = 0.82  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=8000, inc=100): lntime = 1641.32  rptime = NA  padstime = NA  blobtime = NA  tc = 1141.56  adc = 1106.93  score = 12210.88  dist = 0.86  accuracy = NA
+LA-UR-06-1446-MX16-NODE-NOZ.TXT (init=8000, inc=400): timed out
+
+End init/incremental size tests
+
+**** Processing LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv! ****
+wc -l elapse = 0.269552946090698 secs
+Begin init/incremental size tests
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=500, inc=25): lntime = 62.40  rptime = NA  padstime = NA  blobtime = NA  tc = 554.70  adc = 511.18  score = 5666.51  dist = 1.33  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=500, inc=100): lntime = 57.90  rptime = NA  padstime = NA  blobtime = NA  tc = 554.70  adc = 508.25  score = 5637.25  dist = 1.33  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=500, inc=400): lntime = 58.58  rptime = NA  padstime = NA  blobtime = NA  tc = 554.70  adc = 508.25  score = 5637.25  dist = 1.33  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=500, inc=1600): lntime = 69.14  rptime = NA  padstime = NA  blobtime = NA  tc = 589.79  adc = 511.15  score = 5701.30  dist = 1.33  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=500, inc=6400): lntime = 110.47  rptime = NA  padstime = NA  blobtime = NA  tc = 589.79  adc = 511.15  score = 5701.24  dist = 1.33  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=1000, inc=25): lntime = 62.33  rptime = NA  padstime = NA  blobtime = NA  tc = 681.57  adc = 544.09  score = 6122.50  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=1000, inc=100): lntime = 63.90  rptime = NA  padstime = NA  blobtime = NA  tc = 716.66  adc = 547.00  score = 6186.65  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=1000, inc=400): lntime = 65.74  rptime = NA  padstime = NA  blobtime = NA  tc = 716.66  adc = 547.00  score = 6186.63  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=1000, inc=1600): lntime = 75.22  rptime = NA  padstime = NA  blobtime = NA  tc = 716.66  adc = 546.96  score = 6186.27  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=1000, inc=6400): lntime = 364.57  rptime = NA  padstime = NA  blobtime = NA  tc = 1174.53  adc = 619.60  score = 7370.52  dist = 2.27  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=2000, inc=25): lntime = 27.48  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=2000, inc=100): lntime = 24.50  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=2000, inc=400): lntime = 25.19  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=2000, inc=1600): lntime = 32.65  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=2000, inc=6400): lntime = 153.22  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=4000, inc=25): lntime = 25.25  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=4000, inc=100): lntime = 25.27  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=4000, inc=400): lntime = 25.99  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=4000, inc=1600): lntime = 29.67  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=4000, inc=6400): lntime = 93.97  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=8000, inc=25): lntime = 24.25  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=8000, inc=100): lntime = 25.60  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=8000, inc=400): lntime = 24.78  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=8000, inc=1600): lntime = 27.05  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=8000, inc=6400): lntime = 279.74  rptime = NA  padstime = NA  blobtime = NA  tc = 2792.14  adc = 546.73  score = 8259.43  dist = 6.93  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=16000, inc=25): lntime = 46.98  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=16000, inc=100): lntime = 45.18  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=16000, inc=400): lntime = 45.68  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=16000, inc=1600): lntime = 48.29  rptime = NA  padstime = NA  blobtime = NA  tc = 79.50  adc = 569.40  score = 5773.51  dist = 0.67  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=16000, inc=6400): lntime = 314.31  rptime = NA  padstime = NA  blobtime = NA  tc = 2792.14  adc = 546.73  score = 8259.43  dist = 6.93  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=32000, inc=25): lntime = 194.77  rptime = NA  padstime = NA  blobtime = NA  tc = 681.57  adc = 544.03  score = 6121.86  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=32000, inc=100): lntime = 195.67  rptime = NA  padstime = NA  blobtime = NA  tc = 716.66  adc = 546.94  score = 6186.01  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=32000, inc=400): lntime = 195.41  rptime = NA  padstime = NA  blobtime = NA  tc = 716.66  adc = 546.93  score = 6185.99  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=32000, inc=1600): lntime = 197.24  rptime = NA  padstime = NA  blobtime = NA  tc = 716.66  adc = 546.90  score = 6185.62  dist = 1.13  accuracy = NA
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=32000, inc=6400): lntime = 197.77  rptime = NA  padstime = NA  blobtime = NA  tc = 716.66  adc = 546.67  score = 6183.36  dist = 1.13  accuracy = NA
+uncaught exception TimeOut [TimeOut]
+  raised at ../../smlnj-lib/Util/time-limit.sml:20.9-20.16
+LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv (init=64000, inc=25): timed out
+End init/incremental size tests
+
+**** Processing messages.sdb! ****
+wc -l elapse = 2.80680704116821 secs
+Begin init/incremental size tests
+messages.sdb (init=500, inc=25): lntime = 127.38  rptime = NA  padstime = NA  blobtime = NA  tc = 74.27  adc = 802.42  score = 8098.46  dist = 0.67  accuracy = NA
+messages.sdb (init=500, inc=100): lntime = 125.42  rptime = NA  padstime = NA  blobtime = NA  tc = 74.27  adc = 802.42  score = 8098.46  dist = 0.67  accuracy = NA
+messages.sdb (init=500, inc=400): lntime = 124.59  rptime = NA  padstime = NA  blobtime = NA  tc = 74.27  adc = 802.42  score = 8098.46  dist = 0.67  accuracy = NA
+messages.sdb (init=500, inc=1600): lntime = 124.49  rptime = NA  padstime = NA  blobtime = NA  tc = 74.27  adc = 802.42  score = 8098.46  dist = 0.67  accuracy = NA
+messages.sdb (init=500, inc=6400): lntime = 138.14  rptime = NA  padstime = NA  blobtime = NA  tc = 74.27  adc = 802.42  score = 8098.46  dist = 0.67  accuracy = NA
+messages.sdb (init=1000, inc=25): lntime = 426.22  rptime = NA  padstime = NA  blobtime = NA  tc = 480.24  adc = 796.32  score = 8443.47  dist = 1.10  accuracy = NA
+messages.sdb (init=1000, inc=100): lntime = 427.05  rptime = NA  padstime = NA  blobtime = NA  tc = 480.24  adc = 796.29  score = 8443.19  dist = 1.10  accuracy = NA
+messages.sdb (init=1000, inc=400): lntime = 458.94  rptime = NA  padstime = NA  blobtime = NA  tc = 589.38  adc = 795.94  score = 8548.81  dist = 1.24  accuracy = NA
+messages.sdb (init=1000, inc=1600): lntime = 444.08  rptime = NA  padstime = NA  blobtime = NA  tc = 589.38  adc = 795.52  score = 8544.61  dist = 1.24  accuracy = NA
+messages.sdb (init=1000, inc=6400): lntime = 458.75  rptime = NA  padstime = NA  blobtime = NA  tc = 589.38  adc = 795.26  score = 8541.95  dist = 1.24  accuracy = NA
+messages.sdb (init=2000, inc=25): lntime = 3833.25  rptime = NA  padstime = NA  blobtime = NA  tc = 2442.02  adc = 834.33  score = 10785.36  dist = 2.24  accuracy = NA
+messages.sdb (init=2000, inc=100): lntime = 3723.05  rptime = NA  padstime = NA  blobtime = NA  tc = 2442.02  adc = 834.33  score = 10785.36  dist = 2.24  accuracy = NA
+messages.sdb (init=2000, inc=400): lntime = 3873.68  rptime = NA  padstime = NA  blobtime = NA  tc = 2442.02  adc = 834.33  score = 10785.36  dist = 2.24  accuracy = NA
+messages.sdb (init=2000, inc=1600): lntime = 3690.93  rptime = NA  padstime = NA  blobtime = NA  tc = 2442.02  adc = 834.33  score = 10785.36  dist = 2.24  accuracy = NA
+messages.sdb (init=2000, inc=6400): lntime = 3707.39  rptime = NA  padstime = NA  blobtime = NA  tc = 2442.02  adc = 834.33  score = 10785.36  dist = 2.24  accuracy = NA
+messages.sdb (init=4000, inc=25): lntime = 895.22  rptime = NA  padstime = NA  blobtime = NA  tc = 90.36  adc = 784.63  score = 7936.66  dist = 0.57  accuracy = NA
+messages.sdb (init=4000, inc=100): lntime = 894.24  rptime = NA  padstime = NA  blobtime = NA  tc = 90.36  adc = 784.63  score = 7936.66  dist = 0.57  accuracy = NA
+messages.sdb (init=4000, inc=400): lntime = 959.23  rptime = NA  padstime = NA  blobtime = NA  tc = 90.36  adc = 784.63  score = 7936.66  dist = 0.57  accuracy = NA
+messages.sdb (init=4000, inc=1600): lntime = 933.91  rptime = NA  padstime = NA  blobtime = NA  tc = 90.36  adc = 784.63  score = 7936.66  dist = 0.57  accuracy = NA
+messages.sdb (init=4000, inc=6400): lntime = 949.04  rptime = NA  padstime = NA  blobtime = NA  tc = 90.36  adc = 784.63  score = 7936.66  dist = 0.57  accuracy = NA
+messages.sdb (init=8000, inc=25): lntime = 245.00  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.72  score = 7895.66  dist = 0.52  accuracy = NA
+messages.sdb (init=8000, inc=100): lntime = 242.51  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.72  score = 7895.66  dist = 0.52  accuracy = NA
+messages.sdb (init=8000, inc=400): lntime = 244.41  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.72  score = 7895.66  dist = 0.52  accuracy = NA
+messages.sdb (init=8000, inc=1600): lntime = 242.07  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.72  score = 7895.66  dist = 0.52  accuracy = NA
+messages.sdb (init=8000, inc=6400): lntime = 241.57  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.72  score = 7895.66  dist = 0.52  accuracy = NA
+messages.sdb (init=16000, inc=25): lntime = 741.59  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.71  score = 7895.61  dist = 0.52  accuracy = NA
+messages.sdb (init=16000, inc=100): lntime = 776.98  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.71  score = 7895.61  dist = 0.52  accuracy = NA
+messages.sdb (init=16000, inc=400): lntime = 735.58  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.71  score = 7895.61  dist = 0.52  accuracy = NA
+messages.sdb (init=16000, inc=1600): lntime = 756.83  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.71  score = 7895.61  dist = 0.52  accuracy = NA
+messages.sdb (init=16000, inc=6400): lntime = 740.93  rptime = NA  padstime = NA  blobtime = NA  tc = 118.49  adc = 777.71  score = 7895.61  dist = 0.52  accuracy = NA
+uncaught exception TimeOut [TimeOut]
+  raised at ../../smlnj-lib/Util/time-limit.sml:20.9-20.16
+messages.sdb (init=32000, inc=25): timed out
+End init/incremental size tests
+wasl-run.pl Arguments: -incsize
+
+**** Processing searchevents.dat.cleaned! ****
+wc -l elapse = 2.17315292358398 secs
+Begin init/incremental size tests
+searchevents.dat.cleaned (init=500, inc=25): lntime = 2649.60  rptime = NA  padstime = NA  blobtime = NA  tc = 3129.02  adc = 1059.40  score = 13723.05  dist = 1.82  accuracy = NA
+searchevents.dat.cleaned (init=500, inc=100): lntime = 4300.79  rptime = NA  padstime = NA  blobtime = NA  tc = 6210.91  adc = 1043.97  score = 16650.63  dist = 2.33  accuracy = NA
+searchevents.dat.cleaned (init=500, inc=400): lntime = 5921.21  rptime = NA  padstime = NA  blobtime = NA  tc = 7105.47  adc = 1026.29  score = 17368.35  dist = 4.05  accuracy = NA
+searchevents.dat.cleaned (init=500, inc=1600): lntime = 18424.27  rptime = NA  padstime = NA  blobtime = NA  tc = 6842.34  adc = 1096.86  score = 17810.89  dist = 3.64  accuracy = NA
+searchevents.dat.cleaned (init=500, inc=6400): timed out
+searchevents.dat.cleaned (init=1000, inc=25): timed out
+searchevents.dat.cleaned (init=1000, inc=100): timed out
+searchevents.dat.cleaned (init=1000, inc=400): timed out
+searchevents.dat.cleaned (init=1000, inc=1600): timed out
+searchevents.dat.cleaned (init=1000, inc=6400): timed out
+searchevents.dat.cleaned (init=2000, inc=25): lntime = 122.22  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.47  score = 12779.72  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=2000, inc=100): lntime = 120.48  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.47  score = 12779.72  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=2000, inc=400): lntime = 117.97  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.47  score = 12779.72  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=2000, inc=1600): lntime = 120.80  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.47  score = 12779.72  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=2000, inc=6400): lntime = 118.36  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.47  score = 12779.72  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=4000, inc=25): lntime = 134.70  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.36  score = 12778.65  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=4000, inc=100): lntime = 134.48  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.36  score = 12778.65  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=4000, inc=400): lntime = 134.30  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.36  score = 12778.65  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=4000, inc=1600): lntime = 132.09  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.36  score = 12778.65  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=4000, inc=6400): lntime = 134.13  rptime = NA  padstime = NA  blobtime = NA  tc = 165.02  adc = 1261.36  score = 12778.65  dist = 0.84  accuracy = NA
+searchevents.dat.cleaned (init=8000, inc=25): timed out
+searchevents.dat.cleaned (init=8000, inc=100): timed out
+searchevents.dat.cleaned (init=8000, inc=400): timed out
+searchevents.dat.cleaned (init=8000, inc=1600): timed out
+searchevents.dat.cleaned (init=8000, inc=6400): timed out
+searchevents.dat.cleaned (init=16000, inc=25): timed out
+searchevents.dat.cleaned (init=16000, inc=100): timed out
+searchevents.dat.cleaned (init=16000, inc=400): timed out
+searchevents.dat.cleaned (init=16000, inc=1600): timed out
+searchevents.dat.cleaned (init=16000, inc=6400): timed out
+End init/incremental size tests
+
+**** Processing 4046.xls! ****
+wc -l elapse = 0.00808191299438477 secs
+Begin init/incremental size tests
+4046.xls (init=500, inc=25): lntime = 14.49  rptime = NA  padstime = NA  blobtime = NA  tc = 181.87  adc = 2236.73  score = 22549.14  dist = 0.99  accuracy = NA
+4046.xls (init=500, inc=100): lntime = 15.20  rptime = NA  padstime = NA  blobtime = NA  tc = 181.87  adc = 2236.73  score = 22549.14  dist = 0.99  accuracy = NA
+4046.xls (init=500, inc=400): lntime = 14.47  rptime = NA  padstime = NA  blobtime = NA  tc = 181.87  adc = 2236.73  score = 22549.14  dist = 0.99  accuracy = NA
+4046.xls (init=500, inc=1600): lntime = 14.69  rptime = NA  padstime = NA  blobtime = NA  tc = 181.87  adc = 2236.73  score = 22549.14  dist = 0.99  accuracy = NA
+4046.xls (init=500, inc=6400): lntime = 14.67  rptime = NA  padstime = NA  blobtime = NA  tc = 181.87  adc = 2236.73  score = 22549.14  dist = 0.99  accuracy = NA
+4046.xls (init=1000, inc=25): lntime = 111.41  rptime = NA  padstime = NA  blobtime = NA  tc = 53.18  adc = 2249.81  score = 22551.31  dist = 1.00  accuracy = NA
+4046.xls (init=1000, inc=100): lntime = 182.24  rptime = NA  padstime = NA  blobtime = NA  tc = 53.18  adc = 2209.16  score = 22144.76  dist = 1.00  accuracy = NA
+4046.xls (init=1000, inc=400): lntime = 385.50  rptime = NA  padstime = NA  blobtime = NA  tc = 53.18  adc = 2094.14  score = 20994.62  dist = 1.00  accuracy = NA
+4046.xls (init=1000, inc=1600): lntime = 888.66  rptime = NA  padstime = NA  blobtime = NA  tc = 53.18  adc = 1825.94  score = 18312.58  dist = 1.00  accuracy = NA
+4046.xls (init=1000, inc=6400): lntime = 884.30  rptime = NA  padstime = NA  blobtime = NA  tc = 53.18  adc = 1825.94  score = 18312.58  dist = 1.00  accuracy = NA
+4046.xls (init=2000, inc=25): lntime = 102.85  rptime = NA  padstime = NA  blobtime = NA  tc = 120.87  adc = 2228.27  score = 22403.55  dist = 0.98  accuracy = NA
+4046.xls (init=2000, inc=100): lntime = 131.20  rptime = NA  padstime = NA  blobtime = NA  tc = 120.87  adc = 2221.72  score = 22338.03  dist = 0.98  accuracy = NA
+4046.xls (init=2000, inc=400): lntime = 455.85  rptime = NA  padstime = NA  blobtime = NA  tc = 120.87  adc = 2198.64  score = 22107.26  dist = 0.98  accuracy = NA
+4046.xls (init=2000, inc=1600): timed out
+4046.xls (init=2000, inc=6400): timed out
+4046.xls (init=4000, inc=25): timed out
+4046.xls (init=4000, inc=100): timed out
+4046.xls (init=4000, inc=400): timed out
+4046.xls (init=4000, inc=1600): timed out
+4046.xls (init=4000, inc=6400): timed out
+4046.xls (init=8000, inc=25): lntime = 588.85  rptime = NA  padstime = NA  blobtime = NA  tc = 437.59  adc = 2239.14  score = 22829.02  dist = 0.97  accuracy = NA
+4046.xls (init=8000, inc=100): lntime = 590.57  rptime = NA  padstime = NA  blobtime = NA  tc = 437.59  adc = 2239.14  score = 22829.02  dist = 0.97  accuracy = NA
+4046.xls (init=8000, inc=400): lntime = 588.47  rptime = NA  padstime = NA  blobtime = NA  tc = 437.59  adc = 2239.14  score = 22829.02  dist = 0.97  accuracy = NA
+4046.xls (init=8000, inc=1600): lntime = 589.98  rptime = NA  padstime = NA  blobtime = NA  tc = 437.59  adc = 2239.14  score = 22829.02  dist = 0.97  accuracy = NA
+4046.xls (init=8000, inc=6400): timed out
+
+End init/incremental size tests
+
+**** Processing HALO_have2impression.log.1! ****
+wc -l elapse = 0.0821151733398438 secs
+Begin init/incremental size tests
+HALO_have2impression.log.1 (init=500, inc=25): lntime = 120.11  rptime = NA  padstime = NA  blobtime = NA  tc = 3747.87  adc = 2130.37  score = 25051.52  dist = 1.59  accuracy = NA
+HALO_have2impression.log.1 (init=500, inc=100): lntime = 122.33  rptime = NA  padstime = NA  blobtime = NA  tc = 3747.87  adc = 2130.37  score = 25051.52  dist = 1.59  accuracy = NA
+HALO_have2impression.log.1 (init=500, inc=400): lntime = 72.75  rptime = NA  padstime = NA  blobtime = NA  tc = 1224.14  adc = 2126.82  score = 22492.36  dist = 1.00  accuracy = NA
+HALO_have2impression.log.1 (init=500, inc=1600): lntime = 84.45  rptime = NA  padstime = NA  blobtime = NA  tc = 1224.14  adc = 2126.82  score = 22492.36  dist = 1.00  accuracy = NA
+HALO_have2impression.log.1 (init=500, inc=6400): lntime = 238.90  rptime = NA  padstime = NA  blobtime = NA  tc = 999.96  adc = 2147.88  score = 22478.79  dist = 0.97  accuracy = NA
+HALO_have2impression.log.1 (init=1000, inc=25): lntime = 380.55  rptime = NA  padstime = NA  blobtime = NA  tc = 87670.74  adc = 3046.06  score = 118131.33  dist = 4.06  accuracy = NA
+HALO_have2impression.log.1 (init=1000, inc=100): lntime = 103.51  rptime = NA  padstime = NA  blobtime = NA  tc = 2584.68  adc = 3093.46  score = 33519.25  dist = 1.12  accuracy = NA
+HALO_have2impression.log.1 (init=1000, inc=400): lntime = 383.83  rptime = NA  padstime = NA  blobtime = NA  tc = 6617.40  adc = 2758.85  score = 34205.86  dist = 4.32  accuracy = NA
+HALO_have2impression.log.1 (init=1000, inc=1600): lntime = 69.75  rptime = NA  padstime = NA  blobtime = NA  tc = 1836.45  adc = 3110.71  score = 32943.53  dist = 0.82  accuracy = NA
+HALO_have2impression.log.1 (init=1000, inc=6400): lntime = 143.48  rptime = NA  padstime = NA  blobtime = NA  tc = 1836.45  adc = 3086.71  score = 32703.57  dist = 0.82  accuracy = NA
+HALO_have2impression.log.1 (init=2000, inc=25): lntime = 30.81  rptime = NA  padstime = NA  blobtime = NA  tc = 167.23  adc = 3188.96  score = 32056.85  dist = 0.76  accuracy = NA
+HALO_have2impression.log.1 (init=2000, inc=100): lntime = 36.33  rptime = NA  padstime = NA  blobtime = NA  tc = 167.23  adc = 3188.96  score = 32056.84  dist = 0.76  accuracy = NA
+HALO_have2impression.log.1 (init=2000, inc=400): lntime = 175.08  rptime = NA  padstime = NA  blobtime = NA  tc = 4159.78  adc = 2719.16  score = 31351.37  dist = 9.24  accuracy = NA
+HALO_have2impression.log.1 (init=2000, inc=1600): lntime = 31.30  rptime = NA  padstime = NA  blobtime = NA  tc = 167.23  adc = 3189.12  score = 32058.39  dist = 0.76  accuracy = NA
+HALO_have2impression.log.1 (init=2000, inc=6400): lntime = 273.48  rptime = NA  padstime = NA  blobtime = NA  tc = 4471.88  adc = 2646.37  score = 30935.61  dist = 10.29  accuracy = NA
+HALO_have2impression.log.1 (init=4000, inc=25): lntime = 72.27  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.67  score = 27464.99  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=4000, inc=100): lntime = 72.32  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.67  score = 27464.99  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=4000, inc=400): lntime = 72.49  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.67  score = 27464.99  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=4000, inc=1600): lntime = 72.27  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.67  score = 27464.99  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=4000, inc=6400): lntime = 72.32  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.67  score = 27464.99  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=8000, inc=25): lntime = 108.12  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.27  score = 27460.96  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=8000, inc=100): lntime = 107.92  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.27  score = 27460.96  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=8000, inc=400): lntime = 108.14  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.27  score = 27460.96  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=8000, inc=1600): lntime = 107.95  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.27  score = 27460.96  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=8000, inc=6400): lntime = 108.19  rptime = NA  padstime = NA  blobtime = NA  tc = 758.26  adc = 2670.27  score = 27460.96  dist = 0.65  accuracy = NA
+HALO_have2impression.log.1 (init=16000, inc=25): lntime = 258.59  rptime = NA  padstime = NA  blobtime = NA  tc = 838.23  adc = 2737.03  score = 28208.58  dist = 1.15  accuracy = NA
+HALO_have2impression.log.1 (init=16000, inc=100): lntime = 258.53  rptime = NA  padstime = NA  blobtime = NA  tc = 838.23  adc = 2737.03  score = 28208.58  dist = 1.15  accuracy = NA
+HALO_have2impression.log.1 (init=16000, inc=400): lntime = 258.68  rptime = NA  padstime = NA  blobtime = NA  tc = 838.23  adc = 2737.03  score = 28208.58  dist = 1.15  accuracy = NA
+HALO_have2impression.log.1 (init=16000, inc=1600): lntime = 259.21  rptime = NA  padstime = NA  blobtime = NA  tc = 838.23  adc = 2737.03  score = 28208.58  dist = 1.15  accuracy = NA
+HALO_have2impression.log.1 (init=16000, inc=6400): lntime = 258.59  rptime = NA  padstime = NA  blobtime = NA  tc = 838.23  adc = 2737.03  score = 28208.58  dist = 1.15  accuracy = NA
+uncaught exception TimeOut [TimeOut]
+  raised at ../../smlnj-lib/Util/time-limit.sml:20.9-20.16
+HALO_have2impression.log.1 (init=32000, inc=25): timed out
+End init/incremental size tests
+

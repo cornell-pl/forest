@@ -1,0 +1,73 @@
+Huge.pl Arguments: initsz = 2000, incsz = 100, adc = 10.0, uc = 0.5
+
+**** Processing  cosmosLog_csm.exe.log ****
+Total num of lines = 22143288
+wc -l elapse = 4 secs
+initsize = 2000  incsize = 100
+Final comps = (240.81b, 2106.05b, 21301.3435738)
+Total time = 1040.423 secs
+Edit distance = 0.805
+Reparse time = 1225.123 secs
+PADS parse time = 430 secs
+Blob parse time = 89 secs
+Accuracy = 100%
+
+**** Processing  dalpiv.dat ****
+Total num of lines = 25867260
+wc -l elapse = 82 secs
+initsize = 2000  incsize = 100
+Final comps = (383.89b, 4540.18b, 45785.7165761)
+Total time = 4012.067 secs
+Edit distance = 0.865
+Reparse time = 2195.591 secs
+PADS parse time = 767 secs
+Blob parse time = 278 secs
+Accuracy = 100%
+
+**** Processing  free_impressions.dat.cleaned ****
+Total num of lines = 27644006
+wc -l elapse = 15 secs
+initsize = 2000  incsize = 100
+Final comps = (1007.29b, 505.51b, 6062.39397592)
+Total time = 2701.207 secs
+Edit distance = 0.893
+Reparse time = 4031.680 secs
+PADS parse time = 493 secs
+Blob parse time = 46 secs
+Accuracy = 100%
+
+**** Processing  liberty ****
+Total num of lines = 265569231
+wc -l elapse = 175 secs
+initsize = 2000  incsize = 100
+Final comps = (364.17b, 842.67b, 8790.85383106)
+Total time = 21143.565 secs
+Edit distance = 0.722
+Reparse time = 20850.884 secs
+PADS parse time = 8036 secs
+Blob parse time = 677 secs
+Accuracy = 100%
+
+**** Processing  redstorm ****
+Total num of lines = 219096168
+wc -l elapse = 191 secs
+initsize = 2000  incsize = 100
+Final comps = (957.38b, 1288.04b, 13837.7346)
+Total time = 55547.561 secs
+Edit distance = 0.707
+Reparse time = 24735.798 secs
+PADS parse time = 9791 secs
+Blob parse time = 719 secs
+Accuracy = 100%
+
+**** Processing  vshkap2.log ****
+Total num of lines = 89662433
+wc -l elapse = 57 secs
+initsize = 2000  incsize = 100
+Final comps = (901.62b, 916.21b, 10063.707238)
+Total time = 23337.360 secs
+Edit distance = 1.750
+Reparse time = 14651.370 secs
+PADS parse time = 2163 secs
+Blob parse time = 174 secs
+Accuracy = 100%

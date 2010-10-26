@@ -1,0 +1,10 @@
+mktexpk --mfmode / --bdpi 600 --mag 2+240/600 --dpi 1440 ptmr8r
+mktexpk --mfmode / --bdpi 600 --mag 1+60/600 --dpi 660 ptmr8r
+mktexpk --mfmode / --bdpi 600 --mag 1+0/600 --dpi 600 ptmr8r
+mktexpk --mfmode / --bdpi 600 --mag 0+540/600 --dpi 540 ptmbi8r
+mktexpk --mfmode / --bdpi 600 --mag 0+540/600 --dpi 540 ptmb8r
+mktexpk --mfmode / --bdpi 600 --mag 0+480/600 --dpi 480 ptmr8r
+mktexpk --mfmode / --bdpi 600 --mag 0+420/600 --dpi 420 ptmr8r
+mktexpk --mfmode / --bdpi 600 --mag 1+0/600 --dpi 600 ptmri8r
+mktexpk --mfmode / --bdpi 600 --mag 0+480/600 --dpi 480 ptmri8r
+mktexpk --mfmode / --bdpi 600 --mag 0+360/600 --dpi 360 ptmri8r

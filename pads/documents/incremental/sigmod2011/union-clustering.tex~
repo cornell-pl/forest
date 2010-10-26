@@ -1,0 +1,18 @@
+\subsection{Effects of Union Clustering}
+\begin{table*}[th]
+\caption{Default vs. Union Clustering}
+\label{tab:uceffects}
+\begin{tabular}{|c||c|c|c||c|c|c|} \hline
+Data & Time (secs) & Score & Dist & Time (Secs) & Score & Dist \\ \hline \hline
+free\_clickthroughs.dat.cleaned & 21.78 & 5272.57 & 0.19 & 22.54 & 5272.57 & 0.19 \\ \hline
+thirdpartycontent.log & 28.69 & 9038.22 & 0.55 & 30.18 & 9038.22 & 0.55 \\ \hline
+eventstream.current & 1102.43 & 15183.99 & 5.05 & 1115.32 & 15183.99 & 5.05 \\ \hline
+strace\_jaccn.dat & 58.92 & 7206.30 & 0.13 & 72.31 & 7246.68 & 0.12 \\ \hline
+LA-UR-06-0803-MX20\_NODES\_0\_TO\_255\_EVENTS.csv & 24.66 & 5773.51 & 0.67 & 161.14 & 5772.10 & 0.67 \\ \hline
+messages.sdb & 244.20 & 7932.71 & 0.48 & 702.52 & 7932.65 & 0.48 \\ \hline
+HALO\_have2impression.log.1 & 107.95 & 27460.96 & 0.65 & 115.25 & 27460.96 & 0.65 \\ \hline
+LA-UR-06-1446-MX16-NODE-NOZ.TXT & 1168.55 & 10572.83 & 0.59 & 1148.81 & 10572.83 & 0.59 \\ \hline
+searchevents.dat.cleaned & 120.61 & 12779.76 & 0.84 & 131.28 & 12778.65 & 0.84 \\ \hline
+4046.xls & 535.41 & 22828.71 & 0.97 & 447.30 & 22107.26 & 0.98 \\ \hline
+\end{tabular}
+\end{table*}

@@ -1,0 +1,176 @@
+\section{Related Work}
+\label{sec:related}
+
+There is a long history of research in {\em grammar induction},
+the process of discovering grammars from example data.  
+Vidal~\cite{vidal:gisurvey} and
+De La Higuera~\cite{higuera01current} both give surveys
+of research in the area.  One way  research in this area
+may be categorized is by analyzing what kinds of inputs
+the various algorithms require.  Some algorithms
+require positive and negative examples to discover a grammar, some
+algorithms require manual labeling of example data, some algorithms
+require answers to various kinds of queries.  Our system only
+requires positive examples (negative examples 
+are not available in practice), does not ask users to answer queries,
+and does not require labeling.  
+
+Given that we work only with positive examples, there
+are still a number of possible approaches we could take.
+Our work on the core learning algorithm
+borrows key ideas from two different places.
+First, the structure discovery phase of our algorithm, which
+generates an initial candidate grammar from a set of examples,
+is a variant of Arasu and Garcia-Molina's algorithm 
+for inferring the structure of web pages for the purpose
+of information extraction~\cite{arasu+:sigmod03}.
+Second, our system makes use of various grammar
+rewriting algorithms that seek to optimize an information-theoretic
+Minimum Description Length (MDL) score.  MDL rewriting has been
+used many times before; we recommend Gr\"{u}nwald's book~\cite{mdlbook}
+as a starting point for reading about this topic.
+Given this background of basic algorithms, the key contribution
+of the work is more applied:  we have borrowed basic algorithms to get
+started, modified them so they work effectively on an important,
+understudied domain (ad hoc system logs),
+proven it is possible to scale the algorithms up
+to the point that they may be applied to massive industrial data
+sets, and empirically evaluated the results.
+
+The adaptations of our algorithm to incremental processing 
+are partly
+inspired by traditional compiler error detection and correction
+techniques.  In particular, the idea of using synchronizing tokens
+as a means for accumulating chunks of unknown/unparseable data
+has long been used in parsers from programming languages
+(see Appel's text~\cite{appel:modern-compiler} for an
+introduction to such techniques).  This heuristic appears to
+work well in our domain of systems logs as these logs are
+usually structured around punctuation symbols (commas, semi-colons,
+verticle bars, parens, newlines, {\em etc.}) that act as
+field-terminators and hence work well as synchronizing tokens.
+
+Other incremental algorithms for learning grammars from example data
+has been developed in the past.  For example, Parekh and 
+Honavar~\cite{parekh+:incremental} have developed and proven correct
+an incremental interactive algorithm for inferring
+regular grammars from positive examples and membership queries.
+This algorithm works quite differently than ours:  it operates over
+automata and it uses membership queries, which ours does not.
+More broadly speaking, Parekh and Honavar and many other related algorithms
+provide beautiful theoretical guarantees.  In contrast, we have
+focused on implementation, empirical 
+evaluation and scaling to support massive data sets.
+
+Another place in which grammar induction is used is in information
+extraction from web pages.  One example (amongst many, many others) is
+work by Chidlovskii {\em et al.}~\cite{chidlovskii+:wrapper-generation},
+which seeks to learn wrappers ({\em i.e.,} data extraction functions)
+by using a modified edit distance algorithm.  Our algorithm also
+uses edit distance in its guts to measure similarity
+between chunks of data.  However, the edit distance metric we use is just
+one element of a larger induction algorithm related to Arasu and
+Garcina-Molina's recursive descent algorithm mentioned above.
+Chidlovskii's algorithm is also incremental -- it
+integrates one new record of data at a time into a grammar.
+Our algorithm integrates batches of new data at a time.  One
+reason we chose a batch-oriented approach is that processing
+data in batches helps
+disambiguate between various possibilities for both token
+definitions and tree structure.  The tagged tree-structure of
+XML or HTML documents eliminates many of the ambiguities that
+appear in log files where the separators or tags are not known
+a priori.  Our ad hoc data sets also appear different
+from the web-based data studied by Chidlovskii in terms of their
+scale:  Chidlovskii's algorithms take up to
+30 seconds on up to 30 kilobytes of data; our algorithms 
+take hundreds of times longer on data a million times larger.
+
+Other related information-extraction efforts
+are those that attempt to identify tabular data 
+either from free-form text~\cite{Ng+:texttables,Pinto+:texttables} or
+from web pages~\cite{Lerman+:webtables}.  These approaches typically
+use hand-labeled examples to train machine learning systems to
+identify the tables.  They then use heuristics specific to tabular
+data to extract the tuples contained within those tables.  
+% The portion
+% of this work related to identifying structured data from within more
+% free-form documents is complementary to ours.  The portion responsible
+% for deconstructing the identified tables uses more specific
+% domain-knowledge related to the form of tables than we do.
+
+Many researchers have studied the problem of learning
+a schema such as a DTD or XSchema from a collection 
+of XML
+documents~\cite{bex+:dtd-inference,bex+:inferring-xml-schema,fernau:learning-xml,garofalakis+:xtract}.  
+At a high level, this task is similar to the kind of format inference
+we are attempting to do, but
+the details differ because, as mentioned above in reference to
+Chidlovskii's work, XML has different characteristics
+from ad hoc data:  XML documents have a well-nested tree 
+shape, with obvious delimiters defining the structure
+and the XML tags help with tokenization.  
+As a result of these differences,
+XML inference algorithms cannot be used ``off-the-shelf'' for understanding
+the structure of ad hoc data.  They must be modified, tuned and
+empirically evaluated on this new task.
+%% One line of research on schema inference for XML makes use of the 
+%% observation that 99\% of the content models for XML nodes are defined as
+%% SOREs or CHAREs~\cite{martens+:expressiveness-xml-schema}. 
+%% %(recall, these
+%% %are heavily restricted forms of regular expressions).  
+%% This observation allows \cite{bex+:dtd-inference} to define
+%% an efficient algorithm for inferring concise DTDs.  Later 
+%% \cite{bex+:inferring-xml-schema} build on this work 
+%% by showing how to infer $k$-local XML Schema definitions also based on
+%% SORES.  A $k$-local definition allows node content to depend on the parent
+%% tag, grandparent tag, etc. (up to $k$ levels for some fixed $k$).
+%% As mentioned earlier, hand-written PADS descriptions do not generally obey
+%% the SOREs or CHAREs restriction, nor are they generally arranged with a nesting
+%% structure that suggests $k$-local inference will be particularly useful.
+%% The successful application of these techniques to XML data reinforces 
+%% the idea that the ad hoc data we analyze has quite different characteristics
+%% from XML, and therefore the ad hoc data inference problem merits study
+%% independent of the XML inference problem.
+Having made this point,
+one of the more closely related XML schema inference systems
+is XTRACT~\cite{garofalakis+:xtract}.  
+It operates in three phases: generalization,
+factoring and MDL optimization.  The first phase plays a role similar to
+our structure discovery phase in that it generates a
+collection of candidate structures from a series of XML examples.
+This generalization phase searches for patterns in XML
+data; it is tuned using the authors' knowledge of common DTD
+structures.  Factoring decreases the size of generated candidate DTDs;
+some of the factoring rules resemble our rewriting rules.
+Finally, they tackle the MDL optimization problem by mapping the
+problem into an instance of the NP-complete Facility Location Problem,
+which they solve using a quadratic approximation algorithm.
+Our MDL-guided rewriting problem considers a more general set of
+rewriting rules and hence we cannot reuse this particular technique.
+
+Finally, Potter's Wheel~\cite{raman+:potterwheel} is a system that attempts to
+help users find and purge errors from
+relational data sources.  It does so through the use of a spread-sheet
+style interface, but in the background, a grammar inference algorithm
+infers the structure of the input data, which may be ``ad hoc,'' 
+somewhat like ours.  This inference algorithm operates by
+enumerating all possible sequences of base types that appear
+in the training data.  Like our work, Potter's Wheel is interested
+in large-scale data processing problems and is designed
+to process data incrementally and interactively.
+Since Potter's Wheel is aimed at processing
+relational data, they only infer \cd{struct} types
+as opposed to enumerations, arrays, switches or unions.  
+
+%% The TSIMMIS project~\cite{chawathe+:tsimmis} aims to
+%% allow users to manage and query collections of heterogeneous, ad hoc
+%% data sources.  TSIMMIS sits on top of the Rufus
+%% system~\cite{shoens+:rufus}, which supports automatic classification
+%% of data sources based on features such as the presence of certain
+%% keywords, magic numbers appearing at the beginning of files and file
+%% type.  
+%% %The sources are classified using categories such as ``email''
+%% %and ``C program.''  
+%% This sort of classification is materially
+%% different from the syntactic analysis we have developed.

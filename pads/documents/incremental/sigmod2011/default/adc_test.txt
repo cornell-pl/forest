@@ -1,0 +1,168 @@
+wasl-run.pl Arguments: -single -w 1.0
+
+**** Processing eventstream.current! ****
+wc -l elapse = 3.0704939365387 secs
+Begin single test
+eventstream.current (init=2000, inc=400): lntime = 1148.03  rptime = 191.92  padstime = 53.01  blobtime = 7.45  tc = 457.24  adc = 1953.58  score = 2410.82  dist = 1.37  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 5.0
+
+**** Processing eventstream.current! ****
+wc -l elapse = 0.347059011459351 secs
+Begin single test
+eventstream.current (init=2000, inc=400): lntime = 1127.63  rptime = 674.42  padstime = 70.40  blobtime = 7.25  tc = 2892.25  adc = 1298.48  score = 9384.64  dist = 5.05  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 10.0
+
+**** Processing eventstream.current! ****
+wc -l elapse = 0.340620994567871 secs
+Begin single test
+eventstream.current (init=2000, inc=400): lntime = 1104.06  rptime = 648.95  padstime = 64.34  blobtime = 7.11  tc = 4154.96  adc = 1102.90  score = 15183.99  dist = 5.05  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 100.0
+
+**** Processing eventstream.current! ****
+wc -l elapse = 0.340739965438843 secs
+Begin single test
+eventstream.current (init=2000, inc=400): lntime = 1176.78  rptime = 696.98  padstime = 64.41  blobtime = 7.09  tc = 5042.80  adc = 1037.51  score = 108793.89  dist = 5.42  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 1000.0
+
+**** Processing eventstream.current! ****
+wc -l elapse = 0.346027851104736 secs
+Begin single test
+eventstream.current (init=2000, inc=400): lntime = 1177.89  rptime = 702.44  padstime = 63.35  blobtime = 7.17  tc = 5427.06  adc = 1035.86  score = 1041289.89  dist = 5.42  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 1.0
+
+**** Processing strace_jaccn.dat! ****
+wc -l elapse = 0.53687310218811 secs
+Begin single test
+strace_jaccn.dat (init=2000, inc=100): lntime = 55.19  rptime = 16.22  padstime = 2.06  blobtime = 1.43  tc = 136.36  adc = 713.58  score = 849.94  dist = 0.12  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 5.0
+
+**** Processing strace_jaccn.dat! ****
+wc -l elapse = 0.0736238956451416 secs
+Begin single test
+strace_jaccn.dat (init=2000, inc=100): lntime = 65.72  rptime = 20.11  padstime = 2.00  blobtime = 1.42  tc = 160.22  adc = 708.65  score = 3703.45  dist = 0.12  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 10.0
+
+**** Processing strace_jaccn.dat! ****
+wc -l elapse = 0.0727939605712891 secs
+Begin single test
+strace_jaccn.dat (init=2000, inc=100): lntime = 56.58  rptime = 16.74  padstime = 2.03  blobtime = 1.43  tc = 160.22  adc = 708.65  score = 7246.68  dist = 0.12  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 100.0
+
+**** Processing strace_jaccn.dat! ****
+wc -l elapse = 0.067080020904541 secs
+Begin single test
+strace_jaccn.dat (init=2000, inc=100): lntime = 2297.20  rptime = 1473.77  padstime = 7.54  blobtime = 1.42  tc = 1912.07  adc = 637.33  score = 65645.43  dist = 0.60  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 1000.0
+
+**** Processing strace_jaccn.dat! ****
+wc -l elapse = 0.0732150077819824 secs
+Begin single test
+strace_jaccn.dat (init=2000, inc=100): lntime = 2293.13  rptime = 1504.44  padstime = 7.51  blobtime = 1.43  tc = 1912.07  adc = 637.33  score = 639245.73  dist = 0.60  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 1.0
+
+**** Processing messages.sdb! ****
+wc -l elapse = 2.86432600021362 secs
+Begin single test
+messages.sdb (init=8000, inc=1600): lntime = 242.90  rptime = 174.86  padstime = 78.21  blobtime = 8.95  tc = 137.53  adc = 791.65  score = 929.18  dist = 0.62  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 5.0
+
+**** Processing messages.sdb! ****
+wc -l elapse = 0.465359210968018 secs
+Begin single test
+messages.sdb (init=8000, inc=1600): lntime = 248.96  rptime = 180.85  padstime = 73.17  blobtime = 8.99  tc = 155.53  adc = 777.72  score = 4044.12  dist = 0.48  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 10.0
+
+**** Processing messages.sdb! ****
+wc -l elapse = 0.462922811508179 secs
+Begin single test
+messages.sdb (init=8000, inc=1600): lntime = 246.63  rptime = 178.22  padstime = 72.61  blobtime = 8.94  tc = 155.53  adc = 777.72  score = 7932.71  dist = 0.48  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 100.0
+
+**** Processing messages.sdb! ****
+wc -l elapse = 0.45647406578064 secs
+Begin single test
+messages.sdb (init=8000, inc=1600): lntime = 46775.12  rptime = 465.74  padstime = 88.82  blobtime = 9.10  tc = 1354.64  adc = 768.80  score = 78234.53  dist = 0.71  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 1000.0
+
+**** Processing messages.sdb! ****
+wc -l elapse = 0.460179090499878 secs
+Begin single test
+messages.sdb (init=8000, inc=1600): lntime = 105769.12  rptime = 698.55  padstime = 84.27  blobtime = 10.23  tc = 1227.87  adc = 768.39  score = 769619.98  dist = 0.43  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 1.0
+
+**** Processing HALO_have2impression.log.1! ****
+wc -l elapse = 0.629067897796631 secs
+Begin single test
+HALO_have2impression.log.1 (init=8000, inc=100): lntime = 99.12  rptime = 43.18  padstime = 7.11  blobtime = 1.46  tc = 301.42  adc = 2730.16  score = 3031.58  dist = 0.44  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 5.0
+
+**** Processing HALO_have2impression.log.1! ****
+wc -l elapse = 0.066248893737793 secs
+Begin single test
+HALO_have2impression.log.1 (init=8000, inc=100): lntime = 102.75  rptime = 43.27  padstime = 7.01  blobtime = 1.28  tc = 307.42  adc = 2725.51  score = 13934.99  dist = 0.41  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 10.0
+
+**** Processing HALO_have2impression.log.1! ****
+wc -l elapse = 0.0703871250152588 secs
+Begin single test
+HALO_have2impression.log.1 (init=8000, inc=100): lntime = 110.31  rptime = 50.87  padstime = 7.03  blobtime = 1.29  tc = 758.26  adc = 2670.27  score = 27460.96  dist = 0.65  accuracy = 100.00%
+
+wasl-run.pl Arguments: -single -w 100.0
+
+**** Processing HALO_have2impression.log.1! ****
+wc -l elapse = 0.0648329257965088 secs
+Begin single test
+HALO_have2impression.log.1 (init=8000, inc=100): lntime = 187.63  rptime = 129.34  padstime = 7.07  blobtime = 1.46  tc = 15572.10  adc = 2718.91  score = 287462.61  dist = 0.65  accuracy = 100.00%
+wasl-run.pl Arguments: -single -w 1000.0
+
+**** Processing HALO_have2impression.log.1! ****
+wc -l elapse = 0.0652289390563965 secs
+Begin single test
+HALO_have2impression.log.1 (init=8000, inc=100): lntime = 1194.74  rptime = 1709.04  padstime = 6.99  blobtime = 1.27  tc = 316522.09  adc = 2309.11  score = 2625629.25  dist = 0.65  accuracy = 100.00%
+wasl-run.pl Arguments: -single -u 0.5 -w 1.0
+
+**** Processing 4046.xls! ****
+wc -l elapse = 0.00861001014709473 secs
+Begin single test
+4046.xls (init=8000, inc=400): lntime = 630.88  rptime = 2.17  padstime = 0.18  blobtime = 0.10  tc = 464.20  adc = 2250.22  score = 2714.42  dist = 0.99  accuracy = 100.00%
+wasl-run.pl Arguments: -single -u 0.5 -w 5.0
+
+**** Processing 4046.xls! ****
+wc -l elapse = 0.00826406478881836 secs
+Begin single test
+4046.xls (init=8000, inc=400): lntime = 596.56  rptime = 1.20  padstime = 0.16  blobtime = 0.10  tc = 413.85  adc = 2243.09  score = 11629.32  dist = 0.97  accuracy = 100.00%
+wasl-run.pl Arguments: -single -u 0.5 -w 10.0
+
+**** Processing 4046.xls! ****
+wc -l elapse = 0.00813984870910645 secs
+Begin single test
+4046.xls (init=8000, inc=400): lntime = 594.97  rptime = 1.23  padstime = 0.16  blobtime = 0.11  tc = 437.59  adc = 2239.14  score = 22829.02  dist = 0.97  accuracy = 100.00%
+wasl-run.pl Arguments: -single -u 0.5 -w 100.0
+
+**** Processing 4046.xls! ****
+wc -l elapse = 0.00849604606628418 secs
+Begin single test
+4046.xls (init=8000, inc=400): lntime = 598.24  rptime = 1.56  padstime = 0.14  blobtime = 0.11  tc = 620.07  adc = 2237.69  score = 224388.91  dist = 0.97  accuracy = 100.00%
+wasl-run.pl Arguments: -single -u 0.5 -w 1000.0
+
+**** Processing 4046.xls! ****
+wc -l elapse = 0.00829315185546875 secs
+Begin single test
+4046.xls (init=8000, inc=400): lntime = 594.58  rptime = 1.54  padstime = 0.15  blobtime = 0.11  tc = 620.07  adc = 2237.69  score = 2238308.48  dist = 0.97  accuracy = 100.00%
