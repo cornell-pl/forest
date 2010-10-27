@@ -108,7 +108,9 @@ Enrique Vidal.
 
 \bibitem{wasl09:zhu+}
 Kenny~Q. Zhu, Kathleen Fisher, and David Walker.
-\newblock In {\em ACM SOSP Workshop on the Analysis of System Logs (WASL)},
-  2009.
+\newblock Incremental learning of system log formats.
+\newblock In {\em ACM SOSP Workshop on the Analysis of System Logs (WASL 2009)
+  and later appeared in the special issue of Operating Systems Review, 44(1)},
+  2010.
 
 \end{thebibliography}

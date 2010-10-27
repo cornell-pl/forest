@@ -13,7 +13,6 @@ running Linux version 2.6.18. Our system is single-threaded, so we effectively u
 
 \begin{table*}[t]
 \centering
-\caption{The data sources}\label{tab:sources}
 \begin{tabular}{|l|r|r|l|} \hline
 {\bf Name (Large)} & {\bf Size} & {\bf Lines} & {\bf Description} \\ \hline
 redstorm & 34.18 GB & 219096168 & Supercomputer log from Sandia National Lab	\\ \hline
@@ -35,6 +34,7 @@ searchevents.dat & 90 MB & 2035348 & Yellow pages search event log \\ \hline
 4046.xls & 7 MB & 24193 & DNA Microarray data\\ \hline
 %smallrace.log & 1.9 MB & 3000 &	Log file from an autonomous vehicle \\ \hline
 \end{tabular}
+\caption{The data sources}\label{tab:sources}
 \end{table*}
 
 We are interested in two kinds of performance measures: 
@@ -61,6 +61,8 @@ This metric counts the number of edits necessary to convert the learned descript
 More precisely, the distance measure is a {\em normalized edit distance} score:
 \[normal\_dist(D) = \frac{edit\_dist(D, D_{gold})}{|D_{gold}|}\]
 where $|D|$ denotes the total number of nodes in $D$.
+We have empiracally determined that a normalized edit distance of 
+less than 1 indicates a relatively good description. 
 Of course, the edit distance measure may also be imperfect as there can be a number of different but equally ``good'' ways 
 to craft a gold description.  Nevertheless, we have found this measure
 adds information to what we gain from the MDL score alone.
@@ -106,10 +108,10 @@ raw data.
 
 \begin{table*}[th]
 \centering
-\caption{Large data sources}
 \label{tab:large}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
-Data &  MDL & Dist & Accuracy & Learn Time (s) & \cd{parse} time (s) & PADS time (s) & {\tt wc} time (s) & {\tt Pstring} time (s)\\ \hline \hline
+Data &  MDL & Dist & Accuracy & Learn Time & \cd{parse} time & PADS time & {\tt wc} time & {\tt Pstring} time \\ 
+  &  &  &  &  (secs) & (secs) & (secs) & (secs) & (secs) \\ \hline \hline
 cosmosLog\_csm.exe.log &  21301.34 & 0.805 & 100\% &  1040 & 1225  &  430 &  34 & 89 \\ \hline
 dalpiv.dat             & 45785.72  & 0.865 & 100\% &  4012 & 2196  &  767 &  82 & 278 \\ \hline
 free\_impressions.dat  & 6062.39   & 0.89  & 100\% &  2701 & 4032  &  493 &  15 & 46 \\ \hline
@@ -117,6 +119,7 @@ liberty                & 8790.85   & 0.722 & 100\% & 21144 & 20851 & 8036 & 175 
 redstorm               & 13837.73  & 0.707 & 100\% & 55548 & 24736 & 9791 & 191 & 719 \\ \hline
 vshkap2.log            & 10063.71  & 1.750 & 100\% & 23337 & 14651 & 2163 &  57 & 174  \\ \hline
 \end{tabular}
+\caption{Large data sources}
 \end{table*}
 
 
@@ -844,8 +847,7 @@ init/inc & 25 & 100 & 400 & 1600 & 6400 \\ \hline \hline
 
 \cleardoublepage
 }%%%%%%%%%%%%%%%% end of cut %%%%%%%%%%%%%%%%%%%
-\begin{table}[th]
-\caption{$N$ vs. $M$ - eventstream.current}
+\begin{table}[th]\small
 \label{tab:eventstream.current}
 \centering
 \begin{tabular}{|c||c|c|c|c|c|}
@@ -879,9 +881,10 @@ Manual & 10199.04 & 9763.39 & 9763.39 & 9763.39 & 9742.43 \\
 %64000  &  &  &  &  & \\ 
 %  &  &  &  &  & \\ \hline 
 \end{tabular}
+\caption{$N$ vs. $M$ - eventstream.current}
 \end{table}
-\begin{table}[th]
-\caption{$N$ vs. $M$ - messages.sdb}
+
+\begin{table}[th]\small
 \label{tab:messages.sdb}
 \centering
 \begin{tabular}{|c||c|c|c|c|c|}
@@ -915,6 +918,7 @@ Manual & 8316.77 & 8355.71 & 8313.52 & 8297.47 & 8297.04 \\
 %64000  &  &  &  &  & \\ 
 %  &  &  &  &  & \\ \hline 
 \end{tabular}
+\caption{$N$ vs. $M$ - messages.sdb}
 \end{table}
 
 To understand the interplay of parameters $N$ and $M$,
@@ -1041,7 +1045,7 @@ for the other files are available on the web (\url{http://www.padsproj.org/incre
 
 \begin{figure}[t]
 \centering
-{\footnotesize
+{\small
 \begin{code}
 \kw{Pstruct} proc_id_t \{
         '[';
@@ -1083,7 +1087,7 @@ for the other files are available on the web (\url{http://www.padsproj.org/incre
 \begin{figure}[t]
 \centering
 \vskip 2ex
-{\footnotesize
+{\small
 \begin{code}
 \kw{Pstruct} Struct_6113 \{
         Pstring(:':':)  v_blob_5869;

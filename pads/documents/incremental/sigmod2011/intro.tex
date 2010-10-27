@@ -2,7 +2,7 @@
 
 \begin{figure*}
 Cosmos event streams:
-{\footnotesize
+{\small
 \begin{verbatim}
 EventName=CosmosPerfCounter_1,CurrentTimeStamp=2010-04-10T02:07:54.950Z,Machine=msradb001,
 name=\\Cosmos\\MessageSent,instanceName=Total,counterType=rate,currentValue=1,minValue=1,
@@ -11,7 +11,7 @@ maxValue=1,average=0,rate=1.18217E-006,runningTotalCount=0,runningTotal=0,timeIn
 \end{verbatim}
 }
 Messages.sdb:
-{\footnotesize
+{\small
 \begin{verbatim}
 Jun  4 10:42:56 nid00004 sshd[5405]: Accepted publickey for root from 193.168.0.1 port 43484 ssh2
 Jun  4 10:57:49 nid00003 syslog-ng[3504]: syslog-ng version 1.6.8 starting
@@ -114,8 +114,11 @@ various industrial data sources.
 
 We presented a short, earlier version of this material in an informal workshop 
 in 2009~\cite{wasl09:zhu+}. 
-Unlike the earlier paper, this paper presents a detailed empirical analysis of the correctness and scalability of the system,
-as well as describing the algorithm in more detail.
+Unlike the earlier paper, this paper presents a re-engineered algorithm
+that is capable of processing data sources more than two orders of magnitude
+larger, while at the same time producing outputs of higher quality. 
+This paper also gives detailed empirical analysis of the 
+correctness and scalability of the system.
 
 In the rest of the paper, we give a brief overview of \pads{} and the original
 \learnpads{} inference algorithm (\secref{sec:review}). We then decribe

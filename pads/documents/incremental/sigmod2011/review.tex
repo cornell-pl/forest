@@ -1,6 +1,6 @@
 \section{Review of PADS and LearnPADS}\label{sec:review}
 \begin{figure*}
-{\footnotesize
+{\small
 \begin{verbatim}
 207.136.97.49  - - [05/May/2009:16:37:20 -0400] "GET /README.txt HTTP/1.1" 404 216
 ks38.kms.com - kim [10/May/2009:18:38:35 -0400] "GET /doc/prev.gif HTTP/1.1" 304 576
@@ -109,7 +109,7 @@ data determines which branch to take.  Such unions illustrate that
 can determine how to parse later portions.
 
 \begin{figure}[t]
-{\footnotesize
+{\small
 \begin{verbatim}
 <entry_t>
   <client>
@@ -150,37 +150,37 @@ can determine how to parse later portions.
 
 From a description like the one in \figref{fig:ai.p}, the \pads{}
 compiler can automatically produce a suite of data processing tools
-such as XML translator that converts the raw data into XML and
+such as an XML translator that converts the raw data into XML and
 statistical reporter that computes the various statistics of each types
 in the data source. \figref{fig:xml} presents the output of such an XML
 translator when applied to the first data records in \figref{fig:ai}.
 Note that every data field has been tagged with a corresponding 
-\pads{} data type. \figref{fig:accum} shows a snipet of the statistical
+\pads{} data type. \figref{fig:accum} shows a snippet of the statistical
 report on a \ai{} data source. 
 
 
 \begin{figure}[th]
-{\footnotesize
+{\small
 \begin{verbatim}
-*****************************************************
+*************************************************
 <top> : struct entry_t
-*****************************************************
+*************************************************
 good vals: 3000  bad vals: 0  pcnt-bad: 0.0
 
 [Describing each field of <top>]
-=====================================================
+=================================================
 <top>.client : union client_t
-=====================================================
+=================================================
 good vals: 3000  bad vals: 0  pcnt-bad: 0.0
   min ip 1  max host 2
   distribution:
-    val: ip (1)   count: 1704 pcnt-of-good: 56.800
-    val: host (2) count: 1296 pcnt-of-good: 43.200
-                  . . . . . . . . . . . . . . . . .
-  SUMMING         count: 3000 pcnt-of-good: 100.000
-=====================================================
+  val: ip (1)   count: 1704 pcnt-of-good: 56.800
+  val: host (2) count: 1296 pcnt-of-good: 43.200
+                . . . . . . . . . . . . . . . . .
+SUMMING         count: 3000 pcnt-of-good: 100.000
+=================================================
 <top>.length.len : uint32
-=====================================================
+=================================================
 good vals: 2651  bad vals: 0  pcnt-bad: 0.000
   min 35  max 37947 avg 3896.320
   distribution:
@@ -234,12 +234,20 @@ in \figref{fig:ai} are:
 \end{verbatim}
 }
 
+Note that there are data sources in which the major unit of
+repetition is something other than a single line of text. Our
+system allows the use of other record delimiters through a
+regular expression. Automatic inference of such a delimiter
+does not seem worthwhile because it normally does not take
+the user more than a few seconds to look at the data source and
+determine the appropriate delimiter.
+
 In the {\em structure discovery} phase, \learnpads{} computes a
 frequency distribution for each token type and then uses that
 information to determine if the top-level structure of the data source
 is a base type, \kw{Pstruct}, \kw{Parray}, or \kw{Punion}.  Based on
-that determination, the algorithm partitions the data into new
-contexts and recursively analyzes each of those contexts, constructing
+that determination, the algorithm partitions the data 
+and recursively analyzes each of those partitions, constructing
 the corresponding description as it recurses.  This phase terminates
 with a candidate description.  
 
@@ -252,7 +260,10 @@ buckets; each bucket corresponds to one branch of the new
 based on the first token of each record: all records starting with
 \kw{Pint} into one bucket, \kw{Pdate} into a second, \etc{}  
 Although this approach is very effective for some formats, for others
-it fails to capture useful structure.  To address this lack, we added
+it fails to capture useful structure, because two semantically very
+different records may incidentally have the same type of token as their first
+token. And conversely records with similar meaning may not share the same
+first token. To address this lack, we added
 a second mechansism for partitioning records in a \kw{Punion}
 context: edit distance.  With this approach, two records are placed in
 the same bucket if the number of token ``edits'' (insertions and
@@ -269,7 +280,8 @@ the algorithm uses an information-theoretic scoring function to guide the
 application of rewriting rules.
 These rules seek to minimize the size of the description while
 improving its precision by performing structural transformations (such
-as merging adjacent \kw{Pstruct}s),  adding data dependencies, and
+as merging adjacent \kw{Pstruct}s),  adding data dependencies ({\em e.g.}
+converting regular unions into switched unions), and
 constraining the range of base types, \eg{}, converting a
 general integer to a 32-bit integer.  
 
@@ -292,7 +304,7 @@ log files that we have experimented with, but it has two limitations:
 performance and adaptability.  In terms of performance, the algorithm
 requires space quadratic in the input file size to perform the data
 dependency analysis, so it cannot be used on data sources larger than the
-square of the size of usable memory. In terms of adaptability, the
+square root of the size of usable memory. In terms of adaptability, the
 algorithm only learns a description from a fixed amount of data.
 If the data changes over time,
 the algorithm cannot modify the existing description; 

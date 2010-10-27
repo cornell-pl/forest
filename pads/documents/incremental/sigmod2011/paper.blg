@@ -2,37 +2,36 @@ This is BibTeX, Version 0.99c (Web2C 7.5.4)
 The top-level auxiliary file: paper.aux
 The style file: plain.bst
 Database file #1: pads.bib
-Warning--empty title in wasl09:zhu+
 You've used 21 entries,
             2118 wiz_defined-function locations,
-            877 strings with 11371 characters,
-and the built_in function-call counts, 7993 in all, are:
-= -- 782
+            879 strings with 11497 characters,
+and the built_in function-call counts, 7998 in all, are:
+= -- 784
 > -- 299
 < -- 14
 + -- 122
 - -- 98
-* -- 482
-:= -- 1194
-add.period$ -- 62
+* -- 479
+:= -- 1196
+add.period$ -- 63
 call.type$ -- 21
-change.case$ -- 109
+change.case$ -- 110
 chr.to.int$ -- 0
-cite$ -- 22
+cite$ -- 21
 duplicate$ -- 376
 empty$ -- 707
 format.name$ -- 98
-if$ -- 1808
+if$ -- 1810
 int.to.chr$ -- 0
 int.to.str$ -- 21
 missing$ -- 23
-newline$ -- 106
+newline$ -- 107
 num.names$ -- 40
-pop$ -- 166
+pop$ -- 164
 preamble$ -- 1
 purify$ -- 92
 quote$ -- 0
-skip$ -- 287
+skip$ -- 288
 stack$ -- 0
 substring$ -- 508
 swap$ -- 136
@@ -40,8 +39,7 @@ text.length$ -- 14
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 78
-warning$ -- 1
+warning$ -- 0
 while$ -- 74
 width$ -- 23
-write$ -- 229
-(There was 1 warning)
+write$ -- 231

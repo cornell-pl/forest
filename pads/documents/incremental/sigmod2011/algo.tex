@@ -75,7 +75,7 @@ a new description for the next iteration.
 }
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\columnwidth]{overview}
+\includegraphics[width=0.8\columnwidth]{overview}
 %\epsfig{file=overview.eps,width=0.9\columnwidth}
 \caption{An Overview of the Incremental Learning Framework}
 \label{fig:overview}
@@ -183,6 +183,8 @@ for the aggregated portions of bad data.
 \figref{fig:data-structures} defines
 the data structures for descriptions \cd{D}, data
 representations \cd{R}, and aggregate structures \cd{A}.
+Some data types, such as the switched union, are omitted for the succinctness
+of the presentation.
 In these definitions,  variable \cd{re} ranges over regular expressions,
 \cd{e} over host language expressions,
 \cd{s} and \cd{t} over strings, and \cd{i} over integers.
@@ -251,7 +253,7 @@ incremental_step(D, xs) =
     foreach R in Rs \{
       foreach A in As \{
         A' = \kw{aggregate}(A, R); 
-        As' = A :: As'
+        As' = A' :: As'
       \}
     \}
     As = As'
@@ -276,7 +278,13 @@ possible aggregates \cd{As}, seeded with the initial aggregate of
 then calls the \kw{aggregate} function to merge each parse \cd{R} in
 the current list of parses with each aggregate \cd{A} in the current
 list of aggregates.  (We use `\cd{::}' to denote prepending an element
-onto the front of a list.)  When the system finishes parsing all the
+onto the front of a list.) Note that the potentially large number of parses
+and the growing list of aggregates in the
+inner loop are the performance bottleneck. 
+We will show in Section \ref{sec:opt}
+some strategies to alleviate this complexity.  
+
+When the system finishes parsing all the
 input data, the algorithm uses the \kw{select\_best} function to
 select the best aggregate from the list of candidate aggregates
 \cd{As}.  The \kw{select\_best} function counts the total number of
@@ -285,6 +293,7 @@ the one with the smallest number.
 The idea is that the aggregate with the smallest number of added nodes is 
 more likely to represent a description
 that is the close to the original description. 
+
 Finally, the \kw{update\_desc} function uses the structure of the best
 aggregate to update the previous description \cd{D} to produce the new
 current description \cd{D'}.  The \kw{update\_desc} function works by
@@ -342,8 +351,14 @@ rules to improve the overall description.
   if  (R1, m1) $\in$ L(D1,E,s1,s2.s')
   and (R2, m2) $\in$ L(D2,E[x $\arrow$ R1],s2,s')
 \mbox{}
+\kw{Union}:
+(Union1R R, m) $\in$ L(Union(D1, D2),E,s,s')
+  if (R, m) $\in$ L(D1, E, s, s')
+(Union2R R, m) $\in$ L(Union(D1, D2),E,s,s')
+  if (R, m) $\in$ L(D2, E, s, s')
+\mbox{}
 \kw{Main parse function}:
-\kw{parse}(D, s) = \{r | (R, m) $\in$ L(D,$\epsilon$,s,"")\} 
+\kw{parse}(D, s) = \{R | (R, m) $\in$ L(D,$\epsilon$,s,"")\} 
 \end{code}
 %and for all (R',m') $\in$ L(D,.,s,""), m <= m'
 }
@@ -353,12 +368,6 @@ rules to improve the overall description.
 \end{figure}
 
 %% \mbox{}
-%% \kw{Union}:
-%% (Union1R R, m) $\in$ L(Union(D1, D2),E,s,s')
-%%   if (R, m) $\in$ L(D1, E, s, s')
-%% (Union2R R, m) $\in$ L(Union(D1, D2),E,s,s')
-%%   if (R, m) $\in$ L(D2, E, s, s')
-
 %% \kw{Array}:
 %%   (ArrayR([R1,...,Rn], [SyncR1,...,SyncR(n-1)], $SyncR_{term}$), m)
 %%     $\in$ L(Array(D, $s_{sep}$, $s_{term}$), E, s, s'),
@@ -682,7 +691,8 @@ phase; we have modified and tuned the algorithm for use in
 the incremental system.
 
 Description rewriting is based on optimizing an information-theoretic
-Minimum Description Length (MDL) score~\cite{mdlbook}, which is defined over descriptions
+Minimum Description Length (MDL) score~\cite{mdlbook}, which is 
+defined over descriptions
 \cd{D} as:
 \[\mbox{\rm{MDL}(\texttt{D})} = \costdescription{D} + w \times \acostdata{D}{x_1, \ldots, x_k},\]
 where $\costdescription{D}$ is called the {\em type complexity} of \cd{D}

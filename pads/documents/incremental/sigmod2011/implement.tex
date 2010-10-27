@@ -53,7 +53,7 @@
 %%  This avoids invoking the \cd{update\_desc} function unnecessarily when
 %% there is no error data.
 
-\subsection{Optimizations}
+\subsection{Optimizations}\label{sec:opt}
 The pseudo-code in \figref{fig:inc-learning} suggests the number of
 aggregates is of the order $O(m ^ n)$, where $m$ is the maximum number of
 parses for a line of input  and $n$ is the number of lines to
@@ -120,7 +120,7 @@ According to the semantics of sync tokens, given in \figref{fig:parse-sem},
 there can be two possible parses:
 
 \noindent
-{\footnotesize
+{\small
 \verb#(Recovered "kim [10/May/2009:18:38:35 ", (1, 26, 1))#
 }
 
@@ -128,7 +128,7 @@ there can be two possible parses:
 or:
 
 \noindent
-{\footnotesize
+{\small
 \verb#(Fail, (1, 0, 0))#
 }
 
