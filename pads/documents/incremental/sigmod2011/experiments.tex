@@ -61,7 +61,7 @@ This metric counts the number of edits necessary to convert the learned descript
 More precisely, the distance measure is a {\em normalized edit distance} score:
 \[normal\_dist(D) = \frac{edit\_dist(D, D_{gold})}{|D_{gold}|}\]
 where $|D|$ denotes the total number of nodes in $D$.
-We have empiracally determined that a normalized edit distance of 
+We have empirically determined that a normalized edit distance of 
 less than 1 indicates a relatively good description. 
 Of course, the edit distance measure may also be imperfect as there can be a number of different but equally ``good'' ways 
 to craft a gold description.  Nevertheless, we have found this measure
@@ -1031,7 +1031,7 @@ descriptions for them with $w$ set at 1, 5, 10, 100 and 1000, while
 keeping the other parameters the same. The results in \figref{fig:adc}
 show that setting $w$ to a very small or very large number either
 results in bad descriptions with high edit distance score, or
-timeouts at runtime (description was too complex to parse in reasonable time).
+timeouts at run time (description was too complex to parse in reasonable time).
 Therefore, we choose $w = 10$ for practicality.
 
 To illustrate the quality of learned description and the difference between it

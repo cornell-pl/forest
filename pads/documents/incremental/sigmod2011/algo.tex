@@ -66,9 +66,9 @@ The initial description
 can be supplied by user, or learned from the first batch of the input
 data. At each iteration, the system generates a filter program from
 the current data description.  This program parses the incoming batch of data
-into an aggregted data structure similar to the parse tree of the description.
+into an aggregated data structure similar to the parse tree of the description.
 In this process, the filter program collects ``bad data'' which does not
-comform to the current description. The system then invokes the original
+conform to the current description. The system then invokes the original
 \learnpads{} algorithm to learn ``sub-descriptions'' from the bad data, and
 merges these sub-descriptions into the current data description to produce
 a new description for the next iteration. 
@@ -198,7 +198,7 @@ in \pads{} descriptions.  Such tokens, which are often
 white spaces or punctuation,
 serve as delimiters in the data and are useful for detecting
 errors. The binary dependent pairs \cd{Pair (x:D1, D2)} are
-a simplicification of PADS more general \kw{Pstruct}s. 
+a simplification of PADS more general \kw{Pstruct}s. 
 The variable \cd{x} refers to the data parsed by \cd{D1}
 and may be used in \cd{D2}. The union \cd{Union (D1, D2)}
 provides a choice between descriptions \cd{D1} and \cd{D2}.
@@ -550,13 +550,13 @@ and we are given the following three lines of new input: ``5*'' and
 \figref{fig:parse} shows the three data representations that result
 from parsing the lines, which we call $R1$, $R2$ and $R3$,
 respectively. Notice the first line parsed without errors, the second
-line contains an error for \cd{Pint} and some unparsable data ``{\tt
+line contains an error for \cd{Pint} and some unparseable data ``{\tt
   abc}'', and the third contains a \cd{Fail} node because the
 sync token \cd{*} was missing.  \figref{fig:aggregate} shows the aggregation
 of $R1$ to $R3$ starting from an empty aggregate. In
 general, \cd{Error} and \cd{Fail} nodes in the data representation
 trigger the creation of \cd{Opt} nodes in the aggregate, while
-unparsable data is collected in \cd{Learn} nodes.
+unparseable data is collected in \cd{Learn} nodes.
 
 \begin{figure}[t]
 \begin{center}
