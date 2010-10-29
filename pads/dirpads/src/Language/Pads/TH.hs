@@ -30,7 +30,7 @@ strToLower = mapFstChar toLower
 
 mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
     where con = NormalC ty_name [(NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
-          derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data]
+          derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data, ''Ord]
 
 mk_TySynD ty_name ty = TySynD ty_name [] ty
 

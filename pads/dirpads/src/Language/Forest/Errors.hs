@@ -8,14 +8,9 @@ data ErrMsg = ForestError String
             | ForestIOException String
             | PredicateFailure
             | MissingFile String
+            | MatchFailure String
             | NotADirectory String
+            | ConstraintViolation
             | SystemError Int
-     deriving (Typeable, Data, Show, Eq)
+     deriving (Typeable, Data, Show, Eq, Ord)
 
-{- XXX-KSF: fix pretty printing to use pretty printing combinators rather than string ++ 
-instance Pretty ErrMsg where
-  ppr (ForestError str) = text ("Forest error: " ++ str ++ ".")
-  ppr (ForestIOException str)   = text ("Forest IO Exception: " ++ str ++ ".")
-  ppr (MissingFile str)   = text ("Forest error: Missing file: " ++ str ++ ".")
-
--}

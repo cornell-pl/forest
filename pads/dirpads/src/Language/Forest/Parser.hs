@@ -23,7 +23,7 @@ type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-", ","],
-                                           reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe", "as" ]})
+                                           reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe", "as", "constrain", "where" ]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -50,9 +50,16 @@ forestDecl :: Parser ForestDecl
 forestDecl = do { reserved "type"
                 ; id <- identifier
                 ; pat <- param
-                ; ty <- forestTy
+                ; rawty <- forestTy
+                ; predM <- optionMaybe fieldPredicate
+                ; let ty = integratePred rawty predM 
                 ; return (ForestDecl(id, pat, replaceName id ty))
                 } <?> "Forest Declaration"
+
+integratePred :: ForestTy -> Maybe TH.Exp -> ForestTy
+integratePred ty predM = case predM of
+  Nothing -> ty
+  Just predE -> FConstraint (TH.VarP (mkName "this")) ty predE
 
 haskellExp :: Parser (TH.Exp)
 haskellExp = do 
@@ -71,6 +78,7 @@ forestTy =   directoryTy
          <|> symLinkTy
          <|> gzipTy
          <|> tarTy
+         <|> constrainTy
          <|> try fnAppTy
          <|> namedTy
          <|> parenTy
@@ -112,6 +120,18 @@ tarTy = do { reserved "Tar"
              ; ty <- forestTy
              ; return (Tar ty)
              } <?> "Forest Tar type"
+
+constrainTy :: Parser ForestTy
+constrainTy = do
+  { reserved "constrain"
+  ; strPat <- manyTill anyChar (reservedOp "::")
+  ; pat <- case LHM.parsePat strPat of
+               (Left err) -> unexpected ("Failed to parse Haskell pattern in where declaration: " ++ err)
+               (Right patTH) -> return patTH
+  ; ty <- forestTy
+  ; predE <- fieldPredicate
+  ; return (FConstraint pat ty predE)
+  } <?> "Forest Constraint type"
 
 fileTy :: Parser ForestTy
 fileTy = do { reserved "File"
@@ -175,10 +195,10 @@ fieldBody internal_name =
 
 simpleField :: String -> Parser Field
 simpleField internal_name = do
-           { external_exp <- externalName internal_name
+           { (isForm, external_exp) <- externalName internal_name
            ; forest_ty <- forestTy
            ; predM <- optionMaybe fieldPredicate
-           ; return (Simple (internal_name, external_exp, forest_ty, predM))
+           ; return (Simple (internal_name, isForm, external_exp, forest_ty, predM))
            } <?> "Simple Forest Field"
 
 
@@ -232,24 +252,33 @@ fieldPredicate :: Parser TH.Exp
 fieldPredicate = do { reserved   "where"
                     ; haskellExp
                     }
-externalName :: String -> Parser TH.Exp
+externalName :: String -> Parser (Bool, TH.Exp)
 externalName internal = 
        (explicitExternalName internal)
+   <|> (simpleMatches internal)
    <|> (implicitExternalName internal)
 
-explicitExternalName :: String -> Parser TH.Exp
+simpleMatches :: String -> Parser (Bool, TH.Exp)
+simpleMatches internal = do
+  { reserved "matches"
+  ; expE <- forestArg
+  ; reservedOp "::"                 
+  ; return (False, expE)
+  }
+
+explicitExternalName :: String -> Parser (Bool, TH.Exp)
 explicitExternalName internal = do 
     { reserved "is"
     ; nameE <- forestArg
     ; reservedOp "::"                 
-    ; return nameE
+    ; return (True, nameE)
     }      
            
-implicitExternalName :: String -> Parser TH.Exp
+implicitExternalName :: String -> Parser (Bool, TH.Exp)
 implicitExternalName internal = 
     if isLowerCase internal then do 
         { reservedOp "::"
-        ; return (TH.LitE (TH.StringL internal))}
+        ; return (True, TH.LitE (TH.StringL internal))}
     else unexpected ("Directory label "++ internal ++" is not a valid Haskell record label.  Use an \"is\" clause to give an explicit external name.")     
     
 

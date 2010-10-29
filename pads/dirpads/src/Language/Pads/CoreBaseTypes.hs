@@ -49,9 +49,9 @@ newtype Pchar = Pchar Char
 newtype Pdigit = Pdigit Int
   deriving (Eq, Show, Data, Typeable, Num, Ord, Integral, Real, Enum)
 newtype Ptext    = Ptext String
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Show, Data, Typeable, Ord)
 newtype Pbinary  = Pbinary S.RawStream
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Show, Data, Typeable, Ord)
 
 type Pint_md = Base_md
 type Pchar_md = Base_md
@@ -85,15 +85,15 @@ instance Pads Pbinary Base_md where
   parsePP = pbinary_parseM
 
 newtype Pre = Pre String
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Show, Data, Typeable, Ord)
 newtype Pstring    = Pstring    String
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Show, Data, Typeable, Ord)
 newtype PstringFW = PstringFW String
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Show, Data, Typeable, Ord)
 newtype PstringME = PstringME String
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Show, Data, Typeable, Ord)
 newtype PstringSE = PstringSE String
-  deriving (Eq, Show, Data, Typeable)
+  deriving (Eq, Show, Data, Typeable, Ord)
 
 type Pre_md     = Base_md
 type Pstring_md = Base_md

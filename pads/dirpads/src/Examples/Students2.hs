@@ -75,9 +75,9 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
   type Class_d (year :: String) = Directory
     { bse is <|"BSE" ++ year|> :: Major_d
     , ab  is <|"AB"  ++ year|> :: Major_d   
-    , transfer is  [ t :: Major_d | t <- matches transferRE  ]      
-    , withdrawn is [ w :: Major_d | w <- matches withdrawnRE ]
-    , leave is     [ l :: Major_d | l <- matches leaveRE     ] 
+    , transfer  matches transferRE  :: Maybe Major_d 
+    , withdrawn matches withdrawnRE :: Maybe Major_d 
+    , leave     matches leaveRE     :: Maybe Major_d 
     }
 
   -- Directory for all graduated students

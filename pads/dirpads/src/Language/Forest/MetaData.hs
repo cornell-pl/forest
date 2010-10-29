@@ -38,7 +38,7 @@ import Language.Forest.Errors
 
 
 data FileType = UnknownK | AsciiK | BinaryK | DirectoryK 
- deriving (Eq, Data, Typeable)
+ deriving (Eq, Data, Typeable, Ord)
 
 instance Show FileType where
  show UnknownK = "Unknown"
@@ -61,7 +61,7 @@ data FileInfo = FileInfo { fullpath :: FilePath
                          , isSymLink :: Bool
                          , kind :: FileType
                          }
-       deriving (Eq, Data, Typeable)
+       deriving (Eq, Data, Typeable, Ord)
 
 {- Function System.Time.Utils.epochToClockTime converts EpochTime to CalendarTime -}
 
@@ -121,7 +121,7 @@ data Forest_md = Forest_md { numErrors :: Int
                            , errorMsg  :: Maybe ErrMsg
                            , fileInfo  :: FileInfo 
                            }
-   deriving (Typeable, Data, Eq, Show)
+   deriving (Typeable, Data, Eq, Show, Ord)
 
 forest_md_def = Forest_md{ numErrors = 1
                          , errorMsg = Nothing
@@ -169,8 +169,10 @@ instance Data b => ForestMD (Forest_md,b) where
 cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = errorFileInfo}
 errorForestMD = Forest_md {numErrors = 1, errorMsg = Nothing, fileInfo = errorFileInfo}
 missingPathForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MissingFile path), fileInfo = errorFileInfo}
+fileMatchFailureForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MatchFailure path), fileInfo = errorFileInfo}
 systemErrorForestMD i = Forest_md {numErrors = 1, errorMsg = Just (SystemError i), fileInfo = errorFileInfo}
 notDirectoryForestMD path = Forest_md {numErrors = 1, errorMsg = Just (NotADirectory path), fileInfo = errorFileInfo}
+constraintViolation       = Forest_md {numErrors = 1, errorMsg = Just ConstraintViolation, fileInfo = errorFileInfo}
 
 mergeErrors m1 m2 = case (m1,m2) of
             (Nothing,Nothing) -> Nothing

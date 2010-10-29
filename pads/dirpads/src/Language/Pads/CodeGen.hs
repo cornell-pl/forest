@@ -100,7 +100,7 @@ genRepMDMaybe ty =
 genRepMDDeclStruct :: Name -> Name -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDeclStruct ty_name md_ty_name fields = 
   let (vsts', md_vsts') = unzip $ flattenMaybeList $ map genRepMDField fields
-      derives      = [''Show, ''Eq, ''Typeable, ''Data]
+      derives      = [''Show, ''Eq, ''Typeable, ''Data, ''Ord]
       ty_con       = TH.RecC ty_name vsts'
       ty_decl      = TH.DataD [] ty_name [] [ty_con] derives
       inner_md_name = getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
@@ -119,7 +119,7 @@ genRepMDDeclStruct ty_name md_ty_name fields =
 genRepMDDeclUnion :: Name -> Name -> [(Maybe String, PadsTy, Maybe TH.Exp)] -> (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDeclUnion ty_name md_ty_name branches = 
   let (cons', md_cons') = unzip $ map genRepMDUnion branches
-      derives      = [''Show, ''Eq, ''Typeable, ''Data]
+      derives      = [''Show, ''Eq, ''Typeable, ''Data, ''Ord]
       ty_decl      = TH.DataD [] ty_name [] cons' derives
       inner_md_name = getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
       imd_decl      = TH.DataD [] inner_md_name [] md_cons' derives   -- declaration of line for nested components

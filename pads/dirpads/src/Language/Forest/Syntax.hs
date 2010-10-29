@@ -15,6 +15,7 @@ data ForestTy = Directory DirectoryTy
               | Named String 
               | FMaybe ForestTy
               | SymLink
+              | FConstraint TH.Pat ForestTy TH.Exp    {- pattern bound to underlying type, underlying type, predicate -}
               | Fapp ForestTy TH.Exp
    deriving (Eq, Data, Typeable, Show)
 
@@ -23,7 +24,7 @@ data DirectoryTy = Record String [Field]
 
 type FileTy = (String, Maybe TH.Exp)
 
-type BasicField = (String, TH.Exp, ForestTy, Maybe TH.Exp)  -- internal name, external name, description type, optional predicate
+type BasicField = (String, Bool, TH.Exp, ForestTy, Maybe TH.Exp)  -- internal name, isForm, external name, description type, optional predicate
 
 data Generator = Explicit TH.Exp | Matches TH.Exp
     deriving (Eq, Data, Typeable, Show)

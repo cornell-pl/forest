@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell, NamedFieldPuns, ScopedTypeVariables, RecordWildCards, FlexibleInstances, MultiParamTypeClasses,
     UndecidableInstances  #-}
 module Language.Forest.CodeGen where
-
+import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Forest.Syntax as PS
 import Language.Forest.MetaData
@@ -41,104 +41,27 @@ make_forest_declaration (ForestDecl (id, pat, forestTy)) = do
    let ty_name    = getTyName    id
    let md_ty_name = getMDName    id
    let load_name  = getLoadName  id
-   let def_name   = getDefName   id
-   let md_def_name = getMDDefName id
    let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
-   let (ty_decl, md_ty_decls, md_ty) = genRepMDDecl forestTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
-   let forestInstance       :: [Dec] = genFInst    load_name def_name ty_name md_ty      forestTy arg_info_opt
+   (ty_decl, md_ty_decls, md_ty) <- genRepMDDecl forestTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
+   let forestInstance       :: [Dec] = genFInst    load_name ty_name md_ty      forestTy arg_info_opt
    loadM :: [Dec]                   <- genLoadM    load_name ty_name md_ty_name forestTy arg_info_opt
-   defM  :: [Dec]                   <- genDefM     def_name  ty_name            forestTy arg_info_opt
    return (   [ty_decl]    
            ++ md_ty_decls  
            ++ forestInstance
            ++ loadM
-           ++ defM
            )
 
-genFInst load_name def_name ty_name md_ty forestTy mpat_info = 
-      let (inst, load, def) = case mpat_info of
+genFInst load_name ty_name md_ty forestTy mpat_info = 
+      let (inst, load) = case mpat_info of
                           Nothing -> (AppT (AppT (ConT ''Forest) (ConT ty_name)) md_ty,   -- Forest RepTy MDTy
-                                      mkName "load", mkName "fdef")
+                                      mkName "load")
                           Just (p,arg_ty) -> 
                                      (AppT 
                                         (AppT (AppT (ConT ''Forest1) arg_ty) (ConT ty_name)) 
                                         md_ty,   -- Forest1 Arg RepTy MDTy
-                                      mkName "load1", mkName "fdef1")
+                                      mkName "load1")
           load_method = ValD (VarP load) (NormalB (VarE load_name)) []
-          def_method  = ValD (VarP def)  (NormalB (VarE def_name )) []
-      in [InstanceD [] inst [load_method, def_method]]
-
-
-genDefM :: Name -> Name -> ForestTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
-genDefM def_name rep_name forestTy mpat_info = do 
-   let core_ty = ConT rep_name
-   core_bodyE <- genDefBody  rep_name  forestTy
-   let (bodyE,ty) = case mpat_info of
-                     Nothing -> (core_bodyE, core_ty)
-                     Just (pat,pat_ty) -> ( LamE [pat] core_bodyE,
-                                            arrowTy pat_ty core_ty)
-   let sigD = SigD def_name ty
-   let funD = ValD (VarP def_name) (NormalB bodyE) []
-   return [sigD, funD]
-
-
-genDefBody :: Name -> ForestTy -> Q TH.Exp
-genDefBody repN ty = do
-   rhsE        <- defE ty 
-   case ty of 
-     Directory _ -> return rhsE
-     otherwise   -> return (AppE  (ConE repN) rhsE)
-
-defE :: ForestTy -> Q TH.Exp
-defE ty = do 
- case ty of
-  Named f_name -> return (VarE (getDefName f_name))
-  File (file_name, argEOpt) -> case argEOpt of 
-                                Nothing ->     return (VarE 'def)
-                                Just argE ->   return (AppE (VarE 'def1) argE)
-  Directory dirTy -> defDirectory dirTy 
-  Gzip ty -> defE ty
-  Tar  ty -> defE ty
-  SymLink -> return (mkStrLitM "")
-  FMaybe forestTy -> return (ConE 'Nothing)
-  Fapp (Named f_name) argE  -> return (AppE (VarE (getDefName f_name)) argE)
-
-defDirectory :: DirectoryTy -> Q TH.Exp
-defDirectory ty = case ty of 
-  Record id fields -> defRecord id fields
-
-defRecord :: String -> [Field] -> Q TH.Exp
-defRecord id fields = do
-  repEs        <- defFields fields 
-  let tyName    = mkName id
-  let repE      = RecConE tyName repEs
-  return repE
-
-defFields :: [Field] -> Q [FieldExp]
-defFields [] = return []
-defFields (field:fields) = do
-  rep_field <- defField  field 
-  reps_fields <- defFields fields 
-  return (rep_field++reps_fields)
-
-defField :: Field -> Q [TH.FieldExp]
-defField field = case field of
-   Simple s -> defSimple s
-   Comp   c -> defCompound c
-
-defSimple :: BasicField -> Q [TH.FieldExp]
-defSimple (internal, externalE, forestTy, predM) = do
-   let repName = mkName internal
-   rhsE <- defE forestTy 
-   return [(repName, rhsE)]
-
-defCompound :: CompField -> Q [TH.FieldExp]
-defCompound (CompField {internalName,tyConNameOpt, ..})  = do
-   let repName = mkName internalName
-   let repE = case tyConNameOpt of 
-           Nothing -> ListE []
-           Just _  -> (VarE 'emptyMap)
-   return [(repName, repE)]
+      in [InstanceD [] inst [load_method]]
 
 
 genLoadM :: Name -> Name -> Name -> ForestTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
@@ -184,6 +107,12 @@ loadE ty pathE = do
    ; return (AppE (AppE (VarE 'checkPath) pathE) actionE)
    }
 
+loadNonEmptyE :: ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
+loadNonEmptyE ty pathE fileE = do
+  { actionE <- rawLoadE ty pathE
+  ; return (AppE (AppE (AppE (VarE 'checkPathNonEmpty) pathE) fileE) actionE)
+  }
+
 
 rawLoadE :: ForestTy -> TH.Exp -> Q TH.Exp
 rawLoadE ty pathE = case ty of
@@ -194,9 +123,17 @@ rawLoadE ty pathE = case ty of
   Gzip ty         -> loadGzip ty pathE
   Tar  ty         -> loadTar  ty pathE
   SymLink         -> loadSymLink pathE
+  FConstraint p ty pred -> loadConstraint p ty pred pathE
   Directory dirTy -> loadDirectory dirTy pathE
   FMaybe forestTy -> loadMaybe forestTy pathE
   Fapp (Named f_name) argE  -> return (AppE (AppE (VarE (getLoadName f_name)) argE) pathE)   -- XXX should add type checking to ensure that ty is expecting an argument
+
+loadConstraint :: TH.Pat -> ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
+loadConstraint pat ty predE pathE = do
+  { loadAction <- loadE ty pathE
+  ; let predFnE = LamE [getRepMDPatFromPat pat] predE
+  ; return (AppE (AppE (VarE 'doLoadConstraint) loadAction) predFnE)
+  }
 
 loadSymLink :: TH.Exp -> Q TH.Exp
 loadSymLink pathE = do
@@ -270,20 +207,25 @@ loadField field = case field of
    Comp   c -> loadCompound c
 
 loadSimple :: BasicField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
-loadSimple (internal, externalE, forestTy, predM) pathE = do
+loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
    let repName = mkName internal
    let mdName  = mkName (internal++"_md")
    bmdName <- newName (internal++"_bmd")
+   filesName <- newName (internal++"_files")
    let (repE, repP) = genPE repName
    let (mdE,  mdP ) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
-   let newPathE     = AppE (AppE (VarE 'concatPath) pathE) externalE
-   rhsE <- loadE forestTy newPathE
+   let (filesE, filesP) = genPE filesName
+   let (fileE, pathStmts) = if isForm then (externalE, [])
+                            else (AppE (VarE 'pickFile) filesE,
+                                  [BindS filesP (AppE (AppE (VarE 'getMatchingFiles) pathE) externalE)])
+   let newPathE     = AppE (AppE (VarE 'concatPath) pathE) fileE
+   rhsE <- loadNonEmptyE forestTy newPathE fileE
+   let stmt1 = BindS (TupP [repP,mdP]) rhsE                            
    case predM of 
      Nothing -> let
-         stmt1 = BindS (TupP [repP,mdP]) rhsE                            
          stmt2 = LetS [ValD bmdP (NormalB (AppE (VarE 'get_fmd_header) mdE)) []]  -- Read out header of resulting parse descriptor        
-         in return([(repName, repE)], [(mdName,mdE)], bmdE, [stmt1,stmt2]) 
+         in return([(repName, repE)], [(mdName,mdE)], bmdE, pathStmts++[stmt1,stmt2]) 
      Just pred -> do
          final_mdName    <- newName (internal++"_final_md") 
          raw_bmdName     <- newName (internal++"_raw_bmd") 
@@ -291,11 +233,10 @@ loadSimple (internal, externalE, forestTy, predM) pathE = do
          let (rawBMDE, rawBMDP)   = genPE raw_bmdName
          let predTestE      = TH.CondE pred rawBMDE (AppE (VarE 'addPredFailureMD) rawBMDE)    -- if pred then rawBMD else addPredFailureMD rawBMD
          let replaceHeaderE = AppE (AppE (VarE 'replace_fmd_header) mdE) bmdE                -- replace_md_header mdE bmd
-         let stmt1 = BindS (TupP [repP,mdP]) rhsE
          let stmt2 = LetS [ValD rawBMDP (NormalB (AppE (VarE 'get_fmd_header) mdE)) []]
          let stmt3 = LetS [ValD bmdP (NormalB predTestE)  []] 
          let stmt4 = LetS [ValD finalMDP  (NormalB replaceHeaderE) []]
-         return ([(repName,repE)], [(mdName,finalMDE)], bmdE, [stmt1,stmt2,stmt3,stmt4])       -- Include named rep and md in result
+         return ([(repName,repE)], [(mdName,finalMDE)], bmdE, pathStmts++[stmt1,stmt2,stmt3,stmt4])       -- Include named rep and md in result
 
 
 
@@ -330,12 +271,36 @@ loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, de
                                 , LetS [(ValD fmP (NormalB (AppE (AppE (VarE 'zip) filesE) metadatasE) ) [])]],
                                 [NoBindS predE])
    let compE = CompE ([BindS generatorP' generatorE]++ compPredStmts ++[NoBindS compResultE])
-   let buildMapsE = case tyConNameOpt of
-                     Nothing  -> AppE (VarE 'insertRepMDsList) compE
-                     Just str -> AppE (VarE 'insertRepMDsMap) compE
+   buildMapsE <- case tyConNameOpt of
+                     Nothing  -> do return (AppE (VarE 'insertRepMDsList) compE)
+                     Just str -> do 
+                                  { arity <- getTyConArity str   
+                                  ; if arity == 1 then
+                                       return (AppE (VarE 'insertRepMDsGeneric1) compE)
+                                    else 
+                                       return (AppE (VarE 'insertRepMDsGeneric2) compE)
+                                  }
    let mapStmt = BindS (TildeP (TupP [repP, mdP, bmdP]))  buildMapsE
    return ([(repName,repE)], [(mdName,mdE)], bmdE, genStmts++predStmts++[mapStmt])       -- Include named rep and md in result
 
+runGetTyConArity :: String ->  Int
+runGetTyConArity str = unsafePerformIO (runQ (getTyConArity str))
+
+
+getTyConArity :: String -> Q Int
+getTyConArity str = do 
+  { let tyConName = mkName str
+  ; info <- qReify tyConName
+  ; case info of
+     TyConI dec -> return (getDecArity dec)
+     otherwise -> error ("Forest: "++ str ++" should be a type constructor.")
+  }
+
+getDecArity :: TH.Dec -> Int
+getDecArity dec = case dec of
+  DataD cxt name args cons derives -> length args
+  NewtypeD cxt name args con derives -> length args
+  TySynD name args ty -> length args
 
 getAttPat explicitName externalE = 
   case explicitName of 
@@ -355,22 +320,16 @@ getRepMDPatFromExp externalE = case externalE of
   VarE name -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_md"))])
   otherwise -> error "Forest: Couldn't convert file expression to pattern; please supply an explicit name with 'name as exp' form"
 
+getRepMDPatFromPat externalP = case externalP of
+  VarP name -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_md"))])
+  otherwise -> error "Forest: Couldn't convert constraint pattern to pattern for meta data.  Use simple pattern."
+
 
 
 emptyMap :: Map a b
 emptyMap = Data.Map.empty
 
 
-insertRepMDsList'' :: ForestMD b => IO [(String, (a,b))] -> IO ([(String, a)], [(String, b)], Forest_md)
-insertRepMDsList'' inputs = do 
-    path_rep_mds <- inputs
-    let ~(paths, rep_mds) = unzip path_rep_mds
-    let ~(reps, mds) = unzip rep_mds
-    let repList = zip paths reps
-    let mdList = zip paths mds
-    let bmdList = Prelude.map get_fmd_header mds
-    let bmd = mergeForestMDs bmdList
-    return (repList, mdList, bmd)
 
 filterWPred :: [(String, IO (a,b), ((a,b) -> Bool))] -> IO [ (String, (a,b))] 
 filterWPred [] = return [] 
@@ -384,21 +343,6 @@ filterWPred (~(name, action, pred):rest) = do
  }
 
 
-insertRepMDsList' :: ForestMD b => [(String, IO (a,b), (a,b) -> Bool)] -> IO ([(String, a)], [(String, b)], Forest_md)
-insertRepMDsList' inputs = do 
-    inputs' <- filterWPred inputs               -- inputs' :: [(String, (a,b))]
-    let ~(paths, rep_mds) = unzip inputs'        -- paths :: [String], rep_mds:: [(a,b)]
-    let ~(reps, mds) = unzip rep_mds
-    let repList = zip paths reps
-    let mdList = zip paths mds
-    let bmdList = Prelude.map get_fmd_header mds
-    let bmd = mergeForestMDs bmdList
-    return (repList, mdList, bmd)
-
-insertRepMDsMap' :: ForestMD b => [(String, IO (a,b), (a,b)-> Bool)] -> IO (Map String a, Map String b, Forest_md)
-insertRepMDsMap' inputs = do 
-    (repList, mdList, bmd) <- insertRepMDsList' inputs
-    return (fromList repList, fromList mdList, bmd)
 
 
 insertRepMDsList :: ForestMD b => [(String, IO (a,b))] -> IO ([(String, a)], [(String, b)], Forest_md)
@@ -412,12 +356,22 @@ insertRepMDsList inputs = do
     let bmd = mergeForestMDs bmdList
     return (repList, mdList, bmd)
 
+{-
 insertRepMDsMap :: ForestMD b => [(String, IO (a,b))] -> IO (Map String a, Map String b, Forest_md)
 insertRepMDsMap inputs = do 
     (repList, mdList, bmd) <- insertRepMDsList inputs
     return (fromList repList, fromList mdList, bmd)
+-}
 
+insertRepMDsGeneric1 :: (ForestMD b, BuildContainer1 c a, BuildContainer1 c b) => [(FilePath, IO (a,b))] -> IO (c (FilePath, a), c (FilePath, b), Forest_md)
+insertRepMDsGeneric1 inputs = do 
+    (repList, mdList, bmd) <- insertRepMDsList inputs
+    return (buildContainer1 repList, buildContainer1 mdList, bmd)
 
+insertRepMDsGeneric2 :: (ForestMD b, BuildContainer2 c a, BuildContainer2 c b) => [(FilePath, IO (a,b))] -> IO (c FilePath a, c FilePath b, Forest_md)
+insertRepMDsGeneric2 inputs = do 
+    (repList, mdList, bmd) <- insertRepMDsList inputs
+    return (buildContainer2 repList, buildContainer2 mdList, bmd)
 
 addPredFailureMD :: Forest_md -> Forest_md
 addPredFailureMD (Forest_md{numErrors, errorMsg, fileInfo}) = 
@@ -436,71 +390,83 @@ mkStrLitM s = LitE (StringL s)
 
 
 
-genRepMDDecl :: ForestTy -> Name -> Name -> (TH.Dec, [TH.Dec], TH.Type)
+genRepMDDecl :: ForestTy -> Name -> Name -> Q (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDecl ty ty_name md_ty_name = case ty of
   Directory dirTy -> genRepMDDir dirTy ty_name md_ty_name
-  others          -> let (rep,md) = genRepMDTy others
-                     in  (mk_newTyD ty_name rep, [mk_TySynD md_ty_name md], md) 
+  others          -> do (rep,md) <- genRepMDTy others
+                        return (mk_newTyD ty_name rep, [mk_TySynD md_ty_name md], md) 
 
 {- Generate a representation and meta-data type for maybe. -}
-genRepMDMaybe :: ForestTy -> (TH.Type, TH.Type)
-genRepMDMaybe ty = 
-  let (rep_orig, md_orig) = genRepMDTy ty
-      rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
-      md'_ty = AppT (ConT ''Maybe) md_orig                  -- underyling md is Maybe of md of nested type
-      md_ty  = tyListToTupleTy [ConT ''Forest_md, md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
-  in (rep_ty, md_ty)
+genRepMDMaybe :: ForestTy -> Q (TH.Type, TH.Type)
+genRepMDMaybe ty = do
+  { (rep_orig, md_orig) <- genRepMDTy ty
+  ; let rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
+  ; let md'_ty = AppT (ConT ''Maybe) md_orig                  -- underyling md is Maybe of md of nested type
+  ; let md_ty  = tyListToTupleTy [ConT ''Forest_md, md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
+  ; return (rep_ty, md_ty)
+  }
 
 
-genRepMDDir :: DirectoryTy -> Name -> Name -> (TH.Dec, [TH.Dec], TH.Type)
+genRepMDDir :: DirectoryTy -> Name -> Name -> Q (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDir ty ty_name md_ty_name = case ty of
   Record _ fields -> genRepMDDeclRecord ty_name md_ty_name fields
 
 {- Generate a representation and meta-data type for a directory with named fields. -}
-genRepMDDeclRecord :: Name -> Name -> [Field] -> (TH.Dec, [TH.Dec], TH.Type)
-genRepMDDeclRecord ty_name md_ty_name fields = 
-  let (vsts', md_vsts') = unzip $ Prelude.map genRepMDField fields
-      derives      = [''Show, ''Eq, ''Typeable, ''Data]
-      ty_con       = TH.RecC ty_name vsts'
-      ty_decl      = TH.DataD [] ty_name [] [ty_con] derives
-      inner_md_name = getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
-      imd_con       = TH.RecC inner_md_name md_vsts'
-      imd_decl      = TH.DataD [] inner_md_name [] [imd_con] derives   -- declaration of line for nested components
-      imd_ty        = TH.ConT inner_md_name
-      md_ty         = tyListToTupleTy [ConT ''Forest_md, imd_ty]
-      md_decl       = mk_TySynD md_ty_name md_ty
-  in if length vsts' == 0 then 
-        error ("Error: Directory " ++ (show ty_name) ++ " must contain at least one named field.")
-     else 
-        (ty_decl, [imd_decl,md_decl], md_ty)
+genRepMDDeclRecord :: Name -> Name -> [Field] -> Q (TH.Dec, [TH.Dec], TH.Type)
+genRepMDDeclRecord ty_name md_ty_name fields = do
+    { reps <- mapM genRepMDField fields
+    ; let (vsts', md_vsts') = unzip reps
+    ; let derives      = [''Show, ''Eq, ''Typeable, ''Data, ''Ord]
+    ; let ty_con       = TH.RecC ty_name vsts'
+    ; let ty_decl      = TH.DataD [] ty_name [] [ty_con] derives
+    ; let inner_md_name = getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
+    ; let imd_con       = TH.RecC inner_md_name md_vsts'
+    ; let imd_decl      = TH.DataD [] inner_md_name [] [imd_con] derives   -- declaration of line for nested components
+    ; let imd_ty        = TH.ConT inner_md_name
+    ; let md_ty         = tyListToTupleTy [ConT ''Forest_md, imd_ty]
+    ; let  md_decl       = mk_TySynD md_ty_name md_ty
+    ;  if length vsts' == 0 then 
+         error ("Error: Directory " ++ (show ty_name) ++ " must contain at least one named field.")
+       else 
+        return (ty_decl, [imd_decl,md_decl], md_ty)
+    }
  
 type VST = (TH.Name, TH.Strict, TH.Type)
-genRepMDField :: Field -> (VST, VST)
-genRepMDField (Simple (internal, external, ty, predM)) = let
-   (rep_ty, md_ty) = genRepMDTy ty
-   in ((getFieldName   internal, TH.NotStrict, rep_ty),
-       (getFieldMDName internal, TH.NotStrict, md_ty))
-genRepMDField (Comp (CompField {internalName, tyConNameOpt, descTy, ..})) = let
-   (rng_rep_ty, rng_md_ty) = genRepMDTy descTy
-   (rep_ty, md_ty) = case tyConNameOpt of 
-                      Nothing ->  (mkStringListTy rng_rep_ty, mkStringListTy rng_md_ty)
-                      Just str -> (mkStringConTy (mkName str) rng_rep_ty, mkStringConTy (mkName str) rng_md_ty) 
-   in ((getFieldName   internalName, TH.NotStrict, rep_ty),
-       (getFieldMDName internalName, TH.NotStrict, md_ty))
+genRepMDField :: Field -> Q (VST, VST)
+genRepMDField (Simple (internal, isForm, external, ty, predM)) = do
+   { (rep_ty, md_ty) <- genRepMDTy ty
+   ; return ((getFieldName   internal, TH.NotStrict, rep_ty),
+             (getFieldMDName internal, TH.NotStrict, md_ty))
+   }
 
-mkStringConTy con ty = AppT (AppT (ConT con) (ConT ''String)) ty
+genRepMDField (Comp (CompField {internalName, tyConNameOpt, descTy, ..})) = do
+  { (rng_rep_ty, rng_md_ty) <- genRepMDTy descTy
+  ; (rep_ty, md_ty) <- case tyConNameOpt of 
+                        Nothing ->  return (mkStringListTy rng_rep_ty, mkStringListTy rng_md_ty)
+                        Just str -> do { arity <- getTyConArity str
+                                       ; case arity of 
+                                          1 -> return (mkStringConTupleTy (mkName str) rng_rep_ty, mkStringConTupleTy (mkName str) rng_md_ty) 
+                                          2 -> return (mkStringConCurryTy (mkName str) rng_rep_ty, mkStringConCurryTy (mkName str) rng_md_ty) 
+                                       }
+  ; return ((getFieldName   internalName, TH.NotStrict, rep_ty),
+            (getFieldMDName internalName, TH.NotStrict, md_ty))
+  }
+
+mkStringConTupleTy con ty = AppT (ConT con)  (tyListToTupleTy [ConT ''String, ty])
+mkStringConCurryTy con ty = AppT (AppT (ConT con) (ConT ''String)) ty
 mkStringListTy ty = AppT ListT (tyListToTupleTy [ConT ''String, ty])
 
 
 {- Generate type and meta-data representations. -}
-genRepMDTy ::  ForestTy -> (TH.Type, TH.Type)
+genRepMDTy ::  ForestTy -> Q (TH.Type, TH.Type)
 genRepMDTy ty = case ty of
     Directory _          -> error "Forest: Directory declarations must appear at the top level."
-    File (ty_name,arg)   -> (ConT (getTyName ty_name), tyListToTupleTy [ConT ''Forest_md, ConT (getMDName ty_name)])
+    File (ty_name,arg)   -> return (ConT (getTyName ty_name), tyListToTupleTy [ConT ''Forest_md, ConT (getMDName ty_name)])
     Gzip ty              -> genRepMDTy ty
     Tar  ty              -> genRepMDTy ty
-    SymLink              -> (ConT ''FilePath, tyListToTupleTy [ConT ''Forest_md, ConT ''Base_md])
-    Named ty_name        -> (ConT (getTyName ty_name), ConT (getMDName ty_name))
+    SymLink              -> return (ConT ''FilePath, tyListToTupleTy [ConT ''Forest_md, ConT ''Base_md])
+    Named ty_name        -> return (ConT (getTyName ty_name), ConT (getMDName ty_name))
+    FConstraint p ty pred -> genRepMDTy ty
     FMaybe ty            -> genRepMDMaybe ty
     Fapp ty arg          -> genRepMDTy ty
 
@@ -528,8 +494,6 @@ getTyName pname = mkName  (strToUpper pname)
 
 getLoadName pname = mkName ((strToLower pname) ++ "_load")
 
-getDefName pname = mkName ((strToLower pname) ++ "_def")
-getMDDefName pname = mkName ((strToLower pname) ++ "_md_def")
 
 
 

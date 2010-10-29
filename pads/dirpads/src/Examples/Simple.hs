@@ -1,9 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
-   redo comprenensions as discussed (f_att)  (where -> ',')
-   implement simple matches 
-   implement this form for typedefs in forest
+   BUG: error squasing in maybes doesn't work; move path check to inside loadTy function to fix.
    add [] form for directory;    remove Directory keyword
    library for manipulating times and permissions
       add `isCompatabile` comparator for FileModes
@@ -28,6 +26,10 @@
    BUG: Maybe followed by a regular expression: see Students4.hs Grades
    literate haskell
 
+   DONE implement this form for typedefs in forest
+   DONE add other type constructors besides map
+   DONE implement simple matches 
+   DONE redo comprenensions as discussed (f_att)  (where -> ',')
    DONE explore laziness in loading directory files
    DONE write a "unverisal description" w/binry and ascii
    DONE implement glob patterns in addition to regular expressions
@@ -63,6 +65,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import Language.Haskell.Meta as LHM
 import Text.Regex
 import Data.Maybe
+import Data.Set as S hiding (map)
 -- import Examples.AI 
 
 [pads| type SEntry_t = (Pstring ',', ',', Pint)
@@ -85,15 +88,25 @@ getHost (Hosts_t hs) = case hs of
                          , nested is <|getHost local|>        :: Scores_d     where <| (get_group nested_md) == (get_owner local_md) |> 
                          , mylink_sym is "mylink"             :: SymLink      where <| mylink_sym == "quantum" |>
                          , mylink                             :: Scores_d
-                         , generic is "Generic.o"             :: File Pbinary
+--                         , generic matches (GL "Generic.*")   :: File Pbinary
 --                         , airef  is ai_file                  :: File AI_t
-                         }    |] 
+                         }    
+
+         type PrivateFile = constrain this :: File Ptext where <| get_modes this_md == "-rw-rw-r--" |>
+         type ReadOnly    = File Ptext where <| get_modes this_md == "-rw-r--r--" |>
+|] 
+
+
 
 mkPrettyInstance ''Simple_d
 mkPrettyInstance ''Simple_d_md
 
-
-
+local_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/local.txt"
+remote_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/remote.txt"
+(lpvt_rep, lpvt_md) =  unsafePerformIO $ privateFile_load local_file
+(rpvt_rep, rpvt_md) =  unsafePerformIO $ privateFile_load remote_file
+(lread_rep, lread_md) =  unsafePerformIO $ readOnly_load local_file
+(rread_rep, rread_md) =  unsafePerformIO $ readOnly_load remote_file
 
 host_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/local.txt"
 (host_rep, host_md) = let (Hosts_t rep, md) = unsafePerformIO $ parseFile host_file in (rep,md)
@@ -107,7 +120,8 @@ notChina h = h /= "china"
 
 [forest| type Nested_d (file_name :: String) = Directory 
                { hostIndex is <|file_name++".txt"|>  :: File Hosts_t 
-               , hosts is Map  [ h :: Scores_d | h <- <| getNames hostIndex |>, <| h /= "china"|> ]
+               , hostsM is Map  [ h :: Scores_d | h <- <| getNames hostIndex |>, <| h /= "china"|> ]
+               , hostsS is Set  [ h :: Scores_d | h <- <| getNames hostIndex |>, <| h /= "china"|> ]
                }  |]
 
 

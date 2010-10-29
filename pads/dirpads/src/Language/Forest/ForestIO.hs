@@ -154,6 +154,16 @@ doLoadSymLink path = checkPath path (do
   )
 
 
+doLoadConstraint :: ForestMD md => IO(rep,md) -> ((rep,md) -> Bool) -> IO(rep,md)
+doLoadConstraint action pred = do
+ { result @ ~(r,fmd) <- action
+ ; let isGood = pred result
+ ; if isGood 
+      then return result
+      else let bfmd = get_fmd_header fmd
+               newbfmd = updateForestMDwith bfmd [constraintViolation]
+           in return (r, replace_fmd_header fmd newbfmd)
+ }
 
 doLoadMaybe :: ForestMD md =>  IO (rep,md) -> IO (Maybe rep, (Forest_md, Maybe md))
 doLoadMaybe f = do
@@ -162,6 +172,20 @@ doLoadMaybe f = do
    if Language.Forest.MetaData.numErrors bfmd == 0 
        then return (Just r, (bfmd, Just fmd))
        else return (Nothing, (cleanForestMD, Nothing))
+
+pickFile :: [FilePath] -> FilePath
+pickFile files = case files of
+  [] -> ""
+  f:fs -> f
+
+checkPathNonEmpty :: (Data rep, ForestMD md) => FilePath -> FilePath -> IO(rep,md) -> IO(rep,md)
+checkPathNonEmpty path file ifExists = 
+  if file == "" then 
+       do { let def_md = myempty
+          ; let new_md = replace_fmd_header def_md (fileMatchFailureForestMD path)
+          ; return (myempty, new_md)
+          }
+  else checkPath path ifExists
 
 checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
 checkPath path ifExists = do 

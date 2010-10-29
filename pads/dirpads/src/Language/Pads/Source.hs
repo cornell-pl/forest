@@ -13,7 +13,7 @@ type RawStream = B.ByteString
 {- Input source abstraction -}
 data Loc = Loc { lineNumber :: Int64,
                  byteOffset :: Int64 }
-     deriving (Typeable, Data,Eq)
+     deriving (Typeable, Data,Eq, Ord)
 
 dummyLoc = Loc {lineNumber = -1, byteOffset = -1 }
 
@@ -31,7 +31,7 @@ data Source = Source {current  :: B.ByteString,
 data Pos = Pos { line       :: B.ByteString,
                  begin      :: Loc,
                  end        :: Maybe Loc}
-  deriving (Typeable, Data, Eq)
+  deriving (Typeable, Data, Eq, Ord)
 
 dummyPos = Pos {line = B.empty, begin = dummyLoc, end = Nothing }
 
