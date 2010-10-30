@@ -66,10 +66,9 @@ leaveRE     = RE "LEAVE|Leave"
 withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 
 [forest|
-  -- Directory containing all students in a particular major.
-  type Major_d = Directory 
-       { students is Map [ s :: File (Student <| getName s |>) 
-                         | s <- matches (GL "*.txt"),  <| (not . template) s |>  ] } 
+  -- Collection of files containing all students in a particular major.
+  type Major_d = Map [ s :: File (Student <| getName s |>) 
+                     | s <- matches (GL "*.txt"),  <| (not . template) s |>  ]  
 
   -- Directory containing all students in a particular year
   type Class_d (year :: String) = Directory
@@ -80,10 +79,9 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
     , leave     matches leaveRE     :: Maybe Major_d 
     }
 
-  -- Directory for all graduated students
-  type Grads_d = Directory 
-    { classes is  Map [ aclass :: Class_d <| getYear aclass |>  
-                      | aclass <- matches (RE "classof[0-9][0-9]") ] }
+  -- Collection of directories containing graduated students
+  type Grads_d = Map [ aclass :: Class_d <| getYear aclass |>  
+                     | aclass <- matches (RE "classof[0-9][0-9]") ] 
 
   -- Root of the hierarchy
   type PrincetonCS_d = Directory

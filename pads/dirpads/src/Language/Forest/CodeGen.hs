@@ -118,6 +118,7 @@ loadE ty pathE = case ty of
   Fapp (Named f_name) argE  -> return (AppE (AppE (VarE (getLoadName f_name)) argE) pathE)   -- XXX should add type checking to ensure that ty is expecting an argument
   Directory dirTy -> loadDirectory dirTy pathE
   FMaybe forestTy -> loadMaybe forestTy pathE
+  FComp cinfo     -> loadComp cinfo pathE
 
 
 loadConstraint :: TH.Pat -> ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
@@ -159,7 +160,7 @@ loadTyApp ty pathE argE = do
 loadMaybe :: ForestTy -> TH.Exp -> Q TH.Exp
 loadMaybe ty pathE = do 
    rhsE <- loadE ty pathE
-   return (AppE(VarE 'doLoadMaybe) rhsE)
+   return (AppE (AppE(VarE 'doLoadMaybe) pathE) rhsE)
 
 loadDirectory :: DirectoryTy -> TH.Exp -> Q TH.Exp
 loadDirectory ty pathE = case ty of
@@ -233,7 +234,14 @@ loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
          return ([(repName,repE)], [(mdName,finalMDE)], bmdE, pathStmts++[stmt1,stmt2,stmt3,stmt4])       -- Include named rep and md in result
 
 
-
+loadComp :: CompField -> TH.Exp -> Q TH.Exp
+loadComp cinfo pathE = do
+   { (_,_,bmdE,stmts) <- loadCompound cinfo pathE
+   ; let resultE = TupE [VarE (mkName "this"), TupE[bmdE, VarE (mkName "this_md")]]
+   ; let returnS = NoBindS (AppE (VarE 'return) resultE)
+   ; let isGoodE = DoE (stmts++[returnS])
+   ; return (AppE (AppE (VarE 'checkPathIsDir) pathE) isGoodE)
+   }
 
 loadCompound :: CompField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
 loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, predEOpt}) pathE = do
@@ -350,12 +358,6 @@ insertRepMDsList inputs = do
     let bmd = mergeForestMDs bmdList
     return (repList, mdList, bmd)
 
-{-
-insertRepMDsMap :: ForestMD b => [(String, IO (a,b))] -> IO (Map String a, Map String b, Forest_md)
-insertRepMDsMap inputs = do 
-    (repList, mdList, bmd) <- insertRepMDsList inputs
-    return (fromList repList, fromList mdList, bmd)
--}
 
 insertRepMDsGeneric1 :: (ForestMD b, BuildContainer1 c a, BuildContainer1 c b) => [(FilePath, IO (a,b))] -> IO (c (FilePath, a), c (FilePath, b), Forest_md)
 insertRepMDsGeneric1 inputs = do 
@@ -433,7 +435,13 @@ genRepMDField (Simple (internal, isForm, external, ty, predM)) = do
              (getFieldMDName internal, TH.NotStrict, md_ty))
    }
 
-genRepMDField (Comp (CompField {internalName, tyConNameOpt, descTy, ..})) = do
+genRepMDField (Comp (info @ CompField {internalName, tyConNameOpt, descTy, ..})) = do
+  { (rep_ty, md_ty) <- genRepMDComp info
+  ; return ((getFieldName   internalName, TH.NotStrict, rep_ty),
+            (getFieldMDName internalName, TH.NotStrict, md_ty))
+  }
+
+genRepMDComp (CompField {internalName, tyConNameOpt, descTy, ..}) = do
   { (rng_rep_ty, rng_md_ty) <- genRepMDTy descTy
   ; (rep_ty, md_ty) <- case tyConNameOpt of 
                         Nothing ->  return (mkStringListTy rng_rep_ty, mkStringListTy rng_md_ty)
@@ -442,8 +450,13 @@ genRepMDField (Comp (CompField {internalName, tyConNameOpt, descTy, ..})) = do
                                           1 -> return (mkStringConTupleTy (mkName str) rng_rep_ty, mkStringConTupleTy (mkName str) rng_md_ty) 
                                           2 -> return (mkStringConCurryTy (mkName str) rng_rep_ty, mkStringConCurryTy (mkName str) rng_md_ty) 
                                        }
-  ; return ((getFieldName   internalName, TH.NotStrict, rep_ty),
-            (getFieldMDName internalName, TH.NotStrict, md_ty))
+  ; return (rep_ty, md_ty)
+  }
+
+genRepMDCompTy info = do
+  { (rep_ty, md'_ty) <- genRepMDComp info
+  ; let md_ty  = tyListToTupleTy [ConT ''Forest_md, md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
+  ; return (rep_ty, md_ty)
   }
 
 mkStringConTupleTy con ty = AppT (ConT con)  (tyListToTupleTy [ConT ''String, ty])
@@ -463,6 +476,7 @@ genRepMDTy ty = case ty of
     FConstraint p ty pred -> genRepMDTy ty
     FMaybe ty            -> genRepMDMaybe ty
     Fapp ty arg          -> genRepMDTy ty
+    FComp cinfo          -> genRepMDCompTy cinfo
 
 
 {- Name manipulation functions -}

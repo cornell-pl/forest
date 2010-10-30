@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, Rank2Types #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, Rank2Types, FlexibleInstances #-}
 
 module Language.Pads.Generic (
       Pads(..), 
@@ -7,7 +7,9 @@ module Language.Pads.Generic (
       parseFileWithRaw,
 --      gdef,
       myempty,
-      doTime
+      doTime,
+      BuildContainer1(..),
+      BuildContainer2(..)
    )
 
 where
@@ -21,6 +23,7 @@ import qualified Control.Exception as CE
 import Data.Data
 import Data.Generics.Aliases (extB, ext1B)
 import Data.Map
+import Data.Set
 
 import System.Posix.Types
 import Foreign.C.Types
@@ -141,3 +144,20 @@ doTime a = do
  ; end <- getCPUTime
  ; return (v, end-begin)
  }
+
+class BuildContainer2 c item where
+  buildContainer2 :: [(FilePath,item)] -> c FilePath item
+  toList2         :: c FilePath item -> [(FilePath,item)]
+
+instance BuildContainer2 Map a  where
+  buildContainer2 = Data.Map.fromList
+  toList2         = Data.Map.toList
+
+class BuildContainer1 c item where
+  buildContainer1 :: [(FilePath,item)] -> c (FilePath, item)
+  toList1         :: c (FilePath, item) ->  [(FilePath,item)]
+
+instance Ord a => BuildContainer1 Set a  where
+  buildContainer1 = Data.Set.fromList
+  toList1         = Data.Set.toList
+

@@ -105,13 +105,27 @@ mkPrettyInstance' worklist done decls =
                      ; let clause = Clause [argP] (NormalB bodyE) []
                      ; return (nestedTyNames, [instD, FunD specificPprName [clause]])
                      }
+                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, AppT (AppT (ConT ty_con_name) ty_arg1) ty_arg2) ]) derives) -> do  -- curry rep (Map)
+                     { let nestedTyNames = getTyNames ty_arg2
+                     ; (argP, body) <- mkPatBody tyBaseName pprCon2E
+--                     ; report True ("curry rep case " ++ (nameBase ty_name))
+                     ; let clause = Clause [argP] body []	
+                     ; return (nestedTyNames, [instD, FunD specificPprName [clause]]) 
+                     }
+                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, AppT (ConT ty_con_name) ty_arg) ]) derives) -> do  -- con rep (Set)
+                     { let nestedTyNames = getTyNames ty_arg
+                     ; (argP, body) <- mkPatBody tyBaseName pprCon1E
+--                     ; report True ("con rep case " ++ (nameBase ty_name))
+                     ; let clause = Clause [argP] body []	
+                     ; return (nestedTyNames, [instD, FunD specificPprName [clause]]) 
+                     }
                    TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ConT core_name)]) derives) -> do  -- App, Typedef
-                     { (argP, body) <- mkPatBody tyBaseName
+                     { (argP, body) <- mkPatBody tyBaseName pprE
 --                     ; report True ("app, typedef case " ++ (nameBase ty_name))
                      ; let clause = Clause [argP] body []	
                      ; return (S.singleton core_name, [instD, FunD specificPprName [clause]]) 
                      }
-                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ty)]) derives) -> do    -- Tuple
+                   TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ty)]) derives) | isTuple ty -> do    -- Tuple
                      { let nestedTyNames = getTyNames ty
 --                     ; report True ("tuple case " ++ (nameBase ty_name))
                      ; let (len, tys) = tupleTyToListofTys ty
@@ -148,7 +162,9 @@ mkPrettyInstance' worklist done decls =
          let newDecls = decls'++decls
          mkPrettyInstance' newWorklist newDone newDecls
 
-
+isTuple ty = case ty of
+  TupleT n -> True
+  (AppT ty arg_ty) -> isTuple ty
 
 isDataType cons = case cons of
   [] -> False
@@ -160,7 +176,7 @@ isRecordType cons = case cons of
   (RecC _ _ ) : rest -> True
   otherwise -> False
 
-mkPatBody core_name_str = do
+mkPatBody core_name_str pprE = do
   { (exp,pat) <- doGenPE "arg"
   ; let bodyE = AppE (AppE (VarE 'namedty_ppr) (LitE (StringL core_name_str)))  (pprE exp)
   ; let argP = ConP (mkName core_name_str) [pat]
@@ -179,7 +195,7 @@ mkClause con = case con of
         ; return (Match argP body [])
         }
      NormalC name ty_args -> do
-        { (argP, body) <- mkPatBody (nameBase name)
+        { (argP, body) <- mkPatBody (nameBase name) pprE
         ; return (Match argP body [])
         }
      otherwise -> error "mkClause not implemented for this kind of constructor."
@@ -227,6 +243,11 @@ namedlist_ppr name pprls = group $ hang 2 (text name <+/> (list_ppr pprls))
 
 pprE argE = AppE (VarE 'ppr) argE
 pprListEs argEs = ListE (map pprE argEs) 
+pprCon1E argE = AppE (VarE 'pprCon1) argE
+pprCon2E argE = AppE (VarE 'pprCon2) argE
+
+pprCon1 arg = ppr (toList1 arg)
+pprCon2 arg = ppr (toList2 arg)
 
 
 pint_ppr :: Pint -> Doc

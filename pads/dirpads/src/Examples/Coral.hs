@@ -81,11 +81,9 @@ status_re = RE "[0-9]+"
   type LogDir = Directory 
     { coral_log is "coralwebsrv.log.gz" :: Gzip (File CoralFile) }
 
-  type SiteDir = Directory
-    { dates is [ d :: LogDir | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] }
+  type SiteDir = [ d :: LogDir | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] 
 
-  type TopDir = Directory
-    { sites is [ s :: SiteDir | s <- matches (RE "[^.].*") ] }
+  type TopDir = [ s :: SiteDir | s <- matches (RE "[^.].*") ] 
 |]
 
 load_logs () = fst (unsafePerformIO $ topDir_load "/Users/nate/coral")

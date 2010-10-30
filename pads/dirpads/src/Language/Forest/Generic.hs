@@ -27,22 +27,6 @@ listPaths md = map fullpath (listify (\(_::FileInfo) -> True) md)
 
 listEmptyFiles md = listify (\(r::FileInfo) -> (fullpath r) == "") md
 
-class BuildContainer2 c item where
-  buildContainer2 :: [(FilePath,item)] -> c FilePath item
 
-instance BuildContainer2 Map a  where
-  buildContainer2 = Data.Map.fromList
-
-class BuildContainer1 c item where
-  buildContainer1 :: [(FilePath,item)] -> c (FilePath, item)
-
-instance Ord a => BuildContainer1 Set a  where
-  buildContainer1 = Data.Set.fromList
-
-
-{-
-instance BuildContainer Set item where
-  buildContainer = Data.Set.fromList
--}
 
   

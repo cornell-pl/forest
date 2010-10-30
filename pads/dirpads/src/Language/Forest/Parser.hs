@@ -80,6 +80,7 @@ forestTy =   directoryTy
          <|> tarTy
          <|> constrainTy
          <|> try fnAppTy
+         <|> try compTy
          <|> namedTy
          <|> parenTy
          <?> "Forest type"
@@ -213,12 +214,15 @@ compBody =  do
           else return (Explicit generatorE, predE)
      }
 
+compTy :: Parser ForestTy
+compTy = do
+  { cf <- compForm "this"
+  ; return (FComp cf)
+  }
 
-
-compField :: String -> Parser Field
-compField internal_name = do
-          { reserved "is" 
-          ; repTyConName <- optionMaybe (identifier)
+compForm :: String -> Parser CompField
+compForm internal_name = do
+          { repTyConName <- optionMaybe (identifier)
           ; reservedOp "["
           ; explicitFileName <- optionMaybe asPattern
           ; externalE <- forestArg
@@ -231,8 +235,14 @@ compField internal_name = do
                               Right patTH -> return patTH
           ; (generatorE, predEOpt) <- compBody
           ; reservedOp "]"
-          ; let compField = CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorE predEOpt
-          ; return (Comp compField)
+          ; return (CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorE predEOpt)
+          }
+
+compField :: String -> Parser Field
+compField internal_name = do
+          { reserved "is" 
+          ; cfield <- compForm internal_name
+          ; return (Comp cfield)
           }
 
 asPattern :: Parser String
@@ -255,7 +265,7 @@ fieldPredicate = do { reserved   "where"
 externalName :: String -> Parser (Bool, TH.Exp)
 externalName internal = 
        (explicitExternalName internal)
-   <|> (simpleMatches internal)
+   <|> (simpleMatches        internal)
    <|> (implicitExternalName internal)
 
 simpleMatches :: String -> Parser (Bool, TH.Exp)

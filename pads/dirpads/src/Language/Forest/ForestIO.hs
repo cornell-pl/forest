@@ -165,13 +165,20 @@ doLoadConstraint load path pred = checkPath path (do
            in return (r, replace_fmd_header fmd newbfmd)
  })
 
-doLoadMaybe :: ForestMD md =>  IO (rep,md) -> IO (Maybe rep, (Forest_md, Maybe md))
-doLoadMaybe f = do
-   (r,fmd) <- f 
-   let bfmd = get_fmd_header fmd
-   if Language.Forest.MetaData.numErrors bfmd == 0 
-       then return (Just r, (bfmd, Just fmd))
-       else return (Nothing, (cleanForestMD, Nothing))
+doLoadMaybe :: ForestMD md =>  FilePath -> IO (rep,md) -> IO (Maybe rep, (Forest_md, Maybe md))
+doLoadMaybe path f = do
+   { exists <- fileExist path
+   ; if not exists then
+       return (Nothing, (cleanForestMD, Nothing))
+     else do
+      { (r,fmd) <- f 
+      ; let bfmd = get_fmd_header fmd
+      ; if Language.Forest.MetaData.numErrors bfmd == 0 
+         then return (Just r, (bfmd, Just fmd))
+         else return (Nothing, (cleanForestMD, Nothing))
+      }
+   }
+
 
 pickFile :: [FilePath] -> FilePath
 pickFile files = case files of
@@ -197,6 +204,16 @@ checkPath path ifExists = do
           }
      else ifExists
    }
+
+checkPathIsDir path ifGood = do
+  { isGood <- doesDirectoryExist path
+  ; if isGood then ifGood
+    else do 
+      { let def_md = myempty
+      ; let new_md = replace_fmd_header def_md (missingPathForestMD path)
+      ; return (myempty, new_md)
+      }
+  }
 
 checkIsDir :: (Data rep, ForestMD md) => Forest_md -> IO(rep,md) -> IO(rep,md)
 checkIsDir fmd ifDir = 

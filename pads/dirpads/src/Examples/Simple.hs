@@ -1,18 +1,16 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
-   add [] form for directory;    remove Directory keyword
    library for manipulating times and permissions
       add `isCompatabile` comparator for FileModes
    performance tuning
+   TOOL: shell tools
    TOOL: given file path, predicate on FMDs, depth limit, produce forest description
    TOOL: given a (rep,md), produce a dot graph (colored according to metadata)
    TOOL: lookup :: (Data a) => String -> Maybe a  (where a = String_t)
    TOOL: check permissions
-   implement patterns in physical names for simple records?
    incorporate pads meta-data error counts into forest error counts.
    implement regular expression primitives
-   implement ls tool
    implement pre-processor type constructor
    debug CVS example: too many file handles open
    change "type" to "newtype"?  (ask david and nate)  explore whether types work
@@ -25,6 +23,7 @@
    BUG: Maybe followed by a regular expression: see Students4.hs Grades
    literate haskell
 
+   DONE add [] form for directory;    remove Directory keyword
    FIXED BUG: error squasing in maybes doesn't work; move path check to inside loadTy function to fix.
    DONE implement this form for typedefs in forest
    DONE add other type constructors besides map
@@ -94,8 +93,11 @@ getHost (Hosts_t hs) = case hs of
 
          type PrivateFile = constrain this :: File Ptext where <| get_modes this_md == "-rw-rw-r--" |>
          type ReadOnly    = File Ptext where <| get_modes this_md == "-rw-r--r--" |>
+
+         type TextFiles = Set [ f :: File Ptext | f <- matches (GL "*.txt") ]
 |] 
 
+mkPrettyInstance ''TextFiles
 
 
 mkPrettyInstance ''Simple_d
@@ -115,6 +117,8 @@ host_file_take n  = Prelude.take n host_rep
 
 host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple"
 (simple_rep, simple_md) = unsafePerformIO $ simple_d_load "remote" host_dir
+
+(text_rep, text_md) = unsafePerformIO $ textFiles_load host_dir
 
 notChina h = h /= "china"
 

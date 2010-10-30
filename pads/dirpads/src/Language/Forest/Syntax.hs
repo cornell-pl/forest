@@ -17,6 +17,7 @@ data ForestTy = Directory DirectoryTy
               | SymLink
               | FConstraint TH.Pat ForestTy TH.Exp    {- pattern bound to underlying type, underlying type, predicate -}
               | Fapp ForestTy TH.Exp
+              | FComp CompField
    deriving (Eq, Data, Typeable, Show)
 
 data DirectoryTy = Record String [Field]
