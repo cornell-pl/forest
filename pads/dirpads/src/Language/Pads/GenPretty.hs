@@ -249,8 +249,8 @@ instance Pretty PstringSE where
 --instance Pretty String where
 -- ppr = pstring_ppr
 
---instance Pretty a => Pretty (Maybe a) where
--- ppr = maybe_ppr
+instance Pretty a => Pretty (Maybe a) where
+ ppr = maybe_ppr
 
 maybe_ppr d = case d of 
   Nothing -> text "Nothing"

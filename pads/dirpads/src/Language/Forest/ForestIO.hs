@@ -31,16 +31,16 @@ import System.IO.Unsafe
 
 
 fileload :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
-fileload path = do
-   fmd       <- unsafeInterleaveIO (getForestMD path)
+fileload path = checkPath path (do
+   fmd        <- unsafeInterleaveIO (getForestMD path)
    ~(rep, md) <- unsafeInterleaveIO (parseFile path)
-   return (rep, (fmd, md))
+   return (rep, (fmd, md)))
 
 fileload1 :: Pads1 arg pads md => arg -> FilePath -> IO (pads, (Forest_md, md))
-fileload1 arg path = do
+fileload1 arg path = checkPath path (do
    fmd       <- unsafeInterleaveIO (getForestMD path)
    ~(rep, md) <- unsafeInterleaveIO (parseFile1 arg path)
-   return (rep, (fmd, md))
+   return (rep, (fmd, md)))
 
 
 tarFilesFromMD :: (ForestMD md) => md -> String -> IO ()
@@ -117,8 +117,8 @@ tarload load path = checkPath path (do
 
 
 
-gzipload'  :: (ForestMD md, Data rep) =>  (FilePath -> IO (rep, md)) -> FilePath -> IO (rep, md)
-gzipload' load path = checkPath path (do 
+gzipload  :: (ForestMD md, Data rep) =>  (FilePath -> IO (rep, md)) -> FilePath -> IO (rep, md)
+gzipload load path = checkPath path (do 
   { md <- getForestMD path
   ; (exitCode, newpath) <- gunzip path
   ; case exitCode of
@@ -154,16 +154,16 @@ doLoadSymLink path = checkPath path (do
   )
 
 
-doLoadConstraint :: ForestMD md => IO(rep,md) -> ((rep,md) -> Bool) -> IO(rep,md)
-doLoadConstraint action pred = do
- { result @ ~(r,fmd) <- action
+doLoadConstraint :: (Data rep, ForestMD md) => IO(rep,md) -> FilePath -> ((rep,md) -> Bool) -> IO(rep,md)
+doLoadConstraint load path pred = checkPath path (do
+ { result @ ~(r,fmd) <- load
  ; let isGood = pred result
  ; if isGood 
       then return result
       else let bfmd = get_fmd_header fmd
                newbfmd = updateForestMDwith bfmd [constraintViolation]
            in return (r, replace_fmd_header fmd newbfmd)
- }
+ })
 
 doLoadMaybe :: ForestMD md =>  IO (rep,md) -> IO (Maybe rep, (Forest_md, Maybe md))
 doLoadMaybe f = do
@@ -175,17 +175,17 @@ doLoadMaybe f = do
 
 pickFile :: [FilePath] -> FilePath
 pickFile files = case files of
-  [] -> ""
+  [] -> "-This is an illegal file path according to POSIX Standard."  -- an illegal file path
   f:fs -> f
 
-checkPathNonEmpty :: (Data rep, ForestMD md) => FilePath -> FilePath -> IO(rep,md) -> IO(rep,md)
-checkPathNonEmpty path file ifExists = 
+checkNonEmpty :: (Data rep, ForestMD md) => FilePath -> FilePath -> IO(rep,md) -> IO(rep,md)
+checkNonEmpty path file ifExists = 
   if file == "" then 
        do { let def_md = myempty
           ; let new_md = replace_fmd_header def_md (fileMatchFailureForestMD path)
           ; return (myempty, new_md)
           }
-  else checkPath path ifExists
+  else ifExists
 
 checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
 checkPath path ifExists = do 

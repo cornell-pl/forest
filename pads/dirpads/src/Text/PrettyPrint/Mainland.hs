@@ -463,9 +463,11 @@ instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f) => Pretty 
 instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f, Pretty g) => Pretty (a, b, c, d, e, f,g) where
     ppr (a, b, c, d, e, f, g) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e, ppr f, ppr g]
 
+{-
 instance Pretty a => Pretty (Maybe a) where
     pprPrec _ Nothing  = empty
     pprPrec p (Just a) = pprPrec p a
+-}
 
 instance Pretty a => Show a where
     show x = pretty 80 $ ppr x

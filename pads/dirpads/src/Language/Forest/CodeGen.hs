@@ -21,16 +21,6 @@ import qualified Control.Exception as CE
 
 
 
-{-
-instance Pads rep md => Forest rep (Forest_md, md) where
-  load = fileload
-  fdef = def
-
-instance Pads1 arg rep md =>  Forest1 arg rep (Forest_md, md) where
-  load1 = fileload1
-  fdef1 = def1
--}
-
 
 {- Code generation routines -}
 make_forest_declarations :: [ForestDecl] -> Q [Dec]
@@ -100,22 +90,23 @@ genLoadBody pathE repN mdN ty = do
           let finalS      = NoBindS (AppE (VarE 'return) resultE)
           return (DoE [doLoadS, finalS])
 
-
+{-
 loadE :: ForestTy -> TH.Exp -> Q TH.Exp
 loadE ty pathE = do
    { actionE <- rawLoadE ty pathE
    ; return (AppE (AppE (VarE 'checkPath) pathE) actionE)
    }
+-}
 
 loadNonEmptyE :: ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
 loadNonEmptyE ty pathE fileE = do
-  { actionE <- rawLoadE ty pathE
-  ; return (AppE (AppE (AppE (VarE 'checkPathNonEmpty) pathE) fileE) actionE)
+  { actionE <- loadE ty pathE
+  ; return (AppE (AppE (AppE (VarE 'checkNonEmpty) pathE) fileE) actionE)
   }
 
 
-rawLoadE :: ForestTy -> TH.Exp -> Q TH.Exp
-rawLoadE ty pathE = case ty of
+loadE :: ForestTy -> TH.Exp -> Q TH.Exp
+loadE ty pathE = case ty of
   Named f_name   -> return (AppE (VarE (getLoadName f_name)) pathE)
   File (file_name, argEOpt) -> case argEOpt of 
                                 Nothing ->     return (AppE (VarE 'fileload) pathE)
@@ -124,15 +115,16 @@ rawLoadE ty pathE = case ty of
   Tar  ty         -> loadTar  ty pathE
   SymLink         -> loadSymLink pathE
   FConstraint p ty pred -> loadConstraint p ty pred pathE
+  Fapp (Named f_name) argE  -> return (AppE (AppE (VarE (getLoadName f_name)) argE) pathE)   -- XXX should add type checking to ensure that ty is expecting an argument
   Directory dirTy -> loadDirectory dirTy pathE
   FMaybe forestTy -> loadMaybe forestTy pathE
-  Fapp (Named f_name) argE  -> return (AppE (AppE (VarE (getLoadName f_name)) argE) pathE)   -- XXX should add type checking to ensure that ty is expecting an argument
+
 
 loadConstraint :: TH.Pat -> ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
 loadConstraint pat ty predE pathE = do
   { loadAction <- loadE ty pathE
   ; let predFnE = LamE [getRepMDPatFromPat pat] predE
-  ; return (AppE (AppE (VarE 'doLoadConstraint) loadAction) predFnE)
+  ; return (AppE (AppE (AppE (VarE 'doLoadConstraint) loadAction) pathE) predFnE)
   }
 
 loadSymLink :: TH.Exp -> Q TH.Exp
@@ -145,7 +137,7 @@ loadGzip ty pathE = do
   ; let (newPathE, newPathP) = genPE newPathName
   ; rawE <- loadE ty newPathE
   ; let rhsE =  LamE [newPathP] rawE
-  ; return (AppE (AppE (VarE 'gzipload') rhsE) pathE)
+  ; return (AppE (AppE (VarE 'gzipload) rhsE) pathE)
   }
 
 loadTar :: ForestTy -> TH.Exp -> Q TH.Exp
@@ -191,7 +183,8 @@ loadRecord id fields pathE = do
   let finalS             = NoBindS (AppE (VarE 'return) resultE)
   let ifDirE             = DoE (stmts ++ [mdS, finalS])
   let chkDirS            = NoBindS(AppE (AppE (VarE 'checkIsDir ) dir_mdE)  ifDirE)
-  return (DoE [dir_mdS, chkDirS])
+  let doDirE             = DoE [dir_mdS, chkDirS]
+  return (AppE (AppE (VarE 'checkPath) pathE) doDirE)
 
 
 loadFields :: [Field] -> TH.Exp -> Q ([FieldExp], [FieldExp], [TH.Exp], [Stmt])
@@ -221,6 +214,7 @@ loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
                                   [BindS filesP (AppE (AppE (VarE 'getMatchingFiles) pathE) externalE)])
    let newPathE     = AppE (AppE (VarE 'concatPath) pathE) fileE
    rhsE <- loadNonEmptyE forestTy newPathE fileE
+--   rhsE <- loadE forestTy newPathE 
    let stmt1 = BindS (TupP [repP,mdP]) rhsE                            
    case predM of 
      Nothing -> let
@@ -256,7 +250,7 @@ loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, de
    let (metadatasE, metadatasP) = genPE metadatasName
    let (fmE, fmP) = genPE fmName
    let newPathE     = AppE (AppE (VarE 'concatPath) pathE ) externalE
-   rhsE <- loadE descTy newPathE
+   rhsE <- loadNonEmptyE descTy newPathE externalE
    let compResultE = TupE[externalE, rhsE]
    let getFilesE regexpE = AppE (AppE (VarE 'getMatchingFiles) pathE) regexpE
    let genStmts = case generatorG of 

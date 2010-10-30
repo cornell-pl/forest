@@ -1,7 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
-   BUG: error squasing in maybes doesn't work; move path check to inside loadTy function to fix.
    add [] form for directory;    remove Directory keyword
    library for manipulating times and permissions
       add `isCompatabile` comparator for FileModes
@@ -26,6 +25,7 @@
    BUG: Maybe followed by a regular expression: see Students4.hs Grades
    literate haskell
 
+   FIXED BUG: error squasing in maybes doesn't work; move path check to inside loadTy function to fix.
    DONE implement this form for typedefs in forest
    DONE add other type constructors besides map
    DONE implement simple matches 
@@ -84,7 +84,7 @@ getHost (Hosts_t hs) = case hs of
 
          type Simple_d (file_name :: String ) = Directory 
                          { local  is "local.txt"              :: File Hosts_t where <| (get_owner local_md) == "kfisher" |> 
-                         , remote is <|file_name ++ ".txt"|>  :: Hosts_f      where <| (get_modes remote_md) == "-rw-r--r--" |>
+                         , remote is <|file_name ++ ".txt"|>  :: Hosts_f      where <| (get_modes remote_md) == "-rw-rw-r--" |>
                          , nested is <|getHost local|>        :: Scores_d     where <| (get_group nested_md) == (get_owner local_md) |> 
                          , mylink_sym is "mylink"             :: SymLink      where <| mylink_sym == "quantum" |>
                          , mylink                             :: Scores_d
