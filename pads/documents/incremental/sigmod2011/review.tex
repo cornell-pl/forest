@@ -1,4 +1,4 @@
-\section{Review of PADS and LearnPADS}\label{sec:review}
+\section{Review of \pads{} and \learnpads{}}\label{sec:review}
 \begin{figure*}
 {\small
 \begin{verbatim}
@@ -203,10 +203,18 @@ good vals: 2651  bad vals: 0  pcnt-bad: 0.000
 \end{figure}
 
 
-The goal of the \learnpads{} format inference engine is to infer 
+\paragraph*{\learnpads{}}The goal of the \learnpads{} format inference engine is to infer 
 \pads{} descriptions like the one in \figref{fig:ai.p} from raw data.
-From such a description, the \pads{} compiler can produce end-to-end
-processing tools fully automatically.  A full description of the
+The algorithm is
+designed to be {\em sound} in the sense that the generated description describes
+{\em all} of the training data, including data that a human might deem to be erroneous.
+We might have automatically deemed very low occurrence data erroneous and pruned the
+corresponding elements of the description, but we felt
+such decisions were best left in human hands.  The \pads{} statistical reporter
+(automatically generated from the learned description, along with other \pads{} tools) 
+can help with this task, if a user
+chooses, by reporting the distribution of data that match each portion of the generated description.
+A full description of the
 \learnpads{} algorithm appears in an earlier
 paper~\cite{Fisher+:dirttoshovels}. We give only a brief summary
 here. 

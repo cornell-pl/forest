@@ -78,7 +78,7 @@ learned description parses without errors.
 \begin{table*}[th]
 \caption{Default results}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
-Data & wc Time & Blob Time & Learn Time & MDL & Dist & Accuracy & Reparse time & PADS time \\ \hline
+Data & wc Time & Blob Time & Learn Time & MDL & Dist & Accuracy & Reparse time & \pads{} time \\ \hline
 cosmosLog\_csm.exe.log & 34 & 89 & 13016.48 & 22554.07& 0.951 & 100\% & 9789.43 & 481 \\ \hline
 dalpiv.dat & 82 & 211 & 72244.29 & 45730.82 & 0.865 & 100\% & 2218.91 & 771 \\ \hline
 free\_impressions.dat.cleaned & 14 & 46 & 2682.78 & 6062.39 & 0.89 & 100\% & 3485.53 & 504 \\ \hline
@@ -95,7 +95,7 @@ We set the initial batch size $N$ to be 2000 and the incremental batch size $M$ 
 In addition, it report various times to parse the data.
 The \cd{parse} time is the time it takes
 the algorithm's \kw{parse} function to parse the source data using the
-learned description. The \cd{PADS time} is the time it takes the generated \pads{}
+learned description. The \pads{} time is the time it takes the generated \pads{}
 parser to parse the same data. To put these parsing times in perspective,
 we list the time to count the total number of lines using 
 the Unix {\tt wc -l} command and the time to parse the data using
@@ -110,7 +110,7 @@ raw data.
 \centering
 \label{tab:large}
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|} \hline
-Data &  MDL & Dist & Accuracy & Learn Time & \cd{parse} time & PADS time & {\tt wc} time & {\tt Pstring} time \\ 
+Data &  MDL & Dist & Accuracy & Learn Time & \cd{parse} time & \pads{} time & {\tt wc} time & {\tt Pstring} time \\ 
   &  &  &  &  (secs) & (secs) & (secs) & (secs) & (secs) \\ \hline \hline
 cosmosLog\_csm.exe.log &  21301.34 & 0.805 & 100\% &  1040 & 1225  &  430 &  34 & 89 \\ \hline
 dalpiv.dat             & 45785.72  & 0.865 & 100\% &  4012 & 2196  &  767 &  82 & 278 \\ \hline

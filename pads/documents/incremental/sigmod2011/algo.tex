@@ -198,7 +198,7 @@ in \pads{} descriptions.  Such tokens, which are often
 white spaces or punctuation,
 serve as delimiters in the data and are useful for detecting
 errors. The binary dependent pairs \cd{Pair (x:D1, D2)} are
-a simplification of PADS more general \kw{Pstruct}s. 
+a simplification of \pads{} more general \kw{Pstruct}s. 
 The variable \cd{x} refers to the data parsed by \cd{D1}
 and may be used in \cd{D2}. The union \cd{Union (D1, D2)}
 provides a choice between descriptions \cd{D1} and \cd{D2}.
@@ -406,7 +406,7 @@ parsing the input \cd{I = s.s'} will consume input prefix \cd{s} and leave \cd{s
 returning the parse tree \cd{R} and correctness metric \cd{m}.''   
 The environment \cd{E} is a mapping from variable names
 \cd{x} to parse trees \cd{R}.  This environment stores the
-binding of variables to parse trees that the PADS dependent
+binding of variables to parse trees that the \pads{} dependent
 pair construct introduces.   We use the symbol `$\epsilon$' to denote the empty environment.
 
 The {\em parse metric} \cd{m} measures the quality of a parse. It is a 

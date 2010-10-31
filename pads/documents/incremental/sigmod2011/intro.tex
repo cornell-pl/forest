@@ -52,7 +52,8 @@ In the past, ad hoc data analysis usually involved
 writing a shell script or one-off wrapper program to parse each 
 data format, a practice which is expensive, error-prone and brittle.
 
-The \pads{} project \cite{padsweb} aims to solve the above 
+The \pads{}\anon{}{\footnote{Name substitution for blind review.}}
+project \cite{padsweb} aims to solve the above 
 problems. The central technology is a declarative, type-based, 
 data description language that allows the user to specify the physical
 layout of data sources as well as semantic properties of the data. 
@@ -67,7 +68,7 @@ write \pads{} descriptions, which can be time consuming
 if the data format is large and complex. Evolving data formats 
 present an additional challenge because the descriptions must be updated.
 For example, when analyzing Cisco router
-logs at AT\&T, we noticed that the format changes after the first 2GB, 
+logs\anon{ at AT\&T,}{,} we noticed that the format changes after the first 2GB, 
 and then again after another few GBs. The sudden change in format is
 the result of router firmware upgrades.
 
@@ -79,7 +80,8 @@ As a first step, we developed an unsupervised algorithm \learnpads{}
 \cite{Fisher+:dirttoshovels,fisher+:sigmod08}
 that automatically infers a \pads{} description of a data source by 
 computing frequency statistics for the {\em tokens} in the data and using an information
-theoretic score to guide description optimization. This algorithm, however,
+theoretic score to guide description optimization.  
+This algorithm, however,
 requires all data fit into main memory and contains procedures 
 that are quadratic to the size of data, 
 and therefore cannot scale to very large sources. 
@@ -112,7 +114,8 @@ on 16 different examples drawn from
 various industrial data sources.
 \end{enumerate}
 
-We presented a short, earlier version of this material in an informal workshop~\cite{wasl09:zhu+}. 
+We presented an earlier, 6-page abstract of this material in an informal workshop~\cite{wasl09:zhu+}
+that was reprinted unchanged and unrefereed in a SIG newsletter. 
 Unlike the earlier paper, this paper presents a re-engineered algorithm
 that is capable of processing data sources more than two orders of magnitude
 larger, while at the same time producing outputs of higher quality. 
