@@ -16,11 +16,11 @@ txt         = GL "*.txt"
 |]
 \mbox{}
 [forest|
-  type Major = Directory  
+  type Major = MapName  
     [ s :: File (Student <|getName s|>) 
-    | s <- matches txt where <|not (tpl s)|>]
+    | s <- matches txt, <|not (tpl s)|>]
 \mbox{}
-  type Grads = Directory 
+  type Grads = 
     [c :: Class <|cYear c|> | c <- matches cRE]
 \mbox{}
   type Class (y::Integer) = Directory

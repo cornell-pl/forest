@@ -11,10 +11,10 @@ site = RE "[^.].*"
     \{ log is "coralwebsrv.log.gz" 
           :: Gzip (File Coral) \}
 
-  type Site = Directory
-    \{ dates is [d :: Log | d <- matches time] \}
+  type Site = 
+    Map [d :: Log | d <- matches time]
 
   type Top = Directory
-    \{ sites is [s :: Site | s <- matches site] \}
+    Map [s :: Site | s <- matches site]
 |]
 \end{code}
