@@ -6,8 +6,8 @@ import Language.Pads.Padsc
 import Language.Forest.Forestc
 import Language.Pads.GenPretty
 
-import Data.Map (fromListWith)
-
+import Data.Map (fromListWith, fold, toList)
+import List (sortBy)
 import System.IO.Unsafe (unsafePerformIO)
 
 comma_ws = RE ",[ \t]*"
@@ -86,16 +86,28 @@ status_re = RE "[0-9]+"
   type TopDir = [ s :: SiteDir | s <- matches (RE "[^.].*") ] 
 |]
 
-load_logs () = fst (unsafePerformIO $ topDir_load "/Users/nate/coral")
+load_logs () = 
+  let (rep,md) = unsafePerformIO $ topDir_load "/home/nate/coraldata" in 
+  rep
 
 get_stats e = 
   case payload e of 
     In i -> in_stats i
     Out o -> out_stats o
 
+get_total::Entry -> Int
 get_total e = 
   case stats_total $ get_stats e of 
     Pint n -> n
+
+string_of_url :: Url -> String
+string_of_url (Url (Generic (NoQuote (PstringME s)))) = s
+
+get_url::Entry -> String
+get_url e =                     
+  case payload e of 
+    In i -> string_of_url (url $ in_req i)
+    Out o -> string_of_url (url $ out_req o)
 
 get_entries :: LogDir -> [Entry]
 get_entries (LogDir (CoralFile (Entries es))) = es
@@ -108,15 +120,56 @@ get_date w = Prelude.take 10 w
 get_dates :: SiteDir -> [(String,LogDir)]
 get_dates (SiteDir p) = p
 
--- map 
-by_host tdir = 
-   [ (host,get_total e) | (host,hdir) <- get_hosts tdir,
-                          (_,ldir) <- get_dates hdir,
-                          e <- get_entries ldir ]
-by_date tdir = 
-   [ (get_date datetime,get_total e) | (host,hdir) <- get_hosts tdir,
-                                       (datetime,ldir) <- get_dates hdir,
-                                       e <- get_entries ldir ]
+is_in :: Entry -> Bool
+is_in e =
+  case payload e of 
+    In _ -> True
+    Out _ -> False
 
--- reduce (using a map to accumulate)
-go m = fromListWith (+) (m (load_logs ()))
+is_out :: Entry -> Bool
+is_out e = not (is_in e)
+
+-- MAPS --
+lmap f p tdir = 
+   [ f host datetime e | (host,hdir) <- get_hosts tdir,
+                         (datetime,ldir) <- get_dates hdir,
+                          e <- get_entries ldir,
+                          p e ]
+
+by_date = lmap (\h d e -> (get_date d, get_total e))
+by_host = lmap (\h d e -> (h, get_total e))
+by_url_bytes = lmap (\h d e -> (get_url e, get_total e))
+by_url_counts = lmap (\h d e -> (get_url e, 1))
+
+-- FOLDS --
+tdir = load_logs ()
+
+go_bins m p = fromListWith (+) (m p tdir)
+
+count_bins m = 
+  fromListWith (+) (fold (\ c l -> (c,1):l) [] m)
+
+go_flat p = 
+  sum [ (get_total e) | (host,hdir) <- get_hosts tdir,
+                        (datetime,ldir) <- get_dates hdir,
+                        e <- get_entries ldir,
+                        p e ]
+
+sortDown (x1,t1) (x2,t2)
+  | t1 < t2 = GT
+  | t2 < t1 = LT
+  | t1 == t2 = compare x2 x1
+
+in_total = go_flat is_in
+out_total = go_flat is_out
+in_by_host = go_bins by_host is_in
+out_by_host = go_bins by_host is_out 
+in_by_date = go_bins by_host is_in 
+out_by_date = go_bins by_host is_out
+in_url_bytes = go_bins by_url_bytes is_in
+out_url_bytes = go_bins by_url_bytes is_out
+in_url_counts = go_bins by_url_counts is_in
+out_url_counts = go_bins by_url_counts is_out
+in_counts_urls = count_bins $ go_bins by_url_counts is_in
+out_counts_urls = count_bins $ go_bins by_url_counts is_out
+topk k m = Prelude.take k (sortBy sortDown (toList m))
