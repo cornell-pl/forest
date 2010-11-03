@@ -236,10 +236,13 @@ loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 
 loadComp :: CompField -> TH.Exp -> Q TH.Exp
 loadComp cinfo pathE = do
-   { (_,_,bmdE,stmts) <- loadCompound cinfo pathE
-   ; let resultE = TupE [VarE (mkName "this"), TupE[bmdE, VarE (mkName "this_md")]]
+   { fmdName   <- newName ("fmd")
+   ; let (fmdE, fmdP) = genPE fmdName
+   ; (_,_,_,stmts) <- loadCompound cinfo pathE
+   ; let dir_mdS = BindS  fmdP (AppE (VarE 'getForestMD) pathE)
+   ; let resultE = TupE [VarE (mkName "this"), TupE[fmdE, VarE (mkName "this_md")]]
    ; let returnS = NoBindS (AppE (VarE 'return) resultE)
-   ; let isGoodE = DoE (stmts++[returnS])
+   ; let isGoodE = DoE ([dir_mdS]++stmts++[returnS])
    ; return (AppE (AppE (VarE 'checkPathIsDir) pathE) isGoodE)
    }
 

@@ -116,6 +116,20 @@ errorFileInfo  = FileInfo
      , kind = UnknownK
      }
 
+mkErrorFileInfo :: FilePath -> FileInfo
+mkErrorFileInfo  path = FileInfo 
+     { fullpath = path
+     , owner = ""
+     , group = ""
+     , size  = -1
+     , access_time = -1
+     , read_time = -1
+     , mod_time = -1
+     , mode     = -1
+     , isSymLink = False
+     , kind = UnknownK
+     }
+
 
 data Forest_md = Forest_md { numErrors :: Int
                            , errorMsg  :: Maybe ErrMsg
@@ -166,12 +180,12 @@ instance Data b => ForestMD (Forest_md,b) where
 
 
 
-cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = errorFileInfo}
+cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = fileInfo_def}
 errorForestMD = Forest_md {numErrors = 1, errorMsg = Nothing, fileInfo = errorFileInfo}
-missingPathForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MissingFile path), fileInfo = errorFileInfo}
-fileMatchFailureForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MatchFailure path), fileInfo = errorFileInfo}
+missingPathForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MissingFile path), fileInfo = mkErrorFileInfo path}
+fileMatchFailureForestMD path = Forest_md {numErrors = 1, errorMsg = Just (MatchFailure path), fileInfo = mkErrorFileInfo path}
 systemErrorForestMD i = Forest_md {numErrors = 1, errorMsg = Just (SystemError i), fileInfo = errorFileInfo}
-notDirectoryForestMD path = Forest_md {numErrors = 1, errorMsg = Just (NotADirectory path), fileInfo = errorFileInfo}
+notDirectoryForestMD path = Forest_md {numErrors = 1, errorMsg = Just (NotADirectory path), fileInfo = mkErrorFileInfo path}
 constraintViolation       = Forest_md {numErrors = 1, errorMsg = Just ConstraintViolation, fileInfo = errorFileInfo}
 
 mergeErrors m1 m2 = case (m1,m2) of
@@ -268,7 +282,58 @@ modeToModeString mode = special ++ ownerr ++ ownerw ++ ownerx ++ groupr ++ group
          otherr = if intersectFileModes mode otherReadMode == otherReadMode then "r" else "-"
          otherw = if intersectFileModes mode otherWriteMode == otherWriteMode then "w" else "-"
          otherx = if intersectFileModes mode otherExecuteMode == otherExecuteMode then "x" else "-"
-    
+
+
+data Permission = Read | Write | Execute
+  deriving (Eq, Ord, Show, Typeable, Data)
+
+ownModeToPermission :: FileMode -> [Permission]
+ownModeToPermission mode = ownerr ++ ownerw ++ ownerx
+   where ownerr = if intersectFileModes mode ownerReadMode == ownerReadMode then [Read] else []
+         ownerw = if intersectFileModes mode ownerWriteMode == ownerWriteMode then [Write] else []
+         ownerx = if intersectFileModes mode ownerExecuteMode == ownerExecuteMode then [Execute] else []
+
+grpModeToPermission :: FileMode -> [Permission]
+grpModeToPermission mode = groupr ++ groupw ++ groupx
+   where
+     groupr = if intersectFileModes mode groupReadMode == groupReadMode then [Read] else []
+     groupw = if intersectFileModes mode groupWriteMode == groupWriteMode then [Write] else []
+     groupx = if intersectFileModes mode groupExecuteMode == groupExecuteMode then [Execute] else []
+
+othModeToPermission :: FileMode -> [Permission]
+othModeToPermission mode = otherr ++ otherw ++ otherx
+   where
+     otherr = if intersectFileModes mode otherReadMode == otherReadMode then [Read] else []
+     otherw = if intersectFileModes mode otherWriteMode == otherWriteMode then [Write] else []
+     otherx = if intersectFileModes mode otherExecuteMode == otherExecuteMode then [Execute] else []
+
+getPermissionsForGroups :: [String] -> FileInfo -> [Permission]
+getPermissionsForGroups groups fInfo = 
+  if (group fInfo) `elem` groups 
+    then grpModeToPermission (mode fInfo)
+    else []
+
+getPermissionsForOwner :: String -> FileInfo -> [Permission]
+getPermissionsForOwner id fInfo = 
+  if (owner fInfo) == id
+    then ownModeToPermission (mode fInfo)
+    else []
+
+getPermissionsForOther :: FileInfo -> [Permission]
+getPermissionsForOther  fInfo =  othModeToPermission (mode fInfo)
+
+getPermissions :: String -> [String] -> FileInfo -> [Permission] 
+getPermissions id groups fInfo = nub (owner++group++other)
+  where owner = getPermissionsForOwner id fInfo
+        group = getPermissionsForGroups groups fInfo
+        other = getPermissionsForOther fInfo
+
+getGroups :: String -> IO [String]
+getGroups id = do
+  { groupEntries <- getAllGroupEntries 
+  ; let id_groups = filter (\g -> id `elem` (groupMembers g)) groupEntries
+  ; return (Data.List.map groupName id_groups)
+  }
 
 {- Should raise no exceptions -}
 getForestMD :: FilePath -> IO Forest_md
@@ -278,7 +343,7 @@ getForestMD path = do
         Left (e::CE.SomeException) -> return
                 (Forest_md { numErrors = 1
                            , errorMsg = Just (ForestIOException (show e))
-                           , fileInfo = errorFileInfo
+                           , fileInfo = mkErrorFileInfo path
                            })
         Right fd -> do 
          { let file_ownerID = fileOwner fd

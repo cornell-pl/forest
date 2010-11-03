@@ -4,13 +4,19 @@ module Examples.Students2 where
 
 import Language.Pads.Padsc
 import Language.Forest.Forestc
+
 import Language.Pads.GenPretty
+import Language.Forest.Auth
+
+
 import System.Directory
 import System.Environment (getArgs)
+import System.IO.Unsafe (unsafePerformIO)
 
 import Data.Map
 import Data.List hiding (sort)
-import System.IO.Unsafe (unsafePerformIO)
+
+import Language.Forest.Graph
 
 
 
@@ -121,8 +127,19 @@ mkPrettyInstance ''PrincetonCS_d_md
 cs_dir = "Examples/data/facadm"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_d_load cs_dir
 
+permissions = checkAuth cs_md  "Examples/data/facadm/graduates/classof07/BSE07/clark.txt" "kfisher"
+readStatus = canRead cs_md  "Examples/data/facadm/graduates/classof07/BSE07/clark.txt" "kathleenfisher"
+-- Right (False,["Examples/data/facadm/graduates","Examples/data/facadm/graduates/classof07/BSE07"])
+
+noRead = readProhibited cs_md "kathleenfisher"
+problemPaths = restrictingPaths noRead
+-- ["Examples/data/facadm/graduates","Examples/data/facadm/graduates/classof07/BSE07"]
+
 cd_md md f = f $ snd md  -- should this change the paths?
 cd_rep rep f = f $ rep
+
+{- print graph of students -}
+resultIO =  mdToPDF cs_md "/Users/kfisher/pads/dirpads/src/Examples/Students.pdf"
 
 princetonCS_d_tarFiles filePath name = do
  { ~(rep,md) <- princetonCS_d_load filePath

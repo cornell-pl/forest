@@ -1,14 +1,14 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
-   library for manipulating times and permissions
-      add `isCompatabile` comparator for FileModes
-   performance tuning
    TOOL: shell tools
    TOOL: given file path, predicate on FMDs, depth limit, produce forest description
    TOOL: given a (rep,md), produce a dot graph (colored according to metadata)
    TOOL: lookup :: (Data a) => String -> Maybe a  (where a = String_t)
    TOOL: check permissions
+   performance tuning
+   library for manipulating times and permissions
+      add `isCompatabile` comparator for FileModes
    incorporate pads meta-data error counts into forest error counts.
    implement regular expression primitives
    implement pre-processor type constructor
@@ -58,6 +58,7 @@ import Language.Forest.Syntax
 import Language.Forest.CodeGen
 import System.Time.Utils
 import Language.Pads.GenPretty
+import Language.Forest.Graph
 
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -65,6 +66,8 @@ import Language.Haskell.Meta as LHM
 import Text.Regex
 import Data.Maybe
 import Data.Set as S hiding (map)
+
+
 -- import Examples.AI 
 
 [pads| type SEntry_t = (Pstring ',', ',', Pint)
@@ -118,6 +121,8 @@ host_file_take n  = Prelude.take n host_rep
 host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple"
 (simple_rep, simple_md) = unsafePerformIO $ simple_d_load "remote" host_dir
 
+resultSimpleIO =  mdToPDF simple_md "/Users/kfisher/pads/dirpads/src/Examples/Simple.pdf"
+
 (text_rep, text_md) = unsafePerformIO $ textFiles_load host_dir
 
 notChina h = h /= "china"
@@ -133,6 +138,8 @@ notChina h = h /= "china"
 (nested_remote_rep, nested_remote_md) = unsafePerformIO $ nested_d_load "remote" host_dir
 (nested_local_rep, nested_local_md) = unsafePerformIO $ nested_d_load "local" host_dir
 
+resultNestedIO =  mdToPDF nested_remote_md "/Users/kfisher/pads/dirpads/src/Examples/Nested_Remote.pdf"
+
 re = RE ".*[.]txt"
 
 
@@ -141,5 +148,5 @@ re = RE ".*[.]txt"
        |]
 
 (match_rep, match_md) = unsafePerformIO $ match_d_load  host_dir
-
+resultMatchIO =  mdToPDF match_md "/Users/kfisher/pads/dirpads/src/Examples/Match.pdf"
 
