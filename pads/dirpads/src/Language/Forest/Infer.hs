@@ -2,9 +2,9 @@
 module Language.Forest.Infer where
 import Language.Forest.Forestc
 import Language.Forest.Syntax
+import Language.Haskell.TH
 
 import Data.List
-import Data.Set
 import Data.Char
 import System.FilePath.Posix
 import Data.Data
@@ -13,42 +13,51 @@ buildDesc :: (ForestMD md) => md -> [ForestDecl]
 buildDesc md = 
   let allpaths = Data.List.nub(listMDNonEmptyFiles md)
       (dirs,files) = Data.List.partition (\fmd -> (kind . fileInfo) fmd == DirectoryK) allpaths
-      fileTyList = Prelude.map (\fmd -> ((fullpath . fileInfo) fmd,
-                              case (kind . fileInfo) fmd of 
-                                 AsciiK    -> File ("Ptext",  Nothing)
-                                 otherwise -> File ("Pbinary", Nothing))) files
-      forestTySet = Data.Set.fromList fileTyList                             
-      sortedDirs = Data.List.sortBy (\d1 d2 -> compare (length (get_fullpath d2)) (length (get_fullpath d1)) ) dirs    -- Subdirectories appear before parent directories
+      forestTyList = Prelude.map getFileTy files
+      dirNames = Data.List.map get_fullpath dirs
+      sortedDirs = Data.List.sortBy (\d1 d2 -> compare (length d1) (length d2) ) dirNames    -- Subdirectories appear before parent directories
+      (finalTys, finalDecls) = Prelude.foldr collapseDirectory (forestTyList, []) sortedDirs
   in
-    []
+    Data.List.nub (Data.List.reverse finalDecls)
 
-collapseDirectory :: FilePath -> Data.Set.Set (FilePath, ForestTy) -> Data.Set.Set (FilePath, ForestDecl) -> 
-                                 (Data.Set.Set (FilePath, ForestTy), Data.Set.Set (FilePath, ForestDecl))
-collapseDirectory dir forestTys forestDecls = 
+collapseDirectory :: FilePath -> ([(FilePath, ForestTy)], [ForestDecl]) -> ([(FilePath, ForestTy)], [ForestDecl])
+collapseDirectory dir (forestTys, forestDecls) = 
   let (nestedFiles, otherFiles)  = getNested dir forestTys
-      (nestedDirs,  otherDirs )  = getNested dir forestDecls
-  in undefined      
+      (dirTy, dirDecl) = buildDirectory dir nestedFiles
+  in ( (dir,dirTy) : forestTys,  dirDecl : forestDecls)
 
-buildDirectory dir nestedFiles nestedDirs = 
+buildDirectory dir nestedComponents  = 
+  let compList = Prelude.map (buildSimpleField 1) nestedComponents   -- make monadic to pass this state around
+      (dirName,n) = (getHaskellId 2 (takeFileName dir))
+      forestTy = Directory (Record dirName compList)
+      forestDecl = ForestDecl(dirName, Nothing, forestTy)
+      refTy = Named dirName
+  in (refTy, forestDecl)
 
-buildSimpleField (fp, fTy) = 
+buildSimpleField n (fp, fTy)  = 
   let externalName = takeFileName fp
-      internalName = if isHaskellID externaName then externalName
+      (internalName,n') = getHaskellId n externalName 
+      externalE = mkStrLitM externalName
+  in Simple (internalName, True, externalE, fTy, Nothing)
+       
+getNested dir set = Data.List.partition (\(filepath,forestTy) -> dir == takeDirectory filepath) set
                       
 
 isHaskellIDchar c = isAlphaNum c ||  c == '_' || c == '\''
 isHaskellID (f:str) = (isAsciiLower f) && (and (Prelude.map isHaskellIDchar str))
 
-getHaskellId name n = 
- case filter isHaskellIDchar name of
-     []      -> ("field_" ++ (show n))
-     c:name' -> (toLower c) : name'
+-- this needs to be fixed to always generate a unique Id
+getHaskellId n name  = 
+ case Data.List.filter isHaskellIDchar name of
+     []      -> (("id_" ++ (show n)), n+1)
+     c:name' -> ((toLower c) : name', n+1)
 
 
-getNested dir set = Data.Set.partition (\(filepath,forestTy) -> dir == takeDirectory filepath) set
 
-instance Ord ForestTy where
- compare f1 f2 = EQ
+getFileTy fmd = ((fullpath . fileInfo) fmd,
+                  case (kind . fileInfo) fmd of 
+                       AsciiK    -> File ("Ptext",  Nothing)
+                       otherwise -> File ("Pbinary", Nothing))
 
-instance Ord ForestDecl where
- compare f1 f2 = EQ
+
+mkStrLitM s = LitE (StringL s)

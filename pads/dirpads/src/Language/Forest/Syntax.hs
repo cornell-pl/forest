@@ -4,9 +4,10 @@ module Language.Forest.Syntax where
 
 import Data.Generics
 import Language.Haskell.TH  as TH 
+import Language.Haskell.TH.Instances.Lift
 
 newtype ForestDecl = ForestDecl (String, Maybe TH.Pat, ForestTy)
-   deriving (Eq, Data, Typeable, Show)
+   deriving (Ord, Eq, Data, Typeable, Show)
 
 data ForestTy = Directory DirectoryTy 
               | File FileTy 
@@ -18,17 +19,17 @@ data ForestTy = Directory DirectoryTy
               | FConstraint TH.Pat ForestTy TH.Exp    {- pattern bound to underlying type, underlying type, predicate -}
               | Fapp ForestTy TH.Exp
               | FComp CompField
-   deriving (Eq, Data, Typeable, Show)
+   deriving (Ord, Eq, Data, Typeable, Show)
 
 data DirectoryTy = Record String [Field]
-   deriving (Eq, Data, Typeable, Show)
+   deriving (Ord, Eq, Data, Typeable, Show)
 
 type FileTy = (String, Maybe TH.Exp)
 
 type BasicField = (String, Bool, TH.Exp, ForestTy, Maybe TH.Exp)  -- internal name, isForm, external name, description type, optional predicate
 
 data Generator = Explicit TH.Exp | Matches TH.Exp
-    deriving (Eq, Data, Typeable, Show)
+    deriving (Ord, Eq, Data, Typeable, Show)
 
 
 data CompField = CompField 
@@ -41,9 +42,9 @@ data CompField = CompField
         , generatorG   :: Generator
         , predEOpt     :: Maybe TH.Exp
         }
-   deriving (Eq, Data, Typeable, Show)
+   deriving (Ord, Eq, Data, Typeable, Show)
 
 data Field = Simple BasicField
            | Comp  CompField
-   deriving (Eq, Data, Typeable, Show)
+   deriving (Ord, Eq, Data, Typeable, Show)
 
