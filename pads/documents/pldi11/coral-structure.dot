@@ -1,17 +1,30 @@
 digraph Coral {
   rankdir=LR;
-  CoralLogs -> "planetlab2.eecs.wsu.edu";
-  CoralLogs -> "planetlab3.williams.edu";
-  CoralLogs -> "ricepl-2.cs.rice.edu";
-  "planetlab2.eecs.wsu.edu" -> "2008_08_14-18_07" -> l1 
-  "planetlab2.eecs.wsu.edu" -> "2008_08_15-13_42" -> l2 
-  "planetlab2.eecs.wsu.edu" -> "2008_08_19-21_53" -> l3 
-  "planetlab3.williams.edu" -> "2008_08_12-22_35" -> l4 
-  "planetlab3.williams.edu" -> "2008_08_14-07_25" -> l5 
-  "planetlab3.williams.edu" -> "2008_08_19-19_27" -> l6 
-  "ricepl-2.cs.rice.edu"    -> "2005_08_12-05_21" -> l7 
-  "ricepl-2.cs.rice.edu"    -> "2005_08_13-02_16" -> l8 
-  "ricepl-2.cs.rice.edu"    -> "2005_08_15-21_34" -> l9 
+  top -> h1;
+  top -> h2;
+  top -> h3; 
+  h1 -> h1d1 -> l1 
+  h1 -> h1d2 -> l2 
+  h1 -> h1d3 -> l3 
+  h2 -> h2d1 -> l4 
+  h2 -> h2d2 -> l5 
+  h2 -> h2d3 -> l6 
+  h3 -> h3d1 -> l7 
+  h3 -> h3d2 -> l8 
+  h3 -> h3d3 -> l9 
+  top [ shape=box, label="logs" ];
+  h1 [ shape=box, label="planetlab2.eecs.wsu.edu"];
+  h2 [ shape=box, label="planetlab3.williams.edu"];
+  h3 [ shape=box, label="ricepl-2.cs.rice.edu"];
+  h1d1 [ shape=box, label="2008_08_14-18_07" ] 
+  h1d2 [ shape=box, label="2008_08_15-13_42" ]
+  h1d3 [ shape=box, label="2008_08_19-21_53" ]
+  h2d1 [ shape=box, label="2008_08_12-22_35" ]
+  h2d2 [ shape=box, label="2008_08_14-07_25" ]
+  h2d3 [ shape=box, label="2008_08_19-19_27" ]
+  h3d1 [ shape=box, label="2005_08_12-05_21" ]
+  h3d2 [ shape=box, label="2005_08_13-02_16" ]   
+  h3d3 [ shape=box, label="2005_08_15-21_34" ]
   l1 [ label="coralwebsrv.log.gz" ];
   l2 [ label="coralwebsrv.log.gz" ];
   l3 [ label="coralwebsrv.log.gz" ];
