@@ -7,7 +7,8 @@ import Language.Forest.Forestc
 
 import Language.Pads.GenPretty
 import Language.Forest.Auth
-
+import Language.Forest.Graph
+import Language.Forest.Shell
 
 import System.Directory
 import System.Environment (getArgs)
@@ -16,7 +17,6 @@ import System.IO.Unsafe (unsafePerformIO)
 import Data.Map
 import Data.List hiding (sort)
 
-import Language.Forest.Graph
 
 
 
@@ -141,35 +141,47 @@ cd_rep rep f = f $ rep
 {- print graph of students -}
 resultIO =  mdToPDF cs_md "/Users/kfisher/pads/dirpads/src/Examples/Students.pdf"
 
+{- tar the student repostitory -}
+doTar = tar cs_md "Princeton.tar"
+
+{- get directory listing, opt is something like "-al" -}
+doLs opt = do { r <- ls cs_md opt; putStrLn r}
+
+{- grep for HST by calling with "HST" -}
+doGrep opt = do { r <- grep cs_md opt; putStrLn r}
+
+{- cp repository -}
+doCopy = cp cs_md "/Users/kfisher/Work/temp"
+
+{- echo repository -}
+doEcho = do { result <- echo cs_md "-n"; putStrLn result}
+
+{- remove repository -}
+doRemove = do { result <- rm cs_md ""; putStrLn result}
+
+
 princetonCS_d_tarFiles filePath name = do
  { ~(rep,md) <- princetonCS_d_load filePath
- ; tarFilesFromMD md name
+ ; tar md name
  }
 
 major_d_tarFiles filePath name = do
  { ~(rep,md) <- major_d_load filePath
- ; tarFilesFromMD md name
+ ; tar md name
  }
 
 grads_d_tarFiles filePath name = do
  { ~(rep,md) <- grads_d_load filePath
- ; tarFilesFromMD md name
+ ; tar md name
  }
 
 class_d_tarFiles arg filePath name = do
  { ~(rep,md) <- class_d_load arg filePath
- ; tarFilesFromMD md name
+ ; tar md name
  }
 
-getLoadArgs s = 
-  let (ty_name, arg) = Data.List.break (\c->c=='(') s
-  in case arg of 
-       [] -> (ty_name, Nothing)
-       '(':str -> if Data.List.last str == ')' then (ty_name, Just (init str)) 
-                  else error ("Argument to shell tool should be enclosed in parens.  Instead found:"++arg)
 
-
-doTar = do
+doShellTar = do
  { [descName, outputName] <- getArgs
  ; absCurrentDir <- getCurrentDirectory
  ; currentDir <- makeRelativeToCurrentDirectory absCurrentDir
@@ -179,10 +191,7 @@ doTar = do
       ("Major_d", Nothing)       -> major_d_tarFiles currentDir outputName
       ("Class_d", Just arg)      -> class_d_tarFiles (read arg) currentDir outputName
  }
-{-
-StudentShell tar PrincetonCS_d CS.tar 
--}
-doTarFromMD = tarFilesFromMD cs_md "CS.tar"
+
 
 
 -- Find all files mentioned in cs

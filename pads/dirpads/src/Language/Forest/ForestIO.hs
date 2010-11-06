@@ -7,12 +7,17 @@ import Language.Pads.Padsc
 import Language.Forest.MetaData
 import Language.Forest.Generic
 import Language.Forest.Errors
+
 import System.FilePath.Posix
+import System.FilePath.Glob
 import System.Posix.Files
 import System.Cmd
 import System.Exit
 import System.Directory
 import System.IO
+import System.IO.Unsafe
+import Text.Regex
+
 -- import Data.Time.Clock (getCurrentTime :: IO UTCTime)
 -- import Data.Time.Clock.Posix (getPOSIXTime:: IO POSIXTime)
 
@@ -20,14 +25,13 @@ import System.IO
 -- Defined in Data.Time.Clock.POSIX
 -- posixSecondsToUTCTime (realToFrac :: POSIXTime)
 
-import Text.Regex
-import System.FilePath.Glob
+
 
 import qualified Control.Exception as CE
 
 import Data.Data
 import Data.Maybe
-import System.IO.Unsafe
+
 
 
 fileload :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
@@ -43,20 +47,6 @@ fileload1 arg path = checkPath path (do
    return (rep, (fmd, md)))
 
 
-tarFilesFromMD :: (ForestMD md) => md -> String -> IO ()
-tarFilesFromMD md name = do 
- { let files = filter (\s->s /= "") (listFiles md)
- ; td <- getTemporaryDirectory
- ; (fp, handle) <- openTempFile td "ForestTarSpec"
- ; mapM_ (hPutStrLn handle) files
- ; hClose handle
- ; let cmd = "tar -T " ++ fp ++ " -cf " ++ name
- ; system cmd
- ; removeFile fp
- }
-
--- >ftar Universal.universal_d universe.tar
--- >Universal-tar universal_d universe.tar
 
 getTempFile :: IO FilePath
 getTempFile = do 
