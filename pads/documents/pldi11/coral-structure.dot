@@ -3,15 +3,32 @@ digraph Coral {
   top -> h1;
   top -> h2;
   top -> h3; 
-  h1 -> h1d1 -> l1 
-  h1 -> h1d2 -> l2 
-  h1 -> h1d3 -> l3 
-  h2 -> h2d1 -> l4 
-  h2 -> h2d2 -> l5 
-  h2 -> h2d3 -> l6 
-  h3 -> h3d1 -> l7 
-  h3 -> h3d2 -> l8 
-  h3 -> h3d3 -> l9 
+  h1 -> h1d1 
+  h1d1 -> h1d1w; 
+  h1d1 -> h1d1d; 
+  h1 -> h1d2
+  h1d2 -> h1d2w;  
+  h1d2 -> h1d2p;  
+  h1 -> h1d3
+  h1d3 -> h1d3w; 
+  h2 -> h2d1
+  h2d1 -> h2d1w;
+  h2d1 -> h2d1n;
+  h2d1 -> h2d1p;
+  h2 -> h2d2
+  h2d2 -> h2d2w; 
+  h2d2 -> h2d2d; 
+  h2 -> h2d3
+  h2d3 -> h2d3w; 
+  h2d3 -> h2d3d; 
+  h3 -> h3d1
+  h3d1 -> h3d1d; 
+  h3 -> h3d2
+  h3d2 -> h3d2w; 
+  h3d2 -> h3d2p; 
+  h3 -> h3d3
+  h3d3 -> h3d3w; 
+  h3d3 -> h3d3d; 
   top [ shape=box, label="logs" ];
   h1 [ shape=box, label="planetlab2.eecs.wsu.edu"];
   h2 [ shape=box, label="planetlab3.williams.edu"];
@@ -25,15 +42,23 @@ digraph Coral {
   h3d1 [ shape=box, label="2005_08_12-05_21" ]
   h3d2 [ shape=box, label="2005_08_13-02_16" ]   
   h3d3 [ shape=box, label="2005_08_15-21_34" ]
-  l1 [ label="coralwebsrv.log.gz" ];
-  l2 [ label="coralwebsrv.log.gz" ];
-  l3 [ label="coralwebsrv.log.gz" ];
-  l4 [ label="coralwebsrv.log.gz" ];
-  l5 [ label="coralwebsrv.log.gz" ];
-  l6 [ label="coralwebsrv.log.gz" ];
-  l7 [ label="coralwebsrv.log.gz" ];
-  l8 [ label="coralwebsrv.log.gz" ];
-  l9 [ label="coralwebsrv.log.gz" ];
+  h1d1w [ label="coralwebsrv.log.gz" ];
+  h1d1d [ label="corald.log.gz" ];
+  h1d2w [ label="coralwebsrv.log.gz" ];
+  h1d2p [ label="probed.log.gz" ];
+  h1d3w [ label="coralwebsrv.log.gz" ];
+  h2d1w [ label="coralwebsrv.log.gz" ];
+  h2d1n [ label="coraldnssrv.log.gz" ];
+  h2d1p [ label="corald.log.gz" ];
+  h2d2w [ label="coralwebsrv.log.gz" ];
+  h2d2d [ label="corald.log.gz" ];
+  h2d3w [ label="coralwebsrv.log.gz" ];
+  h2d3d [ label="coraldnssrv.log.gz" ];
+  h3d1d [ label="corald.log.gz" ];
+  h3d2w [ label="coralwebsrv.log.gz" ];
+  h3d2p [ label="probed.log.gz" ];
+  h3d3w [ label="coralwebsrv.log.gz" ];
+  h3d3d [ label="corald.log.gz" ];
 } 
 
 

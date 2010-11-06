@@ -1,5 +1,5 @@
 %\documentclass[fleqn]{article}
-\documentclass[natbib]{sigplanconf}
+\documentclass[nocopyrightspace,natbib]{sigplanconf}
 %\documentclass[nocopyrightspace]{sigplanconf}
 
 \usepackage{xspace,pads,amsmath,math-cmds,
@@ -18,17 +18,18 @@
 \copyrightyear{2011} 
 \copyrightdata{} 
 
-\title{Forest:  A Language and Toolkit For Programming with File System Fragments}
+\title{Forest: A Language and Toolkit For Programming with File System Fragments}
 
-\authorinfo{Kathleen Fisher}{
-	   AT\&T Labs Research}
-       {\mono{kfisher@research.att.com}}
-\authorinfo{Nate Foster}{
-	   Cornell University}
-       {\mono{jnfoster@cs.cornell.edu}}
-\authorinfo{David Walker}{
-	   Princeton University}
-       {\mono{{dpw}@CS.Princeton.EDU}}
+\authorinfo{Kathleen Fisher}
+	   {AT\&T Labs Research}
+           {\mono{kfisher@research.att.com}}
+\authorinfo{Nate Foster}
+           {Cornell University}
+           {\mono{jnfoster@cs.cornell.edu}}
+\authorinfo{David Walker}
+           {Princeton University}
+           {\mono{{dpw}@CS.Princeton.EDU}}
+
 \input{definitions}
 
 \maketitle{}
@@ -45,7 +46,6 @@ Languages, Algorithms
 \keywords
 Data description languages, file systems, domain specific languages, ad hoc data
 
-
 \section {Introduction}
 \label{sec:intro}
 
@@ -57,18 +57,18 @@ Define the problem:
 \item Data accumulates over time in sets of files organized in
 hierarchically structured file systems.  Show table of examples.
 \item Problem: no documentation
-\item Problem: errors. No tools for consistency checking/ error dection
+\item Problem: errors. No tools for consistency checking/error dection
 \item Problem: data encoded in combination of file and directory names as
-well as internally to files
-\item Problem: data is large: complicates infrastructure for
-getting data in to and out of programs.  can't even use standard unix tools like ls * due to overexpansion
-on command line.
+well as internally in files
+\item Problem: data is large: complicates infrastructure for getting
+  data in to and out of programs. Can't even use standard unix tools
+  like ls due to overexpansion on command line.
 \end{itemize}
 
-Goal: to make programming with data on disk as easy as programming with a
-data structure within your program
+Goal: to make programming with data on disk as easy as programming
+with a data structure in a program
 
-State the Contributions:
+Contributions:
 
 \begin{itemize}
 \item Concept:  the idea to extend a modern programming language with
@@ -76,36 +76,38 @@ fully integrated linguistic features for describing file system fragments
 and for automatically generating programming infrastructure from such 
 descriptions.
 
-\item Description Language Design:  we have carefully chosen \forest{} programming
-features based on our analysis of a number of examples.  The design
-is expressive, concise and tastefully integrated into Haskell.
-It lowers the barrier to programming with data on disk.  We give example
-.
+\item Description Language Design: we have carefully chosen \forest{}
+  programming features based on our analysis of a number of examples.
+  The design is expressive, concise and tastefully integrated into
+  Haskell.  It lowers the barrier to programming with data on disk.
+  We give examples...
 
-\item Tool Generation:  tools are automatically generated so that programmers
-may begin working with their described data immediately and easily.  List
-tools generated.  We illustrate the use of these tools on examples.
+\item Tool Generation: tools are automatically generated so that
+  programmers may begin working with their described data immediately
+  and easily.  List tools generated.  We illustrate the use of these
+  tools on examples.
 
-\item Implementation: a fully functional extension of Haskell.  
-We evaluate its performance briefly?  Side-comment: the implementation
-acts as a case study in *extensive,* practical,
-domain-specific language design in modern languages by
-combining a number of experimental features of Haskell such
-as quasi-quoting, template haskell, etc.
+\item Implementation: a fully functional extension of Haskell.  We
+  evaluate its performance briefly?  Side-comment: the implementation
+  acts as a case study in *extensive,* practical, domain-specific
+  language design in modern languages by combining a number of
+  experimental features of Haskell such as quasi-quoting, template
+  haskell, etc.
 
-\item Semantics: we have a semantics for a core calculus.  This
-guides our implementation decisions.  Unlike parser generators,
-which are based on grammars over sequences, this is based
-on a classical logic over trees.
+\item Semantics: we have a semantics for a core calculus.  This guides
+  our implementation decisions.  Unlike parser generators, which are
+  based on grammars over sequences, this is based on a classical logic
+  over trees.
 \end{itemize}
 
 Tool Notes:
 
 \begin{itemize}
 \item Core tools implemented within the compiler. (loader)
-\item Generic tools, useable with all descriptions, and implemented as 3rd party libraries.
+\item Generic tools, useable with all descriptions, and implemented as
+  third-party libraries.
 \begin{itemize}
-\item Unix-like shell tools:  grep, ls, tar, cp, rm
+\item Unix-like shell tools: grep, ls, tar, cp, rm
 \item description-generation tool using universal description
 \item simple directory visualization by generating dot files and highlighting errors
 \item pretty printing tools
@@ -180,26 +182,25 @@ o  .  .  1  GOL   599  A+
 \label{fig:student-file-example}
 \end{figure}
 
-The second repository we will explore in detail involves
-log files generated by Coral~\cite{freedman+:coral,freedman:coral-experience},
-a distributed content distribution system. To 
-monitor the health, security and performance of Coral, distributed nodes send
-statistics reports back to a centralized repository.  These reports
-are collected in a repository shaped as shown in Figure~\ref{fig:coral-pic}.
-At the top-level, this hierarchy contains a set of subdirectories, with
-one subdirectory per machine name.  Within each machine directory, there is 
-another set of directories, named according to the time it was created.
-Within each time directory, there are one or more gzipped log files.
-For the purposes of this paper, the main log file we are interested 
-in is named \cd{coralwebsrv.log.gz}. \reminder{dpw: I didn't include
-an example file fragment.  This could be done later.  I'm already concerned
-about space.}
+The second repository contains log files generated by the Coral
+Content Distribution Network
+(CoralCDN)~\cite{freedman+:coral,freedman:coral-experience}. To
+monitor the performance, health, and security of the system, each
+distributed host participating in the CDN periodically sends
+statistics reports back to a central server. These statistics are
+collected up and stored in a directory similar to the one depicted in
+Figure~\ref{fig:coral-pic}.  The top-level \cd{log} directory contains
+a set of subdirectories, one for each host.  Within each host
+directory, there is another set of directories labeled with the date
+and time when the logs were collected from that host. Finally, within
+each of these directories, there are one or more compressed log
+files. For the purposes of this example, we will focus on the
+\cd{coralwebsrv.log.gz} file, which contains 
 
 \begin{figure}
-
-a picture showing the Coral hierarchy
-
+\epsfig{file=coral-structure.eps, width=0.9\columnwidth}
 \caption{Coral system log data.}
+
 \label{fig:coral-pic}
 \end{figure}
 
@@ -692,6 +693,8 @@ dir = "Examples/data/text.txt"
 (text_rep, text_md) = unsafePerformIO $ (myText_load dir)
 \end{code}
 
+%$
+
 \begin{itemize}
 \item meta data
 \item describe lazy semantics
@@ -718,10 +721,176 @@ dir = "Examples/data/text.txt"
 
 \section{Language Semantics}
 \label{sec:exp}
+\renewcommand{\bnfdef}{\ensuremath{\mathord{::=}}}
+\newcommand{\slsh}{\ensuremath{\mathord{\textsf{/}}}}
+\newcommand{\File}[1]{\ensuremath{\mathsf{File(#1)}}}
+\newcommand{\Dir}[1]{\ensuremath{\mathsf{Dir(#1)}}}
+\newcommand{\Link}[1]{\ensuremath{\mathsf{Link(#1)}}}
+\newcommand{\Set}[1]{\ensuremath{\{ #1 \}}}
+\newcommand{\Map}[1]{\ensuremath{\{\!\mid #1 \mid\!\}}}
+\newcommand{\PNil}{\ensuremath{\bullet}}
+\newcommand{\PCons}[2]{\ensuremath{#1\,\textsf{/}\,#2}}
+\newcommand{\Just}[1]{\ensuremath{\mathsf{Just(#1)}}}
+\newcommand{\Nothing}{\ensuremath{\mathsf{Nothing}}}
+\newcommand{\True}{\ensuremath{\mathsf{True}}}
+\newcommand{\False}{\ensuremath{\mathsf{False}}}
+\newcommand{\fn}[2]{\ensuremath{\mathsf{#1(#2)}}}
+\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc(#1)}}}
+\newcommand{\SPred}[1]{\ensuremath{\mathsf{Pred(#1)}}}
+\newcommand{\SPath}[2]{\ensuremath{\mathsf{#1 \mathrel{::} #2}}}
+\newcommand{\SPair}[3]{\ensuremath{\langle x : #1, #2 \rangle}}
+\newcommand{\SOption}[1]{\ensuremath{#1?}}
+\newcommand{\SSetComp}[3]{\ensuremath{\{ #1 \mid #2 \in #3 \}}}
+\newcommand{\Env}{\ensuremath{\mathcal{E}}}
+\newcommand{\yields}{\ensuremath{\rightsquigarrow}}
+\newcommand{\valid}[1]{\ensuremath{\mathit{valid}(#1)}}
+\newcommand{\typ}[1]{\ensuremath{\mathit{#1}}}
+\newcommand{\meta}{\typ{meta}}
+\newcommand{\REP}{\ensuremath{\mathit{REP}}}
+\newcommand{\PD}{\ensuremath{\mathit{PD}}}
+\newcommand{\pd}[1]{\ensuremath{(#1)~\mathit{pd}}}
+\newcommand{\eval}[1]{\ensuremath{\mathsf{eval}(#1)}}
+\[
+\begin{array}{rr@{\;}r@{\;}l}
+\textit{Strings}        & n & \in & \Sigma^{\ast} \\[1ex]
+\textit{Paths}          & r,s & \bnfdef & \PNil \mid \PCons{r}{n_1} \\[1ex]
+\textit{Metadata}       & m  & \bnfdef & \dots\\[1ex]
+\textit{Filesystem}     & T  & \bnfdef & \File{n} \\
+\textit{Contents}       &    & \bnfalt & \Dir{ \Set{n_1,\dots,n_k} }\\
+                        &    & \bnfalt & \Link{r}\\[1ex]
+\textit{Filesystems}    & F & \bnfdef & \Map{ r_1 \mapsto (m_1,T_1), \dots r_k \mapsto (m_k,T_k) }\\[1ex]
+\textit{Specifications} & s & \bnfdef & k \\
+                        &   & \bnfalt & \SAdhoc{b}\\
+                        &   & \bnfalt & \SPred{e}\\
+                        &   & \bnfalt & \SPath{e}{s}\\
+                        &   & \bnfalt & \SPair{x}{s_1}{s_2}\\
+                        &   & \bnfalt & \SOption{s}\\
+                        &   & \bnfalt & \SSetComp{s}{x}{e}\\[1ex]
+\textit{Expressions}    & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
+\textit{Values}         & e & \bnfdef & m \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \\
+                        &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \{ v_1,\dots,v_k \}\\
+\end{array}
+\]
 
-Show calculus syntax and semantic definitions.  I can't decide if this
-is weak and if we should dedicate the space to more important things.
-I suppose we'll see when we write the paper.
+\reminder{Dave: you'll probably want to move the $\REP$ and $\PD$ definitions somewhere else.}
+
+\paragraph*{Constants}
+\[
+\infrule
+{ }
+{ \Env;F;r \models k \yields \fn{Check_k}{F,r} }
+{}
+\]
+\reminder{I assume we'll only have space to describe the
+  $\fn{Check_k}{}$ functions informally, perhaps with one example, so
+  not TeXing them for now.}
+
+\reminder{Using $\bot$ for the representation of ``false'' in
+  $\mathit{valid}$ to distinguish from $\False$.}
+
+\reminder{The second rule below is broken: $m$ is not defined in the
+  case where $r \not\in \dom{F}$.}
+
+\paragraph*{Adhoc}
+\[
+\begin{array}{l}
+\REP = b_\REP\\
+\PD = \pd{b_\PD \times \meta}\\
+\\
+\infrule
+{ F(r) = (m,\File{n}) \qquad 
+  b(E,n) = v,d }
+{ \Env;F;r \models \SAdhoc{b} \yields v,(\valid{d},(d,m)) }
+{ }\\
+\\
+\infrule
+{ \begin{array}{l}
+  r \not\in \dom{F} \text{ or } F(r) = (m,\Dir{\_}) \text{ or } F(r) = (m,\Link{\_}) \\
+  b(E,\epsilon) = (v,d)
+  \end{array} }
+{ \Env;F;r \models \SAdhoc{b} \yields v,(\bot,(d,m)) }
+{}
+\end{array}
+\]
+
+\paragraph*{Predicate}
+\[
+\begin{array}{l}
+\REP = \typ{unit}\\
+\PD = \pd{\typ{unit}}\\
+\\
+\infrule
+{ }
+{ \Env;F;r \models \SPred{e} \yields (),(\eval{(E,F,r,e)},()) }
+{ }
+\end{array}
+\]
+
+\paragraph*{Path}
+\[
+\begin{array}{l}
+\REP = s_\REP\\
+\PD = s_\PD\\
+\\
+\infrule
+{ \Env;F;\eval{E,F,r,\PCons{r}{e}} \models s \yields v,d }
+{ \Env;F;r \models \SPath{e}{s} \yields v,d }
+{ }
+\end{array}
+\]
+
+\paragraph*{Pair}
+\[
+\begin{array}{l}
+\REP = {s_1}_\REP \times {s_2}_\REP\\
+\PD = \pd{{s_1}_\PD \times {s_2}_\PD}\\
+\\
+\infrule
+{ \begin{array}{l}
+  \Env;F;r \models s_1 \yields v_1,d_1 \\
+  \Env[x \mapsto v_1, x_d \mapsto d_1];F;r \models s_2 \yields v_2,d_2 \\
+  v = (v_1,v_2) \qquad d = (d_1,d_2) 
+  \end{array} }
+{ \Env;F;r \models \SPair{x}{s_1}{s_2} \yields v,(\valid{d_1} \wedge \valid{d_2}, d) }
+{ }
+\end{array}
+\]
+
+\paragraph*{Option}
+\[
+\begin{array}{l}
+\REP = s_\REP~\typ{option}\\
+\PD = \pd{s_\PD~\typ{option}}\\
+\\
+\infrule
+{ r \not\in \dom{F} }
+{ \Env;F;r \models \SOption{s} \yields \Nothing,(\bot,\Nothing) }
+{ }\\
+\\
+\infrule
+{ r \in \dom{F} \qquad \Env;F;r \models s \yields v,d }
+{ \Env;F;r \models \SOption{s} \yields \Just{v},(\valid{d},\Just{d}) }
+{ }
+\end{array}
+\]
+
+\reminder{I removed ``DESC'' below. Can it just be $\pi_2~S$?}
+\paragraph*{Comprehension}
+\[
+\begin{array}{l}
+\REP = s_\REP~\typ{list}\\
+\PD = \pd{s_\PD~\typ{list}}\\
+\\
+\infrule
+{ \begin{array}{l}
+  \eval{\Env,F,r,e} = T \\
+  S = \Set{ (v,d) \mid t \in T \text{ and } \Env[x \mapsto t];F;r \models s \yields v,d }
+  \end{array} }
+{ \Env;F;r \models \SSetComp{s}{x}{e} \yields \pi_1~S,(\bigwedge~\valid{\pi_2~S}, \pi_2~S) }
+{ }
+\end{array}
+\]
+
 
 \section{Related Work}
 \label{sec:related}
