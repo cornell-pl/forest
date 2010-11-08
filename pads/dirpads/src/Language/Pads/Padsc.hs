@@ -2,6 +2,8 @@
              ScopedTypeVariables, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
              UndecidableInstances, NamedFieldPuns, RecordWildCards, StandaloneDeriving   #-}
 module Language.Pads.Padsc (
+     {- FIX: Languages.Pads.Source exports "take", which clashes with 
+        the function of the same name in Prelude -} 
      module Language.Pads.Source,
      module Language.Pads.RegExp,
      module Language.Pads.Errors,
