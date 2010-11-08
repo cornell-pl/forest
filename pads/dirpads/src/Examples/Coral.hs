@@ -2,12 +2,13 @@
 
 module Examples.Coral where
 
-import Language.Pads.Padsc
+import Language.Pads.Padsc hiding (take)
 import Language.Forest.Forestc
 import Language.Pads.GenPretty
+import Control.Arrow
 
-import Data.Map (fromListWith, fold, toList)
-import List (sortBy)
+import Data.Map (fromListWith, fold, toList, toDescList)
+import List (sortBy,length,map)
 import System.IO.Unsafe (unsafePerformIO)
 
 comma_ws = RE ",[ \t]*"
@@ -74,22 +75,22 @@ status_re = RE "[0-9]+"
 
   type Entries = [Entry] with term Eor
   
-  type CoralFile = (Entries, Eof)
+  type Coral = (Entries, Eof)
 |]
 
 [forest|
-  type LogDir = Directory 
-    { coral_log is "coralwebsrv.log.gz" :: Gzip (File CoralFile) }
+  type Log = Directory 
+    { websrv is "coralwebsrv.log.gz" :: Gzip (File Coral) }
 
-  type SiteDir = [ d :: LogDir | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] 
+  type Site = [ d :: Log | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] 
 
-  type TopDir = [ s :: SiteDir | s <- matches (RE "[^.].*") ] 
+  type Top = [ s :: Site | s <- matches (RE "[^.].*") ] 
 |]
 
-load_logs () = 
-  let (rep,md) = unsafePerformIO $ topDir_load "/home/nate/coraldata" in 
-  rep
-
+go () = unsafePerformIO $ top_load "/home/nate/coraldata"  
+load_logs () = fst(go ())
+load_md () = snd(go())
+  
 get_stats e = 
   case payload e of 
     In i -> in_stats i
@@ -109,16 +110,16 @@ get_url e =
     In i -> string_of_url (url $ in_req i)
     Out o -> string_of_url (url $ out_req o)
 
-get_entries :: LogDir -> [Entry]
-get_entries (LogDir (CoralFile (Entries es))) = es
+get_entries :: Log -> [Entry]
+get_entries (Log (Coral (Entries es))) = es
 
-get_hosts :: TopDir -> [(String,SiteDir)]
-get_hosts (TopDir p) = p
+get_sites :: Top -> [(String,Site)]
+get_sites (Top p) = p
 
 get_date w = Prelude.take 10 w
 
-get_dates :: SiteDir -> [(String,LogDir)]
-get_dates (SiteDir p) = p
+get_dates :: Site -> [(String,Log)]
+get_dates (Site p) = p
 
 is_in :: Entry -> Bool
 is_in e =
@@ -131,7 +132,7 @@ is_out e = not (is_in e)
 
 -- MAPS --
 lmap f p tdir = 
-   [ f host datetime e | (host,hdir) <- get_hosts tdir,
+   [ f host datetime e | (host,hdir) <- get_sites tdir,
                          (datetime,ldir) <- get_dates hdir,
                           e <- get_entries ldir,
                           p e ]
@@ -150,7 +151,7 @@ count_bins m =
   fromListWith (+) (fold (\ c l -> (c,1):l) [] m)
 
 go_flat p = 
-  sum [ (get_total e) | (host,hdir) <- get_hosts tdir,
+  sum [ (get_total e) | (host,hdir) <- get_sites tdir,
                         (datetime,ldir) <- get_dates hdir,
                         e <- get_entries ldir,
                         p e ]
@@ -164,12 +165,36 @@ in_total = go_flat is_in
 out_total = go_flat is_out
 in_by_host = go_bins by_host is_in
 out_by_host = go_bins by_host is_out 
-in_by_date = go_bins by_host is_in 
-out_by_date = go_bins by_host is_out
+in_by_date = go_bins by_date is_in 
+out_by_date = go_bins by_date is_out
 in_url_bytes = go_bins by_url_bytes is_in
 out_url_bytes = go_bins by_url_bytes is_out
 in_url_counts = go_bins by_url_counts is_in
 out_url_counts = go_bins by_url_counts is_out
 in_counts_urls = count_bins $ go_bins by_url_counts is_in
 out_counts_urls = count_bins $ go_bins by_url_counts is_out
-topk k m = Prelude.take k (sortBy sortDown (toList m))
+-- topk k m = Prelude.take k (sortBy sortDown (toList m))
+
+
+num_sites () = 
+  case load_logs () of Top l -> List.length l
+
+get_site = fst  
+get_mod (_,(f,_)) = mod_time . fileInfo $ f 
+sites_mod () =
+  case go () of 
+    (Top rs, (_,ms)) -> 
+      map (get_site *** get_mod) (zip rs ms)
+
+
+
+descBytes = sortDown
+rep = load_logs ()
+topk k = 
+  take k $ sortBy descBytes $ toList $
+  fromListWith (+)
+    [ (get_url e, get_total e)
+    | (site,sdir) <- get_sites rep,
+      (datetime,ldir) <- get_dates sdir,
+      e <- get_entries ldir,
+      is_in e ]
