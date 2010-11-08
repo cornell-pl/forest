@@ -1,0 +1,848 @@
+\documentclass{sig-alternate}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+\usepackage{epsfig}
+\usepackage{code} 
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{The PADS Project: An Overview}
+\conferenceinfo{ICDE}{2011 Uppsala, Sweden}
+\numberofauthors{1}
+\author{
+\alignauthor
+Kathleen Fisher\\
+  \affaddr{AT\&T Labs Research}\\
+  \email{kfisher@research.att.com}}
+
+
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+  The goal of the \pads{} project, which started in 2001, is to make
+  it easier for data analysts to extract useful information from ad
+  hoc data files.  This paper does not report new results, but rather
+  gives an overview of the project, including the design of \pads{}
+  data description languages, a description of the generated parsing
+  tools and the importance of meta-data, a sketch of the formal
+  semantics, a discussion of useful tools and how can they can be
+  generated automatically from \pads{} descriptions, and an overview
+  of an inferencing system that allows us to learn useful \pads{}
+  descriptions from positive examples of the data format.
+\end{abstract}
+
+\category{D.3.m}{Programming languages}{Miscellaneous}
+
+\terms
+Languages, Algorithms
+
+\keywords
+Data description languages, ad hoc data,  domain-specific languages
+
+
+\section {Why PADS}
+\label{sec:intro}
+
+Traditional databases and \xml{}-based systems provide rich
+infrastructure for managing well-behaved data, but provide little
+support for \textit{ad hoc formats}, which we define to be any
+semi-structured data format for which parsing, querying, analysis, or
+transformation tools are not readily available.  Vast amounts of
+useful data are stored and processed in such ad hoc formats, despite
+the existence of standard formats for semi-structured data.  Examples
+arise from a myriad of domains, including finance, health care,
+transportation, telecommunications, and the sciences ~\cite{fisher+:pads}. 
+
+For a number of reasons, processing ad hoc data is challenging.  Ad
+hoc data typically arrives ``as is'': analysts are lucky to get the
+data at all and have little chance of getting suppliers to standardize
+its format.  Documentation for the format is often incomplete,
+out-of-date, or completely non-existent.  Such data frequently contain
+errors for a variety of reasons, including malfunctioning equipment,
+non-standard representations of missing values, human error in
+entering data \etc{}  Handling such errors is challenging because of
+the variety of errors and because the appropriate response is 
+application-dependent. Some applications need the data to be error
+free and need to halt processing if any errors are detected.  Others
+can simply discard erroneous values, while still others want to study
+the errors in detail.  All of these challenges are exacerbated by the
+fact that ad hoc data sources often have high volume.  For example, 
+the AT\&T's \ningaui{} project accumulates billing data at a rate
+of 250-300GB/day, with occasional spurts of 750GBs/day.
+
+Finally, someone has to write a parser for a new format before anyone
+can use the data. People tend to use \C{}, \perl{}, or \python{} for
+this task.  This approach is tedious and error-prone, complicated by
+the lack of documentation, convoluted encodings designed to save
+space, the need to produce efficient code, and the need to handle
+errors robustly to avoid corrupting down-stream data.  Moreover, the
+parser writers' hard-won understanding of the data ends up embedded in
+parsing code, making long-term maintenance difficult for the original
+writers and sharing the knowledge with others nearly impossible.
+
+The \pads{} project started with the observation that an appropriately
+designed, declarative data-description language could facilitate ad
+hoc data processing and address each of these concerns.  The
+language permits analysts to describe the data \textit{as it is}, not
+how one might want it to be. The descriptions are concise enough to
+serve as documentation and flexible enough to describe most of the
+data formats we have seen in practice, including ASCII, binary, Cobol,
+and mixed data formats.  From these descriptions, a compiler can
+produce data structure declarations for representing the data in the
+host language of the data description language as well as parsing and
+printing routines.  Because the compiler is generating software
+artifacts used to manipulate the data, analysts have to keep the data
+description up to date, ensuring it can serve as living documentation.
+
+The declarative nature of \pads{} descriptions facilitates the
+insertion of error handling code.  The generated parsing code checks
+all possible error cases.  Because these checks appear only in
+generated code, they do not clutter the high-level declarative
+description of the data source.  The result of a parse is a pair
+consisting of a canonical in-memory representation of the data and a
+parse descriptor. The parse descriptor precisely characterizes both
+the syntactic and the semantic errors that occurred during parsing.
+This structure allows analysts to choose how to respond to errors in
+application-specific ways.
+
+Finally, a \pads{} description gives enough information about the
+structure of the data that it is possible to generate automatically a
+wide variety of useful tools customized to the particular format.
+Examples of such tools include statistical analyses, format
+converters, data adaptors to connect to query engines like
+XQuery~\cite{fernandez+:padx}, and visualizers.  Using generic
+programming techniques~\cite{mandelbaum+:pads-ml,fernandez+:padl,Lammel+:syb},
+third party developers can design tools that will work for any \pads{}
+description.
+
+\begin{figure*}[!ht]
+\begin{alltt}
+\begin{small}
+171.64.78.97 - kfisher [31/Oct/2010:23:55:36 -0700] "GET /padsproj.org HTTP/1.1" 200 982
+quantum.com  - - [31/Oct/2010:24:55:36 -0700] "GET /padsproj.org/logo.png HTTP/1.1" 200 2326
+\end{small}
+\end{alltt}
+\vskip -.3in
+\caption{A fragment of data in Apache Common Log Format.}
+\label{fig:clf}
+\end{figure*}
+
+
+This paper does not describe new research, but rather collects and
+summarizes the work done in the \pads{} project. The interested reader
+is invited to read more about individual aspects of the project in the
+original papers.  The project is the work of many people over a long
+period of time; all contributors are listed in the acknowledgements
+section of the paper.
+
+The rest of the paper is organized as follows. \secref{sec:language}
+explains what a \pads{} data description language looks like by
+working through a simple example. \secref{sec:compiler} describes the
+output of a \pads{} compiler.  \secref{sec:formal} describes a formal
+semantics for data description languages, which serves as a
+specification for how \pads{} data description languages should
+behave, regardless of the host language in which they are embedded.
+\secref{sec:tools} describes the kinds of tools we can generate from
+\pads{} descriptions as well as how generic programming makes third-party
+tool generation possible.  \secref{sec:inference} describes how we can
+leverage large quantities of data to learn \pads{} descriptions rather
+than having to write them entirely by hand.  \secref{sec:related} briefly
+reviews related work and \secref{sec:conclusion}
+concludes.
+
+
+
+\section{What you say}
+\label{sec:language}
+
+
+
+In this section, we briefly describe what a \pads{} data description
+language looks like by working through a simple example.
+\figref{fig:clf} gives a small fragment of a web access log in Apache
+Common Log Format~\cite{apacheclf}.  Each time an Apache web server
+receives a request, it writes such an entry to its access log.  The
+first field denotes the IP address or host name of the client making
+the request.  The next two columns denote the identity of the client
+user, the first as determined by the \texttt{identd} function on the
+client machine and the second as determined by HTTP authentication.
+If the information is not available, the server writes a \texttt{-}
+instead. The next field is the time stamp of the request, in brackets.
+It is followed by the request itself in double quotes. The request has
+three pieces: the HTTP method used by the client, the requested url,
+and the version of HTTP used for the transaction.  The format ends
+with two integers, the first of which is the three-digit response code
+sent back to the client and the second is the number of bytes
+returned.  If no bytes were returned, this last number will be a dash
+instead.  
+
+\pads{} uses a type metaphor to describe ad hoc data.  Base types
+describe atomic pieces of data and type constructors describe how to
+build compound descriptions from simpler ones.  Each \pads{} type
+plays two roles: it defines a grammar for parsing the data
+\textit{and} a format-specific data structure in which to store the
+result of the parse.  We have developed versions of \pads{} for
+\C{}~\cite{fisher+:pads} and \ml{}~\cite{mandelbaum+:pads-ml}, both of
+which are available for download on the web with an open-source
+license~\cite{padsweb}. We are currently developing a version for
+\haskell{}, which we will use as the example language in this paper.
+For each language binding, we re-use the types of the host language in
+the data description language.  \pads{} also use predicate expressions
+in the host language to describe semantic properties of the data, such
+as the range of integer values or correlations between data items.
+
+
+\begin{figure}[t]
+\begin{code}
+[pads| 
+  \kw{type} CLF_t = [Line Entry_t]               
+  \kw{data} Entry_t = 
+    \{       host       :: Source_t, 
+      ' ',  identdID   :: ID_t, 
+      ' ',  httpID     :: ID_t, 
+      ' ',  time       :: TimeStamp_t, 
+      ' ',  request    :: Request_t,
+      ' ',  response   :: Response_t,
+      ' ',  contentLen :: ContentLength_t 
+    \}
+  \mbox{}
+  \kw{data} Source_t = IP IP_t | Host Host_t  
+  \mbox{}
+  \kw{data} ID_t = Missing '-' | Id (Pstring ' ')
+  \mbox{}
+  \kw{data} Request_t = 
+    \{ '"',  method  :: Method_t,       
+      ' ',  url     :: Pstring ' ', 
+      ' ',  version :: Version_t, 
+      '"' \}  
+  \mbox{}
+  \kw{data} Version_t  = 
+    \{"HTTP/", major :: Pint, '.', minor :: Pint \}  
+  \mbox{}
+  \kw{data} Method_t = GET | PUT | POST | HEAD
+                 | DELETE | LINK | UNLINK
+  \mbox{}
+  \kw{type} Response_t = \kw{constrain} r :: Pint 
+       \kw{where} <| 100 <= r && r < 600 |> 
+  \mbox{}
+  \kw{data} ContentLength_t = NotAvailable '-' 
+                       | ContentLength Pint 
+|]
+\end{code}
+\vskip -.2in
+\caption{\padshaskell{} description of CLF data.}
+\label{fig:clf-haskell}
+\vskip -.1in
+\end{figure}
+
+
+The \padshaskell{} description in \figref{fig:clf-haskell} describes
+the CLF data format.  We embed \pads{} in \haskell{} using \haskell{}'s
+quasi-quoting mechanism~\cite{Mainland:quasi}.  All of the code
+inside the quasi-quotes \texttt{[pads|...|] }  is \padshaskell{}; the
+identifier \texttt{pads} tells \haskell{} which quasi-quoter to use to
+process the enclosed code.  The code outside of the quasi-quotes is
+regular \haskell{} code; \haskell{} code before the quasi-quotes is in
+scope in the \padshaskell{} code.  At compile time, the \haskell{}
+compiler calls the \pads{} quasi-quoter to convert the \padshaskell{}
+code to plain \haskell{} declarations, which are spliced into the source
+code at the point of the quasi-quotation.  These declarations are then
+in scope for the following \haskell{} code.  This mechanism provides
+for a very smooth embedding of \pads{} in \haskell{}, enabling us to
+completely control the syntax of our data description language while
+still inter-operating with the host language.  
+
+The first line of the description declares the type \texttt{CLF\_t},
+which describes the entirety of an access log.  It says that such a
+log is a list of lines of type \texttt{Entry\_t}.  The next line
+declares the type \texttt{Entry\_t}, which is a record describing a
+single entry in the log.  It says that an entry is a sequence of seven
+fields; each field is given a name and an associated type.  For
+example, the \texttt{host} field has type \texttt{Source\_t}, which is
+also declared in the figure.  In addition to the named field, there
+are literal characters in the record declaration, which correspond to
+literals in the data.  For example, between the \texttt{host} and
+\texttt{identdID} fields, there is a space character (\texttt{' '}).
+
+The declaration for the \texttt{Source\_t} type is an example of a
+datatype: a value of this type is \textit{either} an IP address
+\texttt{IP\_t} or a \texttt{Host\_t}, where \texttt{IP\_t} and
+\texttt{Host\_t} are \pads{} \textit{base types} describing IP
+addresses and host names, respectively.  The branches of a datatype
+are attempted in order; the parser greedily selects the first branch
+that matches.   The labels \texttt{IP} and \texttt{Host} tag the
+parsed value as belonging to the first or second branch, respectively.
+Type \texttt{ID\_t} is another datatype. In this case, the first
+branch corresponds to a data format with the literal \texttt{'-'}. The
+type \texttt{Method\_t} is a datatype where the branch labels
+correspond to the data, and so the argument type to the branch label
+can be omitted.  
+
+Base types describe atomic pieces of data.  Examples include integers
+(\texttt{Pint}) and floats (\texttt{Pfloat}), characters
+(\texttt{Pchar}) and strings (\texttt{Pstring ' '}), IP addresses
+(\texttt{IP\_t}) and host names (\texttt{Host\_t}) , dates
+(\texttt{Date\_t}) and times (\texttt{TimeStamp\_t}), \etc{} The type
+\texttt{Pstring ' '} is an example of a \textit{parameterized type}.
+In general, a string could go on forever.  The parameter specifies
+when the string should stop, in this case, when the parser encounters
+a space.  To account for more general stopping conditions,
+\padshaskell{} provides the base type \texttt{PstringME}, which takes
+a regular expression as a parameter.  This type matches the longest
+string that matches the argument regular expression.
+
+Finally, the type \texttt{Response\_t} is an example of a
+\textit{constrained type}. It specifies that a \texttt{Response\_t} is
+a \texttt{Pint} between 100 and 599, inclusive. In the declaration,
+the variable \texttt{r} is bound to the result of parsing the input as
+a \texttt{Pint}, after which the predicate given in the \texttt{where}
+clause is evaluated. The type matches if the predicate evaluates to
+\texttt{True}.  The brackets \texttt{<|...|>} indicate that
+the enclosed code is pure \haskell{} code.
+
+
+
+\section{What you get}
+\label{sec:compiler}
+From a \pads{} specification, the compiler generates a pair of data
+structures: one for the in-memory representation of the parsed data
+and an isomorphic structure for meta-data such as the number and type
+of errors.  The form of the generated representation
+type corresponds the form of the type in the \pads{} description: \pads{}
+lists map to \haskell{} lists, records to records, and data types to
+data types. Constrained types map to the representation of the
+underlying type.  \figref{fig:haskell-rep} gives a selection of the
+representation types generated for the CLF description.
+\begin{figure}
+\begin{code}
+\kw{newtype} CLF_t = CLF_t [Entry_t]
+\kw{data} Entry_t = Entry_t  
+         \{host       :: Source_t,
+          identdID   :: ID_t,
+          httpID     :: ID_t,
+          time       :: TimeStamp_t,
+          request    :: Request_t,
+          response   :: Response_t,
+          contentLen :: ContentLength_t\}
+\kw{data} Source_t = IP IP_t | Host Host_t
+\kw{data} ID_t = Missing | Id Pstring
+ ...
+\kw{newtype} Response_t = Response_t Pint
+\end{code}
+\vskip -.2in
+\caption{Generated representation types.}
+\label{fig:haskell-rep}
+\end{figure}
+
+The meta-data types, shown in 
+\figref{fig:haskell-md}, have a similar structure.
+These declarations make use of the type
+\texttt{Base\_md} to describe the number and type of errors detected
+during parsing: 
+\begin{code}
+\kw{data} Base_md = Base_md 
+        \{ numErrors :: Int,
+          errInfo   :: Maybe ErrInfo \}
+\kw{data} ErrInfo = ErrInfo 
+       \{ msg      :: ErrMsg,
+         position :: Maybe Position \}
+\end{code}
+
+
+\begin{figure}[ht!]
+\begin{code}
+\kw{type} CLF_t_md   = (Base_md, [Entry_t_md]),
+\kw{type} Entry_t_md = (Base_md,  Entry_t_inner_md),
+\kw{data} Entry_t_inner_md = Entry_t_inner_md 
+         \{host_md       :: Source_t_md,
+          identdID_md   :: ID_t_md,
+          httpID_md     :: ID_t_md,
+          time_md       :: TimeStamp_t_md,
+          request_md    :: Request_t_md,
+          response_md   :: Response_t_md,
+          contentLen_md :: ContentLength_t_md\}
+\kw{type} Source_t_md = (Base_md, Source_t_inner_md)
+\kw{data} Source_t_inner_md
+       = IP_md IP_t_md | Host_md Host_t_md
+\kw{data} ID_t = Missing | Id Pstring
+\kw{data} ID_t_inner_md
+       = Missing_md Base_md 
+       | Id_md (Base_md, Base_md)
+  ...
+\kw{newtype} Response_t = Response_t Pint
+\end{code}
+\vskip -.2in
+\label{fig:haskell-md}
+\caption{Generated meta-data types.}
+\end{figure}
+
+Each generated meta-data type pairs a generic \texttt{Base\_md} with a
+type-specific meta-data structure.  The \texttt{Base\_md} type
+summarizes the errors that occurred within the corresponding
+structure while the type-specific meta-data localizes error
+information.  This structure allows analysts to handle errors in
+application-specific ways.  By checking the top-level
+\texttt{Base\_md} value, analysts can determine whether there were
+any errors during parsing. If the error count is zero, they know 
+the data parsed without any errors and all the semantic predicates
+held.  If the error count is non-zero, they can walk down the
+meta-data structure to determine precisely where the errors occurred
+and what caused them, allowing the analysts to decide whether to discard,
+repair, or study the errors. This design also means that the
+representation is not cluttered with option types indicating that each
+value could be absent because of an error during parsing.  If an error
+occurs while parsing a base type, the compiler fills in an appropriate
+default value and marks the meta-data accordingly.
+
+
+Finally, the compiler generates a function that parses
+an input file into a pair of a representation and a meta-data
+structure.  In \haskell{} terms, each generated representation (\texttt{rep}),
+meta-data (\texttt{md}) pair belongs to the \texttt{Pads} type class and provide
+a definition for the \texttt{parseFile} method:
+\begin{code}
+parseFile :: Pads rep md => 
+             FilePath -> IO (rep, md)
+\end{code}
+The return type \texttt{IO(rep,md)} indicates that the function
+produces a value of type \texttt{(rep,md)} while causing side-effects
+such as opening and closing file handles.  A particular instance of
+this function parses values for the type \texttt{CLF\_t}:
+\begin{code}
+parseFile :: FilePath -> IO (CLF_t, CLF_t_md)
+\end{code}
+The generated parser is a simple recursive-descent parser.  This
+parsing strategy makes it easy for values early in the parse to affect
+down-stream choices, for example, to read an integer that determines
+the length of an upcoming list or a tag that predicts what form the
+body of a record will take.  While generally satisfactory, recursive
+descent parsers can require exponential time (if there is a lot of
+backtracking).  Developing always-efficient parsers suitable for
+\pads{}-like applications is an open research question~\cite{Jim+:yakker}.
+
+Although not yet implemented in \padshaskell{}, \padsc{} and
+\padsml{} both also generate a pretty printing function that takes a
+pair of a representation and meta-data structure and serializes the
+representation to a file.  In Haskell, this function will have the
+signature:
+\begin{code}
+printFile :: Pads rep md => 
+             (rep, md) -> FilePath -> IO ()
+\end{code}
+
+
+
+\section{What it means}
+\label{sec:formal}
+The close correspondence between \pads{} descriptions and the type
+structure of the host language makes the meaning of \pads{}
+descriptions relatively intuitive, but it does not suffice to
+precisely define their semantics.  To address this deficiency, we
+developed a formal calculus, called \ddca{}, based on dependent type
+theory~\cite{Fisher+:ddca}.  
+
+We defined a denotational semantics for \ddca{} that interprets
+each term in multiple ways.  In the first interpretation, each \ddca{}
+term $\tau$ is mapped to a type that we call its ``representation''
+type, $\tau_{rep}$.  This type is the data structure that stores the
+host-language representation of the parsed value.  In the second
+interpretation, each \ddca{} term $\tau$ is mapped to a type that we
+call its ``meta-data'' type, $\tau_{md}$.  This type is the data
+structure that stores the host-language representation of the
+meta-data generated during parsing.  In the third interpretation, each
+\ddca{} term $\tau$ is mapped to a parsing function.  This parsing
+function takes as input a string to be parsed and returns a pair with
+type $(\tau_{rep}, \tau_{md})$.
+
+We precisely characterized the \textit{canonical} relationship between a
+representation value and a meta-data value for the two to be
+meaningfully paired.  This canonical relation enforces the property
+that the meta-data structure captures the errors in the
+representation.  We then showed that for every \ddca{} term $\tau$,
+the generated parser returns a representation and a meta-data value
+that are related via the canonical relation, guaranteeing that the
+meta-data structure returned by the parser precisely captures the
+errors detected during parsing. 
+
+We then showed how to translate \pads{} declarations into terms of
+\ddca{} to document precisely the semantics of those declarations.
+This process allowed us to find several bugs in the \padsc{}
+implementation and guided the design of \padsml{} and \padshaskell{}. 
+The \ddca{} calculus is general enough that it also allowed us to
+define formal semantics for other data description languages,
+including \packettypes{}~\cite{sigcomm00} and
+\datascript{}~\cite{gpce02}. 
+
+We eventually extended \ddca{} to add a fourth semantic function,
+corresponding to a printing function.  We explored under what
+conditions parsing followed by printing or printing followed by
+parsing is the identity function~\cite{fisher+:ddc-printing}.  This
+question is non-trivial because various parsing functions throw away
+information from the input, such as the number of white space
+characters between two values.  This loss makes it impossible to
+precisely regenerate the output.  Of course, it is possible to change
+the parser to always keep enough information to allow faithful
+printing, but it is unclear whether the practical price is worth the theoretical
+gain.
+
+
+
+\section{What else you get}
+\label{sec:tools}
+A key insight behind the \pads{} project is that once someone has
+written a description, it is possible to generate a wide variety of
+additional tools besides a parser and a printer because the description
+tells the computer a lot about the data.  Each version of \pads{}
+provides a number of such tools, some of which are described below.
+
+
+\paragraph{Accumulator} With large data sets, it can be difficult to get a
+  ``bird's eye'' view of the data, which requires developing a sense
+  of what the data ``usually'' looks like, what fields have a lot of
+  variation, what the representations for missing values are, \etc.
+  The accumulator tool is designed to help with this problem.  To use
+  it, analysts insert each parsed record and its associated meta-data
+  into an accumulator, which aggregates the values for each part of
+  the structure point-wise.  When all the relevant data has been
+  processed, the accumulator reports a number of statistics for each
+  component of the structure.  For base types, the accumulator reports
+  information relevant to that type.  For example, for integers, the
+  tools reports the minimum, maximum, and average values, as well as a
+  histogram of the most commonly seen values, precisely tracking all
+  values up to a customizable limit.  For strings, the accumulator
+  reports the observed lengths of the strings and a histogram of
+  observed values.  For structured types, the accumulator tool reports
+  summaries of the components of the types.  For lists, it reports the
+  various lengths of the list observed in the input.  For datatypes,
+  it reports the relative frequencies of the various branches.  
+
+A common use of the accumulator tool is in writing \pads{}
+descriptions.  It is typical to write an initial description that
+covers a representative sample of the data source, using string base
+types to specify poorly-understood portions of the data.  From this
+description, the analyst generates and runs the accumulator tool,
+which reports both the records in the input that do not match the
+description and distributions on the place-holder strings.  Both
+pieces of information allow the analyst to refine the description and
+iterate.  This process helps in developing descriptions where the data
+file is large and has variation throughout the file, making it
+impossible for human beings to see all the variation without automated
+assistance. 
+
+A demo of a \pads{}  accumulator is available from the
+website \url{http://www.padsproj.org/learning-demo.cgi}.
+
+\paragraph{XML Converter} \pads{} descriptions typically describe
+semi-structured data, which makes it natural to represent the same
+information in XML.  Because XML is a standard representation for
+semi-structured data, there are many tools available to manage XML
+data.  To leverage this infrastructure, we developed a tool to convert
+any \pads{} description into a corresponding, format-specific XML
+Schema and any data matching the \pads{} description into XML that
+matches the generated Schema. The \pads{} website has a demo of
+this tool. 
+
+\paragraph{Relational Converter} Although not all \pads{} descriptions
+describe essentially relational data, some do, and for such
+descriptions, it can be useful to convert the raw data into a
+``cleaned-up'' form suitable for loading into a relational database.
+The common log format we saw in \secref{sec:language} is an example of
+such a data source.  Its raw form is difficult to include via a
+typical database import function because of the extraneous
+punctuation, but conceptually it is a simple table.  The \pads{}
+relational converter tool maps the raw data into a delimited column
+form, where the user can specify the delimiter.  We have used this
+tool at AT\&T to import data into the Daytona database system. 
+The \pads{} website has a demo of this tool. 
+
+\paragraph{XQuery Integration}
+An obviously useful tool for ad hoc data sources is the ability to
+query the data.  Inventing an entirely new query language for what is
+essentially semi-structured data seemed like reinventing the wheel.
+Instead, we decided to develop a tool that would allow analysts to
+query any data source with a \pads{} description using
+\xquery{}~\cite{xquery}.  An obvious approach to this integration
+would be to use the XML converter to translate the original data into
+XML and then run an XQuery implementation on the resulting document.
+However, the large amount of extra space required to represent the
+data in XML, typically a factor of eight, led to unacceptable
+performance with this approach.  Instead, we were able to leverage the
+abstract data model provided by the Galax~\cite{galax} implementation
+of \xquery{} to enable Galax to query \pads{} data directly.  The
+original implementation of this tool~\cite{fernandez+:padx} only
+allowed query results to be returned in XML, but a subsequent extension
+allowed results to be mapped back into the original
+form~\cite{fernandez+:padl}. 
+
+\paragraph{Harmony integration}
+The Harmony synchronization framework~\cite{harmony-web} allows
+two replicas of a document to be synchronized with each other.
+Internally, Harmony works on unordered trees.  Synchronizing
+particular data formats requires writing viewers to map between the
+on-disk representation and Harmony's tree model.  To avoid having to
+write such viewers by hand, we wrote a tool to automatically convert
+any data with a \pads{} description into the required format and
+back. 
+
+\subsection{Implementing tools}
+The best way to implement these description-specific tools has been
+the subject of on-going research.  In the original implementation of
+\pads{}, the compiler generated these tools.  This approach gives a
+lot of flexibility and is fairly straightforward to implement, but it
+means that only compiler writers can add new tools, a significant
+limitation.  To address this problem, the \padsml{} compiler generates
+generic ``traversal functions''~\cite{mandelbaum+:pads-ml,fernandez+:padl} 
+in addition to the standard type declarations and parsing functions.
+Using this infrastructure, third-party developers can write tools
+without having to change the compiler.  This approach is sufficiently
+expressive that all of the tools described above can be implemented
+using these generic functions.  The host language for \padsml,
+\ocaml{}, does not provide direct support for generic programming.
+Instead, it requires fancy encodings leveraging \ocaml{}'s powerful
+module system.  The result is a system that is expressive enough to
+accomplish the desired tasks, but can be difficult to understand.  One
+of the motivations for building a version of \pads{} in \haskell{} is
+that \haskell{} does provide a lot of support for generic
+programming~\cite{Wadler+:typeclass,Lammel+:syb}.  We anticipate that
+writing third party tools in the \padshaskell{} framework will be
+significantly easier.
+
+\section{Something for free}
+\label{sec:inference}
+The time and expertise required to write a \pads{} description from
+scratch can be a significant impediment to using the system.
+Depending on the complexity of a data source, it can take hours to
+days to produce a comprehensive \pads{} description.  To shorten this
+process, we have developed a system that automatically infers a
+\pads{} description from multiple positive examples of the data
+format~\cite{Fisher+:dirttoshovels}.  This learning process can be
+connected to the \pads{} tool infrastructure to automatically produce
+tools to generate accumulator reports or XML representations of ad hoc
+data sources without any human intervention.  A demo of this
+capability is available on the web
+\url{http://www.padsproj.org/learning-demo.cgi}. 
+
+The inference system works in a series of stages.  In the first stage,
+the input data is broken into a series of chunks, each a positive
+instance of the data format to be learned.  We require the user to
+tell us how to do this division.  Typical examples include breaking a
+file on newline boundaries or treating each file in a collection of
+files as an instance.  It may be possible to infer how to do this
+chunking automatically, but that is a difficult research question and
+in all the examples we have considered so far, it is trivial for the
+user to determine this information. 
+
+In the second stage, we convert each chunk into a sequence of tokens,
+where the collection of possible tokens is specified using regular
+expressions.  By default, the system provides tokens for integers,
+floats, various kinds of strings, white space, and punctuation.  It
+also provides domain-specific tokens for systems-like data, such as IP
+addresses, MAC addresses, email addresses, dates, and times.  The
+intuition is that this collection should include atomic pieces of data
+that a human would glance at and know what it means with 100\%
+confidence.   The system is parameterized so users can provide their
+own set of regular expressions. 
+
+In the third stage, the system computes a histogram for each token,
+counting the number of records in which the token appear zero times,
+one time, two times, \etc.  Tokens with similar histograms are
+clustered, based on a similarity metric.  The cluster that ``best
+describes'' the data is selected, using a heuristic that rewards high
+coverage, meaning the cluster appears in almost every record, and
+narrowness, meaning that the tokens in the cluster appear with the
+same frequency in almost all records.  For example, if every record
+had exactly one comma and two quotation characters, then the comma and
+two quotation tokens would be clustered and that cluster would be
+selected.  The system next partitions the input based on the selected
+cluster, with one partition for each observed order for the cluster
+tokens and an extra partition for the records that do not contain all
+the tokens in the cluster.  This collection of partitions will
+correspond to a datatype in the eventual description, with one branch
+for each non-empty partition.  (In the case where there is only one
+partition, this datatype is omitted from the inferred description.)
+Within a partition, all records have all the tokens in the cluster in
+the same order.  Each such partition will correspond to a record type
+declaration in the generated description. This record type contains
+each of the tokens in the appropriate order.  To infer the description
+for the data between these tokens, the system divides each input
+record into the tokens before the first cluster token, between the
+first and second cluster token, \etc{} Each of these groups is then
+recursively analysed to produce a description that is slotted into the
+top-level record declaration.
+
+In the fourth stage, we use an information-theoretic measure called
+the Minimum Description Length (MDL)~\cite{mdlbook} to score the
+description.  This measure counts the complexity of the description
+and the complexity of the data \textit{given the description},
+penalizing both simplistic descriptions (like \texttt{String}) that
+cover the data without adding any information as well as overly
+complex descriptions, such as the description that specifies each
+character in order.  We then apply a number of rewriting rules that
+reduce the MDL score of the description.  When no more rewriting rules
+apply, we output the resulting description.
+
+\subsection{Learning tokenizations}
+The learning algorithm is very sensitive to how the input is
+tokenized.  For certain basic types, like filepaths, the regular
+expression that defines legal file paths is very general.  Almost
+every string of characters is a file path, but that does not mean it
+is \textit{likely} that every string of characters is a file path.  It
+is fairly easy for human beings to look at a data set and identify the
+filepaths.  We explored whether machine-learning techniques could help
+us develop a tokenizer that could capture this
+tokenizer~\cite{Xi+:padl}. The result of this study was that the
+learning system required a lot of data and the inference process was
+slower, but the quality of the inferred descriptions improved.
+
+\subsection{Incremental Inference}
+The original inferencing algorithm produces a description from just
+the input data.  This design means it is not possible to use inference
+to improve an existing description.  To address this weakness, we
+are in the process of developing an incremental version of the
+learning system~\cite{Zhu+:wasl}.  In this version, the learning system optionally
+takes an existing description as input in addition to the data.
+The output of the system is a new description that covers all the new
+data while diverging from the original description as little as
+possible.  
+
+This architecture allows us to scale to larger data sets by
+iterating the inference process.  We can either start with a supplied
+description or use the original learning algorithm to produce a
+description from a subset of the supplied data.  We then divide the
+remaining data into groups of appropriate size and iteratively apply
+the incremental algorithm to these groups, eventually returning a
+description that covers the entirety of the original data set.
+We are in the process of evaluating the effectiveness of this approach
+and how well it scales.
+
+\subsection{Putting humans in the loop}
+Even if format inference were perfect, we would still need human
+involvement to produce the best descriptions.  At the very least, it
+is not possible for the computer to infer meaningful labels for fields
+in records.  For example, the computer cannot tell if a given IP
+address a source or a destination.  In the end, it is likely that the
+best system for inferring descriptions will use a combination of
+machine learning techniques and a high-power user interface that lets
+humans explore the data and edit descriptions effectively.
+
+Before starting the learning project, we developed
+\launchpads{}~\cite{planx06:launchpads}, a tool with a graphical user
+interface to help human beings write descriptions.  The tool 
+presents users with sample input and provided a tool palette for
+introducing structure such as lists, datatypes, and records.  An
+integration of a tool like \launchpads{} and the incremental
+inferencing algorithm is likely the best approach to producing
+high-quality descriptions quickly.
+   
+
+\section{What others have done}
+\label{sec:related}
+There is a vast literature on parsing, so here we only briefly review
+related work on data description languages.  Our paper defining the
+semantics of \pads{} contains a detailed discussion of a large body of
+related work~\cite{Fisher+:ddca}.  The interested reader is invited to
+consult that paper for a more detailed discussion.  In addition, each
+of the \pads{} papers mentioned here discusses the relevant related
+work.  For more information on particular aspects of the \pads{}
+project, consult the relevant paper.
+
+There are many data description languages for designing data formats,
+including ASN.1~\cite{asn} and ASDL~\cite{ASDL}.  These declarative
+languages allow programmers to describe the \textit{logical representation} of
+data and then automatically generate a \textit{physical
+  representation} and functions to map between the two representations.
+Although useful for many purposes, such tools are of little use when
+the physical representation is already fixed, which is the domain that
+\pads{} targets.
+
+Traditional parsing systems such as \textsc{YACC} generate parsers from
+declarative specifications; however, they are not particularly well
+suited for writing data descriptions.  In particular, such systems
+generally require users to write a separate lexer and construct
+in-memory data structures by hand.  They typically only work on ASCII
+data and do not allow data-dependent parsing.
+
+\erlang{}'s bit syntax~\cite{erlang}, \packettypes{}~\cite{sigcomm00},
+and \datascript{}~\cite{gpce02} are the most closely related work to
+the \pads{} project.  Each of these systems allow declarative
+descriptions of physical data, motivated respectively by the goals of
+parsing protocols, \textsc{TCP/IP} packets, and \java{} jar-files.  As
+with \pads{}, these languages all use a type-directed approach to
+describing physical data formats and permit the user to specify
+semantic constraints in a host language.  These systems differ from
+\pads{} in focusing only on binary data and assuming that the data is
+error free, halting if an error is detected.  In addition, these
+systems focus on the parsing problem, rather than also providing a
+body of auxiliary tools.  None of these systems attempt to infer
+descriptions from raw data. 
+
+
+
+\section{Where we go from here}
+\label{sec:conclusion}
+Various problems remain open.  
+Developing new tools is still difficult.  We anticipate that working
+in the context of \haskell{}, which has an active research community
+in generic and type-directed programming, will help in this area.  
+Format inferencing is reasonably successful, but we believe the
+inferencing process can be further improved by incorporating more
+advanced machine-learning techniques and by including the user in
+strategic decisions.  Finally, to get widespread adoption of the
+technology, it is likely necessary to integrate a version of \pads{}
+more tightly into standard tools for manipulating data. 
+
+  
+
+\section*{Acknowledgments}
+The \pads{} project has been a collaboration involving a large number of
+people from a variety of institutions, including:
+Andy Adams-Moran,
+David Burke,
+Mark Daly,
+Zach DeVito,
+Pamela Dragosh,
+Mary Fern\'andez,
+Andrew Forrest,
+J. Nathan Foster,
+Artem Gleyzer,
+Joel Gottlieb,
+Michael Greenberg,
+Robert Gruber,
+Vikas Kedia,
+John Launchbury,
+Yitzhak Mandelbaum,
+Ricardo Medel,
+Frances Spalding,
+David Walker,
+Peter White,
+Qian Xi,
+Xuan Zheng, and
+Kenny Q. Zhu.
+
+Portions of this material are based upon work 
+supported under NSF grants CCF-1016937,  0238328,  0612147, and 0615062 and
+supported by DARPA under grant FA8750-07-C-0014.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of the NSF.
+
+%\newpage
+
+%\bibliographystyle{plainnat}
+\bibliographystyle{abbrv}
+\bibliography{pads}
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+
