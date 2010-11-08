@@ -11,11 +11,8 @@ import qualified Data.ByteString.Lazy.Char8 as B
 
 [pads| type IP_t = (Pint, '.', Pint, '.', Pint, '.', Pint)
        type Host_t = Pstring ' '
-       data Source_t = IP IP_t | Host Host_t  
 
        type IPList_t = [IP_t]
-
-       data ID_t = Missing '-' | Id (Pstring ' ')
 
        data Month_t = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec  
 
@@ -42,22 +39,26 @@ checkVersion method version =
     UNLINK -> major version == 1 && minor version == 0
     _ -> True
 
-[pads| type Request_t = { '"',  method  :: Method_t,       
-                          ' ',  url     :: Pstring ' ', 
-                          ' ',  version :: Version_t  where <| checkVersion method version |>, 
-                          '"'
-                        }  
-       type Response_t = constrain r :: Pint where <| 100 <= r && r < 600 |> 
-       data ContentLength_t = NotAvailable '-' | ContentLength Pint 
-       data Entry_t = {      host       :: Source_t, 
-                       ' ',  remoteID   :: ID_t, 
-                       ' ',  authID     :: ID_t, 
-                       ' ',  time       :: TimeStamp_t, 
-                       ' ',  request    :: Request_t,
-                       ' ',  response   :: Response_t,
-                       ' ',  contentLen :: ContentLength_t }
-       type EntryL_t = Line Entry_t
-       type AI_t = [EntryL_t]                                        |]
+[pads| 
+  data Source_t = IP IP_t | Host Host_t  
+  data ID_t = Missing '-' | Id (Pstring ' ')
+  type Request_t = { '"',  method  :: Method_t,       
+                     ' ',  url     :: Pstring ' ', 
+                     ' ',  version :: Version_t  where <| checkVersion method version |>,  '"'
+                    }  
+  type Response_t = constrain r :: Pint where <| 100 <= r && r < 600 |> 
+  data ContentLength_t = NotAvailable '-' | ContentLength Pint 
+  data Entry_t = {      host       :: Source_t, 
+                  ' ',  identdID   :: ID_t, 
+                  ' ',  httpID     :: ID_t, 
+                  ' ',  time       :: TimeStamp_t, 
+                  ' ',  request    :: Request_t,
+                  ' ',  response   :: Response_t,
+                  ' ',  contentLen :: ContentLength_t }
+  type AI_t     = [Line Entry_t]   
+--  type EntryL_t = Line Entry_t
+
+|]
 
 mkPrettyInstance ''AI_t
 mkPrettyInstance ''AI_t_md

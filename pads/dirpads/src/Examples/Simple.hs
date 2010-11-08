@@ -1,11 +1,11 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- To do:
-   TOOL: shell tools
-   TOOL: given file path, predicate on FMDs, depth limit, produce forest description
-   TOOL: given a (rep,md), produce a dot graph (colored according to metadata)
    TOOL: lookup :: (Data a) => String -> Maybe a  (where a = String_t)
-   TOOL: check permissions
+   computed fields: can I put a list of fileNames in the rep of a Directory or not?
+        type AnyDir = Directory
+          { names = [ n :: String | n <- matches (GL "*"),
+          ... }
    performance tuning
    library for manipulating times and permissions
       add `isCompatabile` comparator for FileModes
@@ -23,6 +23,10 @@
    BUG: Maybe followed by a regular expression: see Students4.hs Grades
    literate haskell
 
+   DONE TOOL: check permissions
+   DONE TOOL: shell tools
+   DONE TOOL: given file path, predicate on FMDs, depth limit, produce forest description
+   DONE TOOL: given a (rep,md), produce a dot graph (colored according to metadata)
    DONE add [] form for directory;    remove Directory keyword
    FIXED BUG: error squasing in maybes doesn't work; move path check to inside loadTy function to fix.
    DONE implement this form for typedefs in forest
