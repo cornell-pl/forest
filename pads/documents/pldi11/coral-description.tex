@@ -1,20 +1,18 @@
 \begin{code}
 [pads|
-  type Coral = ...
+  type WebSrv = ...
 |]
 \mbox{}
-time = RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}"
+websrv = "coralwebsrv.log.gz"
+time = RE "[0-9]\{4\}(_[0-9]\{2\})\{2\}-[0-9]\{2\}_[0-2]\{2\}"
 site = RE "[^.].*"
 \mbox{}
 [forest|
   type Log = Directory 
-    \{ log is "coralwebsrv.log.gz" 
-          :: Gzip (File Coral) \}
+    \{ log is websrv :: Gzip (File WebSrv) \}
 
-  type Site = 
-    Map [d :: Log | d <- matches time]
+  type Site = [ d :: LogDir | d <- matches time ]
 
-  type Top = Directory
-    Map [s :: Site | s <- matches site]
+  type Top = [ s :: Site | s <- matches site ]
 |]
 \end{code}
