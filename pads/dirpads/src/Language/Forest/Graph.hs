@@ -15,7 +15,7 @@ type EdgeLabel = ()
 
 defaultGraphVizParams :: GraphvizParams NodeTy EdgeLabel () NodeTy = Params
   { isDirected = True
-  , globalAttributes = [GraphAttrs [Ordering "out"]]
+  , globalAttributes = [GraphAttrs [Ordering "out", RankDir FromLeft]]
   , clusterBy = N
   , clusterID = const Nothing
   , fmtCluster = const []
@@ -29,18 +29,22 @@ displayNodes (n,fmd) =
       full = fullpath fInfo
       name = takeFileName full
       shape = case kind fInfo of 
-               BinaryK  -> [Shape Parallelogram]
-               AsciiK   -> [Shape BoxShape]
+               DirectoryK -> [Shape BoxShape]
+               BinaryK  -> [PenWidth 2.0]
+               AsciiK   -> []
                otherwise -> []
+      symLink = if isSymLink fInfo
+                 then [Style [SItem Dashed []]]
+                 else []
       color = if numErrors fmd > 0
                 then [Color[myred]]
                 else []
-  in [FontName "Courier", mkLabel name] ++ color ++ shape
+  in [FontName "Courier", mkLabel name] ++ color ++ shape ++ symLink
 
 
-mdToPDF md filePath = mdToPDFWtihParams defaultGraphVizParams md filePath 
+mdToPDF md filePath = mdToPDFWithParams defaultGraphVizParams md filePath 
 
-mdToPDFWtihParams params md filePath = let 
+mdToPDFWithParams params md filePath = let 
   dg = toDotGraphWithParams params md
   in runGraphviz dg Pdf filePath
 
