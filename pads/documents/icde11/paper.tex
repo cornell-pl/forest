@@ -12,7 +12,7 @@
 
 \begin{document}
 \title{The PADS Project: An Overview}
-\conferenceinfo{ICDE}{2011 Uppsala, Sweden}
+\conferenceinfo{ICDT}{2011 Uppsala, Sweden}
 \numberofauthors{2}
 \author{
 \alignauthor
@@ -38,11 +38,11 @@ the gap between the unmanaged world of ad hoc data and
 the managed world of typed programming languages and
 databases.
   In particular, the paper reviews the design of \pads{}
-  data description languages, the generated parsing
-  tools and the importance of meta-data.  It also gives a sketch of the formal
-  semantics, a discussion of useful tools and how can they can be
-  generated automatically from \pads{} descriptions, and an overview
-  of an inferencing system that allows us to learn useful \pads{}
+  data description languages, describes the generated parsing
+  tools and discusses the importance of meta-data.  It also sketches the formal
+  semantics, discusses useful tools and how can they can be
+  generated automatically from \pads{} descriptions, and describes
+  an inferencing system that can learn useful \pads{}
   descriptions from positive examples of the data format.
 \end{abstract}
 
@@ -77,12 +77,12 @@ errors for a variety of reasons, including malfunctioning equipment,
 non-standard representations of missing values, human error in
 entering data \etc{}  Handling such errors is challenging because of
 the variety of errors and because the appropriate response is 
-application-dependent. Some applications need the data to be error
+application-dependent. Some applications require the data to be error
 free and need to halt processing if any errors are detected.  Others
 can simply discard erroneous values, while still others want to study
 the errors in detail.  All of these challenges are exacerbated by the
 fact that ad hoc data sources often have high volume.  For example, 
-the AT\&T's \ningaui{} project accumulates billing data at a rate
+AT\&T's \ningaui{} project accumulates billing data at a rate
 of 250-300GB/day, with occasional spurts of 750GBs/day.
 
 Finally, someone has to write a parser for a new format before anyone
@@ -113,6 +113,18 @@ printing routines.  Because the compiler is generating software
 artifacts used to manipulate the data, analysts have to keep the data
 description up to date, ensuring it can serve as living documentation.
 
+\begin{figure*}[!ht]
+\begin{alltt}
+\begin{small}
+171.64.78.97 - kfisher [31/Oct/2010:23:55:36 -0700] "GET /padsproj.org HTTP/1.1" 200 982
+quantum.com  - - [31/Oct/2010:24:55:36 -0700] "GET /padsproj.org/logo.png HTTP/1.1" 200 2326
+\end{small}
+\end{alltt}
+\vskip -.3in
+\caption{A fragment of data in Apache Common Log Format.}
+\label{fig:clf}
+\end{figure*}
+
 The declarative nature of \pads{} descriptions facilitates the
 insertion of error handling code.  The generated parsing code checks
 all possible error cases.  Because these checks appear only in
@@ -130,21 +142,10 @@ wide variety of useful tools customized to the particular format.
 Examples of such tools include statistical analyses, format
 converters, data adaptors to connect to query engines like
 XQuery~\cite{fernandez+:padx}, and visualizers.  Using generic
-programming techniques~\cite{mandelbaum+:pads-ml,fernandez+:padl,Lammel+:syb},
+programming techniques~\cite{fernandez+:padl,Lammel+:syb,mandelbaum+:pads-ml},
 third party developers can design tools that will work for any \pads{}
 description.
 
-\begin{figure*}[!ht]
-\begin{alltt}
-\begin{small}
-171.64.78.97 - kfisher [31/Oct/2010:23:55:36 -0700] "GET /padsproj.org HTTP/1.1" 200 982
-quantum.com  - - [31/Oct/2010:24:55:36 -0700] "GET /padsproj.org/logo.png HTTP/1.1" 200 2326
-\end{small}
-\end{alltt}
-\vskip -.3in
-\caption{A fragment of data in Apache Common Log Format.}
-\label{fig:clf}
-\end{figure*}
 
 
 This paper does not describe new research, but rather collects and
@@ -239,7 +240,7 @@ as the range of integer values or correlations between data items.
     \{"HTTP/", major :: Pint, '.', minor :: Pint \}  
   \mbox{}
   \kw{data} Method_t = GET | PUT | POST | HEAD
-                 | DELETE | LINK | UNLINK
+                | DELETE | LINK | UNLINK
   \mbox{}
   \kw{type} Response_t = \kw{constrain} r :: Pint 
        \kw{where} <| 100 <= r && r < 600 |> 
@@ -281,7 +282,7 @@ declares the type \texttt{Entry\_t}, which is a record describing a
 single entry in the log.  It says that an entry is a sequence of seven
 fields; each field is given a name and an associated type.  For
 example, the \texttt{host} field has type \texttt{Source\_t}, which is
-also declared in the figure.  In addition to the named field, there
+also declared in the figure.  In addition to the named fields, there
 are literal characters in the record declaration, which correspond to
 literals in the data.  For example, between the \texttt{host} and
 \texttt{identdID} fields, there is a space character (\texttt{' '}).
@@ -357,21 +358,6 @@ representation types generated for the CLF description.
 \label{fig:haskell-rep}
 \end{figure}
 
-The meta-data types, shown in 
-\figref{fig:haskell-md}, have a similar structure.
-These declarations make use of the type
-\texttt{Base\_md} to describe the number and type of errors detected
-during parsing: 
-\begin{code}
-\kw{data} Base_md = Base_md 
-        \{ numErrors :: Int,
-          errInfo   :: Maybe ErrInfo \}
-\kw{data} ErrInfo = ErrInfo 
-       \{ msg      :: ErrMsg,
-         position :: Maybe Position \}
-\end{code}
-
-
 \begin{figure}[ht!]
 \begin{code}
 \kw{type} CLF_t_md   = (Base_md, [Entry_t_md]),
@@ -399,6 +385,23 @@ during parsing:
 \caption{Generated meta-data types.}
 \end{figure}
 
+
+The meta-data types, shown in 
+\figref{fig:haskell-md}, have a similar structure.
+These declarations make use of the type
+\texttt{Base\_md} to describe the number and type of errors detected
+during parsing: 
+\begin{code}
+\kw{data} Base_md = Base_md 
+        \{ numErrors :: Int,
+          errInfo   :: Maybe ErrInfo \}
+\kw{data} ErrInfo = ErrInfo 
+       \{ msg      :: ErrMsg,
+         position :: Maybe Position \}
+\end{code}
+
+
+
 Each generated meta-data type pairs a generic \texttt{Base\_md} with a
 type-specific meta-data structure.  The \texttt{Base\_md} type
 summarizes the errors that occurred within the corresponding
@@ -408,7 +411,7 @@ application-specific ways.  By checking the top-level
 \texttt{Base\_md} value, analysts can determine whether there were
 any errors during parsing. If the error count is zero, they know 
 the data parsed without any errors and all the semantic predicates
-held.  If the error count is non-zero, they can walk down the
+held.  If the error count is non-zero, they can traverse the
 meta-data structure to determine precisely where the errors occurred
 and what caused them, allowing the analysts to decide whether to discard,
 repair, or study the errors. This design also means that the
@@ -462,7 +465,7 @@ The close correspondence between \pads{} descriptions and the type
 structure of the host language makes the meaning of \pads{}
 descriptions relatively intuitive, but it does not suffice to
 precisely define their semantics.  To address this deficiency, we
-developed a formal calculus, called \ddca{}, based on dependent type
+developed a formal calculus, called \ddca{}\hskip -5pt,\hskip 5pt based on dependent type
 theory~\cite{Fisher+:ddca}.  
 
 We defined a denotational semantics for \ddca{} that interprets
@@ -520,7 +523,7 @@ written a description, it is possible to generate a wide variety of
 additional tools besides a parser and a printer because the description
 tells the computer a lot about the data.  Each version of \pads{}
 can generate a number of such tools fully automatically from any
-description.  A few of the most useful tools are described below.
+description.  We describe a few of the most useful tools below.
 
 
 \paragraph{Accumulator} With large data sets, it can be difficult to get a
@@ -534,7 +537,7 @@ description.  A few of the most useful tools are described below.
   processed, the accumulator generates an informative statistical report.
   For base types, the accumulator reports
   information relevant to that type.  For example, for integers, the
-  tools reports the minimum, maximum, and average values, as well as a
+  tool reports the minimum, maximum, and average values, as well as a
   histogram of the most commonly seen values, precisely tracking all
   values up to a customizable limit.  For strings, the accumulator
   reports the observed lengths of the strings and a histogram of
@@ -620,7 +623,7 @@ means that only compiler writers can add new tools, a significant
 limitation.  
 
 To address this problem, the \padsml{} compiler generates
-generic ``traversal functions''~\cite{mandelbaum+:pads-ml,fernandez+:padl} 
+generic ``traversal functions''~\cite{fernandez+:padl,mandelbaum+:pads-ml} 
 in addition to the standard type declarations and parsing functions.
 Using this infrastructure, third-party developers can write tools
 without having to change the compiler.  However, the downside
@@ -628,7 +631,7 @@ is that the interface to the set of generic
 functions is extremely complex. The complexities in the interface
 arose because the host language for \padsml,
 \ocaml{}, does not provide direct support for generic programming,
-and in order to obtain the generic programming facilities we required,
+In order to obtain the generic programming facilities we required,
 we were forced to implement sophisticated type-directed algorithms in the
 structures and functors supplied by \ocaml{}'s powerful
 module system.  The result was a system that is expressive enough to
@@ -637,7 +640,7 @@ accomplish the desired tasks, but useable only by extreme experts.
 One
 of the motivations for building a version of \pads{} in \haskell{} is
 that \haskell{} does provide a lot of support for generic
-programming~\cite{Wadler+:typeclass,Lammel+:syb}.  We anticipate that
+programming~\cite{Lammel+:syb,Wadler+:typeclass}.  We anticipate that
 writing third party tools in the \padshaskell{} framework will be
 significantly easier.
 
@@ -657,7 +660,7 @@ capability is available on the web
 \url{http://www.padsproj.org/learning-demo.cgi}. 
 
 The inference system works in a series of stages.  In the first stage,
-the input data is broken into a series of chunks, each a positive
+the input data is broken into chunks, each of which is a positive
 instance of the data format to be learned.  We require the user to
 tell us how to do this division.  Typical examples include breaking a
 file on newline boundaries or treating each file in a collection of
@@ -679,8 +682,8 @@ confidence.   The system is parameterized so users can provide their
 own set of regular expressions. 
 
 In the third stage, the system computes a histogram for each token,
-counting the number of records in which the token appear zero times,
-one time, two times, \etc.  Tokens with similar histograms are
+counting the number of records in which the token appears zero times,
+one time, two times, \etc{}  Tokens with similar histograms are
 clustered, based on a similarity metric.  The cluster that ``best
 describes'' the data is selected, using a heuristic that rewards high
 coverage, meaning the cluster appears in almost every record, and
@@ -733,7 +736,7 @@ us develop a tokenizer that could capture this concept
 effectively~\cite{Xi+:padl}. The result of this study was that the
 learning system required a lot of data and the inference process was
 slower, but the quality of the inferred descriptions improved.  Still,
-more research in this area may well further improve the quality of descriptions
+more research in this area may well improve the quality of descriptions
 relative to the time required to learn them.
 
 \subsection{Incremental Inference}
@@ -761,7 +764,7 @@ and how well it scales.
 
 \subsection{Putting humans in the loop}
 Even if format inference were perfect, we would still need human
-involvement to produce the best descriptions.  At the very least, it
+involvement to produce the high-quality descriptions.  At the very least, it
 is not possible for the computer to infer meaningful labels for fields
 in records.  For example, the computer cannot tell if a given IP
 address is a source or a destination.  In the end, it is likely that the
@@ -789,7 +792,8 @@ purposes.  The description can also be saved as documentation
 or used to generate any of the other \pads{} tools.  Like other
 languages in the \pads{} family, \anne{} has a formal semantics.
 This time, the semantics is based on concepts drawn from
-Relevance Logic~\cite{anderson+:relevance-logic} as opposed to type theory.  The semantics was used to prove a number of
+Relevance Logic~\cite{anderson+:relevance-logic} as opposed to type
+theory.  We used the semantics to prove a number of
 interesting properties concerning the expressiveness of 
 \anne{} and the conditions under which it is able 
 to extract a desired context-free grammar from a document.
@@ -837,7 +841,7 @@ The languages and systems that are most closely related to \pads{} are
 \packettypes{}~\cite{sigcomm00} and \datascript{}~\cite{gpce02}.  
 Each of these systems allow declarative
 descriptions of physical data, motivated respectively by the goals of
-parsing protocols, \textsc{TCP/IP} packets, and \java{} jar-files.  As
+parsing \textsc{TCP/IP} packets and \java{} jar-files.  As
 with \pads{}, these languages all use a type-directed approach to
 describing physical data formats and permit the user to specify
 semantic constraints in a host language.  These systems differ from
@@ -862,7 +866,7 @@ strategic decisions.  Finally, to get widespread adoption of the
 technology, it is likely necessary to integrate a version of \pads{}
 more tightly into standard tools for manipulating data. 
 
-  \newpage
+%  \newpage
 
 \section*{Acknowledgments}
 The \pads{} project has been a collaboration involving a large number of
@@ -895,7 +899,7 @@ supported under NSF grants CCF-1016937,  0238328,  0612147, and 0615062 and
 supported by DARPA under grant FA8750-07-C-0014.
 Any opinions, findings, and conclusions or recommendations
    expressed in this material are those of the authors and do not
-   necessarily reflect the views of the NSF.
+   necessarily reflect the views of the NSF or DARPA.
 
 %\newpage
 
