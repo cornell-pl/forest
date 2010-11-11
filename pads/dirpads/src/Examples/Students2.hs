@@ -139,7 +139,7 @@ cd_md md f = f $ snd md  -- should this change the paths?
 cd_rep rep f = f $ rep
 
 {- print graph of students -}
-resultIO =  mdToPDF cs_md "/Users/kfisher/pads/dirpads/src/Examples/Students.pdf"
+resultIO =  mdToPDF cs_md "Examples/Students.pdf"
 
 {- tar the student repostitory -}
 doTar = tar cs_md "Princeton.tar"
@@ -230,6 +230,9 @@ course_result = course_parseS course_input
 
 major_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/AB11"
 (major_rep, major_md) = unsafePerformIO $ major_d_load  major_dir
+
+bse11_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/BSE11"
+(bse11_rep, bse11_md) = unsafePerformIO $ major_d_load  bse11_dir
 
 withdrawn_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11/WITHDREW"
 (withdrawnt_rep, withdrawnt_md) = unsafePerformIO $ major_d_load  withdrawn_dir
