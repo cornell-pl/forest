@@ -4,6 +4,7 @@ module Examples.Coral where
 
 import Language.Pads.Padsc hiding (take)
 import Language.Forest.Forestc
+import Language.Forest.Graph (mdToPDF)
 import Language.Pads.GenPretty
 import Control.Arrow
 
@@ -41,7 +42,7 @@ status_re = RE "[0-9]+"
   type Url = Generic
 
   data Header = 
-    { version       :: Pre "[12]",        comma_ws
+    { version       :: Maybe (Pre "[12],[ \t]*")
     , time          :: Time     }
 
   data Request = 
@@ -80,7 +81,10 @@ status_re = RE "[0-9]+"
 
 [forest|
   type Log = Directory 
-    { websrv is "coralwebsrv.log.gz" :: Gzip (File Coral) }
+    { web is "coralwebsrv.log.gz" :: Gzip (File Coral),
+      dns is "coraldnssrv.log.gz" :: Maybe (Gzip (File Ptext)),
+      prb is "probed.log.gz"      :: Maybe (Gzip (File Ptext)),
+      dmn is "corald.log.gz"      :: Maybe (Gzip (File Ptext)) }
 
   type Site = [ d :: Log | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] 
 
@@ -91,6 +95,8 @@ go () = unsafePerformIO $ top_load "/home/nate/coraldata"
 load_logs () = fst(go ())
 load_md () = snd(go())
   
+graph () = mdToPDF (snd $ unsafePerformIO $ top_load "/home/nate/logs") "/home/nate/coral.dot"
+
 get_stats e = 
   case payload e of 
     In i -> in_stats i
@@ -111,7 +117,7 @@ get_url e =
     Out o -> string_of_url (url $ out_req o)
 
 get_entries :: Log -> [Entry]
-get_entries (Log (Coral (Entries es))) = es
+get_entries (Log (Coral (Entries es)) _ _ _) = es
 
 get_sites :: Top -> [(String,Site)]
 get_sites (Top p) = p
