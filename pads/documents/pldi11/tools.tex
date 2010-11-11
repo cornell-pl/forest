@@ -76,7 +76,7 @@ The related function \cd{mdToPDFWithParams} takes an additional
 argument that allows the user to specify how to draw the nodes and
 edges in the output graph.  Among other things, this parameter
 specifies how to map a value of type \cd{Forest\_md} into
-\graphviz{}~\cite{Gansner+:graphviz} attributes.  By appropriately setting the
+\graphviz{}~\cite{haskell-graphviz,Gansner+:graphviz} attributes.  By appropriately setting the
 parameter, a user can customize the formatting of each node according
 to its owner, group, or permissions, \etc{}, as well as specify global
 properties of the graph such as its orientation and size.  \fg{} uses
@@ -157,6 +157,9 @@ parse tree, which it then pretty prints.
 
 \begin{figure}
 \begin{code}
+\kw{data} transfer = \kw{Directory} \{
+\}
+
 \kw{data} wITHDREW = \kw{Directory} \{
     fingertxt \kw{is} "finger.txt" :: File Ptext
 \}
