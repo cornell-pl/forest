@@ -1,0 +1,351 @@
+\section{A Core Calculus for \forest{}}
+\label{sec:exp}
+\renewcommand{\bnfdef}{\ensuremath{\mathord{::=}}}
+\newcommand{\slsh}{\ensuremath{\mathord{\textsf{/}}}}
+\newcommand{\File}[1]{\ensuremath{\mathsf{File}(#1)}}
+\newcommand{\Dir}[1]{\ensuremath{\mathsf{Dir}(#1)}}
+\newcommand{\Link}[1]{\ensuremath{\mathsf{Link}(#1)}}
+\newcommand{\Set}[1]{\ensuremath{\{ #1 \}}}
+\newcommand{\Map}[1]{\ensuremath{\{\!\mid #1 \mid\!\}}}
+\newcommand{\PNil}{\ensuremath{\bullet}}
+\newcommand{\PCons}[2]{\ensuremath{#1\,\textsf{/}\,#2}}
+\newcommand{\Just}[1]{\ensuremath{\mathsf{Just(#1)}}}
+\newcommand{\Nothing}{\ensuremath{\mathsf{Nothing}}}
+\newcommand{\True}{\ensuremath{\mathsf{True}}}
+\newcommand{\False}{\ensuremath{\mathsf{False}}}
+\newcommand{\fn}[2]{\ensuremath{#1(#2)}}
+\newcommand{\Sk}{k^{\tau_m}_{\tau_r}}
+\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1}^{\tau_m}_{\tau_r})}}
+\newcommand{\SPred}[1]{\ensuremath{\mathsf{Pred}(#1)}}
+\newcommand{\SPath}[2]{\ensuremath{#1 \mathrel{::} #2}}
+\newcommand{\SPair}[3]{\ensuremath{\langle #1 {:} #2, #3 \rangle}}
+\newcommand{\SOption}[1]{\ensuremath{#1?}}
+\newcommand{\SSetComp}[3]{\ensuremath{\{ #1 \mid #2 \in #3 \}}}
+\newcommand{\Env}{\ensuremath{\mathcal{E}}}
+\newcommand{\ENil}{\ensuremath{\bullet}}
+\newcommand{\yields}{\ensuremath{\rightsquigarrow}}
+\newcommand{\valid}[1]{\ensuremath{\mathit{valid}(#1)}}
+\newcommand{\typ}[1]{\ensuremath{\mathit{#1}}}
+\newcommand{\meta}{\typ{meta}}
+\newcommand{\REP}{\ensuremath{\mathit{REP}}}
+\newcommand{\PD}{\ensuremath{\mathit{PD}}}
+\newcommand{\pd}[1]{\ensuremath{(#1)~\mathit{pd}}}
+\newcommand{\eval}[1]{\ensuremath{\mathsf{eval}(#1)}}
+\newcommand{\ptext}{\ensuremath{\mathsf{Txt}}}
+\newcommand{\pbin}{\ensuremath{\mathsf{Bin}}}
+\newcommand{\pany}{\ensuremath{\mathsf{Any}}}
+\newcommand{\att}{\ensuremath{\mathsf{a}}}
+\newcommand{\defaultatt}{\ensuremath{\att_{\mathsf{df}}}}
+\newcommand{\repty}[1]{{\cal R}[\![ #1 ]\!]}
+\newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
+\newcommand{\checkk}[3]{\fn{\mathit{check}}{#1,#2,#3}}
+
+In order to capture the essence of \forest{}'s semantics, we have
+defined an idealized core calculus.  This calculus has helped us
+design various aspects of the \forest{} language itself and provides
+compact means by which we may communicate the central, orthogonal
+concepts to others.  It is inspired by classical ({\em i.e.,} not
+separating, substructural or ambient) unordered tree logics, though
+customized for our particular needs.
+
+\paragraph*{File system model and specification syntax.}
+Figure~\ref{fig:calculus-syntax} presents the formal file system model.  
+In our model, file paths $r$ are
+sequences of string names\footnote{For simplicity, we ignore the special path
+elements ``..'' and ``.''.  Adding these elements
+requires path normalization in the semantics, which, while easily
+achievable, does not shed light on interesting design elements.} 
+and file systems $F$
+are finite partial maps from paths to pairs of file attributes $\att$
+and file system contents $T$.  We leave the attribute records $\att$ 
+unspecified, but they should include the usual elements: owner, group,
+date modified, {\it etc.}  We write $\defaultatt$ for the dummy or
+default attribute record where necessary.
+A $T$ may be a file $\File{n}$ (with underlying string contents $n$),
+a directory $\Dir{ \Set{n_1,\dots,n_k} }$ (with contents named 
+$n_1, \ldots, n_k$) or a symbolic link $\Link{r}$ (where $r$ is the
+path linked to).  
+
+A file system model $F$ is only {\em well-formed} when it is tree-shaped,
+with directories forming internal nodes and files and symbolic
+links the leaves.  More formally, the following conditions must hold:
+\begin{itemize}
+\item The domain of $F$ must be prefix-closed.
+\item If $F(r) = (\att,\Dir{ \Set{n_1,\dots,n_k} })$ then for $i=1,\ldots,k$,
+$\PCons{r}{n_i} \in \dom{F}$.
+\item  If $F(r) = (\att,\File{n})$ or $(m,\Link{r'})$ then 
+there does not exist $n$ such that $\PCons{r}{n} \in \dom{F}$.
+\end{itemize}
+
+Figure~\ref{fig:calculus-syntax} also presents the syntax of
+a simple computation language $e$ and our
+file system specifications $s$.  The computation language $e$
+contains values $v$, variables $x$, and some number of other
+operations, which we leave unspecified.  An environment
+$\Env$ maps variables to values.  A semantic function
+$\eval{\Env,F,r,e}$ evaluates an expression $e$ in an
+environment $\Env$, file system $F$, and at current path $r$,
+producing a value $v$.
+
+The simplest file system specifications are the constants
+$k$, which range over basic specifications such as those for
+text files (\ptext), binary files (\pbin), or any
+file system object at all (\pany). 
+
+\padshaskell{} specifications are modelled as
+\SAdhoc{b} where $b$, a parser,  is a total
+function from pairs of environments and strings to
+values.  
+
+For syntactic reasons, \forest{} itself combines specifications
+for records and paths and also comprehensions and paths.
+However, the calculus reveals that (dependent) records, paths 
+and comprehensions
+may all be understood as independent, orthogonal constructs.
+The record specifications are modelled as a dependent pair,
+written \SPair{x}{s_1}{s_2}, where $x$ may appear in $s_2$.
+A path specification is written $\SPath{e}{s}$, where $e$ is
+a path name (to be appended to the current path) and 
+$s$ specifies the file system fragment at that path.  As an example,
+a combined \forest{} record-and-path specification such as
+\cd{\{c is "c.txt" :: C, dat is "d.txt" :: D c\}}
+is written in the calculus as
+$\SPair{x}{(\SPath{\mathtt{"c.txt"}}{C})}{(\SPath{\mathtt{"d.txt"}}{D\; x})}$.
+A specification with the form $\SSetComp{s}{x}{e}$ is a comprehension where
+$e$ is a set of values, $x$ is bound to each such value in turn, and
+$s$, which may contain $x$, specifies a file system fragment for each
+such $x$.  Again, a combined \forest{} comprehension-and-path
+\cd{[x :: s | x <- e]} is modelled as the composition of two
+orthogonal constructors ($\SSetComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$).
+
+A predicate specifications $\SPred{e}$ succeeds
+when $e$ evaluates to \True{} and fails when $e$ evaluates
+to \False.  A \forest{} constraint of the form \cd{s where e}
+is modelled in the calculus as a dependent pair with a predicate:
+$\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$
+
+Finally, a maybe specification is written $\SOption{s}$ in the calculus.
+ 
+\begin{figure}
+\[
+\begin{array}{rr@{\;}r@{\;}l}
+\textit{Strings}        & n & \in & \Sigma^{\ast} \\[1ex]
+\textit{Paths}          & r,s & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
+\textit{Attributes}     & \att  & \bnfdef & \dots\\[1ex]
+\textit{Filesystem}     & T  & \bnfdef & \File{n} \\
+\textit{Contents}       &    & \bnfalt & \Dir{ \Set{n_1,\dots,n_k} }\\
+                        &    & \bnfalt & \Link{r}\\[1ex]
+\textit{Filesystems}    & F & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots r_k \mapsto (\att_k,T_k) }\\[1ex]
+\textit{Values}         & v & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
+                        &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \{ v_1,\dots,v_k \}\\
+\textit{Expressions}    & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
+\textit{Environments}   & \Env & \bnfdef & \ENil \bnfalt E,x\mapsto v \\[1ex]
+\textit{Specifications} & s & \bnfdef & \Sk \\
+                        &   & \bnfalt & \SAdhoc{b}\\
+                        &   & \bnfalt & \SPath{e}{s}\\
+                        &   & \bnfalt & \SPair{x}{s_1}{s_2}\\
+                        &   & \bnfalt & \SSetComp{s}{x}{e}\\
+                        &   & \bnfalt & \SPred{e}\\
+                        &   & \bnfalt & \SOption{s}\\[1ex]
+\end{array}
+\]
+\caption{File systems and their specifications}
+\label{fig:calculus-syntax}
+\end{figure}
+
+\paragraph*{Calculus Semantics.}
+The calculus has a semantics in three parts, which represent the three different
+artifacts generated by the \forest{} compiler from each specification.  The
+first semantic judgement has the form $\Env;F;r \models s \yields v,d$.
+Intuitively, this judgement states that in environment $\Env$ and file system
+$F$, specification $s$ matches the file system fragment at current path $r$
+and produces file system representation $v$ and metadata $d$.  This judgement
+may also be viewed as a total function from $\Env$, $F$, $r$ and $s$ to the
+pair $v$ and $d$.  The judgement is total because when file system fragments
+fail to match the given specification, defaults are generated for the representation
+$v$ and errors are recorded in the metadata $d$.  This design is preferable to
+failing outright as it allows a programmer
+to explore a file system fragment even when it contains errors, as is common
+in ad hoc data repositories.  The second and third
+semantic judgements characterize the shape of the representation and metadata
+given a specification by giving their types.  They have the form $\repty{s} = \tau$ and
+$\mdty{s} = \tau$, respectively.  The three sets of definitions obey the following
+basic coherence property, where $\turn v : \tau$ states that value $v$ has type $\tau$.
+
+\begin{proposition}
+If $\Env;F;r \models s \yields v,d$ and
+$\repty{s} = \tau_r$ and $\mdty{s} = \tau_m$
+then $\turn v : \tau_r$ and $\turn d : \tau_r$ 
+\end{proposition}
+
+
+The semantics of our calculus is spelled out in Figure~\ref{fig:calculus-semantics} 
+and \ref{fig:calculus-types}.
+
+\begin{figure}
+\[
+\infrule
+{ }
+{ \Env;F;r \models \Sk \yields \checkk{\Sk}{F}{r} }
+{}
+\]
+
+\[
+\infrule
+{ F(r) = (\att,\File{n}) \qquad 
+  b(E,n) = v,d }
+{ \Env;F;r \models \SAdhoc{b} \yields v,(\valid{d},(d,\att)) }
+{ }
+\]
+
+\[
+\infrule
+{ %\begin{array}{l}
+  F(r) = (\att,\Dir{\_}) \text{ or } F(r) = (\att,\Link{\_}) \qquad
+  b(E,\epsilon) = (v,d)
+  %\end{array} 
+}
+{ \Env;F;r \models \SAdhoc{b} \yields v,(\False,(d,\att)) }
+{}
+\]
+
+\[
+\infrule
+{ 
+  r \not\in \dom{F}  \qquad
+  b(E,\epsilon) = (v,d)
+}
+{ \Env;F;r \models \SAdhoc{b} \yields v,(\False,(d,\defaultatt)) }
+{}
+\]
+
+\[
+\infrule
+{ \Env;F;\eval{E,F,r,\PCons{r}{e}} \models s \yields v,d }
+{ \Env;F;r \models \SPath{e}{s} \yields v,d }
+{ }
+\]
+
+\[
+\infrule
+{ \begin{array}{c}
+  \Env;F;r \models s_1 \yields v_1,d_1 \\
+  \Env[x \mapsto v_1, x_d \mapsto d_1];F;r \models s_2 \yields v_2,d_2 \\
+  v = (v_1,v_2) \qquad d = (d_1,d_2) 
+  \end{array} }
+{ \Env;F;r \models \SPair{x}{s_1}{s_2} \yields v,(\valid{d_1} \wedge \valid{d_2}, d) }
+{ }
+\]
+
+\[
+\infrule
+{ \begin{array}{c}
+  \eval{\Env,F,r,e} = \{ v_1,\dots,v_k \} \\
+  S = \Set{ (v,d) \mid v' \in \{ v_1,\dots,v_k \} \text{ and } \Env[x \mapsto v'];F;r \models s \yields v,d }
+  \end{array} }
+{ \Env;F;r \models \SSetComp{s}{x}{e} \yields \pi_1~S,(\bigwedge~\valid{\pi_2~S}, \pi_2~S) }
+{ }
+\]
+
+
+\[
+\infrule
+{ }
+{ \Env;F;r \models \SPred{e} \yields (),(\eval{(E,F,r,e)},()) }
+{ }
+\]
+
+
+\[
+\infrule
+{ r \not\in \dom{F} }
+{ \Env;F;r \models \SOption{s} \yields \Nothing,(\False,\Nothing) }
+{ }
+\]
+
+\[
+\infrule
+{ r \in \dom{F} \qquad \Env;F;r \models s \yields v,d }
+{ \Env;F;r \models \SOption{s} \yields \Just{v},(\valid{d},\Just{d}) }
+{ }
+\]
+
+
+\caption{\forest{} calculus semantics}
+\label{fig:calculus-semantics}
+\end{figure}
+
+\begin{figure}
+
+\[
+\begin{array}{lcl}
+\repty{\Sk} & = & \tau_r \\
+\repty{\SAdhoc{b}} & = & \tau_r \\
+\repty{\SPath{e}{s}} & = & \repty{s} \\
+\repty{\SPair{x}{s_1}{s_2}} & = & \repty{s_1} \times \repty{s_2} \\
+\repty{\SSetComp{s}{x}{e}} & = & \repty{s}~\typ{list}  \\
+\repty{\SPred{e}} & = & \typ{unit} \\
+\repty{\SOption{s}} & = & \repty{s}~\typ{option}  \\
+\\
+\mdty{\Sk} & = & \pd{\tau_m} \\
+\mdty{\SAdhoc{b}} & = & \pd{\tau_m} \\
+\mdty{\SPath{e}{s}} & = & \mdty{s} \\
+\mdty{\SPair{x}{s_1}{s_2}} & = & \pd{\mdty{s_1} \times \mdty{s_2}} \\
+\mdty{\SSetComp{s}{x}{e}} & = & \pd{\mdty{s}~\typ{list}}  \\
+\mdty{\SPred{e}} & = & \pd{\typ{unit}} \\
+\mdty{\SOption{s}} & = & \pd{\mdty{s}~\typ{option}}  \\
+\\
+\pd{\tau} & = & \typ{header} \times \tau \\
+\typ{header} & = & \typ{bool} 
+\end{array}
+\]
+
+\caption{\forest{} calculus data and metadata types}
+\label{fig:calculus-types}
+\end{figure}
+
+% \paragraph*{Constants}
+
+% \reminder{I assume we'll only have space to describe the
+%   $\fn{Check_k}{}$ functions informally, perhaps with one example, so
+%   not TeXing them for now.}
+
+% \reminder{The second rule below is broken: $m$ is not defined in the
+%   case where $r \not\in \dom{F}$.}
+
+% \paragraph*{Adhoc}
+% \[
+% \REP = b_\REP \qquad
+% \PD = \pd{b_\PD \times \meta}\\
+% \]
+
+% \paragraph*{Predicate}
+% \[
+% \REP = \typ{unit}\qquad
+% \PD = \pd{\typ{unit}}
+% \]
+
+% \paragraph*{Path}
+% \[
+% \REP = s_\REP\qquad
+% \PD = s_\PD
+% \]
+
+% \paragraph*{Pair}
+% \[
+% \REP = {s_1}_\REP \times {s_2}_\REP\qquad
+% \PD = \pd{{s_1}_\PD \times {s_2}_\PD}
+% \]
+
+% \paragraph*{Option}
+% \[
+% \REP = s_\REP~\typ{option}\qquad
+% \PD = \pd{s_\PD~\typ{option}}
+% \]
+
+% \reminder{I removed ``DESC'' below. Can it just be $\pi_2~S$?}
+% \paragraph*{Comprehension}
+% \[
+% \REP = s_\REP~\typ{list}\qquad
+% \PD = \pd{s_\PD~\typ{list}}
+% \]

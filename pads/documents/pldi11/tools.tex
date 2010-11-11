@@ -1,7 +1,45 @@
 \section{Tools}
 \label{sec:tools}
+Third-party developers can use type-directed programming techniques~\cite{??} to
+generate tools that will work for any file system structure that has a
+\forest{} description.  As a proof of concept, we have written a
+number of such tools, which we describe in this section.  We simulated
+being third-party users by not changing the code of the \forest{}
+compiler to build any of these tools.
+
+\subsection{Graph View}
+The first tool, which we call \fg{}, generates a graphical
+representation of any directory structure that matches a 
+\forest{} specification.  As an example of \fg{}'s
+output, we generated the graph in \figref{fig:coral-pic} using 
+the tool.  This graph uses boxes to denote directories and ovals to
+denote files, with borders of varying thickness to distinguish between
+ASCII and binary files.  The borders of file components that are
+symbolic links are drawn as dashed lines.  Components that have errors
+are drawn in red. 
+
+The core functionality of \fg{} lies in a Haskell function
+called \texttt{mdToPDF}:
+
+\begin{code}
+mdToPDF :: ForestMD md => 
+     md -> FilePath -> IO (Either String FilePath)
+\end{code}
+This type indicates the function takes a value having any \forest{}
+meta-data type
+
+In this type, type variable \texttt{md} denotes any type belonging to
+the \texttt{ForestMD} type class, which means that the type
+\texttt{md} is a generated \forest{} meta-data type. 
+
+This function takes as input any value belonging to the
+\texttt{ForestMD} type class, (\ie, any value of type \texttt{md}
+where \texttt{md} belongs 
+which intuitively means \texttt{}
+
 \begin{itemize}
-\item tar, ...
+\item pretty printer
 \item Graph representation giving status
-\item ??
+\item Permissions checker
+\item Shell tools: 
 \end{itemize}

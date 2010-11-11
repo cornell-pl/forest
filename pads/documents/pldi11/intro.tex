@@ -1,0 +1,68 @@
+\section {Introduction}
+\label{sec:intro}
+
+Bogus cite~\cite{fisher+:pads}
+
+Define the problem:
+
+\begin{itemize}
+\item Data accumulates over time in sets of files organized in
+hierarchically structured file systems.  Show table of examples.
+\item Problem: no documentation
+\item Problem: errors. No tools for consistency checking/error dection
+\item Problem: data encoded in combination of file and directory names as
+well as internally in files
+\item Problem: data is large: complicates infrastructure for getting
+  data in to and out of programs. Can't even use standard unix tools
+  like ls due to overexpansion on command line.
+\end{itemize}
+
+Goal: to make programming with data on disk as easy as programming
+with a data structure in a program
+
+Contributions:
+
+\begin{itemize}
+\item Concept:  the idea to extend a modern programming language with
+fully integrated linguistic features for describing file system fragments
+and for automatically generating programming infrastructure from such 
+descriptions.
+
+\item Description Language Design: we have carefully chosen \forest{}
+  programming features based on our analysis of a number of examples.
+  The design is expressive, concise and tastefully integrated into
+  Haskell.  It lowers the barrier to programming with data on disk.
+  We give examples...
+
+\item Tool Generation: tools are automatically generated so that
+  programmers may begin working with their described data immediately
+  and easily.  List tools generated.  We illustrate the use of these
+  tools on examples.
+
+\item Implementation: a fully functional extension of Haskell.  We
+  evaluate its performance briefly?  Side-comment: the implementation
+  acts as a case study in *extensive,* practical, domain-specific
+  language design in modern languages by combining a number of
+  experimental features of Haskell such as quasi-quoting, template
+  haskell, etc.
+
+\item Semantics: we have a semantics for a core calculus.  This guides
+  our implementation decisions.  Unlike parser generators, which are
+  based on grammars over sequences, this is based on a classical logic
+  over trees.
+\end{itemize}
+
+Tool Notes:
+
+\begin{itemize}
+\item Core tools implemented within the compiler. (loader)
+\item Generic tools, useable with all descriptions, and implemented as
+  third-party libraries.
+\begin{itemize}
+\item Unix-like shell tools: grep, ls, tar, cp, rm
+\item description-generation tool using universal description
+\item simple directory visualization by generating dot files and highlighting errors
+\item pretty printing tools
+\end{itemize}
+\item Custom programming against typed interface and querying using Haskell generic programming libraries
+\end{itemize}
