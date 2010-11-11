@@ -7,16 +7,15 @@ number of such tools, which we describe in this section.  We simulated
 being third-party users by not changing the code of the \forest{}
 compiler to build any of these tools.
 
-\subsection{Graph View}
-The first tool, which we call \fg{}, generates a graphical
-representation of any directory structure that matches a 
-\forest{} specification.  As an example of \fg{}'s
-output, we generated the graph in \figref{fig:coral-pic} using 
-the tool.  This graph uses boxes to denote directories and ovals to
-denote files, with borders of varying thickness to distinguish between
-ASCII and binary files.  The borders of file components that are
-symbolic links are drawn as dashed lines.  Components that have errors
-are drawn in red. 
+\subsection{\fg{}}
+\fg{} generates a graphical representation of any directory structure that matches a 
+\forest{} specification.  We generated the graphs in
+Figures~\ref{fig:student-pic} and \ref{fig:coral-pic} using  
+this tool.  In the default configuration, \fg{} uses boxes to denote
+directories and ovals to denote files with borders of varying
+thickness to distinguish between ASCII and binary files.  
+It draws the borders of symbolic links as dashed lines and components
+with errors in red.
 
 The core functionality of \fg{} lies in a Haskell function
 called \texttt{mdToPDF}:
@@ -25,8 +24,9 @@ called \texttt{mdToPDF}:
 mdToPDF :: ForestMD md => 
      md -> FilePath -> IO (Either String FilePath)
 \end{code}
-This type indicates the function takes a value having any \forest{}
-meta-data type
+This type indicates the function takes as input any \forest{}
+meta-data value and a filepath (that names the location for the
+generated PDF file) and returns 
 
 In this type, type variable \texttt{md} denotes any type belonging to
 the \texttt{ForestMD} type class, which means that the type
