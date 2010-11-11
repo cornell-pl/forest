@@ -7,14 +7,14 @@ all:	paper
 clean:	
 	rm -rf *.aux *.log *.blg *.dvi *.ps *.pdf *.toc
 
-quick:  paper.tex
+quick: 	paper.tex
 	latex paper.tex; dvips paper.dvi -o paper.ps
 
-quick2:  paper.tex
-	latex paper.tex; dvipdf paper.dvi
+quick2:	paper.tex
+	pdflatex paper.tex
 
 paper:  paper.tex pads.bib abstract.tex
-	latex paper.tex; 
+	pdflatex paper.tex; 
 	bibtex paper;
-	latex paper.tex; latex paper.tex; dvips paper.dvi -o paper.ps -t letter
-	dvipdf paper.dvi
+	pdflatex paper.tex; 
+	pdflatex paper.tex
