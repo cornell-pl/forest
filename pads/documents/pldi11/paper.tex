@@ -13,13 +13,20 @@
 %\setlength{\textheight}{8.5in}
 
 \begin{document}
+\input{definitions}
 
 \conferenceinfo{PLDI'11,}{} 
 \copyrightyear{2011} 
 \copyrightdata{} 
 
-\title{Forest: A Language and Toolkit For Programming with File System Fragments}
+\title{Forest: A Language and Toolkit For Programming with File System
+  Fragments}
 
+\authorinfo{Omitted for blind review}
+	   {\vskip -.5in}
+           {}
+
+\cut{
 \authorinfo{Kathleen Fisher}
 	   {AT\&T Labs Research}
            {\mono{kfisher@research.att.com}}
@@ -29,8 +36,7 @@
 \authorinfo{David Walker}
            {Princeton University}
            {\mono{{dpw}@CS.Princeton.EDU}}
-
-\input{definitions}
+}
 
 \maketitle{}
 
@@ -59,6 +65,10 @@
 
 
 \section*{Acknowledgments}
+We would like to thank Simon Peyton Jones for extending Haskell's 
+Quasi-Quoting and Template Haskell mechanisms to support the \forest{}
+design and for help in using the mechanisms in general. We omit 
+other acknowledgments to preserve anonymity.
 
 This material is based upon work 
 supported under NSF grant CCF-1016937.

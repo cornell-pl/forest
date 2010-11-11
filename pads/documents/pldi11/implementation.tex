@@ -1,5 +1,7 @@
 \section{Implementation}
 \label{sec:implementation}
+We have fully implemented the \forest{} language and anticipate making
+it publicly available within the next few months.
 \haskell{} provides powerful language features and libraries that
 greatly facilitated the implementation of \forest{}.  The most obvious
 of these features is the quasi-quoting~\cite{Mainland:quasi} mechanism
@@ -23,7 +25,9 @@ corresponding \haskell{} code had appeared in the input at the
 location of the quasi-quote.  Early versions of quasi-quoting
 supporting quoting only expression and pattern forms.  Simon Peyton
 Jones extended the mechanism to permit declaration and type
-quasi-quoting partly to enable the \forest{} implementation.  
+quasi-quoting partly to enable the \forest{} implementation.  We used
+this same approach to implement \padshaskell{}, which we built
+concomitantly. 
 
 \paragraph{Parsing.}  
 We used the parsec 3.1.0 parser
@@ -56,3 +60,4 @@ current type environment with type bindings for new identifiers.  With
 this combination of features, we will be able to type check \forest{}
 sources directly, yielding a fully satisfactory embedded
 domain-specific language.
+
