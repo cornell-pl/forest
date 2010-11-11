@@ -12,30 +12,41 @@ compiler to build any of these tools.
 \forest{} specification.  We generated the graphs in
 Figures~\ref{fig:student-pic} and \ref{fig:coral-pic} using  
 this tool.  In the default configuration, \fg{} uses boxes to denote
-directories and ovals to denote files with borders of varying
-thickness to distinguish between ASCII and binary files.  
-It draws the borders of symbolic links as dashed lines and components
-with errors in red.
+directories and ovals to denote files. Borders of varying
+thickness distinguish between ASCII and binary files.  
+Dashed node boundaries indicate symbolic links and red nodes flag errors.
 
 The core functionality of \fg{} lies in a Haskell function
-called \texttt{mdToPDF}:
-
+called \cd{mdToPDF}:
 \begin{code}
 mdToPDF :: ForestMD md => 
-     md -> FilePath -> IO (Either String FilePath)
+     md -> FilePath -> IO (Maybe String)
 \end{code}
-This type indicates the function takes as input any \forest{}
-meta-data value and a filepath (that names the location for the
-generated PDF file) and returns 
+The function takes as input any \forest{} meta-data value (\ie{}, any
+value of type \cd{md} where \cd{md} belongs to the \forest{}
+meta-data class \cd{ForestMD}) and a filepath that specifies where to
+put the generated PDF file.  It optionally returns a string (\cd{Maybe
+String}); if the option is present, the string contains an error
+message.  The \cd{IO} type constructor indicates that there can be
+side effects during the execution of the function.  A use of
+this function to generate the graph for the Princeton Computer Science
+Department looks like:
+\begin{code}
+ do \{ (cs_rep,cs_md) <- CS_load  "facadm"
+    ; mdToPDF cs_md "Output/CS.pdf" 
+    \}
+\end{code}
+Note that \fg{} needs only the meta-data to generate the graph;
+laziness means \forest{} will not load the representation in this
+case. 
 
-In this type, type variable \texttt{md} denotes any type belonging to
-the \texttt{ForestMD} type class, which means that the type
-\texttt{md} is a generated \forest{} meta-data type. 
+The related function \cd{mdToPDFWithParams} takes an additional
+argument that allows the user to specify how to draw the nodes and
+edges in the output graph
 
-This function takes as input any value belonging to the
-\texttt{ForestMD} type class, (\ie, any value of type \texttt{md}
-where \texttt{md} belongs 
-which intuitively means \texttt{}
+
+
+
 
 \begin{itemize}
 \item pretty printer
