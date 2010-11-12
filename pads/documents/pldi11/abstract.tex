@@ -21,11 +21,16 @@ the file system conforms to its specification.  It greatly lowers the
 divide between on-disk and in-memory representations of data.
 
 We present our design for \forest{} and describe an implementation of
-a full working prototype in \haskell{}. Leveraging the support for
-generic programming in \haskell{}, we also describe a framework that
-allows third-party developers to build tools for querying,
-visualizing, and detecting errors in on-disk data in a generic way. We
-present examples illusrtating the use of \forest{} on a number of
+a full working prototype in \haskell{}. From a single compact
+description, the \forest{} implementation generates a useful
+collection of \haskell{} types and functions for manipulating,
+checking, and analyzing file system data.   In addition, \forest{}
+generates type class definitions that make it possible to
+exploit powerful
+generic programming paradigms that
+allow third-party developers to build tools for querying,
+visualizing, and debugging on-disk data in a generic way. We
+present examples illustrating the use of \forest{} on a number of
 real-world directory structures and programming tasks, including
 drop-in replacements for a number of standard shell tools. Finally, we
 formalize the core elements of the language as a simple calculus based
