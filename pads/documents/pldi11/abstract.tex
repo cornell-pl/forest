@@ -1,60 +1,29 @@
 Many users and many applications use part of the file system as a
 low-overhead database or persistent store.  The correct behavior of
 such applications relies on the collection of files having the
-expected hierarchical organization and meta-properties such as file
+expected hierarchical organization and meta-data such as file
 ownership, permissions, and timestamps.  Although expedient, this
 approach is tedious and error prone.  Currently, there is little
 support for documenting or checking such assumptions, and loading
 information from disk robustly requires a lot of boring code.
 \forest{} is a new \haskell{}-based embedded domain-specific language
-designed to address this problem.  \forest{} descriptions allow users
-to declaratively specify the portion of the file system relevant to a
-particular use using a type-based metaphor.  Given such a
-specification, the \forest{} compiler can automatically generate tools
-to detect whether the relevant portion of the file system conforms to
-the specification and to load the corresponding data into \haskell{}
-data structures.  This design greatly lowers the divide between
-on-disk and in-memory representations of data.  \haskell{}'s support
-for generic programming makes it is easy to write third-party tools
-for manipulating these application-specific file system fragments.  We
-demonstrate this ability by defining tools to query meta-data, detect
-errors, visualize on-disk data, and mimic a variety of shell tools
-with application-specific versions.  We demonstrate that the language
-design is both general and useful by applying it to a number of real
-data sets and programming tasks.  Finally, we formalize the core
-elements of the language as a simple calculus inspired by classical
-tree logics. \forest{} is fully implemented. 
-
-
-
-One of the most pressing modern programming language problems involves
-designing mechanisms that provide programmers with immediate,
-low-cost, easy-to-understand data access and data management tools.
-This paper tackles one crucial aspect of this problem: access to
-structured file systems.  It does so through the conception, design
-and implementation of a new programming language called \forest.
-\forest{} is an embedded domain-specific language in \haskell{} that
-allows programmers to specify the structure of file system fragments
-using a form of extended type declaration.  These specifications
-include complete information about hierarchical and data-dependent
-directory structure, directory unfolding (untarring), file attributes,
-file compression, and file contents.  Once programmers have defined a
-file system specification, they may apply it to a file system fragment
-and read or analyze the file system contents as if it were any other
-strongly-typed data structure within their program.  In addition to
-providing ordinary programming support, the \forest{} system also
-generates a range of useful end-to-end tools for managing file system
-fragments including tools for error-detection, for visualization and
-debugging, for permission verification and for scripting.  For the
-latter application, \forest{} generates a suite of
-specification-directed analogues of conventional Unix-style commands
-such as {\tt ls}, {\tt grep}, {\tt tar}, and {\tt cp}.  \forest{} is
-also tightly connected to generic programming support available in
-\haskell{} and automatically generates the type class instance
-declarations necessary to perform generic traversals, maps, folds or
-queries.  Consequently, users may design new, domain-specific generic
-tools quickly and easily.  We demonstrate that the language design is
-both general and useful by applying it to a number of real data sets
-and programming tasks.  We formalize the core elements of the
-language as a simple calculus inspired by classical tree logics.
-
+designed to address this problem.  \forest{} descriptions use a
+type-based metaphor to declaratively specify the portion of the file
+system relevant to a particular use.  By specifying the root of a
+given application's data, programmers can use \forest{} to seamlessly
+connect their on-disk data to an isomorphic in-memory representation
+that they can manipulate as if it were any other strongly-typed data
+structure in their program.  \forest{} generates meta-data that
+makes it easy to detect to what extent the relevant portion of the
+file system conforms to the specification.  This design greatly lowers
+the divide between on-disk and in-memory representations of data.
+\haskell{}'s support for generic programming makes it easy to write
+third-party tools for manipulating these application-specific file
+system fragments.  We demonstrate this ability by defining tools to
+query meta-data, visualize on-disk data, detect errors, and mimic a
+variety of shell tools with application-specific versions.  We
+demonstrate that the language design is both general and useful by
+applying it to a number of real data sets and programming tasks.
+Finally, we formalize the core elements of the language as a simple
+calculus inspired by classical tree logics. \forest{} is fully
+implemented.
