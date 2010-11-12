@@ -12,8 +12,8 @@ import Data.List
 type NodeTy = Forest_md
 type EdgeLabel = ()
 
-
-defaultGraphVizParams :: GraphvizParams NodeTy EdgeLabel () NodeTy = Params
+type ForestGraphParams = GraphvizParams NodeTy EdgeLabel () NodeTy
+defaultGraphVizParams :: ForestGraphParams  = Params
   { isDirected = True
   , globalAttributes = [GraphAttrs [Ordering "out", RankDir FromLeft]]
   , clusterBy = N
@@ -41,12 +41,17 @@ displayNodes (n,fmd) =
                 else []
   in [FontName "Courier", mkLabel name] ++ color ++ shape ++ symLink
 
-
+mdToPDF :: ForestMD md => md -> FilePath -> IO(Maybe String)
 mdToPDF md filePath = mdToPDFWithParams defaultGraphVizParams md filePath 
 
-mdToPDFWithParams params md filePath = let 
-  dg = toDotGraphWithParams params md
-  in runGraphviz dg Pdf filePath
+mdToPDFWithParams :: ForestMD md => ForestGraphParams -> md -> FilePath -> IO(Maybe String)
+mdToPDFWithParams params md filePath = do
+  { let dg = toDotGraphWithParams params md
+  ; result <- runGraphviz dg Pdf filePath
+  ; case result of 
+      Left s -> return (Just s)
+      Right fp -> return Nothing
+  }
 
 toDotGraph md = toDotGraphWithParams defaultGraphVizParams md 
 

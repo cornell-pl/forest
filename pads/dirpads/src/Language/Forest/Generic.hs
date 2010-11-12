@@ -26,6 +26,9 @@ listDirs md = map fullpath (listify (\(r::FileInfo) -> (kind r) `elem` [Director
 listFiles :: (ForestMD md) => md -> [FilePath] 
 listFiles md = map fullpath (listify (\(r::FileInfo) -> (kind r) `elem` [AsciiK, BinaryK]) md)
 
+findFiles :: (ForestMD md) => md -> (FileInfo -> Bool) -> [FilePath]
+findFiles md pred = map fullpath (listify pred md)
+
 listNonEmptyFiles :: (ForestMD md) => md -> [FilePath] 
 listNonEmptyFiles md = L.filter (\s->s/= "") (listFiles md)
 
