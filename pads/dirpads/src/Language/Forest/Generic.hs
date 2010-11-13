@@ -20,6 +20,15 @@ class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
  fdef1 :: arg -> rep
  fdef1 = \s->myempty
 
+class File rep md where
+  fileLoad :: FilePath -> IO (rep, (Forest_md, md))
+
+class File1 arg rep md where
+  fileLoad1 :: arg -> FilePath -> IO (rep, (Forest_md, md))
+
+
+
+
 listDirs :: (ForestMD md) => md -> [FilePath] 
 listDirs md = map fullpath (listify (\(r::FileInfo) -> (kind r) `elem` [DirectoryK]) md)
 

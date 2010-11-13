@@ -6,6 +6,7 @@ module Language.Forest.Forestc (
      module Language.Forest.Generic,
      module Language.Forest.Quote,
      module Language.Forest.ForestIO,
+     module Language.Forest.BaseTypes,
      Map
   ) 
   where
@@ -16,6 +17,7 @@ import Language.Forest.MetaData
 import Language.Forest.Generic
 import Language.Forest.Quote
 import Language.Forest.ForestIO
+import Language.Forest.BaseTypes
 import Data.Map
 
 

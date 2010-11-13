@@ -109,8 +109,8 @@ loadE :: ForestTy -> TH.Exp -> Q TH.Exp
 loadE ty pathE = case ty of
   Named f_name   -> return (AppE (VarE (getLoadName f_name)) pathE)
   File (file_name, argEOpt) -> case argEOpt of 
-                                Nothing ->     return (AppE (VarE 'fileload) pathE)
-                                Just argE ->   return (AppE (AppE (VarE 'fileload1) argE) pathE)
+                                Nothing ->     return (AppE (VarE 'fileLoad) pathE)
+                                Just argE ->   return (AppE (AppE (VarE 'fileLoad1) argE) pathE)
   Gzip ty         -> loadGzip ty pathE
   Tar  ty         -> loadTar  ty pathE
   SymLink         -> loadSymLink pathE

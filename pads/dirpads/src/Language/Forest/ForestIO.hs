@@ -1,6 +1,6 @@
 {- XXX  add error checking to all calls to system; wrap with failure -}
 
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances #-}
 module Language.Forest.ForestIO where
 
 import Language.Pads.Padsc
@@ -46,6 +46,11 @@ fileload1 arg path = checkPath path (do
    ~(rep, md) <- unsafeInterleaveIO (parseFile1 arg path)
    return (rep, (fmd, md)))
 
+instance (Pads rep md) => File rep md where
+  fileLoad = fileload
+
+instance (Pads1 arg rep md) => File1 arg rep md where
+  fileLoad1 = fileload1
 
 
 getTempFile :: IO FilePath

@@ -10,9 +10,9 @@ import Language.Forest.Pretty
 import System.IO.Unsafe (unsafePerformIO)
 
 [forest| type Universal_d = Directory 
-             { ascii_files  is [ f :: File Ptext   | f <- matches (GL "*"), <| get_kind  f_att == AsciiK      |> ]
+             { ascii_files  is [ f :: Text         | f <- matches (GL "*"), <| get_kind  f_att == AsciiK      |> ]
              , binary_files is [ b :: File Pbinary | b <- matches (GL "*"), <| get_kind  b_att == BinaryK     |> ]
-             , directories  is [ d :: Universal_d  | d <- matches (GL "*"), <| get_kind  d_att == DirectoryK  |> ]
+             , directories  is [ d :: Binary       | d <- matches (GL "*"), <| get_kind  d_att == DirectoryK  |> ]
              , symLinks     is [ s :: SymLink      | s <- matches (GL "*"), <| get_isSym s_att == True        |> ]
              } |]
 
@@ -24,7 +24,7 @@ universal_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/universal"
 (universe_rep, universe_md) = unsafePerformIO $ universal_d_load  universal_dir
 
 universal_pretty = putStrLn (pretty 120 (universal_d_ppr universe_rep))
-universalIO =  mdToPDF universe_md "/Users/kfisher/pads/dirpads/src/Examples/Univeral.pdf"
+universalIO =  mdToPDF universe_md "/Users/kfisher/pads/dirpads/src/Examples/Universal.pdf"
 
 decls = buildDesc universe_md
 decls_pretty = putStrLn(pretty 80 ( ppr_decls decls))
