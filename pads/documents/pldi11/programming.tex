@@ -2,49 +2,51 @@
 \label{sec:exp}
 
 \begin{figure}
+Load Functions:
 \begin{code}
 log_load :: FilePath -> IO (Log, Log_md),
 site_load :: FilePath -> IO (Site, Site_md)
-top_load :: FilePath -> IO (Top, Top_md),
+coral_load :: FilePath -> IO (Top, Top_md),
 \end{code}
-\caption{Load functions for Coral}
-\label{fig:coral-load}
-\end{figure}
-
-\begin{figure}
+%\caption{Load functions for Coral}
+%\label{fig:coral-load}
+%\end{figure}
+%
+%\begin{figure}
+Representation Types:
 \begin{code}
 data Log = Log { log :: CoralLog }
 newtype Site = Site [(String, Log)]
-newtype Top = Top [(String, Site)]
+newtype Coral = Coral [(String, Site)]
 \end{code}
-\caption{Representation types for Coral}
-\label{fig:coral-rep}
-\end{figure}
-
-\begin{figure}
+%\caption{Representation types for Coral}
+%\label{fig:coral-rep}
+%\end{figure}
+%
+%\begin{figure}
+Metadata Types:
 \begin{code}
 data Log_inner_md = 
   Log_inner_md { log_md :: (Forest_md, CoralLog_md) }
 type Log_md = (Forest_md, Log_inner_md)
 type Site_md = (Forest_md, [(String, Log_md)])
-type Top_md = (Forest_md, [(String, Site_md)])
+type Coral_md = (Forest_md, [(String, Site_md)])
 \end{code}
-\caption{Metadata types for Coral}
-\label{fig:coral-md}
+\caption{Coral load functions, representation and metadata types}
+\label{fig:coral-aux}
 \end{figure}
-
-
-\reminder{jnf: TODOs
-\begin{itemize}
-\item Format of coralwebsrv.log.gz is not currently explained anywhere.
-\item Must explain the structure of entries for the top-k example.
-\end{itemize}}
 
 Most \forest{} programs work in two phases. In the first phase they
 use \forest{} to load certain portions of the file system into memory,
 and in the second phase they use an ordinary Haskell function to
 traverse the in-memory representation of the data (or its associated
 metadata) and compute the desired result.
+\jnf{TODOs
+\begin{itemize}
+\item Format of coralwebsrv.log.gz is not currently explained anywhere.
+\item Must explain the structure of entries for the top-k example.
+\end{itemize}}
+
 
 To facilitate this style of programming, the \forest{} compiler
 generates a several Haskell functions and types from every \forest{}
@@ -56,28 +58,27 @@ the data produced by the load function; and it generates a Haskell
 type for the \emph{metadata} associated with the representation. For
 example, from the descriptions for CoralCDN logs in
 Figure~\ref{fig:coral-description}, the compiler generates the load
-functions in Figure~\ref{fig:coral-load}, the representation types in
-Figure~\ref{fig:coral-rep}, and the metadata types in
-Figure~\ref{fig:coral-md}. Note that the structure each of these
+functions, the representation types, and the metadata types presented in
+Figure~\ref{fig:coral-aux}. Note that the structure each of these
 artifacts closely corresponds to the structure of the \forest{}
 description that generated them. This makes it easy for programmers to
 write programs against these \forest{}-generated artifacts.
 
-As a simple example, consider the \cd{Top} description from
-Figure~\ref{fig:coral-description}. The \cd{top\_load} function takes
+As a simple example, consider the \cd{Coral} description from
+Figure~\ref{fig:coral-description}. The \cd{coral\_load} function takes
 a path as an argument and produces the representation and metadata
 obtained by loading each of the site directories contained in the
 directory at that path:
 %
 \begin{code}
 (rep,md) = 
-  unsafePerformIO $ (top_load "/var/log/coral")
+  unsafePerformIO $ (coral_load "/var/log/coral")
 \end{code}
 % $
-Because \cd{Top} is a comprehension, both \cd{rep} and \cd{md} are
+Because \cd{Coral} is a comprehension, both \cd{rep} and \cd{md} are
 structured as lists. More specifically, \cd{rep} has the form,
 \begin{code}
-Top [("planetab2.eecs.wsu.edu", Site [...]),
+Coral [("planetab2.eecs.wsu.edu", Site [...]),
      ("planetlab3.williams.edu", Site [...]), ...]
 \end{code}
 where the list contains pairs of names of subdirectories and
@@ -105,17 +106,21 @@ Forest_md
  ("planetlab3.williams.edu", Forest_md \{...\}), ...]
 \end{code}
 %
-
 Using these functions and types, it is easy to formulate many useful
 queries as simple Haskell programs. For instance, to count the number
 of sites we can simply compute the length of the nested list in
 \cd{rep}:
 %
 \begin{code}
-num_sites = case rep of Top l -> List.length l 
+num_sites = case rep of Coral l -> List.length l 
 \end{code}
 %
-More interestingly, to calculate the time when statistics were last
+More interestingly, since the internals of the web log are
+specified using \padshaskell{} (see \auxmaterials{} for details), 
+it is straightforward to
+dig in to the file data and combine it with file metadata
+or attributes in queries.  For example,
+to calculate the time when statistics were last
 reported for each site, we can zip the lists in \cd{rep} and \cd{md}
 together and project out the site name and the \cd{mod_time} field
 from each element in the resulting list of pairs:
@@ -124,12 +129,13 @@ from each element in the resulting list of pairs:
 get_site = fst
 get_mod (_,(f,_)) = mod_time . fileInfo $ f  
 sites_mod () = 
-  case rep,md of (Top rs, (_,ms)) -> 
+  case rep,md of (Coral rs, (_,ms)) -> 
     map (get_site *** get_mod) (zip rs ms)
 \end{code}
 % $
-\reminder{jnf: do we want to show output? we'll have to be careful to
+\jnf{do we want to show output? we'll have to be careful to
   sanitize the data.}
+\dpw{no space for output}
 
 These simple examples show how \forest{} diminishes the distinction
 between data represented on disk and in memory. After writing a
@@ -146,8 +152,8 @@ log files contained within them.
 As a final example, consider a program that computes the top-$k$
 requested URLs from all CoralCDN nodes by size. The CoralCDN
 administrators compute this statistic periodically to help monitor and
-tune the performance of the system~\reminder{cite Mike's NSDI '10
-  paper}. Here is its definition in Haskell (it uses several helper
+tune the performance of the system~\cite{freedman:coral-experience}. 
+Here is its definition in Haskell (it uses several helper
 functions such as \cd{get_sites} to project out various components of
 \cd{rep}):
 %
@@ -170,7 +176,15 @@ size of the request. It then adds up the sizes of all requests for the
 same URL using the \cd{fromListWith} function from the \cd{Data.Map}
 module. Next, it sorts the entries in descending order. Finally, it
 returns the first $k$ entries of the list as the final result.
-%
-\reminder{jnf: compare with the hand-written Python program Mike
+
+Overall, the main take-away from this section is how 
+the \forest{}-generated infrastructure and tight coupling
+to \haskell{} facilitates construction
+of remarkably terse queries over the combination of file contents,
+file attributes and directory structure.  Exploratory data analysis
+in this new programming paradigm is light-weight, easy and highly effective.
+%how the tight coupling of \forest{} and \haskell{} lead to highly
+%productive programming practice.  
+\jnf{compare with the hand-written Python program Mike
   actually uses? Highlight difficulties of dealing with large number
-  of huge files?}
+  of huge files? dpw: it would be great to give some kind of comparison}
