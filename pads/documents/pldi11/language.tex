@@ -119,7 +119,7 @@ format:
 \noindent
 \begin{code}
 [pads| 
-  data Student (name :: String) = < pads decl >
+  \kw{data} Student (name :: String) = < pads decl >
 |]
 \end{code}
 This description is parameterized by the name of the student whose
@@ -132,7 +132,7 @@ type \cd{Student_md}, and a parsing function.
 types to \forest{} file types.  For example, the declaration
 \begin{code}
 [forest| 
-  type SFile (n::String) = File (Student n) 
+  \kw{type} SFile (n::String) = File (Student n) 
 |]
 \end{code}
 introduces a new file type named \cd{SFile} whose format is given by
