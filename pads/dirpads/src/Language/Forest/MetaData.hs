@@ -147,6 +147,8 @@ forest_md_def = Forest_md{ numErrors = 1
 class Data md => ForestMD md where
   get_fmd_header :: md -> Forest_md
   replace_fmd_header :: md -> Forest_md -> md
+  get_fileInfo :: md -> FileInfo
+  get_fileInfo md = fileInfo (get_fmd_header md)
   get_fullpath :: md -> String
   get_fullpath md = fullpath $ fileInfo (get_fmd_header md)
   get_owner :: md -> String

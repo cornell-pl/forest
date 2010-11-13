@@ -69,11 +69,13 @@ comma = ','
 |]
 
 -- Auxiliary code
-template s = or [ s == "SSSS.txt"
+template' s = or [ s == "SSSS.txt"
                 , s == "SSS.txt"
                 , s == "sxx.txt"
                 , s == "sss.txt"
                 , s == "ssss.txt" ]
+
+template s = s `elem` ["SSSS.txt", "SSS.txt", "sxx.txt", "sss.txt", "ssss.txt"]
 
 not_template = not . template
 
@@ -97,9 +99,9 @@ txt         = GL "*.txt"
     | s <- matches txt,  <| (not . template) s |>  ]  
 
   -- Directory containing all students in a particular year
-  type Class (yy :: Integer) = Directory
-    { bse is <|"BSE" ++ (toStrN yy 2)|> :: Major
-    , ab  is <|"AB"  ++ (toStrN yy 2)|> :: Major   
+  type Class (y :: Integer) = Directory
+    { bse is <|"BSE" ++ (toStrN y 2)|> :: Major
+    , ab  is <|"AB"  ++ (toStrN y 2)|> :: Major   
     , transfer  matches transferRE  :: Maybe Major 
     , withdrawn matches withdrawnRE :: Maybe Major 
     , leave     matches leaveRE     :: Maybe Major 
@@ -111,7 +113,7 @@ txt         = GL "*.txt"
 
   -- Root of the hierarchy
   type PrincetonCS (y::Integer) = Directory
-    { notes is "README" :: File Ptext
+    { notes is "README" :: Text
     , seniors   is <|mkClass y      |> :: Class y
     , juniors   is <|mkClass (y + 1)|> :: Class <| y + 1 |>
     , graduates :: Grads

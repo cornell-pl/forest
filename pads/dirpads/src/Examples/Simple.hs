@@ -99,9 +99,16 @@ getHost (Hosts_t hs) = case hs of
                          }    
 
          type PrivateFile = constrain this :: File Ptext where <| get_modes this_md == "-rw-rw-r--" |>
-         type ReadOnly    = File Ptext where <| get_modes this_md == "-rw-r--r--" |>
+         type ReadOnly    = Text where <| get_modes this_att == "-rw-r--r--" |>
 
          type TextFiles = Set [ f :: File Ptext | f <- matches (GL "*.txt") ]
+
+         type NoBin =
+             [ b :: Binary
+             | b <- matches (GL "*"), 
+              <|get_kind b_att == BinaryK|> ]
+             where <|length this == 0|>
+
 |] 
 
 mkPrettyInstance ''TextFiles

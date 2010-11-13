@@ -107,7 +107,8 @@ loadNonEmptyE ty pathE fileE = do
 
 loadE :: ForestTy -> TH.Exp -> Q TH.Exp
 loadE ty pathE = case ty of
-  Named f_name   -> return (AppE (VarE (getLoadName f_name)) pathE)
+--  Named f_name   -> return (AppE (VarE (getLoadName f_name)) pathE)
+  Named f_name   -> return (AppE (VarE 'load) pathE)
   File (file_name, argEOpt) -> case argEOpt of 
                                 Nothing ->     return (AppE (VarE 'fileLoad) pathE)
                                 Just argE ->   return (AppE (AppE (VarE 'fileLoad1) argE) pathE)
@@ -124,7 +125,7 @@ loadE ty pathE = case ty of
 loadConstraint :: TH.Pat -> ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
 loadConstraint pat ty predE pathE = do
   { loadAction <- loadE ty pathE
-  ; let predFnE = LamE [getRepMDPatFromPat pat] predE
+  ; let predFnE = modPredE pat predE
   ; return (AppE (AppE (AppE (VarE 'doLoadConstraint) loadAction) pathE) predFnE)
   }
 
@@ -325,8 +326,14 @@ getRepMDPatFromExp externalE = case externalE of
   VarE name -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_md"))])
   otherwise -> error "Forest: Couldn't convert file expression to pattern; please supply an explicit name with 'name as exp' form"
 
-getRepMDPatFromPat externalP = case externalP of
-  VarP name -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_md"))])
+modPredE externalP predE = case externalP of
+  VarP name -> let md_name = mkName ((nameBase name) ++"_md")  
+                   attP    = VarP (mkName ((nameBase name) ++"_att"))
+                   pat     = TildeP (TupP[VarP name, VarP md_name])
+                   initE   = AppE (VarE 'get_fmd_header) (VarE md_name)
+                   bodyE   = LetE [ValD attP (NormalB initE) []] predE      -- let name_att = fileInfo name_md in predE
+               in LamE [pat] bodyE
+                 
   otherwise -> error "Forest: Couldn't convert constraint pattern to pattern for meta data.  Use simple pattern."
 
 

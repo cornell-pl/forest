@@ -11,8 +11,8 @@ import System.IO.Unsafe (unsafePerformIO)
 
 [forest| type Universal_d = Directory 
              { ascii_files  is [ f :: Text         | f <- matches (GL "*"), <| get_kind  f_att == AsciiK      |> ]
-             , binary_files is [ b :: File Pbinary | b <- matches (GL "*"), <| get_kind  b_att == BinaryK     |> ]
-             , directories  is [ d :: Binary       | d <- matches (GL "*"), <| get_kind  d_att == DirectoryK  |> ]
+             , binary_files is [ b :: Binary       | b <- matches (GL "*"), <| get_kind  b_att == BinaryK     |> ]
+             , directories  is [ d :: Universal_d  | d <- matches (GL "*"), <| get_kind  d_att == DirectoryK  |> ]
              , symLinks     is [ s :: SymLink      | s <- matches (GL "*"), <| get_isSym s_att == True        |> ]
              } |]
 
