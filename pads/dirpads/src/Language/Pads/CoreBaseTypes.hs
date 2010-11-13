@@ -64,6 +64,9 @@ instance Pretty Pchar where
 
 instance Pretty Ptext where
   ppr (Ptext str) = string ("\"" ++ str++ "\"")
+
+instance Pretty Pre where
+  ppr (Pre s) = string s
               
 
 instance Pretty Pbinary where
@@ -85,7 +88,7 @@ instance Pads Pbinary Base_md where
   parsePP = pbinary_parseM
 
 newtype Pre = Pre String
-  deriving (Eq, Show, Data, Typeable, Ord)
+  deriving (Eq, Data, Typeable, Ord)
 newtype Pstring    = Pstring    String
   deriving (Eq, Show, Data, Typeable, Ord)
 newtype PstringFW = PstringFW String

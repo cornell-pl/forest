@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, NamedFieldPuns, ScopedTypeVariables #-}
 module Language.Pads.GenPretty where
 -- pattern guards
-import Language.Pads.Padsc
+import Language.Pads.Padsc hiding (line)
 import Language.Haskell.TH as TH hiding (ppr)
 import Language.Pads.TH
 import qualified Data.List as L
@@ -71,7 +71,7 @@ getNamedTys' answers worklist =
 
 baseTypeNames = S.fromList [ ''Pint, ''Pchar, ''Pdigit, ''Ptext, ''Pstring, ''PstringFW, ''PstringME 
                            , ''PstringSE, ''String, ''Char, ''COff, ''EpochTime, ''FileMode, ''Int, ''Word, ''Int64
-                           , ''Language.Pads.Errors.ErrInfo, ''Bool, ''Pbinary
+                           , ''Language.Pads.Errors.ErrInfo, ''Bool, ''Pbinary, ''Pre
                            ]
 
 mkPrettyInstance :: TH.Name -> Q [TH.Dec]
@@ -226,8 +226,8 @@ namedtuple_ppr :: String -> [Doc] -> Doc
 namedtuple_ppr name pprls = group $ hang 2 (text name <+/> (tuple_ppr pprls))
 
 
-list_ppr ds = (text "[" <//>
-                    align (sep comma ds ) <//>        
+list_ppr ds = (text "[---" <//>
+                    align (seplines comma ds ) <//>        
                 text "]")
 
 instance (Pretty a, Pretty b)  => Pretty (M.Map a b) where
@@ -282,10 +282,13 @@ tuple_ppr ds = (text "(" <//>
                     align (sep comma ds ) <//>        
                 text ")")
 
-recordbody_ppr docs = (text "{" <//>
-                    align (sep comma docs) <//>        
-                 text "}")
+recordbody_ppr docs = 
+       text "{" 
+  <//> align (seplines comma docs) 
+  <//> text "}"
+
 field_ppr field_name ppr = text field_name   <+> equals <+> ppr
-record_ppr str pprs  = namedty_ppr str (recordbody_ppr pprs)
+
+record_ppr str pprs  = namedty_ppr str (recordbody_ppr pprs)  
 
 

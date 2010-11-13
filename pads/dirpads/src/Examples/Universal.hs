@@ -38,3 +38,10 @@ classof11_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm/classof11"
 (classof11_rep, classof11_md) = unsafePerformIO $ universal_d_load  classof11_dir
 classof11_decls = buildDesc classof11_md
 classof11_pretty = putStrLn(pretty 80 ( ppr_decls classof11_decls))
+
+getDesc :: FilePath -> IO String
+getDesc path = do
+ { (rep,md) <- universal_d_load path
+ ; let decls = buildDesc md
+ ; return (pretty 80 (ppr_decls decls))
+ }

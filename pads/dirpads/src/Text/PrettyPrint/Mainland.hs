@@ -427,7 +427,7 @@ class Pretty a where
 
     ppr         = pprPrec 0
     pprPrec _   = ppr
-    pprList xs  = brackets $ commasep $ map ppr xs
+    pprList xs  = brackets $ align $ commaseplines $ map ppr xs
 
 instance Pretty Int where
     ppr = text . show
