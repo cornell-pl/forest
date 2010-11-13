@@ -43,105 +43,136 @@ discussed later, is an example of an exception to the general rule.}
 register an attempt to load from that
 path as an error in the associated metadata structure.}
 
-\subsection{Simple Files}
+At its core, \forest{} is a simple dependent type system in which base
+types denote files of various flavors and record types describe
+directories.  \forest{} also includes a list type to describe
+collections of files with finer granularity than directories.  We use
+other type constructors to build more refined structures from these
+basic building blocks.  We discuss each of these constructs in turn in
+the remainder of this section.
+
+\subsection{Files}
 \label{sec:basics}
+\forest{} provides a small collection of base types for describing
+files: \cd{Text} for ASCII files, \cd{Binary} for binary files, and
+\cd{Any} for arbitrary files.  As with all \forest{} types, each of
+these types specifies a representation type, a metadata type, and a
+loading function.  The in-memory representation for an ASCII file is a
+Haskell \cd{String}; for binary and arbitrary files, it is a
+\cd{ByteString}.  For all three file types, the metadata type pairs
+file-system metadata with metadata describing properties of the file
+contents.  The file-system metadata has type \cd{Forest\_md}, shown in
+\figref{fig:forest-md}.  This structure stores two kinds of
+information: (1) the number and kind of any errors that occurred while
+loading the file and (2) the attributes associated with the file.
+File-content metadata typically describes errors within the file, but
+can be used for other purposes.  For these three file types, there is
+no meaningful content metadata and so this type is the unit type.
+Leveraging Haskell's laziness, the loading functions create the
+in-memory representations and set the metadata on demand.
 
-The basic building blocks of any file system are the files themselves.  To get started,
-\forest{} provides several different ways to describe a file at the current position.  The simplest
-way is to choose from a collection of standard, built-in file descriptions:\footnote{Recall that
-any text following \cd{--} is a comment in Haskell.} 
-\noindent
+\begin{figure}
 \begin{code}
-[forest| 
-  type MyText = File Ptext   -- a text file
-  type MyBin = File Pbin     -- a binary file
-  type Whatever = File Pany  -- any file at all
-|]
+\kw{data} Forest_md = Forest_md 
+   \{ numErrors :: Int
+   , errorMsg  :: Maybe ErrMsg
+   , fileInfo  :: FileInfo      
+   \}
+\mbox{}
+\kw{data} FileInfo = FileInfo 
+   \{ fullpath   :: FilePath
+   , owner       :: String
+   , group       :: String
+   , size        :: COff
+   , access_time :: EpochTime
+   , mod_time    :: EpochTime
+   , read_time   :: EpochTime
+   , mode        :: FileMode
+   , isSymLink   :: Bool
+   , kind        :: FileType     
+   \}
 \end{code}
-Each such declaration creates an identifier ({\it e.g.,} \cd{MyText}) that can be used in other
-more complex descriptions later.  It also generates several utility functions that may
-be used in the surrounding Haskell code, including functions 
-for loading files that match the given description.  
+\caption{\forest{} metadata types.}
+\label{fig:forest-md}
+\end{figure}
 
-Descriptions such as \cd{MyText} are useful when the user neither knows or cares much about
-the internal structure of the given file.  On the other hand, when the user does know and does
-care about the internal structure of a file, he or she will want to describe that structure,
-and will be able to do so using \padshaskell{}.  \padshaskell{} is another sublanguage,
-based on the PADS family of parser 
-generators~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml}, but 
-designed for use with Haskell and \forest{}.  \padshaskell{} declarations are introduced
-within the pads scope:
+Of course, there are many kinds of files, and the appropriate
+representation and content metadata type for each such file varies.
+Possible examples include XML documents, Makefiles, source files in
+various languages, shell scripts, \etc{}  To support such files,
+\forest{} provides a plug-in architecture, allowing third party users
+to define new file base types by specifying a representation type, a
+metadata type, and a corresponding loading function.
+
+A common class of files are \textit{ad hoc data files} containing
+semi-structured information, an example of which is the Princeton
+student record file format (\figref{fig:student-file-example}). 
+In such cases, \forest{} can leverage the \padshaskell{} data
+description language to define format-specific in-memory
+representations, content metadata, and loading functions. 
+\padshaskell{} is a recently developed version of 
+\pads{}~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml}.
+Like \forest{}, \padshaskell{} is embedded in Haskell using
+quasiquotation.  For example, the following code snippit 
+begins the \pads{} specification of the Princeton student record
+format: 
 \noindent
 \begin{code}
 [pads| 
-  ... pads declarations ...
+  data Student (name :: String) = < pads decl >
 |]
 \end{code}
-These declarations are capable of generating parsers that may be referred
-to later within \forest{}.  For example, it is straightforward to use \padshaskell{} to generate
-a parser for student files such as the one shown in Figure~\ref{fig:student-file-example}
-(see the appendix for its definition).
-Assuming that the parser for the file is named \cd{Student} and that it takes a single string parameter
-(\cd{n}, the student name), we can use it within \forest{} as follows.
+This description is parameterized by the name of the student whose
+data is in the file; the complete description appears in the appendix.
+From this specification, the \pads{} compiler
+generates an in-memory representation type \cd{Student}, a content metadata
+type \cd{Student_md}, and a parsing function.  
+
+\forest{} provides the \cd{File} type constructor to lift \pads{}
+types to \forest{} file types.  For example, the declaration
 \begin{code}
 [forest| 
   type SFile (n::String) = File (Student n) 
 |]
 \end{code}
-Using \padshaskell{} parsers in \forest{} not only helps specify the intended grammatical structure
-of a file, but it also generates a structured in-memory representation for Haskell programmers
-to traverse, query or otherwise manipulate.  Indeed, \padshaskell{} and \forest{}
-were designed to work seemlessly together.  From the perspective of the Haskell
-programmer traversing an in-memory data structure, there is effectively
-no difference between iterating over files in a directory or
-structured sequences of lines or tokens within a file.
+introduces a new file type named \cd{SFile} whose format is given by
+the \pads{} type \cd{Student}.  As with the \pads{} type, \cd{SFile}
+is parameterized by the name of the student.  
 
-While the design of \padshaskell{} is interesting in its own right, the rest of this
-paper focuses on \forest{}.  Henceforth, the reader should assume
-any unadorned declarations 
-occur within the \forest{} scope \cd{[forest| ... |]} unless otherwise noted.
-The reader should also assume any declarations prefixed by \cd{>} are ordinary
-Haskell declarations.
+Using \padshaskell{} descriptions in \forest{} not only helps specify
+the structure of ad hoc data files, but it also generates a structured
+in-memory representation of the data, allowing Haskell programmers to
+traverse, query and otherwise manipulate such data.  Indeed,
+\padshaskell{} and \forest{} were designed to work seamlessly
+together.  From the perspective of the Haskell programmer traversing
+an in-memory data structure, there is effectively no difference
+between iterating over files in a directory or structured sequences of
+lines or tokens within a file.
 
-\subsection{File Modifiers}
-\label{sec:file-modifiers}
+While \padshaskell{} is independently interesting,
+the rest of this paper focuses on \forest{}.  Henceforth, any
+unadorned declarations occur within the \forest{} scope
+\cd{[forest|...|]} unless otherwise noted.  Any declarations prefixed
+by \cd{>} 
+are ordinary Haskell declarations.
 
-Some files need processing by a utility before they can be used.  A typical
-example is a compressed file such as the gzipped log files in the Coral
-example shown in Figure~\ref{fig:coral-pic}.  \forest{} allows users to describe such 
-files using various modifiers.  For example, if \cd{CoralInfo} is a \padshaskell{}
-description of a Coral log file then the following describes a gzipped log file.
-\begin{code}
-type CoralLog = Gzip (File CoralInfo)
-\end{code}
-Likewise, suppose \cd{logs.tar.gz} is a gzipped tar file and suppose also that 
-\cd{AllLogs} describes the directory of log files that \cd{logs.tar} expands
-to.  In this case, the following description will describe the contents of
-\cd{logs.tar.gz} properly.
-\begin{code}
-type CoralLogs = Gzip (Tar AllLogs)
-\end{code}
+\subsection{The Maybe Type}
+\label{sec:maybe}
+Sometimes, a given file (or directory or symbolic link) may or may not
+be present in the file system, and either situation is valid.
+\forest{} provides the \cd{Maybe} type constructor for this
+situation.  If \cd{T} is a \forest{} type, then \cd{Maybe T} is the
+\forest{} type denoting an optional \cd{T}.  In particular, 
+\cd{Maybe T} succeeds and returns representation \cd{None} when the
+current path does not exist in the file system.  \cd{Maybe T} also
+succeeds, returning \cd{Just v} for some \cd{v} of type \cd{T}, 
+when applied to an file system object that matches \cd{T} at the
+current path.  \cd{Maybe T} registers an error in the metadata when
+the current path exists but the object at the current path does not
+match \cd{T}. 
 
-\subsection{Symbolic Links}
-\label{sec:symlinks}
 
-When symbolic links are present in the file system described,
-the default behavior is to read through the symbolic links to their
-targets.  Hence, the behavior of \forest{} will be intuitive to programmers who
-are used to working in a standard UNIX-like environment.  In addition, however, it is possible
-for a programmer to explicitly specify that she expects a symbolic link in a particular
-position.  To do so, the programmer will use the \cd{SymLink} base type.  For
-example:
-\begin{code}
-type MyFile = SymLink
-\end{code}
-In \forest{}, any file system object may be described in multiple different ways.
-Hence, in the case of symbolic links, it is possible to use one declaration to
-specify the fact that an object is a symbolic link, and a second declaration to specify
-the nature of the target that link ({\em e.g.,} the target is a text file).  We will see such 
-a specification in later subsections.
-
-\subsection{Simple Directories}
+\subsection{Directories}
 \label{sec:simple-directories}
 
 The simplest way to specify the contents of a directory is to use
@@ -227,8 +258,8 @@ construct representations for the subparts that do match and will insert dummy v
 into the parts that do not match.  \forest{} will also record all errors encountered in the
 matching process in the object metadata.
 
-\subsection{Computed and Approximate Paths}
-\label{sec:computed-pathes}
+\paragraph*{Computed Paths}
+\label{sec:computed-paths}
 
 Both of the above descriptions are a good start for our application, but neither
 are ideal.  Every year, the directory for the graduating seniors 
@@ -265,6 +296,7 @@ they may be supplied directly.  When arguments are more complex
 computed expressions, it is necessary to use explicit escapes back 
 in to Haskell.
 
+\paragraph*{Approximate Paths}
 As repositories evolve over time, naming conventions may change.
 Alternatively, programmers simply may not care to specify certain names
 exactly.  To accomodate these possibilities, \forest{} includes mechanisms
@@ -300,12 +332,6 @@ and behaves the same way.}  If there is more than one match, one of the many mat
 is selected non-deterministically, a multiple match error is registered in the metadata,
 and matching once again continues as in the \cd{is} form.
 
-In this example, the \cd{matches} form is combined with the \cd{Maybe T} constructor.
-\cd{Maybe T} succeeds and returns \cd{None} when the current path is not a path in the
-file system.  \cd{Maybe T} also succeeds, returning \cd{Just v} for some \cd{v},
-when applied to an object that matches \cd{T} at the current path.  \cd{Maybe T} 
-registers an error in the metadata when the current path exists but 
-the object at the current path does not properly match \cd{T}.
 
 \subsection{Comprehensions}
 \label{sec:comprehensions}
@@ -365,6 +391,34 @@ type Major =
   | s <- matches txt, <|not (tpl s)|>]
 \end{code}
 
+\paragraph*{Representation Coercions}
+One of the benefits of using \forest{} is that every description serves multiple purposes:
+(1) it specifies the structure of the file system on disk, (2) it specifies structure of in-memory
+representations of the file system, (3) it generates type declarations describing those in-memory
+structures, and (4) it generates data structures representing error conditions and other meta data.
+\reminder{jnf: above, we identified three things generated from descriptions...}
+
+Sometimes, however, it is useful to be able to override the default structure of the generated items.
+In particular, we have found that programmers occasionally want the representation of their in-memory data
+structured differently than the default.  In order to give programmers choice on this matter when they want it,
+\forest{} permits them to use {\em representation coercions} within a description.  As an example, consider
+again the definition of \cd{Major} from subsection~\ref{sec:comprehensions}.  In that definition, the
+in-memory representation of the set of majors is a list of \cd{(name.txt,filecontents)} pairs.  A more convenient
+representation for programming, however, is likely a map from \cd{names} to \cd{filecontents}.  Assuming
+\cd{MapName} is the coercion from lists to maps suggested, 
+we insert it into the description as follows.\reminder{dpw: can we put the definition of mapname in?  I don't know
+how to write it.  I can't find Kathleen's email with some mention that any Builder something something toList
+function something something is how you write these functions.}
+\begin{code}
+type Major = 
+  MapName [ s :: File (Student <|getName s|>) 
+          | s <- matches txt, <|not (tpl s)|>]
+\end{code}
+While programmers may build their own custom coercions as above, \forest{} does supply a set of 
+generic, built-in coercions as well such as \cd{Map} (convert to a map from file name to contents)
+and \cd{Set} (convert to a set of contents).
+
+
 \subsection{Attributes and Constraints}
 \label{sec:constraints}
 
@@ -372,6 +426,24 @@ Every file system object has a number of attributes associated with it.  In gene
 if a \forest{} identifier \cd{id} refers to a path, the attributes for the object at that
 path are available through the identifier named \cd{id_att}. Figure~\ref{fig:metadata-components}
 lists a set of functions that extract useful information from metadata structures.
+
+Attributes are also commonly used in {\em constraints}.  For example, if a user
+wants to ensure that all her text files are private,
+she might replace the use of \cd{File Ptext} in a description with the following
+\cd{PrivateFile} definition.  
+\reminder{dpw: The following two examples need to be tested to ensure correctness.}
+\begin{code}
+type PrivateFile = 
+  File Ptext 
+    where <|get_modes this_att == "-rw-------"|>
+\end{code}
+Here, the keyword \cd{where} introduces a constraint
+on the underlying type.  If a constraint evaluates to false, an error
+is registered in the metadata.  Within the constraint, \cd{this} refers to the representation 
+of the underlying object, \cd{this_att} refers to its attributes and \cd{this_md} refers
+to its metadata.
+
+
 Below, metadata functions used to write a universal description.
 Notice that the description also happens to be recursive, another useful feature of
 \forest{}.  In the case that a symbolic link creates a cycle in the file system, the Haskell
@@ -394,21 +466,6 @@ type Universal = Directory
   \}
 \end{code}
 
-Attributes are also commonly used in {\em constraints}.  For example, if a user
-wants to ensure that all her text files are private,
-she might replace the use of \cd{File Ptext} in a description with the following
-\cd{PrivateFile} definition.  
-\reminder{dpw: The following two examples need to be tested to ensure correctness.}
-\begin{code}
-type PrivateFile = 
-  File Ptext 
-    where <|get_modes this_att == "-rw-------"|>
-\end{code}
-Here, the keyword \cd{where} introduces a constraint
-on the underlying type.  If a constraint evaluates to false, an error
-is registered in the metadata.  Within the constraint, \cd{this} refers to the representation 
-of the underlying object, \cd{this_att} refers to its attributes and \cd{this_md} refers
-to its metadata.
 
 Another use for constraints involves specifying emptiness conditions or conditions that
 certain files do not appear in certain places.  As an example, one might want to specify
@@ -439,34 +496,44 @@ function name &  information \\
 \label{fig:metadata-components}
 \end{figure}
 
-\subsection{Representation Coercions}
-\label{sec:transforms}
 
-One of the benefits of using \forest{} is that every description serves multiple purposes:
-(1) it specifies the structure of the file system on disk, (2) it specifies structure of in-memory
-representations of the file system, (3) it generates type declarations describing those in-memory
-structures, and (4) it generates data structures representing error conditions and other meta data.
-\reminder{jnf: above, we identified three things generated from descriptions...}
+\subsection{Gzip and Tar Type Constructors}
+\label{sec:file-modifiers}
 
-Sometimes, however, it is useful to be able to override the default structure of the generated items.
-In particular, we have found that programmers occasionally want the representation of their in-memory data
-structured differently than the default.  In order to give programmers choice on this matter when they want it,
-\forest{} permits them to use {\em representation coercions} within a description.  As an example, consider
-again the definition of \cd{Major} from subsection~\ref{sec:comprehensions}.  In that definition, the
-in-memory representation of the set of majors is a list of \cd{(name.txt,filecontents)} pairs.  A more convenient
-representation for programming, however, is likely a map from \cd{names} to \cd{filecontents}.  Assuming
-\cd{MapName} is the coercion from lists to maps suggested, 
-we insert it into the description as follows.\reminder{dpw: can we put the definition of mapname in?  I don't know
-how to write it.  I can't find Kathleen's email with some mention that any Builder something something toList
-function something something is how you write these functions.}
+Some files need processing by a utility before they can be used.  A typical
+example is a compressed file such as the gzipped log files in the Coral
+example shown in Figure~\ref{fig:coral-pic}.  \forest{} allows users to describe such 
+files using various modifiers.  For example, if \cd{CoralInfo} is a \padshaskell{}
+description of a Coral log file then the following describes a gzipped log file.
 \begin{code}
-type Major = 
-  MapName [ s :: File (Student <|getName s|>) 
-          | s <- matches txt, <|not (tpl s)|>]
+type CoralLog = Gzip (File CoralInfo)
 \end{code}
-While programmers may build their own custom coercions as above, \forest{} does supply a set of 
-generic, built-in coercions as well such as \cd{Map} (convert to a map from file name to contents)
-and \cd{Set} (convert to a set of contents).
+Likewise, suppose \cd{logs.tar.gz} is a gzipped tar file and suppose also that 
+\cd{AllLogs} describes the directory of log files that \cd{logs.tar} expands
+to.  In this case, the following description will describe the contents of
+\cd{logs.tar.gz} properly.
+\begin{code}
+type CoralLogs = Gzip (Tar AllLogs)
+\end{code}
+
+\subsection{Symbolic Links}
+\label{sec:symlinks}
+
+When symbolic links are present in the file system described,
+the default behavior is to read through the symbolic links to their
+targets.  Hence, the behavior of \forest{} will be intuitive to programmers who
+are used to working in a standard UNIX-like environment.  In addition, however, it is possible
+for a programmer to explicitly specify that she expects a symbolic link in a particular
+position.  To do so, the programmer will use the \cd{SymLink} base type.  For
+example:
+\begin{code}
+type MyFile = SymLink
+\end{code}
+In \forest{}, any file system object may be described in multiple different ways.
+Hence, in the case of symbolic links, it is possible to use one declaration to
+specify the fact that an object is a symbolic link, and a second declaration to specify
+the nature of the target that link ({\em e.g.,} the target is a text file).  We will see such 
+a specification in later subsections.
 
 \subsection{Putting it all together}
 
