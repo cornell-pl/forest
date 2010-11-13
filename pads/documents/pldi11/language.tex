@@ -1,11 +1,10 @@
 \section{\forest{} Design}
 \label{sec:language}
 
-\forest{} is a domain-specific language embedded within Haskell using the
-Template Haskell extension mechanism~\cite{metahaskell}.  In a typical
-\forest{} description, \forest{} declarations will be interleaved with ordinary
-Haskell declarations.  To introduce new \forest{} declarations in amongst
-Haskell declarations,
+\forest{} is a domain-specific language embedded within Haskell using
+the Quasiquote mechanism~\cite{Mainland:quasi}.  In a typical
+\forest{} description, \forest{} declarations are interleaved with ordinary
+Haskell declarations.  To introduce new \forest{} declarations,
 the programmer simply opens the \forest{} sublanguage scope:
 \begin{code}
 [forest| 
@@ -13,28 +12,36 @@ the programmer simply opens the \forest{} sublanguage scope:
 |]
 \end{code}
 
-Once within the forest sublanguage, the programmer will write declarations
-that look and feel very much like extended Haskell type declarations.
-Each such type declaration serves three purposes: (1) it specifies how the user
-expects some fragment of the file system to appear, (2) it describes
-the structure of the in-memory {\em representation} of that 
-file system fragment when it is read into a Haskell program, and (3) it describes 
-the structure of the {\em metadata} that is associated with reading the file system
-fragment into the Haskell program.  As we explain the different features of \forest{}, 
-readers should keep these three different aspects of \forest{} descriptions in mind.  
-The effectiveness of our design comes in part due to the fact that these three 
-elements may all be specified using a single compact description.  
+\forest{} uses a type-based metaphor to describe directory
+structures, so once  within the \forest{} sublanguage, the programmer
+writes declarations that look and feel very much like extended Haskell
+type declarations. 
+Each such type declaration serves three purposes: 
+(1) it describes a fragment of the file system,
+(2) it specifies the structure of the in-memory {\em representation}
+    that will be constructed when the fragment is (lazily) loaded into a Haskell program, and 
+(3) it specifies the structure of the in-memory {\em metadata}
+    that will be generated when the fragment loaded.
+Such metadata includes error information (missing file, insufficient
+permissions, \etc{})  as well as file system attributes (owner, size, \etc{}).
+As we explain the design of \forest{}, 
+readers should keep these three different aspects in mind.  
+The effectiveness of the \forest{} language comes in part from the fact that these three 
+elements can all be specified in a single compact description.  
 
-Readers should also be aware
-that the validity of every description is defined relative to a 
-{\em current path} or {\em current position} within the file system.  As 
-the system interprets a description against the file system, the current path
-will change from one directory or file path to the next.  In general, descriptions
-do not assume that the current path is a valid path in the file system.  When the current
+Every \forest{} description is defined relative to a
+{\em current path} within the file system.  As 
+\forest{} matches a description against the file system, it 
+adjusts the current path to reflect its navigation.
+\cut{
+In general, descriptions
+do not assume that the current path is a valid path in the file
+system.  
+When the current
 path is invalid, a description will generally\footnote{The \cd{Maybe} constructor,
 discussed later, is an example of an exception to the general rule.} 
 register an attempt to load from that
-path as an error in the associated metadata structure.
+path as an error in the associated metadata structure.}
 
 \subsection{Simple Files}
 \label{sec:basics}
