@@ -1,3 +1,19 @@
+\newcommand{\todonote}[3]{% something has to be done!
+  \typeout{TODO: #1 (\thepage) #2}\ifdraft
+  {\textbf{#3}\marginpar{\raggedright\scriptsize{\textbf{#1: }#2}}}
+  \else{}\fi
+}
+\newcommand{\Remark}[3]{% en passant
+  \ifdraft%
+  {\textbf{#3}\marginpar{\raggedright\scriptsize{(#1) \textit{#2}}}}%
+  \else{#3}\fi
+}
+
+\newcommand{\dpw}[1]{\Remark{dpw}{#1}{}}
+\newcommand{\kf}[1]{\Remark{kf}{#1}{}}
+\newcommand{\njf}[1]{\Remark{njf}{#1}{}}
+\newcommand{\kz}[1]{\Remark{kz}{#1}{}}
+
 \newcommand{\cut}[1]{}
 \newcommand{\reminder}[1]{{\it #1 }}
 \newcommand{\poplversion}[1]{#1}

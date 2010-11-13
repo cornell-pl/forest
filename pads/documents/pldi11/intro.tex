@@ -1,97 +1,189 @@
 \section {Introduction}
 \label{sec:intro}
 
+\dpw{argg: telling the story is slightly de-anonymizing.  What to do?}%
+Databases are an effective, time-tested technology for storing
+structured and semi-structured data.  Nevertheless, many computer
+users eschew the benefits of structured databases and store important
+semi-structured information in collections of conventional files,
+scattered across a conventional file system.  For example, the
+Princeton Computer Science Department, which should know better,
+stores records of undergraduate student grades in a structured set of
+directories and uses a variety of scripts to compute averages and
+study grading trends.  Similarly, Michael Freedman, collects massive
+numbers of log files from Coral, a distributed content distribution
+network~\cite{coral}.  The logs are orangized in hierarchical
+directory structures based on machine name, time and date.  Freedman
+mines for information on system security, health and performance.  At
+Harvard, Vinothan Manoharan, a physics professor, stores extensive
+experimental information on colloidal spheres in the file system and
+extracts information using python scripts.  At AT\&T, vast structured
+repositories contain networking information,
+phone call detail and billing data.  Of course, there are
+many other examples across the computational sciences and social
+sciences, in computer systems research, in computer
+systems administration, and in industry.
 
-One of the most pressing, modern programming language design problems is how
-to provide programmers with immediate, low-cost, easy-to-understand
-data access and data management tools.  
-There are many aspects to this problem: database access (Links), 
-program-to-program
-communication infrastructure (Protobufs), language-integrated query (Linq), etc.
-In this paper, we propose a new
-kind of language design, geared towards solving one corner of this
-crucial problem --- the corner.  Our proposal, \forest{}
+There are a number of reasons that users
+choose to implement ad hoc data bases in this manner.  One of the most 
+prevalent
+reasons is simply that using a database requires a substantial up-front cost that
+many users cannot be bothered to pay, even if it might mean long-term
+benefits.  The up-front costs include (1) finding and evaluating
+appropriate data base
+software (and possibly paying for it); (2) learning how to load data into
+the database; (3) possibly writing programs that transform the raw
+data in to a form that allows it to be loaded appropriately; 
+(4) learning how to access the data once it is in the database; and 
+(5) connecting to the data base to a conventional programming language
+for query post-processing, visualization, debugging, or other tasks.
 
-Databases are an effective, time-tested technology for storing structured
-and semi-structured data.  Nevertheless, many
-computer users eschew the benefits of structured databases
-and store their information in collections of files, scattered across
-a conventional file system.  Programming with such data repositories is
-complicated and error-prone, because there is generally no documentation
-of file system structure, no systematic means for detecting errors, no
-support for large sets of files and no
-useful generic tool or query support.  Typically, in such settings,
-programmers fall back on using inflexible, unreuseable, hard-to-understand, 
-hard-to-modify collections of scripts.
+Naturally, rather than paying these costs, programmers often simply
+dump their data into the file system and use conventional programming
+tools to deal with it.  Unfortunately, programming with such data 
+repositories is complicated and error-prone, and often has longer-term
+negative impacts.  First, there is generally no documentation
+of file system structure.  This means that the data and its organization
+can be hard to understand,
+new users take longer to come up to speed on the infrastructure and there
+is risk that if the system administrator leaves his or her post, knowledge
+of the data schema will be lost.  Second, over time, the repository
+structure tends to evolve: new elements are added and old formats are changed,
+sometimes accidentally.  This can cause hacked-up data processing
+tools to break or to return erroneous results. Naturally, it also makes
+understanding the data even more difficult.  Third, there is often no 
+systematic means for detecting data errors.  Data errors are immensely
+important as they can often be signals that other parts of the system --
+hardware, servers or other elements of the tool chain -- are broken.
+Fourth, every analysis is more-or-less
+built from scratch.  There is no auxiliary 
+query or tool support and no debugging support.  Any tools that are
+built tend to be ``one-off'' tools that are inflexible, unreuseable
+and difficult to modify.  Fifth, dealing with large data sets, which
+are common in many settings, imposes extra difficulties.  One example
+of the simplest kind of unexpected difficulty is that standard tools 
+such as \cd{ls} simply break when more than 256 files appear on the
+command line.  Hence, naive scripts will not function properly on
+large data sets.  Programmers must tediously break up their data
+and process it in smaller sets.  While such problems are not
+technically insurmountable, they all add up to substantial amounts
+of time and programming resources that could be better spent if there
+was a better way.
 
-This paper proposes a more general and robust solution to the 
-  
-The goal of \forest{} project is to make programming with such collections
-of files as easy and robust as programming with structured, in-memory data 
-structures.  We
+In this paper, we propose a better way:  A novel specification language,
+programming environment and toolkit for processing file system fragments.
+This language, called \forest{}, is embedded directly in \haskell{}.
+\dpw{should the font for \haskell{} be the same as the font for \forest{}?}%
+It allows programmers to define the expected shape of file systems or
+file system fragments, to materialize actual file system fragments
+into a \haskell{} program as strongly-typed 
+\haskell{} data structures, and to support efficient, robust 
+programming with these
+data structures by generating useful type class instances, interfaces for
+file system meta data, programming libraries
+and integrated tools.  
 
+One of the primary goals of the system is
+to make programming with such file system fragments
+as lightweight, easy and robust as programming with any other strongly-typed,
+structured, in-memory \haskell{} data structure.  In addition, however,
+\forest{} specifications are useful simply because they are {\em executable 
+documentation} of expected file system structure.  For example, Unix file
+systems are expected to be laid out in a particular way and the 
+Filesystem Hierarchy Standard Group has laid out these expectations
+informally, in English, in
+a comprehensive way~\cite{fsh}.  \forest{} provides a formal language
+by which many of these expectations may be documented precisely and
+an implementation that allows users to check if their installation
+conforms to the standard. As another example, the 
+\pads{} website~\cite{padsweb}
+contains a relatively complex set of scripts and data files used to
+implement online demos.  
+\dpw{note: need anonymization of pads web site?}
+When modifying these demos to add new examples
+or features, it is, literally, almost always the case that an important
+file will be forgotten or some set of permissions will be set incorrectly.
+The debugging process through the web interface is cumbersome and unintuitive.
+However, a \forest{} description can be used to document and check that
+all necessary files are present and that their permissions are set properly.
+\dpw{we should find a citation for a security example that requires certain
+directories to not contain certain executables, for example.}
 
+As well as serving as documentation, checking for consistency, and 
+providing basic programming
+support by (lazily) materializing file system fragments in memory, \forest{}
+provides a substantial amount of auxiliary support for
+programmers.  The goal is for programmers to obtain a whole range
+benefits by writing one simple, compact file system specification.
+This automatically generated support includes all of the following: 
+\begin{enumerate}
+\item a set of new type declarations that characterize
+the shape of the file system fragment as it appears in memory; 
+\item a set of data structures that characterize errors and other metadata
+concerning the describe file system fragment;
+\item libraries for analyzing
+data and errors so that programmers may quickly detect
+and correct deviations from their expectations;
+\item a set of \haskell{} type class instances that make it possible for
+programmers to query, analyze, and transform file system data using generic
+libraries immediately;
+\item a set of domain-specific tools, such as file system visualization,
+access control analysis, automatic file system shape analysis and description
+generation;
+\item robust, drop-in, specification-directed replacements for standard
+Unix-style command-line tools such as \cd{ls}, \cd{grep}, \cd{tar} and
+others.
+\end{enumerate}
 
-Define the problem:
+Hence, in summary, this paper makes the following important contributions.
 
 \begin{itemize}
-\item Data accumulates over time in sets of files organized in
-hierarchically structured file systems.  Show table of examples.
-\item Problem: no documentation
-\item Problem: errors. No tools for consistency checking/error dection
-\item Problem: data encoded in combination of file and directory names as
-well as internally in files
-\item Problem: data is large: complicates infrastructure for getting
-  data in to and out of programs. Can't even use standard unix tools
-  like ls due to overexpansion on command line.
-\end{itemize}
-
-Goal: to make programming with data on disk as easy as programming
-with a data structure in a program
-
-Contributions:
-
-\begin{itemize}
-\item Concept:  the idea to extend a modern programming language with
-fully integrated linguistic features for describing file system fragments
+\item {\bf Conceptual}:  this paper proposes the novel {\em idea} 
+of extending a modern programming language with
+{\em tightly integrated linguistic features for describing file system 
+fragments}
 and for automatically generating programming infrastructure from such 
 descriptions.
 
-\item Description Language Design: we have carefully chosen \forest{}
-  programming features based on our analysis of a number of examples.
+\item {\bf Language Design}: this paper describes our 
+  carefully chosen \forest{}
+  programming features and explains our choices by appeal to a number of 
+  real-world examples.
   The design is expressive, concise and tastefully integrated into
-  Haskell.  It lowers the barrier to programming with data on disk.
-  We give examples...
+  Haskell.  The design is backed by a formal semantics for a core calculus,
+  inspired by classical tree logics.
 
-\item Tool Generation: tools are automatically generated so that
-  programmers may begin working with their described data immediately
-  and easily.  List tools generated.  We illustrate the use of these
-  tools on examples.
+\item {\bf Tool Generation Architecture}: this paper describes the architecture of
+  our tool generation infrastructure and the way it interacts with and 
+  exploits the powerful generic programming features of \haskell{}.
 
-\item Implementation: a fully functional extension of Haskell.  We
-  evaluate its performance briefly?  Side-comment: the implementation
-  acts as a case study in *extensive,* practical, domain-specific
+\item {\bf Case Study in Domain-Specific Language Design}: \forest{}
+  is fully implemented and its design 
+  acts as a case study in extensive, practical, domain-specific
   language design in modern languages by combining a number of
-  experimental features of Haskell such as quasi-quoting, template
-  haskell, etc.
-
-\item Semantics: we have a semantics for a core calculus.  This guides
-  our implementation decisions.  Unlike parser generators, which are
-  based on grammars over sequences, this is based on a classical logic
-  over trees.
+  experimental features of \haskell{} such as quasi-quoting and \template{}.
+  Moreover, our \forest{} design and implementation experience 
+  has had practical impact on the \haskell{} implementation itself:  
+  the \haskell{} team modified and extended
+  \template{} in response to our needs.  Several of these modifications
+  are now available in the most recent release of \haskell{}.
+  \dpw{Most recent release?  Head release? Future releases? Please correct me.}%
 \end{itemize}
 
-Tool Notes:
+Overall, \forest{} substantially lowers pragmatic barriers to programming 
+with data on disk.
 
-\begin{itemize}
-\item Core tools implemented within the compiler. (loader)
-\item Generic tools, useable with all descriptions, and implemented as
-  third-party libraries.
-\begin{itemize}
-\item Unix-like shell tools: grep, ls, tar, cp, rm
-\item description-generation tool using universal description
-\item simple directory visualization by generating dot files and highlighting errors
-\item pretty printing tools
-\end{itemize}
-\item Custom programming against typed interface and querying using Haskell generic programming libraries
-\end{itemize}
+%% Tool Notes:
+
+%% \begin{itemize}
+%% \item Core tools implemented within the compiler. (loader)
+%% \item Generic tools, useable with all descriptions, and implemented as
+%%   third-party libraries.
+%% \begin{itemize}
+%% \item Unix-like shell tools: grep, ls, tar, cp, rm
+%% \item description-generation tool using universal description
+%% \item simple directory visualization by generating dot files and highlighting errors
+%% \item pretty printing tools
+%% \end{itemize}
+%% \item Custom programming against typed interface and querying using Haskell generic programming libraries
+%% \end{itemize}
