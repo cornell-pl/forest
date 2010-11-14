@@ -18,8 +18,15 @@ that can be manipulated by programmers as if it were any other
 data structure in their program.  \forest{} generates
 metadata that describes to what degree the files on disk conform to
 the specification, making error detection easy. The system greatly
-lowers the divide between on-disk and in-memory representations of data.
+lowers the divide between on-disk and in-memory representations of
+data. \forest{} leverages \haskell{}'s powerful generic programming
+infrastructure to make it easy for third-party developers to build
+tools that work for any \forest{} description.  We illustrate the use
+of this infrastructure to build a number of useful tools, including a
+visualizer, permission checker, and description-specific tools for a
+number of standard shell tools.
 
+\cut{
 We present the design for \forest{} and describe the implementation of
 a full working prototype. From a single compact description, the
 \forest{} compiler generates a collection of \haskell{} types and
@@ -32,4 +39,4 @@ illustrating the use of \forest{} on a number of real-world directory
 structures and programming tasks, including description-specific
 replacements for a number of standard shell tools. Finally, we
 formalize the core elements of the language as a simple calculus based
-on classical tree logics.
+on classical tree logics.}
