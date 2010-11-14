@@ -201,7 +201,7 @@ the structure of a directory holding data for the class of year \cd{y},
 and \cd{Grads}, a description that specifies the structure of the
 directory holding all graduated classes.   
 \begin{code}
-\kw{data} PrincetonCS_1 = \kw{Directory}
+\kw{type} PrincetonCS_1 = \kw{Directory}
   \{ notes   \kw{is} "README"    :: Text
   , seniors \kw{is} "classof11" :: Class 11
   , juniors \kw{is} "classof12" :: Class 12
@@ -219,7 +219,7 @@ object on disk, and
 When the external name is itself a valid Haskell label, users may omit
 it, in which case \forest{} uses the label as the on-disk name:
 \begin{code}
-\kw{data} PrincetonCS_2 = \kw{Directory}
+\kw{type} PrincetonCS_2 = \kw{Directory}
   \{ notes \kw{is} "README" :: Text
   , classof11 :: Class 11
   , classof12 :: Class 12
@@ -241,7 +241,7 @@ fields in a directory description at the same time.  For example, if
 document that fact by mentioning it twice in the directory
 description, once as a text file and once as a symbolic link:
 \begin{code}
-\kw{data} PrincetonCS_3 = \kw{Directory}
+\kw{type} PrincetonCS_3 = \kw{Directory}
   \{ link  \kw{is} "README" :: SymLink
   , notes \kw{is} "README" :: Text
   , ...
@@ -290,7 +290,7 @@ to \textit{construct} the appropriate file names using Haskell functions:
                ++ (show i)
 > mkClass y = "classof" ++ (toStrN y 2)
 \mbox{}
-\kw{data} PrincetonCS (y::Integer) = \kw{Directory}
+\kw{type} PrincetonCS (y::Integer) = \kw{Directory}
   \{ notes   \kw{is} "README" :: Text
   , seniors \kw{is} <|mkClass y    |> :: Class y
   , juniors \kw{is} <|mkclass (y+1)|> :: Class <|y+1|>
@@ -325,7 +325,7 @@ describe the class directory:
 > leaveRE = RE "LEAVE|Leave"
 > wdRE    = RE "WITHDRAWN|WITHDRAWAL|Withdrawn"
 \mbox{}
-\kw{data} Class (y::Integer) = \kw{Directory}
+\kw{type} Class (y::Integer) = \kw{Directory}
   \{ bse \kw{is} <|"BSE" ++ (toString y)|> :: Major
   , ab  \kw{is} <|"AB"  ++ (toString y)|> :: Major   
   , trans \kw{matches} transRE :: Maybe Major      
@@ -441,7 +441,7 @@ Using attributes, we can write a \textit{universal
   directory description}, which is sufficiently general to describe
 any directory:
 \begin{code}
-\kw{data} Universal = \kw{Directory}
+\kw{type} Universal = \kw{Directory}
   \{ asc \kw{is} [ f :: Text
            | f <- \kw{matches} (GL "*"), 
             <|get_kind f_att == AsciiK|>]

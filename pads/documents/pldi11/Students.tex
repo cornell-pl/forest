@@ -1,0 +1,102 @@
+\begin{code}
+\textcolor{red}{-- Auxiliary Haskell functions for PADS description}
+ws   = RE "[ \t]+"
+ows  = RE "[ \t]*"
+junk = RE ".*"
+space = ' '
+quote = '\''
+comma = ','
+\end{code}
+
+\begin{code}
+\textcolor{red}{-- PADS description of Princeton CS Student Record Format}
+[pads| 
+  \kw{type} Grade = Pre "[ABCD][+-]?|F|AUD|N|INC|P"
+\mbox{}
+  \kw{data} Course = 
+    \{ sort         :: Pre "[dto]",           ws
+    , departmental :: Pre "[.D]",            ws
+    , passfail     :: Pre "[.p]",            ws
+    , level        :: Pre "[1234]",          ws
+    , department   :: Pre "[A-Z][A-Z][A-Z]", ws
+    , number       :: Pint \kw{where} <| 100 <= number && number < 600 |>, ws
+    , grade        :: Grade,                 junk                               
+    \} 
+\mbox{}
+  \kw{data} Middle_name = \{space, middle :: Pre "[a-zA-Z]+[.]?" \}    
+\mbox{} 
+  \kw{data} Student_Name(myname::String) = 
+    \{ lastname   :: Pre "[a-zA-Z]*"  \kw{where} <| toString lastname ==  myname |>,  comma, ows     
+    , firstname  :: Pre "[a-zA-Z]*" 
+    , middlename :: Maybe Middle_name
+    \}
+\mbox{}
+  \kw{data} School = AB | BSE
+\mbox{}
+  \kw{data} Person (myname::String) =
+    \{ fullname   :: Student_Name myname,    ws
+    , school     :: School,                 ws, quote
+    , year       :: Pre "[0-9][0-9]"
+    \}
+\mbox{}
+  \kw{type} Header  = [Line (Pre ".*")] \kw{with} term length of 7 
+  \kw{type} Trailer = [Line (Pre ".*")] \kw{with} term Eof 
+  \kw{data} Student (name::String) = 
+    \{ person  :: Line (Person name)
+    , Header  
+    , courses :: [Line Course]
+    , Trailer
+    \}
+|]
+\end{code}
+
+\begin{code}
+\textcolor{red}{-- Auxiliary Haskell functions for Forest description}
+template s = s `elem` ["SSSS.txt", "SSS.txt", "sxx.txt", "sss.txt", "ssss.txt"]
+not_template = not . template
+\mbox{}
+getYear :: String -> Integer
+getYear s = read (reverse (take 2 (reverse s)))
+toStrN i n = (replicate  (n - length (show i)) '0') ++ (show i)
+mkClass y = "classof" ++ (toStrN y 2)
+\mbox{}
+transferRE  = RE "TRANSFER|Transfer"
+leaveRE     = RE "LEAVE|Leave"
+withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
+cRE         = RE "classof[0-9][0-9]" 
+txt         = GL "*.txt"
+\end{code}
+\vfill
+
+
+\begin{code}
+\textcolor{red}{-- FOREST description of Princeton CS Department Database}
+[forest|
+  \textcolor{red}{-- Root of the hierarchy}
+  \kw{type} PrincetonCS (y::Integer) = \kw{Directory}
+    \{ notes \kw{is} "README" :: Text
+    , seniors   \kw{is} <|mkClass y      |> :: Class y
+    , juniors   \kw{is} <|mkClass (y + 1)|> :: Class <| y + 1 |>
+    , graduates :: Grads
+    \}
+\mbox{}
+  \textcolor{red}{-- Collection of directories containing graduated students}
+  \kw{type} Grads = 
+     Map [ c :: Class <| getYear c |> | c <- matches cRE ] 
+\mbox{}
+  \textcolor{red}{-- Directory containing all students in a particular year}
+  \kw{type} Class (y :: Integer) = \kw{Directory}
+    \{ bse \kw{is} <|"BSE" ++ (toStrN y 2)|> :: Major
+    , ab  \kw{is} <|"AB"  ++ (toStrN y 2)|> :: Major   
+    , transfer  \kw{matches} transferRE  :: Maybe Major 
+    , withdrawn \kw{matches} withdrawnRE :: Maybe Major 
+    , leave     \kw{matches} leaveRE     :: Maybe Major 
+    \}
+\mbox{}
+  \textcolor{red}{-- Collection of files containing all students in a particular major.}
+  \kw{type} Major = Map 
+    [ s :: File (Student <| dropExtension s |>) 
+    | s <- \kw{matches} txt,  <| (not . template) s |>  ]  
+|]
+
+\end{code}
