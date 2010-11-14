@@ -3,10 +3,11 @@
 Third-party developers can use generic programming~\cite{Lammel+:syb} to
 generate tools that will work for any file system structure that has a
 \forest{} description.  As a proof of concept, we have written a
-number of such tools, which we describe in this section.  We simulated
-being third-party users by not changing the code of the \forest{}
-compiler to build any of these tools.  The generic programming
-infrastructure provided by Haskell makes writing such tools very easy.
+number of such tools, which we describe in this section.  
+%We simulated
+%being third-party users by not changing the code of the \forest{}
+%compiler to build any of these tools.  The generic programming
+%infrastructure provided by Haskell makes writing such tools very easy.
 
 \subsection{Generic Querying }
 One simple application of generic programming is querying 
@@ -27,10 +28,11 @@ with the Princeton Computer Science Department data, then the code
 dirs  = findFiles cs_md (\textbackslash(r::FileInfo) -> 
                            (kind r) == DirectoryK)
 other = findFiles cs_md (\textbackslash(r::FileInfo) -> 
-                           (owner r) /= "dpw")
+                           (owner r) /= "bwk")
 \end{code}
 binds \cd{dirs} to the list of all directories in the data set and
-\cd{other} to all the directories and files not owned by \cd{"dpw"}.
+\cd{other} to all the directories and files not owned by 
+user \cd{"bwk"}.
 
 To implement the \cd{findFiles} function, we use the generic Haskell
 function \cd{listify}: 
@@ -42,7 +44,7 @@ instantiated to match the argument type of its predicate argument.
 We map the \cd{fullpath} function over the resulting list of
 \cd{FileInfo} structures to return only the \cd{FilePaths}.
 
-\subsection{\fg{}}
+\subsection{File System Visualization}
 \fg{} generates a graphical representation of any directory structure
 that matches a \forest{} specification.  We generated the graphs in
 Figures~\ref{fig:student-pic} and \ref{fig:coral-pic} using  
@@ -103,8 +105,8 @@ the implementation of this tool is again applying the \cd{listify}
 function to the meta-data for the \forest{} description.
 
 \subsection{Shell Tools}
-Finally, we have implemented analogs of many shell tools that work
-over only the portion of the file system that match the given
+We have implemented analogs of many shell tools that work
+over a file system fragment defined by a
 \forest{} description:
 \begin{code}
 ls    :: (ForestMD md) => md -> String -> IO String
@@ -120,8 +122,8 @@ out to a shell tool to do the work.  For \cd{ls}, the second argument
 gives the command-line arguments to pass to the shell version of
 \cd{ls}, and the result is the resulting output. The implementation
 uses \cd{xarg} to lift the restriction on the number of files that can
-be passed to \cd{ls}. For \cd{grep}, the second argument is the search
-search and result is the output of the shell version of \cd{grep}. For
+be passed to \cd{ls}. For \cd{grep}, the second argument is the 
+search string and result is the output of the shell version of \cd{grep}. For
 \cd{tar}, the second argument specifies the location for the resulting
 tarball.  The implementation uses a file manifest to allow \cd{tar} to
 work regardless of the number of files involved.  The \cd{cp} tool
