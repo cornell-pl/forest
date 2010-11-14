@@ -30,7 +30,7 @@
 \newcommand{\REP}{\ensuremath{\mathit{REP}}}
 \newcommand{\PD}{\ensuremath{\mathit{PD}}}
 \newcommand{\pd}[1]{\ensuremath{(#1)~\mathit{pd}}}
-\newcommand{\eval}[1]{\ensuremath{\mathsf{eval}(#1)}}
+\newcommand{\eval}[2]{\ensuremath{\mathsf{eval}_{#1}(#2)}}
 \newcommand{\ptext}{\ensuremath{\mathsf{Txt}}}
 \newcommand{\pbin}{\ensuremath{\mathsf{Bin}}}
 \newcommand{\pany}{\ensuremath{\mathsf{Any}}}
@@ -38,93 +38,9 @@
 \newcommand{\defaultatt}{\ensuremath{\att_{\mathsf{df}}}}
 \newcommand{\repty}[1]{{\cal R}[\![ #1 ]\!]}
 \newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
-\newcommand{\checkk}[3]{\fn{\mathit{check}}{#1,#2,#3}}
-
-In order to capture the essence of \forest{}'s semantics, we have
-defined an idealized core calculus.  This calculus has helped us
-design various aspects of the \forest{} language itself and provides
-compact means by which we may communicate the central, orthogonal
-concepts to others.  It is inspired by classical ({\em i.e.,} not
-separating, substructural or ambient) unordered tree logics, though
-customized for our particular needs.
-
-\paragraph*{File system model and specification syntax.}
-Figure~\ref{fig:calculus-syntax} presents the formal file system model.  
-In our model, file paths $r$ are
-sequences of string names\footnote{For simplicity, we ignore the special path
-elements ``..'' and ``.''.  Adding these elements
-requires path normalization in the semantics, which, while easily
-achievable, does not shed light on interesting design elements.} 
-and file systems $F$
-are finite partial maps from paths to pairs of file attributes $\att$
-and file system contents $T$.  We leave the attribute records $\att$ 
-unspecified, but they should include the usual elements: owner, group,
-date modified, {\it etc.}  We write $\defaultatt$ for the dummy or
-default attribute record where necessary.
-A $T$ may be a file $\File{n}$ (with underlying string contents $n$),
-a directory $\Dir{ \Set{n_1,\dots,n_k} }$ (with contents named 
-$n_1, \ldots, n_k$) or a symbolic link $\Link{r}$ (where $r$ is the
-path linked to).  
-
-A file system model $F$ is only {\em well-formed} when it is tree-shaped,
-with directories forming internal nodes and files and symbolic
-links the leaves.  More formally, the following conditions must hold:
-\begin{itemize}
-\item The domain of $F$ must be prefix-closed.
-\item If $F(r) = (\att,\Dir{ \Set{n_1,\dots,n_k} })$ then for $i=1,\ldots,k$,
-$\PCons{r}{n_i} \in \dom{F}$.
-\item  If $F(r) = (\att,\File{n})$ or $(m,\Link{r'})$ then 
-there does not exist $n$ such that $\PCons{r}{n} \in \dom{F}$.
-\end{itemize}
-
-Figure~\ref{fig:calculus-syntax} also presents the syntax of
-a simple computation language $e$ and our
-file system specifications $s$.  The computation language $e$
-contains values $v$, variables $x$, and some number of other
-operations, which we leave unspecified.  An environment
-$\Env$ maps variables to values.  A semantic function
-$\eval{\Env,F,r,e}$ evaluates an expression $e$ in an
-environment $\Env$, file system $F$, and at current path $r$,
-producing a value $v$.
-
-The simplest file system specifications are the constants
-$k$, which range over basic specifications such as those for
-text files (\ptext), binary files (\pbin), or any
-file system object at all (\pany). 
-
-\padshaskell{} specifications are modelled as
-\SAdhoc{b} where $b$, a parser,  is a total
-function from pairs of environments and strings to
-values.  
-
-For syntactic reasons, \forest{} itself combines specifications
-for records and paths and also comprehensions and paths.
-However, the calculus reveals that (dependent) records, paths 
-and comprehensions
-may all be understood as independent, orthogonal constructs.
-The record specifications are modelled as a dependent pair,
-written \SPair{x}{s_1}{s_2}, where $x$ may appear in $s_2$.
-A path specification is written $\SPath{e}{s}$, where $e$ is
-a path name (to be appended to the current path) and 
-$s$ specifies the file system fragment at that path.  As an example,
-a combined \forest{} record-and-path specification such as
-\cd{\{c is "c.txt" :: C, dat is "d.txt" :: D c\}}
-is written in the calculus as
-$\SPair{x}{(\SPath{\mathtt{"c.txt"}}{C})}{(\SPath{\mathtt{"d.txt"}}{D\; x})}$.
-A specification with the form $\SSetComp{s}{x}{e}$ is a comprehension where
-$e$ is a set of values, $x$ is bound to each such value in turn, and
-$s$, which may contain $x$, specifies a file system fragment for each
-such $x$.  Again, a combined \forest{} comprehension-and-path
-\cd{[x :: s | x <- e]} is modelled as the composition of two
-orthogonal constructors ($\SSetComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$).
-
-A predicate specifications $\SPred{e}$ succeeds
-when $e$ evaluates to \True{} and fails when $e$ evaluates
-to \False.  A \forest{} constraint of the form \cd{s where e}
-is modelled in the calculus as a dependent pair with a predicate:
-$\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$
-
-Finally, a maybe specification is written $\SOption{s}$ in the calculus.
+\newcommand{\checkk}[3]{\fn{\mathit{ck}}{#1,#2,#3}}
+\newcommand{\stringty}{{string}}
+\newcommand{\metapdty}{{meta}}
  
 \begin{figure}
 \[
@@ -153,8 +69,98 @@ Finally, a maybe specification is written $\SOption{s}$ in the calculus.
 \label{fig:calculus-syntax}
 \end{figure}
 
+In order to capture the essence of \forest{}'s semantics, we have
+defined an idealized core calculus.  This calculus has helped us
+design various aspects of the \forest{} language and provides
+compact means by which we may communicate the central, orthogonal
+concepts to others.  It is inspired by classical ({\em i.e.,} not
+separating, substructural or ambient) unordered tree logics, though
+customized for our particular needs.
+
+\paragraph*{File system model and specification syntax.}
+Figure~\ref{fig:calculus-syntax} presents the formal file system model.  
+In our model, file paths $r$ are
+sequences of string names\footnote{For simplicity, we ignore the special path
+elements ``..'' and ``.''.  Adding these elements
+requires path normalization in the semantics, which, while easily
+achievable, does not shed light on interesting design elements.} 
+and file systems $F$
+are finite partial maps from paths to pairs of file attributes $\att$
+and file system contents $T$.  We leave the attribute records
+unspecified, but they should include the usual elements: owner, group,
+date modified, {\it etc.}  We write $\defaultatt$ for the dummy or
+default attribute record where necessary.
+A $T$ may be a file $\File{n}$ (with underlying string contents $n$),
+a directory $\Dir{ \Set{n_1,\dots,n_k} }$ (with contents named 
+$n_1, \ldots, n_k$) or a symbolic link $\Link{r}$ (where $r$ is the
+path linked to).  
+
+A file system model $F$ is only {\em well-formed} when it is tree-shaped,
+with directories forming internal nodes and files and symbolic
+links the leaves.  More formally, these conditions must hold:
+\begin{itemize}
+\item The domain of $F$ must be prefix-closed.
+\item If $F(r) = (\att,\Dir{ \Set{n_1,\dots,n_k} })$ then for $i=1,\ldots,k$,
+$\PCons{r}{n_i} \in \dom{F}$.
+\item  If $F(r) = (\att,\File{n})$ or $(m,\Link{r'})$ then 
+there does not exist $n$ such that $\PCons{r}{n} \in \dom{F}$.
+\end{itemize}
+Checking functions for other constants such as directories, links,
+ascii or binary files may be defined similarly.
+
+Figure~\ref{fig:calculus-syntax} also presents the syntax of
+a simple computation language $e$ and our
+file system specifications $s$.  The computation language $e$
+contains values $v$, variables $x$, and some number of other
+operations, which we leave unspecified.  An environment
+$\Env$ maps variables to values.  A semantic function
+$\eval{\tau}{\Env,F,r,e}$ evaluates an expression $e$ in an
+environment $\Env$, file system $F$, and at current path $r$,
+producing a value $v$ with type $\tau$.
+
+The simplest file system specifications are the constants
+$k$, which range over basic specifications such as those for
+text files (\ptext), binary files (\pbin), or any
+file system object at all (\pany). 
+
+\padshaskell{} specifications are modelled as
+\SAdhoc{b} where $b^{\tau_m}_{\tau_r}$, a parser,  is a total
+function from pairs of environments and strings to
+pairs with type $\tau_r \times \tau_m$ where the
+first element of the pair is the representation and the
+second element is the metadata.  
+
+For syntactic reasons, \forest{} itself combines specifications
+for records and paths and also comprehensions and paths.
+However, the calculus reveals that (dependent) records, paths 
+and comprehensions
+may all be understood as independent, orthogonal constructs.
+Record specifications are modelled as dependent pairs,
+written \SPair{x}{s_1}{s_2}, where $x$ may appear in $s_2$.
+A path specification is written $\SPath{e}{s}$, where $e$ is
+a path name (to be appended to the current path) and 
+$s$ specifies the file system fragment at that path.  As an example,
+a combined \forest{} record-and-path specification such as
+\cd{\{c is "c.txt" :: C, dat is "d.txt" :: D c\}}
+is written in the calculus as
+$\SPair{x}{(\SPath{\mathtt{"c.txt"}}{C})}{(\SPath{\mathtt{"d.txt"}}{D\; x})}$.
+A specification with the form $\SSetComp{s}{x}{e}$ is a comprehension where
+$e$ is a set of values, $x$ is bound to each such value in turn, and
+$s$, which may contain $x$, specifies a file system fragment for each
+such $x$.  Again, a combined \forest{} comprehension-and-path
+\cd{[x :: s | x <- e]} is modelled as the composition of two
+orthogonal constructors ($\SSetComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$).
+
+A predicate specifications $\SPred{e}$ succeeds
+when $e$ evaluates to \True{} and fails when $e$ evaluates
+to \False.  A \forest{} constraint of the form \cd{s where e}
+is modelled in the calculus as a dependent pair with a predicate:
+$\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$
+
+Finally, a maybe specification is written $\SOption{s}$ in the calculus.
+
 \paragraph*{Calculus Semantics.}
-The calculus has a semantics in three parts, which represent the three different
+The calculus has a semantics in three parts, which represent three different
 artifacts generated by the \forest{} compiler from each specification.  The
 first semantic judgement has the form $\Env;F;r \models s \yields v,d$.
 Intuitively, this judgement states that in environment $\Env$ and file system
@@ -166,7 +172,27 @@ fail to match the given specification, defaults are generated for the representa
 $v$ and errors are recorded in the metadata $d$.  This design is preferable to
 failing outright as it allows a programmer
 to explore a file system fragment even when it contains errors, as is common
-in ad hoc data repositories.  The second and third
+in ad hoc data repositories.  
+
+The rule for constants depends upon upon
+an auxiliary function {\it ck} (pronounced ``check'')
+that interprets the constants.
+For example, {\it ck} for a constant {\sf F} describing any file
+(but not symbolic link or directory) might be defined as follows:
+\[
+\begin{array}{@{}l}
+ck(\mbox{\sf F}^{\metapdty}_{\stringty},F,r) = (n,(\True,\att)), \mathrm{if } F(r) = (\att,\File{n}) \\
+ck(\mbox{\sf F}^{\metapdty}_{\stringty},F,r) = ("",(\False,\att)), \mathrm{if } F(r) = (\att,T), T \not=\File{n} \\
+ck(\mbox{\sf F}^{\metapdty}_{\stringty},F,r) = ("",(\False,\defaultatt)), \mathrm{otherwise}
+\end{array}
+\]
+
+The rule for \padshaskell{} parsers, and several of the other rules,
+use the function $valid(d)$.  This function extracts a boolean from the
+metadata structure $d$: if $\True$, there are no errors in the structure;
+if $\False$, there are errors in the structure.
+
+The second and third
 semantic judgements characterize the shape of the representation and metadata
 given a specification by giving their types.  They have the form $\repty{s} = \tau$ and
 $\mdty{s} = \tau$, respectively.  The three sets of definitions obey the following
@@ -193,7 +219,7 @@ and \ref{fig:calculus-types}.
 \[
 \infrule
 { F(r) = (\att,\File{n}) \qquad 
-  b(E,n) = v,d }
+  b^{\tau_m}_{\tau_r}(E,n) = v,d }
 { \Env;F;r \models \SAdhoc{b} \yields v,(\valid{d},(d,\att)) }
 { }
 \]
@@ -202,7 +228,7 @@ and \ref{fig:calculus-types}.
 \infrule
 { %\begin{array}{l}
   F(r) = (\att,\Dir{\_}) \text{ or } F(r) = (\att,\Link{\_}) \qquad
-  b(E,\epsilon) = (v,d)
+  b^{\tau_m}_{\tau_r}(E,\epsilon) = (v,d)
   %\end{array} 
 }
 { \Env;F;r \models \SAdhoc{b} \yields v,(\False,(d,\att)) }
@@ -221,7 +247,7 @@ and \ref{fig:calculus-types}.
 
 \[
 \infrule
-{ \Env;F;\eval{E,F,r,\PCons{r}{e}} \models s \yields v,d }
+{ \Env;F;\eval{path}{E,F,r,\PCons{r}{e}} \models s \yields v,d }
 { \Env;F;r \models \SPath{e}{s} \yields v,d }
 { }
 \]
@@ -231,16 +257,16 @@ and \ref{fig:calculus-types}.
 { \begin{array}{c}
   \Env;F;r \models s_1 \yields v_1,d_1 \\
   \Env[x \mapsto v_1, x_d \mapsto d_1];F;r \models s_2 \yields v_2,d_2 \\
-  v = (v_1,v_2) \qquad d = (d_1,d_2) 
+%  v = (v_1,v_2) \qquad d = (d_1,d_2) 
   \end{array} }
-{ \Env;F;r \models \SPair{x}{s_1}{s_2} \yields v,(\valid{d_1} \wedge \valid{d_2}, d) }
+{ \Env;F;r \models \SPair{x}{s_1}{s_2} \yields (v_1,v_2),(\valid{d_1} \wedge \valid{d_2}, (d_1,d_2)) }
 { }
 \]
 
 \[
 \infrule
 { \begin{array}{c}
-  \eval{\Env,F,r,e} = \{ v_1,\dots,v_k \} \\
+  \eval{\tau\ set}{\Env,F,r,e} = \{ v_1,\dots,v_k \} \\
   S = \Set{ (v,d) \mid v' \in \{ v_1,\dots,v_k \} \text{ and } \Env[x \mapsto v'];F;r \models s \yields v,d }
   \end{array} }
 { \Env;F;r \models \SSetComp{s}{x}{e} \yields \pi_1~S,(\bigwedge~\valid{\pi_2~S}, \pi_2~S) }
@@ -251,7 +277,7 @@ and \ref{fig:calculus-types}.
 \[
 \infrule
 { }
-{ \Env;F;r \models \SPred{e} \yields (),(\eval{(E,F,r,e)},()) }
+{ \Env;F;r \models \SPred{e} \yields (),(\eval{bool}{E,F,r,e},()) }
 { }
 \]
 
