@@ -1,3 +1,25 @@
+
+\begin{figure}
+% Note: Kessel has poor grades in COS but excels in HOC and 
+% is taking a grad course in GOL(s).  :-)
+\begin{code}
+KESSEL, PHIL	   BSE   '11
+- - - - - - - - - - - - - - - - - - -
+Type    Yr  Course     Grade
+         1             A+ to F
+d        2             P  (  Pass )
+t  D  p  3             INC
+o  .  .  4  Dept  xxx  N  (Not Avail)
+- - - - - - - - - - - - - - - - - - -
+d  .  .  1  COS   101  C
+o  .  .  1  HOC   101  A
+o  .  .  1  GOL   599  A+
+...
+\end{code}
+\caption{Initial portion of student record file {\tt KESSEL.txt}.}
+\label{fig:student-file-example}
+\end{figure}
+
 \begin{code}
 \textcolor{red}{-- Auxiliary Haskell functions for PADS description}
 ws   = RE "[ \t]+"
@@ -66,7 +88,6 @@ withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
 cRE         = RE "classof[0-9][0-9]" 
 txt         = GL "*.txt"
 \end{code}
-\vfill
 
 
 \begin{code}
@@ -98,5 +119,5 @@ txt         = GL "*.txt"
     [ s :: File (Student <| dropExtension s |>) 
     | s <- \kw{matches} txt,  <| (not . template) s |>  ]  
 |]
-
 \end{code}
+\vfill{}

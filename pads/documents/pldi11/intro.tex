@@ -1,13 +1,15 @@
 \section {Introduction}
 \label{sec:intro}
 
-\dpw{argg: telling the story is slightly de-anonymizing.  What to do?}%
+\dpw{argg: telling the story is slightly de-anonymizing.  What to
+  do?}%
+\kf{I don't think we should worry about it}
 Databases are an effective, time-tested technology for storing
 structured and semi-structured data.  Nevertheless, many computer
 users eschew the benefits of structured databases and store important
 semi-structured information in collections of conventional files,
 scattered across a conventional file system.  For example, the
-Princeton Computer Science Department, which should know better,
+Princeton Computer Science Department
 stores records of undergraduate student grades in a structured set of
 directories and uses scripts to compute averages and
 study grading trends.  Similarly, Michael Freedman collects
@@ -25,77 +27,78 @@ many other examples across the computational sciences and social
 sciences, in computer systems research, in computer
 systems administration, and in industry.
 
-There are a number of reasons that users
-choose to implement ad hoc data bases in this manner.  One of the most 
-prevalent
-is that using databases usually requires paying substantial up-front 
-costs such as: (1) finding and evaluating the
-appropriate database
-software (and possibly paying for it); (2) learning how to load data into
-the database; (3) possibly writing programs that transform the raw
-data in to a form that allows it to be loaded appropriately; 
-(4) learning how to access the data once it is in the database; and 
-(5) interfacing the database with a conventional programming language
-for query post-processing, visualization, debugging, or other tasks.
+There are a number of reasons that users choose to implement ad hoc
+databases in this manner.  One of the most prevalent is that using
+databases often requires paying substantial up-front costs such as:
+(1) finding and evaluating the appropriate database software (and
+possibly paying for it); (2) learning how to load data into the
+database; (3) possibly writing programs that transform the raw data 
+so it may be loaded; (4) learning how
+to access the data once it is in the database; and (5) interfacing the
+database with a conventional programming language to support
+applications that use the data.  Finally, it may be the case that the
+database optimizes for a pattern of use not suited to the actual
+application, which makes paying the overhead of a database system even
+less desirable. 
 
-Rather than paying these costs, programmers often 
-dump their data into the file system, using a combination of
-directory structure, file names and file contents
-to structure the data.  The ``query language'' is often a shell script
-or conventional programming language.  
-Unfortunately, programming with such roll-your-own 
-databases can have a number of negative consequences.  
-First, there is generally no documentation
-of file system structure.  This means that the data and its organization
-can be hard to understand,
-new users take longer to come up to speed on the infrastructure and there
-is risk that if the system administrator leaves his or her post, knowledge
-of the data schema will be lost.  Second, over time, the repository
-structure tends to evolve: new elements are added and old formats are changed,
-sometimes accidentally.  This can cause hacked-up data processing
-tools to break or to return erroneous results. Naturally, it also makes
-understanding the data even more difficult.  Third, there is often no 
+Rather than paying these costs, programmers often store their data in
+the file system, using a combination of directory structure, file
+names and file contents to structure the data.  We will call such a
+representation of a coherent set of data a \textit{\filestore{}}.
+The ``query language'' for a \filestore{}
+is often a shell script or conventional programming language.
+Unfortunately, programming with \filestores{} can have
+negative consequences.  First, there is generally no documentation,
+which means it can be hard to understand the data and its
+organization.  New users take longer to learn the structure, and if
+the system administrator leaves, knowledge of the data
+schema may be lost.  Second, the structure of the \filestore{} tends
+to evolve: new elements are added and old formats are changed, sometimes
+accidentally.  Such evolution can cause hacked-up data processing
+tools to break or return erroneous results; it also makes
+understanding the data even more difficult.  Third, there is often no
 systematic means for detecting data errors.  Data errors are immensely
-important as they can often be signals that other parts of the system --
-hardware, servers or other elements of the tool chain -- are broken.
-Fourth, every analysis is more-or-less
-built from scratch.  There is no auxiliary 
-query or tool support and no debugging support.  Any tools that are
-built tend to be ``one-off'' tools that are inflexible, unreuseable
-and difficult to modify.  Fifth, dealing with large data sets, which
-are common in many settings, imposes extra difficulties.  One example
-of the simplest kind is that standard tools 
-such as \cd{ls} simply break when more than 256 files appear on the
-command line.  Hence, programmers must tediously break up their data
-and process it in smaller sets.  
+important.  For \filestores{} containing monitoring information,
+errors can signal that some portion of the monitored system
+-- hardware, servers or other elements of the tool chain -- is
+broken.  Fourth, analyses tend to be built from scratch.
+There is no auxiliary query or tool support and no help with debugging.
+Any tools that are built tend to be ``one-off'' tools that are
+unreuseable.  Fifth, dealing with
+large data sets, which are common in this setting, imposes extra
+difficulties.  For example,  standard tools
+such as \cd{ls} fail when more than 256 files appear on the
+command line.  Hence, programmers must  break up their data
+and process it in smaller sets, a tedious task.
 %While such problems are not
 %technically insurmountable, they all add up to substantial amounts
 %of time and programming resources that could be better spent if there
 %was a better way.
 
-In this paper, we propose a better way:  A novel specification language,
-programming environment and toolkit for processing file system fragments.
-This language, called \forest{}, is embedded directly in \haskell{}.
 \dpw{should the font for \haskell{} be the same as the font for \forest{}?}%
-It allows programmers to define the expected shape of file systems or
-file system fragments, to materialize actual file system fragments
-into a \haskell{} program as strongly-typed 
-\haskell{} data structures, and to support efficient, robust 
-programming with these
-data structures by generating useful type class instances, interfaces for
-file system meta data, programming libraries
-and robust shell tools.  
+\kf{It takes more space; we could change forest to be the same as haskell}%
 
-One of the primary goals of the system is
-to make programming with such file system fragments
-as lightweight, easy and robust as programming with any other strongly-typed,
-structured, in-memory \haskell{} data structure.  In addition, however,
+In this paper, we propose a better way:  A novel type-based
+specification language, programming environment and toolkit for
+managing \filestores{}.
+This language, called \forest{}, is smoothly integrated with
+\haskell{} as an embedded domain-specific language.
+\forest{} allows programmers to describe the expected shape of a
+\filestore{} and to lazily materialize it into \haskell{} programs as
+format-specific \haskell{} data structures.  \forest{} 
+leverages \haskell{}'s support for generic programming to make it easy
+to define tools that work for any \filestore{} with a \forest{}
+description.  A primary goal of \forest{} is to make programming with \filestores{}
+as easy and robust as programming with any other 
+\haskell{} data structure.  
+
+In addition, 
 \forest{} specifications are useful because they are {\em executable 
-documentation} of expected file system structure.  For example, Unix file
+documentation}.  For example, Unix file
 systems should be laid out as the
 Filesystem Hierarchy Standard Group has described in their informal
 standards document~\cite{fsh}.  \forest{} provides a formal language
-by which many of these standards may be documented precisely and
+by which such standards can be documented precisely and
 a checker that allows users to verify that their installation
 conforms to the standard. As another example, the 
 \pads{} website~\cite{padsweb}
