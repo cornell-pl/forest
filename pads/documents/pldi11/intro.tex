@@ -9,17 +9,18 @@ semi-structured information in collections of conventional files,
 scattered across a conventional file system.  For example, the
 Princeton Computer Science Department, which should know better,
 stores records of undergraduate student grades in a structured set of
-directories and uses a variety of scripts to compute averages and
-study grading trends.  Similarly, Michael Freedman, collects massive
-numbers of log files from Coral, a distributed content distribution
-network~\cite{coral}.  The logs are orangized in hierarchical
+directories and uses scripts to compute averages and
+study grading trends.  Similarly, Michael Freedman collects
+sets of log files from Coral, a distributed content distribution
+network~\cite{freedman+:coral,freedman:coral-experience}.  
+The logs are orangized in hierarchical
 directory structures based on machine name, time and date.  Freedman
-mines for information on system security, health and performance.  At
-Harvard, Vinothan Manoharan, a physics professor, stores extensive
-experimental information on colloidal spheres in the file system and
+mines the logs for information on system security, health and performance.  At
+Harvard, Vinothan Manoharan, a physics professor, stores 
+his experimental data in sets of files and
 extracts information using python scripts.  At AT\&T, vast structured
 repositories contain networking information,
-phone call detail and billing data.  Of course, there are
+phone call detail and billing data.  And there are
 many other examples across the computational sciences and social
 sciences, in computer systems research, in computer
 systems administration, and in industry.
@@ -27,22 +28,24 @@ systems administration, and in industry.
 There are a number of reasons that users
 choose to implement ad hoc data bases in this manner.  One of the most 
 prevalent
-reasons is simply that using a database requires a substantial up-front cost that
-many users cannot be bothered to pay, even if it might mean long-term
-benefits.  The up-front costs include (1) finding and evaluating
-appropriate data base
+is that using databases usually requires paying substantial up-front 
+costs such as: (1) finding and evaluating the
+appropriate database
 software (and possibly paying for it); (2) learning how to load data into
 the database; (3) possibly writing programs that transform the raw
 data in to a form that allows it to be loaded appropriately; 
 (4) learning how to access the data once it is in the database; and 
-(5) connecting to the data base to a conventional programming language
+(5) interfacing the database with a conventional programming language
 for query post-processing, visualization, debugging, or other tasks.
 
-Naturally, rather than paying these costs, programmers often simply
-dump their data into the file system and use conventional programming
-tools to deal with it.  Unfortunately, programming with such data 
-repositories is complicated and error-prone, and often has longer-term
-negative impacts.  First, there is generally no documentation
+Rather than paying these costs, programmers often 
+dump their data into the file system, using a combination of
+directory structure, file names and file contents
+to structure the data.  The ``query language'' is often a shell script
+or conventional programming language.  
+Unfortunately, programming with such roll-your-own 
+databases can have a number of negative consequences.  
+First, there is generally no documentation
 of file system structure.  This means that the data and its organization
 can be hard to understand,
 new users take longer to come up to speed on the infrastructure and there
@@ -61,14 +64,14 @@ query or tool support and no debugging support.  Any tools that are
 built tend to be ``one-off'' tools that are inflexible, unreuseable
 and difficult to modify.  Fifth, dealing with large data sets, which
 are common in many settings, imposes extra difficulties.  One example
-of the simplest kind of unexpected difficulty is that standard tools 
+of the simplest kind is that standard tools 
 such as \cd{ls} simply break when more than 256 files appear on the
-command line.  Hence, naive scripts will not function properly on
-large data sets.  Programmers must tediously break up their data
-and process it in smaller sets.  While such problems are not
-technically insurmountable, they all add up to substantial amounts
-of time and programming resources that could be better spent if there
-was a better way.
+command line.  Hence, programmers must tediously break up their data
+and process it in smaller sets.  
+%While such problems are not
+%technically insurmountable, they all add up to substantial amounts
+%of time and programming resources that could be better spent if there
+%was a better way.
 
 In this paper, we propose a better way:  A novel specification language,
 programming environment and toolkit for processing file system fragments.
@@ -81,30 +84,29 @@ into a \haskell{} program as strongly-typed
 programming with these
 data structures by generating useful type class instances, interfaces for
 file system meta data, programming libraries
-and integrated tools.  
+and robust shell tools.  
 
 One of the primary goals of the system is
 to make programming with such file system fragments
 as lightweight, easy and robust as programming with any other strongly-typed,
 structured, in-memory \haskell{} data structure.  In addition, however,
-\forest{} specifications are useful simply because they are {\em executable 
+\forest{} specifications are useful because they are {\em executable 
 documentation} of expected file system structure.  For example, Unix file
-systems are expected to be laid out in a particular way and the 
-Filesystem Hierarchy Standard Group has laid out these expectations
-informally, in English, in
-a comprehensive way~\cite{fsh}.  \forest{} provides a formal language
-by which many of these expectations may be documented precisely and
-an implementation that allows users to check if their installation
+systems should be laid out as the
+Filesystem Hierarchy Standard Group has described in their informal
+standards document~\cite{fsh}.  \forest{} provides a formal language
+by which many of these standards may be documented precisely and
+a checker that allows users to verify that their installation
 conforms to the standard. As another example, the 
 \pads{} website~\cite{padsweb}
 contains a relatively complex set of scripts and data files used to
 implement online demos.  
 \dpw{note: need anonymization of pads web site?}
 When modifying these demos to add new examples
-or features, it is, literally, almost always the case that an important
+or features, it is almost always the case that an important
 file will be forgotten or some set of permissions will be set incorrectly.
-The debugging process through the web interface is cumbersome and unintuitive.
-However, a \forest{} description can be used to document and check that
+%The debugging process through the web interface is cumbersome and unintuitive.
+A \forest{} description can be used to document and check that
 all necessary files are present and that their permissions are set properly.
 \dpw{we should find a citation for a security example that requires certain
 directories to not contain certain executables, for example.}
@@ -112,10 +114,10 @@ directories to not contain certain executables, for example.}
 As well as serving as documentation, checking for consistency, and 
 providing basic programming
 support by (lazily) materializing file system fragments in memory, \forest{}
-provides a substantial amount of auxiliary support for
+provides substantial auxiliary support for
 programmers.  The goal is for programmers to obtain a whole range
 benefits by writing one simple, compact file system specification.
-This automatically generated support includes all of the following: 
+The automatically generated auxiliary support includes:
 \begin{enumerate}
 \item a set of new type declarations that characterize
 the shape of the file system fragment as it appears in memory; 
@@ -134,9 +136,7 @@ generation;
 Unix-style command-line tools such as \cd{ls}, \cd{grep}, \cd{tar} and
 others.
 \end{enumerate}
-
-Hence, in summary, this paper makes the following important contributions.
-
+In summary, this paper makes the following contributions.
 \begin{itemize}
 \item {\bf Conceptual}:  this paper proposes the novel {\em idea} 
 of extending a modern programming language with
@@ -147,10 +147,10 @@ descriptions.
 
 \item {\bf Language Design}: this paper describes our 
   carefully chosen \forest{}
-  programming features and explains our choices by appeal to a number of 
+  programming features and illustrates their application to
   real-world examples.
-  The design is expressive, concise and tastefully integrated into
-  Haskell.  The design is backed by a formal semantics for a core calculus,
+  The design is expressive, concise and effectively integrated into
+  Haskell.  It is also backed by a formal semantics for a core calculus,
   inspired by classical tree logics.
 
 \item {\bf Tool Generation Architecture}: this paper describes the architecture of
@@ -170,8 +170,8 @@ descriptions.
   \dpw{Most recent release?  Head release? Future releases? Please correct me.}%
 \end{itemize}
 
-Overall, \forest{} substantially lowers pragmatic barriers to programming 
-with data on disk.
+%Overall, \forest{} substantially lowers pragmatic barriers to programming 
+%with data on disk.
 
 %% Tool Notes:
 
