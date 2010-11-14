@@ -1,6 +1,16 @@
 \section{Example Repositiories}
 \label{sec:examples}
 
+
+\begin{figure}
+\vskip -.25in
+\hskip -.15in \scalebox{.31}{\includegraphics{StudentsNew.pdf}}
+\vskip -.1in
+\caption{Princeton computer science undergraduate data. The red
+  denotes an error, in this case, missing files.}
+\label{fig:student-pic}
+\end{figure}
+
 In this section, we present two example file repositories.
 We will use these examples to motivate and explain
 the design of \forest{}.
@@ -11,7 +21,7 @@ The faculty use the information in the repository every year
 to decide on undergraduate awards,
 to assign honor levels (honors, high honors, highest honors)
 to graduating seniors and to track grading trends.
-It was created in approximately 1990 and has been in use ever since.
+%It was created in approximately 1990 and has been in use ever since.
 As the repository has evolved over time, there 
 have been a few slight changes in format -- typical for
 ad hoc data repositories.  Naturally, any description needs to cope
@@ -19,7 +29,7 @@ with the variation.
  
 Figure~\ref{fig:student-pic} shows a snippet
 of the (anonymized) student data repository designed to
-illustrate its structure.  At the ``top'' level, there are
+illustrate its structure.  At the top level, there are
 three directories: 
 \cd{classof11} (seniors),
 \cd{classof12} (juniors)
@@ -35,48 +45,40 @@ and Engineering degrees.  Optionally, there are also subdirectories for
 students who withdrew from Princeton or transferred to another program. 
 Within any degree subdirectory, there is one text file
 per student that records the courses taken and the corresponding grades.
-Figure~\ref{fig:student-file-example} shows a fragment
-of a typical student record file.    Note that such files can easily be described by a
-data-description language like \pads{}~\cite{fisher+:pads}.
+%Figure~\ref{fig:student-file-example} shows a fragment
+%of a typical student record file.    
+%Note that such files can easily be described by a
+%data-description language like \pads{}~\cite{fisher+:pads}.
 Each such directory also usually contains a blank
 template file named \cd{sss.txt} (or something similar) for creating
 new students.
 
-\begin{figure}
-\vskip -.25in
-\hskip -.15in \scalebox{.31}{\includegraphics{StudentsNew.pdf}}
-\vskip -.1in
-\caption{Princeton computer science undergraduate data. The red
-  denotes an error, in this case, missing files.}
-\label{fig:student-pic}
-\end{figure}
 
-\begin{figure}
-% Note: Kessel has poor grades in COS but excels in HOC and 
-% is taking a grad course in GOL(s).  :-)
-\begin{code}
-KESSEL, PHIL	   BSE   '11
-- - - - - - - - - - - - - - - - - - -
-Type    Yr  Course     Grade
-         1             A+ to F
-d        2             P  (  Pass )
-t  D  p  3             INC
-o  .  .  4  Dept  xxx  N  (Not Avail)
-- - - - - - - - - - - - - - - - - - -
-d  .  .  1  COS   101  C
-o  .  .  1  HOC   101  A
-o  .  .  1  GOL   599  A+
-...
-\end{code}
-\caption{Initial portion of student record file {\tt KESSEL.txt}.}
-\label{fig:student-file-example}
-\end{figure}
+%% \begin{figure}
+%% % Note: Kessel has poor grades in COS but excels in HOC and 
+%% % is taking a grad course in GOL(s).  :-)
+%% \begin{code}
+%% KESSEL, PHIL	   BSE   '11
+%% - - - - - - - - - - - - - - - - - - -
+%% Type    Yr  Course     Grade
+%%          1             A+ to F
+%% d        2             P  (  Pass )
+%% t  D  p  3             INC
+%% o  .  .  4  Dept  xxx  N  (Not Avail)
+%% - - - - - - - - - - - - - - - - - - -
+%% d  .  .  1  COS   101  C
+%% o  .  .  1  HOC   101  A
+%% o  .  .  1  GOL   599  A+
+%% ...
+%% \end{code}
+%% \caption{Initial portion of student record file {\tt KESSEL.txt}.}
+%% \label{fig:student-file-example}
+%% \end{figure}
 
-The second repository contains log files for the Coral Content
-Distribution Network
-(CoralCDN)~\cite{freedman+:coral,freedman:coral-experience}. To
+The second repository contains log files for the Coral content
+distribution network~\cite{freedman+:coral,freedman:coral-experience}. To
 monitor the performance, health, and security of the system, the hosts
-participating in CoralCDN periodically send usage statistics back to
+participating in Coral periodically send usage statistics back to
 a central server. These statistics are collected and stored in a
 directory structure similar to the one depicted in Figure~\ref{fig:coral-pic}.
 The top-level \cd{logs} directory contains a set of subdirectories, one
