@@ -132,7 +132,7 @@ the location specified by the second argument \textit{while retaining
 the same directory structure}.   
 %The module that implements these tools is~80 lines of Haskell code.
 
-\subsection{Description Inference}
+\subsection{Description Inference Tool}
 This tool allows the user to generate a \forest{} description from the
 contents of the file system.   The function
 \begin{code}
@@ -140,16 +140,36 @@ getDesc :: FilePath -> IO String
 \end{code}
 takes as an argument the path to the root of the directory structure
 to infer.  It returns a string containing the generated
-representation.  \figref{fig:generated-description} shows the result
-of invoking \cd{getDesc} on the \texttt{classof11} directory.  
+representation.  For example, below we show a fragment of the
+results when
+\cd{getDesc} is invoked on the \texttt{classof11} directory:
+\begin{code}
+\kw{data} classof11 = \kw{Directory} \{
+    aB11 \kw{is} "AB11" :: aB11,
+    bSE11 \kw{is} "BSE11" :: bSE11,
+    tRANSFER \kw{is} "TRANSFER" :: tRANSFER,
+    wITHDREW \kw{is} "WITHDREW" :: wITHDREW
+\}
+\kw{data} tRANSFER = \kw{Directory} \{
+    bEAUCHEMINtxt \kw{is} "BEAUCHEMIN.txt" :: File Ptext,
+    vERSTEEGtxt \kw{is} "VERSTEEG.txt" :: File Ptext
+\}
+...
+\end{code}
 The description is not perfect: the label names are generated 
-from the file name, but human editing is desirable, \etc, but it can
-be easier for a programmer to edit a generated description rather than
-starting from scratch.  A more sophisticated version of the tool 
-takes width and depth limits. When the number of files in a directory
-exceeds the width parameter, files with the same type are collected into
-comprehensions.  When the depth of the description exceeds the depth
-parameter, directories are given the universal directory type.
+from the file name, for example.  Nevertheless, the tool improves
+programmer productivity as it is
+easier for a programmer to edit a generated description than to
+start from scratch.   Our first tool in this vein is simple;
+a more sophisticated variant would collapse records of files
+into comprehensions when a width limit was exceeded or
+other criteria were met.  Another variant might
+collapse deeply nested directories into a universal directory
+description when a depth limit was exceeded.
+%When the number of files in a directory
+%exceeds the width parameter, files with the same type are collected into
+%comprehensions.  When the depth of the description exceeds the depth
+%parameter, directories are given the universal directory type.
 
 The \cd{getDesc} function works by using the universal description to
 load the contents of the file system starting from the supplied path.
@@ -157,43 +177,43 @@ It then walks over the resulting meta-data to generate a \forest{}
 parse tree, which it then pretty prints.
 
 
-\begin{figure}
-\begin{code}
-\kw{data} transfer = \kw{Directory} \{
-\}
+% \begin{figure}
+% \begin{code}
+% \kw{data} transfer = \kw{Directory} \{
+% \}
 
-\kw{data} wITHDREW = \kw{Directory} \{
-    fingertxt \kw{is} "finger.txt" :: File Ptext
-\}
+% \kw{data} wITHDREW = \kw{Directory} \{
+%     fingertxt \kw{is} "finger.txt" :: File Ptext
+% \}
 
-\kw{data} tRANSFER = \kw{Directory} \{
-    bEAUCHEMINtxt \kw{is} "BEAUCHEMIN.txt" :: File Ptext,
-    vERSTEEGtxt \kw{is} "VERSTEEG.txt" :: File Ptext
-\}
+% \kw{data} tRANSFER = \kw{Directory} \{
+%     bEAUCHEMINtxt \kw{is} "BEAUCHEMIN.txt" :: File Ptext,
+%     vERSTEEGtxt \kw{is} "VERSTEEG.txt" :: File Ptext
+% \}
 
-\kw{data} bSE11 = \kw{Directory} \{
-    transfer \kw{is} "transfer" :: transfer,
-    bOZAKtxt \kw{is} "BOZAK.txt" :: File Ptext,
-    kESSELtxt \kw{is} "KESSEL.txt" :: File Ptext,
-    ssstxt \kw{is} "sss.txt" :: File Ptext
-\}
+% \kw{data} bSE11 = \kw{Directory} \{
+%     transfer \kw{is} "transfer" :: transfer,
+%     bOZAKtxt \kw{is} "BOZAK.txt" :: File Ptext,
+%     kESSELtxt \kw{is} "KESSEL.txt" :: File Ptext,
+%     ssstxt \kw{is} "sss.txt" :: File Ptext
+% \}
 
-\kw{data} aB11 = \kw{Directory} \{
-    kADRItxt \kw{is} "KADRI.txt" :: File Ptext,
-    mACARTHERtxt \kw{is} "MACARTHER.txt" :: File Ptext,
-    oRRtxt \kw{is} "ORR.txt" :: File Ptext,
-    sSSStxt \kw{is} "SSSS.txt" :: File Ptext
-\}
+% \kw{data} aB11 = \kw{Directory} \{
+%     kADRItxt \kw{is} "KADRI.txt" :: File Ptext,
+%     mACARTHERtxt \kw{is} "MACARTHER.txt" :: File Ptext,
+%     oRRtxt \kw{is} "ORR.txt" :: File Ptext,
+%     sSSStxt \kw{is} "SSSS.txt" :: File Ptext
+% \}
 
-\kw{data} classof11 = Directory \{
-    aB11 \kw{is} "AB11" :: aB11,
-    bSE11 \kw{is} "BSE11" :: bSE11,
-    tRANSFER \kw{is} "TRANSFER" :: tRANSFER,
-    wITHDREW \kw{is} "WITHDREW" :: wITHDREW
-\}
-\end{code}
-\caption{Generated description. Type \texttt{File Ptext} is synonymous
-  with \texttt{Text}.}
-\label{fig:generated-description}
-\end{figure}
+% \kw{data} classof11 = Directory \{
+%     aB11 \kw{is} "AB11" :: aB11,
+%     bSE11 \kw{is} "BSE11" :: bSE11,
+%     tRANSFER \kw{is} "TRANSFER" :: tRANSFER,
+%     wITHDREW \kw{is} "WITHDREW" :: wITHDREW
+% \}
+% \end{code}
+% \caption{Generated description. Type \texttt{File Ptext} is synonymous
+%   with \texttt{Text}.}
+% \label{fig:generated-description}
+% \end{figure}
 
