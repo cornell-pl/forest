@@ -101,7 +101,7 @@ at the leaves.  In addition, these conditions must hold:
 \item The domain of $F$ must be prefix-closed.
 \item If $F(r) = (\att,\Dir{ \Set{n_1,\dots,n_k} })$ then for $i=1,\ldots,k$,
 $\PCons{r}{n_i} \in \dom{F}$.
-\item  If $F(r) = (\att,\File{n})$ or $(m,\Link{r'})$ then 
+\item  If $F(r) = (\att,\File{n_r})$ or $(\att,\Link{r'})$ then 
 there does not exist $n$ such that $\PCons{r}{n} \in \dom{F}$.
 \end{itemize}
 % JNF: this sentence seems out of place...
@@ -133,12 +133,12 @@ paths into a single construct (and similarly for comprehensions and
 paths). The calculus models (dependent) records, paths, and
 comprehensions as independent, orthogonal constructs.  Record
 specifications are written \SPair{x}{s_1}{s_2}, where $x$ may appear
-in $s_2$.  Paths specifications are written $\SPath{e}{s}$, where $e$
+in $s_2$.  Path specifications are written $\SPath{e}{s}$, where $e$
 is a path name (to be appended to the current path) and $s$ specifies
-the fragment of the file system at that path. Comprenehsion
+a fragment of the file system at that path. Comprenehsion
 specifications are written $\SSetComp{s}{x}{e}$, where $e$ is a set of
 values, $x$ is a variable, and $s$, which may depend on $x$, specifies
-the fragment of the file system fragment for each value of $x$.
+a fragment of the file system for each value of $x$.
 \forest{}'s combined record-and-path construct 
 \cd{\{c is "c.txt" :: C, d is "d.txt" :: D c\}} is encoded in the calculus as
 $\SPair{x}{(\SPath{\mathtt{"c.txt"}}{C})}{(\SPath{\mathtt{"d.txt"}}{D\; x})}$.  Similarly, \forest{}'s comprehension 
