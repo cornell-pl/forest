@@ -1000,9 +1000,9 @@
    \parfillskip = 0pt
    \spaceskip = .7em
    \noindent \LARGE \bfseries \@titletext \par}
-  \vskip 6pt
+  %\vskip 6pt %dpw commented this line
   \noindent \Large \@subtitletext \par
-  \vskip 12pt
+  %\vskip 12pt %dpw commented this line
   \ifcase \@authorcount
     \@latex@error{No authors were specified for this paper}{}\or
     \@titleauthors{i}{}{}\or
@@ -1050,7 +1050,8 @@
               \@setauthor{12.5pc}{#3}{\@true}\par
     \relax
   \fi\fi
-  \vspace{20pt}}
+  %\vspace{20pt}  %dpw commented this line
+}
 
 \def \@setauthor #1#2#3{%                       {width}{text}{unused}
   \vtop{%

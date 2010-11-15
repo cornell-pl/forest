@@ -56,7 +56,7 @@ mentioned in the description into a structured object in memory; it
 generates a Haskell type for the in-memory \emph{representation} of
 the data produced by the load function; and it generates a Haskell
 type for the \emph{metadata} associated with the representation. For
-example, from the descriptions for CoralCDN logs in
+example, from the descriptions for \coral{} logs in
 Figure~\ref{fig:coral-description}, the compiler generates the load
 functions, the representation types, and the metadata types presented in
 Figure~\ref{fig:coral-aux}. Note that the structure each of these
@@ -64,6 +64,7 @@ artifacts closely corresponds to the structure of the \forest{}
 description that generated them. This makes it easy for programmers to
 write programs against these \forest{}-generated artifacts.
 
+\dpw{replaced unsafeIO with monadic style}
 As a simple example, consider the \cd{Coral} description from
 Figure~\ref{fig:coral-description}. The \cd{coral\_load} function takes
 a path as an argument and produces the representation and metadata
@@ -71,9 +72,10 @@ obtained by loading each of the site directories contained in the
 directory at that path:
 %
 \begin{code}
-(rep,md) = 
-  unsafePerformIO $ (coral_load "/var/log/coral")
+(rep,md) <- coral_load "/var/log/coral1"
 \end{code}
+%(rep,md) = 
+%  unsafePerformIO $ (coral_load "/var/log/coral")
 % $
 Because \cd{Coral} is a comprehension, both \cd{rep} and \cd{md} are
 structured as lists. More specifically, \cd{rep} has the form,
@@ -143,14 +145,14 @@ suitable \forest{} description, programmers can write programs that
 work on file system data as if it were in memory. Moreover, because
 Forest uses lazy I/O operations, many simple programs do not require
 constructing an explicit representation of the entire directory being
-loaded in memory---a good thing as the directory of CoralCDN logs
+loaded in memory---a good thing as the directory of \coral{} logs
 contains approximately 1GB of data!  Instead, the load functions only
 read the portions of the file system that are needed to compute the
 result---in this case, only the site directories and not the gzipped
 log files contained within them.
 
 As a final example, consider a program that computes the top-$k$
-requested URLs from all CoralCDN nodes by size. The CoralCDN
+requested URLs from all \coral{} nodes by size. The \coral{}
 administrators compute this statistic periodically to help monitor and
 tune the performance of the system~\cite{freedman:coral-experience}. 
 Here is its definition in Haskell (it uses several helper

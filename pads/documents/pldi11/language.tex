@@ -7,9 +7,7 @@ the Quasiquote mechanism~\cite{Mainland:quasi}.  In a typical
 Haskell declarations.  To introduce new \forest{} declarations,
 the programmer simply opens the \forest{} sublanguage scope:
 \begin{code}
-[forest| 
-  ... forest declarations ...
-|]
+[forest| ... forest declarations ... |]
 \end{code}
 
 \forest{} uses a type-based metaphor to describe directory
@@ -244,8 +242,7 @@ description, once as a text file and once as a symbolic link:
 \kw{type} PrincetonCS_3 = \kw{Directory}
   \{ link  \kw{is} "README" :: SymLink
   , notes \kw{is} "README" :: Text
-  , ...
-  \}
+  , ... \}
 \end{code}
 
 It is also possible for a directory to contain objects
@@ -421,9 +418,21 @@ Every file system object has a number of attributes associated with
 it, such as the file owner and size.  In general,
 if a \forest{} identifier \cd{id} refers to a path, the attributes for the object at that
 path are available through the identifier \cd{id_att}, which has
-type \cd{Forest_md} (\figref{fig:forest-md}).
-Figure~\ref{fig:metadata-components} lists a set of helper functions that
-extract useful information from attribute structures.
+type \cd{Forest_md} (\figref{fig:forest-md}).  Forest defines
+accessor functions such \cd{get_modes} (get permissions), \cd{get_kind} (get
+ascii/binary/directory characteristics) and others to inspect
+these attributes.
+%Figure~\ref{fig:metadata-components} lists a set of helper functions that
+%extract useful information from attribute structures.
+
+
+\begin{figure}
+%Students Description:
+\input{student-description}
+\caption{\forest{} student desc. (aux. declarations omitted)}
+\label{fig:student-description}
+\end{figure}
+
 
 \textit{Constrained types} make use of attributes. For example, the
 type \cd{PrivateText} specifies a text file accessible only by its owner.
@@ -442,18 +451,18 @@ Using attributes, we can write a \textit{universal
 any directory:
 \begin{code}
 \kw{type} Universal = \kw{Directory}
-  \{ asc \kw{is} [ f :: Text
+  \{ asc \kw{is} [ f :: Text 
            | f <- \kw{matches} (GL "*"), 
-            <|get_kind f_att == AsciiK|>]
-  , bin \kw{is} [ b :: Binary
-           | b <- \kw{matches} (GL "*") 
-            <|get_kind b_att == BinaryK|>]
+          <| get_kind f_att == AsciiK |> ]
+  , bin \kw{is} [ b :: Binary 
+           | b <- \kw{matches} (GL "*"), 
+          <| get_kind b_att == BinaryK |> ]
   , dir \kw{is} [ d :: Universal  
-           | d <- \kw{matches} (GL "*") 
-            <|get_kind d_att == DirectoryK|>]
-  , sym \kw{is} [ s :: SymLink      
-           | s <- \kw{matches} (GL "*") 
-            <|get_sym s_att == True|>]
+           | d <- \kw{matches} (GL "*"),
+          <| get_kind d_att == DirectoryK |> ]
+  , sym \kw{is} [ s :: SymLink 
+           | s <- \kw{matches} (GL "*"), 
+          <| get_sym s_att == True |> ]
   \}
 \end{code}
 The description requires recursion to describe the directory case,
@@ -469,27 +478,26 @@ space. The description below flags an error if a binary file exists
 in the directory. 
 \begin{code}
 \kw{type} NoBin =
-  [ b :: Binary
-  | b <- \kw{matches} (GL "*"), 
-  <|get_kind b_att == BinaryK|> ]
+  [ b :: Binary | b <- \kw{matches} (GL "*"), 
+               <| get_kind b_att == BinaryK |> ]
   \kw{where} <|length this == 0|>
 \end{code}
 
-\begin{figure}
-\begin{center}
-\begin{tabular}{l|l}
-function name &  information \\
-\hline
-\cd{get_group} & object group\\
-\cd{get_kind} & the sort of file or directory \\
-\cd{get_modes} & permission string\\
-\cd{get_owner} & object owner\\
-\cd{get_size} & object size \\
-\end{tabular}
-\end{center}
-\caption{Selected file attribute functions}
-\label{fig:metadata-components}
-\end{figure}
+% \begin{figure}
+% \begin{center}
+% \begin{tabular}{l|l}
+% function name &  information \\
+% \hline
+% \cd{get_group} & object group\\
+% \cd{get_kind} & the sort of file or directory \\
+% \cd{get_modes} & permission string\\
+% \cd{get_owner} & object owner\\
+% \cd{get_size} & object size \\
+% \end{tabular}
+% \end{center}
+% \caption{Selected file attribute functions}
+% \label{fig:metadata-components}
+% \end{figure}
 
 
 \subsection{Gzip and Tar Type Constructors}
@@ -497,11 +505,10 @@ function name &  information \\
 
 Some files need to be processed before they can be used.  A typical
 example is a compressed file such as the gzipped log files in 
-Coral 
-(\figref{fig:coral-pic}).  \forest{} provides processing-specific type
+\coral{}.  \forest{} provides processing-specific type
 constructors to describe such files.   For example, if
 \cd{CoralInfo} is a \padshaskell{} 
-description of a Coral log file then 
+description of a \coral{} log file then 
 \begin{code}
 \kw{type} CoralLog = Gzip (File CoralInfo)
 \end{code}
@@ -519,18 +526,14 @@ combination of the \cd{Tar} and \cd{Gzip} type constructors:
 
 The previous subsections give an overview of the \forest{} design.
 Figures~\ref{fig:student-description}
-and~\ref{fig:coral-description} show complete \forest{} specifications
-for our two running examples.  A set of other descriptions are
-available in the appendix for the paper.
+and~\ref{fig:coral-description} show \forest{} specifications
+for our two running examples (minus \padshaskell{} and \haskell{}
+declarations).  Additional, more extensive descriptions are
+available in the \auxmaterials.
 
 \begin{figure}
-\input{student-description}
-\caption{\forest{} student description}
-\label{fig:student-description}
-\end{figure}
-
-\begin{figure}
+%CoralCDN Description:
 \input{coral-description}
-\caption{\forest{} coral description}
+\caption{\forest{} CoralCDN desc. (aux. declarations omitted)}
 \label{fig:coral-description}
 \end{figure}

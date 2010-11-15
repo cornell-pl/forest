@@ -296,7 +296,14 @@ in the structure and $\False$ otherwise.
 The second and third semantic judgements specify the representation
 and metadata types for a given specification.  They have the form
 $\repty{s} = \tau$ and $\mdty{s} = \tau$, respectively.  Note here
-that $\meta$ is the type for file attribute records.
+that $\meta$ is the type for file attribute records and the 
+\cd{pd} type is defined as follows.
+\[
+\begin{array}{lcl}
+\tau~\mathit{pd} & = & \typ{header} \times \tau \\
+\typ{header} & = & \typ{bool} 
+\end{array}
+\]
 
 The three
 sets of definitions obey the following basic coherence property, where
@@ -312,27 +319,58 @@ $\turn v : \tau$ states that the value $v$ has type $\tau$.
 \begin{figure}
 
 \[
-\begin{array}{lcl}
-\repty{\Sk} & = & \tau_r \\
-\repty{\SAdhoc{b}} & = & \tau_r \\
-\repty{\SPath{e}{s}} & = & \repty{s} \\
-\repty{\SPair{x}{s_1}{s_2}} & = & \repty{s_1} \times \repty{s_2} \\
-\repty{\SSetComp{s}{x}{e}} & = & \repty{s}~\typ{list}  \\
-\repty{\SPred{e}} & = & \typ{unit} \\
-\repty{\SOption{s}} & = & \repty{s}~\typ{option}  \\
-\\
-\mdty{\Sk} & = & \tau_m~\mathit{pd}\\
-\mdty{\SAdhoc{b}} & = & (\tau_m \times \meta)~\mathit{pd}\\
-\mdty{\SPath{e}{s}} & = & \mdty{s} \\
-\mdty{\SPair{x}{s_1}{s_2}} & = & \pd{\mdty{s_1} \times \mdty{s_2}} \\
-\mdty{\SSetComp{s}{x}{e}} & = & \pd{\mdty{s}~\typ{list}}  \\
-\mdty{\SPred{e}} & = & \typ{unit}~\mathit{pd}\\
-\mdty{\SOption{s}} & = & \pd{\mdty{s}~\typ{option}}  \\
-\\
-\tau~\mathit{pd} & = & \typ{header} \times \tau \\
-\typ{header} & = & \typ{bool} 
+\begin{array}{c|c|c}
+\hline
+s & \repty{s} = & \mdty{s} =  \\
+\hline
+\Sk & \tau_r &  \tau_m~\mathit{pd} \\
+\SAdhoc{b} & \tau_r & (\tau_m \times \meta)~\mathit{pd} \\
+\SPath{e}{s} & \repty{s} & \mdty{s} \\
+\SPair{x}{s_1}{s_2} & \repty{s_1} \times \repty{s_2} & \pd{\mdty{s_1} \times \mdty{s_2}} \\
+\SSetComp{s}{x}{e} & \repty{s}~\typ{list} & \pd{\mdty{s}~\typ{list}}    \\
+\SPred{e} & \typ{unit} & \typ{unit}~\mathit{pd}\\
+\SOption{s} & \repty{s}~\typ{option} & \pd{\mdty{s}~\typ{option}} %\\
+%\hline
 \end{array}
 \]
+
+%where:
+%
+%\[
+%\begin{array}{lcl}
+%\tau~\mathit{pd} & = & \typ{header} \times \tau \\
+%\typ{header} & = & \typ{bool} 
+%\end{array}
+%\]
 \caption{\forest{} calculus data and metadata types}
 \label{fig:calculus-types}
 \end{figure}
+
+
+% \begin{figure}
+
+% \[
+% \begin{array}{lcl}
+% \repty{\Sk} & = & \tau_r \\
+% \repty{\SAdhoc{b}} & = & \tau_r \\
+% \repty{\SPath{e}{s}} & = & \repty{s} \\
+% \repty{\SPair{x}{s_1}{s_2}} & = & \repty{s_1} \times \repty{s_2} \\
+% \repty{\SSetComp{s}{x}{e}} & = & \repty{s}~\typ{list}  \\
+% \repty{\SPred{e}} & = & \typ{unit} \\
+% \repty{\SOption{s}} & = & \repty{s}~\typ{option}  \\
+% \\
+% \mdty{\Sk} & = & \tau_m~\mathit{pd}\\
+% \mdty{\SAdhoc{b}} & = & (\tau_m \times \meta)~\mathit{pd}\\
+% \mdty{\SPath{e}{s}} & = & \mdty{s} \\
+% \mdty{\SPair{x}{s_1}{s_2}} & = & \pd{\mdty{s_1} \times \mdty{s_2}} \\
+% \mdty{\SSetComp{s}{x}{e}} & = & \pd{\mdty{s}~\typ{list}}  \\
+% \mdty{\SPred{e}} & = & \typ{unit}~\mathit{pd}\\
+% \mdty{\SOption{s}} & = & \pd{\mdty{s}~\typ{option}}  \\
+% \\
+% \tau~\mathit{pd} & = & \typ{header} \times \tau \\
+% \typ{header} & = & \typ{bool} 
+% \end{array}
+% \]
+% \caption{\forest{} calculus data and metadata types}
+% \label{fig:calculus-types}
+% \end{figure}

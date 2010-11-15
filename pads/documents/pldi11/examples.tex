@@ -11,16 +11,14 @@
 \label{fig:student-pic}
 \end{figure}
 
-In this section, we present two example file repositories.
+In this section, we present two example \filestores{}.
 We will use these examples to motivate and explain
 the design of \forest{}.
 
-The first repository contains information about students in
+The first \filestore{} contains information about students in
 Princeton's undergraduate computer science program.   
-The faculty use the information in the repository every year 
-to decide on undergraduate awards,
-to assign honor levels (honors, high honors, highest honors)
-to graduating seniors and to track grading trends.
+The faculty use the information in the repository 
+to decide on undergraduate awards and to track grading trends.
 %It was created in approximately 1990 and has been in use ever since.
 As the repository has evolved over time, there 
 have been a few slight changes in format -- typical for
@@ -28,7 +26,7 @@ ad hoc data repositories.  Naturally, any description needs to cope
 with the variation.
  
 Figure~\ref{fig:student-pic} shows a snippet
-of the (anonymized) student data repository designed to
+of the (anonymized) student \filestore{} designed to
 illustrate its structure.  At the top level, there are
 three directories: 
 \cd{classof11} (seniors),
@@ -49,7 +47,7 @@ per student that records the courses taken and the corresponding grades.
 %of a typical student record file.    
 %Note that such files can easily be described by a
 %data-description language like \pads{}~\cite{fisher+:pads}.
-Each such directory also usually contains a blank
+Each such directory can also contain a 
 template file named \cd{sss.txt} (or something similar) for creating
 new students.
 
@@ -75,30 +73,30 @@ new students.
 %% \label{fig:student-file-example}
 %% \end{figure}
 
-The second repository contains log files for the Coral content
-distribution network~\cite{freedman+:coral,freedman:coral-experience}. To
+The second \filestore{} contains log files for 
+CoralCDN~\cite{freedman+:coral,freedman:coral-experience}. To
 monitor the performance, health, and security of the system, the hosts
-participating in Coral periodically send usage statistics back to
-a central server. These statistics are collected and stored in a
-directory structure similar to the one depicted in Figure~\ref{fig:coral-pic}.
-The top-level \cd{logs} directory contains a set of subdirectories, one
-for each host. Each host directory contains another set of
+participating in CoralCDN periodically send usage statistics back to
+a central server. These statistics are collected in a \filestore{}
+%similar to the one depicted in Figure~\ref{fig:coral-pic}.
+with top-level \cd{logs} directory containing a set of subdirectories, one
+for each host. Each such host directory contains another set of
 directories, labeled by date and time. Finally, each of these
 directories contains one or more compressed log files. For the
 purposes of this example, we will focus on the \cd{coralwebsrv.log.gz}
 log file, which contains detailed information about the web requests
 made on the host during the preceding time period.
 
-\reminder{We should check with Mike that including this information (machine
-  names, dates) is okay. Also, we will probably need to make
-  the graph smaller by eliding some nodes.}
+%\reminder{We should check with Mike that including this information (machine
+%  names, dates) is okay. Also, we will probably need to make
+%  the graph smaller by eliding some nodes.}
 
-\begin{figure}
-\vskip -.25in
-\hskip -.15in\scalebox{.31}{\includegraphics{coral-structure.pdf}}
-\vskip -.1in
-%\epsfig{file=coral-structure.eps, width=0.9\columnwidth}
-\caption{Coral system log data.}
-\label{fig:coral-pic}
-\end{figure}
+% \begin{figure}
+% \vskip -.25in
+% \hskip -.15in\scalebox{.31}{\includegraphics{coral-structure.pdf}}
+% \vskip -.1in
+% %\epsfig{file=coral-structure.eps, width=0.9\columnwidth}
+% \caption{Coral system log data.}
+% \label{fig:coral-pic}
+% \end{figure}
 

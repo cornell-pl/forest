@@ -23,22 +23,22 @@
     [ s :: File (Student <|dropExtension s|>) 
     | s <- \kw{matches} txt, <|not (template s)|>]
 |]
-\mbox{}
-[pads|
-  \kw{data} Student (name::String) = ...
-|]
-\mbox{}
-toStrN i n = (replicate(n - length(show i)) '0') 
-             ++ (show i)
-mkClass y = "classof" ++ (toStrN y 2)
-getYear s = 
-  toInteger (reverse (take 2 (reverse s)))
-template s = s `elem` ["sss.txt", "sxx.txt"]
-
-transRE = RE "TRANSFER|Transfer"
-leaveRE = RE "LEAVE|Leave"
-wdRE    = RE "WITHDRAWN|WITHDRAWAL|Withdrawn"
-cRE     = RE "classof[0-9][0-9]"
-txt     = GL "*.txt"
 \end{code}
 }
+% \mbox{}
+% [pads|
+%   \kw{data} Student (name::String) = ...
+% |]
+% \mbox{}
+% toStrN i n = (replicate(n - length(show i)) '0') 
+%              ++ (show i)
+% mkClass y = "classof" ++ (toStrN y 2)
+% getYear s = 
+%   toInteger (reverse (take 2 (reverse s)))
+% template s = s `elem` ["sss.txt", "sxx.txt"]
+
+% transRE = RE "TRANSFER|Transfer"
+% leaveRE = RE "LEAVE|Leave"
+% wdRE    = RE "WITHDRAWN|WITHDRAWAL|Withdrawn"
+% cRE     = RE "classof[0-9][0-9]"
+% txt     = GL "*.txt"

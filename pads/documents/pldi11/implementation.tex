@@ -14,10 +14,8 @@ convert an input string representing a \forest{} declaration into the
 \template{}~\cite{Sheard+:templatehaskell} 
 data structures that represent the syntax of the
 corresponding collection of \haskell{} declarations.
-The quasi-quoting syntax is legal anywhere the identifier \cd{forest} is in scope:
-\begin{code}
-[forest| <input> |]
-\end{code}
+The quasi-quoting syntax \cd{[forest| <input> |]}
+is legal anywhere the identifier \cd{forest} is in scope.
 When the \haskell{} compiler processes this declaration, it first
 passes \cd{<input>} as a string to the \cd{forest} quasi-quoter, and
 then it compiles the resulting \template{} data structures as if the
@@ -41,7 +39,7 @@ used the Haskell Source Extension package~\cite{haskell-src-exts} to parse
 these fragments.  The data structure that this library returns is
 unfortunately not the data structure that \template{} requires, so we
 used yet another library, the Haskell Source Meta
-package~\cite{haskell-src-meta}, that provides exactly this translation. 
+package~\cite{haskell-src-meta}, that provides this translation. 
 
 
 \paragraph{Type checking.}
@@ -58,6 +56,7 @@ with functions that would enable us to ask the native \haskell{}
 typechecker for the types of embedded expressions and to extend the
 current type environment with type bindings for new identifiers.  With
 this combination of features, we will be able to type check \forest{}
-sources directly, yielding a fully satisfactory embedded
-domain-specific language.
+sources directly.
+%, yielding a fully satisfactory embedded
+%domain-specific language.
 
