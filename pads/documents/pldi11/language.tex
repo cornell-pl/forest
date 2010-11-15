@@ -108,12 +108,12 @@ metadata type, and a corresponding loading function.
 
 A common class of files are \textit{ad hoc data files} containing
 semi-structured information, an example of which is the Princeton
-student record file format (\figref{fig:student-file-example}). 
+student record file format~\cite{pldi-aux-materials}. 
 In such cases, \forest{} can leverage the \padshaskell{} data
 description language to define format-specific in-memory
 representations, content metadata, and loading functions. 
 \padshaskell{} is a recently developed version of 
-\pads{}~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml}.
+\pads{}~\cite{fisher+:pads,fisher+:toplas,mandelbaum+:pads-ml}.
 Like \forest{}, \padshaskell{} is embedded in Haskell using
 quasiquotation.  For example, the following code snippit 
 begins the \pads{} specification of the Princeton student record
@@ -352,7 +352,7 @@ system objects, each with its own type.
 List comprehensions, on the other hand, allow programmers to specify
 an arbitrary number of file system objects, each with the same type.
 As an example, we can use a list comprehension to specify the
-\cd{Grads} directory from \figref{fig:student-file-example}:
+\cd{Grads} directory from \figref{fig:student-pic}:
 
 \begin{code}
 > getYear s = 
