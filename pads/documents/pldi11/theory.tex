@@ -17,7 +17,7 @@
 \newcommand{\Sk}{k^{\tau_m}_{\tau_r}}
 \newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1}^{\tau_m}_{\tau_r})}}
 \newcommand{\SPred}[1]{\ensuremath{\mathsf{Pred}(#1)}}
-\newcommand{\SPath}[2]{\ensuremath{#1 \mathrel{::} #2}}
+\newcommand{\SPath}[2]{\ensuremath{#1\,{::}\,#2}}
 \newcommand{\SPair}[3]{\ensuremath{\langle #1 {:} #2, #3 \rangle}}
 \newcommand{\SOption}[1]{\ensuremath{#1?}}
 \newcommand{\SSetComp}[3]{\ensuremath{\{ #1 \mid #2 \in #3 \}}}
@@ -26,7 +26,7 @@
 \newcommand{\yields}{\ensuremath{\rightsquigarrow}}
 \newcommand{\valid}[1]{\ensuremath{\mathit{valid}(#1)}}
 \newcommand{\typ}[1]{\ensuremath{\mathit{#1}}}
-\newcommand{\meta}{\typ{meta}}
+\newcommand{\meta}{\typ{att}}
 \newcommand{\REP}{\ensuremath{\mathit{REP}}}
 \newcommand{\PD}{\ensuremath{\mathit{PD}}}
 \newcommand{\pd}[1]{\ensuremath{(#1)~\mathit{pd}}}
@@ -41,7 +41,7 @@
 \newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
 \newcommand{\checkk}[3]{\fn{\mathit{ck}}{#1,#2,#3}}
 \newcommand{\stringty}{{string}}
-\newcommand{\metapdty}{{meta}}
+\newcommand{\metapdty}{\meta}
  
 \begin{figure}
 \[
@@ -57,13 +57,13 @@
                         &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \{ v_1,\dots,v_k \}\\
 \textit{Expressions}    & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
 \textit{Environments}   & \Env & \bnfdef & \ENil \bnfalt E,x\mapsto v \\[1ex]
-\textit{Specifications} & s & \bnfdef & \Sk \\
-                        &   & \bnfalt & \SAdhoc{b}\\
-                        &   & \bnfalt & \SPath{e}{s}\\
-                        &   & \bnfalt & \SPair{x}{s_1}{s_2}\\
-                        &   & \bnfalt & \SSetComp{s}{x}{e}\\
-                        &   & \bnfalt & \SPred{e}\\
-                        &   & \bnfalt & \SOption{s}\\[1ex]
+\textit{Specifications} & s & \bnfdef & \Sk 
+                              \bnfalt \SAdhoc{b}
+                              \bnfalt \SPath{e}{s}
+                              \bnfalt \SPair{x}{s_1}{s_2}\\
+                        &   & \bnfalt & \SSetComp{s}{x}{e}
+                              \bnfalt \SPred{e}
+                              \bnfalt \SOption{s}\\[1ex]
 \end{array}
 \]
 \caption{File systems and their specifications}
@@ -139,12 +139,11 @@ the fragment of the file system at that path. Comprenehsion
 specifications are written $\SSetComp{s}{x}{e}$, where $e$ is a set of
 values, $x$ is a variable, and $s$, which may depend on $x$, specifies
 the fragment of the file system fragment for each value of $x$.
-\forest{}'s combined record-and-path construct \cd{\{c is "c.txt" ::
-  C, dat is "d.txt" :: D c\}} is encoded in the calculus as
-$\SPair{x}{(\SPath{\mathtt{"c.txt"}}{C})}{(\SPath{\mathtt{"d.txt"}}{D\;
-    x})}$.  Similarly, \forest{}'s comprehension-and-path construct
-\cd{[x :: s | x <- e]} is encoded as the composition of
-$\SSetComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$.
+\forest{}'s combined record-and-path construct 
+\cd{\{c is "c.txt" :: C, d is "d.txt" :: D c\}} is encoded in the calculus as
+$\SPair{x}{(\SPath{\mathtt{"c.txt"}}{C})}{(\SPath{\mathtt{"d.txt"}}{D\; x})}$.  Similarly, comprehension-and-path construct of \forest{} ({\it i.e.}, 
+\cd{[x :: s | x <- e]}) is encoded as the composition of the
+calculus constructors $\SSetComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$.
 
 Predicate specifications $\SPred{e}$ succeed when $e$ evaluates to
 \True{} and fail when $e$ evaluates to \False under the current
@@ -195,7 +194,10 @@ in the structure and $\False$ otherwise.
 
 The second and third semantic judgements specify the representation
 and metadata types for a given specification.  They have the form
-$\repty{s} = \tau$ and $\mdty{s} = \tau$, respectively.  The three
+$\repty{s} = \tau$ and $\mdty{s} = \tau$, respectively.  Note here
+that $\meta$ is the type for file attribute records.
+
+The three
 sets of definitions obey the following basic coherence property, where
 $\turn v : \tau$ states that the value $v$ has type $\tau$.
 
@@ -205,12 +207,12 @@ $\turn v : \tau$ states that the value $v$ has type $\tau$.
   v : \tau_{\mathcal{R}}$ and $\turn d : \tau_{\mathcal{M}}$
 \end{proposition}
 
-\jnf{ The metadata type for adhoc is $\tau_m~\mathit{pd}$ but the
-  actual metadata computed by the inference rule below is
-  $(\valid{d},(d,a))$ which has type $(\tau_m \times
-  \meta)~\mathit{pd}$. We can fix this either by eliminating the
-  metadata or by changing the definition of $\mdty{\cdot}$. I'm not
-  sure which is better?}
+%\jnf{ The metadata type for adhoc is $\tau_m~\mathit{pd}$ but the
+%  actual metadata computed by the inference rule below is
+%  $(\valid{d},(d,a))$ which has type $(\tau_m \times
+%  \meta)~\mathit{pd}$. We can fix this either by eliminating the
+%  metadata or by changing the definition of $\mdty{\cdot}$. I'm not
+%  sure which is better?}
 
 \begin{figure}
 \[
@@ -318,7 +320,7 @@ $\turn v : \tau$ states that the value $v$ has type $\tau$.
 \repty{\SOption{s}} & = & \repty{s}~\typ{option}  \\
 \\
 \mdty{\Sk} & = & \tau_m~\mathit{pd}\\
-\mdty{\SAdhoc{b}} & = & \tau_m~\mathit{pd}\\
+\mdty{\SAdhoc{b}} & = & (\tau_m \times \meta)~\mathit{pd}\\
 \mdty{\SPath{e}{s}} & = & \mdty{s} \\
 \mdty{\SPair{x}{s_1}{s_2}} & = & \pd{\mdty{s_1} \times \mdty{s_2}} \\
 \mdty{\SSetComp{s}{x}{e}} & = & \pd{\mdty{s}~\typ{list}}  \\
