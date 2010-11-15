@@ -34,18 +34,24 @@
 @string{esop = "European Symposium on Programming"}
 @string{fool = "Foundations of Object-Oriented Languages Workshop"}
 @string{fpca = "Conference on Functional Programming Languages and Computer Architecture"}
+@string{haskellw = {{Proceedings of the ACM SIGPLAN Workshop on Haskell}}}
+@string{haskellw = "Haskell Workshop"}
+@string{haskells = "Haskell Symposium"}
 @string{icalp = "International Colloquium on Automata, Languages, and Programming"}
 @string{icfp = "{ACM} International Conference on Functional Programming"}
 @string{icfpca = "{ACM} International Conference on Functional Programming and Computer Architecture"}
 @string{lfp = "{ACM} Conference on {Lisp} and Functional Programming"}
 @string{lics = "{IEEE} Symposium on Logic in Computer Science"}
 @string{mfps = "Mathematical Foundations of Programming Semantics"}
+%@string{nsdi = "{USENIX/ACM Symposium on Networked Systems Design and Implementation}"}
 %@string{popl = "{ACM} Symposium on Principles of Programming Languages"}
+@string{nsdi = "{NSDI}"}
 @string{popl = "{POPL}"}
 @string{padl = "{PADL}"}
 %@string{pldi = "{ACM} Conference on Programming Language Design and Implementation"}
 @string{pldi = "{PLDI}"}
 @string{tldi = "{ACM} International Workshop on Types in Language Design and Implementation"}
+@string{tldi = "{TLDI}"}
 @string{tacs = "Theoretical Aspects of Computer Software"}
 @string{tic = "Workshop on Types in Compilation"}
 @string{tlca = "International Conference on Typed Lambda Calculi and Applications"}
@@ -193,10 +199,8 @@ year        = 2001
 
 @inproceedings{Sheard+:templatehaskell,
  author = {Sheard, Tim and Jones, Simon Peyton},
- title = {Template meta-programming for Haskell},
- booktitle = {Proceedings of the 2002 ACM SIGPLAN workshop on Haskell},
- series = {Haskell '02},
- year = {2002},
+ title = {Template meta-programming for {Haskell}},
+ booktitle = haskellw,
  isbn = {1-58113-605-6},
  location = {Pittsburgh, Pennsylvania},
  pages = {1--16},
@@ -204,33 +208,32 @@ year        = 2001
  url = {http://doi.acm.org/10.1145/581690.581691},
  doi = {http://doi.acm.org/10.1145/581690.581691},
  acmid = {581691},
- publisher = {ACM},
- address = {New York, NY, USA},
+ year = 2002,
  keywords = {meta programming, templates},
 }
 
 @Misc{haskell-graphviz,
   key = "Graphviz",
-  title="Haskell {G}raphviz Package",
+  title= {{Haskell {G}raphviz Package}},
   howpublished="\url{http://hackage.haskell.org/package/graphviz}",
 }
 
 @Misc{haskell-src-exts,
   key = "Haskell Source Extensions",
-  title="Haskell Source Extensions Package",
+  title= {{Haskell Source Extensions Package}},
   howpublished="\url{http://hackage.haskell.org/package/haskell-src-exts}",
 }
 
 
 @Misc{extend-templates,
   key = "Template Haskell Extension Proposal",
-  title="Template Haskell Extension Proposal",
-  howpublished="\url{http://hackage.haskell.org/trac/ghc/blog/Template%20Haskell%20Proposal}",
+  title= {{Template Haskell Extension Proposal}},
+  howpublished="\url{hackage.haskell.org/trac/ghc/blog/Template%20Haskell%20Proposal}",
 }
 
 @Misc{haskell-src-meta,
   key = "Haskell Source Meta",
-  title="Haskell Source Meta Package",
+  title= {{Haskell Source Meta Package}},
   howpublished="\url{http://hackage.haskell.org/package/haskell-src-meta}",
 }
 
@@ -267,15 +270,13 @@ year        = 2001
  url = {http://doi.acm.org/10.1145/604174.604179},
  doi = {http://doi.acm.org/10.1145/604174.604179},
  acmid = {604179},
- publisher = {ACM},
- address = {New York, NY, USA},
  keywords = {generic programming, rank-2 types, traversal, type cast},
 }
 
 @inproceedings{Mainland:quasi,
  author = {Mainland, Geoffrey},
  title = {Why it's nice to be quoted: {Q}uasiquoting for {H}askell},
- booktitle = {{ACM Workshop on Haskell}},
+ booktitle = haskellw,
  year = {2007},
  isbn = {978-1-59593-674-5},
  location = {Freiburg, Germany},
@@ -284,8 +285,6 @@ year        = 2001
  url = {http://doi.acm.org/10.1145/1291201.1291211},
  doi = {http://doi.acm.org/10.1145/1291201.1291211},
  acmid = {1291211},
- publisher = {ACM},
- address = {New York, NY, USA},
  keywords = {meta programming, quasiquoting},
 }
 
@@ -1180,16 +1179,16 @@ induction",
 
 @InProceedings{freedman:coral-experience,
   author = 	 {Michael J. Freedman},
-  title = 	 {Experiences with CoralCDN: A Five-Year Operational View},
-  booktitle = {USENIX/ACM Symposium on Networked Systems Design and Implementation},
+  title = 	 {Experiences with {CoralCDN}: {A} Five-Year Operational View},
+  booktitle =    nsdi,
   pages = 	 {7-7},
   year = 	 {2010},
 }
 
 @InProceedings{freedman+:coral,
   author = 	 {Michael J. Freedman and Eric Freudenthal and David Mazieres},
-  title = 	 {Democratizing Content Publication with Coral},
-  booktitle = {USENIX/ACM Symposium on Networked Systems Design and Implementation},
+  title = 	 {Democratizing Content Publication with {Coral}},
+  booktitle =    nsdi,
   pages = 	 {18-18},
   year = 	 {2004},
   note = {See also \url{http://www.coralcdn.org/}}
@@ -1214,23 +1213,23 @@ induction",
 }
 
 @Misc{pldi-aux-materials,
-  key = 	 {PLDI 2011 Auxiliary Submission Materials},
-  title = 	 {PLDI 2011 Auxiliary Submission Materials for this paper},
-  note = {These materials will become available to reviewers via the program chair or the online conference management software once they have submitted their reviews.},
+  key = 	 {{Forest Auxiliary Submission Materials}},
+  title = 	 {{Forest Auxiliary Submission Materials}},
+  note = {These materials will become available via the program chair after initial review is submitted.},
   year = 	 {2010},
 }
 
 
 @Misc{fsh,
   key = 	 {Filesystem Hierarchy Standard},
-  author = 	 {Filesystem Hierarchy Standard Group},
+  author = 	 {{Filesystem Hierarchy Standard Group}},
   title = 	 {Filesystem Hierarchy Standard},
   howpublished = {\url{http://www.pathname.com/fhs/}},
   year = 	 {2004},
 }
 
 @Misc{linq,
-  OPTkey = 	 {{LINQ}: {.NET} Language-Integrated Query},
+  key = 	 {{LINQ}: {.NET} Language-Integrated Query},
   title = 	 {{LINQ}: {.NET} Language-Integrated Query},
   howpublished = {\url{http://msdn.microsoft.com/library/bb308959.aspx}},
   month = 	 feb,
@@ -1241,8 +1240,8 @@ induction",
 
 @Unpublished{syme+:type-providers,
   author = 	 {Don Syme},
-  title = 	 {Looking Ahead with F\#: Taming the Data Deluge},
-  note = 	 {Presentation at the Workshop on F\# in Education},
+  title = 	 {{Looking Ahead with F\#: Taming the Data Deluge}},
+  note = 	 {{Presentation at the Workshop on F\# in Education}},
   month = 	 nov,
   year = 	 2010,
 }
