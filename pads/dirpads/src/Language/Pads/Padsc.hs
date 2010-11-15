@@ -21,7 +21,7 @@ module Language.Pads.Padsc (
 
 import Language.Pads.Source 
 import Language.Pads.RegExp
-import Language.Pads.Errors 
+import Language.Pads.Errors  hiding (msg)
 import Language.Pads.PadsParser
 import Language.Pads.MetaData
 import Language.Pads.Generic

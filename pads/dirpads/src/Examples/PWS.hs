@@ -1,16 +1,17 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-
-module Examples.PWSe where
+module Examples.PWS where
 import Language.Pads.Padsc
 import Language.Forest.Forestc
---import System.IO.Unsafe (unsafePerformIO)
+import System.IO.Unsafe (unsafePerformIO)
+import Language.Pads.GenPretty
 
 {- Description of configuration file for learning demo web site -}
 [pads| 
-  type Config_entry_t = Line ("\"",  Pstring '\"',  "\";")   
+  type Config_entry_t = Line (" \"",  Pstring '\"',  "\";")   
+  type Header_t = [Pstringln] with term length of 13
   data Config_f =  {
-                      header      :: PstringSE(RE "$"),
+                      header      :: [Pstringln] with term length of 13,
    "$host_name   =",  host_name   :: Config_entry_t,  -- Name of machine hosting web site
    "$static_path =",  static_path :: Config_entry_t,  -- URL prefix for static content
    "$cgi_path    =",  cgi_path    :: Config_entry_t,  -- URL prefix for cgi content
@@ -19,12 +20,17 @@ import Language.Forest.Forestc
    "$pads_home   =",  pads_home   :: Config_entry_t,  -- Path to directory containing pads system
    "$learn_home  =",  learn_home  :: Config_entry_t,  -- Path to directory containing learning system
    "$sml_home    =",  sml_home    :: Config_entry_t,  -- Path to directory containing SML executable
-   "$insrall_src =",  install_src :: Config_entry_t,  -- Path to directory containing learning demo website source
+   "$install_src =",  install_src :: Config_entry_t,  -- Path to directory containing learning demo website source
    "$static_dst  =",  static_dst  :: Config_entry_t,  -- Path to directory for static content in live web site
    "$cgi_dst     =",  cgi_dst     :: Config_entry_t,  -- Path to directory for cgi content in live web site site
-                      trailer     :: Pstringln
+                      trailer     :: [Pstringln]
    }
 |]
+
+config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
+(config_rep, config_md) :: (Config_f, Config_f_md) = unsafePerformIO $ parseFile config_file
+(head_rep, head_md) :: (Header_t, Header_t_md) = unsafePerformIO $ parseFile config_file
+
 
 [pads|
   {- Format for file listing data sources for web site -}
@@ -40,84 +46,125 @@ import Language.Forest.Forestc
      A file with type userEntries_t describes a collection of such mappings.
   -}
   data UserEntry_t =  {
-     "id.",   userId :: Pint,               ',',
-     "id.",   dirId  :: (Pint, '.', Pint)    where <| userId = first dirId |> 
+     "id.",   usrId :: Pint,               
+    ",id.",   dirId :: (Pint, '.', Pint)    where <| usrId == fst dirId |> 
   } 
 
-  type UserEntries_f = [userEntry_t]
+  type UserEntries_f = [Line UserEntry_t] with term Eor
+
   type IP_t = (Pint, '.', Pint, '.', Pint, '.', Pint)
 
   {- Log of requests.  Used to prevent denial of service attacks. -}
   data LogEntry_t = {
     userId :: Pint,        ',',
-    ip     :: IP_t,         ',',
+    ip     :: IP_t,        ',',
     script :: Pstring ' ', ' ',
     userDir:: Pstring ' ', ' ',
-    pads   :: Pstring ' ', ' ',
+    padsv  :: Pstring ' ', ' ',
     sml    :: PstringSE(RE " "),     -- This may need to also enclude end of line as an end.
     msg    :: Maybe Pstringln 
   }
 
-  type LogFile_f = [logEntry_t]
+  type LogFile_f = [LogEntry_t]
 |]
 
+
+sampleFiles = "/Users/kfisher/Sites/sampleFiles"
+(sample_rep, sample_md) :: (SourceNames_f, SourceNames_f_md) = unsafePerformIO $ parseFile sampleFiles
+
+userEntries = "/Users/kfisher/Sites/userFile"
+(user_rep, user_md) :: (UserEntries_f, UserEntries_f_md) = unsafePerformIO $ parseFile userEntries
+
+logFiles = "/Users/kfisher/Sites/logFile"
+(logFiles_rep, logFiles_md) :: (LogFile_f, LogFile_f_md) = unsafePerformIO $ parseFile logFiles
+
 {- Helper function to map a list of userIds, to the associated list of directory names -}
-userDirs :: UserEntries_t -> [(Pint,Pint)]
-userDirs f = List.map dirId f
+userDirs :: [UserEntry_t] -> [(Pint,Pint)]
+userDirs f = map dirId f
 
+isReadOnly md = get_modes md == "-rw-r--r--"
 
-{- Directory of image files -}
 [forest|
+  type BinaryRO    = Binary        where <| get_modes this_att ==  "-rw-r--r--" |>
+  type TextRX      = Text          where <| get_modes this_att ==  "-rwxr-xr-x" |>
+  type TextRO      = Text          where <| get_modes this_att ==  "-rw-r--r--" |>
+  type Config      = File Config_f where <| get_modes this_att ==  "-rw-r--r--" |>
+  type SourceNames = File SourceNames_f where <| isReadOnly this_att |>
+  type UserEntries = File UserEntries_f where <| isReadOnly this_att |>
+  type LogFile     = File LogFile_f     where <| isReadOnly this_att |>
+
+  {- Directory of image files -}
   type Imgs_d = Directory {
-    logo is "pads_small.jpg" :: Binary
+    logo     is "pads_small.jpg" :: BinaryRO,
+    favicon  is "favicon.ico"    :: BinaryRO
   }
 
-{- Directory of static content -}
+  {- Directory of static content -}
   type Static_d = Directory {
-    style_sheet is "pads.css"           :: Text,   
-    intro_redir is "learning-demo.html" :: Text,   
-    title_frame is "atitle.html"        :: Text,   
-    logo_frame  is "top-left.html"      :: Text,   
-    top_frame   is "banner.html"        :: Text,   
-    empty_frame is "nothing.html"       :: Text,
-    images      is "images"             :: Imgs_d 
+    style_sheet is "pads.css"           :: TextRO,   
+    intro_redir is "learning-demo.html" :: TextRO,   
+    title_frame is "atitle.html"        :: TextRO,   
+    logo_frame  is "top-left.html"      :: TextRO,   
+    top_frame   is "banner.html"        :: TextRO,   
+    empty_frame is "nothing.html"       :: TextRO,
+    images      is "images"             :: Imgs_d where <| get_modes images_md == "drwxr-xr-x" |>
   }
+
 
 {- Directory of dynamic content -}
   type Cgi_d = Directory {
-    config1       is "PLConfig.pm"             :: Config_f,
-    config2       is "PLConfig.pm"             :: Text,     
-    perl_utils    is "PLUtilities.pm"          :: Text,     
-    intro         is "learning-demo.cgi"       :: Text,     
-    intro_nav     is "navbar-orig.cgi"         :: Text,     
-    select_data   is "pads.cgi"                :: Text,     
-    result_nav    is "navbar.cgi"              :: Text,     
-    format_chosen is "data-results.cgi"        :: Text,     
-    gen_desc      is "build-description.cgi"   :: Text,     
-    get_user_data is "build-roll-your-own.cgi" :: Text,     
-    gen_desc_usr  is "genData.cgi"             :: Text,     
-    build_lib     is "build-library.cgi"       :: Text,     
-    build_accum   is "build-accum.cgi"         :: Text,     
-    build_xml     is "build-xml.cgi"           :: Text,     
-    build_fmt     is "build-fmt.cgi"           :: Text     
+    config1       is "PLConfig.pm"             :: Config,
+    config2       is "PLConfig.pm"             :: TextRO,     
+    perl_utils    is "PLUtilities.pm"          :: TextRO,     
+    intro         is "learning-demo.cgi"       :: TextRX,     
+    intro_nav     is "navbar-orig.cgi"         :: TextRX,     
+    select_data   is "pads.cgi"                :: TextRX,     
+    result_nav    is "navbar.cgi"              :: TextRX,     
+    format_chosen is "data-results.cgi"        :: TextRX,     
+    gen_desc      is "build-description.cgi"   :: TextRX,     
+    get_user_data is "build-roll-your-own.cgi" :: TextRX,     
+    gen_desc_usr  is "genData.cgi"             :: TextRX,     
+    build_lib     is "build-library.cgi"       :: TextRX,     
+    build_accum   is "build-accum.cgi"         :: TextRX,     
+    build_xml     is "build-xml.cgi"           :: TextRX,     
+    build_fmt     is "build-fmt.cgi"           :: TextRX     
   }
 
 {- Directory of shell scripts invoked by CGI to run learning system -}
  type Scripts_d = Directory {
-    rlearn                    :: Text,      -- Shell script for running PADS comiler on stock format
-    rlearnown is "rlearn-own" :: Text,      -- Shell script for running PADS compiler on user format
-    raccum    is "r-accum"    :: Text,      -- Shell script to generate and run accumulator
-    rxml      is "r-xml"      :: Text,      -- Shell script to generate and run XML converter
-    rfmt      is "r-fmt"      :: Text      -- Shell script to generate and run formating program
+    rlearn                    :: TextRX,      -- Shell script for running PADS comiler on stock format
+    rlearnown is "rlearn-own" :: TextRX,      -- Shell script for running PADS compiler on user format
+    raccum    is "r-accum"    :: TextRX,      -- Shell script to generate and run accumulator
+    rxml      is "r-xml"      :: TextRX,      -- Shell script to generate and run XML converter
+    rfmt      is "r-fmt"      :: TextRX       -- Shell script to generate and run formating program
   }
-
 
 {- Directory containing administrative files used by demo web site -}
  type Info_d = Directory {
-     sources is "sourceNames" :: SourceNames_f,  -- List of source data files whose formats can be learned
-     users   is "usersFile"   :: UserEntries_f,  -- Mapping from userIDs to associated directory names
-     log     is "logFile"     :: LogFile_f       -- Log of server actions.
+     sources is "sampleFiles" :: SourceNames,  -- List of source data files whose formats can be learned
+     users   is "userFile"    :: UserEntries,  -- Mapping from userIDs to associated directory names
+     logFile is "logFile"     :: LogFile       -- Log of server actions.
   }                          
+
+|]
+
+info_dir = "/Users/kfisher/Sites"
+(info_rep, info_md) :: (Info_d, Info_d_md) = unsafePerformIO $ load  info_dir
+
+scripts_dir = "/Users/kfisher/Sites/cgi-bin"
+(scripts_rep, scripts_md) :: (Scripts_d, Scripts_d_md) = unsafePerformIO $ load  scripts_dir
+
+cgi_dir = "/Users/kfisher/Sites/cgi-bin"
+(cgi_rep, cgi_md) :: (Cgi_d, Cgi_d_md) = unsafePerformIO $ load  cgi_dir
+
+static_dir = "/Users/kfisher/Sites"
+(static_rep, static_md) :: (Static_d, Static_d_md) = unsafePerformIO $ load  static_dir
+
+image_dir = "/Users/kfisher/Sites/images"
+(img_rep, img_md) :: (Imgs_d, Imgs_d_md) = unsafePerformIO $ load  image_dir
+
+{-
+
 
 {- Type of directory containing stock data files named by sourceNames -}
  type DataSource_d(sourceNames :: SourceNames_t) = Directory {
@@ -178,7 +225,7 @@ userDirs f = List.map dirId f
 
  type Website_d(config::FilePath)  = Directory {
   c               is config              :: Config_f,        -- configuration file with locations
-  static_content  is <| static_path c |> :: Static_d,        -- static web site content
+  static_content  is <| static_dst c  |> :: Static_d,        -- static web site content
   dynamic_content is <| cgi_path c    |> :: Cgi_d,           -- dynamic web site content
   scripts         is <| script_path c |> :: Scripts_d,       -- shell scripts invoked by cgi to run learning system
   admin_info      is <| static_dst c  |> :: Info_d,         -- administrative information about website
@@ -194,3 +241,4 @@ doLoadWebsite = do
  }
 
           
+-}

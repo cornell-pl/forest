@@ -71,7 +71,7 @@ getNamedTys' answers worklist =
 
 baseTypeNames = S.fromList [ ''Pint, ''Pchar, ''Pdigit, ''Ptext, ''Pstring, ''PstringFW, ''PstringME 
                            , ''PstringSE, ''String, ''Char, ''COff, ''EpochTime, ''FileMode, ''Int, ''Word, ''Int64
-                           , ''Language.Pads.Errors.ErrInfo, ''Bool, ''Pbinary, ''Pre
+                           , ''Language.Pads.Errors.ErrInfo, ''Bool, ''Pbinary, ''Pre 
                            ]
 
 mkPrettyInstance :: TH.Name -> Q [TH.Dec]

@@ -12,7 +12,7 @@ import Language.Pads.RegExp
 import qualified Data.Char as C
 import qualified Data.List as L
 
-[pads| type  Pstringln = constrain x :: PstringSE <| RE "$" |> where <| True |> |]
+[pads| type  Pstringln = Line (constrain x :: PstringSE <| RE "$" |> where <| True |>) |]
 
 hexStr2Int :: Pos -> (PstringFW, Base_md) -> (Pint, Base_md)
 hexStr2Int src_pos (PstringFW s,md) = if good then (Pint (intList2Int ints 0), md)

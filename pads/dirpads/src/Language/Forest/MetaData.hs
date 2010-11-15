@@ -285,6 +285,12 @@ modeToModeString mode = special ++ ownerr ++ ownerw ++ ownerx ++ groupr ++ group
          otherw = if intersectFileModes mode otherWriteMode == otherWriteMode then "w" else "-"
          otherx = if intersectFileModes mode otherExecuteMode == otherExecuteMode then "x" else "-"
 
+pl (c1, c2) = case (c1,c2) of
+  (c1, '-') -> True
+  (c1,c2) | c1 == c2 -> True
+  otherwise -> False
+
+(<==) s1 s2 = and (map pl (zip s1 s2))
 
 data Permission = Read | Write | Execute
   deriving (Eq, Ord, Show, Typeable, Data)
