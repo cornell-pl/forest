@@ -1,2 +1,16 @@
 \section{Conclusions}
 \label{sec:conclusion}
+In this paper, we present the design of \forest{}, an embedded
+domain-specific language for describing \filestores{}.  A \forest{}
+description concisely specifies a collection of files, directories,
+and symbolic links as well as expected file system attributes such as
+owners and permissions.  From a description, the \forest{} compiler
+generates code to lazily load the on-disk data into an isomorphic
+in-memory representation, lowering the divide between on-disk and
+in-memory data.  The generated metadata identifies errors in the
+\filestore{}.  Haskell's generic programming infrastructure makes it
+easy for third-party developers to generate tools that work for any 
+\filestore{} that has a \forest{} desecription. We have used this
+infrastructure already to define a number of useful tools. The
+language has a formal semantics based on classical tree logic and is
+fully implemented.  We anticipate releasing the source code shortly.
