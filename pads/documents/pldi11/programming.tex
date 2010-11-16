@@ -4,8 +4,8 @@
 \begin{figure}
 Load Functions:
 \begin{code}
-log_load :: FilePath -> IO (Log, Log_md),
-site_load :: FilePath -> IO (Site, Site_md)
+log_load   :: FilePath -> IO (Log, Log_md),
+site_load  :: FilePath -> IO (Site, Site_md)
 coral_load :: FilePath -> IO (Top, Top_md),
 \end{code}
 %\caption{Load functions for Coral}
@@ -15,9 +15,9 @@ coral_load :: FilePath -> IO (Top, Top_md),
 %\begin{figure}
 Representation Types:
 \begin{code}
-data Log = Log { log :: CoralLog }
-newtype Site = Site [(String, Log)]
-newtype Coral = Coral [(String, Site)]
+\kw{data}    Log   = Log   \{log :: CoralLog\}
+\kw{newtype} Site  = Site  [(String, Log)]
+\kw{newtype} Coral = Coral [(String, Site)]
 \end{code}
 %\caption{Representation types for Coral}
 %\label{fig:coral-rep}
@@ -26,18 +26,18 @@ newtype Coral = Coral [(String, Site)]
 %\begin{figure}
 Metadata Types:
 \begin{code}
-data Log_inner_md = 
-  Log_inner_md { log_md :: (Forest_md, CoralLog_md) }
-type Log_md = (Forest_md, Log_inner_md)
-type Site_md = (Forest_md, [(String, Log_md)])
-type Coral_md = (Forest_md, [(String, Site_md)])
+\kw{data} Log_inner_md = 
+  Log_inner_md \{log_md :: (Forest_md, CoralLog_md)\}
+\kw{type} Log_md   = (Forest_md, Log_inner_md)
+\kw{type} Site_md  = (Forest_md, [(String, Log_md)])
+\kw{type} Coral_md = (Forest_md, [(String, Site_md)])
 \end{code}
 \caption{Coral load functions, representation and metadata types}
 \label{fig:coral-aux}
 \end{figure}
 
 Most \forest{} programs work in two phases. In the first phase they
-use \forest{} to load certain portions of the file system into memory,
+use \forest{} to load relevant portions of the file system into memory,
 and in the second phase they use an ordinary Haskell function to
 traverse the in-memory representation of the data (or its associated
 metadata) and compute the desired result.
@@ -49,7 +49,7 @@ metadata) and compute the desired result.
 
 
 To facilitate this style of programming, the \forest{} compiler
-generates a several Haskell functions and types from every \forest{}
+generates several Haskell functions and types from every \forest{}
 description.  It generates a \emph{load function}, which traverses the
 file system and reads the files, directories, and symbolic links
 mentioned in the description into a structured object in memory; it
@@ -59,13 +59,12 @@ type for the \emph{metadata} associated with the representation. For
 example, from the descriptions for \coral{} logs in
 Figure~\ref{fig:coral-description}, the compiler generates the load
 functions, the representation types, and the metadata types presented in
-Figure~\ref{fig:coral-aux}. Note that the structure each of these
-artifacts closely corresponds to the structure of the \forest{}
-description that generated them. This makes it easy for programmers to
-write programs against these \forest{}-generated artifacts.
+Figure~\ref{fig:coral-aux}. Note that the structure of each of these
+artifacts mirrors the structure of the \forest{}
+description that generated them. This close correspondance makes it
+easy for programmers to write programs using these \forest{}-generated artifacts.
 
-\dpw{replaced unsafeIO with monadic style}
-As a simple example, consider the \cd{Coral} description from
+As a simple example, consider the \cd{Coral} description in
 Figure~\ref{fig:coral-description}. The \cd{coral\_load} function takes
 a path as an argument and produces the representation and metadata
 obtained by loading each of the site directories contained in the
@@ -74,14 +73,11 @@ directory at that path:
 \begin{code}
 (rep,md) <- coral_load "/var/log/coral1"
 \end{code}
-%(rep,md) = 
-%  unsafePerformIO $ (coral_load "/var/log/coral")
-% $
 Because \cd{Coral} is a comprehension, both \cd{rep} and \cd{md} are
-structured as lists. More specifically, \cd{rep} has the form,
+lists. More specifically, \cd{rep} has the form
 \begin{code}
 Coral [("planetab2.eecs.wsu.edu", Site [...]),
-     ("planetlab3.williams.edu", Site [...]), ...]
+       ("planetlab3.williams.edu",Site [...]),...]
 \end{code}
 where the list contains pairs of names of subdirectories and
 representations for the data loaded from those directories. The
@@ -114,7 +110,7 @@ of sites we can simply compute the length of the nested list in
 \cd{rep}:
 %
 \begin{code}
-num_sites = case rep of Coral l -> List.length l 
+num_sites = \kw{case} rep \kw{of} Coral l -> List.length l 
 \end{code}
 %
 More interestingly, since the internals of the web log are
@@ -131,13 +127,10 @@ from each element in the resulting list of pairs:
 get_site = fst
 get_mod (_,(f,_)) = mod_time . fileInfo $ f  
 sites_mod () = 
-  case rep,md of (Coral rs, (_,ms)) -> 
+  \kw{case} (rep,md) \kw{of} (Coral rs, (_,ms)) -> 
     map (get_site *** get_mod) (zip rs ms)
 \end{code}
 % $
-\jnf{do we want to show output? we'll have to be careful to
-  sanitize the data.}
-\dpw{no space for output}
 
 These simple examples show how \forest{} diminishes the distinction
 between data represented on disk and in memory. After writing a
@@ -155,9 +148,9 @@ As a final example, consider a program that computes the top-$k$
 requested URLs from all \coral{} nodes by size. The \coral{}
 administrators compute this statistic periodically to help monitor and
 tune the performance of the system~\cite{freedman:coral-experience}. 
-Here is its definition in Haskell (it uses several helper
-functions such as \cd{get_sites} to project out various components of
-\cd{rep}):
+We define the analogous function in Haskell using helper
+functions such as \cd{get_sites} to project out components of
+\cd{rep}:
 %
 \begin{code}
 topk k = 
@@ -171,10 +164,10 @@ topk k =
 \end{code}
 % $
 Reading this program inside-out, we see that it first uses a list
-comprehension to iterate through \cd{rep}, collecting up the
+comprehension to iterate through \cd{rep}, collecting the
 individual log entries in the \cd{coralwebsrv.log.gz} file for
 incoming requests and projecting out the URL requested and the total
-size of the request. It then adds up the sizes of all requests for the
+size of the request. It then sums the sizes of all requests for the
 same URL using the \cd{fromListWith} function from the \cd{Data.Map}
 module. Next, it sorts the entries in descending order. Finally, it
 returns the first $k$ entries of the list as the final result.
