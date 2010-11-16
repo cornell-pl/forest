@@ -5,6 +5,7 @@ import Language.Pads.Padsc
 import Language.Forest.Forestc
 import System.IO.Unsafe (unsafePerformIO)
 import Language.Pads.GenPretty
+import Language.Forest.Graph
 
 {- Description of configuration file for learning demo web site -}
 [pads| 
@@ -26,6 +27,16 @@ import Language.Pads.GenPretty
                       trailer     :: [Pstringln]
    }
 |]
+
+cToS (Config_entry_t (Pstring s)) = s
+
+ghost_name   (Config c) = cToS $ host_name c
+gstatic_path (Config c) = cToS $ static_path c
+gcgi_path    (Config c) = cToS $ cgi_path c
+gscript_path (Config c) = cToS $ script_path c
+glearn_home  (Config c) = cToS $ learn_home c
+gtmp_root    (Config c) = cToS $ tmp_root c
+gstatic_dst  (Config c) = cToS $ static_dst c
 
 config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
 (config_rep, config_md) :: (Config_f, Config_f_md) = unsafePerformIO $ parseFile config_file
@@ -79,6 +90,11 @@ logFiles = "/Users/kfisher/Sites/logFile"
 (logFiles_rep, logFiles_md) :: (LogFile_f, LogFile_f_md) = unsafePerformIO $ parseFile logFiles
 
 {- Helper function to map a list of userIds, to the associated list of directory names -}
+userNames info = getUserEntries (users info)
+getUserEntries (UserEntries (UserEntries_f users)) = map userEntryToFileName users
+userEntryToFileName userEntry = pairToFileName (dirId userEntry)
+pairToFileName (Pint n1, Pint n2) = "id."++(show n1)++"."++(show n2)
+
 userDirs :: [UserEntry_t] -> [(Pint,Pint)]
 userDirs f = map dirId f
 
@@ -86,6 +102,7 @@ isReadOnly md = get_modes md == "-rw-r--r--"
 
 [forest|
   type BinaryRO    = Binary        where <| get_modes this_att ==  "-rw-r--r--" |>
+  type BinaryRX    = Binary        where <| get_modes this_att ==  "-rwxr-xr-x" |>
   type TextRX      = Text          where <| get_modes this_att ==  "-rwxr-xr-x" |>
   type TextRO      = Text          where <| get_modes this_att ==  "-rw-r--r--" |>
   type Config      = File Config_f where <| get_modes this_att ==  "-rw-r--r--" |>
@@ -146,13 +163,122 @@ isReadOnly md = get_modes md == "-rw-r--r--"
      logFile is "logFile"     :: LogFile       -- Log of server actions.
   }                          
 
+{- Type of directory containing actual data files named by sourceNames -}
+ type DataSource_d(sources :: [String]) =  [ s :: Text | s <- sources ]
+
+
+{- Type of a link with get_modes rwxrwxr-x to location p with type dataFile_t -}
+ type SymLink_f (source :: String) = SymLink where <| this == source |>
+
+
+{- Directory of optional links to source data files -}
+ type Data_d ((root,sourceNames) :: (String, [String])) = Directory {
+     datareps  is [s :: Maybe Text                            | s <- sourceNames],
+     datalinks is [s :: Maybe (SymLink_f <| root++"/"++ s |>) | s <- sourceNames]        
+ }
+
+ type OptBinaryRX = Maybe BinaryRX
+
+{- Directory that stores the generated machine-dependent output for data source named source -}
+ type MachineDep_d (source :: String) = Directory {
+   pads_c    is <| source ++ ".c"    |> :: TextRO,
+   pads_h    is <| source ++ ".h"    |> :: TextRO,
+   pads_o    is <| source ++ ".o"    |> :: BinaryRO,
+   pads_pxml is <| source ++ ".pxml" |> :: TextRO,  -- PADS description in xml syntax
+   pads_xsd  is <| source ++ ".xsd"  |> :: TextRO,  -- xschema of xml syntax for <| source description
+   pads_acc  is <| source ++ "-accum"|> :: OptBinaryRX,
+   pads_fmt  is <| source ++ "-fmt"  |> :: OptBinaryRX,
+   pads_xml  is <| source ++ "-xml"  |> :: OptBinaryRX
+}
+
+
+{- Directory that stores the generated output for data source named "source". -}
+ type Example_d (source :: String) = Directory {
+   pads_p         is <| source ++ ".p" |>            :: TextRO,    -- padsc description of data source
+   pads_pml       is <| source ++ ".pml" |>          :: Maybe TextRO,    -- padsml description of data source
+   vanilla        is "vanilla.p"                     :: TextRO,    -- input tokenization
+   makefile       is "GNUmakefile"                   :: Text,    
+   machine        is <| envVar "AST_ARCH"|>          :: Maybe (MachineDep_d source),   -- Platform dependent files
+   accum_c        is <| source ++ "-accum.c" |>      :: Maybe TextRO,    -- template for generating accumulator output
+   accum_out      is <| source ++ "-accum.out"|>     :: Maybe TextRO,   -- ASCII Accumulator output
+   accum_xml_out  is <| source ++ "-accum_xml.out"|> :: Maybe TextRO,   -- XML Accumulator output
+   xml_c          is <| source ++ "-xml.c"|>         :: Maybe TextRO,   -- template for generating xml output
+   xml_out        is <| source ++ "-xml.out"|>       :: Maybe TextRO,   -- XML representation of <| source
+   xml_xsd        is <| source ++ ".xsd" |>          :: Maybe TextRO,   -- XSchema for XML representation of source
+   fmt_c          is <| source ++ "-fmt.c" |>        :: Maybe TextRO,   -- template for generating fmt output
+   fmt_out        is <| source ++ "-fmt.out" |>      :: Maybe TextRO    -- Formatted representation of source
+ }
+
+
+{- Directory that stores all information for one user. -}
+ type User_d(arg@ (r, sources) :: (String, [String])) = Directory {
+    dataSets    is "data"    :: Maybe (Data_d arg),
+    runExamples is       [ s :: Maybe (Example_d s) | s <- sources]
+  }
+
+{- Directory stores temporary information associated with all users. -}
+ type Users_d((r,info) :: (String, Info_d)) = 
+    [userDir :: User_d <|(r, getSources info) |>  | userDir <- <| userNames info |> ]
+
+ type Website_d(config::FilePath)  = Directory {
+  c               is global config               :: Config,             -- configuration file with locations
+  static_content  is global <| gstatic_dst c  |> :: Static_d,           -- static web site content
+  dynamic_content is global <| gcgi_path c    |> :: Cgi_d,              -- dynamic web site content
+  scripts         is global <| gscript_path c |> :: Scripts_d,          -- shell scripts invoked by cgi to run learning system
+  admin_info      is global <| gstatic_dst c  |> :: Info_d,             -- administrative information about website
+  data_dir        is global <| (glearn_home c)++"/examples/data" |>
+                                                  :: DataSource_d <|(getSources admin_info)|>,      -- stock data files for website
+  usr_data        is global <| gtmp_root c |>     :: Users_d <|(get_fullpath data_dir_md, admin_info)|>      -- per user information
+ }
+ 
 |]
+
+config_location = "/Users/kfisher/Sites/cgi-bin/PLConfig.PM"
+doLoadWebsite = website_d_load config_location "/Users/kfisher/Sites"
+
+{- print graph of website -}
+doGraph md =  mdToPDF md "Examples/website.pdf"
+          
+users_dir = "/Users/kfisher/Sites/cgi-bin/gen"
+(users'_rep, users'_md) :: (Users_d, Users_d_md) = unsafePerformIO $ load1 ("/Users/kfisher/pads/infer/examples/data", info_rep) users_dir
+
+user_dir = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7"
+(userE_rep, userE_md) :: (User_d, User_d_md) = unsafePerformIO $ load1 ("/Users/kfisher/pads/infer/examples/data", ["ai.3000"]) user_dir
+
+graphUserIO = mdToPDF userE_md "Examples/users.pdf"
+
+example_dir = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7/ai.3000"
+(example_rep, example_md) :: (Example_d, Example_d_md) = unsafePerformIO $ load1 "ai.3000" example_dir
+
+machine_dir = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7/ai.3000/darwin.i386"
+(machinedep_rep, machinedep_md) :: (MachineDep_d, MachineDep_d_md) = unsafePerformIO $ load1 "ai.3000" machine_dir
+
+root_data_dir = "/Users/kfisher/pads/infer/examples/data"
+data_dir_path = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7/data"
+(data_d_rep, data_d_md) :: (Data_d, Data_d_md) = unsafePerformIO $ load1 (root_data_dir, datasources) data_dir_path
+
+link_path = "Examples/data/Simple/mylink"
+(link_rep,link_md) :: (SymLink_f, SymLink_f_md) = unsafePerformIO $ load1 "quantum" link_path
+
 
 info_dir = "/Users/kfisher/Sites"
 (info_rep, info_md) :: (Info_d, Info_d_md) = unsafePerformIO $ load  info_dir
 
+dataSource_dir = "/Users/kfisher/pads/infer/examples/data"
+(datasource_rep, datasource_md) :: (DataSource_d, DataSource_d_md) = unsafePerformIO $ load1 datasources dataSource_dir
+
+getStrings (Pstringln (PstringSE s)) = s
+getSources' (SourceNames (SourceNames_f  pstrlns)) = map getStrings pstrlns
+
+getSources :: Info_d -> [String]
+getSources info = getSources' (sources info)
+
+datasources :: [String]
+datasources = getSources info_rep
+
+
 scripts_dir = "/Users/kfisher/Sites/cgi-bin"
-(scripts_rep, scripts_md) :: (Scripts_d, Scripts_d_md) = unsafePerformIO $ load  scripts_dir
+(scripts_rep, scripts'_md) :: (Scripts_d, Scripts_d_md) = unsafePerformIO $ load  scripts_dir
 
 cgi_dir = "/Users/kfisher/Sites/cgi-bin"
 (cgi_rep, cgi_md) :: (Cgi_d, Cgi_d_md) = unsafePerformIO $ load  cgi_dir
@@ -163,82 +289,3 @@ static_dir = "/Users/kfisher/Sites"
 image_dir = "/Users/kfisher/Sites/images"
 (img_rep, img_md) :: (Imgs_d, Imgs_d_md) = unsafePerformIO $ load  image_dir
 
-{-
-
-
-{- Type of directory containing stock data files named by sourceNames -}
- type DataSource_d(sourceNames :: SourceNames_t) = Directory {
-      dataSources is [ s :: Text | s <- sourceNames];
-  }
-
-{- Type of a link with get_modes rwxrwxr-x to location p with type dataFile_t -}
- type SymLink_f (sourceName :: String) = SymLink where <| this == sourceName |>
-
-{- Directory of optional links to source data files -}
- type Data_d ((sourceNames,d) :: (SourceNames_f, DataSource_d)) = Directory {
-     datareps  is [s :: Maybe Text          | s <- sourceNames]
-     datalinks is [s :: Maybe (Symlink_f s) | s <- sourceNames]        -- this path needs to be augmented from d parameter's location
- }
-
-{- Directory that stores the generated machine-dependent output for data source named source -}
- type MachineDep_d (source :: String) = Directory {
-   pads_c    is <| source ++ ".c"    |> :: Text,
-   pads_h    is <| source ++ ".h"    |> :: Text,
-   pads_o    is <| source ++ ".o"    |> :: Binary,
-   pads_pxml is <| source ++ ".pxml" |> :: Text,  -- PADS description in xml syntax
-   pads_xsd  is <| source ++ ".xsd"  |> :: Text,  -- xschema of xml syntax for <| source description
-   pads_acc  is <| source ++ "-accum"|> :: Maybe Binary,
-   pads_fmt  is <| source ++ "-fmt"  |> :: Mabye Binary,
-   pads_xml  is <| source ++ "-xml"  |> :: Maybe Binary
-}
-
-{- Directory that store the generated output for data source named source. -}
- type Example_d (source :: String) = Directory {
-   pads_p         is <| source ++ ".p" |>            :: Text,    -- padsc description of data source
-   pads_pml       is <| source ++ ".pml" |>          :: Text,    -- padsml description of data source
-   vanilla        is "vanilla.p"                     :: Text,    -- input tokenization
-   makefile       is "GNUmakefile"                   :: Text,    
-   machine        is <| getEnv "AST_ARCH"|>  :: Maybe (MachineDep_d source),   -- Platform dependent files
-   accum_c        is <| source ++ "-accum.c" |>      :: Maybe Text,    -- template for generating accumulator output
-   accum_out      is <| source ++ "-accum.out"|>     :: Maybe Text,   -- ASCII Accumulator output
-   accum_xml_out  is <| source ++ "-accum_xml.out"|> :: Maybe Text,   -- XML Accumulator output
-   xml_c          is <| source ++ "-xml.c"|>         :: Maybe Text,   -- template for generating xml output
-   xml_out        is <| source ++ "-xml.out"|>       :: Maybe Text,   -- XML representation of <| source
-   xml_xsd        is <| source ++ ".xsd" |>          :: Maybe Text,   -- XSchema for XML representation of source
-   fmt_c          is <| source ++ "-fmt.c" |>        :: Maybe Text,   -- template for generating fmt output
-   fmt_out        is <| source ++ "-fmt.out" |>      :: Maybe Text    -- Formatted representation of source
-};
-
-{- Directory that stores all information for one user. -}
-{- This type is an example where it isn't easy to factor type of element out into containing list -}
- type User_d( arg @ (sources, dataSourcE) :: (SourceNames_f, DataSource_d)) = Directory {
-    data        :: Maybe (Data_d arg),
-    runExamples is [ s  :: Maybe (Example_d s) | s <- sources]
-  }
-
-
-{- Directory stores temporary information associated with all users. -}
- type Users_d((info, dataSource) :: (Info_d, DataSource_d)) = 
-    [userDir :: Maybe (User_d <|(sources info, dataSource) |> ) | userDir <- userDirs(users info) ]
-
-
-
- type Website_d(config::FilePath)  = Directory {
-  c               is config              :: Config_f,        -- configuration file with locations
-  static_content  is <| static_dst c  |> :: Static_d,        -- static web site content
-  dynamic_content is <| cgi_path c    |> :: Cgi_d,           -- dynamic web site content
-  scripts         is <| script_path c |> :: Scripts_d,       -- shell scripts invoked by cgi to run learning system
-  admin_info      is <| static_dst c  |> :: Info_d,         -- administrative information about website
-  data_dir        is <| (learn_home c)++"/examples/data" |>
-                                         :: DataSource_d(sources admin_info),      -- stock data files for website
-  usr_data        is <| tmp_root c |>    :: Users_d(admin_info, data_dir)      -- per user information
- } 
-|]
-
-let config_location = "Root/cgi-bin/PLConfig.PM"
-doLoadWebsite = do
- { (rep,md) <- website_d_load config_location config ""
- }
-
-          
--}

@@ -202,7 +202,7 @@ loadField field = case field of
    Comp   c -> loadCompound c
 
 loadSimple :: BasicField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
-loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
+loadSimple (internal, isForm, isGlobal, externalE, forestTy, predM) pathE = do
    let repName = mkName internal
    let mdName  = mkName (internal++"_md")
    bmdName <- newName (internal++"_bmd")
@@ -214,7 +214,7 @@ loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
    let (fileE, pathStmts) = if isForm then (externalE, [])
                             else (AppE (VarE 'pickFile) filesE,
                                   [BindS filesP (AppE (AppE (VarE 'getMatchingFiles) pathE) externalE)])
-   let newPathE     = AppE (AppE (VarE 'concatPath) pathE) fileE
+   let newPathE     = AppE(AppE (AppE (VarE 'concatPath) (boolToExpE isGlobal)) pathE) fileE
    rhsE <- loadNonEmptyE forestTy newPathE fileE
 --   rhsE <- loadE forestTy newPathE 
    let stmt1 = BindS (TupP [repP,mdP]) rhsE                            
@@ -248,7 +248,7 @@ loadComp cinfo pathE = do
    }
 
 loadCompound :: CompField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
-loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, predEOpt}) pathE = do
+loadCompound (CompField {internalName, tyConNameOpt, explicitName, isGlobal, externalE, descTy, generatorP, generatorG, predEOpt}) pathE = do
    let repName = mkName internalName
    let mdName  = mkName (internalName++"_md")
    bmdName   <- newName (internalName++"_bmd")
@@ -261,7 +261,7 @@ loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, de
    let (filesE, filesP) = genPE filesName
    let (metadatasE, metadatasP) = genPE metadatasName
    let (fmE, fmP) = genPE fmName
-   let newPathE     = AppE (AppE (VarE 'concatPath) pathE ) externalE
+   let newPathE     = AppE (AppE (AppE (VarE 'concatPath) (boolToExpE isGlobal)) pathE ) externalE
    rhsE <- loadNonEmptyE descTy newPathE externalE
    let compResultE = TupE[externalE, rhsE]
    let getFilesE regexpE = AppE (AppE (VarE 'getMatchingFiles) pathE) regexpE
@@ -439,7 +439,7 @@ genRepMDDeclRecord ty_name md_ty_name fields = do
  
 type VST = (TH.Name, TH.Strict, TH.Type)
 genRepMDField :: Field -> Q (VST, VST)
-genRepMDField (Simple (internal, isForm, external, ty, predM)) = do
+genRepMDField (Simple (internal, isForm, isGlobal, external, ty, predM)) = do
    { (rep_ty, md_ty) <- genRepMDTy ty
    ; return ((getFieldName   internal, TH.NotStrict, rep_ty),
              (getFieldMDName internal, TH.NotStrict, md_ty))

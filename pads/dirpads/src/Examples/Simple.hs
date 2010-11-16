@@ -21,6 +21,10 @@
                     (filename, student) <= matches Student_filename where not (template filename) ] }
    How to specify fields that match a regular expression but have a single representation.
    BUG: Maybe followed by a regular expression: see Students4.hs Grades
+   BUG: not an error to read a directory as a text file :-(
+   BUG: Maybe as other than last type constructor in record (see PWS.hs)
+   BUG: pretty printer for Maybes
+   BUG: Maybe with a underlying type with a constraint violation fails; I guess this is the right behavior...
    literate haskell
 
    DONE TOOL: check permissions
@@ -161,3 +165,10 @@ re = RE ".*[.]txt"
 (match_rep, match_md) = unsafePerformIO $ match_d_load  host_dir
 resultMatchIO =  mdToPDF match_md "/Users/kfisher/pads/dirpads/src/Examples/Match.pdf"
 
+
+
+[forest| type Global = Directory 
+               { globalNotes is global "/Users/kfisher/pads/dirpads/src/Notes/ghc-tricks"  :: Text }
+  |]
+
+(global_rep, global_md) = unsafePerformIO $ global_load host_dir

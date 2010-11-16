@@ -105,3 +105,6 @@ patToExp pat = case pat of
   SigP p ty   -> patToExp p
 
 fieldPatToExp (n,p) = (n, patToExp p)
+
+boolToExpE True = ConE 'True
+boolToExpE False = ConE 'False

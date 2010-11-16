@@ -8,8 +8,9 @@ import Language.Forest.MetaData
 import Language.Forest.Generic
 import Language.Forest.Errors
 
-import System.FilePath.Posix
+import qualified System.FilePath.Posix
 import System.FilePath.Glob
+import System.Posix.Env
 import System.Posix.Files
 import System.Cmd
 import System.Exit
@@ -283,8 +284,11 @@ getMatchingFilesGlob' path (GL glob) = do
   }
 
 
-concatPath stem new = 
-  case new of
-   [] -> stem
-   ('/':rest) -> new
-   otherwise -> stem ++ "/" ++ new
+concatPath isGlobal stem new = 
+  if isGlobal then new else
+    case new of
+     [] -> stem
+     ('/':rest) -> new
+     otherwise -> stem ++ "/" ++ new
+
+envVar str = fromJust (unsafePerformIO $ (System.Posix.Env.getEnv str))
