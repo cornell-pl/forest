@@ -12,7 +12,7 @@ config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
 (head_rep, head_md) :: (Header_t, Header_t_md) = unsafePerformIO $ parseFile config_file
 -}
 
-ws = RE "/\s+/"
+ws = RE "[ \t]+"
 [pads|
   type Comment_t = ('#', Pstringln)
   type Def_t = ("def", ws, PstringSE ws, ws, Pstringln)

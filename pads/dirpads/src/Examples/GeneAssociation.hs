@@ -12,77 +12,44 @@ config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
 (head_rep, head_md) :: (Header_t, Header_t_md) = unsafePerformIO $ parseFile config_file
 -}
 
-ws = RE "/\s+/"
-gz_suffix = ".gz"
-readme_suffix = ".README"
-conf_suffix = ".conf"
-
+ws = RE "[ \t]+"
 title = "gene_association"
-origins = [
-	"Compugen"
-	, "GeneDB"
-	, "PAMGO"
-	, "aspgd"
-	, "cgd"
-	, "dictyBase"
-	, "ecocyc"
-	, "fb"
-	, "goa"
-	, "gramene"
-	, "jcvi"
-	, "mgi"
-	, "pseudocap"
-	, "reactome"
-	, "rgd"
-	, "sgd"
-	, "sgn"
-	, "tair"
-	, "wb"
-	, "zfin"
-]
+get_gz_file f = title ++ '.' ++ f ++".gz"
+get_readme_file f = f ++ ".README"
+get_conf_file f = title ++ '.'  ++ f ++ ".conf"
 
-organisms = [
-	 "Lmajor"
-	,"Pfalciparum"
-	,"Spombe"
-	,"Tbrucei"
-	,"tsetse"
-	,"Atumefaciens"
-	,"Ddadantii"
-	,"Mgrisea"
-	,"Oomycetes"
-	,"arabidopsis"
-	,"chicken"
-	,"cow"
-	,"human"
-	,"mouse"
-	,"pdb"
-	,"rat"
-	,"uniprot"
-	,"noiea"
-	,"zebrafish"
-	,"oryza"
-	,"Aphagocytophilum"
-	,"Banthracis"
-	,"Cburnetii"
-	,"Chydrogenoformans"
-	,"Cjejuni"
-	,"Cperfringens"
-	,"Cpsychrerythraea"
-	,"Dethenogenes"
-	,"Echaffeensis"
-	,"Gsulfurreducens"
-	,"Hneptunium"
-	,"Lmonocytogenes"
-	,"Mcapsulatus"
-	,"Nsennetsu"
-	,"Pfluorescens"
-	,"Psyringae"
-	,"phaseolicola"
-	,"Soneidensis"
-	,"Spomeroyi"
-	,"Vcholerae"
-]
+{- each source is a pair (institute name, list of organisms the institute provides) -}
+sources = [
+	  ("Compugen", [])
+	, ("GeneDB", ["Lmajor","Pfalciparum","Spombe","Tbrucei","tsetse"])
+	, ("PAMGO", ["Atumefaciens","Ddadantii","Mgrisea","Oomycetes"])
+	, ("aspgd", [])
+	, ("cgd", [])
+	, ("dictyBase", [])
+	, ("ecocyc", [])
+	, ("fb", [])
+	, ("goa", ["arabidopsis","chicken","cow","human","mouse","pdb","rat","uniprot","uniprot_noiea","zebrafish"])
+	, ("gramene", ["oryza"])
+	, ("jcvi", ["Aphagocytophilum","Banthracis","Cburnetii","Chydrogenoformans","Cjejuni","Cperfringens",
+		    "Cpsychrerythraea","Dethenogenes","Echaffeensis","Gsulfurreducens","Hneptunium","Lmonocytogenes",
+		    "Mcapsulatus","Nsennetsu","Pfluorescens","Psyringae","phaseolicola","Soneidensis","Spomeroyi",
+		    "Vcholerae"])
+	, ("mgi", [])
+	, ("pseudocap", [])
+	, ("reactome", [])
+	, ("rgd", [])
+	, ("sgd", [])
+	, ("sgn", [])
+	, ("tair", [])
+	, ("wb", [])
+	, ("zfin", []) ]
+
+
+comb_source ((inst, organs):sources) = 
+   let cl = case organs of
+	  [] -> [inst]
+	  _ -> map (\organism -> inst ++ '_' ++ organismm) organs
+   in cl ++ (comb_source sources) 
 
 {- the GO files, when unzipped, contain a header like the following:
 !CVS Version: Revision: 1.19 $
@@ -129,9 +96,21 @@ organisms = [
 {- isReadOnly md = get_modes md == "-rw-r--r--" -}
 
 [forest|
-  type Submission_d = Directory {
-    pair_files = [Maybe (zipf :: Gzip (File GA_f), conf :: Conf_f) | 
+  type Readme_d = Directory {
+    readmes is [<|get_readme_file f|> :: Maybe Text | f <- <|comb_source sources|>]
+  }
 
+  type Submission_d = Directory {
+    pair_files  is  [(<|get_gz_file cs|>  :: Maybe Gzip (File GA_f), <|get_conf_file cs|> :: Maybe (File Conf_f)) | 
+			cs <- <|comb_source sources|>],
+    paint_files is  [<|get_conf_file cs|> :: Maybe Conf_f | cs <- <|map (\x -> "paint" ++ x) (comb_source sources)|>], 
+    paint_d     is  "paint"               :: Paint_d
+  }
+
+  type Top_d = Directory {
+    data_files is [<|get_gz_file cs|> :: Maybe (Gzip (File GA_f)) | cs <- <|comb_source sources|>]
+    readme     is "readme"             :: Readme_d
+    sub        is "submission"         :: Submission_d
   }
 |]
 
