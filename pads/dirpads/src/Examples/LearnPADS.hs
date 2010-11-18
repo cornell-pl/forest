@@ -147,7 +147,7 @@ let benchmarks_alt = [
   {- the source directory contains a main.cm and a list of sml files -}
   type Src_d = Directory {
     main is "main.cm" :: SRC,
-    sources is [SRC]  {- this is not right! -}
+    sources is [ s :: SRC | s <- matches (GL  "*.sml") ]
   }
   
   {- the root infer directory -}
