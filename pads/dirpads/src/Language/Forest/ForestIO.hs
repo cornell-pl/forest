@@ -283,9 +283,12 @@ getMatchingFilesGlob' path (GL glob) = do
   ; return matches
   }
 
+isGlobal s = case s of 
+  '/' : rest -> True
+  otherwise -> False
 
-concatPath isGlobal stem new = 
-  if isGlobal then new else
+concatPath stem new = 
+  if isGlobal new then new else
     case new of
      [] -> stem
      ('/':rest) -> new

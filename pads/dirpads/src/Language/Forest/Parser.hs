@@ -23,7 +23,7 @@ type Parser = PS.Parser
 
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-", ","],
-                                           reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe", "as", "constrain", "where", "global" ]})
+                                           reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe", "as", "constrain", "where"]})
 
 whiteSpace    = PT.whiteSpace  lexer
 identifier    = PT.identifier  lexer
@@ -196,24 +196,22 @@ fieldBody internal_name =
 
 simpleField :: String -> Parser Field
 simpleField internal_name = do
-           { (isForm, isGlobal, external_exp) <- externalName internal_name
+           { (isForm, external_exp) <- externalName internal_name
            ; forest_ty <- forestTy
            ; predM <- optionMaybe fieldPredicate
-           ; return (Simple (internal_name, isForm, isGlobal, external_exp, forest_ty, predM))
+           ; return (Simple (internal_name, isForm, external_exp, forest_ty, predM))
            } <?> "Simple Forest Field"
 
 
 
-compBody :: Parser(Generator, Bool, Maybe TH.Exp)
+compBody :: Parser(Generator, Maybe TH.Exp)
 compBody =  do
      { isMatch <- optionMaybe (reserved "matches")
-     ; isGlobalM <- optionMaybe (reserved "global")
-     ; let isGlobal = isJust isGlobalM
      ; generatorE <- forestArg
      ; predE <- optionMaybe compPredicate
      ; if isJust isMatch 
-          then return (Matches  generatorE, isGlobal, predE)
-          else return (Explicit generatorE, isGlobal, predE)
+          then return (Matches  generatorE, predE)
+          else return (Explicit generatorE, predE)
      }
 
 compTy :: Parser ForestTy
@@ -235,9 +233,9 @@ compForm internal_name = do
           ; generatorP <- case LHM.parsePat strPat of 
                               Left err    -> unexpected ("Failed to parse Haskell pattern in directory declaration for field "  ++ internal_name ++ ":" ++ err)
                               Right patTH -> return patTH
-          ; (generatorE, isGlobal, predEOpt) <- compBody
+          ; (generatorE, predEOpt) <- compBody
           ; reservedOp "]"
-          ; return (CompField internal_name repTyConName explicitFileName isGlobal externalE forest_ty generatorP generatorE predEOpt)
+          ; return (CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorE predEOpt)
           }
 
 compField :: String -> Parser Field
@@ -264,42 +262,37 @@ fieldPredicate :: Parser TH.Exp
 fieldPredicate = do { reserved   "where"
                     ; haskellExp
                     }
-externalName :: String -> Parser (Bool, Bool, TH.Exp)
+externalName :: String -> Parser (Bool, TH.Exp)
 externalName internal = 
        (explicitExternalName internal)
    <|> (simpleMatches        internal)
    <|> (implicitExternalName internal)
 
-simpleMatches :: String -> Parser (Bool, Bool, TH.Exp)
+simpleMatches :: String -> Parser (Bool, TH.Exp)
 simpleMatches internal = do
   { reserved "matches"
-  ; (isGlobal, expE) <- pathSpec
+  ; expE <- pathSpec
   ; reservedOp "::"                 
-  ; return (False, isGlobal, expE)
+  ; return (False, expE)
   }
 
-explicitExternalName :: String -> Parser (Bool, Bool, TH.Exp)
+explicitExternalName :: String -> Parser (Bool, TH.Exp)
 explicitExternalName internal = do 
     { reserved "is"
-    ; (isGlobal,nameE) <- pathSpec
+    ; nameE <- pathSpec
     ; reservedOp "::"                 
-    ; return (True, isGlobal, nameE)
+    ; return (True, nameE)
     }      
            
-implicitExternalName :: String -> Parser (Bool, Bool, TH.Exp)
+implicitExternalName :: String -> Parser (Bool, TH.Exp)
 implicitExternalName internal = 
     if isLowerCase internal then do 
         { reservedOp "::"
-        ; return (True, False, TH.LitE (TH.StringL internal))}     -- implicit external names can't be global
+        ; return (True, TH.LitE (TH.StringL internal))}     
     else unexpected ("Directory label "++ internal ++" is not a valid Haskell record label.  Use an \"is\" clause to give an explicit external name.")     
     
-pathSpec :: Parser(Bool, TH.Exp)
-pathSpec = do 
-  { isGlobalM <- optionMaybe (reserved "global")
-  ; let isGlobal = isJust isGlobalM
-  ; exp <- forestArg
-  ; return (isGlobal, exp)     
-  }
+pathSpec :: Parser TH.Exp
+pathSpec = forestArg
 
 isLowerCase [] = False
 isLowerCase (x:xs) = isLower x

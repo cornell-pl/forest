@@ -26,8 +26,8 @@ data DirectoryTy = Record String [Field]
 
 type FileTy = (String, Maybe TH.Exp)
 
--- internal name, isForm, isGlobal external name, description type, optional predicate
-type BasicField = (String, Bool, Bool, TH.Exp, ForestTy, Maybe TH.Exp)  
+-- internal name, isForm, external name, description type, optional predicate
+type BasicField = (String, Bool, TH.Exp, ForestTy, Maybe TH.Exp)  
 
 data Generator = Explicit TH.Exp | Matches TH.Exp
     deriving (Ord, Eq, Data, Typeable, Show)
@@ -37,7 +37,6 @@ data CompField = CompField
         { internalName :: String
         , tyConNameOpt :: Maybe String
         , explicitName :: Maybe String
-        , isGlobal     :: Bool
         , externalE    :: TH.Exp
         , descTy       :: ForestTy
         , generatorP   :: TH.Pat

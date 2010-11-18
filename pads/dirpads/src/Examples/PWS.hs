@@ -26,24 +26,8 @@ import Language.Forest.Graph
    "$cgi_dst     =",  cgi_dst     :: Config_entry_t,  -- Path to directory for cgi content in live web site site
                       trailer     :: [Pstringln]
    }
-|]
-
-cToS (Config_entry_t (Pstring s)) = s
-
-ghost_name   (Config c) = cToS $ host_name c
-gstatic_path (Config c) = cToS $ static_path c
-gcgi_path    (Config c) = cToS $ cgi_path c
-gscript_path (Config c) = cToS $ script_path c
-glearn_home  (Config c) = cToS $ learn_home c
-gtmp_root    (Config c) = cToS $ tmp_root c
-gstatic_dst  (Config c) = cToS $ static_dst c
-
-config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
-(config_rep, config_md) :: (Config_f, Config_f_md) = unsafePerformIO $ parseFile config_file
-(head_rep, head_md) :: (Header_t, Header_t_md) = unsafePerformIO $ parseFile config_file
 
 
-[pads|
   {- Format for file listing data sources for web site -}
   type SourceNames_f = [Pstringln]
 
@@ -80,14 +64,6 @@ config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
 |]
 
 
-sampleFiles = "/Users/kfisher/Sites/sampleFiles"
-(sample_rep, sample_md) :: (SourceNames_f, SourceNames_f_md) = unsafePerformIO $ parseFile sampleFiles
-
-userEntries = "/Users/kfisher/Sites/userFile"
-(user_rep, user_md) :: (UserEntries_f, UserEntries_f_md) = unsafePerformIO $ parseFile userEntries
-
-logFiles = "/Users/kfisher/Sites/logFile"
-(logFiles_rep, logFiles_md) :: (LogFile_f, LogFile_f_md) = unsafePerformIO $ parseFile logFiles
 
 {- Helper function to map a list of userIds, to the associated list of directory names -}
 userNames info = getUserEntries (users info)
@@ -99,6 +75,16 @@ userDirs :: [UserEntry_t] -> [(Pint,Pint)]
 userDirs f = map dirId f
 
 isReadOnly md = get_modes md == "-rw-r--r--"
+
+cToS (Config_entry_t (Pstring s)) = s
+ghost_name   (Config c) = cToS $ host_name c
+gstatic_path (Config c) = cToS $ static_path c
+gcgi_path    (Config c) = cToS $ cgi_path c
+gscript_path (Config c) = cToS $ script_path c
+glearn_home  (Config c) = cToS $ learn_home c
+gtmp_root    (Config c) = cToS $ tmp_root c
+gstatic_dst  (Config c) = cToS $ static_dst c
+
 
 [forest|
   type BinaryRO    = Binary        where <| get_modes this_att ==  "-rw-r--r--" |>
@@ -126,7 +112,6 @@ isReadOnly md = get_modes md == "-rw-r--r--"
     empty_frame is "nothing.html"       :: TextRO,
     images      is "images"             :: Imgs_d where <| get_modes images_md == "drwxr-xr-x" |>
   }
-
 
 {- Directory of dynamic content -}
   type Cgi_d = Directory {
@@ -166,10 +151,8 @@ isReadOnly md = get_modes md == "-rw-r--r--"
 {- Type of directory containing actual data files named by sourceNames -}
  type DataSource_d(sources :: [String]) =  [ s :: Text | s <- sources ]
 
-
 {- Type of a link with get_modes rwxrwxr-x to location p with type dataFile_t -}
  type SymLink_f (source :: String) = SymLink where <| this == source |>
-
 
 {- Directory of optional links to source data files -}
  type Data_d ((root,sourceNames) :: (String, [String])) = Directory {
@@ -209,7 +192,6 @@ isReadOnly md = get_modes md == "-rw-r--r--"
    fmt_out        is <| source ++ "-fmt.out" |>      :: Maybe TextRO    -- Formatted representation of source
  }
 
-
 {- Directory that stores all information for one user. -}
  type User_d(arg@ (r, sources) :: (String, [String])) = Directory {
     dataSets    is "data"    :: Maybe (Data_d arg),
@@ -221,14 +203,14 @@ isReadOnly md = get_modes md == "-rw-r--r--"
     [userDir :: User_d <|(r, getSources info) |>  | userDir <- <| userNames info |> ]
 
  type Website_d(config::FilePath)  = Directory {
-  c               is global config               :: Config,             -- configuration file with locations
-  static_content  is global <| gstatic_dst c  |> :: Static_d,           -- static web site content
-  dynamic_content is global <| gcgi_path c    |> :: Cgi_d,              -- dynamic web site content
-  scripts         is global <| gscript_path c |> :: Scripts_d,          -- shell scripts invoked by cgi to run learning system
-  admin_info      is global <| gstatic_dst c  |> :: Info_d,             -- administrative information about website
-  data_dir        is global <| (glearn_home c)++"/examples/data" |>
+  c               is config               :: Config,             -- configuration file with locations
+  static_content  is <| gstatic_dst c  |> :: Static_d,           -- static web site content
+  dynamic_content is <| gcgi_path c    |> :: Cgi_d,              -- dynamic web site content
+  scripts         is <| gscript_path c |> :: Scripts_d,          -- shell scripts invoked by cgi to run learning system
+  admin_info      is <| gstatic_dst c  |> :: Info_d,             -- administrative information about website
+  data_dir        is <| (glearn_home c)++"/examples/data" |>
                                                   :: DataSource_d <|(getSources admin_info)|>,      -- stock data files for website
-  usr_data        is global <| gtmp_root c |>     :: Users_d <|(get_fullpath data_dir_md, admin_info)|>      -- per user information
+  usr_data        is <| gtmp_root c |>     :: Users_d <|(get_fullpath data_dir_md, admin_info)|>      -- per user information
  }
  
 |]
@@ -289,3 +271,15 @@ static_dir = "/Users/kfisher/Sites"
 image_dir = "/Users/kfisher/Sites/images"
 (img_rep, img_md) :: (Imgs_d, Imgs_d_md) = unsafePerformIO $ load  image_dir
 
+config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
+(config_rep, config_md) :: (Config_f, Config_f_md) = unsafePerformIO $ parseFile config_file
+(head_rep, head_md) :: (Header_t, Header_t_md) = unsafePerformIO $ parseFile config_file
+
+sampleFiles = "/Users/kfisher/Sites/sampleFiles"
+(sample_rep, sample_md) :: (SourceNames_f, SourceNames_f_md) = unsafePerformIO $ parseFile sampleFiles
+
+userEntries = "/Users/kfisher/Sites/userFile"
+(user_rep, user_md) :: (UserEntries_f, UserEntries_f_md) = unsafePerformIO $ parseFile userEntries
+
+logFiles = "/Users/kfisher/Sites/logFile"
+(logFiles_rep, logFiles_md) :: (LogFile_f, LogFile_f_md) = unsafePerformIO $ parseFile logFiles
