@@ -1,5 +1,5 @@
 %\documentclass[fleqn]{article}
-\documentclass[nocopyrightspace,natbib]{sigplanconf}
+\documentclass[nocopyrightspace,natbib,onecolumn,9pt]{sigplanconf}
 %\documentclass[nocopyrightspace]{sigplanconf}
 
 \newif\ifdraft\drafttrue  %% set to false in final version
@@ -22,8 +22,7 @@
 \copyrightyear{2011} 
 \copyrightdata{} 
 
-\title{Forest: A Language and Toolkit For Programming with File System
-  Fragments}
+\title{Forest: A Language and Toolkit For Programming with \Filestores{}}
 
 \authorinfo{Auxiliary Materials for PLDI Review}
 	   {\vskip -.5in}
@@ -43,15 +42,42 @@
 
 \maketitle{}
 
+
+\section{Introduction}
 This document contains auxiliary materials provided for the PLDI 2011
-review process.  The materials begin on the next page.
+review process. Specifically, it contains \forest{} descriptions of a
+variety of different \filestores{}.
 
 
-\appendix
-\onecolumn
-
+\section{Pads Web Site Descripton}
+This \forest{} description describes the \pads{} web site. The
+description starts with \pads{} descriptions of files that contain
+information that impacts the directory structure. The
+configuration file supplies the paths where various components of the
+website should be located.  The \cd{SourceNames} file lists the names
+of the data files available for the demo.  Each user directory will
+have a subdirectory for each file listed in \cd{SourceNames}. Each
+user is logged in the file \cd{UserEntries}.  For each user in this
+file, there is a directory with a corresponding name containing all of
+the information relevent to that user. \figref{fig:pws} shows a graph
+of the \pads{} website, generated using the \cd{ForestGraph} tool from
+the description and an actual instance of the \pads{} website.
+\input{PWS}
+\begin{figure}
+\vskip -.25in
+\begin{center}
+\scalebox{.13}{\includegraphics{website.pdf}}
+\end{center}
+\caption{Graph showing structure of PADS website, generated from
+  description using \texttt{ForestGraph}}
+\label{fig:pws}
+\end{figure}
+\newpage
 \section{Students.hs Description}
+This section includes the \forest{} description of the Princeton
+Computer Science Department \filestore{}.
 \input{Students}
+
 \section{Coral.hs Description}
 
 \section{CVS.hs Description}
