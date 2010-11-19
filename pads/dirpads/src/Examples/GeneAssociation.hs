@@ -45,6 +45,7 @@ sources = [
 	, ("zfin", []) ]
 
 
+comb_source [] = []
 comb_source ((inst, organs):sources) = 
    let cl = case organs of
 	  [] -> [inst]
