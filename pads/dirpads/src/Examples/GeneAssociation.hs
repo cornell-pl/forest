@@ -97,19 +97,40 @@ comb_source ((inst, organs):sources) =
 
 [forest|
   type Readme_d = Directory {
-    readmes is [<|get_readme_file f|> :: Maybe Text | f <- <|comb_source sources|>]
+    readmes is [rm :: Maybe Text | rm <- <|map get_readme_file (comb_source sources)|>]
   }
 
+  type PTHR_d (name :: String)  = Directory {
+   attr is  <| name ++ ".save.attr" |>  :: Text,
+   gaf  is  <| name ++ ".save.gaf" |>   :: Text,
+   msa  is  <| name ++ ".save.msa" |>   :: Text,
+   paint is <| name ++ ".save.paint" |> :: XML,
+   sfan is  <| name ++ ".save.sfan" |>  :: Text,
+   tree is  <| name ++ ".save.tree" |>  :: Text,
+   txt  is  <| name ++ ".save.txt" |>   :: Text, 
+   wts  is  <| name ++ ".save.txt" |>   :: Text
+  }
+
+  type Pre_sub_d = Directory {
+    gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_files (comb_source sources)|>],
+    conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_files (comb_source sources)|>]
+  }
+
+  type Paint_d = Directory {
+    pthr_dirs is [dir_name :: PTHR_d (dir_name) | dir_name <- matches RE "PTHR[0-9]+"],
+    pre_sub   is "pre-submission" :: Pre_sub_d
+  }
+ 
   type Submission_d = Directory {
-    pair_files  is  [(<|get_gz_file cs|>  :: Maybe Gzip (File GA_f), <|get_conf_file cs|> :: Maybe (File Conf_f)) | 
-			cs <- <|comb_source sources|>],
-    paint_files is  [<|get_conf_file cs|> :: Maybe Conf_f | cs <- <|map (\x -> "paint" ++ x) (comb_source sources)|>], 
+    gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_files (comb_source sources)|>],
+    conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_files (comb_source sources)|>],
+    paint_files is  [cs :: Maybe Conf_f | cs <- <|map (\x -> get_conf_files ("paint" ++ x)) (comb_source sources)|>], 
     paint_d     is  "paint"               :: Paint_d
   }
 
   type Top_d = Directory {
-    data_files is [<|get_gz_file cs|> :: Maybe (Gzip (File GA_f)) | cs <- <|comb_source sources|>]
-    readme     is "readme"             :: Readme_d
+    data_files is [<|get_gz_file cs|> :: Maybe (Gzip (File GA_f)) | cs <- <|comb_source sources|>],
+    readme     is "readme"             :: Readme_d,
     sub        is "submission"         :: Submission_d
   }
 |]
