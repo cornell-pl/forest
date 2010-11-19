@@ -145,4 +145,7 @@ comb_source ((inst, organs):sources) =
   }
 |]
 
-
+doImg = do
+ { (rep,md) <- top_d_load "Data/ga"
+ ; mdToPDF md "Examples/ga.pdf"
+ }

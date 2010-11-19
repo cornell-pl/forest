@@ -7,10 +7,9 @@ import System.IO.Unsafe (unsafePerformIO)
 import Language.Pads.GenPretty
 import Language.Forest.Graph
 
-{- Description of configuration file for learning demo web site -}
+
 [pads| 
-  type Config_entry_t = Line (" \"",  Pstring '\"',  "\";")   
-  type Header_t = [Pstringln] with term length of 13
+  {- Configuration file for learning demo web site; contains paths to various web site components. -}
   data Config_f =  {
                       header      :: [Pstringln] with term length of 13,
    "$host_name   =",  host_name   :: Config_entry_t,  -- Name of machine hosting web site
@@ -27,11 +26,14 @@ import Language.Forest.Graph
                       trailer     :: [Pstringln]
    }
 
+  type Config_entry_t = Line (" \"",  Pstring '\"',  "\";")   
+  type Header_t = [Pstringln] with term length of 13
 
-  {- Format for file listing data sources for web site -}
+  {- Fle listing data sources for web site -}
   type SourceNames_f = [Pstringln]
 
   {- Information related to a single user's use of the web site -}
+  type UserEntries_f = [Line UserEntry_t] with term Eor
 
   {- Each visitor gets assigned a userId that is passed as a ? parameter in URL.
      Security considerations preclude using user-modifiable values as part of file paths.
@@ -45,53 +47,37 @@ import Language.Forest.Graph
     ",id.",   dirId :: (Pint, '.', Pint)    where <| usrId == fst dirId |> 
   } 
 
-  type UserEntries_f = [Line UserEntry_t] with term Eor
-
-  type IP_t = (Pint, '.', Pint, '.', Pint, '.', Pint)
 
   {- Log of requests.  Used to prevent denial of service attacks. -}
+  type LogFile_f = [LogEntry_t]
+
+  {- Request entry.  -}
   data LogEntry_t = {
-    userId :: Pint,        ',',
-    ip     :: IP_t,        ',',
-    script :: Pstring ' ', ' ',
-    userDir:: Pstring ' ', ' ',
-    padsv  :: Pstring ' ', ' ',
-    sml    :: PstringSE(RE " "),     -- This may need to also enclude end of line as an end.
-    msg    :: Maybe Pstringln 
+    userId :: Pint,        ',',   -- user making request
+    ip     :: IP_t,        ',',   -- IP address of requestor
+    script :: Pstring ' ', ' ',   -- script to be executed
+    userDir:: Pstring ' ', ' ',   -- directory to put results, corresponds to user
+    padsv  :: Pstring ' ', ' ',   -- version of PADS used
+    sml    :: PstringSE(RE " "),  -- version of SML used
+    msg    :: Maybe Pstringln     -- optional message 
   }
 
-  type LogFile_f = [LogEntry_t]
+  type IP_t = (Pint, '.', Pint, '.', Pint, '.', Pint)
 |]
 
 
-
-{- Helper function to map a list of userIds, to the associated list of directory names -}
-userNames info = getUserEntries (users info)
-getUserEntries (UserEntries (UserEntries_f users)) = map userEntryToFileName users
-userEntryToFileName userEntry = pairToFileName (dirId userEntry)
-pairToFileName (Pint n1, Pint n2) = "id."++(show n1)++"."++(show n2)
-
-userDirs :: [UserEntry_t] -> [(Pint,Pint)]
-userDirs f = map dirId f
-
-isReadOnly md = get_modes md == "-rw-r--r--"
-
-cToS (Config_entry_t (Pstring s)) = s
-ghost_name   (Config c) = cToS $ host_name c
-gstatic_path (Config c) = cToS $ static_path c
-gcgi_path    (Config c) = cToS $ cgi_path c
-gscript_path (Config c) = cToS $ script_path c
-glearn_home  (Config c) = cToS $ learn_home c
-gtmp_root    (Config c) = cToS $ tmp_root c
-gstatic_dst  (Config c) = cToS $ static_dst c
-
-
 [forest|
+  {- Files with various permission settings. -}
   type BinaryRO    = Binary        where <| get_modes this_att ==  "-rw-r--r--" |>
   type BinaryRX    = Binary        where <| get_modes this_att ==  "-rwxr-xr-x" |>
   type TextRX      = Text          where <| get_modes this_att ==  "-rwxr-xr-x" |>
   type TextRO      = Text          where <| get_modes this_att ==  "-rw-r--r--" |>
-  type Config      = File Config_f where <| get_modes this_att ==  "-rw-r--r--" |>
+  
+  {- Optional binary file with read/execute permission. -}
+  type OptBinaryRX = Maybe BinaryRX
+
+  {- Files with PADS descriptions -}
+  type Config      = File Config_f      where <| get_modes this_att ==  "-rw-r--r--" |>
   type SourceNames = File SourceNames_f where <| isReadOnly this_att |>
   type UserEntries = File UserEntries_f where <| isReadOnly this_att |>
   type LogFile     = File LogFile_f     where <| isReadOnly this_att |>
@@ -115,8 +101,7 @@ gstatic_dst  (Config c) = cToS $ static_dst c
 
 {- Directory of dynamic content -}
   type Cgi_d = Directory {
-    config1       is "PLConfig.pm"             :: Config,
-    config2       is "PLConfig.pm"             :: TextRO,     
+    config'       is "PLConfig.pm"             :: TextRO,   
     perl_utils    is "PLUtilities.pm"          :: TextRO,     
     intro         is "learning-demo.cgi"       :: TextRX,     
     intro_nav     is "navbar-orig.cgi"         :: TextRX,     
@@ -138,7 +123,8 @@ gstatic_dst  (Config c) = cToS $ static_dst c
     rlearnown is "rlearn-own" :: TextRX,      -- Shell script for running PADS compiler on user format
     raccum    is "r-accum"    :: TextRX,      -- Shell script to generate and run accumulator
     rxml      is "r-xml"      :: TextRX,      -- Shell script to generate and run XML converter
-    rfmt      is "r-fmt"      :: TextRX       -- Shell script to generate and run formating program
+    rfmt      is "r-fmt"      :: TextRX,      -- Shell script to generate and run formating program
+    rlibrary                  :: TextRX       -- Shell script to build PADS library
   }
 
 {- Directory containing administrative files used by demo web site -}
@@ -148,73 +134,97 @@ gstatic_dst  (Config c) = cToS $ static_dst c
      logFile is "logFile"     :: LogFile       -- Log of server actions.
   }                          
 
-{- Type of directory containing actual data files named by sourceNames -}
+{- Collection of files named by sources containing actual data.  -}
  type DataSource_d(sources :: [String]) =  [ s :: Text | s <- sources ]
 
-{- Type of a link with get_modes rwxrwxr-x to location p with type dataFile_t -}
- type SymLink_f (source :: String) = SymLink where <| this == source |>
+{- Type of a symbolic link with pointing to source-}
+ type SymLink_f (path :: FilePath) = SymLink where <| this == path |>
 
 {- Directory of optional links to source data files -}
- type Data_d ((root,sourceNames) :: (String, [String])) = Directory {
-     datareps  is [s :: Maybe Text                            | s <- sourceNames],
-     datalinks is [s :: Maybe (SymLink_f <| root++"/"++ s |>) | s <- sourceNames]        
+ type Data_d ((root,sources) :: (FilePath, [String])) = Directory {
+     datareps  is [s :: Maybe Text                            | s <- sources],
+     datalinks is [s :: Maybe (SymLink_f <| root++"/"++ s |>) | s <- sources]        
  }
-
- type OptBinaryRX = Maybe BinaryRX
 
 {- Directory that stores the generated machine-dependent output for data source named source -}
  type MachineDep_d (source :: String) = Directory {
-   pads_c    is <| source ++ ".c"    |> :: TextRO,
-   pads_h    is <| source ++ ".h"    |> :: TextRO,
-   pads_o    is <| source ++ ".o"    |> :: BinaryRO,
-   pads_pxml is <| source ++ ".pxml" |> :: TextRO,  -- PADS description in xml syntax
-   pads_xsd  is <| source ++ ".xsd"  |> :: TextRO,  -- xschema of xml syntax for <| source description
-   pads_acc  is <| source ++ "-accum"|> :: OptBinaryRX,
-   pads_fmt  is <| source ++ "-fmt"  |> :: OptBinaryRX,
-   pads_xml  is <| source ++ "-xml"  |> :: OptBinaryRX
-}
+   pads_c    is <| source ++ ".c"    |> :: TextRO,      -- Generated C source for PADS description
+   pads_h    is <| source ++ ".h"    |> :: TextRO,      -- Generated C header for PADS description
+   pads_o    is <| source ++ ".o"    |> :: BinaryRO,    -- Compiled library for PADS description
+   pads_pxml is <| source ++ ".pxml" |> :: TextRO,      -- PADS description in xml syntax
+   pads_xsd  is <| source ++ ".xsd"  |> :: TextRO,      -- Xschema of XML syntax for source description
+   pads_acc  is <| source ++ "-accum"|> :: OptBinaryRX, -- Optional generated accumulator program
+   pads_fmt  is <| source ++ "-fmt"  |> :: OptBinaryRX, -- Optional generated formatting program
+   pads_xml  is <| source ++ "-xml"  |> :: OptBinaryRX  -- Optional generated XML conversion program
+ }
 
 
 {- Directory that stores the generated output for data source named "source". -}
  type Example_d (source :: String) = Directory {
-   pads_p         is <| source ++ ".p" |>            :: TextRO,    -- padsc description of data source
-   pads_pml       is <| source ++ ".pml" |>          :: Maybe TextRO,    -- padsml description of data source
-   vanilla        is "vanilla.p"                     :: TextRO,    -- input tokenization
-   makefile       is "GNUmakefile"                   :: Text,    
+   pads_p         is <| source ++ ".p" |>            :: TextRO,         -- PADS/C description of data source
+   pads_pml       is <| source ++ ".pml" |>          :: Maybe TextRO,   -- PADS/ML description of data source
+   vanilla        is "vanilla.p"                     :: TextRO,         -- input tokenization
+   makefile       is "GNUmakefile"                   :: Text,           -- Makefile
    machine        is <| envVar "AST_ARCH"|>          :: Maybe (MachineDep_d source),   -- Platform dependent files
-   accum_c        is <| source ++ "-accum.c" |>      :: Maybe TextRO,    -- template for generating accumulator output
+   accum_c        is <| source ++ "-accum.c" |>      :: Maybe TextRO,   -- Template for accumulator program
    accum_out      is <| source ++ "-accum.out"|>     :: Maybe TextRO,   -- ASCII Accumulator output
    accum_xml_out  is <| source ++ "-accum_xml.out"|> :: Maybe TextRO,   -- XML Accumulator output
-   xml_c          is <| source ++ "-xml.c"|>         :: Maybe TextRO,   -- template for generating xml output
-   xml_out        is <| source ++ "-xml.out"|>       :: Maybe TextRO,   -- XML representation of <| source
-   xml_xsd        is <| source ++ ".xsd" |>          :: Maybe TextRO,   -- XSchema for XML representation of source
-   fmt_c          is <| source ++ "-fmt.c" |>        :: Maybe TextRO,   -- template for generating fmt output
+   xml_c          is <| source ++ "-xml.c"|>         :: Maybe TextRO,   -- Template for XML converter
+   xml_out        is <| source ++ "-xml.out"|>       :: Maybe TextRO,   -- XML representation of source
+   xml_xsd        is <| source ++ ".xsd" |>          :: Maybe TextRO,   -- Xschema for XML representation of source
+   fmt_c          is <| source ++ "-fmt.c" |>        :: Maybe TextRO,   -- Template for formatting program
    fmt_out        is <| source ++ "-fmt.out" |>      :: Maybe TextRO    -- Formatted representation of source
  }
 
 {- Directory that stores all information for one user. -}
- type User_d(arg@ (r, sources) :: (String, [String])) = Directory {
+ type User_d(arg@ (r, sources) :: (FilePath, [String])) = Directory {
     dataSets    is "data"    :: Maybe (Data_d arg),
     runExamples is       [ s :: Maybe (Example_d s) | s <- sources]
   }
 
-{- Directory stores temporary information associated with all users. -}
- type Users_d((r,info) :: (String, Info_d)) = 
+{- Collection of directories containing temporary information for all users. -}
+ type Users_d((r,info) :: (FilePath, Info_d)) = 
     [userDir :: User_d <|(r, getSources info) |>  | userDir <- <| userNames info |> ]
 
+{- Top-level of PADS website. -}
  type Website_d(config::FilePath)  = Directory {
-  c               is config               :: Config,             -- configuration file with locations
-  static_content  is <| gstatic_dst c  |> :: Static_d,           -- static web site content
-  dynamic_content is <| gcgi_path c    |> :: Cgi_d,              -- dynamic web site content
-  scripts         is <| gscript_path c |> :: Scripts_d,          -- shell scripts invoked by cgi to run learning system
-  admin_info      is <| gstatic_dst c  |> :: Info_d,             -- administrative information about website
+  c               is config               :: Config,             -- Configuration file with locations of other components
+  static_content  is <| gstatic_dst c  |> :: Static_d,           -- Static web site content
+  dynamic_content is <| gcgi_path c    |> :: Cgi_d,              -- Dynamic web site content
+  scripts         is <| gscript_path c |> :: Scripts_d,          -- Shell scripts invoked by cgi to run learning system
+  admin_info      is <| gstatic_dst c  |> :: Info_d,             -- Administrative information about website
   data_dir        is <| (glearn_home c)++"/examples/data" |>
-                                                  :: DataSource_d <|(getSources admin_info)|>,      -- stock data files for website
-  usr_data        is <| gtmp_root c |>     :: Users_d <|(get_fullpath data_dir_md, admin_info)|>      -- per user information
+                                                  :: DataSource_d <|(getSources admin_info)|>,     -- Stock data files for website
+  usr_data        is <| gtmp_root c |>     :: Users_d <|(get_fullpath data_dir_md, admin_info)|>   -- User-specific information
  }
  
 |]
 
+{- HASKELL HELPER FUNCTIONS -}
+isReadOnly md = get_modes md == "-rw-r--r--"
+
+{- Function userName gets the list of user directorn names from an info structure. -}
+userNames info = getUserEntries (users info)
+getUserEntries (UserEntries (UserEntries_f users)) = map userEntryToFileName users
+userEntryToFileName userEntry = pairToFileName (dirId userEntry)
+pairToFileName (Pint n1, Pint n2) = "id."++(show n1)++"."++(show n2)
+
+{- Helper functiosn to convert a Config entry to a FileName -}
+cToS (Config_entry_t (Pstring s)) = s
+ghost_name   (Config c) = cToS $ host_name c
+gstatic_path (Config c) = cToS $ static_path c
+gcgi_path    (Config c) = cToS $ cgi_path c
+gscript_path (Config c) = cToS $ script_path c
+glearn_home  (Config c) = cToS $ learn_home c
+gtmp_root    (Config c) = cToS $ tmp_root c
+gstatic_dst  (Config c) = cToS $ static_dst c
+
+
+
+
+
+
+{- Loading functions -}
 config_location = "/Users/kfisher/Sites/cgi-bin/PLConfig.PM"
 doLoadWebsite = website_d_load config_location "/Users/kfisher/Sites"
 
