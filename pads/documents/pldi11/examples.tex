@@ -1,4 +1,4 @@
-\section{Example Repositiories}
+\section{Example \Filestores{}}
 \label{sec:examples}
 
 
@@ -6,7 +6,7 @@
 \vskip -.25in
 \hskip -.15in \scalebox{.31}{\includegraphics{StudentsNew.pdf}}
 \vskip -.1in
-\caption{Princeton computer science undergraduate data. The red
+\caption{Anonymized snippet of Princeton computer science undergraduate data. The red
   denotes an error, in this case, missing files.}
 \label{fig:student-pic}
 \end{figure}
@@ -17,12 +17,12 @@ the design of \forest{}.
 
 The first \filestore{} contains information about students in
 Princeton's undergraduate computer science program.   
-The faculty use the information in the repository 
+The faculty use the information in the \filestore{}
 to decide on undergraduate awards and to track grading trends.
 %It was created in approximately 1990 and has been in use ever since.
-As the repository has evolved over time, there 
+As it has evolved over time, there 
 have been a few slight changes in format -- typical for
-ad hoc data repositories.  Naturally, any description needs to cope
+ad hoc \filestores{}.  Naturally, any description needs to cope
 with the variation.
  
 Figure~\ref{fig:student-pic} shows a snippet
@@ -79,7 +79,7 @@ monitor the performance, health, and security of the system, the hosts
 participating in CoralCDN periodically send usage statistics back to
 a central server. These statistics are collected in a \filestore{}
 %similar to the one depicted in Figure~\ref{fig:coral-pic}.
-with top-level \cd{logs} directory containing a set of subdirectories, one
+with a top-level \cd{logs} directory containing a set of subdirectories, one
 for each host. Each such host directory contains another set of
 directories, labeled by date and time. Finally, each of these
 directories contains one or more compressed log files. For the

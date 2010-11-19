@@ -1,12 +1,12 @@
 \begin{code}
 [forest|
   \kw{data} Log = \kw{Directory}
-    \{ log is coralwebsrv :: Gzip (File CoralLog) \}
+    \{ log \kw{is} coralwebsrv :: Gzip (File CoralLog) \}
   \kw{type} Site  = [ d :: Log  | d <- \kw{matches} time ]
   \kw{type} Coral = [ s :: Site | s <- \kw{matches} site ]
 |]
 \end{code}
-
+\vskip -5pt
 %\mbox{}
 %[pads|
 %  \kw{type} CoralLog = ...

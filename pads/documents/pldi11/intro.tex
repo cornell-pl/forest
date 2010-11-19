@@ -12,7 +12,7 @@ directories and uses scripts to compute averages and
 study grading trends.  Similarly, Michael Freedman collects
 sets of log files from \coral, a distributed content distribution
 network~\cite{freedman+:coral,freedman:coral-experience}.  
-The logs are orangized in hierarchical
+The logs are organized in hierarchical
 directory structures based on machine name, time and date.  Freedman
 mines the logs for information on system security, health and performance.  At
 Harvard, Vinothan Manoharan, a physics professor, stores 
@@ -61,7 +61,7 @@ important.  For example, for \filestores{} containing monitoring information,
 errors can signal that some portion of the monitored system is broken.
 Fourth, analyses tend to be built from scratch.
 There is no auxiliary query or tool support and no help with debugging.
-Tools tend to be ``one-off'' tools that are not
+Tools tend to be ``one-off'' efforts that are not
 reuseable.  Fifth, dealing with
 large data sets, which are common in this setting, imposes extra
 difficulties.  For example,  standard tools
@@ -85,22 +85,22 @@ Furthermore, \forest{} leverages
 tools that work for any \filestore{} with a \forest{} description.  
 
 
-\forest{} descriptions provide {\em executable
-  documentation} that can be used to check whether a given
-\filestore{} conforms to its specification.  For example, Unix file
-systems should be laid out as described by the Filesystem Hierarchy
-Standard Group in the informal standards document~\cite{fsh}.  \forest{}
-provides a language for writing such standards precisely and a checker
-that allows users to verify that their installation conforms to the
-standard.  As another example, the \pads{} website~\cite{padsweb}
-contains a complex set of scripts and data files to
-implement an online demo.  Unless all of the required data files,
-directories, and symbolic links are configured correctly, the web demo 
-fails with an inscrutable error message.  In addition, security policy
-dictates that only vetted executables can belong to particular
-directories. \forest{} allows the \pads{} webmaster to precisly
-document all of these requirements and to detect specification
-violations, making it easy to find and repair errors.
+\forest{} descriptions provide {\em executable documentation} that can
+be used to check whether a given \filestore{} conforms to its
+specification.  For example, Unix file systems should be laid out as
+described by the Filesystem Hierarchy Standard Group in an informal
+standards document~\cite{fsh}.  In addition, the standard requires that certain
+directories contain \textit{only} the specified files, presumably for
+security reasons. \forest{} provides a language for writing such
+standards precisely and a checker that allows users to verify that
+their installation conforms to the standard.  As another example, the
+\pads{} website~\cite{padsweb} contains a complex set of scripts and
+data files to implement an online demo.  Unless all of the required
+data files, directories, and symbolic links are configured correctly,
+the web demo fails with an inscrutable error message.  \forest{}
+allows the \pads{} webmaster to precisely document all of these
+requirements and to detect specification violations, making it easy to
+find and repair errors.
 
 \cut{
 As well as serving as documentation, generating tools to check for

@@ -72,7 +72,7 @@ Leveraging Haskell's laziness, the loading functions create the
 in-memory representations and set the metadata on demand.
 
 \begin{figure}
-\begin{code}
+\begin{centercode}
 \kw{data} Forest_md = Forest_md 
    \{ numErrors :: Int
    , errorMsg  :: Maybe ErrMsg
@@ -80,7 +80,7 @@ in-memory representations and set the metadata on demand.
    \}
 \mbox{}
 \kw{data} FileInfo = FileInfo 
-   \{ fullpath   :: FilePath
+   \{ fullpath    :: FilePath
    , owner       :: String
    , group       :: String
    , size        :: COff
@@ -91,7 +91,7 @@ in-memory representations and set the metadata on demand.
    , isSymLink   :: Bool
    , kind        :: FileType     
    \}
-\end{code}
+\end{centercode}
 \caption{\forest{} metadata types.}
 \label{fig:forest-md}
 \end{figure}
@@ -113,7 +113,7 @@ representations, content metadata, and loading functions.
 \padshaskell{} is a recently developed version of 
 \pads{}~\cite{fisher+:pads,fisher+:toplas,mandelbaum+:pads-ml}.
 Like \forest{}, \padshaskell{} is embedded in Haskell using
-quasiquotation.  For example, the following code snippit 
+quasiquotation.  For example, the following code snippet 
 begins the \pads{} specification of the Princeton student record
 format: 
 \noindent
@@ -145,7 +145,7 @@ in-memory representation of the data, allowing Haskell programmers to
 traverse, query and otherwise manipulate such data.  Indeed,
 \padshaskell{} and \forest{} were designed to work seamlessly
 together.  From the perspective of the Haskell programmer traversing
-an in-memory data structure, there is effectively no difference
+a resulting in-memory data structure, there is effectively no difference
 between iterating over files in a directory or structured sequences of
 lines or tokens within a file.
 
@@ -249,8 +249,8 @@ It is also possible for a directory to contain objects
 that are unmatched by a description.  We allow extra items because it
 is common for directories to contain objects that users do not care
 about.  For example, a directory structure may contain extra files or
-directories related to a version control system, and the
-description writer did not want to clutter the \forest{} specification
+directories related to a version control system, and a
+description writer may not want to clutter the \forest{} specification
 with that information.  As we will see shortly, it is possible to
 specify the absence of file system objects using constraints.
 
@@ -294,8 +294,8 @@ to \textit{construct} the appropriate file names using Haskell functions:
   , graduates :: Grads
   \}
 \end{code}
-The brackets \cd{<|...|>} provide an escape so that we may use
-Haskell to perform arbitrary computations.  This example also
+The bracket syntax \cd{<|...|>} provides an escape so that we may use
+Haskell within \forest{} code to specify arbitrary computations.  This example also
 illustrates abstraction: any \forest{} declaration may be
 parameterized by specifying a legal Haskell expression identifier and
 its type.  The types of the fields for \cd{seniors} and \cd{juniors}
@@ -305,16 +305,16 @@ it may be supplied directly.  When an argument is more complex,
 however, it must be written in brackets to escape to Haskell.
 
 \paragraph*{Approximate Paths}
-As repositories evolve, naming conventions may change.
+As \filestores{} evolve, naming conventions may change.
 Additionally, directory structures with multiple instances may have
 minor variations in the names of individual files across instances.  
 For example, in each Princeton class directory, there may
 (or may not) be some number of students that have withdrawn from the
-program, transferred to a different program, on gone on
+program, transferred to a different program, or gone on
 leave.  Over the years, slightly different directory names
 have been used to represent these situations.  
 
-To accomodate this situation, \forest{} includes the matching
+To accommodate this variation, \forest{} includes the matching
 construct to approximate file names.  We can use this mechanism to
 describe the class directory:
 \begin{code}
@@ -387,7 +387,7 @@ a summary metadata structure of type \cd{Forest_md}.
 \paragraph*{Representation Transformations}
 Although the list representation for comprehensions is useful, it can
 be desirable to use a more sophisticated data structure to
-repesent such collections.  To support
+represent such collections.  To support
 this usage, \forest{} allows programmers to prefix a list
 comprehension with any type constructor that belongs to a 
 container type class that supports operations to convert between the
@@ -419,7 +419,7 @@ it, such as the file owner and size.  In general,
 if a \forest{} identifier \cd{id} refers to a path, the attributes for the object at that
 path are available through the identifier \cd{id_att}, which has
 type \cd{Forest_md} (\figref{fig:forest-md}).  Forest defines
-accessor functions such \cd{get_modes} (get permissions), \cd{get_kind} (get
+accessor functions such as \cd{get_modes} (get permissions), \cd{get_kind} (get
 ascii/binary/directory characteristics) and others to inspect
 these attributes.
 %Figure~\ref{fig:metadata-components} lists a set of helper functions that
@@ -427,9 +427,9 @@ these attributes.
 
 
 \begin{figure}
-%Students Description:
 \input{student-description}
-\caption{\forest{} student desc. (aux. declarations omitted)}
+\caption{\forest{} description of Princeton \filestore{}. (Associated Haskell and \pads{} code
+  appears in \auxmaterials.)}
 \label{fig:student-description}
 \end{figure}
 
@@ -471,7 +471,7 @@ In the case that a symbolic link creates a cycle in the file system by
 pointing to a parent directory, the Haskell in-memory representation
 is a (lazy) infinite data structure.  
 
-We can also use constaints to specify that certain files do not appear
+We can also use constraints to specify that certain files do not appear
 in certain places.  As an example, we might want to require that no
 binaries appear in a directory given to an untrusted user as scratch
 space. The description below flags an error if a binary file exists
@@ -479,7 +479,7 @@ in the directory.
 \begin{code}
 \kw{type} NoBin =
   [ b :: Binary | b <- \kw{matches} (GL "*"), 
-               <| get_kind b_att == BinaryK |> ]
+                  <| get_kind b_att == BinaryK |> ]
   \kw{where} <|length this == 0|>
 \end{code}
 
@@ -527,8 +527,8 @@ combination of the \cd{Tar} and \cd{Gzip} type constructors:
 The previous subsections give an overview of the \forest{} design.
 Figures~\ref{fig:student-description}
 and~\ref{fig:coral-description} show \forest{} specifications
-for our two running examples (minus \padshaskell{} and \haskell{}
-declarations).  The complete descriptions of these \filestores{}
+for our two running examples, minus the associated \padshaskell{} and \haskell{}
+declarations.  The complete descriptions of these \filestores{}
 and additional descriptions are available in the \auxmaterials,
 including descriptions of the \pads{} website, a Gene Ontology
 \filestore{}, and the CVS repository structure. 
@@ -536,6 +536,7 @@ including descriptions of the \pads{} website, a Gene Ontology
 \begin{figure}
 %CoralCDN Description:
 \input{coral-description}
-\caption{\forest{} CoralCDN desc. (aux. declarations omitted)}
+\caption{\forest{} CoralCDN description. Associated Haskell and
+  \pads{} code appears in \auxmaterials.}
 \label{fig:coral-description}
 \end{figure}
