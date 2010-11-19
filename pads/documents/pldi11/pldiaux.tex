@@ -49,6 +49,12 @@ This document contains auxiliary materials provided for the PLDI 2011
 review process. Specifically, it contains \forest{} descriptions of a
 variety of different \filestores{}.
 
+Please note that this document is best viewed electronically.  Some of
+the graphs generated are very large, but shrunk down to fit on a
+single page.  They will not display well when
+printed.  However, reviewers may zoom in electronically
+on the PDF to view the details.
+
 
 \section{Pads Web Site Descripton}
 This \forest{} description describes the \pads{} web site. The
@@ -60,19 +66,20 @@ of the data files available for the demo.  Each user directory will
 have a subdirectory for each file listed in \cd{SourceNames}. Each
 user is logged in the file \cd{UserEntries}.  For each user in this
 file, there is a directory with a corresponding name containing all of
-the information relevent to that user. \figref{fig:pws} shows a graph
-of the \pads{} website, generated using the \cd{ForestGraph} tool from
-the description and an actual instance of the \pads{} website.
+the information relevent to that user.  A graph
+of the \pads{} website, generated using the \cd{ForestGraph} tool
+follows the description.
 \input{PWS}
-\begin{figure}
-\vskip -.25in
+\newpage
+%\begin{figure}
+%\vskip -.25in
 \begin{center}
 \scalebox{.13}{\includegraphics{website.pdf}}
 \end{center}
-\caption{Graph showing structure of PADS website, generated from
-  description using \texttt{ForestGraph}}
-\label{fig:pws}
-\end{figure}
+%\caption{Graph showing structure of PADS website, generated from
+%  description using \texttt{ForestGraph}}
+%\label{fig:pws}
+%\end{figure}
 \newpage
 \section{Students.hs Description}
 This section includes the \forest{} description of the Princeton
@@ -80,25 +87,43 @@ Computer Science Department \filestore{}.
 \input{Students}
 
 \newpage
-\vfill
+
 \section{Coral.hs Description}
 
 This section gives the PADS and Forest descriptions for the CoralCDN
-Log repository. \figref{fig:coral} shows a graph of the CoralCDN
+Log repository. A graph of the CoralCDN
 repository, generated like the graph above using the \cd{ForestGraph}
-tool from the description and (a subset of) the actual repository.
+tool from the description and (a subset of) the actual repository 
+follows.
 
 \input{Coral}
 
 \newpage
 
 \section{Gene Ontology}
+
+This section presents a description of gene ontology data found 
+here: \url{http://www.geneontology.org/gene-associations/}.
+Once again, a graph generated using \texttt{ForestGraph}
+on a subset of the data follows the description.
+%Graph showing structure of a small subset of the Gene Ontology \filestore, generated from 
+%  the description using 
+
 \input{GeneAssociation}
 
+\newpage
+
 \section{CVS.hs Description}
+
+This section provides a generic description for CVS repositories.
+
 \input{CVS}
 
 \section{Universal.hs Description}
+
+This section includes a universal data description.  This universal description
+is used to drive some of our generic tools.
+
 \input{Universal}
 
 \end{document}
