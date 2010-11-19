@@ -5,7 +5,7 @@ import Language.Pads.Padsc
 import Language.Forest.Forestc
 import System.IO.Unsafe (unsafePerformIO)
 import Language.Pads.GenPretty
-
+import Language.Forest.Graph
 {-
 config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
 (config_rep, config_md) :: (Config_f, Config_f_md) = unsafePerformIO $ parseFile config_file
@@ -14,9 +14,9 @@ config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
 
 ws = RE "[ \t]+"
 title = "gene_association"
-get_gz_file f = title ++ '.' ++ f ++".gz"
+get_gz_file f = title ++ "." ++ f ++ ".gz"
 get_readme_file f = f ++ ".README"
-get_conf_file f = title ++ '.'  ++ f ++ ".conf"
+get_conf_file f = title ++ "."  ++ f ++ ".conf"
 
 {- each source is a pair (institute name, list of organisms the institute provides) -}
 sources = [
@@ -48,7 +48,7 @@ sources = [
 comb_source ((inst, organs):sources) = 
    let cl = case organs of
 	  [] -> [inst]
-	  _ -> map (\organism -> inst ++ '_' ++ organismm) organs
+	  _ -> map (\organism -> inst ++ "_" ++ organism) organs
    in cl ++ (comb_source sources) 
 
 {- the GO files, when unzipped, contain a header like the following:
@@ -58,6 +58,9 @@ comb_source ((inst, organs):sources) =
 -}
 
 [pads|
+  type Pfloat = (Pint, '.', Pint)
+  type Pdate = {mon :: Pint, '/', day :: Pint, '/', year :: Pint}
+  type Purl = ("http://", Pstringln)
   type Version_t =    	("!CVS Version: Revision: ", Pfloat, ws, '$')
   type Valid_date_t = 	("!GOC Validation Date: ", Pdate, ws, '$')
   type Sub_date_t =   	("!Submission Date: ", Pdate)
@@ -81,7 +84,7 @@ comb_source ((inst, organs):sources) =
 	| Gaf_ver Gaf_ver_t
 	| Organism Organism_t
 	| Date Date_t
-	| Note_t
+	| Note Note_t
 	| Other ('!', Pstringln)
   type Other_line_t = Pstringln
  
@@ -89,8 +92,13 @@ comb_source ((inst, organs):sources) =
 |]
 
 [pads|
-  type Pair_t = {key::Pstring, '=', val::Pstring}
+  data Pair_t = {key::Pstring '=', '=', val::Pstringln}
   type Conf_f = [Line Pair_t] with term Eof 
+|]
+
+[pads|
+  type Xml_header = ("<?xml ", Pstringln)
+  type XML_f = (Line Xml_header, [Line Pstringln])
 |]
 
 {- isReadOnly md = get_modes md == "-rw-r--r--" -}
@@ -104,7 +112,7 @@ comb_source ((inst, organs):sources) =
    attr is  <| name ++ ".save.attr" |>  :: Text,
    gaf  is  <| name ++ ".save.gaf" |>   :: Text,
    msa  is  <| name ++ ".save.msa" |>   :: Text,
-   paint is <| name ++ ".save.paint" |> :: XML,
+   paint is <| name ++ ".save.paint" |> :: File XML_f,
    sfan is  <| name ++ ".save.sfan" |>  :: Text,
    tree is  <| name ++ ".save.tree" |>  :: Text,
    txt  is  <| name ++ ".save.txt" |>   :: Text, 
@@ -112,8 +120,8 @@ comb_source ((inst, organs):sources) =
   }
 
   type Pre_sub_d = Directory {
-    gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_file (comb_source sources)|>],
-    conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_file (comb_source sources)|>]
+    pre_gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_file (comb_source sources)|>],
+    pre_conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_file (comb_source sources)|>]
   }
 
   type Paint_d = Directory {
@@ -124,7 +132,7 @@ comb_source ((inst, organs):sources) =
   type Submission_d = Directory {
     gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_file (comb_source sources)|>],
     conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_file (comb_source sources)|>],
-    paint_files is  [cs :: Maybe Conf_f | cs <- <|map (\x -> get_conf_file ("paint" ++ x)) (comb_source sources)|>], 
+    paint_files is  [cs :: Maybe (File Conf_f) | cs <- <|map (\x -> get_conf_file ("paint" ++ x)) (comb_source sources)|>], 
     paint_d     is  "paint"               :: Paint_d
   }
 
