@@ -112,8 +112,8 @@ comb_source ((inst, organs):sources) =
   }
 
   type Pre_sub_d = Directory {
-    gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_files (comb_source sources)|>],
-    conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_files (comb_source sources)|>]
+    gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_file (comb_source sources)|>],
+    conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_file (comb_source sources)|>]
   }
 
   type Paint_d = Directory {
@@ -122,14 +122,15 @@ comb_source ((inst, organs):sources) =
   }
  
   type Submission_d = Directory {
-    gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_files (comb_source sources)|>],
-    conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_files (comb_source sources)|>],
-    paint_files is  [cs :: Maybe Conf_f | cs <- <|map (\x -> get_conf_files ("paint" ++ x)) (comb_source sources)|>], 
+    gz_files is   [gz   :: Maybe (Gzip (File GA_f)) | gz <- <|map get_gz_file (comb_source sources)|>],
+    conf_files is [conf :: Maybe (File Conf_f) | conf <- <|map get_conf_file (comb_source sources)|>],
+    paint_files is  [cs :: Maybe Conf_f | cs <- <|map (\x -> get_conf_file ("paint" ++ x)) (comb_source sources)|>], 
     paint_d     is  "paint"               :: Paint_d
   }
 
   type Top_d = Directory {
-    data_files is [<|get_gz_file cs|> :: Maybe (Gzip (File GA_f)) | cs <- <|comb_source sources|>],
+    data_files is [gz :: Maybe (Gzip (File GA_f)) | 
+			gz <- <|map get_gz_file (comb_source sources)|>],
     readme     is "readme"             :: Readme_d,
     sub        is "submission"         :: Submission_d
   }
