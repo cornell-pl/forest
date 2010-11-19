@@ -4,7 +4,11 @@ module Examples.Coral where
 
 import Language.Pads.Padsc hiding (take)
 import Language.Forest.Forestc
+<<<<<<< Coral.hs
+import Language.Forest.Graph
+=======
 import Language.Forest.Graph (mdToPDF)
+>>>>>>> 1.10
 import Language.Pads.GenPretty
 import Control.Arrow
 
@@ -94,9 +98,15 @@ status_re = RE "[0-9]+"
 go () = unsafePerformIO $ top_load "/home/nate/coraldata"  
 load_logs () = fst(go ())
 load_md () = snd(go())
+<<<<<<< Coral.hs
+
+graph () = mdToPDF (load_md ()) "/Users/nate/coral.pdf"
+
+=======
   
 graph () = mdToPDF (snd $ unsafePerformIO $ top_load "/home/nate/logs") "/home/nate/coral.dot"
 
+>>>>>>> 1.10
 get_stats e = 
   case payload e of 
     In i -> in_stats i
