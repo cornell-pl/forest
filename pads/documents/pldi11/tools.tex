@@ -11,19 +11,19 @@ number of such tools, which we describe in this section.
 
 \subsection{Generic Querying }
 One simple application of generic programming is querying 
-meta-data to find files with a particular collection of attributes. 
+metadata to find files with a particular collection of attributes. 
 The \cd{findFiles} function 
 \begin{code}
 findFiles :: (ForestMD md) => 
      md -> (FileInfo -> Bool) -> [FilePath]
 \end{code}
-takes as input any \forest{} meta-data value (\ie{}, any
+takes as input any \forest{} metadata value (\ie{}, any
 value of type \cd{md} where \cd{md} belongs to the \forest{}
-meta-data class \cd{ForestMD}) and a predicate on \cd{FileInfo}
+metadata class \cd{ForestMD}) and a predicate on \cd{FileInfo}
 structures, and returns the list of all \cd{FilePath}s anywhere in the
-input meta-data whose associated \cd{FileInfo} satisfies the
-predicate.  For example, if \cd{cs_md} is the meta-data associated
-with the Princeton Computer Science Department data, then the code 
+input metadata whose associated \cd{FileInfo} satisfies the
+predicate.  For example, if \cd{cs_md} is the metadata associated
+with the Princeton computer science department \filestore{}, then the code 
 \begin{code}
 dirs  = findFiles cs_md (\textbackslash(r::FileInfo) -> 
                            (kind r) == DirectoryK)
@@ -57,19 +57,19 @@ The core functionality of \fg{} lies in the Haskell function \cd{mdToPDF}:
 mdToPDF :: ForestMD md => 
      md -> FilePath -> IO (Maybe String)
 \end{code}
-The function takes as input any meta-data value and a
+The function takes as input any metadata value and a
 filepath that specifies where to 
 put the generated PDF file.  It optionally returns a string (\cd{Maybe
 String}); if the option is present, the string contains an error
 message.  The \cd{IO} type constructor indicates that there can be
 side effects during the execution of the function.  A use of
-this function to generate the graph for the Princeton Computer Science
-Department looks like:
+this function to generate the graph for the Princeton computer science
+department \filestore{} looks like:
 \begin{code}
  do \{ (cs_rep,cs_md) <- CS_load  "facadm"
     ; mdToPDF cs_md "Output/CS.pdf"       \}
 \end{code}
-Note that this code needs only the meta-data to generate the graph;
+Note that this code needs only the metadata to generate the graph;
 laziness means \forest{} will not load the representation in this
 case. 
 
@@ -82,12 +82,12 @@ parameter, a user can customize the formatting of each node according
 to its owner, group, or permissions, \etc{}, as well as specify global
 properties of the graph such as its orientation and size.  \fg{} uses
 the Haskell binding of the \graphviz{} library to layout and render
-the graphs, so all customization provided by \graphviz{} are
+the graphs, so all customizations provided by \graphviz{} are
 available.
 
 The \cd{listify} function is at the heart of the implementation of
-this tool; we use it to convert the input meta-data to the list of
-\cd{FileInfo}s in the meta-data.  We then convert this list into a
+this tool; we use it to convert the input metadata to the list of
+\cd{FileInfo}s in the metadata.  We then convert this list into a
 graph data structure suitable for use with the \graphviz{} library.
 
 \subsection{Permission Checker}
@@ -101,7 +101,7 @@ The tool is useful when trying to share files with a colleague.  It
 helps the first user ensure that all the necessary permissions
 have been set properly to allow the second user access.  The key to
 the implementation of this tool is again applying the \cd{listify}
-function to the meta-data for the \forest{} description.
+function to the metadata for the \forest{} description.
 
 \subsection{Shell Tools}
 We have implemented analogs of many shell tools that work
@@ -116,7 +116,7 @@ cp    :: (ForestMD md) => md -> FilePath -> IO ()
 %rm    :: (ForestMD md) => md -> String -> IO String
 %rmdir :: (ForestMD md) => md -> String -> IO String
 All of these functions work by extracting the relevant file names from
-the argument meta-data structure using \cd{listify} and then calling
+the argument metadata structure using \cd{listify} and then calling
 out to a shell tool to do the work.  For \cd{ls}, the second argument
 gives the command-line arguments to pass to the shell version of
 \cd{ls}, and the result is the resulting output. The implementation
@@ -126,10 +126,10 @@ search string and result is the output of the shell version of \cd{grep}. For
 \cd{tar}, the second argument specifies the location for the resulting
 tarball.  The implementation uses a file manifest to allow \cd{tar} to
 work regardless of the number of files involved.  The \cd{cp} tool
-uses the \cd{tar} tool to move the files mentioned in the meta-data to
+uses the \cd{tar} tool to move the files mentioned in the metadata to
 the location specified by the second argument \textit{while retaining
 the same directory structure}.   
-%The module that implements these tools is~80 lines of Haskell code.
+The module that implements these tools is~80 lines of Haskell code.
 
 \subsection{Description Inference Tool}
 This tool allows the user to generate a \forest{} description from the
@@ -169,10 +169,9 @@ description when a depth limit was exceeded.
 %exceeds the width parameter, files with the same type are collected into
 %comprehensions.  When the depth of the description exceeds the depth
 %parameter, directories are given the universal directory type.
-
 The \cd{getDesc} function works by using the universal description to
 load the contents of the file system starting from the supplied path.
-It then walks over the resulting meta-data to generate a \forest{}
+It then walks over the resulting metadata to generate a \forest{}
 parse tree, which it then pretty prints.
 
 
