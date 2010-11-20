@@ -104,10 +104,33 @@ follows.
 
 This section presents a description of gene ontology data found 
 here: \url{http://www.geneontology.org/gene-associations/}.
-Once again, a graph generated using \texttt{ForestGraph}
+A graph generated using \texttt{ForestGraph}
 on a subset of the data follows the description.
-%Graph showing structure of a small subset of the Gene Ontology \filestore, generated from 
-%  the description using 
+
+This \filestore{} is a web directory of gene association data files.
+The root directory contains a number of \cd{.gz} files,
+a \cd{readme} directory and a \cd{submission} directory.
+Each \cd{.gz} file is the gene ontology (GO) data of the genes
+in one or more organism, and the file names have the format
+\cd{"gene_association.XXX_YYY.gz"}, where \cd{XXX} represents the
+name of the institute that provides the data and \cd{YYY} is the
+name of the organism. \cd{YYY} is optional because some institute
+provides the data for only one organism.
+
+The \cd{readme} directory contains a set of \cd{.README} files for a
+subset of the GO data in the root.
+
+The \cd{submission} directory contains a set of \cd{.gz} files, their
+corresponding \cd{.conf} files, and a \cd{paint} sub-directory.
+The \cd{.gz} files are similar to the ones
+in root except they are older. The \cd{.conf} file summarizes
+some attributes of the \cd{.gz} file such as ``the name of the project'',
+``contact email'', \etc{} The paint sub-directory contains
+a further set of subdirectories of the form \cd{PTHRXXXXX}, where
+\cd{XXXXX} is a 5-digit number. These subdirectories each contain
+six text files and an XML file. These are the annotation inference
+of the gene ontology using phylogenetic trees and the PAINT tool.
+
 
 \input{GeneAssociation}
 
