@@ -113,15 +113,14 @@ of sites we can simply compute the length of the nested list in
 num_sites = \kw{case} rep \kw{of} Coral l -> List.length l 
 \end{code}
 %
-More interestingly, since the internals of the web log are
-specified using \padshaskell{} (see \auxmaterials{} for details), 
-it is straightforward to
-dig in to the file data and combine it with file metadata
-or attributes in queries.  For example,
-to calculate the time when statistics were last
-reported for each site, we can zip the lists in \cd{rep} and \cd{md}
-together and project out the site name and the \cd{mod_time} field
-from each element in the resulting list of pairs:
+More interestingly, since the internals of the web log are specified
+using \padshaskell{} (see \ifanon\auxmaterials{}\else the appendix\fi{}
+for details), it is straightforward to dig in to the file data and
+combine it with file metadata or attributes in queries.  For example,
+to calculate the time when statistics were last reported for each
+site, we can zip the lists in \cd{rep} and \cd{md} together and
+project out the site name and the \cd{mod_time} field from each
+element in the resulting list of pairs:
 %
 \begin{code}
 get_site = fst

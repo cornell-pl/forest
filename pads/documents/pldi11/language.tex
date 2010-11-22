@@ -106,7 +106,7 @@ metadata type, and a corresponding loading function.
 
 A common class of files are \textit{ad hoc data files} containing
 semi-structured information, an example of which is the Princeton
-student record file format~\cite{pldi-aux-materials}. 
+student record file format\ifanon{}~\cite{pldi-aux-materials}\fi. 
 In such cases, \forest{} can leverage the \padshaskell{} data
 description language to define format-specific in-memory
 representations, content metadata, and loading functions. 
@@ -429,7 +429,7 @@ these attributes.
 \begin{figure}
 \input{student-description}
 \caption{\forest{} description of Princeton \filestore{}. (Associated Haskell and \pads{} code
-  appears in \auxmaterials.)}
+  appears in\ifanon\auxmaterials\else{} the appendix\fi.)}
 \label{fig:student-description}
 \end{figure}
 
@@ -525,18 +525,18 @@ combination of the \cd{Tar} and \cd{Gzip} type constructors:
 \subsection{Putting it all together}
 
 The previous subsections give an overview of the \forest{} design.
-Figures~\ref{fig:student-description}
-and~\ref{fig:coral-description} show \forest{} specifications
-for our two running examples, minus the associated \padshaskell{} and \haskell{}
-declarations.  The complete descriptions of these \filestores{}
-and additional descriptions are available in the \auxmaterials,
-including descriptions of the \pads{} website, a Gene Ontology
-\filestore{}, and the CVS repository structure. 
+Figures~\ref{fig:student-description} and~\ref{fig:coral-description}
+show \forest{} specifications for our two running examples, minus the
+associated \padshaskell{} and \haskell{} declarations.  The complete
+descriptions of these \filestores{} and additional descriptions are
+available in the \ifanon\auxmaterials\else appendix\fi, including
+descriptions of the \pads{} website, a Gene Ontology \filestore{}, and
+the CVS repository structure.
 
 \begin{figure}
 %CoralCDN Description:
 \input{coral-description}
 \caption{\forest{} CoralCDN description. Associated Haskell and
-  \pads{} code appears in \auxmaterials.}
+  \pads{} code appears in \ifanon\auxmaterials\else the appendix\fi.}
 \label{fig:coral-description}
 \end{figure}

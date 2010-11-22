@@ -1,18 +1,14 @@
-%\documentclass[fleqn]{article}
-\documentclass[nocopyrightspace,natbib]{sigplanconf}
-%\documentclass[nocopyrightspace]{sigplanconf}
+\documentclass[nocopyrightspace,natbib,preprint]{sigplanconf}
 
-\newif\ifdraft\drafttrue  %% set to false in final version
+\newif\ifdraft\draftfalse  %% set to false in final version
+\newif\ifanon\anonfalse  %% set to false in final version
 
 \usepackage{xspace,pads,amsmath,math-cmds,
             math-envs,inference-rules,times,
             verbatim,alltt,multicol,proof,url}
 \usepackage{epsfig}
 \usepackage{code} 
-%\setlength{\oddsidemargin}{0in}
-%\setlength{\evensidemargin}{0in}
-%\setlength{\textwidth}{6.5in}
-%\setlength{\textheight}{8.5in}
+\usepackage{tikz}
 
 \begin{document}
 \input{definitions}
@@ -21,24 +17,28 @@
 \copyrightyear{2011} 
 \copyrightdata{} 
 
+\titlebanner{DRAFT -- Please do not redistribute}
 \title{Forest: A Language and Toolkit For Programming with \Filestores{}}
 
+\ifanon
 %Omitted for blind review
 \authorinfo{\vskip -2in}
-	   {\vskip -2in}
+ 	   {\vskip -2in}
            {}
-
-\cut{
+\else
 \authorinfo{Kathleen Fisher}
-	   {AT\&T Labs Research}
-           {\mono{kfisher@research.att.com}}
+	   {AT\&T Labs Research}{}
+%           {{kfisher@research.att.com}}
 \authorinfo{Nate Foster}
-           {Cornell University}
-           {\mono{jnfoster@cs.cornell.edu}}
+           {Cornell University}{}
+%           {{jnfoster@cs.cornell.edu}}
 \authorinfo{David Walker}
-           {Princeton University}
-           {\mono{{dpw}@CS.Princeton.EDU}}
-}
+           {Princeton University}{}
+%           {{{dpw}@CS.Princeton.EDU}}
+\authorinfo{Kenny Q. Zhu}
+           {Shanghai Jiao Tong University}{}
+%           {{kzhu@cs.sjtu.edu.cn}}
+\fi
 
 \maketitle{}
 
@@ -47,12 +47,11 @@
 \end{abstract}
 
 %\category{D.3.m}{Programming languages}{Miscellaneous}
-
 %\terms
 %Languages, Algorithms
-
 %\keywords
-%Data description languages, file systems, domain specific languages, ad hoc data
+%Data description languages, file systems, domain specific languages,
+% ad hoc data
 
 \input{intro}
 \input{examples}
@@ -65,28 +64,31 @@
 \input{conclusions}
 
 
-\cut{
+\ifanon
+\else
 \section*{Acknowledgments}
-We would like to thank Simon Peyton Jones for extending Haskell's 
+We would like to thank Simon Peyton Jones for extending Haskell's
 Quasi-Quoting and Template Haskell mechanisms to support the \forest{}
-design and for help in using the mechanisms in general. We omit 
-other acknowledgments to preserve anonymity.
+design and for help in using the mechanisms in general. We omit other
+acknowledgments to preserve anonymity.
 
-This material is based upon work 
-supported under NSF grant CCF-1016937.
-Any opinions, findings, and conclusions or recommendations
-   expressed in this material are those of the authors and do not
-   necessarily reflect the views of the NSF.
-}
-%\newpage
+This material is based upon work supported under NSF grant
+CCF-1016937.  Any opinions, findings, and conclusions or
+recommendations expressed in this material are those of the authors
+and do not necessarily reflect the views of the NSF.
+\fi
 
-%\bibliographystyle{plainnat}
 \bibliographystyle{abbrv}
-
 
 \bibliography{pads}
 
-%\input{appendix}
+\ifanon
+\else
+\onecolumn
+\newpage
+\appendix
+\input{pldiaux}
+\fi
 
 \end{document}
 

@@ -1002,13 +1002,13 @@
    \noindent \LARGE \bfseries \@titletext \par}
   %\vskip 6pt %dpw commented this line
   \noindent \Large \@subtitletext \par
-  %\vskip 12pt %dpw commented this line
+  \vskip 12pt %dpw commented this line
   \ifcase \@authorcount
     \@latex@error{No authors were specified for this paper}{}\or
     \@titleauthors{i}{}{}\or
     \@titleauthors{i}{ii}{}\or
     \@titleauthors{i}{ii}{iii}\or
-    \@titleauthors{i}{ii}{iii}\@titleauthors{iv}{}{}\or
+    \@titleauthorsfour{i}{ii}{iii}{iv}\or
     \@titleauthors{i}{ii}{iii}\@titleauthors{iv}{v}{}\or
     \@titleauthors{i}{ii}{iii}\@titleauthors{iv}{v}{vi}\or
     \@titleauthors{i}{ii}{iii}\@titleauthors{iv}{v}{vi}%
@@ -1052,6 +1052,16 @@
   \fi\fi
   %\vspace{20pt}  %dpw commented this line
 }
+
+\def \@titleauthorsfour#1#2#3#4{%
+  \noindent 
+  \@setauthor{9pc}{#1}{\@false}\hspace{2pc}%
+  \@setauthor{7.5pc}{#2}{\@false}\hspace{2pc}%
+  \@setauthor{7.5pc}{#3}{\@false}\hspace{1.5pc}%
+  \@setauthor{9.75pc}{#4}{\@true}\par
+  \relax
+}
+
 
 \def \@setauthor #1#2#3{%                       {width}{text}{unused}
   \vtop{%
