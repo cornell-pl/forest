@@ -1,0 +1,112 @@
++-----------+
+| SEMANTICS |
++-----------+
+
+pull  : env * fs * path -> rep * md
+check : env * fs * path -> rep * md -> bool
+push  : (e : env * fs * path) -> (v : rep * md where check e v) -> env * fs 
+
+pull (E,F,r) = (v,d)
+valid (d)
+---------------------------[PullCheck]
+check (E,F,r) (v,d) = true
+
+----------------------------------[PullPush]
+push (E,F,r) (pull (E,F,r)) ~ E,F
+
+where ~ is an equivalence that ignores information such as
+modification times in F.
+
+check (E,F,r) (v,d) = true
+push (E,F,r) (v,d) = (E',F')
+-----------------------------[PushPull]
+pull (E',F',r) = (v,d)
+
++-----------+
+| CONSTANTS |
++-----------+
+
+file.pull (E,F,r) = { (n,true)    if F(r) = File(n)
+                    { ("",false)  otherwise
+
+file.check (E,F,r) (n,b) = exists n'. F(r) = File(n') and b
+
+file.push (E,F,r) (n,b) = (E, F[r:=File(n)])
+
+---------------------------------------------------------------------------
+Adhoc(b)
+
+Not sure whether it is better to make these lens-y too or relax the
+laws modulo an equivalence relation on all PADS-described files?
+
+---------------------------------------------------------------------------
+
+(e::s).pull (E,F,r) = s.pull (E,F,r/n)
+where [[e]](E,F,r) = n 
+
+(e::s).check (E,F,r) (v,d) = { s.check (E,F,r')    if r = r'/n and [[e]](E,F,r) = n
+                             { false               otherwise 
+
+(e::s).push (E,F,r) (v,d) = s.push (E,F,r') (v,d)
+where r = r'/n
+
+Questions:
+  * do we want to put n in the metadata?
+
+  * can we make the check function more flexible? (Probably, but we
+    need to be careful not to violate PushPull!)
+
+---------------------------------------------------------------------------
+
+<x:s1,s2>.pull (E,F,r) = ((v1,v2),(valid d1 && valid d2,(d1,d2)))
+where s1.pull (E,F,r) = (v1,d1)
+  and s2.pull (E[x:=v1,x_d:=d1],F,r) = (v2,d2)
+
+<x:s1,s2>.check (E,F,r) ((v1,v2),(b,(d1,d2))) = 
+  check (E,F,r) (v1,d1) &&
+  check (E[x:=v1,x_d:=d2],F,r) (v2,d2)
+
+<x:s1,s2>.push (E,F,r) ((v1,v2),(b,(d1,d2))) = E',F'
+where s2.push (E[x:=v1,x_d:=d1],F,r) (v2,d2) = E'',F''
+  and s1.push (E''[x:=E(x),x_d:=E(x_d)],F'',r) (v1,d1) = E',F'
+
+---------------------------------------------------------------------------
+
+{s | x in e}.pull (E,F,r) = ({v1,..,vk},(valid d1 && .. && valid dk,{d1,..,dk])) 
+where [[e]](E,F,r) = {u1,...,uk}
+  and s.pull (E[x:=ui],F,r) = (vi,di) for i from 1 to k
+  
+{ s | x in e }.check (E,F,r) ({v1,..,vk},(b,{d1,..,dl})) = 
+  [[e]](E,F,r) = {v1,..,vk} &&
+  s.check (E[x:=vi],F,r) (vi,di) for i from 1 to k
+
+{ s | x in e }.push (E,F,r) ({v1,..,vk},(b,{d1,..,dl})) = Ek,Fk
+where s.push (E{i-1}[x:=vi],F{i-1},r) = Ei,Fi for i from 1 to k
+  and E0 = E
+  and F0 = F
+
+Todo:
+  * Handle empty cases
+
+---------------------------------------------------------------------------
+
+(Pred(e)).pull (E,F,r) ((),([[e]](E,F,r),()))
+
+(Pred(e)).check (E,F,r) (_,(b,_)) = [[e]](E,F,r) = b
+
+(Pred(e)).push (E,F,r) _ = E,F
+
+---------------------------------------------------------------------------
+
+(s?).pull (E,F,r) = { (None,(false,None))       if r not in dom(F)
+                    { (Some v,(valid d,Some d)) otherwise
+                      where s.pull (E,F,r) = v,d
+
+(s?).check (E,F,r) (vo,(b,do)) = 
+     r not in dom(F) && vo = do = None
+  || r in dom(F) && vo = Some v && do = Some d && s.check (E,F,r) (v,d) = true
+
+(s?).push (E,F,r) (vo,(b,do)) = { (E,F)                if r not in dom(F)
+                                { s.push (E,F,r) (v,d) otherwise
+                                  where vo = Some v
+                                    and do = Some d
