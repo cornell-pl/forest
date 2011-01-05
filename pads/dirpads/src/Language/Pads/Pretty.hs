@@ -31,3 +31,14 @@ instance Pretty a => Pretty (Result a) where
     ppr (Good r) = text "Good:" <+> ppr r
     ppr (Bad  r) = text "Bad:"  <+> ppr r
 
+
+instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e) => Pretty (a, b, c, d, e) where
+    ppr (a, b, c, d, e) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e]
+
+instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f) => Pretty (a, b, c, d, e, f) where
+    ppr (a, b, c, d, e, f) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e, ppr f]
+
+instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f, Pretty g) => Pretty (a, b, c, d, e, f,g) where
+    ppr (a, b, c, d, e, f, g) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e, ppr f, ppr g]
+
+

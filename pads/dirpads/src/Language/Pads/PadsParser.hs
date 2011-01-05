@@ -1,10 +1,14 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module Language.Pads.PadsParser where
 
 import qualified Language.Pads.Source as S
 import qualified Language.Pads.Errors as E
+import Language.Pads.Errors
 import Language.Pads.MetaData
 import Language.Pads.RegExp
 import Char
+
+import Control.Monad
 
 {- Parsing Monad -}
 {- Invariant: Good [] never arises -}
@@ -354,3 +358,25 @@ parseJust p = do
 parseMaybe :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
 parseMaybe p = choiceP [parseJust p, parseNothing]
 
+------------------------
+
+parseConstraint :: PadsMD md => PadsParser(rep,md) -> ( rep -> md -> Bool) -> PadsParser(rep, (Base_md, md))
+parseConstraint p pred = do 
+  { (rep,md) <- p
+  ; let bmd @ Base_md{numErrors, errInfo} = get_md_header md
+  ; let (isGood, totErrors) = if pred rep md then (True, numErrors) else (False, numErrors + 1)
+  ; let constraint_md = Base_md { numErrors = totErrors
+                                , errInfo = buildError totErrors isGood errInfo}
+  ; return (rep, (constraint_md, md))
+  }
+
+
+getLocOpt errInfo = join $ fmap position errInfo
+buildError numErrs isGood errInfo = 
+  if numErrs == 0 then Nothing
+  else if isGood then 
+    Just(ErrInfo{msg = FUnderlyingTypedefFail,
+                 position = getLocOpt errInfo})
+  else 
+    Just(ErrInfo{msg = FPredicateFailure,
+                 position = getLocOpt errInfo})

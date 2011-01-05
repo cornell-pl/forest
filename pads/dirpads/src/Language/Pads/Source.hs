@@ -72,6 +72,7 @@ padsSourceFromByteString bs =
 padsSourceFromString str = padsSourceFromByteString (B.pack str)
 
 padsSourceToString (Source {current, rest, ..}) = B.unpack (B.concat [current,rest])
+
 drainSource :: Source -> (String, Source)
 drainSource (s @ Source {current, rest, atEOF, loc=loc_orig}) = (padsSourceToString s,   
                                                         Source {current = B.empty, rest = B.empty, atEOF = True, loc = loc_orig})
@@ -82,9 +83,27 @@ rawSource (s @ Source {current, rest, atEOF, loc=loc_orig}) = (B.concat [current
 
 isEOF (Source{current,rest,..}) = B.null current && B.null rest
 isEOR (Source{current,..}) = B.null current
+
+{- Return the rest of the current record as a string -}
+restRec :: Source -> String
+restRec (s @ Source {current, rest, atEOF, loc=loc_orig}) = B.unpack current
+
+
+
+
+
 head  (Source{current,..}) = B.head current 
 takeHead (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
        (B.head current, Source{current=B.tail current,rest,atEOF,loc=Loc{byteOffset=byteOffset+1,lineNumber}})
+
+
+matchString :: String -> Source -> Maybe(String, Source)
+matchString str (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
+   let pstr = B.pack str 
+   in if B.isPrefixOf pstr current
+      then let (res,source) = Language.Pads.Source.take (B.length pstr) s
+            in Just(str, source)            
+      else Nothing
 
 takeHeadStr :: String -> Source -> (Bool, Source)
 takeHeadStr str (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
@@ -122,12 +141,27 @@ scanStr str (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
      else let len = B.length pat
           in (Just (B.unpack before), Source{current= B.drop len after, rest, atEOF,loc =Loc{byteOffset=byteOffset+len,lineNumber}})
 
+scanString :: String -> Source -> Maybe (String, Source)
+scanString str (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
+  let pat = B.pack str
+      (before,after) = breakSubstring pat current
+  in if B.null after then Nothing
+     else let len = B.length pat
+          in Just (B.unpack before, Source{current= B.drop len after, rest, atEOF,loc =Loc{byteOffset=byteOffset+len,lineNumber}})
+
                 
 
 take n (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
      let (head, tail) = B.splitAt n current
          newOffset    = byteOffset + (B.length head)
      in (B.unpack head, Source{current=tail,rest,atEOF,loc=Loc{byteOffset=byteOffset+newOffset,lineNumber}})
+
+take' :: Int64  -> Source -> Maybe (String, Source)
+take' n (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
+     if n > B.length current then Nothing
+     else let (head, tail) = B.splitAt n current
+              newOffset    = byteOffset + (B.length head)
+          in Just (B.unpack head, Source{current=tail,rest,atEOF,loc=Loc{byteOffset=byteOffset+newOffset,lineNumber}})
 
 
 testRegexMatch (RE raw) str = 
@@ -156,6 +190,12 @@ span p (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
      let (head, tail) = B.span p current
          newOffset    = byteOffset + (B.length head)
      in (B.unpack head, Source{current=tail,rest,atEOF,loc=Loc{byteOffset=byteOffset+newOffset,lineNumber}})
+
+whileS :: (Char -> Bool) -> Source -> Maybe (String,Source)
+whileS p (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
+     let (head, tail) = B.span p current
+         newOffset    = byteOffset + (B.length head)
+     in Just (B.unpack head, Source{current=tail,rest,atEOF,loc=Loc{byteOffset=byteOffset+newOffset,lineNumber}})
 
 tail  (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
        (Source{current=B.tail current,rest,atEOF,loc=Loc{byteOffset=byteOffset+1,lineNumber}})

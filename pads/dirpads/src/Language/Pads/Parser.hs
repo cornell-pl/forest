@@ -14,7 +14,7 @@ import Text.Parsec.Language
 import Text.ParserCombinators.Parsec.Language 
 import Text.ParserCombinators.Parsec.Pos
 import Text.Parsec.Expr
-import Language.Haskell.Meta as LHM
+import qualified Language.Haskell.Meta as LHM
 import Language.Haskell.TH as TH hiding (CharL)
 import Data.Char
 import Language.Pads.RegExp as PRE 

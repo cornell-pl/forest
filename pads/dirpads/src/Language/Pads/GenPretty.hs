@@ -16,6 +16,9 @@ import Language.Pads.Errors
 import Language.Pads.MetaData
 import Text.PrettyPrint.Mainland
 
+seplines :: Doc -> [Doc] -> Doc
+seplines s = folddoc (\hd tl -> hd <> s </> tl)
+
 getTyNames :: TH.Type ->  S.Set TH.Name
 getTyNames ty  = case ty of
     ForallT tvb cxt ty' -> getTyNames ty'
@@ -230,8 +233,8 @@ list_ppr ds = (text "[---" <//>
                     align (seplines comma ds ) <//>        
                 text "]")
 
-instance (Pretty a, Pretty b)  => Pretty (M.Map a b) where
-  ppr = map_ppr 
+--instance (Pretty a, Pretty b)  => Pretty (M.Map a b) where
+--  ppr = map_ppr 
 map_ppr d = list_ppr (map ppr (M.toList d))
 
 string_ppr :: String -> Doc
@@ -270,8 +273,8 @@ instance Pretty PstringSE where
 --instance Pretty String where
 -- ppr = pstring_ppr
 
-instance Pretty a => Pretty (Maybe a) where
- ppr = maybe_ppr
+--instance Pretty a => Pretty (Maybe a) where
+-- ppr = maybe_ppr
 
 maybe_ppr d = case d of 
   Nothing -> text "Nothing"
@@ -279,7 +282,7 @@ maybe_ppr d = case d of
 
 
 tuple_ppr ds = (text "(" <//>
-                    align (sep comma ds ) <//>        
+                    align (commasep ds ) <//>        
                 text ")")
 
 recordbody_ppr docs = 

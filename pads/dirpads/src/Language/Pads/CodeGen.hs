@@ -154,17 +154,16 @@ genRepMDField (Just str, ty, exp) = let
 {- Generate a representation and meta-data types for a tuple -}
 genRepMDTuple :: [PadsTy] -> (TH.Type, TH.Type)
 genRepMDTuple tys = 
-  let (tys', mds') = unzip (map genRepMDTy tys)
-      r_tys = filter (\t -> t /= ConT ''()) tys'
+  let (r_tys, md_tys) = unzip (  filter (\(r_t,md_t) -> r_t /= ConT ''()) (map genRepMDTy tys))
       ty =  case r_tys of          -- Construct rep type for a tuple.
              []   -> ConT ''()     -- Tuple contained no non-singleton types, so its rep is the unit type.
              [ty] -> ty            -- Tuple contains one non-singleton type T, so its rep type is just T
              (r_ty:r_tys') ->      -- Rep is tuple of non-singleton types T.
                  tyListToTupleTy r_tys
-      md_ty_nested = case mds' of  
+      md_ty_nested = case md_tys of  
                       []      -> ConT ''Base_md   -- Tuple contains no types, so its nested pd is just a base pd
                       [md_ty] -> md_ty            -- Tuple contains a single type, so its nested pd is just the pd of the type
-                      (md_ty:md_tys') -> tyListToTupleTy mds'
+                      otherwise -> tyListToTupleTy md_tys
      {- Pd of a tuple is a pair of a base pd and a tuple of pds for each element in the tuple. -}
       md_ty = tyListToTupleTy [(ConT ''Base_md), md_ty_nested]
   in
@@ -264,8 +263,8 @@ parseE ty = case ty of
        return (rep, (b_md,md_orig))
 -}
 
-mkParseTyTypedef :: TH.Pat -> PadsTy -> TH.Exp -> Q TH.Exp
-mkParseTyTypedef pat tyBase pred = do
+mkParseTyTypedef' :: TH.Pat -> PadsTy -> TH.Exp -> Q TH.Exp
+mkParseTyTypedef' pat tyBase pred = do
   baseE <- parseE tyBase
   let baseEQ = return baseE
   let predQ  = return (TH.LamE [pat, TH.VarP (TH.mkName "rep"), TH.VarP (TH.mkName "md")] pred)    -- abstract on bound variables
@@ -282,6 +281,13 @@ mkParseTyTypedef pat tyBase pred = do
         let tdef_md = Base_md {numErrors = totErrors, errInfo = buildError predVal totErrors b_errInfo }
 
         return (b_rep, (tdef_md,b_md)) |]
+
+mkParseTyTypedef :: TH.Pat -> PadsTy -> TH.Exp -> Q TH.Exp
+mkParseTyTypedef pat tyBase rawPredE = do
+  baseE <- parseE tyBase
+  let predE  = TH.LamE [pat, TH.VarP (TH.mkName "md")] rawPredE    -- abstract on bound variables: given name and "md"
+  return (AppE (AppE (VarE 'parseConstraint) baseE) predE)
+
 
 mkParseTyTrans :: PadsTy -> PadsTy -> TH.Exp -> Q TH.Exp
 mkParseTyTrans tySrc tyDest exp = do
@@ -517,7 +523,7 @@ mkParseTupleB [] = return ([],[],[],[])
 mkParseTupleB (ty:tys) = do
   (rep_ty,   md_ty,  bmd_ty,  stmt_ty)  <- mkParseTyB ty
   (reps_tys, md_tys, bmd_tys, stmt_tys) <- mkParseTupleB tys
-  return (rep_ty++reps_tys, md_ty:md_tys, bmd_ty:bmd_tys, stmt_ty++stmt_tys)
+  return (rep_ty++reps_tys, md_ty++md_tys, bmd_ty:bmd_tys, stmt_ty++stmt_tys)
 
 {- Input:
      PadsTy: type we are generating parsing instructions for
@@ -531,7 +537,7 @@ mkParseTupleB (ty:tys) = do
      bmd <- get_md_header md
 
 -}
-mkParseTyB :: PadsTy -> Q ([TH.Exp], TH.Exp, TH.Exp, [Stmt])
+mkParseTyB :: PadsTy -> Q ([TH.Exp], [TH.Exp], TH.Exp, [Stmt])
 mkParseTyB ty = do
    repName     <- genRepName 
    mdName      <- genMdName  
@@ -540,12 +546,12 @@ mkParseTyB ty = do
    let ( mdE,  mdP) = genPE mdName
    let (bmdE, bmdP) = genPE bmdName
    rhsE        <- parseE ty
-   let resultEs =  case ty of
-        Plit l ->    []
-        otherwise -> [repE]
+   let (resultEs, resultMDEs) =  case ty of
+        Plit l ->    ([],[])
+        otherwise -> ([repE], [mdE])
    let stmt1    = BindS (TupP [repP,mdP]) rhsE
    let stmt2    = LetS [ValD bmdP (NormalB (AppE (VarE 'get_md_header) mdE)) []]
-   return (resultEs, mdE,bmdE,[stmt1,stmt2])
+   return (resultEs, resultMDEs,bmdE,[stmt1,stmt2])
 
 
 
