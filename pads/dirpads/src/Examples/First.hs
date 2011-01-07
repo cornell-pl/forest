@@ -255,7 +255,7 @@ test_intRangeBad    = mkTestCase "IntRangeBad" expect_intRangeBad result_intRang
 {- Note that the special variables "rep" and "md" are in scope in the body of the predicate. -}
 {- Here rep is bound to the same value as x; md is the meta-data descriptor for the underyling type. -}
 
-[pads| type  IntRangeP (low::Pint, high::Pint) = constrain x :: Pint where <| low <= x && rep <= high && (numErrors md == 0) |> |]
+[pads| type  IntRangeP (low::Pint, high::Pint) = constrain x :: Pint where <| low <= x && x <= high && (numErrors md == 0) |> |]
 
 result_intRangeP24 = intRangeP_parseS (0, 256) intRange24_input
 expect_intRangeP24 = (IntRangeP (Pint 24),0,"")
