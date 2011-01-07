@@ -1,23 +1,31 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, NamedFieldPuns, ScopedTypeVariables #-}
 module Language.Pads.GenPretty where
--- pattern guards
-import Language.Pads.Padsc hiding (line)
-import Language.Haskell.TH as TH hiding (ppr)
+import Language.Pads.Padsc 
+import Language.Pads.Errors
+import Language.Pads.MetaData
 import Language.Pads.TH
+
+import Language.Haskell.TH as TH hiding (ppr)
+
+import Text.PrettyPrint.Mainland
+
 import qualified Data.List as L
 import qualified Data.Set as S
-import qualified Data.Map as M
 import Control.Monad
 
 import System.Posix.Types
 import Data.Word
 import Data.Int
-import Language.Pads.Errors
-import Language.Pads.MetaData
-import Text.PrettyPrint.Mainland
 
-seplines :: Doc -> [Doc] -> Doc
-seplines s = folddoc (\hd tl -> hd <> s </> tl)
+pprE argE = AppE (VarE 'ppr) argE
+pprListEs argEs = ListE (map pprE argEs) 
+pprCon1E argE = AppE (VarE 'pprCon1) argE
+pprCon2E argE = AppE (VarE 'pprCon2) argE
+
+pprCon1 arg = ppr (toList1 arg)
+pprCon2 arg = ppr (toList2 arg)
+
+
 
 getTyNames :: TH.Type ->  S.Set TH.Name
 getTyNames ty  = case ty of
@@ -74,7 +82,7 @@ getNamedTys' answers worklist =
 
 baseTypeNames = S.fromList [ ''Pint, ''Pchar, ''Pdigit, ''Ptext, ''Pstring, ''PstringFW, ''PstringME 
                            , ''PstringSE, ''String, ''Char, ''COff, ''EpochTime, ''FileMode, ''Int, ''Word, ''Int64
-                           , ''Language.Pads.Errors.ErrInfo, ''Bool, ''Pbinary, ''Pre 
+                           , ''Language.Pads.Errors.ErrInfo, ''Bool, ''Pbinary, ''Pre, ''Base_md
                            ]
 
 mkPrettyInstance :: TH.Name -> Q [TH.Dec]
@@ -218,80 +226,4 @@ mkField (field_name, _, ty) = do
   }
 
 nameToStrLit name = LitE (StringL (nameBase name))
-
-
-
-
-namedty_ppr str ph = hang 2 (text str <+/> ph)
--- host_t_ppr (Host_t h) = namedty_ppr "Host_t" (ppr h)
-
-namedtuple_ppr :: String -> [Doc] -> Doc
-namedtuple_ppr name pprls = group $ hang 2 (text name <+/> (tuple_ppr pprls))
-
-
-list_ppr ds = (text "[---" <//>
-                    align (seplines comma ds ) <//>        
-                text "]")
-
---instance (Pretty a, Pretty b)  => Pretty (M.Map a b) where
---  ppr = map_ppr 
-map_ppr d = list_ppr (map ppr (M.toList d))
-
-string_ppr :: String -> Doc
-string_ppr = ppr
-
-
-namedlist_ppr :: String -> [Doc] -> Doc
-namedlist_ppr name pprls = group $ hang 2 (text name <+/> (list_ppr pprls))
-
-pprE argE = AppE (VarE 'ppr) argE
-pprListEs argEs = ListE (map pprE argEs) 
-pprCon1E argE = AppE (VarE 'pprCon1) argE
-pprCon2E argE = AppE (VarE 'pprCon2) argE
-
-pprCon1 arg = ppr (toList1 arg)
-pprCon2 arg = ppr (toList2 arg)
-
-
-pint_ppr :: Pint -> Doc
-pint_ppr (Pint x) = ppr x
-
-instance Pretty Pint where
- ppr = pint_ppr 
-
-pstring_ppr (Pstring s) = ppr s
-
-instance Pretty Pstring where
- ppr = pstring_ppr
-
-instance Pretty PstringME where
- ppr (PstringME s) = ppr s
-
-instance Pretty PstringSE where
- ppr (PstringSE s) = ppr s
-
---instance Pretty String where
--- ppr = pstring_ppr
-
---instance Pretty a => Pretty (Maybe a) where
--- ppr = maybe_ppr
-
-maybe_ppr d = case d of 
-  Nothing -> text "Nothing"
-  Just a -> ppr a
-
-
-tuple_ppr ds = (text "(" <//>
-                    align (commasep ds ) <//>        
-                text ")")
-
-recordbody_ppr docs = 
-       text "{" 
-  <//> align (seplines comma docs) 
-  <//> text "}"
-
-field_ppr field_name ppr = text field_name   <+> equals <+> ppr
-
-record_ppr str pprs  = namedty_ppr str (recordbody_ppr pprs)  
-
 

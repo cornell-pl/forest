@@ -13,7 +13,7 @@ module Language.Pads.Padsc (
      module Language.Pads.CoreBaseTypes,
      module Language.Pads.Quote,
      module Language.Pads.BaseTypes,
---     module Text.PrettyPrint.Mainland hiding (comma)
+     module Language.Pads.Pretty,
      ppr, pretty
   ) 
   where
@@ -28,6 +28,7 @@ import Language.Pads.Generic
 import Language.Pads.CoreBaseTypes
 import Language.Pads.Quote
 import Language.Pads.BaseTypes
+import Language.Pads.Pretty
 
 import Data.Data
 import Text.PrettyPrint.Mainland hiding (line,  dot)
@@ -35,7 +36,7 @@ import Text.PrettyPrint.Mainland hiding (line,  dot)
 
 
 {- Fix these should be reexported -}
-parseAllS = Language.Pads.PadsParser.parseAllS
+-- parseAllS = Language.Pads.PadsParser.parseAllS
 numErrors = Language.Pads.MetaData.numErrors
 
 

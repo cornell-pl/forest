@@ -49,9 +49,3 @@ maybeMergeErrInfo m1 m2 = case (m1,m2) of
           (Nothing, Just p) -> Just p
           (Just p1, Just p2) -> Just (mergeErrInfo p1 p2)
 
-instance Pretty ErrInfo where
-  ppr (ErrInfo {msg,position}) = ppr msg <+> 
-       case position of 
-         Nothing -> empty
-         Just pos -> (text "at:") <+>  ppr pos
-

@@ -294,10 +294,10 @@ mkParseTyTrans tySrc tyDest exp = do
   srcE <- parseE tySrc
   let srcEQ = return srcE
   let expQ  = return exp
-  [| do begin_pos <- getPos
+  [| do begin_loc <- getLoc
         src_result <- $srcEQ
-        end_pos <- getPos
-        let src_pos = S.pos_span begin_pos end_pos
+        end_loc <- getLoc
+        let src_pos = S.locsToPos begin_loc end_loc
         let (toDst,toSrc) = $expQ
         return (toDst src_pos src_result) |]
 

@@ -2,7 +2,6 @@
 module Language.Pads.RegExp where
 import Data.Data
 
-{- Regular expression support -}
 
 {- Regular expression support -}
 data RE = RE String | ReName String

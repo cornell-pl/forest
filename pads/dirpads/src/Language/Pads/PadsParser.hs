@@ -1,8 +1,8 @@
 {-# LANGUAGE NamedFieldPuns #-}
+
 module Language.Pads.PadsParser where
 
 import qualified Language.Pads.Source as S
-import qualified Language.Pads.Errors as E
 import Language.Pads.Errors
 import Language.Pads.MetaData
 import Language.Pads.RegExp
@@ -11,139 +11,320 @@ import Char
 import Control.Monad
 
 {- Parsing Monad -}
-{- Invariant: Good [] never arises -}
-data Result a =  Good [a] | Bad a
+
+newtype PadsParser a = PadsParser { (#) :: S.Source -> Result (a,S.Source) }
+data Result a = Good a | Bad a
   deriving Show
-newtype PadsParser a = PadsParser (S.Source -> Result (a,S.Source))
-
-runPP :: PadsParser t -> S.Source -> Result (t, S.Source)
-runPP (PadsParser p) = p
-
-appendResult :: Result a -> Result a -> Result a
-appendResult (Good r) (Good s) = Good (r++s)
-appendResult (Good r) _ = Good r
-appendResult _ (Good r) = Good r
-appendResult (Bad r1) (Bad r2) = Bad r1
-
-alwaysSucceeds :: PadsParser a -> PadsParser a
-alwaysSucceeds (PadsParser p)= PadsParser $ \s -> reallyGood (p s)
-
-reallyGood ~(Good (x:xs)) = Good (x:xs)
 
 
-concatResult = foldr appendResult (Bad (error "Should never arise: empty good list"))
 
+val :: PadsParser t -> S.Source -> t
+val p bs = case p # bs of
+             Good (v,bs') -> v
+             Bad (v,bs')  -> v
+
+parseStringInput pp cs = case pp #  (S.padsSourceFromString cs) of
+                           Good (r,rest) -> (r, S.padsSourceToString rest)  
+                           Bad  (r,rest) -> (r, S.padsSourceToString rest)  
+
+instance Functor PadsParser where
+  fmap f p = PadsParser $ \bs -> case p # bs of
+                                  Good (x,bs') -> Good (f x, bs')
+                                  Bad (x,bs')  -> Bad (f x, bs')
+
+-- if any results on the way are bad, then the whole thing will be bad
 instance Monad PadsParser where
-  return r = PadsParser (\bs -> Good [(r,bs)])
+  return r = PadsParser $ \bs -> Good (r,bs)
   p >>= f  = PadsParser $ \bs -> 
-               case runPP p bs of
-                  Good results -> 
-                       concatResult [runPP (f a) bs' | (a,bs') <-  [ head results] ]
-                  Bad (errVal,bs') -> case runPP (f errVal) bs' of
-                                         Good results -> Bad (head results)   -- Should always succeed by Result invariant.
-                                         Bad v -> Bad v
+               case p # bs of
+                  Good (v,bs') -> f v # bs'
+                  Bad (v,bs')  -> case f v # bs' of
+                                    Good (w,bs'') -> Bad (w,bs'')
+                                    Bad (w,bs'')  -> Bad (w,bs'')
+
+goodReturn r = return r
 badReturn  r = PadsParser $ \bs -> Bad (r,bs)
-goodReturn r = PadsParser $ \bs -> Good [(r,bs)]
 mdReturn r @ (rep,md) = PadsParser $ \bs -> 
     if numErrors (get_md_header md) == 0 
-    then Good [(r,bs)]
-    else Bad (r,bs)
-
-commit :: PadsParser a -> PadsParser a
-commit p = PadsParser $ \bs -> 
-               case runPP p bs of
-                  Good [] -> Good []
-                  Good (x:xs) -> Good [x]      
-                  Bad x   -> Bad x
-
-eitherP :: PadsParser a -> PadsParser a -> PadsParser a
-eitherP p q = PadsParser $ \s -> 
-   runPP p s `appendResult` runPP q s 
-
-choiceP :: [PadsParser a] -> PadsParser a
-choiceP ps = foldr1 eitherP ps
-
-{- 
-This combinator seems natural because it is the unit for eitherP, but it breaks the 
-invariant on Result.  So, either we don't need failP or the invariant is wrong.
-
-failP :: PadsParser [a]
-failP = PadsParser $ \s -> Good []
--}
+    then Good (r,bs)
+    else Bad  (r,bs)
 
 
-productive :: PadsParser a -> PadsParser (Maybe a)
-productive p = PadsParser $ \s -> 
-    case runPP p s of
-       Good v  -> case [ (Just results,s') | (results,s') <- v, not (S.eqCurrent s s')] of
-                    [] -> Bad (Nothing,s)
-                    w  -> Good w
-       Bad (r,s) -> Bad (Nothing,s)
+void p = p >> return ()
 
-parseAll :: PadsParser(rep,md) -> PadsParser([rep],[md])
-parseAll p = ifEofP $ do 
-  m <- productive p 
-  case m of Nothing -> return ([],[])
-            Just (r,md) -> do 
-               (rs,mds) <- parseAll p
-               return (r:rs, md:mds)
+-- Introduces laziness, by returning Success even before the parse has been performed
+alwaysSucceeds p = PadsParser $ \bs -> 
+                      let Good (v,bs') = p # bs in
+                      Good (v,bs')
+
+--------------------------
+-- Source manipulation functions
 
 
-parseAllS :: PadsParser (rep,md) -> String -> ([rep],[md])
-parseAllS p inputS = 
-  let psource = (S.padsSourceFromString inputS)
-  in case runPP (parseAll p) psource of
-      Good ((r,rest):alternates) -> r
-      Bad (r,rest) -> r
-
-{-
-
-meta p s = PadsParser $ \s ->
-   case runPP p s of    
-
-idea:
- turn Good gs with meta-data problems into Bad
- in either onFail or appendResult
-
--}
-
-
-onFail :: PadsParser a -> PadsParser a -> PadsParser a
-onFail p q = PadsParser $ \s -> 
-             case runPP p s of 
-               Bad a   -> runPP q s
---               Good [] -> runPP q s
-               Good v  -> Good v
-
-replaceSource :: S.Source -> (Result (a,S.Source)) -> (Result (a,S.Source))
-replaceSource s res = case res of
-  Good gs     -> Good $ map (\(v,_)->(v,s)) gs
-  Bad  (a,_)  -> Bad (a,s)
-
-parseTry :: PadsParser a -> PadsParser a
-parseTry p = PadsParser $ \s ->  replaceSource s (runPP p s)
-
+queryP :: (S.Source -> a) -> PadsParser a
+queryP f = PadsParser $ \bs -> Good (f bs,bs)
 
 primPads :: (S.Source -> (a,S.Source)) -> PadsParser a
-primPads f = PadsParser $ \s -> Good [f s]
+primPads f = PadsParser $ \bs -> Good (f bs)
 
-queryPads :: (S.Source -> a) -> PadsParser a
-queryPads f = PadsParser $ \s -> Good [(f s,s)]
+liftStoP :: (S.Source -> Maybe (a,S.Source)) -> a -> PadsParser a
+liftStoP f def = PadsParser $ \bs -> 
+                 case f bs of
+                   Nothing      -> Bad (def,bs)
+                   Just (v,bs') -> Good (v,bs')
 
-getPos :: PadsParser S.Pos
-getPos = queryPads S.getSrcPos
+replaceSource :: S.Source -> (Result (a,S.Source)) -> (Result (a,S.Source))
+replaceSource bs res = case res of
+  Good (v,_) -> Good (v,bs)
+  Bad  (v,_) -> Bad (v,bs)
 
-isEofP :: PadsParser Bool 
-isEofP = queryPads S.isEOF
 
-ifEofP :: PadsParser ([rep],[md]) -> PadsParser ([rep],[md])
-ifEofP p = do
-  b <- isEofP
-  if b then return ([],[]) else p
+
+------- Choice
+-- The monad is non-backtracking. The only choice point is at ChoiceP
+
+choiceP :: [PadsParser a] -> PadsParser a
+choiceP ps = foldr1 (<||>) ps
+
+(<||>) :: PadsParser a -> PadsParser a -> PadsParser a
+p <||> q = PadsParser $ \bs -> (p # bs) <++> (q # bs) 
+
+(<++>) :: Result a -> Result a -> Result a
+(Good r)  <++> _  = Good r
+(Bad r1)  <++> r2 = r2 -- A number of functions rely on r2
+
+
+
+
+-------------------------
+
+parseMaybe :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
+parseMaybe p = choiceP [parseJust p, parseNothing]
+
+parseJust :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
+parseJust p = do
+  (r,md) <- p
+  let bmd = get_md_header md
+  return (Just r, (bmd, Just md))
+
+parseNothing :: PadsParser (Maybe t, (Base_md, Maybe s))
+parseNothing = return (Nothing, (cleanBasePD, Nothing))
+                        
+
+-----------------------
+
+parseTry :: PadsParser a -> PadsParser a
+parseTry p = PadsParser $ \bs -> replaceSource bs (p # bs)
+
+
+-------------
+
+parseConstraint :: PadsMD md => PadsParser(rep,md) -> ( rep -> md -> Bool) -> PadsParser(rep, (Base_md, md))
+parseConstraint p pred = do 
+ { (rep,md) <- p
+ ; let bmd @ Base_md{numErrors, errInfo} = get_md_header md
+ ; let (isGood, totErrors) = if pred rep md then (True, numErrors) else (False, numErrors + 1)
+ ; let constraint_md = Base_md { numErrors = totErrors
+                               , errInfo = buildError totErrors isGood errInfo}
+ ; return (rep, (constraint_md, md))
+ }
+
+
+buildError numErrs isGood errInfo = 
+ if numErrs == 0 then Nothing
+ else 
+   Just(ErrInfo{msg = if isGood then FUnderlyingTypedefFail
+                                  else FPredicateFailure,
+                position = join $ fmap position errInfo})
+
+-------------------------------------------------
+
+
+parseListNoTermNoSep :: PadsMD md => PadsParser (rep,md) -> PadsParser ([rep], (Base_md, [md]))
+parseListNoTermNoSep p = buildListReport (parseMany p)
+
+parseListNoTermSep :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListNoTermSep sep p = buildListReport (parseManySep sep p)
+
+parseListTermLengthNoSep :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermLengthNoSep i p = buildListReport (parseCount i p)
+
+parseListTermLengthSep :: (PadsMD md, PadsMD mdSep) => Int -> PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermLengthSep n sep p = buildListReport (parseCountSep n sep p)
+
+parseListTermNoSep :: (PadsMD md, PadsMD mdTerm) => 
+                     PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermNoSep term p = buildListReport (parseManyTerm term p)
+
+parseListTermSep :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) => 
+                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermSep sep term p = buildListReport (parseManySepTerm sep term p)
+
+
+buildListReport  :: (Monad m, PadsMD b) => m [(a, b)] -> m ([a], (Base_md, [b]))
+buildListReport p = do 
+  elems <- p
+  let (reps, mds) = unzip elems
+  let hmds = map get_md_header mds
+  let md = (mergeBaseMDs hmds, mds)
+  return (reps,md)
+
+
+-----------------------------------
+
+parseMany :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
+parseMany p = do { (r,m) <- p
+                 ; if (numErrors (get_md_header m) == 0)
+                   then do { rms <- parseMany p
+                           ; return ((r,m) : rms)}
+                   else badReturn [] -- terminate the recursion if errors found
+                                     -- return would work too, as p will create the Bad
+                 } 
+            <||>
+              return []
+
+
+
+-- BUG :: If (sep>>p) is unproductive, it terminates, but returns Good
+parseManySep :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseManySep sep p = do { rm <- p
+                        ; rms <- parseManySep1 sep p
+                        ; return (rm : rms)
+                        }
+
+parseManySep1 :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseManySep1 sep p = do { (r,m) <- sep
+                         ; if (numErrors (get_md_header m) == 0)
+                           then parseManySep sep p
+                           else badReturn [] -- terminate the recursion if separator error found
+                                             -- return would work too, as p will create the Bad
+                         } 
+                      <||>
+                        return []
+
+-----------------------------------
+
+
+parseCount :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseCount n p  | n <= 0    = return []
+                | otherwise = sequence (replicate n p)
+
+
+parseCountSep :: (PadsMD md) => Int -> PadsParser rmdSep -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseCountSep n sep p  | n <= 0    = return []
+parseCountSep n sep p = do { rm <- p
+                           ; rms <- parseCountSep1 (n-1) sep p
+                           ; return (rm:rms) }
+
+parseCountSep1 n sep p  | n <= 0    = return []
+parseCountSep1 n sep p = do { smd <- sep -- <||> scanForSep [] sep
+                            ; parseCountSep n sep p  -- we lose the metadata for sep, which will detail any problems
+                            }
+
+-----------------------------------
+
+
+
+parseManyTerm :: (PadsMD md, PadsMD mdTerm) =>  PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseManyTerm term p = (term >> return [])
+                  <||> (ifEOFP >> return [])
+                  <||> do { rm <- p
+                          ; rms <- parseManyTerm term p
+                          ; return (rm:rms) }
+
+
+
+parseManySepTerm :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) =>  
+                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseManySepTerm sep term p = (term >> return [])
+                         <||> (ifEOFP >> return [])
+                         <||> scan
+   where 
+	   scan = do { (rep, md) <- p
+	             ; sepLoc <- getLoc
+  		     ; (terminated,junk) <- seekSep sep term
+	             ; if terminated then
+			      case junk of
+	         	        { []  -> return [(rep,md)]
+                                ;  _  -> badReturn [(rep,buildJunkReport md sepLoc junk)]
+                                }
+		       else
+		    	     do { rms <- scan 
+				; case junk of
+                                    { [] -> return ((rep,md):rms)  
+                                    ; _  -> badReturn ((rep,buildJunkReport md sepLoc junk) : rms)
+                                    }
+				}
+                     }
+
+seekSep sep term = (term >> return (True, []))
+              <||> (ifEOFP >> return (True, []))
+              <||> (sep >> return (False, []))
+              <||> recoverSep sep term
+
+recoverSep sep term = do { b <- isEORP
+                         ; if b then badReturn (False, []) else
+                           do { c <- takeHeadP
+                              ; (b,cs) <- seekSep sep term
+                              ; badReturn (b, c:cs) 
+                              }
+                         }
+
+buildJunkReport md loc junk = md'
+  where
+    mdSep   = mkErrBasePDfromLoc (ExtraStuffBeforeTy junk "seperator" ) loc
+    mdHead  = get_md_header md
+    mergeMD = mergeBaseMDs [mdHead,mdSep]
+    md'     = replace_md_header md mergeMD 
+
+
+
+-------------------------------------------------
+
+
+
+getLoc :: PadsParser S.Loc
+getLoc = queryP S.getSrcLoc
+
+isEOFP, isEORP :: PadsParser Bool 
+isEOFP = queryP S.isEOF
+isEORP = queryP S.isEOR
+
+ifEOFP, ifEORP :: PadsParser () 
+ifEOFP = do { b <- isEOFP; if b then return () else badReturn ()}
+ifEORP = do { b <- isEORP; if b then return () else badReturn ()}
+
+
+{- Is this what we should do if there isn't sufficient input? -}
+takeP_new :: Int -> PadsParser String
+takeP_new n = liftStoP (S.take' (fromInt n)) (take n def)
+  where
+    def = '0':def
+
+takeP :: Integral a => a -> PadsParser String
+takeP n = primPads (S.take (fromInt n))
+
+fromInt :: (Integral a1, Num a) => a1 -> a
+fromInt n = fromInteger $ toInteger n
+
+
+-------------------------------------------------
+
+
+matchP :: String -> PadsParser ()
+matchP str = fmap (const ()) $ liftStoP (S.matchString str) undefined
+
+whileP :: (Char -> Bool) -> PadsParser String
+whileP pred = liftStoP (S.whileS pred) undefined
+
+satP :: (Char -> Bool) -> PadsParser Char
+satP pred = do [c] <- takeP 1
+               if pred c then return c else badReturn '0'
+
 
 
 peakHeadP :: PadsParser Char 
-peakHeadP = queryPads S.head
+peakHeadP = queryP S.head
 
 takeHeadP :: PadsParser Char
 takeHeadP = primPads S.takeHead
@@ -155,8 +336,6 @@ takeHeadStrP str = primPads (S.takeHeadStr str)
 scanStrP :: String -> PadsParser (Maybe String)
 scanStrP str = primPads (S.scanStr str)
 
-takeP :: Integral a => a -> PadsParser String
-takeP n = primPads (S.take (fromInteger $ toInteger n))
 
 regexMatchP ::RE -> PadsParser (Maybe String)
 regexMatchP re = primPads (S.regexMatch re)
@@ -186,14 +365,6 @@ digitListToInt :: Bool -> [Char] -> Int
 digitListToInt isNeg digits = let raw = foldl (\a d ->10*a + (Char.digitToInt d)) 0 digits
    in if isNeg then negate raw else raw
 
-isEorP :: PadsParser Bool
-isEorP = queryPads S.isEOR
-
-ifEorP :: PadsParser ([rep],[md]) -> PadsParser ([rep],[md])
-ifEorP p = do
-  b <- isEorP
-  if b then return ([],[]) else p
-
 
 lineBegin,lineEnd :: PadsParser (Maybe String)
 lineBegin = primPads S.srcLineBegin
@@ -203,21 +374,21 @@ doLineEnd :: PadsParser ((), Base_md)
 doLineEnd = do
   rendErr <- lineEnd
   case rendErr of
-    Nothing -> goodReturn ((), cleanBasePD)
-    Just err -> do p <- getPos
-                   badReturn ((), mkErrBasePD (E.LineError err) (Just p))
+    Nothing -> return ((), cleanBasePD)
+    Just err -> do loc <- getLoc
+                   badReturn ((), mkErrBasePDfromLoc (LineError err) loc)
 
 doLineBegin :: PadsParser ((), Base_md)
 doLineBegin = do
   rbegErr <- lineBegin
   case rbegErr of
     Nothing -> return ((), cleanBasePD)
-    Just err -> do p <- getPos
-                   badReturn ((), mkErrBasePD (E.LineError err) (Just p))
+    Just err -> do loc <- getLoc
+                   badReturn ((), mkErrBasePDfromLoc (LineError err)  loc)
 
 
 parseLine :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
-parseLine p = commit $ do 
+parseLine p =  do 
    (_,bmd) <- doLineBegin
    (r, md) <- p
    (_,emd) <- doLineEnd
@@ -227,156 +398,6 @@ parseLine p = commit $ do
    return (r,new_md)
 
 
-parseMany :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
-parseMany p = scan id
-       where scan f = alwaysSucceeds $ 
-                      do { (r,m) <- p     
-                         ; if (numErrors (get_md_header m)) == 0 then scan (\tail -> f ((r,m):tail)) else badReturn [(r,m)]
-                         } 
-                      `onFail`
-                         (return (f []))
-
-
-parseSepBy1 :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseSepBy1 sep p = do { rm <- p
-                       ; rms <- parseMany (sep >> p)
-                       ; return (rm : rms)
-                       }
-
-parseSepBy :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseSepBy sep p = parseSepBy1 sep p `onFail` (return [])
-
-parseCount :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseCount n p  | n <= 0    = return []
-                | otherwise = sequence (replicate n p)
-
-parseCountSep :: (PadsMD md) => Int -> PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseCountSep n sep p  | n <= 0    = return []
-                       | otherwise = sequence (p : replicate (n - 1)  (sep>>p))
-
-parseManyTill :: (PadsMD md, PadsMD mdTerm) =>  PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseManyTill term p = scan
-                     where 
-                       scan = do { term; return [] }
-                          `onFail` 
-                              do { b <- isEofP
-                                 ; if b then goodReturn [] else badReturn [] }
-                          `onFail` 
-                              do { rm <- p; rms <- scan; return (rm:rms) }
-
-parseManyTillSep :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) =>  
-                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseManyTillSep sep term p = (termOrEof []) `onFail` scan
-                     where 
-                       scan = do { (rep, md) <- p
-                                 ; sepPos <- getPos
-                                 ; sepResult <- scanForUntil [] sep (termOrEof [(rep,md)])
-                                 ; case sepResult of
-                                     Left [] ->       -- Found termination condition, no extra junk.  We're done.
-                                          goodReturn [(rep,md)]
-                                     Left junk  ->    -- Found termination condition; but there was extra junk
-                                          do { let mdSep   = mkErrBasePD (E.ExtraStuffBeforeTy junk "seperator" ) (Just sepPos)
-                                             ; let mdHead  = get_md_header md
-                                             ; let mergeMD = mergeBaseMDs [mdHead,mdSep]
-                                             ; let md'     = replace_md_header md mergeMD 
-                                             ; badReturn [(rep,md')]
-                                             }
-                                     Right [] ->     -- Found separator, no extra junk.  Look for next element.
-                                          do { rms <- scan 
-                                             ; return ((rep,md):rms) }   
-                                     Right junk ->   -- Found separator, but with extra junk.  Look for next element
-                                          do { let mdSep   = mkErrBasePD (E.ExtraStuffBeforeTy junk "seperator" ) (Just sepPos)
-                                             ; let mdHead  = get_md_header md
-                                             ; let mergeMD = mergeBaseMDs [mdHead,mdSep]
-                                             ; let md'     = replace_md_header md mergeMD 
-                                             ; rms <- scan
-                                             ; badReturn ((rep,md'):rms)
-                                             }
-                                 }
-                       termOrEof r = do { term; goodReturn r }
-                          `onFail` 
-                                     do { b <- isEofP
-                                        ; if b then goodReturn r else badReturn r }
-
-
-scanForUntil s sep end = do { end        
-                            ; goodReturn (Left (reverse s))
-                            }
-                       `onFail` 
-                         do { sep
-                            ; goodReturn (Right (reverse s))
-                            } 
-                       `onFail`
-                         do { c <- takeHeadP
-                            ; scanForUntil (c:s) sep end
-                            }
 
 
 
-
-parseList  :: (Monad m, PadsMD b) =>  t -> (t -> m [(a, b)]) -> m ([a], (Base_md, [b]))
-parseList p combine = do 
-  elems <- combine p
-  let (reps, mds) = unzip elems
-  let hmds = map get_md_header mds
-  let md = (mergeBaseMDs hmds, mds)
-  return (reps,md)
-
-parseListNoTermNoSep :: PadsMD md => PadsParser (rep,md) -> PadsParser ([rep], (Base_md, [md]))
-parseListNoTermNoSep p = parseList p parseMany
-
-parseListNoTermSep :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
-parseListNoTermSep sep p = parseList p (parseSepBy sep)
-
-parseListTermLengthNoSep :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
-parseListTermLengthNoSep i p = parseList p (parseCount i)
-
-parseListTermLengthSep :: (PadsMD md, PadsMD mdSep) => Int -> PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
-parseListTermLengthSep n sep p = parseList p (parseCountSep n sep)
-
-parseListTermNoSep :: (PadsMD md, PadsMD mdTerm) => 
-                     PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
-parseListTermNoSep term p = parseList p (parseManyTill term)
-
-parseListTermSep :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) => 
-                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
-parseListTermSep sep term p = parseList p (parseManyTillSep sep term)
-
-
-
-
-parseNothing :: PadsParser (Maybe t, (Base_md, Maybe s))
-parseNothing = return (Nothing, (cleanBasePD, Nothing))
-                        
-parseJust :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
-parseJust p = do
-  (r,md) <- p
-  let bmd = get_md_header md
-  let result = (Just r, (bmd, Just md))
-  mdReturn result
-
-parseMaybe :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
-parseMaybe p = choiceP [parseJust p, parseNothing]
-
-------------------------
-
-parseConstraint :: PadsMD md => PadsParser(rep,md) -> ( rep -> md -> Bool) -> PadsParser(rep, (Base_md, md))
-parseConstraint p pred = do 
-  { (rep,md) <- p
-  ; let bmd @ Base_md{numErrors, errInfo} = get_md_header md
-  ; let (isGood, totErrors) = if pred rep md then (True, numErrors) else (False, numErrors + 1)
-  ; let constraint_md = Base_md { numErrors = totErrors
-                                , errInfo = buildError totErrors isGood errInfo}
-  ; return (rep, (constraint_md, md))
-  }
-
-
-getLocOpt errInfo = join $ fmap position errInfo
-buildError numErrs isGood errInfo = 
-  if numErrs == 0 then Nothing
-  else if isGood then 
-    Just(ErrInfo{msg = FUnderlyingTypedefFail,
-                 position = getLocOpt errInfo})
-  else 
-    Just(ErrInfo{msg = FPredicateFailure,
-                 position = getLocOpt errInfo})

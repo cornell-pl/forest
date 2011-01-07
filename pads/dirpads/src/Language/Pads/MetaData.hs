@@ -3,8 +3,8 @@
 module Language.Pads.MetaData where
 
 import qualified Language.Pads.Errors as E
-import Language.Pads.RegExp 
-import Text.PrettyPrint.Mainland as PP
+-- import Language.Pads.RegExp 
+import qualified Language.Pads.Source as S
 
 import Data.Data
 import Data.List
@@ -14,7 +14,7 @@ data Base_md = Base_md { numErrors :: Int
                        , errInfo   :: Maybe E.ErrInfo
                         -- Need to add location information, etc.
                        }
-   deriving (Typeable, Data, Eq, Show, Ord)
+   deriving (Typeable, Data, Eq, Ord)
 
 
 {- Meta data type class -}
@@ -32,17 +32,13 @@ instance Data b => PadsMD (Base_md,b) where
 
 
 
-pprBaseMD Base_md {numErrors=num, errInfo = info} = text "Errors:" <+> PP.ppr num <+> 
-                                                    case info of Nothing -> empty
-                                                                 Just e -> PP.ppr e
-
-
---instance Pretty Base_md where
---  ppr = pprBaseMD 
 
 cleanBasePD = Base_md {numErrors = 0, errInfo = Nothing }
+mkErrBasePDfromLoc msg loc = Base_md {numErrors = 1, 
+                               errInfo = Just (E.ErrInfo{msg=msg,position= Just (S.locToPos loc)}) }  
+
 mkErrBasePD msg pos = Base_md {numErrors = 1, 
-                               errInfo = Just (E.ErrInfo{msg=msg,position=pos}) }
+                               errInfo = Just (E.ErrInfo{msg=msg,position= pos}) }
 
 shallowBaseMDs mds = case mds of 
                      [] -> cleanBasePD

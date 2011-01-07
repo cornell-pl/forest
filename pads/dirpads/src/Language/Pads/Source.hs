@@ -1,12 +1,13 @@
 {-# LANGUAGE NamedFieldPuns, RecordWildCards, DeriveDataTypeable #-}
 
 module Language.Pads.Source where
-import qualified Data.ByteString.Lazy.Char8 as B
+import qualified Data.ByteString.Lazy.Char8 as B   -- abstraction for input data
+import qualified Text.Regex.ByteString as BRE      -- Support for matching regular expressions against bytestrings
+import Language.Pads.RegExp                        -- user-specified regular expressions
+
 import Data.Int
 import Data.Data
-import Text.PrettyPrint.Mainland as PP
-import Language.Pads.RegExp
-import qualified Text.Regex.ByteString as BRE
+
 
 type RawStream = B.ByteString
 
@@ -15,38 +16,23 @@ data Loc = Loc { lineNumber :: Int64,
                  byteOffset :: Int64 }
      deriving (Typeable, Data,Eq, Ord)
 
-dummyLoc = Loc {lineNumber = -1, byteOffset = -1 }
-
-instance Pretty Data.Int.Int64 where
-  ppr i = text(show i)
-
-instance Pretty Loc where
- ppr (Loc{lineNumber,byteOffset}) = text "Line:" <+> ppr lineNumber <> text ", Offset:" <+> ppr byteOffset 
 
 data Source = Source {current  :: B.ByteString,
                       rest     :: B.ByteString,
                       atEOF    :: Bool,
                       loc      :: Loc }
 
-data Pos = Pos { line       :: B.ByteString,
-                 begin      :: Loc,
+data Pos = Pos { begin      :: Loc,
                  end        :: Maybe Loc}
   deriving (Typeable, Data, Eq, Ord)
 
-dummyPos = Pos {line = B.empty, begin = dummyLoc, end = Nothing }
+locToPos :: Loc -> Pos
+locToPos loc = Pos { begin = loc, end = Nothing }
 
-pos_span :: Pos -> Pos -> Pos
-pos_span p_begin p_end = Pos {line  = Language.Pads.Source.line p_begin,
-                              begin = begin p_begin,
-                              end   = Just (begin p_end)}
+locsToPos :: Loc -> Loc -> Pos
+locsToPos b e = Pos {begin = b, end = Just e}
 
-instance Pretty Pos where 
-  ppr (Pos{line,begin,end}) = case end of
-                                Nothing -> ppr begin
-                                Just end_loc ->  text "from:" <+> ppr begin <+> text "to:" <+> ppr end_loc
 
-instance Pretty Source where 
-    ppr (Source{current, rest, ..}) = text "Current:" <+> text (show current)
                                 
 
 
@@ -200,10 +186,10 @@ whileS p (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
 tail  (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
        (Source{current=B.tail current,rest,atEOF,loc=Loc{byteOffset=byteOffset+1,lineNumber}})
 
-getSrcPos (Source {current, rest, atEOF, loc}) = 
-   Pos {line=current, begin = loc, end = Nothing }
+getSrcLoc (Source {loc, ..}) = loc
+
 scanTo chr (src @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
-     let (Pos {line,begin,..}) = getSrcPos src
+     let begin = getSrcLoc src
          (skipped, residual) = B.break (\c->c==chr) current
          (found,remaining,newByteOffset) =   
             if B.null residual then   -- Reached EOR w/o finding chr
@@ -213,7 +199,7 @@ scanTo chr (src @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
          endErrLoc = Loc{lineNumber, byteOffset = byteOffset + (B.length skipped)}
       in (found, 
           Source {current = remaining, rest, atEOF, loc=newLoc},
-          Pos    {line, begin, end=Just endErrLoc})
+          Pos    {begin, end=Just endErrLoc})
 
 eqCurrent :: Source -> Source -> Bool
 eqCurrent s s'= current s == current s'
