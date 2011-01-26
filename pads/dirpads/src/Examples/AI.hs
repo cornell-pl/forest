@@ -30,7 +30,7 @@ import qualified Data.ByteString.Lazy.Char8 as B
                       | LINK | UNLINK      -- obsolete after http 1.0
    
        type URL_t = Pstring ' ' 
-       type Version_t  = {"HTTP/", major :: Pint, '.', minor :: Pint}  |]
+       type Version_t  = {"HTTP/", major :: Pint, '.', minor :: Pint}      |]
 
 checkVersion :: Method_t -> Version_t -> Bool
 checkVersion method version = 
@@ -63,8 +63,9 @@ checkVersion method version =
 mkPrettyInstance ''AI_t
 mkPrettyInstance ''AI_t_md
 
-
-ai_file = "Examples/data/ai.3000"
+ai_file = ai_big
+ai_3000 = "Examples/data/ai.3000"
+ai_big  = "Examples/data/ai.big"
 (ai_rep, ai_md) = let (AI_t rep, md) = unsafePerformIO $ parseFile ai_file in (rep,md)
 ai_file_length = Prelude.length ai_rep
 ai_file_take n  = Prelude.take n ai_rep

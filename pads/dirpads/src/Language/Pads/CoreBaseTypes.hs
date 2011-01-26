@@ -138,24 +138,33 @@ instance ToString PstringSE where
   toString (PstringSE s) = s
 
 
+returnClean x         = return (x, cleanBasePD)
+returnError x err loc = badReturn (x, mkErrBasePDfromLoc err loc)
+
+
 handleEOF val str loc p 
   = do { isEof <- isEOFP 
        ; if isEof then
-           badReturn (val, mkErrBasePDfromLoc (E.FoundWhenExpecting "EOF" str) loc )
+           returnError val (E.FoundWhenExpecting "EOF" str) loc 
+         else p}
+
+handleEOR val str loc p 
+  = do { isEor <- isEORP 
+       ; if isEor then returnError val (E.FoundWhenExpecting "EOR" str) loc
          else p}
 
 
+
 pstringFW_parseM :: Int -> PadsParser (PstringFW, Base_md)
+pstringFW_parseM 0 = returnClean (PstringFW "")
 pstringFW_parseM n = do 
   initLoc <- getLoc
   handleEOF (def1 n) "PstringFW" initLoc $ do
-     isEor <- isEORP
-     if isEor && n /= 0 then badReturn (def1 n, mkErrBasePDfromLoc (E.FoundWhenExpecting "EOR" "PstringFW") initLoc)
-      else do  
+     handleEOR (def1 n) "PstringFW" initLoc $ do
           str <- takeP n 
-          if (length str) /= n then badReturn (def1 n, mkErrBasePDfromLoc (E.Insufficient (length str) n) initLoc)
-            else return (PstringFW str, cleanBasePD)
-
+          if (length str) == n 
+            then returnClean (PstringFW str)
+            else returnError (def1 n) (E.Insufficient (length str) n) initLoc
 
 pstringME_parseM :: RE -> PadsParser (PstringME, Base_md)
 pstringME_parseM re = do 
@@ -163,8 +172,8 @@ pstringME_parseM re = do
   handleEOF (def1 re) "PstringME" initLoc $ do
       match <- regexMatchP re
       case match of 
-        Nothing  -> badReturn  (def1 re, mkErrBasePDfromLoc (E.RegexMatchFail (show re)) initLoc)
-        Just str -> return (PstringME str, cleanBasePD)
+        Just str -> returnClean (PstringME str)
+        Nothing  -> returnError (def1 re) (E.RegexMatchFail (show re)) initLoc
 
 pre_parseM :: String -> PadsParser (Pre, Base_md)
 pre_parseM sre = do 
@@ -172,8 +181,8 @@ pre_parseM sre = do
   handleEOF (def1 sre) "Pre" initLoc $ do
       match <- regexMatchP (RE sre)
       case match of 
-        Nothing  -> badReturn  (def1 sre, mkErrBasePDfromLoc (E.RegexMatchFail sre) initLoc)
-        Just str -> return (Pre str, cleanBasePD)
+        Just str -> returnClean (Pre str)
+        Nothing  -> returnError (def1 sre) (E.RegexMatchFail sre) initLoc
 
 
 pstringSE_parseM :: RE -> PadsParser (PstringSE, Base_md)
@@ -182,67 +191,59 @@ pstringSE_parseM re = do
   handleEOF (def1 re) "PstringSE" initLoc $ do
       match <- regexStopP re
       case match of 
-        Nothing  -> badReturn  (def1 re, mkErrBasePDfromLoc (E.RegexMatchFail (show re)) initLoc)
-        Just str -> return (PstringSE str, cleanBasePD)
+        Just str -> returnClean (PstringSE str)
+        Nothing  -> returnError (def1 re) (E.RegexMatchFail (show re)) initLoc
 
 pstring_parseM :: Char -> PadsParser (Pstring, Base_md)
 pstring_parseM c = do 
   initLoc <- getLoc
   handleEOF (def1 c) "Pstring" initLoc $ do 
-     isEor <- isEORP
-     if isEor then badReturn (def1 c, mkErrBasePDfromLoc (E.FoundWhenExpecting "EOR" "Pstring") ( initLoc))
-      else do  
+     handleEOR (def1 c) "Pstring" initLoc $ do
           str <- satisfy (\c'-> c /= c')
-          return (Pstring str, cleanBasePD)
+          returnClean (Pstring str)
 
 ptext_parseM :: PadsParser (Ptext, Base_md)
 ptext_parseM = do
   document <- getAllP
-  return (Ptext document, cleanBasePD)
+  returnClean (Ptext document)
 
 pbinary_parseM :: PadsParser (Pbinary, Base_md)
 pbinary_parseM = do
   document <- getAllBinP
-  return (Pbinary document, cleanBasePD)
+  returnClean (Pbinary document)
 
 
 pchar_parseM :: PadsParser (Pchar, Base_md)
 pchar_parseM  = do 
   initLoc <- getLoc
   handleEOF def "Pchar" initLoc $ do
-     isEor <- isEORP
-     if isEor then badReturn (def, mkErrBasePDfromLoc (E.FoundWhenExpecting "EOR" "Pchar") ( initLoc))
-      else do  
+     handleEOR def "Pchar" initLoc $ do
           c <- takeHeadP
-          return (Pchar c, cleanBasePD)
+          returnClean (Pchar c)
 
 pdigit_parseM :: PadsParser (Pdigit, Base_md)
 pdigit_parseM  = do 
   initLoc <- getLoc
   handleEOF def "Pdigit" initLoc $ do
-     isEor <- isEORP
-     if isEor then badReturn (def, mkErrBasePDfromLoc (E.FoundWhenExpecting "EOR" "Pdigit") ( initLoc))
-      else do  
+     handleEOR def "Pdigit" initLoc $ do
           c <- takeHeadP
-          if isDigit c then return (Pdigit (digitToInt c), cleanBasePD)
-                       else badReturn  (def, mkErrBasePDfromLoc (E.FoundWhenExpecting [c] "Pdigit") ( initLoc))
+          if isDigit c 
+            then returnClean (Pdigit (digitToInt c))
+            else returnError def (E.FoundWhenExpecting [c] "Pdigit") initLoc
 
 
 pint_parseM :: PadsParser (Pint,Base_md)
 pint_parseM = do
   initLoc <- getLoc
-  isEof <- isEOFP 
-  if isEof then badReturn (def, mkErrBasePDfromLoc (E.FoundWhenExpecting "EOF" "Pint") ( initLoc))
-   else do 
-     isEor <- isEORP
-     if isEor then badReturn (def, mkErrBasePDfromLoc (E.FoundWhenExpecting "EOR" "Pint") ( initLoc))
-      else do  
-          c <- peakHeadP 
-          let isNeg = c == '-'
-          when isNeg (takeHeadP >> return ())
-          digits <- satisfy Char.isDigit
-          if null digits then badReturn (def, mkErrBasePDfromLoc (E.FoundWhenExpecting (mkStr c) "Pint") ( initLoc))
-            else return (Pint $ digitListToInt isNeg digits, cleanBasePD)
+  handleEOF def "Pint" initLoc $ do
+     handleEOR def "Pint" initLoc $ do
+      c <- peakHeadP 
+      let isNeg = c == '-'
+      when isNeg (takeHeadP >> return ())
+      digits <- satisfy Char.isDigit
+      if not (null digits)
+        then returnClean (Pint $ digitListToInt isNeg digits)
+        else returnError def (E.FoundWhenExpecting (mkStr c) "Pint") initLoc
 
 class LitParse a where
   litParse :: a -> PadsParser ((), Base_md)
@@ -267,56 +268,49 @@ pcharLit_parseM :: Char -> PadsParser ((), Base_md)
 pcharLit_parseM c = do 
   let cStr = mkStr c
   initLoc <- getLoc
-  isEof <- isEOFP
-  if isEof then badReturn ((), mkErrBasePDfromLoc (E.FoundWhenExpecting "EOF" cStr) ( initLoc))
-   else do 
-     isEor <- isEORP
-     if isEor then badReturn ((), mkErrBasePDfromLoc (E.FoundWhenExpecting "EOR" cStr) ( initLoc))
-      else do
+  handleEOF () cStr initLoc $ do 
+     handleEOR () cStr initLoc $ do
          c' <- takeHeadP 
-         if c == c' then return ((),cleanBasePD)
+         if c == c' then returnClean ()
           else do
            foundIt <- scanP c
            errLoc <- getLoc
-           if foundIt then badReturn ((), mkErrBasePDfromLoc (E.ExtraBeforeLiteral cStr) ( errLoc))
-                      else badReturn ((), mkErrBasePDfromLoc (E.MissingLiteral     cStr) ( errLoc))
+           returnError () 
+                       (if foundIt 
+                        then (E.ExtraBeforeLiteral cStr)
+                        else (E.MissingLiteral     cStr) ) 
+                       errLoc
 
 
 pstrLit_parseM :: String -> PadsParser ((), Base_md)
 pstrLit_parseM s = do 
   initLoc <- getLoc
-  isEof <- isEOFP
-  if isEof then badReturn ((), mkErrBasePDfromLoc (E.FoundWhenExpecting "EOF" s) ( initLoc))
-   else do 
-     isEor <- isEORP
-     if isEor then badReturn ((), mkErrBasePDfromLoc (E.FoundWhenExpecting "EOR" s) ( initLoc))
-      else do
+  handleEOF () s initLoc $ do
+     handleEOR () s initLoc $ do
          match <- scanStrP s
          errLoc <- getLoc
          case match of
-           Nothing   -> badReturn  ((), mkErrBasePDfromLoc (E.MissingLiteral     s) ( errLoc))
-           Just []   -> return ((), cleanBasePD)
-           Just junk -> badReturn  ((), mkErrBasePDfromLoc (E.ExtraBeforeLiteral s) ( errLoc))
+           Just []   -> returnClean (())
+           Just junk -> returnError () (E.ExtraBeforeLiteral s) errLoc
+           Nothing   -> returnError () (E.MissingLiteral     s) errLoc
 
 peorLit_parseM :: PadsParser ((), Base_md)
 peorLit_parseM = do 
   initLoc <- getLoc
-  isEof <- isEOFP
-  if isEof then badReturn ((), mkErrBasePDfromLoc (E.FoundWhenExpecting "EOF" "EOR") ( initLoc))
-   else do 
+  handleEOF () "EOR" initLoc $ do
      isEor <- isEORP
      if isEor then doLineEnd
-              else badReturn ((), mkErrBasePDfromLoc (E.LineError "Expecting EOR") ( initLoc))
+              else returnError () (E.LineError "Expecting EOR") initLoc
 
 peofLit_parseM :: PadsParser ((), Base_md)
 peofLit_parseM = do
   initLoc <- getLoc
   isEof <- isEOFP
-  if isEof then return ((), cleanBasePD)
-           else badReturn  ((), (mkErrBasePDfromLoc ( E.ExtraBeforeLiteral "Eof")( initLoc)))
+  if isEof then returnClean ()
+           else returnError () (E.ExtraBeforeLiteral "Eof") initLoc
 
 pvoidLit_parseM :: PadsParser ((), Base_md)
-pvoidLit_parseM = return ((), cleanBasePD)
+pvoidLit_parseM = returnClean ()
 
 
 {- Helper functions -}
