@@ -62,8 +62,7 @@ parseFileWith p file = do
 parseFileWithRaw :: PadsParser (rep,md) -> FilePath -> IO (rep,md)
 parseFileWithRaw p file = do
        { bs <- B.readFile file
-       ; let ps = S.padsSourceFromByteString bs
-       ; return (val p ps)
+       ; return (parseByteStringInput p bs)
        }
 
 

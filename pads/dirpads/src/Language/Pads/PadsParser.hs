@@ -15,43 +15,44 @@ import Control.Monad
 {- Parsing Monad -}
 
 newtype PadsParser a = PadsParser { (#) :: S.Source -> Result (a,S.Source) }
-data Result a = Good a | Bad a
-  deriving Show
+type Result a = (a,Bool)
+
+-- type PadsParserMD a = PadsParser (a, Base_md)
 
 
-
-val :: PadsParser t -> S.Source -> t
-val p bs = case p # bs of
-             Good (v,bs') -> v
-             Bad (v,bs')  -> v
-
+parseStringInput :: PadsParser a -> String -> (a,String)
 parseStringInput pp cs = case pp #  (S.padsSourceFromString cs) of
-                           Good (r,rest) -> (r, S.padsSourceToString rest)  
-                           Bad  (r,rest) -> (r, S.padsSourceToString rest)  
+                           ((r,rest),b) -> (r, S.padsSourceToString rest)  
 
+
+-- parseByteStringInput :: PadsParser a -> ByteString -> a
+parseByteStringInput pp cs = case pp #  (S.padsSourceFromByteString cs) of
+                           ((r,rest),b) -> r
+
+
+                        
 instance Functor PadsParser where
   fmap f p = PadsParser $ \bs -> case p # bs of
-                                  Good (x,bs') -> Good (f x, bs')
-                                  Bad (x,bs')  -> Bad (f x, bs')
+                                   ((x,bs'),b) -> ((f x, bs'),b)
 
 -- if any results on the way are bad, then the whole thing will be bad
 instance Monad PadsParser where
-  return r = PadsParser $ \bs -> Good (r,bs)
+  return r = PadsParser $ \bs -> ((r,bs), True)
   p >>= f  = PadsParser $ \bs -> 
                case p # bs of
-                  Good (v,bs') -> f v # bs'
-                  Bad (v,bs')  -> case f v # bs' of
-                                    Good (w,bs'') -> Bad (w,bs'')
-                                    Bad (w,bs'')  -> Bad (w,bs'')
+                 ((v,bs'),b) -> if b
+                                then f v # bs'
+                                else case f v # bs' of
+                                  ((w,bs''),_) -> ((w,bs''), False)
 
-goodReturn r = return r
-badReturn  r = PadsParser $ \bs -> Bad (r,bs)
-mdReturn r @ (rep,md) = PadsParser $ \bs -> 
-    if numErrors (get_md_header md) == 0 
-    then Good (r,bs)
-    else Bad  (r,bs)
+badReturn  r = PadsParser $ \bs -> ((r,bs), False)
+mdReturn (rep,md) = PadsParser $ 
+    \bs -> (((rep,md),bs), numErrors (get_md_header md) == 0)
 
-returnClean x         = return (x, cleanBasePD)
+returnClean :: t -> PadsParser (t, Base_md)
+returnClean x = return (x, cleanBasePD)
+
+returnError :: t -> ErrMsg -> S.Loc -> PadsParser (t, Base_md)
 returnError x err loc = badReturn (x, mkErrBasePDfromLoc err loc)
 
 
@@ -62,21 +63,19 @@ returnError x err loc = badReturn (x, mkErrBasePDfromLoc err loc)
 
 
 queryP :: (S.Source -> a) -> PadsParser a
-queryP f = PadsParser $ \bs -> Good (f bs,bs)
+queryP f = PadsParser $ \bs -> ((f bs,bs), True)
 
 primPads :: (S.Source -> (a,S.Source)) -> PadsParser a
-primPads f = PadsParser $ \bs -> Good (f bs)
+primPads f = PadsParser $ \bs -> ((f bs), True)
 
 liftStoP :: (S.Source -> Maybe (a,S.Source)) -> a -> PadsParser a
 liftStoP f def = PadsParser $ \bs -> 
                  case f bs of
-                   Nothing      -> Bad (def,bs)
-                   Just (v,bs') -> Good (v,bs')
+                   Nothing      -> ((def,bs), False)
+                   Just (v,bs') -> ((v,bs'), True)
 
 replaceSource :: S.Source -> (Result (a,S.Source)) -> (Result (a,S.Source))
-replaceSource bs res = case res of
-  Good (v,_) -> Good (v,bs)
-  Bad  (v,_) -> Bad (v,bs)
+replaceSource bs ((v,_),b) = ((v,bs),b)
 
 
 
@@ -90,8 +89,8 @@ choiceP ps = foldr1 (<||>) ps
 p <||> q = PadsParser $ \bs -> (p # bs) <++> (q # bs) 
 
 (<++>) :: Result a -> Result a -> Result a
-(Good r)  <++> _  = Good r
-(Bad r1)  <++> r2 = r2 -- A number of functions rely on r2
+(r, True)    <++> _  = (r, True)
+(r1, False)  <++> r2 = r2 -- A number of functions rely on this being r2
 
 
 
@@ -119,7 +118,7 @@ parseTry p = PadsParser $ \bs -> replaceSource bs (p # bs)
 
 -------------
 
-parseConstraint :: PadsMD md => PadsParser(rep,md) -> ( rep -> md -> Bool) -> PadsParser(rep, (Base_md, md))
+parseConstraint :: PadsMD md => PadsParser(rep,md) -> (rep -> md -> Bool) -> PadsParser(rep, (Base_md, md))
 parseConstraint p pred = do 
  { (rep,md) <- p
  ; let bmd @ Base_md{numErrors, errInfo} = get_md_header md
@@ -178,14 +177,14 @@ parseMany p = do { (r,m) <- p
                    then do { rms <- parseMany p
                            ; return ((r,m) : rms)}
                    else badReturn [] -- terminate the recursion if errors found
-                                     -- return would work too, as p will create the Bad
+                                     -- return would work too, as p will create the badness
                  } 
             <||>
               return []
 
 
 
--- BUG :: If (sep>>p) is unproductive, it terminates, but returns Good
+-- BUG :: If (sep>>p) is unproductive, it terminates, but returns a good result
 parseManySep :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
 parseManySep sep p = do { rm <- p
                         ; rms <- parseManySep1 sep p
@@ -197,7 +196,7 @@ parseManySep1 sep p = do { (r,m) <- sep
                          ; if (numErrors (get_md_header m) == 0)
                            then parseManySep sep p
                            else badReturn [] -- terminate the recursion if separator error found
-                                             -- return would work too, as p will create the Bad
+                                             -- return would work too, as p will create the badness
                          } 
                       <||>
                         return []
@@ -311,20 +310,9 @@ fromInt n = fromInteger $ toInteger n
 -------------------------------------------------
 
 
-matchP :: String -> PadsParser ()
-matchP str = fmap (const ()) $ liftStoP (S.matchString str) undefined
 
-whileP :: (Char -> Bool) -> PadsParser String
-whileP pred = liftStoP (S.whileS pred) undefined
-
-satP :: (Char -> Bool) -> PadsParser Char
-satP pred = do [c] <- takeP 1
-               if pred c then return c else badReturn '0'
-
-
-
-peakHeadP :: PadsParser Char 
-peakHeadP = queryP S.head
+peekHeadP :: PadsParser Char 
+peekHeadP = queryP S.head
 
 takeHeadP :: PadsParser Char
 takeHeadP = primPads S.takeHead

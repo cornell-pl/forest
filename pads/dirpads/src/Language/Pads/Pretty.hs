@@ -140,10 +140,11 @@ instance Pretty Id where
     ppr (Id ident)  = text ident
     ppr (AntiId v)  = ppr "$id:" <> ppr v
 
+{-
 instance Pretty a => Pretty (Result a) where
     ppr (Good r) = text "Good:" <+> ppr r
     ppr (Bad  r) = text "Bad:"  <+> ppr r
-
+-}
 
 instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e) => Pretty (a, b, c, d, e) where
     ppr (a, b, c, d, e) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e]

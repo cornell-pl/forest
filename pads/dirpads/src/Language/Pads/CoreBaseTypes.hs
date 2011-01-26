@@ -234,7 +234,7 @@ pint_parseM = do
   initLoc <- getLoc
   handleEOF def "Pint" initLoc $ do
      handleEOR def "Pint" initLoc $ do
-      c <- peakHeadP 
+      c <- peekHeadP 
       let isNeg = c == '-'
       when isNeg (takeHeadP >> return ())
       digits <- satisfy Char.isDigit

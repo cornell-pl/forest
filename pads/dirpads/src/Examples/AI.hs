@@ -75,8 +75,8 @@ result n  = do
      } 
 
 
-unGood (Good xs) = xs
-example = Prelude.take 2 $ fst $  unGood  (parseMany pdigit_parseM # padsSourceFromString str)
+
+example = Prelude.take 2 $ fst $ parseStringInput (parseMany pdigit_parseM) str
 
 str = "1234cnbdav duisc djnklcndjkalscnj dkxbvc daseasklfhasdjkhfaksjdhflakjsdhfkjlahsdfkljahsdlfkhasdkjfhaklsjdhflkashdfjkhjmzb"++ undefined
 example2 =  (padsSourceFromString ("abc\nd" ++ undefined))
