@@ -1,5 +1,6 @@
 module Language.Pads.Parser where 
 
+-- This is the parser for the PADS syntax in Haskell
 
 import Language.Pads.Syntax as S
 

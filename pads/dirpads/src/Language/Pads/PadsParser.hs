@@ -2,6 +2,8 @@
 
 module Language.Pads.PadsParser where
 
+-- These are the combinators used to build PADS parsers
+
 import qualified Language.Pads.Source as S
 import Language.Pads.Errors
 import Language.Pads.MetaData
@@ -49,13 +51,11 @@ mdReturn r @ (rep,md) = PadsParser $ \bs ->
     then Good (r,bs)
     else Bad  (r,bs)
 
+returnClean x         = return (x, cleanBasePD)
+returnError x err loc = badReturn (x, mkErrBasePDfromLoc err loc)
 
-void p = p >> return ()
 
--- Introduces laziness, by returning Success even before the parse has been performed
-alwaysSucceeds p = PadsParser $ \bs -> 
-                      let Good (v,bs') = p # bs in
-                      Good (v,bs')
+
 
 --------------------------
 -- Source manipulation functions
@@ -376,7 +376,7 @@ doLineEnd = do
   case rendErr of
     Nothing -> return ((), cleanBasePD)
     Just err -> do loc <- getLoc
-                   badReturn ((), mkErrBasePDfromLoc (LineError err) loc)
+                   returnError () (LineError err) loc
 
 doLineBegin :: PadsParser ((), Base_md)
 doLineBegin = do
@@ -384,7 +384,7 @@ doLineBegin = do
   case rbegErr of
     Nothing -> return ((), cleanBasePD)
     Just err -> do loc <- getLoc
-                   badReturn ((), mkErrBasePDfromLoc (LineError err)  loc)
+                   returnError () (LineError err) loc
 
 
 parseLine :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)

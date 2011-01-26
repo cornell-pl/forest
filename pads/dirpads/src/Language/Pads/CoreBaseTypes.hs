@@ -138,9 +138,6 @@ instance ToString PstringSE where
   toString (PstringSE s) = s
 
 
-returnClean x         = return (x, cleanBasePD)
-returnError x err loc = badReturn (x, mkErrBasePDfromLoc err loc)
-
 
 handleEOF val str loc p 
   = do { isEof <- isEOFP 
