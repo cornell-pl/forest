@@ -38,12 +38,11 @@ instance Functor PadsParser where
 -- if any results on the way are bad, then the whole thing will be bad
 instance Monad PadsParser where
   return r = PadsParser $ \bs -> ((r,bs), True)
-  p >>= f  = PadsParser $ \bs -> 
-               case p # bs of
-                 ((v,bs'),b) -> if b
-                                then f v # bs'
-                                else case f v # bs' of
-                                  ((w,bs''),_) -> ((w,bs''), False)
+  p >>= f  = PadsParser $ \bs -> let ((v,bs'),b)   = p # bs
+                                     ((w,bs''),b') = f v # bs'
+                                 in ((w,bs''), b && b')
+
+
 
 badReturn  r = PadsParser $ \bs -> ((r,bs), False)
 mdReturn (rep,md) = PadsParser $ 
@@ -52,8 +51,9 @@ mdReturn (rep,md) = PadsParser $
 returnClean :: t -> PadsParser (t, Base_md)
 returnClean x = return (x, cleanBasePD)
 
-returnError :: t -> ErrMsg -> S.Loc -> PadsParser (t, Base_md)
-returnError x err loc = badReturn (x, mkErrBasePDfromLoc err loc)
+returnError :: t -> ErrMsg -> PadsParser (t, Base_md)
+returnError x err = do loc <- getLoc
+                       badReturn (x, mkErrBasePDfromLoc err loc)
 
 
 
@@ -238,23 +238,22 @@ parseManySepTerm :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) =>
 parseManySepTerm sep term p = (term >> return [])
                          <||> (ifEOFP >> return [])
                          <||> scan
-   where 
-	   scan = do { (rep, md) <- p
-	             ; sepLoc <- getLoc
-  		     ; (terminated,junk) <- seekSep sep term
-	             ; if terminated then
-			      case junk of
-	         	        { []  -> return [(rep,md)]
-                                ;  _  -> badReturn [(rep,buildJunkReport md sepLoc junk)]
-                                }
-		       else
-		    	     do { rms <- scan 
-				; case junk of
-                                    { [] -> return ((rep,md):rms)  
-                                    ; _  -> badReturn ((rep,buildJunkReport md sepLoc junk) : rms)
-                                    }
-				}
-                     }
+  where 
+  scan = do (rep, md) <- p
+            (terminated,junk) <- seekSep sep term
+            if terminated then
+              case junk of
+                [] -> return [(rep,md)]
+                _  -> do sepLoc <- getLoc
+                         badReturn [(rep,buildJunkReport md sepLoc junk)]
+
+              else do
+                rms <- scan 
+                case junk of
+                  [] -> return ((rep,md):rms)  
+                  _  -> do sepLoc <- getLoc
+                           badReturn ((rep,buildJunkReport md sepLoc junk) : rms)
+
 
 seekSep sep term = (term >> return (True, []))
               <||> (ifEOFP >> return (True, []))
@@ -354,36 +353,31 @@ digitListToInt isNeg digits = let raw = foldl (\a d ->10*a + (Char.digitToInt d)
    in if isNeg then negate raw else raw
 
 
-lineBegin,lineEnd :: PadsParser (Maybe String)
-lineBegin = primPads S.srcLineBegin
-lineEnd = primPads S.srcLineEnd
-
-doLineEnd :: PadsParser ((), Base_md)
-doLineEnd = do
-  rendErr <- lineEnd
-  case rendErr of
-    Nothing -> return ((), cleanBasePD)
-    Just err -> do loc <- getLoc
-                   returnError () (LineError err) loc
-
-doLineBegin :: PadsParser ((), Base_md)
-doLineBegin = do
-  rbegErr <- lineBegin
-  case rbegErr of
-    Nothing -> return ((), cleanBasePD)
-    Just err -> do loc <- getLoc
-                   returnError () (LineError err) loc
-
+-------------------------
 
 parseLine :: PadsMD md => PadsParser (r,md) -> PadsParser (r,md)
 parseLine p =  do 
    (_,bmd) <- doLineBegin
    (r, md) <- p
    (_,emd) <- doLineEnd
-   let hmd = get_md_header md
-   let new_hd = mergeBaseMDs [bmd,hmd,emd]
-   let new_md = replace_md_header md new_hd
-   return (r,new_md)
+   let new_hd = mergeBaseMDs [bmd, get_md_header md, emd]
+   return (r, replace_md_header md new_hd)
+
+
+doLineBegin :: PadsParser ((), Base_md)
+doLineBegin = do
+  rbegErr <- primPads S.srcLineBegin
+  case rbegErr of
+    Nothing -> returnClean ()
+    Just err -> returnError () (LineError err)
+
+
+doLineEnd :: PadsParser ((), Base_md)
+doLineEnd = do
+  rendErr <- primPads S.srcLineEnd
+  case rendErr of
+    Nothing -> returnClean ()
+    Just err -> returnError () (LineError err)
 
 
 

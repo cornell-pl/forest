@@ -20,6 +20,7 @@
 128.200.68.71 - - [15/Oct/1997:18:47:15 -0700] "GET /amnesty/images/joinbutx.gif HTTP/1.0" 200 766
 128.200.68.71 - - [15/Oct/1997:18:47:15 -0700] "GET /amnesty/images/pnbutx.gif HTTP/1.0" 200 1027
 128.200.68.71 - - [15/Oct/1997:18:47:16 -0700] "GET /amnesty/images/aboutbux.gif HTTP/1.0" 200 1634
+!! BAD LINE !!
 208.196.124.26 - - [15/Oct/1997:18:47:16 -0700] "GET /images/wordo35d.gif HTTP/1.0" 200 7089
 128.200.68.71 - - [15/Oct/1997:18:47:19 -0700] "GET /amnesty/images/newbutx.gif HTTP/1.0" 200 1714
 208.196.124.26 - - [15/Oct/1997:18:47:21 -0700] "GET /images/turkboy.gif HTTP/1.0" 200 4625
