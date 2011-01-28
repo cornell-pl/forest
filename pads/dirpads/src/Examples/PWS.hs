@@ -11,7 +11,7 @@ import Language.Forest.Graph
 [pads| 
   {- Configuration file for learning demo web site; contains paths to various web site components. -}
   data Config_f =  {
-                      header      :: [Pstringln] with term length of 13,
+                      header      :: [Pstringln] with length 13,
    "$host_name   =",  host_name   :: Config_entry_t,  -- Name of machine hosting web site
    "$static_path =",  static_path :: Config_entry_t,  -- URL prefix for static content
    "$cgi_path    =",  cgi_path    :: Config_entry_t,  -- URL prefix for cgi content
@@ -27,7 +27,7 @@ import Language.Forest.Graph
    }
 
   type Config_entry_t = Line (" \"",  Pstring '\"',  "\";")   
-  type Header_t = [Pstringln] with term length of 13
+  type Header_t = [Pstringln] with length 13
 
   {- Fle listing data sources for web site -}
   type SourceNames_f = [Pstringln]

@@ -78,7 +78,7 @@ ai_file_length = Prelude.length ai_rep
 ai_fileake n  = Prelude.take n ai_rep
 
 result n  = do 
-     { (AI rep, md) <- (parseFile ai_file )
+     { (AI rep, md) <- parseFile ai_file
      ; return (Prelude.take n ai_rep)
      } 
 

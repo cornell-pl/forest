@@ -58,7 +58,7 @@ comma = ','
     , year       :: Pre "[0-9][0-9]"
     }
 
-  type Header  = [Line (Pre ".*")] with term length of 7 
+  type Header  = [Line (Pre ".*")] with length 7 
   type Trailer = [Line (Pre ".*")] with term Eof 
   data Student (name::String) = 
     { person  :: Line (Person name)

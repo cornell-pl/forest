@@ -17,7 +17,6 @@ import Control.Monad
 newtype PadsParser a = PadsParser { (#) :: S.Source -> Result (a,S.Source) }
 type Result a = (a,Bool)
 
--- type PadsParserMD a = PadsParser (a, Base_md)
 
 
 parseStringInput :: PadsParser a -> String -> (a,String)
@@ -32,8 +31,8 @@ parseByteStringInput pp cs = case pp #  (S.padsSourceFromByteString cs) of
 
                         
 instance Functor PadsParser where
-  fmap f p = PadsParser $ \bs -> case p # bs of
-                                   ((x,bs'),b) -> ((f x, bs'),b)
+  fmap f p = PadsParser $ \bs -> let ((x,bs'),b) = p # bs in
+                                   ((f x, bs'),b)
 
 -- if any results on the way are bad, then the whole thing will be bad
 instance Monad PadsParser where
@@ -135,24 +134,29 @@ constraintReport isGood md = Base_md {numErrors = totErrors, errInfo = errors}
 -------------------------------------------------
 
 
-parseListNoTermNoSep :: PadsMD md => PadsParser (rep,md) -> PadsParser ([rep], (Base_md, [md]))
+parseListNoTermNoSep :: PadsMD md => 
+    PadsParser (rep,md) -> PadsParser ([rep], (Base_md, [md]))
 parseListNoTermNoSep p = listReport (parseMany p)
 
-parseListNoTermSep :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListNoTermSep :: (PadsMD md, PadsMD mdSep) => 
+    PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
 parseListNoTermSep sep p = listReport (parseManySep sep p)
 
-parseListTermLengthNoSep :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermLengthNoSep :: (PadsMD md) => 
+    Int -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
 parseListTermLengthNoSep i p = listReport (parseCount i p)
 
-parseListTermLengthSep :: (PadsMD md, PadsMD mdSep) => Int -> PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+parseListTermLengthSep :: (PadsMD md, PadsMD mdSep) => 
+    Int -> PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
 parseListTermLengthSep n sep p = listReport (parseCountSep n sep p)
 
 parseListTermNoSep :: (PadsMD md, PadsMD mdTerm) => 
-                     PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+    PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
 parseListTermNoSep term p = listReport (parseManyTerm term p)
 
 parseListTermSep :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) => 
-                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
+    PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) ->
+    PadsParser(rep, md) -> PadsParser ([rep], (Base_md, [md]))
 parseListTermSep sep term p = listReport (parseManySepTerm sep term p)
 
 
@@ -197,26 +201,31 @@ parseManySep1 sep p = do { (r,m) <- sep
 
 
 parseCount :: (PadsMD md) => Int -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseCount n p  | n <= 0    = return []
-                | otherwise = sequence (replicate n p)
+parseCount n p = sequence (replicate n p)
 
 
-parseCountSep :: (PadsMD md) => Int -> PadsParser rmdSep -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseCountSep n sep p  | n <= 0    = return []
-parseCountSep n sep p = do { rm <- p
-                           ; rms <- parseCountSep1 (n-1) sep p
-                           ; return (rm:rms) }
+parseCountSep :: (PadsMD md) => 
+    Int -> PadsParser rmdSep -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseCountSep n sep p  | n <= 0 = return []
+parseCountSep n sep p = do
+   rm <- p
+   rms <- sequence $ replicate (n-1) (sep >> p)
+   return (rm:rms)
 
-parseCountSep1 n sep p  | n <= 0    = return []
-parseCountSep1 n sep p = do { smd <- sep -- <||> scanForSep [] sep
-                            ; parseCountSep n sep p  -- we lose the metadata for sep, which will detail any problems
-                            }
+{-
+scanForSep sep = ifEOFP
+            <||> (sep >> return ())
+            <||> ((ifEORP <||> (takeHeadP >> scanForSep sep)) >> badReturn ())
+
+-}
+
 
 -----------------------------------
 
 
 
-parseManyTerm :: (PadsMD md, PadsMD mdTerm) =>  PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+parseManyTerm :: (PadsMD md, PadsMD mdTerm) =>  
+    PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
 parseManyTerm term p = (term >> return [])
                   <||> (ifEOFP >> return [])
                   <||> do { rm <- p
@@ -226,7 +235,7 @@ parseManyTerm term p = (term >> return [])
 
 
 parseManySepTerm :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) =>  
-                     PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
+    PadsParser (repSep,mdSep) -> PadsParser (repTerm,mdTerm) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
 parseManySepTerm sep term p = (term >> return [])
                          <||> (ifEOFP >> return [])
                          <||> scan
@@ -339,8 +348,9 @@ satisfy p = primPads loop
             ([],s)
 
 digitListToInt :: Bool -> [Char] -> Int
-digitListToInt isNeg digits = let raw = foldl (\a d ->10*a + (Char.digitToInt d)) 0 digits
-   in if isNeg then negate raw else raw
+digitListToInt isNeg digits = if isNeg then negate raw else raw
+  where
+    raw = foldl (\a d ->10*a + digitToInt d) 0 digits
 
 
 -------------------------

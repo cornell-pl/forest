@@ -261,16 +261,14 @@ preLit_parseM re = do
 
 pcharLit_parseM :: Char -> PadsParser ((), Base_md)
 pcharLit_parseM c =
-  let cStr = mkStr c in
-  handleEOF () cStr $
-  handleEOR () cStr $ do
+  handleEOF () (mkStr c) $
+  handleEOR () (mkStr c) $ do
     c' <- takeHeadP 
     if c == c' then returnClean () else do
       foundIt <- scanP c
       returnError () (if foundIt 
-                      then (E.ExtraBeforeLiteral cStr)
-                      else (E.MissingLiteral     cStr) ) 
-
+                      then E.ExtraBeforeLiteral (mkStr c)
+                      else E.MissingLiteral     (mkStr c)) 
 
 
 pstrLit_parseM :: String -> PadsParser ((), Base_md)
@@ -279,7 +277,7 @@ pstrLit_parseM s =
   handleEOR () s $ do
     match <- scanStrP s
     case match of
-      Just []   -> returnClean (())
+      Just []   -> returnClean ()
       Just junk -> returnError () (E.ExtraBeforeLiteral s)
       Nothing   -> returnError () (E.MissingLiteral     s)
 

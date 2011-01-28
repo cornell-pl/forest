@@ -350,14 +350,17 @@ maybeTy = do { reserved "Maybe"
 
 --       | Plist  PadsTy (Maybe PadsTy) (Maybe TermCond)
 -- [pads| type Entries = [Pint] with sep ',' and term eof         |]
--- [pads| type Entries = [Pint] with sep ',' and term length of exp  |]
+-- [pads| type Entries = [Pint] with sep ',' and length exp  |]
 -- [pads| type Entries = [Pint] with sep ',' |]    -- keep parsing until get an error in element type
 
-sortModifier (Left sep) =   (Just sep, Nothing)
-sortModifier (Right term) = (Nothing, Just term)
+data ListMod a b c = Sep a | Term b | Len c
+
+sortModifier (Sep sep)   = (Just sep, Nothing, Nothing)
+sortModifier (Term term) = (Nothing, Just term, Nothing)
+sortModifier (Len len)   = (Nothing, Nothing, Just len)
 sortModifiers mods = 
-    let (seps, terms) = unzip $ map sortModifier mods
-    in  (msum seps, msum terms)
+    let (seps, terms, lens) = unzip3 $ map sortModifier mods
+    in  (msum seps, msum (terms ++ lens))
 
 sep :: Parser PadsTy
 sep = do { reserved "sep"
@@ -365,41 +368,39 @@ sep = do { reserved "sep"
          ; return ty 
          } <?> "separator"
      
-termKind :: Parser TermCond
-termKind = do { reserved "length"
-              ; reserved "of"
-              ; lit <- lit
-              ; return (LengthTC (litToExp lit))
-              }
-       <|> do { ty <- padsTy
-              ; return (TyTC ty)
-              } <?> "term kind"
-
 term :: Parser TermCond
 term = do { reserved "term"
-          ; termKind
+          ; ty <- padsTy
+          ; return (TyTC ty)
           } <?> "terminator"
-  
 
-listMod :: Parser (Either PadsTy TermCond)
+len :: Parser TermCond
+len = do { reserved "length"
+         ; lit <- lit
+         ; return (LengthTC (litToExp lit))
+         } <?> "length"
+  
+listMod :: Parser (ListMod PadsTy TermCond TermCond)
 listMod =   do { sepMod <- sep
-                ; return (Left sepMod) }
+                ; return (Sep sepMod) }
          <|> do { termMod <- term
-                ; return (Right termMod) }
+                ; return (Term termMod) }
+         <|> do { termMod <- len
+                ; return (Len termMod) }
          <?> "list modifier"
 
 listMods :: Parser (Maybe PadsTy, Maybe TermCond)
 listMods = do { reservedOp "with"
                ; modifiers <- sepBy1 listMod (reservedOp "and")
-               ;  return (sortModifiers modifiers)
+               ; return (sortModifiers modifiers)
                }
          <|> (return (Nothing, Nothing))
          <?> "list modifiers"
 
 listTy :: Parser PadsTy
 listTy = do { elementTy <- brackets padsTy
-             ; (sepM, termM) <- listMods
-             ; return (Plist elementTy sepM termM)
+             ; (sepM, termlenM) <- listMods
+             ; return (Plist elementTy sepM termlenM)
              } <?> "list type"    
 
 tryTy :: Parser PadsTy

@@ -490,7 +490,7 @@ result_digitListB = digitList_parseS input_digitListB
 expect_digitListB = (DigitList [Pdigit 1],0,",b,3")
 test_digitListB = mkTestCase "DigitListB" expect_digitListB result_digitListB
 
-[pads| type DigitListLen (x::Int) = [Pdigit] with term length of <|x + 1 |>  |]
+[pads| type DigitListLen (x::Int) = [Pdigit] with length <|x + 1 |>  |]
 input_digitListLenG = "123456"
 input_digitListLenB = "12a456"
 
@@ -503,7 +503,7 @@ expect_digitListLenB = (DigitListLen [Pdigit 1,Pdigit 2,Pdigit 0,Pdigit 4,Pdigit
 test_digitListLenB = mkTestCase "DigitListLenB" expect_digitListLenB result_digitListLenB
 
 
-[pads| type DigitListLenSep (x::Int) = [Pdigit] with term length of <|x + 1|>  and sep "ab" |]
+[pads| type DigitListLenSep (x::Int) = [Pdigit] with length <|x + 1|>  and sep "ab" |]
 input_digitListLenSepG = "1ab2ab3ab4ab5ab6ab7ab"
 input_digitListLenSepB = "1ab2ab3abDab5ab6ab7ab"
 result_digitListLenSepG = digitListLenSep_parseS 4 input_digitListLenSepG
