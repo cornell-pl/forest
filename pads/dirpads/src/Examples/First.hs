@@ -353,7 +353,8 @@ test_AB_test1 = mkTestCase "AB_test1" expect_AB_test1 result_AB_test1
 
 input_AB_test2 = "ab"
 result_AB_test2 = aB_test_parseS input_AB_test2
-expect_AB_test2 = (AB_test {field_AB = A},0,"")
+--expect_AB_test2 = (AB_test {field_AB = A},0,"") -- if backtracking
+expect_AB_test2 = (AB_test {field_AB = AB},1,"")
 test_AB_test2 = mkTestCase "AB_test2" expect_AB_test2 result_AB_test2
 
 [pads| data Method  = GET | PUT | LINK | UNLINK | POST  

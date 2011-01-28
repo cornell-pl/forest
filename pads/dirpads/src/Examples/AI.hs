@@ -10,7 +10,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString.Lazy.Char8 as B
 
 [pads|
-  type AI    = [Line Entry] with term Eof
+  type AI    = [Entry] with sep Eor and term Eof
 
   data Entry = {     host       :: Src, 
                ' ',  identdID   :: ID, 

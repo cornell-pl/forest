@@ -5,7 +5,7 @@ module Language.Pads.Parser where
 import Language.Pads.Syntax as S
 
 
-import Control.Monad (msum)
+import Control.Monad (msum, mzero)
 import Text.Parsec
 import qualified Text.Parsec.String as PS
 import Text.Parsec.Error
@@ -359,8 +359,13 @@ sortModifier (Sep sep)   = (Just sep, Nothing, Nothing)
 sortModifier (Term term) = (Nothing, Just term, Nothing)
 sortModifier (Len len)   = (Nothing, Nothing, Just len)
 sortModifiers mods = 
-    let (seps, terms, lens) = unzip3 $ map sortModifier mods
-    in  (msum seps, msum (terms ++ lens))
+    let (seps, terms, lens) = stripNs $ unzip3 $ map sortModifier mods
+    in if length seps <= 1 && length (terms ++ lens) <= 1 then
+      Just (msum seps, msum (terms ++ lens))
+    else
+      Nothing
+  where
+    stripNs (xs,ys,zs) = (filter (/=Nothing) xs, filter (/=Nothing) ys, filter (/=Nothing) zs)
 
 sep :: Parser PadsTy
 sep = do { reserved "sep"
@@ -392,7 +397,9 @@ listMod =   do { sepMod <- sep
 listMods :: Parser (Maybe PadsTy, Maybe TermCond)
 listMods = do { reservedOp "with"
                ; modifiers <- sepBy1 listMod (reservedOp "and")
-               ; return (sortModifiers modifiers)
+               ; case sortModifiers modifiers of
+                   Just sts -> return sts
+                   Nothing  -> mzero
                }
          <|> (return (Nothing, Nothing))
          <?> "list modifiers"

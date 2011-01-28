@@ -212,12 +212,6 @@ parseCountSep n sep p = do
    rms <- sequence $ replicate (n-1) (sep >> p)
    return (rm:rms)
 
-{-
-scanForSep sep = ifEOFP
-            <||> (sep >> return ())
-            <||> ((ifEORP <||> (takeHeadP >> scanForSep sep)) >> badReturn ())
-
--}
 
 
 -----------------------------------
@@ -242,31 +236,28 @@ parseManySepTerm sep term p = (term >> return [])
   where 
   scan = do (rep, md) <- p
             (terminated,junk) <- seekSep sep term
-            if terminated then
-              case junk of
-                [] -> return [(rep,md)]
-                _  -> do sepLoc <- getLoc
-                         badReturn [(rep,junkReport md sepLoc junk)]
-
-              else do
-                rms <- scan 
-                case junk of
-                  [] -> return ((rep,md):rms)  
-                  _  -> do sepLoc <- getLoc
-                           badReturn ((rep,junkReport md sepLoc junk) : rms)
+            case junk of
+              [] -> if terminated then return [(rep,md)] else
+                    do rms <- scan 
+                       return ((rep,md):rms) 
+              _  -> do sepLoc <- getLoc
+                       let report = junkReport md sepLoc junk
+                       if terminated then
+                         badReturn [(rep,report)]
+                         else do
+                           rms <- scan
+                           badReturn ((rep,report) : rms)
 
 
 seekSep sep term = (term >> return (True, []))
               <||> (ifEOFP >> return (True, []))
               <||> (sep >> return (False, []))
-              <||> recoverSep sep term
-
-recoverSep sep term = do { b <- isEORP
-                         ; if b then badReturn (False, []) else
-                           do { c <- takeHeadP
-                              ; (b,cs) <- seekSep sep term
-                              ; badReturn (b, c:cs) 
-                              }
+              <||> do { b <- isEORP
+                      ; if b then badReturn (False, []) else
+                        do { c <- takeHeadP
+                           ; (b,cs) <- seekSep sep term
+                           ; badReturn (b, c:cs) 
+                           }
                          }
 
 junkReport md loc junk = replace_md_header md mergeMD 
@@ -274,7 +265,7 @@ junkReport md loc junk = replace_md_header md mergeMD
     mdSep   = mkErrBasePDfromLoc (ExtraStuffBeforeTy junk "seperator" ) loc
     mergeMD = mergeBaseMDs [get_md_header md, mdSep]
 
-
+                               
 
 -------------------------------------------------
 
