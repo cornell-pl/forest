@@ -39,7 +39,7 @@ to easily add it in as we did in the PLDI submission.
 File.pull (E,F,r) = { (n,true)    if F(r) = File(n)
                     { ("",false)  otherwise
 
-File.check (E,F,r) (n,b) = exists n'. F(r) = File(n') and b
+File.check (E,F,r) (n,b) = b
 
 File.foot (E,r) (n,b) = {r}
 
@@ -55,7 +55,7 @@ For the moment I'm doing the former.
 (Adhoc(b)).pull (E,f,r) = { (v,(valid(d),d))   if F(r) = File(n) and b.parse(n) = (v,d)
                           { (v,(false,d))      if F(r) != File(n) and b.parse("") = (v,d)
 
-(Adhoc(b)).check (E,F,r) = exists n'. F(r) = File(n') and b
+(Adhoc(b)).check (E,F,r) (v,d) = valid(d)
 
 (Adhoc(b)).foot (E,r) (v,d) = {r}
 
