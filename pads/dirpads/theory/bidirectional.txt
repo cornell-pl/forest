@@ -1,10 +1,14 @@
-+-----------+
-| SEMANTICS |
-+-----------+
++--------------------------------------------------------------------------+
+| SEMANTICS 
++--------------------------------------------------------------------------+
 
 pull  : env * fs * path -> rep * md
 check : env * fs * path -> rep * md -> bool
-push  : (e : env * fs * path) -> (v : rep * md where check e v) -> env * fs 
+foot  : env * path -> rep * md -> path bag
+push  : (e : env * fs * path) -> (v : rep * md where check e v) ->  fs 
+
+Note that push could just be a part of the check function; I'm
+splitting it out here for the sake of simplicity.
 
 pull (E,F,r) = (v,d)
 valid (d)
@@ -12,49 +16,68 @@ valid (d)
 check (E,F,r) (v,d) = true
 
 ----------------------------------[PullPush]
-push (E,F,r) (pull (E,F,r)) ~ E,F
+push (E,F,r) (pull (E,F,r)) ~ F
 
-where ~ is an equivalence that ignores information such as
-modification times in F.
+where ~ is a fairly corase equivalence relation that relates two
+filestores if they have the same structure (e.g., it could ignore
+information about modification times and even the contents of files,
+depending on what we want to assume about the PADS-described files...)
 
 check (E,F,r) (v,d) = true
-push (E,F,r) (v,d) = (E',F')
+push (E,F,r) (v,d) = F'
+unique_paths (foot (E,r))
 -----------------------------[PushPull]
-pull (E',F',r) = (v,d)
+pull (E,F',r) = (v,d)
 
-+-----------+
-| CONSTANTS |
-+-----------+
+Note: I'm ignoring filesystem metadata in this note. We should be able
+to easily add it in as we did in the PLDI submission.
 
-file.pull (E,F,r) = { (n,true)    if F(r) = File(n)
++--------------------------------------------------------------------------+
+| CONSTANTS 
++--------------------------------------------------------------------------+
+
+File.pull (E,F,r) = { (n,true)    if F(r) = File(n)
                     { ("",false)  otherwise
 
-file.check (E,F,r) (n,b) = exists n'. F(r) = File(n') and b
+File.check (E,F,r) (n,b) = exists n'. F(r) = File(n') and b
 
-file.push (E,F,r) (n,b) = (E, F[r:=File(n)])
+File.foot (E,r) (n,b) = {r}
+
+File.push (E,F,r) (n,b) = F[r:=File(n)]
 
 ---------------------------------------------------------------------------
 Adhoc(b)
 
-Not sure whether it is better to make these lens-y too or relax the
-laws modulo an equivalence relation on all PADS-described files?
+I'm not sure whether I want to try to make PADS descriptions lens-y as
+well, or just relax the laws modulo a coarse equivalence relation?
+For the moment I'm doing the former.
+
+(Adhoc(b)).pull (E,f,r) = { (v,(valid(d),d))   if F(r) = File(n) and b.parse(n) = (v,d)
+                          { (v,(false,d))      if F(r) != File(n) and b.parse("") = (v,d)
+
+(Adhoc(b)).check (E,F,r) = exists n'. F(r) = File(n') and b
+
+(Adhoc(b)).foot (E,r) (v,d) = {r}
+
+(Adhoc(b)).push (E,F,r) (v,d) = F[r:=File(b.print(v,d))]
 
 ---------------------------------------------------------------------------
 
 (e::s).pull (E,F,r) = s.pull (E,F,r/n)
-where [[e]](E,F,r) = n 
+where [[e]](E,r) = n 
 
-(e::s).check (E,F,r) (v,d) = { s.check (E,F,r')    if r = r'/n and [[e]](E,F,r) = n
-                             { false               otherwise 
+(e::s).check (E,F,r) (v,d) = { s.check (E,F,r/n)   if [[e]](E,r) = n
+                             { false               otherwise
 
-(e::s).push (E,F,r) (v,d) = s.push (E,F,r') (v,d)
-where r = r'/n
+(e::s).foot (E,r) (v,d) = s.foot (E,r/n) 
+where [[e]](E,r) = n
 
-Questions:
-  * do we want to put n in the metadata?
+(e::s).push (E,F,r) (v,d) = s.push (E,F,r/n) (v,d)
+where [[e]](E,r) = n
 
-  * can we make the check function more flexible? (Probably, but we
-    need to be careful not to violate PushPull!)
+Question: do we want to put n in the metadata? It seems to me that we
+don't -- we don't need it to define the check and push functions, and
+adding it will only make them less flexible.
 
 ---------------------------------------------------------------------------
 
@@ -64,49 +87,131 @@ where s1.pull (E,F,r) = (v1,d1)
 
 <x:s1,s2>.check (E,F,r) ((v1,v2),(b,(d1,d2))) = 
   check (E,F,r) (v1,d1) &&
-  check (E[x:=v1,x_d:=d2],F,r) (v2,d2)
+  check (E[x:=v1,x_d:=d1],F,r) (v2,d2)
 
-<x:s1,s2>.push (E,F,r) ((v1,v2),(b,(d1,d2))) = E',F'
-where s2.push (E[x:=v1,x_d:=d1],F,r) (v2,d2) = E'',F''
-  and s1.push (E''[x:=E(x),x_d:=E(x_d)],F'',r) (v1,d1) = E',F'
+<x:s1,s2>.foot (E,r) ((v1,v2),(b,d1,d2)) = 
+  (s1.foot (E,r) (v1,d1) U (s2.foot (E[x:=v1,x_d:=d1],r) (v2,d2))
+
+<x:s1,s2>.push (E,F,r) ((v1,v2),(b,(d1,d2))) = 
+  s1.push (E, s2.push (E[x:=v1,x_d:=d1],F,r) (v2,d2), r) (v1,d1)
 
 ---------------------------------------------------------------------------
 
-{s | x in e}.pull (E,F,r) = ({v1,..,vk},(valid d1 && .. && valid dk,{d1,..,dk])) 
-where [[e]](E,F,r) = {u1,...,uk}
+{s | x in e}.pull (E,F,r) = ({v1,..,vk}, (valid d1 && .. && valid dk,{d1,..,dk}))
+where [[e]](E,r) = {u1,...,uk}
   and s.pull (E[x:=ui],F,r) = (vi,di) for i from 1 to k
   
 { s | x in e }.check (E,F,r) ({v1,..,vk},(b,{d1,..,dl})) = 
-  [[e]](E,F,r) = {v1,..,vk} &&
-  s.check (E[x:=vi],F,r) (vi,di) for i from 1 to k
+  b && 
+  [[e]](E,r) = {v1,..,vk} &&
+  s.check (E[x:=vi,x_d:=di],F,r) (vi,di) for i from 1 to k
 
-{ s | x in e }.push (E,F,r) ({v1,..,vk},(b,{d1,..,dl})) = Ek,Fk
-where s.push (E{i-1}[x:=vi],F{i-1},r) = Ei,Fi for i from 1 to k
-  and E0 = E
+{ s | x in e }.foot (E,r) ({v1,...,vk},(b,{d1,...,dk})) = 
+  U_{vi in [[e]](E,r) } (s.foot(E[x:=vi,x_d:=di],r)
+
+{ s | x in e }.push (E,F,r) ({v1,..,vk},(b,{d1,..,dl})) = Fk
+where s.push (E[x:=vi,x_d:=di],F{i-1},r) = Fi for i from 1 to k
   and F0 = F
 
-Todo:
-  * Handle empty cases
+I'm worried about this comprehension manipulating a set. A list would
+be easier to handle because we wouldn't have to worry about losing
+duplicate values in {v1,...,vk} and {d1,...,dk}. It would also follow
+the implementation closer.
 
 ---------------------------------------------------------------------------
 
-(Pred(e)).pull (E,F,r) ((),([[e]](E,F,r),()))
+(Pred(e)).pull (E,F,r) ((),([[e]](E,r),()))
 
-(Pred(e)).check (E,F,r) (_,(b,_)) = [[e]](E,F,r) = b
+(Pred(e)).check (E,F,r) ((),(b,())) = [[e]](E,r) = b
 
-(Pred(e)).push (E,F,r) _ = E,F
+(Pred(e)).foot (E,r) ((),(b,())) = {} 
+
+(Pred(e)).push (E,F,r) _ = F
 
 ---------------------------------------------------------------------------
 
 (s?).pull (E,F,r) = { (None,(false,None))       if r not in dom(F)
                     { (Some v,(valid d,Some d)) otherwise
-                      where s.pull (E,F,r) = v,d
+where s.pull (E,F,r) = v,d
 
 (s?).check (E,F,r) (vo,(b,do)) = 
      r not in dom(F) && vo = do = None
   || r in dom(F) && vo = Some v && do = Some d && s.check (E,F,r) (v,d) = true
 
-(s?).push (E,F,r) (vo,(b,do)) = { (E,F)                if r not in dom(F)
+(s?).foot (E,r) (vo,(b,do)) = 
+     { {}                if r not in dom(F)
+     { s.foot(E,r) (v,d) if otherwise 
+       where vo = Some v
+         and do = Some d 
+
+(s?).push (E,F,r) (vo,(b,do)) = { F                    if r not in dom(F)
                                 { s.push (E,F,r) (v,d) otherwise
                                   where vo = Some v
                                     and do = Some d
+
+---------------------------------------------------------------------------
+Some examples:
+---------------------------------------------------------------------------
+
+If 
+
+s = <n:("name.txt"::File), n::File>
+
+then executing s.push with
+
+v' = ("foo.ml", "let rec f x = x")
+
+works as you'd expect. However, if 
+
+v' = ("name.txt", "let rec f x = x")
+
+then s.push needs to be rejected if we want to have round-tripping
+laws. Fortunately
+ 
+  s.foot (E,r) (v',d) = { r/name.txt, r/name.txt }
+
+definitely does *not* satisfy unique_paths :-)
+
+---------------------------------------------------------------------------
+
+Similarly, note that if we take 
+
+s = <"x.txt"::File, "x.txt"::File>
+
+and
+
+v' = ("Hello", "World")
+
+Then 
+
+s.push (E,r) (v'd,) 
+
+will update r/x.txt to "Hello", losing the "World" value. But again,
+s.foot (E,r) (v',d) does not satisfy unique_paths, so we're okay.
+
+---------------------------------------------------------------------------
+
+s = <"x.txt"::Adhoc(b1), "x.txt"::Adhoc(b2)>
+
+More generallly, specifications like s will not have useful push
+functions (if we assume that we will only use s.push when s.check and
+s.foot are satisfied). We could generalize s.foot to compute a
+finer-grained footprint -- e.g., if b1 and b2 describe disjoint parts
+of "x.txt", then we might be tempted to define push functions that
+only change those parts of the file. But this is getting rather
+baroque...
+
+---------------------------------------------------------------------------
+
+s = <"x.txt"::Adhoc(b1), "x.txt"::Adhoc(b2)>
+
+More generallly, specifications like s will not have useful push
+functions (if we assume that we will only use s.push when s.check and
+s.foot are satisfied). We could generalize s.foot to compute a
+finer-grained footprint -- e.g., if b1 and b2 describe disjoint parts
+of "x.txt", then we might be tempted to define push functions that
+only change those parts of the file. But this is getting rather
+baroque...
+
+---------------------------------------------------------------------------
+
