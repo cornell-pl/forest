@@ -8,4 +8,4 @@ import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Lib
 
 here :: QuasiQuoter
-here = QuasiQuoter (litE . stringL) (litP . stringL) undefined undefined 
+here = QuasiQuoter (litE . stringL) (litP . stringL) undefined undefined

@@ -21,9 +21,7 @@ data Here
 here :: QuasiQuoter
 here = QuasiQuoter
         {quoteExp = hereExpQ
-        ,quotePat = herePatQ
-        ,quoteType = undefined
-        ,quoteDec  = undefined}
+        ,quotePat = herePatQ}
 
 instance Lift Here
   where lift = liftHere

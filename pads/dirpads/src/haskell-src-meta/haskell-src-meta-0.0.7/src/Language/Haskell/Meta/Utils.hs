@@ -138,63 +138,39 @@ renameT env new ListT = (ListT,env,new)
 renameT env new (AppT t t') = let (s,env',new') = renameT env new t
                                   (s',env'',new'') = renameT env' new' t'
                               in (AppT s s', env'', new'')
-renameT env new (ForallT tyVarBndrs cxt t) =
-  let 
-      (tyVarBndrs', env2,new2) = renameTyVarBndrs env new [] tyVarBndrs
-      (cxt',env3,new3) = renamePreds env2 new2 [] cxt
-      (t',env4,new4) = renameT env3 new3 t
-  in (ForallT  tyVarBndrs' cxt' t', env4, new4)
-
-renameName :: [(Name, Name)] -> [Name] -> Name -> (Name, [(Name,Name)], [Name])
-renameName env new name = 
+renameT env new (ForallT ns cxt t) =
   let unVarT (VarT n) = n
-      (t',env',new') = renameT env new (VarT name)
-      name' = unVarT t'
-  in (name',env',new')
+      (ns',env2,new2) = renameTs env new [] (fmap VarT (tyVarBndrsToNames ns))
+      ns'' = namesToTyVarBndrs ns (fmap unVarT ns') 
+      (cxt',env3,new3) = renameTs env2 new2 [] cxt
+      (t',env4,new4) = renameT env3 new3 t
+  in (ForallT ns'' cxt' t', env4, new4)
 
-renameTyVarBndr :: [(Name, Name)] -> [Name] -> TyVarBndr -> (TyVarBndr, [(Name,Name)], [Name])
-renameTyVarBndr env new tyVarBndr = case tyVarBndr of
-  PlainTV n ->    let (n',env',new') = renameName env new n
-                  in  (PlainTV n', env', new')
-  KindedTV n k -> let (n',env',new') = renameName env new n
-                  in  (KindedTV n' k, env', new')
+tyVarBndrToName :: TyVarBndr -> Name
+tyVarBndrToName tyVarBndr = case tyVarBndr of
+   PlainTV n -> n
+   KindedTV n k -> n
 
-renameTyVarBndrs env new acc [] = (reverse acc, env, new)
-renametyVarBndrs env new acc (t:ts) =
-  let (t',env',new') = renameTyVarBndr env new t
-  in renameTyVarBndrs env' new' (t':acc) ts
+tyVarBndrsToNames :: [TyVarBndr] -> [Name]
+tyVarBndrsToNames tyVarBndrs = fmap tyVarBndrToName tyVarBndrs
 
-renamePred :: [(Name, Name)] -> [Name] -> Pred -> (Pred, [(Name,Name)], [Name])
-renamePred env new pred = case pred of
-  ClassP n tys ->
-    let (n',  env1,new1) = renameName env new n
-        (tys',env2,new2) = renameTs   env1 new1 [] tys
-    in  (ClassP n' tys', env2, new2)
-  EqualP ty1 ty2 -> 
-    let (ty1', env1, new1) = renameT env  new  ty1
-        (ty2', env2, new2) = renameT env1 new1 ty2
-    in (EqualP ty1' ty2', env2, new2)
+namesToTyVarBndrs :: [TyVarBndr] -> [Name] -> [TyVarBndr]
+namesToTyVarBndrs tys ns = case (tys, ns) of
+  ([],[]) -> []
+  ((PlainTV _):tys',       n':ns') -> (PlainTV n')       : (namesToTyVarBndrs tys' ns') 
+  ((KindedTV _ kind):tys', n':ns') -> (KindedTV n' kind) : (namesToTyVarBndrs tys' ns') 
 
-renamePreds env new acc [] = (reverse acc, env, new)
-renamePreds env new acc (t:ts) =
-  let (t',env',new') = renamePred env new t
-  in renamePreds env' new' (t':acc) ts
 
 
 applyT :: Type -> Type -> Type
 applyT (ForallT [] _ t) t' = t `AppT` t'
-applyT (ForallT (n:ns) cxt t) t' = ForallT ns cxt (substT [(getName n,t')] (getNames ns) t)
+applyT (ForallT (n:ns) cxt t) t' = ForallT ns cxt (substT [(tyVarBndrToName n,t')] (tyVarBndrsToNames ns) t)
 applyT t t' = t `AppT` t'
 
-getName :: TyVarBndr -> Name
-getName (PlainTV n) = n
-getName (KindedTV n k) = n
 
-getNames :: [TyVarBndr] -> [Name]
-getNames tvbs = map getName tvbs
 
 substT :: [(Name, Type)] -> [Name] -> Type -> Type
-substT env bnd (ForallT ns _ t) = substT env ((getNames ns)++bnd) t
+substT env bnd (ForallT ns _ t) = substT env ((tyVarBndrsToNames ns)++bnd) t
 substT env bnd t@(VarT n)
   | n `elem` bnd = t
   | otherwise = maybe t id (lookup n env)
@@ -207,15 +183,13 @@ substT _ _ t = t
 
 
 -- | Stolen from Igloo's th-lift.
-{-  Not sure how to fix this...
 deriveLift :: Name -> Q Dec
 deriveLift n
  = do i <- reify n
       case i of
-        TyConI (DataD  _ tvbs cons _) ->
-          let vs = getNames tvbs
-              ctxt = cxt [conT ''Lift `appT` varT v | v <- vs]
-              typ = foldl appT (conT n) $ map varT vs
+        TyConI (DataD _ _ vs cons _) ->
+          let ctxt = cxt [conT ''Lift `appT` varT v | v <- vs]
+              typ = foldl appT (conT n) $ map varT (tyVarBndrsToNames vs)
               fun = funD 'lift (map doCons cons)
           in instanceD ctxt (conT ''Lift `appT` typ) [fun]
         _ -> error (modName ++ ".deriveLift: unhandled: " ++ pprint i)
@@ -240,7 +214,7 @@ deriveLiftPretty n = do
   case (parseHsDecls . pprint . cleanNames) decs of
     Left e -> fail ("deriveLiftPretty: error while prettifying code: "++e)
     Right hsdecs -> return (unlines . fmap prettyPrint $ hsdecs)
--}
+
 
 
 
@@ -274,10 +248,10 @@ decCons _ = []
 
 
 decTyVars :: Dec -> [Name]
-decTyVars (DataD _ _ ns _ _) = getNames ns
-decTyVars (NewtypeD _ _ ns _ _) = getNames ns
-decTyVars (TySynD _ ns _) = getNames ns
-decTyVars (ClassD _ _ ns _ _) = getNames ns
+decTyVars (DataD _ _ ns _ _) = (tyVarBndrsToNames ns)
+decTyVars (NewtypeD _ _ ns _ _) = (tyVarBndrsToNames ns)
+decTyVars (TySynD _ ns _) = (tyVarBndrsToNames ns)
+decTyVars (ClassD _ _ ns _ _) = (tyVarBndrsToNames ns)
 decTyVars _ = []
 
 
@@ -388,8 +362,6 @@ quasify :: (Show a, Lift a) => Quoter a -> QuasiQuoter
 quasify q = QuasiQuoter
               (toExpQ (expQ q))
               (toPatQ (patQ q))
-              undefined
-              undefined
 
 toExpQ :: (Lift a) => (String -> Q a) -> (String -> ExpQ)
 toExpQ parseQ = (lift =<<) . parseQ

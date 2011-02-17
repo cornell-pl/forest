@@ -17,8 +17,6 @@ import Language.Haskell.TH.Syntax
 i :: QuasiQuoter
 i = QuasiQuoter ((cleanNames <$>) . applicateQ)
         (either fail return . parsePat)
-        undefined
-        undefined
 
 applicateQ :: String -> ExpQ
 applicateQ s = case either fail unwindE (parseExp s) of

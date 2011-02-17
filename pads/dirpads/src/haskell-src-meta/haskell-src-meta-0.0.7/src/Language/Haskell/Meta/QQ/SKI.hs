@@ -38,10 +38,7 @@ eval0  x                     = x
 ski :: QuasiQuoter
 ski = QuasiQuoter
         {quoteExp = skiExpQ
-        ,quotePat = skiPatQ
-        ,quoteType = undefined
-        ,quoteDec = undefined}
-
+        ,quotePat = skiPatQ}
 
 instance Lift SKI where
   lift = liftSKI

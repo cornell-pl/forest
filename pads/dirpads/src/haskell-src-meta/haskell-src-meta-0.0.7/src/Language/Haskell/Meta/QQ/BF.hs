@@ -16,10 +16,10 @@ import qualified Data.IntMap as IM
 
 
 bf :: QuasiQuoter
-bf = QuasiQuoter bfExpQ bfPatQ undefined undefined
+bf = QuasiQuoter bfExpQ bfPatQ
 
 bf2 :: QuasiQuoter
-bf2 = QuasiQuoter bf2ExpQ bfPatQ undefined undefined
+bf2 = QuasiQuoter bf2ExpQ bfPatQ
 
 bf2ExpQ :: String -> ExpQ
 bf2ExpQ s = [|eval (parse s)|]

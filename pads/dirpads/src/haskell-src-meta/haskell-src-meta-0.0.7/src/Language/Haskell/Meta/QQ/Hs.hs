@@ -19,8 +19,6 @@ hs :: QuasiQuoter
 hs = QuasiQuoter
       (either fail transformE . parseExp)
       (either fail transformP . parsePat)
-      undefined
-      undefined
 
 transformE :: Exp -> ExpQ
 transformE = return
@@ -34,5 +32,3 @@ pat = QuasiQuoter
         (\s -> case parseExp s of
                 Left err -> fail err
                 Right e -> either fail return (parsePat . pretty $ e))
-        undefined
-        undefined

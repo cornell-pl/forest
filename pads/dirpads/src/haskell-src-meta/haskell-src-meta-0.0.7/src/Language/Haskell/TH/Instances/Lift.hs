@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, CPP, MagicHash, TypeSynonymInstances #-}
+{-# LANGUAGE TemplateHaskell, CPP, MagicHash, TypeSynonymInstances, StandaloneDeriving #-}
 
 {- |
   Module      :  Language.Haskell.TH.Instances.Lift
@@ -686,11 +686,11 @@ instance Lift Type where
               (lift x1)
 
 instance Lift Info where
-        lift (ClassI x0)
+        lift (ClassI x0 x1)
           = appE
-              (conE
-                 (mkNameG_v "ClassI" "template-haskell" "Language.Haskell.TH.Syntax"))
-              (lift x0)
+                (conE
+                   (mkNameG_v "ClassI" "template-haskell" "Language.Haskell.TH.Syntax"))
+                (lift x0)
         lift (ClassOpI x0 x1 x2 x3)
           = appE
               (appE

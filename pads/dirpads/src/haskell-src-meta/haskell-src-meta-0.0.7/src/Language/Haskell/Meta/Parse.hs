@@ -54,6 +54,7 @@ myDefaultExtensions = [PostfixOperators
                       ,TemplateHaskell
                       ,RankNTypes
                       ,MultiParamTypeClasses
+                      ,ScopedTypeVariables
                       ,RecursiveDo]
 
 parseResultToEither :: ParseResult a -> Either String a
