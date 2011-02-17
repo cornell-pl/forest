@@ -1,88 +1,154 @@
+- define (~), an equivalence relation that relates the (potentially)
+  infinite unfolding of two filestores with the same structure---i.e.,
+  ignoring metadata and the contents of files.
+- define ++ on filestores
+- show that (++) preserves equivalence, is commutative, and is associative
+- show [PlusPlusPreserve] that F(r)=c and F++G =F',true implies F'(r)=c and similarly for G(r). 
+
 +--------------------------------------------------------------------------+
 | SEMANTICS 
 +--------------------------------------------------------------------------+
 
-pull  : env * fs * path -> rep * md
-check : env * fs -> rep * md -> bool
-foot  : env * path -> rep * md -> path bag
-push  : (e : env * fs * path) -> (v : rep * md where check e v) ->  fs 
+check : env -> rep * md -> bool
 
-Note that check could be folded into (a partial version of) the check
-function; I'm splitting it out here to make it easier to state
-properties.
+pull  : (e:env) * filesystem * path -> 
+        ((v:rep) * (d:md) where valid d implies check e v)
+
+push  : ((e : env) * filesystem * path) -> 
+        (v : (rep * md) where check e v) -> 
+        filesystem * bool
 
 pull (E,F,r) = (v,d)
 valid (d)
---------------------------[PullCheck]
-check (E,F) (v,d) = true
+F' ~ F
+push (E,F',r) (v,d) = (F'',true)
+--------------------------------[PullPush]
+F'' ~ F'
 
-F(r') = Directory{}
-check (E,F) (v,d)
-push (E,F,chroot(r')) (pull (E,F,r)) = F'
------------------------------------------[PullPush]
-F'(r') ~ F(r)
-
-where ~ is an equivalence relation that relates filestores with
-identical structure (i.e., ignoring metadata and the contents of
-files).
-
-valid(d)
-check (E,F) (v,d)
-push (E,F,chroot(r')) (v,d) = F'
-foot (E,r) = B
---------------------------------[PushFoot]
-paths(F'(r')) <= setof(B)
-
-check (E,F) (v,d)
-unique_paths (foot(E,r)) (v,d)
-push (E,F,chroot(r')) (v,d) = F'
---------------------------------[PushPull]
-pull (E,F',r') = (v,d)
-
-Note: I'm actually ignoring filesystem metadata completely in this
-note. I hope we can easily add it back in.
+check E (v,d)
+push (E,F,r) (v,d) = (F',true)
+F'++G = (F'',true)
+pull (E,F'',r) = (v',d)
+---------------------------------[PushPull]
+v = v' and valid(d) iff valid(d')
 
 +--------------------------------------------------------------------------+
 | CONSTANTS 
 +--------------------------------------------------------------------------+
 
-File.pull (E,F,r) = { (n,true)    if F(r) = File(n)
-                    { ("",false)  otherwise
+File.pull (E,F,r) = 
+  { (n, true)    if F(r) = File(n)
+  { ("", false)  otherwise
 
-File.check (E,F) (n,b) = b
+File.check E (n,b) = b
 
-File.foot (E,r) (n,b) = {r}
+File.foot (E,r) (n,b) = { r }
 
-File.push (E,F,r) (n,b) = F[r:=File(n)]
+File.push (E,F,r) (n,b) = 
+  (F[r:=File(n)], F(r) undefined or F(r) = File(n))
+
+ 
+PullPush:
+  Assume 
+    F' ~ F
+    push (E,F',r) (n,b) = (F'',true) 
+  By the definition of push we have 
+    F'' = F'[r:=File(n)]
+  It follows that F'' ~ F'
+   
+PushPull:
+  Assume 
+    check E (n,b)     
+    push (E,F,r) (n,b) = (F',true)  
+    F'++G = (F'',true)
+    pull (E,F'',r) = (n',b').
+  By the definitions of check and push we have
+    b=true
+    F'(r)=File(n)
+  and using PlusPlusPreserve we also have 
+    F''(r)=File(n)
+  Using the definition of pull we then obtain
+    n'=n
+    b'=true    
+  as required.
 
      -----------------------------------------------------------------
 
 (Adhoc(b)).pull (E,f,r) = 
-    { (v,(valid(d),d))   if F(r) = File(n) and b.parse(n) = (v,d)
-    { (v,(false,d))      if F(r) != File(n) and b.parse("") = (v,d)
+  { (v,(valid (d),d)) if F(r) = File(n) and b.parse (n) = (v,d)
+  { (v,(false,d))     if F(r) != File(n) and b.parse ("") = (v,d)
 
-(Adhoc(b)).check (E,F) (v,d) = valid(d)
+(Adhoc(b)).check E (v,d) = valid (d)
 
-(Adhoc(b)).foot (E,r) (v,d) = {r}
+(Adhoc(b)).push (E,F,r) (v,d) = 
+  (F[r:=File(b.print(v,d))], F(r) undefined or F(r) = File(b.print(v,d)))
 
-(Adhoc(b)).push (E,F,r) (v,d) = F[r:=File(b.print(v,d))]
+
+PullPush:
+  Assume 
+    F' ~ F
+    push (E,F',r) (v,d) = (F'',true) 
+  By the definition of push we have 
+    F'' = F'[r:=b.print(v,d)]
+  It follows that F'' ~ F'.
+   
+PushPull:
+  Assume 
+    check E (v,d) 
+    push (E,F,r) (v,d) = (F',true)  
+    F'++G = true,F''
+    pull (E,F'',r) = (v',d').
+  By the definition of push we have    
+    F'(r)=File(b.print(v,d))
+  and using PlusPreserve we also have
+    F''(r)=File(b.print(v,d)) 
+  Using the definition of pull we then obtain
+    (v',d') = b.parse(b.print(v,d))
+  The required equalities, namely
+    v' = v
+    valid(d) iff valid(d')
+  hold *if* b satisfies a round-tripping law!
 
      -----------------------------------------------------------------
 
 (e::s).pull (E,F,r) = s.pull (E,F,r/n)
 where [[e]] E = n 
 
-(e::s).check (E,F) (v,d) = s.check (E,F)
-
-(e::s).foot (E,r) (v,d) = s.foot (E,r/n) 
-where [[e]] E = n
+(e::s).check E (v,d) = s.check E (v,d)
 
 (e::s).push (E,F,r) (v,d) = s.push (E,F,r/n) (v,d)
 where [[e]] E = n
 
-Question: do we want to put n in the metadata? It seems to me that we
-don't -- we don't need it to define the check and push functions, and
-adding it will only make them less flexible.
+
+PullPush:
+  Assume
+    pull (E,F,r) = (v,d) 
+    valid (d) 
+    F' ~ F
+    push (E,F',r) (v,d) = (F'',true)
+  By the definition of pull and push we have
+    [[e]] E = n 
+    (v,d) = s.pull (E,F,r/n) 
+    (F'',true) = s.push (E,F',r/n) (v,d)
+  By PullPush for s we have 
+    F'' ~ F'
+  as required.
+
+PushPull:
+  Assume 
+    check E (v,d) 
+    push (E,F,r) (v,d) = (F',true)  
+    F'',true = F'++G
+    pull (E,F'',r) = (v',d')
+  By the definition of push we have    
+    [[e]] = n
+    s.push (E,F,r/n) (v,d) = (F',true)
+  Using the definition of pull we also have 
+    (v',d') = s.pull (E,F'',r/n)  
+  The required equalities, 
+    v' = v
+    valid(d) iff valid(d')
+  follow from PushPull for s. 
 
      -----------------------------------------------------------------
 
@@ -90,15 +156,68 @@ adding it will only make them less flexible.
 where s1.pull (E,F,r) = (v1,d1)
   and s2.pull (E[x:=v1,x_d:=d1],F,r) = (v2,d2)
 
-<x:s1,s2>.check (E,F) ((v1,v2),(b,(d1,d2))) = 
+<x:s1,s2>.check E ((v1,v2),(b,(d1,d2))) = 
   check (E,F) (v1,d1) &&
   check (E[x:=v1,x_d:=d1],F) (v2,d2)
 
-<x:s1,s2>.foot (E,r) ((v1,v2),(b,d1,d2)) = 
-  (s1.foot (E,r) (v1,d1) U (s2.foot (E[x:=v1,x_d:=d1],r) (v2,d2))
-
 <x:s1,s2>.push (E,F,r) ((v1,v2),(b,(d1,d2))) = 
-  s1.push (E, s2.push (E[x:=v1,x_d:=d1],F,r) (v2,d2), r) (v1,d1)
+  let F2,b2 = s2.push (E[x:=v1,x_d:=d1],F,r) (v2,d2) in 
+  let F1,b1 = s1.push (E,F, r) (v1,d1) in 
+  let F12,b12 = F1++F2 in 
+  (F12, b2 && b1 && b12)
+
+PullPush:
+  Assume
+    pull (E,F,r) = (v,d) 
+    valid (d) 
+    F' ~ F
+    push (E,F',r) (v,d) = (F'',true)
+  By the definition of pull and push we have
+    s1.pull (E,F,R) = (v1,d1)
+    s2.pull (E[x:=v1,x_d:=d1],F,R) = (v2,d2)
+    ((v1,v2),((valid d1 && valid d2), d1,d2)) = (v,d)
+    (F2,true) = s2.push (E[x:=v1,x_d:=d1],F',r) (v2,d2)
+    (F1,true) = s1.push (E,F',r) (v1,d1)
+    (F'',true) = F1++F2 
+  By PullPush for s2 and s1 we have 
+    F2 ~ F'
+    F1 ~ F'  
+  As (++) preserves (~) we also have 
+    F12 ~ F'
+  as required.
+
+PushPull:
+  Assume 
+    check E (v,d) 
+    push (E,F,r) (v,d) = (F',true)  
+    (F'',true) = F'++G
+    pull (E,F'',r) = (v',d').
+  By the type of rep * md we have 
+    ((v1,v2),(b,(d1,d2)) = (v,d)
+    ((v1',v2'),(b',(d1',d2')) = (v',d')
+  Also, by the definition of push we have    
+    (F2,true) = s2.push (E[x:=v1,x_d:=d1],F,r) (v2,d2)
+    (F1,true) = s1.push (E,F,r) (v1,d1)
+    (F',true) = F1++F2
+  and so by the associativity and commutativity of (++) we have
+    (F'',true) = (F1++F2)++G
+               = F1++(F2++G)
+               = F2++(F1++G)
+  Moreover, with the definition of pull we have
+    (v1',d1') = s1.pull (E,F'',r)
+    (v2',d2') = s2.pull (E[x:=v1',x_d:=d1'],F'',r)
+  By PushPull for s1 we have 
+    v1' = v1 and valid(d1') iff valid(d1)
+  *If* we remove x_d* then...
+  By PushPull for s2 we have 
+    v2' = v2 and valid(d2') iff valid(d2)
+  It follows that
+    v' = v and 
+    valid(valid(d1) && valid(d2),(d1,d2)) iff 
+    valid (valid(d1') && valid(d2'),(d1',d2'))
+  as required.
+
+*** JNF RAGGED BELOW HERE ***
 
      -----------------------------------------------------------------
 
@@ -106,11 +225,8 @@ where s1.pull (E,F,r) = (v1,d1)
 where [[e]] E = {u1,...,uk}
   and s.pull (E[x:=ui],F,r) = (vi,di) for i from 1 to k
   
-{ s | x in e }.check (E,F) ({v1,..,vk},(b,{d1,..,dk})) = 
+{ s | x in e }.check E ({v1,..,vk},(b,{d1,..,dk})) = 
   b && s.check (E[x:=vi,x_d:=di],F) (vi,di) for i from 1 to k
-
-{ s | x in e }.foot (E,r) ({v1,...,vk},(b,{d1,...,dk})) = 
-  U_{vi in [[e]] E } (s.foot(E[x:=vi,x_d:=di],r)
 
 { s | x in e }.push (E,F,r) ({v1,..,vk},(b,{d1,..,dl})) = Fk
 where s.push (E[x:=vi,x_d:=di],F{i-1},r) = Fi for i from 1 to k
@@ -120,7 +236,7 @@ where s.push (E[x:=vi,x_d:=di],F{i-1},r) = Fi for i from 1 to k
 
 (Pred(e)).pull (E,F,r) ((),([[e]] E,()))
 
-(Pred(e)).check (E,F) ((),(b,())) = [[e]] E = b
+(Pred(e)).check E ((),(b,())) = [[e]] E = b
 
 (Pred(e)).foot (E,r) ((),(b,())) = {} 
 
@@ -132,15 +248,9 @@ where s.push (E[x:=vi,x_d:=di],F{i-1},r) = Fi for i from 1 to k
                     { (Some v,(valid d,Some d)) otherwise
 where s.pull (E,F,r) = v,d
 
-(s?).check (E,F) (vo,(b,do)) = 
+(s?).check E (vo,(b,do)) = 
      vo = do = None
   || vo = Some v && do = Some d && s.check (E,F) (v,d) 
-
-(s?).foot (E,r) (vo,(b,do)) = 
-    { {}                if r not in dom(F)
-    { s.foot(E,r) (v,d) if otherwise 
-      where vo = Some v
-        and do = Some d 
 
 (s?).push (E,F,r) (vo,(b,do)) = 
     { F                    if r not in dom(F)
@@ -173,7 +283,11 @@ definitely does *not* satisfy unique_paths :-)
 
      -----------------------------------------------------------------
 
-Similarly, note that if we take 
+< l:(p::Link), ^l::File > 
+
+     -----------------------------------------------------------------
+
+Similarly, note that if we take
 
 s = <"x.txt"::File, "x.txt"::File>
 
