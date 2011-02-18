@@ -23,7 +23,7 @@ valid (d)
 F' ~ F
 push (E,F',r) (v,d) = (F'',true)
 --------------------------------[PullPush]
-F'' ~ F'
+F'' ~ F
 
 check E (v,d)
 push (E,F,r) (v,d) = (F',true)
@@ -54,7 +54,10 @@ PullPush:
     push (E,F',r) (n,b) = (F'',true) 
   By the definition of push we have 
     F'' = F'[r:=File(n)]
-  It follows that F'' ~ F'
+  It follows that F'' ~ F~. 
+  By transitivity of ~ we also have
+    F'' ~ F 
+  as required.
    
 PushPull:
   Assume 
@@ -91,6 +94,9 @@ PullPush:
   By the definition of push we have 
     F'' = F'[r:=b.print(v,d)]
   It follows that F'' ~ F'.
+  By transitivity of ~ we also have
+    F'' ~ F 
+  as required.
    
 PushPull:
   Assume 
@@ -130,8 +136,10 @@ PullPush:
     [[e]] E = n 
     (v,d) = s.pull (E,F,r/n) 
     (F'',true) = s.push (E,F',r/n) (v,d)
-  By PullPush for s we have 
+  By PullPush for s we also have 
     F'' ~ F'
+  By transitivity of ~ we also have
+    F'' ~ F 
   as required.
 
 PushPull:
@@ -183,7 +191,9 @@ PullPush:
     F2 ~ F'
     F1 ~ F'  
   As (++) preserves (~) we also have 
-    F12 ~ F'
+    F'' = F12 ~ F'
+  By transitivity of ~ we also have
+    F'' ~ F 
   as required.
 
 PushPull:
@@ -192,7 +202,7 @@ PushPull:
     push (E,F,r) (v,d) = (F',true)  
     (F'',true) = F'++G
     pull (E,F'',r) = (v',d').
-  By the type of rep * md we have 
+  Using types we have 
     ((v1,v2),(b,(d1,d2)) = (v,d)
     ((v1',v2'),(b',(d1',d2')) = (v',d')
   Also, by the definition of push we have    
@@ -212,51 +222,159 @@ PushPull:
   By PushPull for s2 we have 
     v2' = v2 and valid(d2') iff valid(d2)
   It follows that
-    v' = v and 
-    valid(valid(d1) && valid(d2),(d1,d2)) iff 
-    valid (valid(d1') && valid(d2'),(d1',d2'))
+    v' = v and valid(d) iff valid(d')
   as required.
 
-*** JNF RAGGED BELOW HERE ***
-
      -----------------------------------------------------------------
 
-{s | x in e}.pull (E,F,r) = ({v1,..,vk}, (valid d1 && .. && valid dk,{d1,..,dk}))
-where [[e]] E = {u1,...,uk}
-  and s.pull (E[x:=ui],F,r) = (vi,di) for i from 1 to k
+[s | x in e].pull (E,F,r) = ([v1,..,vk], (valid d1 && .. && valid dk,[d1,..,dk]))
+  where [[e]] E = [u1,...,uk]
+    and s.pull (E[x:=ui],F,r) = (vi,di) for i from 1 to k
   
-{ s | x in e }.check E ({v1,..,vk},(b,{d1,..,dk})) = 
-  b && s.check (E[x:=vi,x_d:=di],F) (vi,di) for i from 1 to k
+[ s | x in e ].check E ([v1,..,vk],(b,[d1,..,dk])) = b1k
+  where [[e]] E = [u1,...,uk]
+  and bi = s.check E[x:=ui] (vi,di) for i from 1 to k
 
-{ s | x in e }.push (E,F,r) ({v1,..,vk},(b,{d1,..,dl})) = Fk
-where s.push (E[x:=vi,x_d:=di],F{i-1},r) = Fi for i from 1 to k
-  and F0 = F
+[ s | x in e ].push (E,F,r) ([v1,..,vk],(b,[d1,..,dl])) = (F1k, b1k && b1 &&...& bk)
+  where [[e]] E = [u1,...,uk]
+    and Fi,bi = s.push (E[x:=ui],F,r) for i from 1 to k
+    and (F1k,b1k) = F1++...++Fk 
+
+
+PullPush:
+  Assume
+    pull (E,F,r) = (v,d) 
+    valid (d) 
+    F' ~ F
+    push (E,F',r) (v,d) = (F'',true)
+  By the definition of pull and push we have
+    [[e]] = [u1,...,uk] 
+    s.pull (E[x:=ui],F,R) = (vi,di) for i from 1 to k
+    (valid d1 && ... & valid dk)
+    (Fi,true) = s.push (E[x:=vi],F',r) (vi,di) for i from 1 to k
+    (F'',true) = F1++...++Fk
+  By PullPush for s (k times) we have 
+    F1 ~ F' 
+      ...
+    Fk ~ F'  
+  As (++) preserves (~) we also have 
+    F'' ~ F'
+  as required.
+
+PushPull:
+  Assume 
+    check E (v,d) 
+    push (E,F,r) (v,d) = (F',true)  
+    (F'',true) = F'++G
+    pull (E,F'',r) = (v',d').
+  Using types (and the definition of check) we have 
+    ([v1,...,vk],(b,[d1,...,dk])) = (v,d) 
+    ([v1',...,vl'],(b',[d1',...,dl'])) = (v',d') 
+  Also, by the definition of push we have    
+    [[e]] E = [u1,...,uk]
+    (Fi,true) = s.push (E[x:=ui],F,r) (vi,di) for 1 from 1 to k
+    (F',true) = F1++...++Fk
+  and so by the associativity and commutativity of (++) we have
+    (F'',true) = (F1++...++Fk)++G
+               = F1++(F2++...++Fk++G)
+                   ...
+               = Fk++(F1++...++F(k-1)++G)
+  Moreover, with the definition of pull we have
+    k = l 
+    (vi',di') = s.pull (E[x:=ui],F'',r) for 1 from 1 to k
+  By PushPull for s (k times) we have 
+    vi' = vi and valid(di') iff valid(di) for i from 1 to k
+  It follows that
+    v' = v and valid(d) iff valid(d')
+  as required.
 
      -----------------------------------------------------------------
 
-(Pred(e)).pull (E,F,r) ((),([[e]] E,()))
+(Pred(e)).pull (E,F,r) ((),([[e]] E))
 
 (Pred(e)).check E ((),(b,())) = [[e]] E = b
 
-(Pred(e)).foot (E,r) ((),(b,())) = {} 
+(Pred(e)).push (E,F,r) ((),b) = F
 
-(Pred(e)).push (E,F,r) _ = F
+
+PullPush:
+  Assume
+    pull (E,F,r) = (v,d) 
+    valid (d) 
+    F' ~ F
+    push (E,F',r) (v,d) = (F'',true)
+  By the definition of push we have
+    F'' = F'
+  By transitivity of ~ we also have
+    F'' ~ F 
+  as required.
+
+PushPull:
+  Assume 
+    check E (v,d) 
+    push (E,F,r) (v,d) = (F',true)  
+    (F'',true) = F'++G
+    pull (E,F'',r) = (v',d').
+  By the definition of pull we immediately have
+    v' = () = v
+    d = [[e]] E = d'
+  as required. 
 
      -----------------------------------------------------------------
 
-(s?).pull (E,F,r) = { (None,(false,None))       if r not in dom(F)
-                    { (Some v,(valid d,Some d)) otherwise
-where s.pull (E,F,r) = v,d
+(s?).pull (E,F,r) = 
+  { (None,(false,None))       if F(r) undefined
+  { (Some v,(valid d,Some d)) otherwise
+    where s.pull (E,F,r) = v,d
 
 (s?).check E (vo,(b,do)) = 
-     vo = do = None
-  || vo = Some v && do = Some d && s.check (E,F) (v,d) 
+     not b & vo = do = None
+  || b & vo = Some v && do = Some d && s.check (E,F) (v,d) 
 
 (s?).push (E,F,r) (vo,(b,do)) = 
-    { F                    if r not in dom(F)
-    { s.push (E,F,r) (v,d) otherwise
-      where vo = Some v
-        and do = Some d
+  { F\{r}      if vo = do = None 
+  { s.push (E,F,r) (v,d) otherwise
+    where vo = Some v
+      and do = Some d
+
+
+PullPush:
+  Assume
+    pull (E,F,r) = (v,d) 
+    valid (d) 
+    F' ~ F
+    push (E,F',r) (v,d) = (F'',true)
+  We analyze two cases. 
+  Case F(r) undefined:
+    Can't happen as valid(d)
+  Case F(r) defined:
+    By the definitions of push and pull we have
+      v = Some v1
+      d = (valid d1, Some d1)
+      (v1,d1) = s.pull (E,F,r)
+      (F'',true) = s.push (E,F',r) (v1,d1)    
+    By PullPush for s we have 
+      F'' ~ F
+    as required.
+    
+PushPull:
+  Assume 
+    check E (v,d) 
+    push (E,F,r) (v,d) = (F',true)  
+    (F'',true) = F'++G
+    pull (E,F'',r) = (v',d')
+  We analyze two cases.
+  Case v = None
+    By the definition of check we have 
+      d = (false,None)
+    With the definition of push we also have 
+      F' = F\{r}
+    Then, using the definition of pull we obtain 
+      (v',d') = (None,(false,None))
+    Hence, 
+      v' = None = v
+      valid(d') = false = valid(d)
+    as required.
 
 +------------------------------------------------------------------------------+
 | Some examples:
