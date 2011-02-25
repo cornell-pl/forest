@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, TemplateHaskell, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable, TypeSynonymInstances,FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, TemplateHaskell, QuasiQuotes, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable, TypeSynonymInstances,FlexibleInstances #-}
 module Language.Forest.BaseTypes where
 
 import Language.Forest.Generic

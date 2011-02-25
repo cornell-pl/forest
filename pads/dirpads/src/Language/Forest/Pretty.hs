@@ -3,6 +3,9 @@ import Language.Forest.Syntax
 import Text.PrettyPrint.Mainland
 import qualified Language.Haskell.TH as TH
 
+seplines :: Doc -> [Doc] -> Doc
+seplines s = folddoc (\hd tl -> hd <> s </> tl)
+
 embracelines s xs =
     nest 4 (text "{" </>
          seplines s (map (nest 4 . ppr) xs)) 

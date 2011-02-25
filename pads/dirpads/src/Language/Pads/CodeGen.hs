@@ -19,6 +19,8 @@ import Data.Data
 import Data.Char
 import qualified Data.Map as M
 
+type BString = S.RawStream
+
 
 {- Code generation routines -}
 make_pads_declarations :: [PadsDecl] -> Q [Dec]
@@ -32,11 +34,13 @@ make_pads_declaration (PadsDecl (id, pat, padsTy)) = do
    let ty_name    = getTyName    p_name
    let md_ty_name = getMDName    p_name
    let parse_name = getParseName p_name
+   let print_name = getPrintBSName p_name
    let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
    let (ty_decl, md_ty_decls, md_ty) = genRepMDDecl padsTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
-   let padsInstance   :: [Dec] = genPadsInstance      parse_name    ty_name md_ty             arg_info_opt
-   parseM :: [Dec]            <- genPadsParseM        parse_name    ty_name md_ty_name padsTy arg_info_opt
-   parseS :: [Dec]            <- genPadsParseS p_name parse_name    ty_name md_ty_name padsTy arg_info_opt
+   let padsInstance   :: [Dec] = genPadsInstance       parse_name    ty_name md_ty             arg_info_opt
+   parseM :: [Dec]            <- genPadsParseM         parse_name    ty_name md_ty_name padsTy arg_info_opt
+   parseS :: [Dec]            <- genPadsParseS  p_name parse_name    ty_name md_ty_name padsTy arg_info_opt
+   printBS :: [Dec]           <- genPadsPrintBS p_name print_name    ty_name md_ty_name padsTy arg_info_opt
    return ([ty_decl]    ++
            md_ty_decls  ++ 
            padsInstance ++  
@@ -554,6 +558,45 @@ mkParseTyB ty = do
    return (resultEs, resultMDEs,bmdE,[stmt1,stmt2])
 
 
+{- Printing Functions -}
+--   printBS :: [Dec]           <- genPadsPrintBS p_name print_name    ty_name md_ty_name padsTy arg_info_opt
+
+{-
+accumulator: String -> String
+when apply to a string, it appends a string on the front of whatever you apply it to
+
+let p = \x . "hello world" ++ x
+let q = \y -> "holiday" ++ y
+
+new accumulator is: p . q
+left-linear tree of compositions
+apply accumulator to end of string
+associativity for composition starts building string up over one one pass.
+
+define own datatype
+ binary tree datatype w/strings at the leaves; want to keep it relatively balanced, an AVL tree (maybe in library)
+ put strings on the end, then you could start putting strings 
+
+pair of lists to encode a queue
+-}
+
+genPadsPrintBS :: String -> Name ->    Name ->  Name -> PadsTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
+genPadsPrintBS    p_name    print_name rep_name pd_name padsTy mpat_info = do 
+   core_bodyE <- printE padsTy
+   let core_ty = arrowTy (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)) (arrowTy (ConT (mkName "B.ByteString")) (ConT (mkName "B.ByteString")))
+   let (bodyE,ty) = case mpat_info of
+                     Nothing -> (core_bodyE, core_ty)
+                     Just (pat,pat_ty) -> ( LamE [pat] core_bodyE,
+                                            arrowTy pat_ty core_ty)
+   let sigD = SigD print_name ty
+   let funD = ValD (VarP print_name) (NormalB bodyE) []
+   return [sigD, funD]
+
+printE :: PadsTy -> Q TH.Exp
+printE ty = return (LamE [VarP (mkName "temp")] (VarE(mkName "undefined")))
+
+
+
 
 {- Name manipulation functions -}
 genUniqueName base = newName base
@@ -579,6 +622,8 @@ getTyName pname = mkName  (strToUpper pname)
 
 getParseName pname = mkName ((strToLower pname) ++ "_parseM")
 getParseSName pname = mkName ((strToLower pname) ++ "_parseS")
+
+getPrintBSName pname = mkName ((strToLower pname) ++ "_printBS")
 
 
 

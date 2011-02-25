@@ -94,7 +94,7 @@ mkPrettyInstance' worklist done decls =
   else do 
       let (ty_name, worklist') = S.deleteFindMin worklist
       if ty_name `S.member` done then mkPrettyInstance' worklist' done decls
-      else do 
+         else do 
          let tyBaseName = nameBase ty_name
          let baseStr = strToLower tyBaseName
          let specificPprName = mkName (baseStr ++ "_ppr")

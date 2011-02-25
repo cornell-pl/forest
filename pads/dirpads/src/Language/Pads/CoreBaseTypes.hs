@@ -8,11 +8,13 @@ import Language.Pads.RegExp
 
 import qualified Language.Pads.Source as S
 import qualified Language.Pads.Errors as E
+import qualified Data.ByteString.Lazy.Char8 as B   -- abstraction for output data
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax
 import qualified Data.Map as M
 import Data.Data
+import qualified Data.List as List
 
 import Text.PrettyPrint.Mainland as PP   
 
@@ -74,18 +76,23 @@ instance Pretty Pbinary where
 
 instance Pads Pint Base_md where
   parsePP = pint_parseM
+  printAcc = pint_printAcc
 
 instance Pads Pchar Base_md where
   parsePP = pchar_parseM
+  printAcc = pchar_printAcc
 
 instance Pads Pdigit Base_md where
   parsePP = pdigit_parseM
+  printAcc = pdigit_printAcc
 
 instance Pads Ptext Base_md where
   parsePP = ptext_parseM
+  printAcc = ptext_printAcc
 
 instance Pads Pbinary Base_md where
   parsePP = pbinary_parseM
+  printAcc = pbinary_printAcc
 
 newtype Pre = Pre String
   deriving (Eq, Data, Typeable, Ord)
@@ -106,18 +113,23 @@ type PstringSE_md = Base_md
 
 instance Pads1 String Pre Base_md where 
   parsePP1 = pre_parseM 
+  printAcc1 = pre_printAcc
 
 instance Pads1 Char Pstring Base_md where 
   parsePP1 = pstring_parseM 
+  printAcc1 = pstring_printAcc
 
 instance Pads1 Int PstringFW Base_md where 
-  parsePP1  = pstringFW_parseM 
+  parsePP1 = pstringFW_parseM 
+  printAcc1 = pstringFW_printAcc
 
 instance Pads1 RE PstringME Base_md where
   parsePP1 = pstringME_parseM
+  printAcc1 = pstringME_printAcc
 
 instance Pads1 RE PstringSE Base_md where
   parsePP1 = pstringSE_parseM
+  printAcc1 = pstringSE_printAcc
 
 class ToString a where
   toString :: a -> String
@@ -296,6 +308,203 @@ peofLit_parseM = do
 
 pvoidLit_parseM :: PadsParser ((), Base_md)
 pvoidLit_parseM = returnClean ()
+
+{- Printing functions -}
+
+pstringFW_printAcc :: Int -> (PstringFW, Base_md) -> B.ByteString -> B.ByteString
+pstringFW_printAcc n (PstringFW str, bmd) orig = B.append orig (B.pack str)             -- Should we check that str has length n?
+
+pstringME_printAcc :: RE -> (PstringME, Base_md) -> B.ByteString -> B.ByteString
+pstringME_printAcc re (PstringME str, bmd) orig = B.append orig (B.pack str)        -- We're not likely to check that str matches re
+
+pre_printAcc :: String -> (Pre, Base_md) -> B.ByteString -> B.ByteString
+pre_printAcc s (Pre str, bmd) orig = B.append orig (B.pack str)
+
+pstringSE_printAcc :: RE -> (PstringSE, Base_md) -> B.ByteString -> B.ByteString
+pstringSE_printAcc s (PstringSE str, bmd) orig = B.append orig (B.pack str)
+
+pstring_printAcc :: Char -> (Pstring, Base_md) -> B.ByteString -> B.ByteString
+pstring_printAcc c (Pstring str, bmd) orig = B.append orig (B.pack str)
+
+ptext_printAcc :: (Ptext, Base_md) -> B.ByteString -> B.ByteString
+ptext_printAcc (Ptext str, bmd) orig = B.append orig (B.pack str)
+
+pbinary_printAcc :: (Pbinary, Base_md) -> B.ByteString -> B.ByteString
+pbinary_printAcc (Pbinary bstr, bmd) orig = B.append orig (bstr)
+
+pchar_printAcc :: (Pchar, Base_md) -> B.ByteString -> B.ByteString
+pchar_printAcc (Pchar c,bmd) orig = B.append orig (B.pack [c])
+
+pdigit_printAcc :: (Pdigit, Base_md) -> B.ByteString -> B.ByteString
+pdigit_printAcc (Pdigit i, bmd) orig = B.append orig (B.pack [intToDigit i])
+
+pint_printAcc :: (Pint, Base_md) -> B.ByteString -> B.ByteString
+pint_printAcc (Pint i, bmd) orig = B.append orig (B.pack (show i))
+
+preLit_printAcc :: RE -> ((), Base_md) -> B.ByteString -> B.ByteString
+preLit_printAcc re ((),bmd) orig = B.append orig (B.pack "--REGEXP LITERAL-- ")
+
+pcharLit_printAcc :: Char -> ((),Base_md) -> B.ByteString -> B.ByteString
+pcharLit_printAcc c _ orig = B.append orig (B.pack [c])
+
+pstrLit_printAcc :: String -> ((),Base_md) -> B.ByteString -> B.ByteString
+pstrLit_printAcc str _ orig = B.append orig (B.pack str)
+
+peorLit_printAcc :: ((),Base_md) -> B.ByteString -> B.ByteString
+peorLit_printAcc r orig = B.append orig (S.printEOR)
+
+peofLit_printAcc :: ((),Base_md) -> B.ByteString -> B.ByteString
+peofLit_printAcc r orig  = B.append orig (S.printEOF)
+
+pvoidLit_printAcc :: ((),Base_md) -> B.ByteString -> B.ByteString
+pvoidLit_printAcc r orig = B.append orig (B.pack [])
+
+
+-- ty_print_acc :: (pads,md) -> B.ByteString -> B.ByteString
+-- ty_print_acc ((a,b,c),(mda,mdb,mdc)) acc = print_acc (c, mdc) (print_acc (b, mdb) (print_acc (a, mba)))
+
+{- 
+  first list is head of queue in correct order
+  second list is tail of queue, in reverse order, so front of list is last entry in queue.
+  current is the record in the process of being added to the queue.
+  Example: the queue [abc, def, ghi] could be represented:
+    PQueue []               [def, abc]      [i,h,g]
+    PQueue []               [ghi, def, abc] []
+    PQueue [abc]            [ghi, def]      []
+    PQueue [abc, def]       [ghi]           []
+    PQueue [abc, def,ghi]   []              []
+
+-}
+-- Assume concat :: [t] -> s
+{-
+data PQueue s t = PQueue [s] [s] [t]
+
+
+emptyPQ :: ConcatTo s t => PQueue t s
+emptyPQ = PQueue [] [] []
+
+eorPQ :: ConcatTo s t => PQueue t s -> PQueue t s
+eorPQ (PQueue front kcab tnerruc) = PQueue front ((concatTo(List.reverse tnerruc)):kcab) []
+
+insertPQ :: ConcatTo s t => s -> PQueue t s -> PQueue t s
+insertPQ new (PQueue front kcab tnerruc) = PQueue front kcab (new : tnerruc)
+
+shiftPQ :: ConcatTo s t => PQueue t s -> PQueue t s
+shiftPQ (PQueue front kcab tnerruc) = PQueue (front ++ (List.reverse kcab)) [] tnerruc
+
+nullPQ :: PQueue t s -> Bool
+nullPQ (PQueue front kcab tnerruc) = List.null front && List.null kcab && List.null tnerruc
+
+removePQ :: ConcatTo s t => PQueue t s -> (t, PQueue t s)
+removePQ q @ (PQueue front kcab tnerruc)  = 
+  case front of 
+    (f:rest) -> (f, PQueue rest kcab tnerruc)                  -- return head of queue
+    [] -> let (PQueue front' [] tnerruc') = shiftPQ q          -- if head is empty, normalize queue
+          in case front' of 
+             (f':ront') -> (f', PQueue ront' [] tnerruc')      -- return head of queue
+             [] -> (concatTo (List.reverse tnerruc'), PQueue [] [] [])    -- if head is still empty, return pending entry.
+
+-}
+              
+
+pstrLit_printQ :: String -> PQueue B.ByteString String -> PQueue B.ByteString String
+pstrLit_printQ str pq = insertPQ str pq
+
+tuple_printQ :: (String, String, String) -> PQueue B.ByteString String -> PQueue B.ByteString String
+tuple_printQ (s1,s2,s3) pq = pstrLit_printQ s3 (pstrLit_printQ s2 (pstrLit_printQ s1 pq))
+
+rtuple_printQ :: (String, String, String) -> PQueue B.ByteString String -> PQueue B.ByteString String
+rtuple_printQ ss pq = eorPQ (tuple_printQ ss pq)
+
+list_printQ :: [(String,String,String)] -> PQueue B.ByteString String -> PQueue B.ByteString String
+list_printQ items pq = 
+   if List.null items then pq else
+     let (first,rest) = List.splitAt 1 items
+         pq' = list_printQ' first pq
+     in addContPQ pq' (list_printQ rest emptyPQ)
+
+list_printQ' :: [(String,String,String)] -> PQueue B.ByteString String -> PQueue B.ByteString String
+list_printQ' [] pq0 =  pq0
+list_printQ' (item:items) pq0 = list_printQ' items (rtuple_printQ item pq0)
+
+
+data PQueue t s = PQueue [t] [t] [s] (Maybe (PQueue t s))
+
+emptyPQ :: ConcatTo s t => PQueue t s
+emptyPQ = PQueue [] [] [] Nothing
+
+eorPQ :: ConcatTo s t => PQueue t s -> PQueue t s
+eorPQ (PQueue front kcab tnerruc Nothing)     = PQueue front ((concatTo(List.reverse tnerruc)):kcab) [] Nothing
+eorPQ (PQueue front kcab tnerruc (Just rest)) = PQueue front kcab tnerruc (Just (eorPQ rest))
+
+insertPQ :: ConcatTo s t => s -> PQueue t s -> PQueue t s
+insertPQ new (PQueue front kcab tnerruc Nothing)     = PQueue front kcab (new : tnerruc) Nothing
+insertPQ new (PQueue front kcab tnerruc (Just rest)) = PQueue front kcab tnerruc (Just (insertPQ new rest))
+
+addContPQ :: ConcatTo s t => PQueue t s -> PQueue t s -> PQueue t s
+addContPQ (PQueue front kcab tnerruc Nothing)     pq2 = PQueue front kcab tnerruc (Just pq2)
+addContPQ (PQueue front kcab tnerruc (Just rest)) pq2 = PQueue front kcab tnerruc (Just (addContPQ rest pq2))
+
+lshiftPQ :: ConcatTo s t => PQueue t s -> PQueue t s
+lshiftPQ (PQueue front1 kcab1 tnerruc1 next) = 
+    PQueue (front1 ++ (List.reverse kcab1)) [] tnerruc1 next
+
+addToFrontPQ :: ConcatTo s t => PQueue t s -> [s] -> PQueue t s
+addToFrontPQ (PQueue front kcab tnerruc' rest)  tnerruc =
+   case front of 
+     (f:ront) -> PQueue ((cappend tnerruc f) : ront) kcab tnerruc' rest
+     [] -> if not (List.null kcab) then
+             let b:ack = List.reverse kcab
+             in PQueue ((cappend tnerruc b) : ack) [] tnerruc' rest
+           else if not (List.null tnerruc') then
+                   PQueue [] [] (tnerruc' ++ tnerruc) rest
+                else case rest of 
+                   Nothing -> PQueue [] [] tnerruc Nothing
+                   Just pq' -> addToFrontPQ pq' tnerruc
+
+nullPQ :: PQueue t s -> Bool
+nullPQ (PQueue front kcab tnerruc Nothing) = List.null front && List.null kcab && List.null tnerruc 
+nullPQ (PQueue front kcab tnerruc (Just tail)) = List.null front && List.null kcab && List.null tnerruc && nullPQ tail
+
+removePQ :: ConcatTo s t => PQueue t s -> (Maybe t, PQueue t s)
+removePQ q @ (PQueue front kcab tnerruc tail)  = 
+  case front of 
+    (f:rest) -> (Just f, PQueue rest kcab tnerruc tail)                  -- return head of queue
+    [] -> let (PQueue front' [] tnerruc' tail') = lshiftPQ q             -- if head is empty, normalize queue
+          in case front' of 
+             (f':ront') -> (Just f', PQueue ront' [] tnerruc' tail')      -- return head of queue
+             [] -> case (tnerruc', tail') of      
+                     ([], Nothing) -> (Nothing, emptyPQ)
+                     (s,  Nothing) -> (Just (concatTo (List.reverse s)), emptyPQ)
+                     ([], Just pq') -> removePQ pq'
+                     (s,  Just pq') -> removePQ (addToFrontPQ pq' s)
+
+class ConcatTo s t where
+  concatTo :: [s] -> t
+  cappend :: [s] -> t -> t
+
+instance ConcatTo String B.ByteString where
+  concatTo ss  = B.pack(List.concat ss)
+  cappend ss b = B.append (concatTo ss) b
+
+
+              
+input = [("abc", "def", "ghi"),
+         ("jkl", "mno", "pqr"),
+         ("stu", "vwx", "yz0"),
+         ("Kat", "hle", "en"),
+         ("Fi",  "sh",  "er"),
+         ("Sta", "nfo", "rd "),
+         ("Uni", "ver", "sity")
+         , undefined]
+
+toStringPQ :: ConcatTo s t => PQueue t s -> [t]
+toStringPQ pq = 
+  let (item, pq') = removePQ pq
+  in case item of 
+      Nothing -> []
+      Just i -> i : (toStringPQ pq')        
+
 
 
 {- Helper functions -}
