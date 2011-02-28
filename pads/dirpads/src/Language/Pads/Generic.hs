@@ -18,6 +18,7 @@ import Language.Pads.MetaData
 import Language.Pads.PadsParser
 import qualified Language.Pads.Errors as E
 import qualified Language.Pads.Source as S
+import Language.Pads.LazyList
 import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Control.Exception as CE
 import Data.Data
@@ -40,11 +41,9 @@ class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
   parseS cs = parseStringInput parsePP cs 
   parseFile :: FilePath -> IO (pads, md)
   parseFile file = parseFileWith parsePP file
-  print :: (pads,md) -> String
-  print r = B.unpack (printBS r)
-  printBS :: (pads,md) -> B.ByteString
-  printBS r = printAcc r B.empty
-  printAcc :: (pads, md) -> B.ByteString -> B.ByteString
+  printS :: (pads,md) -> String
+  printS r = B.unpack (printBS r B.empty)
+  printBS :: (pads,md) -> FList
 
 class (Data pads, PadsMD md) => Pads1 arg pads md | pads->md, pads->arg where
   def1 :: arg -> pads
@@ -54,11 +53,10 @@ class (Data pads, PadsMD md) => Pads1 arg pads md | pads->md, pads->arg where
   parseS1 arg cs = parseStringInput (parsePP1 arg) cs
   parseFile1 :: arg-> FilePath -> IO (pads, md)
   parseFile1 arg file = parseFileWith (parsePP1 arg) file
-  print1 :: arg -> (pads,md) -> String
-  print1 arg (pads,md) = B.unpack (printBS1 arg (pads,md))
-  printBS1 :: arg -> (pads,md) -> B.ByteString
-  printBS1 arg r = printAcc1 arg r B.empty
-  printAcc1 :: arg -> (pads, md) -> B.ByteString -> B.ByteString
+  printS1 :: arg -> (pads,md) -> String
+  printS1 arg (pads,md) = B.unpack (printBS1 arg (pads,md) B.empty)
+  printBS1 :: arg -> (pads,md) -> FList
+
 
 
 parseFileWith  :: (Data rep, PadsMD md) => PadsParser (rep,md) -> FilePath -> IO (rep,md)

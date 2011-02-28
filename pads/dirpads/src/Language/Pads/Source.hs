@@ -212,8 +212,10 @@ srcLineEnd s =
   if atEOF s then (Just "Found EOF when looking for EOR", s)
              else (Nothing, getNextLine_newline s)
 
+{-
 printEOR :: B.ByteString
 printEOR = B.pack "\n"
 
 printEOF:: B.ByteString
 printEOF = B.pack []
+-}

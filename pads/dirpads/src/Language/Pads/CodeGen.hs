@@ -10,7 +10,7 @@ import Language.Pads.CoreBaseTypes
 import Language.Pads.TH
 import qualified Language.Pads.Errors as E
 import qualified Language.Pads.Source as S
-
+import Language.Pads.LazyList
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax
@@ -18,6 +18,8 @@ import Language.Haskell.TH.Syntax
 import Data.Data
 import Data.Char
 import qualified Data.Map as M
+import qualified Data.List as List
+import qualified Data.Maybe as Maybe
 
 type BString = S.RawStream
 
@@ -37,15 +39,16 @@ make_pads_declaration (PadsDecl (id, pat, padsTy)) = do
    let print_name = getPrintBSName p_name
    let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
    let (ty_decl, md_ty_decls, md_ty) = genRepMDDecl padsTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
-   let padsInstance   :: [Dec] = genPadsInstance       parse_name    ty_name md_ty             arg_info_opt
-   parseM :: [Dec]            <- genPadsParseM         parse_name    ty_name md_ty_name padsTy arg_info_opt
-   parseS :: [Dec]            <- genPadsParseS  p_name parse_name    ty_name md_ty_name padsTy arg_info_opt
-   printBS :: [Dec]           <- genPadsPrintBS p_name print_name    ty_name md_ty_name padsTy arg_info_opt
+   let padsInstance   :: [Dec] = genPadsInstance       parse_name  print_name ty_name md_ty             arg_info_opt
+   parseM :: [Dec]            <- genPadsParseM         parse_name             ty_name md_ty_name padsTy arg_info_opt
+   parseS :: [Dec]            <- genPadsParseS  p_name parse_name             ty_name md_ty_name padsTy arg_info_opt
+   printBS :: [Dec]           <- genPadsPrintBS p_name print_name             ty_name md_ty_name padsTy arg_info_opt
    return ([ty_decl]    ++
            md_ty_decls  ++ 
            padsInstance ++  
            parseM       ++ 
-           parseS )
+           parseS       ++
+           printBS)
 
 {- Functions for generating representation and meta-data declarations and meta-data type. -}
 
@@ -173,17 +176,20 @@ genRepMDTuple tys =
   in
       (ty, md_ty)
 
-genPadsInstance parse_name ty_name md_ty mpat_info = 
-  let (inst, parsePP) = case mpat_info of
+genPadsInstance parse_name print_name ty_name md_ty mpat_info = 
+  let (inst, parsePP, printBS) = case mpat_info of
                           Nothing -> (AppT (AppT (ConT ''Pads) (ConT ty_name)) md_ty,   -- Pads RepTy MDTy
-                                      mkName "parsePP")
+                                      mkName "parsePP",
+                                      mkName "printBS")
                           Just (p,arg_ty) -> 
                                      (AppT 
                                         (AppT (AppT (ConT ''Pads1) arg_ty) (ConT ty_name)) 
                                         md_ty,   -- Pads Arg RepTy MDTy
-                                      mkName "parsePP1")
+                                      mkName "parsePP1",
+                                      mkName "printBS1")
       parsePP_method = ValD (VarP parsePP) (NormalB (VarE parse_name)) []
-  in [InstanceD [] inst [parsePP_method]]
+      printBS_method = ValD (VarP printBS) (NormalB (VarE print_name)) []
+  in [InstanceD [] inst [parsePP_method, printBS_method]]
 
 {- This generates a type-specific name for the parseS function by redirecting to the generic function. -}
 genPadsParseS :: String -> Name -> Name -> Name -> PadsTy -> Maybe(TH.Pat, TH.Type) -> Q [Dec]
@@ -220,6 +226,13 @@ wrapRep repN ty repE = case ty of
   Punion  _ _ -> repE
   Pswitch _ _ _ -> repE
   otherwise   -> AppE  (ConE repN) repE
+
+wrapRepP :: Name -> PadsTy -> TH.Pat -> TH.Pat
+wrapRepP repN ty repP = case ty of
+  Precord _ _ -> repP
+  Punion  _ _ -> repP
+  Pswitch _ _ _ -> repP
+  otherwise   -> ConP repN [repP]
 
 {-
  Generate body of parseM function, which has the form:
@@ -265,7 +278,6 @@ parseE ty = case ty of
        let ty_md = if pred then Base_md {numErrors = numErrors md_orig, errInfo = Nothing }
                           else Base_md {numErrors = 1 + numErrors md_orig, errInfo = Just "Typedef predicate failed." }
        return (rep, (b_md,md_orig))
--}
 
 mkParseTyTypedef' :: TH.Pat -> PadsTy -> TH.Exp -> Q TH.Exp
 mkParseTyTypedef' pat tyBase pred = do
@@ -285,6 +297,7 @@ mkParseTyTypedef' pat tyBase pred = do
         let tdef_md = Base_md {numErrors = totErrors, errInfo = buildError predVal totErrors b_errInfo }
 
         return (b_rep, (tdef_md,b_md)) |]
+-}
 
 mkParseTyTypedef :: TH.Pat -> PadsTy -> TH.Exp -> Q TH.Exp
 mkParseTyTypedef pat tyBase rawPredE = do
@@ -582,8 +595,8 @@ pair of lists to encode a queue
 
 genPadsPrintBS :: String -> Name ->    Name ->  Name -> PadsTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
 genPadsPrintBS    p_name    print_name rep_name pd_name padsTy mpat_info = do 
-   core_bodyE <- printE padsTy
-   let core_ty = arrowTy (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)) (arrowTy (ConT (mkName "B.ByteString")) (ConT (mkName "B.ByteString")))
+   core_bodyE <- printE rep_name pd_name padsTy
+   let core_ty = arrowTy (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)) (ConT (mkName "FList"))
    let (bodyE,ty) = case mpat_info of
                      Nothing -> (core_bodyE, core_ty)
                      Just (pat,pat_ty) -> ( LamE [pat] core_bodyE,
@@ -592,11 +605,186 @@ genPadsPrintBS    p_name    print_name rep_name pd_name padsTy mpat_info = do
    let funD = ValD (VarP print_name) (NormalB bodyE) []
    return [sigD, funD]
 
-printE :: PadsTy -> Q TH.Exp
-printE ty = return (LamE [VarP (mkName "temp")] (VarE(mkName "undefined")))
+printE :: Name -> Name -> PadsTy -> Q TH.Exp
+printE repN mdN ty = do
+   repName     <- genRepName 
+   mdName      <- genMdName 
+   let (repE,repP) = genPE repName
+   let (mdE, mdP)  = genPE mdName
+   let frepP       = wrapRepP repN ty repP 
+   rhsE        <- printE' (ty, repE, mdE)
+   let printFun = LamE [TupP [frepP,mdP]] rhsE
+   return printFun
 
 
+printE' :: (PadsTy, TH.Exp, TH.Exp) -> Q TH.Exp
+printE' (ty, repE, mdE) = case ty of
+  Plit  PS.EorL        -> return       (VarE(getPrintBSName "PeorLit"))                           
+  Plit  PS.EofL        -> return       (VarE(getPrintBSName "PeofLit"))                           
+  Plit  PS.VoidL       -> return       (VarE(getPrintBSName "PvoidLit"))            
+  Plit  l              -> return (AppE (VarE 'litPrint) (litToExp l))
+  Pname p_name   -> return (AppE  (VarE (getPrintBSName p_name))  (TupE [repE, mdE]))
+  Ptuple ptys    -> printTuple ptys repE mdE 
+  Pline ty'      -> printLine (ty', repE, mdE)
+  Papp ty' argE  -> printApp (ty', argE, repE, mdE)
+  Ptrans tySrc tyDst trans    -> printTrans(tySrc,tyDst,trans,repE,mdE)
+  Ptypedef pat ty pred  -> printTypeDef (ty, repE, mdE)
+  Precord recName fieldInfo -> printRecord (getTyName recName) fieldInfo repE mdE
+  Punion  unionName fieldInfo -> printUnion (getTyName unionName) fieldInfo repE mdE
+  Pmaybe ty -> printMaybe ty repE mdE
+  Plist elemTy optSepTy optTermCond -> genPrintList elemTy optSepTy optTermCond repE mdE
+  Ptry ty -> return (VarE('printNothing))
+  Pswitch unionName whichE patBranches -> printUnion (getTyName unionName) (map snd patBranches) repE mdE
+  otherwise  -> return (VarE(mkName "undefined"))
 
+genPrintList :: PadsTy -> (Maybe PadsTy) -> (Maybe TermCond) -> TH.Exp -> TH.Exp -> Q TH.Exp
+genPrintList ty sepOpt termCondOpt repE mdE = do 
+  (elemRepE, elemRepP) <- doGenPE "elemrep"
+  (elemMDE,  elemMDP)  <- doGenPE "elemmd"
+  parseElemE <- printE' (ty, elemRepE, elemMDE)
+  let parseElemFnE = LamE [TupP [elemRepP, elemMDP]] parseElemE
+  sepElemE <- case sepOpt of 
+                Nothing -> return (VarE 'printNothing)
+                Just ty -> printE' (ty, TupE [], TupE [])
+  termElemE <- case termCondOpt of
+                Nothing -> return (VarE 'printNothing)
+                Just (LengthTC _) -> return (VarE 'printNothing)
+                Just (TyTC (Ptry _)) -> return (VarE 'printNothing)
+                Just (TyTC (Ptuple [Ptry _])) -> return (VarE 'printNothing)
+                Just (TyTC termTy) -> printE' (termTy, TupE [], TupE [])
+  return (AppE (AppE (AppE (AppE (VarE 'printList) (TupE [repE, mdE])) parseElemFnE) sepElemE) termElemE)
+
+printMaybe :: PadsTy -> TH.Exp -> TH.Exp -> Q TH.Exp
+printMaybe ty repE mdE = do 
+  (jrepE, jrepP) <- doGenPE "rep"
+  (jmdE,  jmdP)  <- doGenPE "md"
+  justE <- printE' (ty, jrepE, jmdE)
+  let justB = NormalB justE
+  let jrepPat = ConP 'Just [jrepP]
+  let jmdPat =  TupP[WildP, ConP 'Just [jmdP]]
+  let justPat = TupP [jrepPat, jmdPat]
+  let justmatch = Match justPat justB []
+  let nrepPat = ConP 'Nothing []
+  let nmdPat =  TupP[WildP, ConP 'Nothing []]
+  let nPat = TupP [nrepPat, nmdPat]
+  let nmatch = Match nPat (NormalB (VarE 'printNothing)) []
+  let caseE = CaseE(TupE[repE,mdE]) [justmatch,nmatch]
+  return caseE
+
+
+printUnion :: Name -> [FieldInfo] -> TH.Exp -> TH.Exp -> Q TH.Exp
+printUnion ty_name branches repE mdE = do
+  matches <- printBranches branches
+  let caseE = CaseE (TupE [repE,mdE]) matches
+  return caseE
+
+printBranches :: [FieldInfo] -> Q [TH.Match]
+printBranches branches = mapM printBranch branches
+
+printBranch :: (Maybe String, PadsTy, Maybe TH.Exp) -> Q TH.Match
+printBranch (Just str, branchTy, pred) = do
+  (repE, repP) <- doGenPE "rep"
+  (mdE,  mdP)  <- doGenPE "md"
+  bodyE <- printE' (branchTy, repE, mdE)
+  let caseBodyB = NormalB bodyE
+  let repPatArg = case branchTy of {Plit _ -> [] ; _ -> [repP]}
+  let repPat = ConP (getBranchNameU str) repPatArg
+  let mdPat =  TupP[WildP, ConP (getBranchMDNameU str) [mdP]]
+  let casePat = TupP [repPat, mdPat]
+  let match = Match casePat caseBodyB []
+  return match
+
+
+printTypeDef :: (PadsTy, TH.Exp, TH.Exp) -> Q TH.Exp
+printTypeDef (pty, repE, mdE) = printE' (pty, repE, AppE (VarE 'snd) mdE)
+
+printTrans :: (PadsTy, PadsTy, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
+printTrans (tySrc, tyDst, transE, repE, mdE) = do 
+  (tmpRepE, tmpRepP) <- doGenPE "rep"
+  (tmpMdE,  tmpMdP) <- doGenPE "md"
+  let toDiskE = AppE (VarE 'snd) transE
+  let    cvtE = AppE toDiskE (TupE [repE, mdE])
+  printBodyE <- printE' (tySrc, tmpRepE, tmpMdE)
+  let letPat = ValD (TupP [tmpRepP, tmpMdP]) (NormalB cvtE) []
+  return (LetE [letPat] printBodyE)
+
+{-
+let (drepP, dmdP) = (snd transE) (repE, mdE)
+phex32FW :: Int -> (Phex32FW, Base_md) -> FList
+phex32FW size = \(Phex32FW x, bmd) -> pstringFW (int2HexStr size (x,bmd))
+-}
+
+printApp :: (PadsTy, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
+printApp (ty, argE, repE, mdE) = case ty of
+  Pname p_name   -> return (AppE (AppE  (VarE (getPrintBSName p_name))  argE) (TupE [repE, mdE]))
+
+printLine :: (PadsTy, TH.Exp, TH.Exp) -> Q TH.Exp
+printLine trm = do
+  elemE <- printE' trm
+  return (AppE (VarE 'endRecord) elemE)
+
+printRecord :: Name -> [FieldInfo] -> TH.Exp -> TH.Exp -> Q TH.Exp
+printRecord recName fields repE mdE = do 
+  let (repEs, repPs) = getPEforFields getBranchNameL fields
+  let (mdEs,  mdPs)  = getPEforFields getBranchMDNameL fields
+  let ptys = map (\(n,ty,p) -> ty) fields
+  let ty_rep_mds = zip3 ptys repEs mdEs
+  expE <- mapM printE' ty_rep_mds
+  let printItemsE = ListE expE
+  let caseBody = NormalB (AppE (VarE 'concatFL) printItemsE)
+  let mdPat  = TupP[WildP, RecP (getStructInnerMDName recName) mdPs]
+  let repPat = RecP recName repPs
+  let casePat = TupP [repPat, mdPat]
+  let match = Match casePat caseBody []
+  let caseE = CaseE (TupE [repE,mdE]) [match]
+  return caseE
+
+getPEforField :: (String -> Name) -> (Maybe String, PadsTy, Maybe TH.Exp) -> (TH.Exp, Maybe TH.FieldPat)
+getPEforField mkFieldNm (nameOpt, pty, optPred) = case nameOpt of
+  Nothing -> (TupE [], Nothing) 
+  Just str -> let (varE, varP) = genPE (mkFieldNm str)
+              in (varE, Just (mkFieldNm str, varP))
+
+getPEforFields :: (String -> Name) -> [(Maybe String, PadsTy, Maybe TH.Exp)] ->  ([TH.Exp], [TH.FieldPat])
+getPEforFields mkFieldNm fields = 
+  let eps =  map (getPEforField mkFieldNm) fields
+      (es, pOpts) = List.unzip eps
+      ps = Maybe.catMaybes pOpts
+  in (es, ps)
+
+printTuple :: [PadsTy] -> TH.Exp -> TH.Exp -> Q TH.Exp
+printTuple ptys repE mdE = do
+  (repEs, repPs ) <- genPEforTuple ptys
+  (mdEs,  mdPs ) <- genPEforTuple ptys
+  let ty_rep_mds = zip3 ptys repEs mdEs
+  expE <- mapM printE' ty_rep_mds
+  let printItemsE = ListE expE
+  let caseBody = NormalB (AppE (VarE 'concatFL) printItemsE)
+  let mdPat = TupP [WildP, (TupP mdPs)]
+  let repPat = TupP repPs
+  let casePat = TupP [repPat, mdPat]
+  let match = Match casePat caseBody []
+  let caseE = CaseE (TupE [repE,mdE]) [match]
+  return caseE
+
+genPEforTy :: PadsTy -> Q (TH.Exp, Maybe TH.Pat)
+genPEforTy pty = case pty of
+  Plit _ -> return (TupE [], Nothing)
+  _ -> do (varE, varP) <- doGenPE "var"
+          return (varE, Just varP)
+
+genPEforTuple :: [PadsTy] -> Q ([TH.Exp], [TH.Pat])
+genPEforTuple tys = do 
+  eps <- mapM genPEforTy tys
+  let (es, pOpts) = List.unzip eps
+  let ps = Maybe.catMaybes pOpts
+  return (es, ps)
+  
+{- 
+Literals are omitted in pattern matching.
+case (repE, mdE) of
+  ((r1,...,rn), (_, (md1, ...,mdn)) -> p1 (r1,md1) +++ ... +++ pn (rn, mdn)
+-}
 
 {- Name manipulation functions -}
 genUniqueName base = newName base

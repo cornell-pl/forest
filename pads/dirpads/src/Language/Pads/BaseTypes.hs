@@ -8,6 +8,7 @@ import Language.Pads.MetaData
 import Language.Pads.CoreBaseTypes
 import Language.Pads.Quote
 import Language.Pads.RegExp
+import Language.Pads.LazyList
 
 import qualified Data.Char as C
 import qualified Data.List as L
@@ -33,7 +34,7 @@ int2HexStr size (Pint x,md) = if (length result == size) && wasPos  then (Pstrin
                               else (PstringFW (Prelude.take size result),
                                     mkErrBasePD (TransformToSrcFail "StrHex" (show x) (" (too big to fit in "++ (show size) ++" characters)")) Nothing)
   where
-   cvt rest a = if rest < 16 then reverse $ (C.intToDigit rest) : a
+   cvt rest a = if rest < 16 then {- reverse $ -} (C.intToDigit rest) : a
                 else cvt (rest `div` 16) (C.intToDigit (rest `mod` 16) : a)
    (wasPos,x') = if x < 0 then (False, -x) else (True, x)
    temp = cvt x' []
@@ -42,3 +43,4 @@ int2HexStr size (Pint x,md) = if (length result == size) && wasPos  then (Pstrin
    result = (stutter '0' padding) ++ temp
 
 [pads| type Phex32FW (size :: Int)  = Trans { PstringFW <| size |>  <=> Pint using (hexStr2Int,int2HexStr size) } |]  
+
