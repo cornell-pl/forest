@@ -79,7 +79,8 @@ Library
                        Language.Pads.CoreBaseTypes, 
                        Language.Pads.Errors, 
                        Language.Pads.MetaData, 
-                       Language.Pads.PadsParser 
+                       Language.Pads.PadsParser,
+                       Language.Pads.LazyList 
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         
