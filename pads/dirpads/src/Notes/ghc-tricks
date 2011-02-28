@@ -1,11 +1,27 @@
 GHCI options:
 Babylon:/Users/kfisher/pads/dirpads/language-c-quote>
 
+Head compiler:
 ~/ghc-head/bin/ghci -XQuasiQuotes -XTemplateHaskell 
+
+7.01:
+
+~/sw/ghc-7.01/bin/ghci -XQuasiQuotes -XTemplateHaskell 
+
+~/.cabal/bin/cabal install XXX  -w ~/sw/ghc-7.01/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-7.01/bin/haddock --package-db=/Users/kfisher/sw/ghc-7.01/lib/ghc-7.0.1/package.conf.d
+
+~/.cabal/bin/cabal install XXX  -w ~/sw/ghc-7.01/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-7.01/bin/haddock --package-db=/Users/kfisher/sw/ghc-test
+
+
+~/sw/ghc-7.01/bin/ghc-pkg list
+
+~/.cabal/bin/cabal install mainland-pretty  -w ~/sw/ghc-7.01/bin/ghc
+--with-haddock=/Users/kfisher/sw/ghc-7.01/bin/haddock
+--package-db=/Users/kfisher/sw/ghc-7.01/lib/ghc-7.0.1/package.conf.d
+
 
 ~/sw/ghc-head/bin/ghci -package derive -package parsec  -package unix -package iproute
 
-~/sw/ghc-head/bin/ghci -package derive -package parsec -package iproute -XQuasiQuotes -XTemplateHaskell -XDeriveDataTypeable -XScopedTypeVariables -XMultiParamTypeClasses -XFunctionalDependencies -XFlexibleInstances -XUndecidableInstances -XNamedFieldPuns -XRecordWildCards -XStandaloneDeriving
 or
 Prelude> :set -XScopedTypeVariables
 Prelude> :set -XTemplateHaskell
@@ -17,17 +33,32 @@ Modules to load:
 :m + Language.Haskell.TH
 :m + Monad
 
-Libraries we use:
-syb
-regex-posix
+Libraries we use for PADS:
+syb		(cabal installed 1)
+regex-posix     (cabal installed 2)
+haskell-src-exts  (cabal installed 4)
+HUnit          (cabal installed 7)
+parsec-3.1.0   (cabal installed 5)
+Glob		(cabal installed 3)
+
+haskell-src-meta-pads (had to hack changes, 6)
+symbol (had to change cabal file to remove upper bound on syb)
+srcloc (had to change cabal file to remove upper bound on syb)
+mainland-pretty 
+regex-bytestring
+
+Libraries we use for Forest:
+regex-compat    (cabal installed 8)
+derive          (cabal installed 9)
+graphviz        (cabal installed 10)
+MissingH        (cabal installed 11)
+
+are installed as part of above:
 regex-base
 mtl
-haskell-src-exts
-cpphs
-HUnit
-parsec
 dlist
-Glob
+cpphs
+
 
 
 Updating head version:
@@ -97,10 +128,15 @@ Babylon:/Users/kfisher> ~/.cabal/bin/cabal install parsec --global -w ~/sw/ghc-h
 To install local package for head version of ghc
 ~/.cabal/bin/cabal install  -w ~/sw/ghc-head/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-head/bin/haddock
 
+ ~/.cabal/bin/cabal install hasktags  -w /usr/bin/ghc --with-haddock=/Users/kfisher/ghc-head/bin/haddock --package-db=/Users/kfisher/.ghc/i386-darwin-6.12.2.20100521/package.conf.d
+
+/Users/kfisher/sw/ghc-7.01/lib/ghc-7.0.1/package.conf.d:
+
 Installing by libraries by hand 
 cabal unpack <package>
 cd <package>
 <inplace-ghc> --make Setup.lhs -o Setup
+./Setup configure -w ~/sw/ghc-7.01/bin/ghc --with-haddock=/Users/kfisher/ghc-head/bin/haddock --package-db=/Users/kfisher/sw/ghc-7.01/lib/ghc-7.0.1/package.conf.d
 ./Setup configure -w ~/ghc-head/bin/ghc --with-haddock=/Users/kfisher/ghc-head/bin/haddock --package-db=/Users/kfisher/ghc-head/lib/ghc-6.13.20100831/package.conf.d
 ./Setup build
 ./Setup register --inplace
