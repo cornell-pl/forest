@@ -1,3 +1,26 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Text.Regex
+-- Copyright   :  (c) Chris Kuklewicz 2006, derived from (c) The University of Glasgow 2001
+-- License     :  BSD-style (see the file LICENSE)
+-- 
+-- Maintainer  :  libraries@haskell.org
+-- Stability   :  experimental
+-- Portability :  non-portable (regex-base needs MPTC+FD)
+--
+-- Regular expression matching.  Uses the POSIX regular expression
+-- interface in "Text.Regex.Posix".
+--
+---------------------------------------------------------------------------
+
+--
+-- Modified by Chris Kuklewicz to be a thin layer over the regex-posix
+-- package, and moved into a regex-compat package.
+--
+-- Modified by Kathleen Fisher to take input from a Lazy Char bytestring instead of 
+-- a String
+--
+
 module Text.Regex.ByteString (
     Regex,
     mkRegex,
@@ -8,8 +31,6 @@ module Text.Regex.ByteString (
     matchRegexS,
     matchRegexAll,
     matchRegexAllS,
---    subRegex,
---    splitRegex
 ) where
 
 import Data.Array((!))
@@ -84,7 +105,6 @@ matchRegexAll
 		-- >         subexpression matches )
 
 matchRegexAll p str = matchM p str
-
 
 matchRegexAllS
    :: Regex             -- ^ The regular expression

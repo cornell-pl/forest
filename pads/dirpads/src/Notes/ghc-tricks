@@ -10,7 +10,6 @@ Head compiler:
 
 ~/.cabal/bin/cabal install XXX  -w ~/sw/ghc-7.01/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-7.01/bin/haddock --package-db=/Users/kfisher/sw/ghc-7.01/lib/ghc-7.0.1/package.conf.d
 
-~/.cabal/bin/cabal install XXX  -w ~/sw/ghc-7.01/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-7.01/bin/haddock --package-db=/Users/kfisher/sw/ghc-test
 
 
 ~/sw/ghc-7.01/bin/ghc-pkg list
