@@ -21,9 +21,9 @@ import Data.List hiding (sort)
 
 
 
-ws   = RE "[ \t]+"
-ows  = RE "[ \t]*"
-junk = RE ".*"
+ws   = REd "[ \t]+" " "
+ows  = REd "[ \t]*" " "
+junk = REd ".*"     " "
 space = ' '
 quote = '\''
 comma = ','
@@ -62,9 +62,9 @@ comma = ','
   type Trailer = [Line (Pre ".*")] with term Eof 
   data Student (name::String) = 
     { person  :: Line (Person name)
-    , Header  
+    , header :: Header  
     , courses :: [Line Course]
-    , Trailer
+    , trailer :: Trailer
     }
 |]
 
@@ -128,31 +128,29 @@ txt         = GL "*.txt"
 mkPrettyInstance ''PrincetonCS
 mkPrettyInstance ''PrincetonCS_md
 
---cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
---cs_dir = "Examples/data/facadm"
-cs_dir = "Examples/data/CS"
+cs_dir = "data/CS"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_load 11 cs_dir
 
 doit = 
- do  { (cs_rep,cs_md) <- princetonCS_load 11 "Examples/data/facadm"
+ do  { (cs_rep,cs_md) <- princetonCS_load 11 "data/CS"
 --     ; return (findFiles cs_md (\(r::FileInfo) -> (kind r) == DirectoryK))
      ; return  (findFiles cs_md (\(r::FileInfo) -> 
                                 (owner r) /= "dpw"))
      }
 
-permissions = checkAuth cs_md  "Examples/data/facadm/graduates/classof07/BSE07/clark.txt" "kfisher"
-readStatus = canRead cs_md  "Examples/data/facadm/graduates/classof07/BSE07/clark.txt" "kathleenfisher"
--- Right (False,["Examples/data/facadm/graduates","Examples/data/facadm/graduates/classof07/BSE07"])
+permissions = checkAuth cs_md  "data/CS/graduates/classof07/BSE07/clark.txt" "kfisher"
+readStatus = canRead cs_md  "data/CS/graduates/classof07/BSE07/clark.txt" "kathleenfisher"
+-- Right (False,["data/CS/graduates","data/CS/graduates/classof07/BSE07"])
 
 noRead = readProhibited cs_md "kathleenfisher"
 problemPaths = restrictingPaths noRead
--- ["Examples/data/facadm/graduates","Examples/data/facadm/graduates/classof07/BSE07"]
+-- ["data/CS/graduates","data/CS/graduates/classof07/BSE07"]
 
 cd_md md f = f $ snd md  -- should this change the paths?
 cd_rep rep f = f $ rep
 
 {- print graph of students -}
-resultIO =  mdToPDF cs_md "Examples/StudentsNew.pdf"
+resultIO =  mdToPDF cs_md "StudentsNew.pdf"
 
 {- tar the student repostitory -}
 doTar = tar cs_md "Princeton.tar"

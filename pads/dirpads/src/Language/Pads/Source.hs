@@ -57,7 +57,10 @@ padsSourceFromByteString bs =
 
 padsSourceFromString str = padsSourceFromByteString (B.pack str)
 
-padsSourceToString (Source {current, rest, ..}) = B.unpack (B.concat [current,rest])
+-- XXX unclear that this is fully correct.  When do we need to insert a newline????
+padsSourceToString (Source {current, rest, ..}) = 
+  if B.null rest then B.unpack current
+  else B.unpack (B.concat [current,B.pack ['\n'], rest])
 
 drainSource :: Source -> (String, Source)
 drainSource (s @ Source {current, rest, atEOF, loc=loc_orig}) = (padsSourceToString s,   
@@ -154,7 +157,7 @@ testRegexMatch (RE raw) str =
      let re = BRE.mkRegexWithOpts (B.pack ("^("++raw++")")) True True    -- append ^ to indicate we want to match at the beginning of the string.
          bstr = B.pack str
      in BRE.matchRegexAll re bstr
-
+testRegexMatch (REd raw def) str = testRegexMatch (RE raw) str
 
 regexMatch (RE re_str_raw) (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
      let re = BRE.mkRegexWithOpts (B.pack('^' : re_str_raw)) True True    -- append ^ to indicate we want to match at the beginning of the string.
@@ -163,6 +166,7 @@ regexMatch (RE re_str_raw) (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lin
         Just (before,match,after,_) ->  -- we ignore subexpression matches.
            if not (B.null before) then (Nothing, s)   -- only looking for matches at the beginning of the string
            else  (Just (B.unpack match), Source{current= after,rest,atEOF,loc=Loc{byteOffset=byteOffset+(fromIntegral (B.length match)),lineNumber}})
+regexMatch (REd re_str_raw def ) s = regexMatch (RE re_str_raw) s
 
 regexStop (RE re_str_raw) (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
      let re = BRE.mkRegexWithOpts (B.pack re_str_raw) True True 
@@ -171,6 +175,7 @@ regexStop (RE re_str_raw) (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,line
         Just (before,match,after,_) ->  -- we ignore subexpression matches.
              (Just (B.unpack before), 
               Source{current= B.append match after,rest,atEOF,loc=Loc{byteOffset=byteOffset+(fromIntegral (B.length before)),lineNumber}})
+regexStop (REd re_str_raw def) s = regexStop (RE re_str_raw) s
 
 span p (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
      let (head, tail) = B.span p current

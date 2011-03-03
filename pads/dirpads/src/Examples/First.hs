@@ -1,6 +1,8 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 {- Still to do:
+    package Text.Regexp.ByteString as a library; figure out library ownership issues.
+
     add parsing support for integer literals & globs
     make it possible for record annotation to come immediately before struct or union.
     add function to repeated call record parser
@@ -25,19 +27,18 @@
 -}
 
 module Examples.First where
-
 import Language.Pads.Padsc
 import Test.HUnit
 import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Text.Regex.ByteString as BRE
 
----- Play space
-re = BRE.mkRegexWithOptsS "^a+" True True
-re_results1 = BRE.matchRegexAllS re "aaaab"
-re_results2 = BRE.matchRegexAllS re "caaaab"
 
 ---- PADS EXAMPLES
+
+-- Regression expects to be run from the Examples directory.
+tests_result = runTestTT tests
+
 
 tests = TestList[ TestLabel "MyChar"  myChar_test
                 , TestLabel "IntPair" intPair_test 
@@ -121,7 +122,6 @@ tests = TestList[ TestLabel "MyChar"  myChar_test
                 , TestLabel "Literal"  whiteSpace2_test
                 , TestLabel "Regular Expression"  rE_ty_test
                 ]
-tests_result = runTestTT tests
 
 getTotalErrors :: PadsMD md => md -> Int
 getTotalErrors md = numErrors $ get_md_header md
@@ -252,8 +252,8 @@ result_intRangeBad  = intRange_parseS intRangeBad_input
 expect_intRangeBad  = (IntRange (Pint 0),1,"aaa")
 test_intRangeBad    = mkTestCase "IntRangeBad" expect_intRangeBad result_intRangeBad
 
-{- Note that the special variables "rep" and "md" are in scope in the body of the predicate. -}
-{- Here rep is bound to the same value as x; md is the meta-data descriptor for the underyling type. -}
+{- Note that the special variable "md" is in scope in the body of the predicate. -}
+{- md is the meta-data descriptor for the underyling type. -}
 
 [pads| type  IntRangeP (low::Pint, high::Pint) = constrain x :: Pint where <| low <= x && x <= high && (numErrors md == 0) |> |]
 
@@ -627,9 +627,9 @@ test_pstringln = mkTestCase "pstringln" expect_pstringln result_pstringln
                       , body    :: MyBody header, ','
                       , trailer :: Pchar}  
 
-       type MyData = [Line MyEntry]       |]
+       type MyData = [Line MyEntry] with term Eof      |]
 
-input_myData = "0,23,a\n1,hello,b\n2,,c"
+input_myData = "0,23,a\n1,hello,b\n2,,c\n"
 result_myData = myData_parseS input_myData
 expect_myData = (MyData [MyEntry {header = Pint 0, body = First (Pint 23), trailer = Pchar 'a'},
                          MyEntry {header = Pint 1, body = Second (Pstring "hello"), trailer = Pchar 'b'},
@@ -642,7 +642,7 @@ pintToInt (Pint i) = i
                    student_name :: PstringFW <|pintToInt student_num|> }
        type HP_data = [Line HP] |]   
 
-input_hp_data = "8,Hermione\n3,Ron\n5,Harry"
+input_hp_data = "8,Hermione\n3,Ron\n5,Harry\n"
 result_hp_data = hP_data_parseS input_hp_data
 expect_hp_data = (HP_data [HP {student_num = Pint 8, student_name = PstringFW "Hermione"},
                            HP {student_num = Pint 3, student_name = PstringFW "Ron"},
@@ -651,7 +651,7 @@ test_hp_data = mkTestCase "HP Data" expect_hp_data result_hp_data
 
 
 
-test_file = "Examples/data/test_file"
+test_file = "data/test_file"
 result_hp_data_file_parse :: (HP_data, HP_data_md) = unsafePerformIO $
                                                      parseFile test_file
 expect_hp_data_file_parse = 
@@ -663,9 +663,9 @@ test_hp_data_file_parse = mkFileTestCase "HP file" expect_hp_data_file_parse res
 
 
 [pads| type MyDoc = Ptext |]
-myDoc_input_file = "Examples/data/test_file"
+myDoc_input_file = "data/test_file"
 myDoc_result :: (Ptext, Base_md) = unsafePerformIO $ parseFile myDoc_input_file
-myDoc_expects = (Ptext "8,Hermione3,Ron\n5,Harry\n",0)
+myDoc_expects = (Ptext "8,Hermione\n3,Ron\n5,Harry\n",0)
 myDoc_test = mkFileTestCase "myDoc" myDoc_expects myDoc_result
 
 acomma = ","
@@ -695,3 +695,9 @@ rE_ty_input = "t  aaaa"
 rE_ty_result = rE_ty_parseS rE_ty_input
 rE_ty_expects = (RE_ty (Pre "t",Pre "aaaa"),0,"")
 rE_ty_test = mkTestCase "regular expression abbreviation for PstringME" rE_ty_expects rE_ty_result
+
+
+---- Play space
+re = BRE.mkRegexWithOptsS "^a+" True True
+re_results1 = BRE.matchRegexAllS re "aaaab"
+re_results2 = BRE.matchRegexAllS re "caaaab"

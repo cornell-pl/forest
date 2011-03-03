@@ -78,23 +78,23 @@ instance Pretty Pbinary where
 
 instance Pads Pint Base_md where
   parsePP = pint_parseM
-  printBS = pint_printBS
+  printFL = pint_printFL
 
 instance Pads Pchar Base_md where
   parsePP = pchar_parseM
-  printBS = pchar_printBS
+  printFL = pchar_printFL
 
 instance Pads Pdigit Base_md where
   parsePP = pdigit_parseM
-  printBS = pdigit_printBS
+  printFL = pdigit_printFL
 
 instance Pads Ptext Base_md where
   parsePP = ptext_parseM
-  printBS = ptext_printBS
+  printFL = ptext_printFL
 
 instance Pads Pbinary Base_md where
   parsePP = pbinary_parseM
-  printBS = pbinary_printBS
+  printFL = pbinary_printFL
 
 newtype Pre = Pre String
   deriving (Eq, Data, Typeable, Ord)
@@ -115,23 +115,23 @@ type PstringSE_md = Base_md
 
 instance Pads1 String Pre Base_md where 
   parsePP1 = pre_parseM 
-  printBS1 = pre_printBS
+  printFL1 = pre_printFL
 
 instance Pads1 Char Pstring Base_md where 
   parsePP1 = pstring_parseM 
-  printBS1 = pstring_printBS
+  printFL1 = pstring_printFL
 
 instance Pads1 Int PstringFW Base_md where 
   parsePP1 = pstringFW_parseM 
-  printBS1 = pstringFW_printBS
+  printFL1 = pstringFW_printFL
 
 instance Pads1 RE PstringME Base_md where
   parsePP1 = pstringME_parseM
-  printBS1 = pstringME_printBS
+  printFL1 = pstringME_printFL
 
 instance Pads1 RE PstringSE Base_md where
   parsePP1 = pstringSE_parseM
-  printBS1 = pstringSE_printBS
+  printFL1 = pstringSE_printFL
 
 class ToString a where
   toString :: a -> String
@@ -258,15 +258,15 @@ class LitParse a where
 
 instance LitParse Char where
   litParse = pcharLit_parseM
-  litPrint = pcharLit_printBS
+  litPrint = pcharLit_printFL
 
 instance LitParse String where
   litParse = pstrLit_parseM
-  litPrint = pstrLit_printBS
+  litPrint = pstrLit_printFL
 
 instance LitParse RE where
   litParse = preLit_parseM
-  litPrint = preLit_printBS
+  litPrint = preLit_printFL
 
 preLit_parseM :: RE -> PadsParser ((), Base_md)
 preLit_parseM re = do
@@ -317,53 +317,54 @@ pvoidLit_parseM = returnClean ()
 {- Printing functions -}
 {- We assume that the value satisfies the corresponding specification. -}
 
-pstringFW_printBS :: Int -> (PstringFW, Base_md) -> FList
-pstringFW_printBS n (PstringFW str, bmd)  = addString str        -- Should we check that str has length n?
+pstringFW_printFL :: Int -> (PstringFW, Base_md) -> FList
+pstringFW_printFL n (PstringFW str, bmd)  = addString str        -- Should we check that str has length n?
 
-pstringME_printBS :: RE -> (PstringME, Base_md) -> FList
-pstringME_printBS re (PstringME str, bmd) = addString str        -- We're not likely to check that str matches re
+pstringME_printFL :: RE -> (PstringME, Base_md) -> FList
+pstringME_printFL re (PstringME str, bmd) = addString str        -- We're not likely to check that str matches re
 
-pre_printBS :: String -> (Pre, Base_md) -> FList
-pre_printBS s (Pre str, bmd) = addString str
+pre_printFL :: String -> (Pre, Base_md) -> FList
+pre_printFL s (Pre str, bmd) = addString str
 
-pstringSE_printBS :: RE -> (PstringSE, Base_md) -> FList
-pstringSE_printBS s (PstringSE str, bmd) = addString str
+pstringSE_printFL :: RE -> (PstringSE, Base_md) -> FList
+pstringSE_printFL s (PstringSE str, bmd) = addString str
 
-pstring_printBS :: Char -> (Pstring, Base_md) -> FList
-pstring_printBS c (Pstring str, bmd) = addString str
+pstring_printFL :: Char -> (Pstring, Base_md) -> FList
+pstring_printFL c (Pstring str, bmd) = addString str
 
-ptext_printBS :: (Ptext, Base_md) -> FList
-ptext_printBS (Ptext str, bmd) = addString str
+ptext_printFL :: (Ptext, Base_md) -> FList
+ptext_printFL (Ptext str, bmd) = addString str
 
-pbinary_printBS :: (Pbinary, Base_md) -> FList
-pbinary_printBS (Pbinary bstr, bmd) =  addBString bstr
+pbinary_printFL :: (Pbinary, Base_md) -> FList
+pbinary_printFL (Pbinary bstr, bmd) =  addBString bstr
 
-pchar_printBS :: (Pchar, Base_md) -> FList
-pchar_printBS (Pchar c,bmd) = addString [c] 
+pchar_printFL :: (Pchar, Base_md) -> FList
+pchar_printFL (Pchar c,bmd) = addString [c] 
 
-pdigit_printBS :: (Pdigit, Base_md) -> FList
-pdigit_printBS (Pdigit i, bmd) = fshow i
+pdigit_printFL :: (Pdigit, Base_md) -> FList
+pdigit_printFL (Pdigit i, bmd) = fshow i
 
-pint_printBS :: (Pint, Base_md) -> FList
-pint_printBS (Pint i, bmd) = fshow i
+pint_printFL :: (Pint, Base_md) -> FList
+pint_printFL (Pint i, bmd) = fshow i
 
-preLit_printBS :: RE -> FList
-preLit_printBS re  = addString "--REGEXP LITERAL-- "
+preLit_printFL :: RE -> FList
+preLit_printFL (RE re)  = addString "--REGEXP LITERAL-- "
+preLit_printFL (REd re def) = addString def
 
-pcharLit_printBS :: Char ->  FList
-pcharLit_printBS c  = addString [c] 
+pcharLit_printFL :: Char ->  FList
+pcharLit_printFL c  = addString [c] 
 
-pstrLit_printBS :: String -> FList
-pstrLit_printBS str  = addString str
+pstrLit_printFL :: String -> FList
+pstrLit_printFL str  = addString str
 
-peorLit_printBS :: FList
-peorLit_printBS = printEOR
+peorLit_printFL :: FList
+peorLit_printFL = printEOR
 
-peofLit_printBS ::  FList
-peofLit_printBS = printEOF
+peofLit_printFL ::  FList
+peofLit_printFL = printEOF
 
-pvoidLit_printBS :: FList
-pvoidLit_printBS = nil
+pvoidLit_printFL :: FList
+pvoidLit_printFL = nil
 
 
 

@@ -42,8 +42,12 @@ class (Data pads, PadsMD md) => Pads pads md | pads -> md  where
   parseFile :: FilePath -> IO (pads, md)
   parseFile file = parseFileWith parsePP file
   printS :: (pads,md) -> String
-  printS r = B.unpack (printBS r B.empty)
-  printBS :: (pads,md) -> FList
+  printS = B.unpack . printBS
+  printBS :: (pads,md) -> B.ByteString
+  printBS r = printFL r B.empty
+  printFL :: (pads,md) -> FList
+  printFile :: FilePath -> (pads,md) -> IO ()
+  printFile filepath r = B.writeFile filepath (printBS r)
 
 class (Data pads, PadsMD md) => Pads1 arg pads md | pads->md, pads->arg where
   def1 :: arg -> pads
@@ -54,8 +58,12 @@ class (Data pads, PadsMD md) => Pads1 arg pads md | pads->md, pads->arg where
   parseFile1 :: arg-> FilePath -> IO (pads, md)
   parseFile1 arg file = parseFileWith (parsePP1 arg) file
   printS1 :: arg -> (pads,md) -> String
-  printS1 arg (pads,md) = B.unpack (printBS1 arg (pads,md) B.empty)
-  printBS1 :: arg -> (pads,md) -> FList
+  printS1 arg (pads,md) = B.unpack (printBS1 arg (pads,md))
+  printBS1 :: arg -> (pads,md) -> B.ByteString
+  printBS1 arg r = printFL1 arg r B.empty
+  printFL1 :: arg -> (pads,md) -> FList
+  printFile1 :: arg -> FilePath -> (pads,md) -> IO ()
+  printFile1 arg filepath r = B.writeFile filepath (printBS1 arg r)
 
 
 

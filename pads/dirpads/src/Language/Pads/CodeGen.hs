@@ -36,19 +36,19 @@ make_pads_declaration (PadsDecl (id, pat, padsTy)) = do
    let ty_name    = getTyName    p_name
    let md_ty_name = getMDName    p_name
    let parse_name = getParseName p_name
-   let print_name = getPrintBSName p_name
+   let print_name = getPrintFLName p_name
    let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
    let (ty_decl, md_ty_decls, md_ty) = genRepMDDecl padsTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
    let padsInstance   :: [Dec] = genPadsInstance       parse_name  print_name ty_name md_ty             arg_info_opt
    parseM :: [Dec]            <- genPadsParseM         parse_name             ty_name md_ty_name padsTy arg_info_opt
    parseS :: [Dec]            <- genPadsParseS  p_name parse_name             ty_name md_ty_name padsTy arg_info_opt
-   printBS :: [Dec]           <- genPadsPrintBS p_name print_name             ty_name md_ty_name padsTy arg_info_opt
+   printFL :: [Dec]           <- genPadsPrintFL p_name print_name             ty_name md_ty_name padsTy arg_info_opt
    return ([ty_decl]    ++
            md_ty_decls  ++ 
            padsInstance ++  
            parseM       ++ 
            parseS       ++
-           printBS)
+           printFL)
 
 {- Functions for generating representation and meta-data declarations and meta-data type. -}
 
@@ -177,19 +177,19 @@ genRepMDTuple tys =
       (ty, md_ty)
 
 genPadsInstance parse_name print_name ty_name md_ty mpat_info = 
-  let (inst, parsePP, printBS) = case mpat_info of
+  let (inst, parsePP, printFL) = case mpat_info of
                           Nothing -> (AppT (AppT (ConT ''Pads) (ConT ty_name)) md_ty,   -- Pads RepTy MDTy
                                       mkName "parsePP",
-                                      mkName "printBS")
+                                      mkName "printFL")
                           Just (p,arg_ty) -> 
                                      (AppT 
                                         (AppT (AppT (ConT ''Pads1) arg_ty) (ConT ty_name)) 
                                         md_ty,   -- Pads Arg RepTy MDTy
                                       mkName "parsePP1",
-                                      mkName "printBS1")
+                                      mkName "printFL1")
       parsePP_method = ValD (VarP parsePP) (NormalB (VarE parse_name)) []
-      printBS_method = ValD (VarP printBS) (NormalB (VarE print_name)) []
-  in [InstanceD [] inst [parsePP_method, printBS_method]]
+      printFL_method = ValD (VarP printFL) (NormalB (VarE print_name)) []
+  in [InstanceD [] inst [parsePP_method, printFL_method]]
 
 {- This generates a type-specific name for the parseS function by redirecting to the generic function. -}
 genPadsParseS :: String -> Name -> Name -> Name -> PadsTy -> Maybe(TH.Pat, TH.Type) -> Q [Dec]
@@ -572,7 +572,7 @@ mkParseTyB ty = do
 
 
 {- Printing Functions -}
---   printBS :: [Dec]           <- genPadsPrintBS p_name print_name    ty_name md_ty_name padsTy arg_info_opt
+--   printFL :: [Dec]           <- genPadsPrintFL p_name print_name    ty_name md_ty_name padsTy arg_info_opt
 
 {-
 accumulator: String -> String
@@ -593,8 +593,8 @@ define own datatype
 pair of lists to encode a queue
 -}
 
-genPadsPrintBS :: String -> Name ->    Name ->  Name -> PadsTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
-genPadsPrintBS    p_name    print_name rep_name pd_name padsTy mpat_info = do 
+genPadsPrintFL :: String -> Name ->    Name ->  Name -> PadsTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
+genPadsPrintFL    p_name    print_name rep_name pd_name padsTy mpat_info = do 
    core_bodyE <- printE rep_name pd_name padsTy
    let core_ty = arrowTy (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)) (ConT (mkName "FList"))
    let (bodyE,ty) = case mpat_info of
@@ -619,11 +619,11 @@ printE repN mdN ty = do
 
 printE' :: (PadsTy, TH.Exp, TH.Exp) -> Q TH.Exp
 printE' (ty, repE, mdE) = case ty of
-  Plit  PS.EorL        -> return       (VarE(getPrintBSName "PeorLit"))                           
-  Plit  PS.EofL        -> return       (VarE(getPrintBSName "PeofLit"))                           
-  Plit  PS.VoidL       -> return       (VarE(getPrintBSName "PvoidLit"))            
+  Plit  PS.EorL        -> return       (VarE(getPrintFLName "PeorLit"))                           
+  Plit  PS.EofL        -> return       (VarE(getPrintFLName "PeofLit"))                           
+  Plit  PS.VoidL       -> return       (VarE(getPrintFLName "PvoidLit"))            
   Plit  l              -> return (AppE (VarE 'litPrint) (litToExp l))
-  Pname p_name   -> return (AppE  (VarE (getPrintBSName p_name))  (TupE [repE, mdE]))
+  Pname p_name   -> return (AppE  (VarE (getPrintFLName p_name))  (TupE [repE, mdE]))
   Ptuple ptys    -> printTuple ptys repE mdE 
   Pline ty'      -> printLine (ty', repE, mdE)
   Papp ty' argE  -> printApp (ty', argE, repE, mdE)
@@ -635,7 +635,6 @@ printE' (ty, repE, mdE) = case ty of
   Plist elemTy optSepTy optTermCond -> genPrintList elemTy optSepTy optTermCond repE mdE
   Ptry ty -> return (VarE('printNothing))
   Pswitch unionName whichE patBranches -> printUnion (getTyName unionName) (map snd patBranches) repE mdE
-  otherwise  -> return (VarE(mkName "undefined"))
 
 genPrintList :: PadsTy -> (Maybe PadsTy) -> (Maybe TermCond) -> TH.Exp -> TH.Exp -> Q TH.Exp
 genPrintList ty sepOpt termCondOpt repE mdE = do 
@@ -716,7 +715,7 @@ phex32FW size = \(Phex32FW x, bmd) -> pstringFW (int2HexStr size (x,bmd))
 
 printApp :: (PadsTy, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
 printApp (ty, argE, repE, mdE) = case ty of
-  Pname p_name   -> return (AppE (AppE  (VarE (getPrintBSName p_name))  argE) (TupE [repE, mdE]))
+  Pname p_name   -> return (AppE (AppE  (VarE (getPrintFLName p_name))  argE) (TupE [repE, mdE]))
 
 printLine :: (PadsTy, TH.Exp, TH.Exp) -> Q TH.Exp
 printLine trm = do
@@ -811,7 +810,7 @@ getTyName pname = mkName  (strToUpper pname)
 getParseName pname = mkName ((strToLower pname) ++ "_parseM")
 getParseSName pname = mkName ((strToLower pname) ++ "_parseS")
 
-getPrintBSName pname = mkName ((strToLower pname) ++ "_printBS")
+getPrintFLName pname = mkName ((strToLower pname) ++ "_printFL")
 
 
 

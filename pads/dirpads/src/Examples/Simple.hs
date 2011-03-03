@@ -62,8 +62,8 @@ module Examples.Simple where
 import Language.Pads.Padsc
 import Language.Forest.Forestc
 import Language.Haskell.TH hiding (ppr)
-import Language.Forest.Syntax
-import Language.Forest.CodeGen
+--import Language.Forest.Syntax
+--import Language.Forest.CodeGen
 import System.Time.Utils
 import Language.Pads.GenPretty
 import Language.Forest.Graph
@@ -168,7 +168,7 @@ resultMatchIO =  mdToPDF match_md "/Users/kfisher/pads/dirpads/src/Examples/Matc
 
 
 [forest| type Global = Directory 
-               { globalNotes is global "/Users/kfisher/pads/dirpads/src/Notes/ghc-tricks"  :: Text }
+               { globalNotes is "/Users/kfisher/pads/dirpads/src/Notes/ghc-tricks"  :: Text }
   |]
 
 (global_rep, global_md) = unsafePerformIO $ global_load host_dir

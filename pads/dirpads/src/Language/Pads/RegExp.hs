@@ -4,7 +4,7 @@ import Data.Data
 
 
 {- Regular expression support -}
-data RE = RE String | ReName String
+data RE = RE String | ReName String | REd String String
   deriving (Eq, Data, Typeable, Show)
 
 

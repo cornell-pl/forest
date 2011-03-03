@@ -68,14 +68,13 @@ mkPrettyInstance ''AI
 mkPrettyInstance ''AI_md
 
 ai_file = ai_big
-ai_3000 = "Examples/data/ai.3000"
-ai_big  = "Examples/data/ai.big"
+ai_3000 = "data/ai.3000"
+ai_big  = "data/ai.big"
 
-(ai_rep, ai_md) = let (AI rep, md) = unsafePerformIO $ parseFile ai_file
-                  in (rep,md)
+(ai_rep, ai_md) = let (AI rep, md) = unsafePerformIO $ parseFile ai_file in (rep,md)
 
-ai_file_length = Prelude.length ai_rep
-ai_fileake n  = Prelude.take n ai_rep
+ai_file_length  = Prelude.length ai_rep
+ai_file_take n  = Prelude.take n ai_rep
 
 result n  = do 
      { (AI rep, md) <- parseFile ai_file
@@ -90,7 +89,7 @@ str = "1234cnbdav duisc djnklcndjkalscnj dkxbvc daseasklfhasdjkhfaksjdhflakjsdhf
 example2 =  (padsSourceFromString ("abc\nd" ++ undefined))
 example3 = B.pack str
 
-first5 = AI (ai_fileake 5)
+first5 = AI (ai_file_take 5)
 first5_doc = aI_ppr first5
 output n = pretty n first5_doc
 

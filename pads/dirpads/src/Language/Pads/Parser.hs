@@ -163,6 +163,14 @@ reglitTy = do { reserved "RE"
               ; s <- stringLiteral
               ; return (S.RegL (RE s))
               }
+       <|> do { reserved "REd"
+              ; reg <- stringLiteral
+              ; def <- stringLiteral
+              ; return (S.RegL (REd reg def))
+              }
+           
+
+
 
 {-
 reglitTy2 :: Parser S.Lit
