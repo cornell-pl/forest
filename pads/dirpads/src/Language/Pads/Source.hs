@@ -1,8 +1,39 @@
 {-# LANGUAGE NamedFieldPuns, RecordWildCards, DeriveDataTypeable #-}
 
+{-
+** *********************************************************************
+*                                                                      *
+*              This software is part of the pads package               *
+*           Copyright (c) 2005-2011 AT&T Knowledge Ventures            *
+*                      and is licensed under the                       *
+*                        Common Public License                         *
+*                      by AT&T Knowledge Ventures                      *
+*                                                                      *
+*                A copy of the License is available at                 *
+*                    www.padsproj.org/License.html                     *
+*                                                                      *
+*  This program contains certain software code or other information    *
+*  ("AT&T Software") proprietary to AT&T Corp. ("AT&T").  The AT&T     *
+*  Software is provided to you "AS IS". YOU ASSUME TOTAL RESPONSIBILITY*
+*  AND RISK FOR USE OF THE AT&T SOFTWARE. AT&T DOES NOT MAKE, AND      *
+*  EXPRESSLY DISCLAIMS, ANY EXPRESS OR IMPLIED WARRANTIES OF ANY KIND  *
+*  WHATSOEVER, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF*
+*  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, WARRANTIES OF  *
+*  TITLE OR NON-INFRINGEMENT.  (c) AT&T Corp.  All rights              *
+*  reserved.  AT&T is a registered trademark of AT&T Corp.             *
+*                                                                      *
+*                   Network Services Research Center                   *
+*                          AT&T Labs Research                          *
+*                           Florham Park NJ                            *
+*                                                                      *
+*              Kathleen Fisher <kfisher@research.att.com>              *
+*                                                                      *
+************************************************************************
+-}
+
 module Language.Pads.Source where
 import qualified Data.ByteString.Lazy.Char8 as B   -- abstraction for input data
-import qualified Text.Regex.ByteString as BRE      -- Support for matching regular expressions against bytestrings
+import qualified Text.Regex.Posix as TRP
 import Language.Pads.RegExp                        -- user-specified regular expressions
 
 import Data.Int
@@ -153,29 +184,23 @@ take' n (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) =
           in Just (B.unpack head, Source{current=tail,rest,atEOF,loc=Loc{byteOffset=byteOffset+newOffset,lineNumber}})
 
 
-testRegexMatch (RE raw) str = 
-     let re = BRE.mkRegexWithOpts (B.pack ("^("++raw++")")) True True    -- append ^ to indicate we want to match at the beginning of the string.
-         bstr = B.pack str
-     in BRE.matchRegexAll re bstr
-testRegexMatch (REd raw def) str = testRegexMatch (RE raw) str
-
 regexMatch (RE re_str_raw) (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
-     let re = BRE.mkRegexWithOpts (B.pack('^' : re_str_raw)) True True    -- append ^ to indicate we want to match at the beginning of the string.
-     in case BRE.matchRegexAll re current of
-        Nothing -> (Nothing, s)       -- match failed, return input unchanged
-        Just (before,match,after,_) ->  -- we ignore subexpression matches.
-           if not (B.null before) then (Nothing, s)   -- only looking for matches at the beginning of the string
-           else  (Just (B.unpack match), Source{current= after,rest,atEOF,loc=Loc{byteOffset=byteOffset+(fromIntegral (B.length match)),lineNumber}})
+     let (before, match, after) = current TRP.=~ (B.pack('^' : re_str_raw))
+     in if not (B.null before) then (Nothing, s)   -- only looking for matches at the beginning of the string
+        else  (Just (B.unpack match), Source{current= after,rest,atEOF,loc=Loc{byteOffset=byteOffset+(fromIntegral (B.length match)),lineNumber}})
 regexMatch (REd re_str_raw def ) s = regexMatch (RE re_str_raw) s
 
+
 regexStop (RE re_str_raw) (s @ Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
-     let re = BRE.mkRegexWithOpts (B.pack re_str_raw) True True 
-     in case BRE.matchRegexAll re current of
-        Nothing -> (Nothing, s)       -- match failed, return input unchanged
-        Just (before,match,after,_) ->  -- we ignore subexpression matches.
-             (Just (B.unpack before), 
-              Source{current= B.append match after,rest,atEOF,loc=Loc{byteOffset=byteOffset+(fromIntegral (B.length before)),lineNumber}})
+     let packed = B.pack re_str_raw
+         (before, match, after) = current TRP.=~ packed      -- Is there a way to test this result matches w/o duplicating match?
+         isMatch = current TRP.=~ packed
+     in if not isMatch
+         then (Nothing, s)        -- match failed, return input unchanged
+         else (Just (B.unpack before), 
+                Source{current= B.append match after,rest,atEOF,loc=Loc{byteOffset=byteOffset+(fromIntegral (B.length before)),lineNumber}})
 regexStop (REd re_str_raw def) s = regexStop (RE re_str_raw) s
+
 
 span p (Source{current,rest,atEOF,loc=Loc{byteOffset,lineNumber}}) = 
      let (head, tail) = B.span p current
