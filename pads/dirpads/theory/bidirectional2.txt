@@ -1,10 +1,9 @@
 Assumptions:
-(1) phi(F1++F2) implies phi(F1) and phi(F2)
-    Note: this does not hold for the constraints produced by glob-comprehensions :-(
+(1) F++F = F
+ 
+(2) F1++(F2++F3) = (F1++F2)++F3
 
-(2) F ~ F1 and F ~ F2 implies F ~ (F1++F2)
-
-(3) (++) associative and commutative 
+(3) F1(r) defined or F2(r) defined implies (F1++F2)(r) defined
 
 +--------------------------------------------------------------------------+
 | SEMANTICS 
@@ -14,59 +13,135 @@ pull : Env * Path -> Filesystem -> Rep * Metadata
 push : Env * Path -> Rep * Metadata -> Filesystem -> Constraint * Filesystem
 
 pull (E,r) F = (v,d)
-F' ~ F
-push (E,r) (v,d) F' = phi,F''
-phi(F'')
+push (E,r) (v,d) F = phi,F'
 ---------------------------[PullPush]
-F'' ~ F
+F' = F and phi(F')
 
 push (E,r) (v,d) F = phi,F'
-phi(F'++F'')
-pull (E,r) (F'++F'') = (v',d')
+phi(G1++F'++G2)
+pull (E,r) (G1++F'++G2) = (v',d')
 ---------------------------------[PushPull]
 v = v' and valid(d) iff valid(d')
 
 +------+
 | FILE |
-+------+ 
++------+
 
 File.pull (E,r) F = 
-  { (n, true)    if F(r) = File(n)
-  { ("", false)  otherwise
+  if F(r) = File(n) then (n, true) 
+  else ("",false)
 
 File.push (E,r) (n,b) = 
-  (fun F -> b && (F(r) = File(n') implies n' = n), F[r:=File(n)])
+  if b then 
+    (fun F -> F(r) undefined or F(r) = File(n), F[r:=File(n)])
+  else
+    (fun F -> n = "" && F(r) != File(_), F)
 
 PullPush:
   Assume 
     pull (E,r) F = (n,b)
-    F' ~ F
-    push (E,r) (n,b) F' = phi,F''
-    phi(F'')
-  By the definition of push we have 
-    phi = (fun F -> b && (F(r) = File(n') implies n' = n))
-  With phi(F'') we have 
-    b = true
-  Using the definition of pull we then obtain
-    F(r) = File(n)
-  By the definition of push we have 
-     F'' = F'[r:=File(n)]
-  Hence, F'' ~ F' and so F'' ~ F by transitivity. 
-
+    push (E,r) (n,b) F = phi,F'
+  We analyze two cases. 
+  Case b = true:
+    By the definition of pull we have 
+      F(r) = File(n)
+    By the definition of push we have
+      F' = F[r:=File(n)]
+      phi = (fun F -> F(r) undefined or F(r) = File(n))
+    We immediately have phi(F') and F' = F. 
+  Case b = false:
+    By the definition of pull we have 
+      F(r) != File(_)
+    By the definition of push we have 
+      F' = F
+      phi = (fun F -> F(r) != File(_))
+    We immediately have phi(F') and F' ~ F. 
+        
 PushPull:
   Assume
     push (E,r) (n,b) F = phi,F'
-    phi(F'++F'')
-    pull (E,r) (F'++F'') = (n',b')
-  By the definition of push we have 
-    phi = (fun F -> b && (F(r) = File(n') implies n' = n))
-    F' = F[r:=File(n)]
-  By phi(F'++F'') and the definition of ++ we have 
-    b = true
-    (F'++F'')(r) = File(n)
-  By the definition of pull we have 
-    n' = n and b' = true
-  Hence, n' = n and b iff b', as required. 
+    phi(G1++F'++G2)
+    pull (E,r) (G1++F'++G2) = (n',b')
+  We analyze two cases.
+  Case b = true:    
+    By the definition of push we have 
+      phi = (fun F -> F(r) undefined or F(r) = File(n))
+      F' = F[r:=File(n)]
+    By phi(G1++F'++G2) and assumption (3) we have       
+      (G1++F'++G2)(r) = File(n)
+    By the definition of pull we have 
+      n' = n and b' = true
+    Hence, n' = n and b iff b', as required. 
+  Case b = false:
+    By the definition of push we have
+      phi = (fun F -> F(r) != File(_))
+      F' = F
+    By phi(G1++F'++G2) we have 
+      n = ""
+      (G1++F'++G2)(r) != File(_) 
+    By the definition of pull we have
+      n' = "" and b' = false 
+    Hence, n' = n and b iff b', as required. 
+
++-----------+
+| DIRECTORY |
++-----------+ 
+
+File.pull (E,r) F = 
+  if F(r) = Directory([n1,...,nk]) then ([n1,...,nk], true) 
+  else ([],false)
+
+File.push (E,r) (l, b) = 
+  if b then 
+    (fun F -> F(r) undefined or F(r) = Directory(l), F[r:=Directory(l)])
+  else
+    (fun F -> l = [] && F(r) != File(_), F)
+
+PullPush:
+  Assume 
+    pull (E,r) F = (l, b)
+    push (E,r) (l, b) F = phi,F'
+  We analyze two cases. 
+  Case b = true:
+    By the definition of pull we have 
+      F(r) = Directory(l)
+    By the definition of push we have
+      F' = F[r:=Directory(l)] 
+      phi = (fun F -> F(r) undefined or F(r) = Directory(l))
+    We immediately have phi(F') and F' = F. 
+  Case b = false:
+    By the definition of pull we have 
+      F(r) != File(_)
+    By the definition of push we have 
+      F' = F
+      phi = (fun F -> F(r) != File(_))
+    We immediatelt have phi(F') and F' = F.
+        
+PushPull:
+  Assume
+    push (E,r) (l, b) F = phi,F'
+    phi(G1++F'++G2)
+    pull (E,r) (G1++F'++G2) = (l',b')
+  We analyze two cases.
+  Case b = true:    
+    By the definition of push we have 
+      phi = (fun F -> F(r) undefined or F(r) = Directory(l))
+      F' = F[r:=Directory(l)]
+    By phi(G1++F'++G2) and assumption (3) we have       
+      (G1++F'++G2)(r) = Directory(l)
+    By the definition of pull we have 
+      l' = l and b' = true
+    Hence, l' = l and b iff b', as required. 
+  Case b = false:
+    By the definition of push we have
+      phi = (fun F -> F(r) != File(_))
+      F' = F
+    By phi(G1++F'++G2) we have 
+      l = []
+      (G1++F'++G2)(r) != File(_) 
+    By the definition of pull we have
+      l' = [] and b' = false 
+    Hence, l' = l and b iff b', as required. 
 
 +------+
 | PATH |
@@ -76,36 +151,33 @@ PushPull:
   let n = [[e]] (E,r) in 
   s.pull (E,r/n) F 
 
-(e::s).push (E,r) (v,(b,n,d)) = 
+(e::s).push (E,r) (v,d) = 
   let n = [[e]] (E,r) in 
   s.push (E,r/n) (v,d)
 
 PullPush:
   Assume 
     pull (E,r) F = (v,d)
-    F' ~ F 
-    push (E,r) (v,d) F' = phi,F''
-    phi(F'')
+    push (E,r) (v,d) F = phi,F'
   By the definition of pull we have 
     n = [[e]] (E,r)
     v,d = s.pull (E,r/n) F
-    b = valid(d) 
   By the definition of push we also have  
-    phi,F'' = s.push (E,r/n) (v,d) F'
+    phi,F' = s.push (E,r/n) (v,d) F
   By PullPush for s we obtain
-    F'' ~ F 
+    F' = F and phi(F') 
   as required. 
 
 PushPull:
   Assume
     push (E,r) (v,d) F = phi,F'
-    phi(F'++F'')
-    pull (E,r) (F'++F'') = (v',d')
+    phi(G1++F'++G2)
+    pull (E,r) (G1++F'++G2) = (v',d')
   By the definition of push we have 
     n = [[e]] (E,r)
     phi,F' = s.push (E,r/n) (v,d)
   By the definition of pull we also have 
-    v',d' = s.pull (E,r/n) (F'++F'')
+    v',d' = s.pull (E,r/n) (G1++F'++G2)
   By PushPull for s we obtain 
     v' = v and valid(d') iff valid(d)
   as required.
@@ -122,150 +194,128 @@ PushPull:
 <x:s1,s2>.push (E,r) ((v1,v2),(b,d1,d2)) F = 
   let phi1,F1 = s1.push (E,r) (v1,d1) F in 
   let phi2,F2 = s1.push (E[x:=v1],r) (v2,d2) F in 
-  let phi = (fun F -> (b iff valid(d1) && valid(d2)) && phi1(F) && phi2(F)) in 
+  let phi = (fun F -> (b = valid(d1) && valid(d2)) && phi1(F) && phi2(F)) in 
   (phi, F1++F2)
 
 PullPush:
   Assume 
     pull (E,r) F = ((v1,v2),(b,d1,d2))
-    F' ~ F 
-    push (E,r) ((v1,v2),(b,d1,d2)) F' = phi,F''
-    phi(F'')
+    push (E,r) ((v1,v2),(b,d1,d2)) F = phi,F'
   By the definition of pull we have 
     v1,d1 = s1.pull (E,r) F
     v2,d2 = s2.pull (E[x:=v1],r) F
-  By the definition of push we have  
-    phi1,F1 = s1.push (E,r) (v1,d1) F'
-    phi2,F2 = s2.push (E[x:=v1],r) (v2,d2) F' in 
-    F'' = F1++F2
-    phi = (fun F -> (b iff valid(d1) && valid(d2)) && phi1(F) && phi2(F))
-  By phi(F1++F2) we have 
-    phi1(F1++F2)
-    phi2(F1++F2)
-  By assumption (1) we have 
-    phi1(F1)
-    phi2(F2)
+    b = valid(d1) && valid(d2)
+  By the definition of push we have
+    phi1,F1 = s1.push (E,r) (v1,d1) F
+    phi2,F2 = s2.push (E[x:=v1],r) (v2,d2) F in 
+    F' = F1++F2
+    phi = (fun F -> (b = valid(d1) && valid(d2)) && phi1(F) && phi2(F))
   By PullPush for s1 and s2 we have 
-    F2 ~ F
-    F1 ~ F
-  By assumption (2) we have 
-    F1++F2 ~ F
-  as required.
+    F1 = F and phi1(F1)
+    F2 = F and phi2(F2)
+  By assumption (1) we also have 
+    F = F1++F2
+  Hence, F' = F and phi(F'), as required. 
   
 PushPull:
   Assume
     push (E,r) ((v1,v2),(b,d1,d2)) F = phi,F'
-    phi(F'++F'')
-    pull (E,r) (F'++F'') = ((v1',v2'),(b',d1',d2'))
+    phi(G1++F'++G2)
+    pull (E,r) (G1++F'++G2) = ((v1',v2'),(b',d1',d2'))
   By the definition of push we have 
     phi1,F1 = s1.push (E,r) (v1,d1) F
-    phi2,F2 = s2.push (E[x:=v1],r) (v2,d2) F in 
+    phi2,F2 = s2.push (E[x:=v1],r) (v2,d2) F
     F' = F1++F2
-    phi = (fun F -> (b iff valid(d1) && valid(d2)) && phi1(F) && phi2(F))
+    phi = (fun F -> (b = valid(d1) && valid(d2)) && phi1(F) && phi2(F))
   By the definition of phi we have 
-    b iff valid(d1) && valid(d2)
-    phi1(F'++F'')
-    phi2(F'++F'')
-  Using assumption (3) we can rewrite these as 
-    phi1(F1++F2++F'')
-    phi2(F2++F1++F'')  
-  By the definition of pull we also have 
-    v1',d1' = s1.pull (E,r) (F'++F'')
-    v2',d2' = s2.pull (E[x:=v1],r) (F'++F'')
+    b = valid(d1) && valid(d2)
+    phi1(G1++F'++G2)
+    phi2(G1++F'++G2)
+  By assumption (2) we have 
+    (G1++(F1++F2)++G2) = (G1++F1++(F2++G2)) 
+                       = ((G1++F1)++F2++G2)
+  Hence we also have
+    phi1(G1++F1++(F2++G2))
+    phi2((G1++F1)++F2++G2)
+  Moreover, by the definition of pull we have 
+    v1',d1' = s1.pull (E,r) (G1++F1++(F2++G2))
+    v2',d2' = s2.pull (E[x:=v1],r) ((G1++F1)++F2++G2)
     b' = valid(d1') && valid(d2')
-  By PushPull for s1 and s2 we then obtain 
+  By PushPull for s1 and s2 we obtain
     v1' = v1 and valid(d1') iff valid(d1)
     v2' = v2 and valid(d2') iff valid(d2)
   It follows that b' iff b. 
 
-+------+
-| GLOB |
-+------+ 
++---------------+
+| COMPREHENSION |
++---------------+ 
     
-[ s | x in * ].pull (E,r) F = 
-  if F(r) = Directory({n1,...,nk}) then 
-    let vi,di = s.pull (E[x:=ni],r) F for i from 1 to n in 
-    ([v1,...,vk],(valid(d1) && ... valid(dk),[d1,...,dk]))
-  else 
-    ([],(false,[]))
+[ s | x in e ].pull (E,r) F = 
+  let [n1,...,nk] = [[e]] (E,r) in 
+  let vi,di = s.pull (E[x:=ni],r) F for i from 1 to k in 
+  let b = valid(d1) && ... && valid(dk) in 
+  ([v1,...,vk],(b,[d1,...,dk]))
 
-[s | x in * ].push (E,r) ([v1,...,vj],(b,[d1,...,dk]) = 
-  if F(r) = Directory({n1,...,nl}) then 
-    let k' = min(j,k,l) in 
-    let phii,Fi = s.push (E[x:=ni],r) F for i from 1 to k' in 
-    let phi = (fun F -> j = k = l
-                && (b iff valid(d1) && ... && valid(dk')) 
-                && F(r) = Directory{n1,...,nk'} && 
-                && phi1(F) && ... && phik'(F)) in 
-    (phi,F1++...++Fk')
-  else 
-    (fun F -> false, F)
+[ s | x in e ].push (E,r) ([v1,...,vj],(b,[d1,...,dl]) F = 
+  let [n1,...,nm] = [[e]] (E,r) in 
+  let k = min(j,l,m) in 
+  let phii,Fi = s.push (E[x:=ni],r) (vi,di) F for i from 1 to k in 
+  let phi = (fun F -> j = l = m = k 
+                   && (b = valid(d1) && ... && valid(dk))
+                   && phi1(F) && ... && phik(F)) in 
+  (phi,F1++...++Fk)
 
 PullPush:
   Assume 
-    pull (E,r) F = ([v1,...,vk],(b,[d1,...dk]))
-    F' ~ F 
-    push (E,r) ([v1,...,vk],(b,[d1,...,dk])) F' = phi,F''
-    phi(F'')
-  We analyze two cases. 
-  Case F(r) = Directory({n1,...,nk}):
-    By the definition of pull we have 
-      vi,di = s.pull (E[x:=ni],r) F for i from 1 to k
-    By F' ~ F we have 
-      F'(r) = Directory({n1,...,nk})
-    By the definition of push we have
-      phii,Fi = s.push (E[x:=ni],r) (vi,di) F' for i from 1 to k
-      F'' = F1++...++Fk
-      phi = (fun F -> k = l = m
-               && (b iff valid(d1) && ... && valid(dk)) 
-               && F(r) = Directory{n1,...,nk} && 
-               && phi1(F) && ... && phik(F)) in 
-    By phi(F1++...++Fk) we have 
-      phii(F1++...++Fk) for i from 1 to k
-    By assumption (1) we have 
-      phii(Fi) for i from 1 to k
-    By PullPush for s (k times) we have 
-      Fi ~ F for i from 1 to k
-    By assumption (2) (k times) we have 
-     F1++...++Fk ~ F
-    as required.
-  Case F(r) != Directory(_):
-    Can't happen. By F' ~ F we have 
-      F'(r) != Directory(_)
-    By the definition of push we have 
-      phi = (fun F -> false)
-      F'' = F
-    which contradicts the assumption that phi(F'').
-
+    pull (E,r) F = ([v1,...,vk],(b,[d1,...,dk]))
+    push (E,r) ([v1,...,vk],(b,[d1,...,dk])) F = phi,F'
+  By the definition of pull we have 
+    [[e]] (E,r) = [n1,...,nk] 
+    vi,di = s.pull (E[x:=ni],r) F for i from 1 to k
+    b = valid(d1) && ... && valid(dk)
+  By the definition of push we have
+    phii,Fi = s.push (E[x:=ni],r) (vi,di) F for i from 1 to k
+    F' = F1++...++F2
+    phi = (fun F -> j = l = k 
+                 && (b = valid(d1) && ... && valid(dk))
+                 && phi1(F) && ... && phik(F))
+  By PullPush for s (k times) we have 
+    Fi = F and phii(Fi) for i from 1 to k
+  By assumption (1) (k times) we also have 
+    F = F1++...++Fk
+  Hence, F' = F and phi(F'), as required. 
+  
 PushPull:
   Assume
-    push (E,r) ([v1,...,vj],(b,[d1,...,dk])) F = phi,F'
-    phi(F'++F'')
-    pull (E,r) (F'++F'') = ([v1',...,vm'],(b,[d1',...,dm']))
-  We analyze two cases. 
-  Case F(r) = Directory({n1,...,nl}):
-    Let k' = min(j,k,l).
-    By the definition of push we have 
-      phii,Fi = s.push (E[x:=ni],r) (vi,di) for i from 1 to k'.
-      phi = (fun F -> j = k = l
-               && (b iff valid(d1) && ... && valid(dk')) 
-               && F(r) = Directory{n1,...,nk'} && 
-               && phi1(F) && ... && phik'(F)) in 
-      F' = F1++...++Fk'
-    By the definition of phi we have 
-      j = k = l 
-      b iff valid(d1) && ... && valid(dj)
-      (F'++F'')(r) = Directory({n1,...,nk})
-      phii(F'++F'') for i from 1 to k
-    Using assumption (3) we can rewrite the facts about phii as
-      phii(Fi++F1++...++F(i-1)++F(i+1)++...++Fk++F'') for i from 1 to k
-    By the definition of pull we also have 
-      vi',di' = s.pull (E[x:=ni],r) (F'++F'') for i from 1 to k
-      b' = valid(d1') && .. && valid(dk')
-    By PushPull for s (k times) we then obtain 
-      vi' = vi and valid(di') iff valid(di) for i from 1 to k
-    It follows that b' iff b. 
-  Case F(r) != Directory(_):
-    Can't happen. By the definition of push we have
-      phi = (fun F -> false)
-    which contradicts the assumption that phi(F'++F'').
+    push (E,r) ([v1,...,vj],(b,[d1,...,dl])) F = phi,F'
+    phi(G1++F'++G2)
+    pull (E,r) (G1++F'++G2) = ([v1',...,vo'],(b,[d1',...,dp']))
+  By the definition of push we have 
+    [[e]] (E,r) = [n1,...,nm]
+    k = min(j,l,m)
+    phii,Fi = s.push (E[x:=ni],r) (vi,di) F for i from 1 to k 
+    F' = F1++...++Fk
+    (fun F -> j = l = k 
+           && (b = valid(d1) && ... && valid(dk))
+           && phi1(F) && ... && phik(F))
+  By the definition of phi we have 
+    j = l = m = k &&
+    b = valid(d1) && ... && valid(dk)
+    phii(G1++F'++G2) for i from 1 to k
+  By assumption (2) we have 
+    (G1++(F1++...++Fk)++G2) = (G1++F1++(F2++...++Fk++G2)) 
+                              ...
+                            = ((G1++F1++...++F(k-1))++Fk++G2)
+  Hence we also have
+    phi1(G1++F1++(F2++...++Fk++G2))
+    ...
+    phik((G1++F1++...++F(k-1))++Fk++G2)
+  Moreover, by the definition of pull we have 
+    k = o = p 
+    v1',d1' = s.pull (E[x:=ni,r) (G1++F1++(F2++G2))
+    ...
+    vk',dk' = s.pull (E[x:=nk],r) ((G1++F1++...++F(k-1))++Fk++G2)
+    b' = valid(d1') && ... && valid(dk')
+  By PushPull for s (k times) we obtain
+    vi' = vi and valid(di') iff valid(di) for 1 from 1 to k
+  It follows that [v1,...,vk] = [v1',...,vk'] and b' iff b.
