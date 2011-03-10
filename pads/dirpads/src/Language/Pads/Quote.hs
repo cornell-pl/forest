@@ -43,30 +43,20 @@ import Language.Pads.CodeGen
 import qualified Language.Pads.Parser as P
 
 
-parse :: Monad m
-      => Loc
-      -> P.Parser a
-      -> String
-      -> m a
-parse loc p input = let
-  fileName = loc_filename loc
-  (line,column) = loc_start loc
-  in case P.parse p fileName line column input of
-       Left err -> unsafePerformIO $ fail $ show err
-       Right x  -> return x
-
-
-pparse1 p pToQ s
-    = do  loc <- location
-          x <- Language.Pads.Quote.parse loc p s
-          pToQ x
-
-pqausiquote1 p
-    = QuasiQuoter  (error "parse expression")
-                   (error "parse pattern")
-                   (error "parse type")
-                   (pparse1 p make_pads_declarations)
-
 pads :: QuasiQuoter
-pads  = pqausiquote1 P.padsDecls
-    
+pads  = QuasiQuoter (error "parse expression")
+                    (error "parse pattern")
+                    (error "parse type")
+                    pparse
+
+pparse :: String -> Q [Dec]
+pparse input = do
+    loc <- location
+    let fileName = loc_filename loc
+    let (line,column) = loc_start loc
+    case P.parsePadsDecls fileName line column input of
+      Left err -> unsafePerformIO $ fail $ show err
+      Right x  -> make_pads_declarations x
+
+
+

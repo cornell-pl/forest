@@ -31,7 +31,7 @@ import Language.Pads.Padsc
 import Test.HUnit
 import System.IO.Unsafe (unsafePerformIO)
 
-import qualified Text.Regex.ByteString as BRE
+--import qualified Text.Regex.ByteString as BRE
 
 
 ---- PADS EXAMPLES
@@ -698,6 +698,6 @@ rE_ty_test = mkTestCase "regular expression abbreviation for PstringME" rE_ty_ex
 
 
 ---- Play space
-re = BRE.mkRegexWithOptsS "^a+" True True
-re_results1 = BRE.matchRegexAllS re "aaaab"
-re_results2 = BRE.matchRegexAllS re "caaaab"
+-- re = BRE.mkRegexWithOptsS "^a+" True True
+-- re_results1 = BRE.matchRegexAllS re "aaaab"
+-- re_results2 = BRE.matchRegexAllS re "caaaab"

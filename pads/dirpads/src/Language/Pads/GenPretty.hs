@@ -80,9 +80,8 @@ getTyNamesFromCon con = case con of
 
 getNamedTys :: TH.Name -> Q [TH.Name]
 getNamedTys ty_name = do 
-   { result <- getNamedTys' S.empty (S.singleton ty_name)
-   ; return (S.toList result)
-   }
+   result <- getNamedTys' S.empty (S.singleton ty_name)
+   return (S.toList result)
 
 
 getNamedTys' :: S.Set TH.Name -> S.Set TH.Name -> Q (S.Set TH.Name)
@@ -151,20 +150,20 @@ mkPrettyInstance' worklist done decls =
                      { let nestedTyNames = getTyNames ty_arg2
                      ; (argP, body) <- mkPatBody tyBaseName pprCon2E
 --                     ; report True ("curry rep case " ++ (nameBase ty_name))
-                     ; let clause = Clause [argP] body []	
+                     ; let clause = Clause [argP] body []
                      ; return (nestedTyNames, [instD, FunD specificPprName [clause]]) 
                      }
                    TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, AppT (ConT ty_con_name) ty_arg) ]) derives) -> do  -- con rep (Set)
                      { let nestedTyNames = getTyNames ty_arg
                      ; (argP, body) <- mkPatBody tyBaseName pprCon1E
 --                     ; report True ("con rep case " ++ (nameBase ty_name))
-                     ; let clause = Clause [argP] body []	
+                     ; let clause = Clause [argP] body []
                      ; return (nestedTyNames, [instD, FunD specificPprName [clause]]) 
                      }
                    TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ConT core_name)]) derives) -> do  -- App, Typedef
                      { (argP, body) <- mkPatBody tyBaseName pprE
 --                     ; report True ("app, typedef case " ++ (nameBase ty_name))
-                     ; let clause = Clause [argP] body []	
+                     ; let clause = Clause [argP] body []
                      ; return (S.singleton core_name, [instD, FunD specificPprName [clause]]) 
                      }
                    TyConI (NewtypeD [] ty_name' [] (NormalC ty_name'' [(NotStrict, ty)]) derives) | isTuple ty -> do    -- Tuple
@@ -174,7 +173,7 @@ mkPrettyInstance' worklist done decls =
                      ; (exps, pats) <- doGenPEs len "tuple"
                      ; let bodyE = AppE (AppE (VarE 'namedtuple_ppr) (LitE (StringL tyBaseName)))  (pprListEs exps)
                      ; let argP = ConP (mkName tyBaseName) [TupP pats]
-                     ; let clause = Clause [argP] (NormalB bodyE) []	
+                     ; let clause = Clause [argP] (NormalB bodyE) []
                      ; return (nestedTyNames, [instD, FunD specificPprName [clause]])
                      }
                    TyConI (DataD [] ty_name' [] cons  derives) | isDataType cons -> do
@@ -182,7 +181,7 @@ mkPrettyInstance' worklist done decls =
                      ; (exp, pat) <- doGenPE "case_arg"
                      ; matches <- mapM mkClause cons
                      ; let caseE = CaseE exp matches
-                     ; let clause = Clause [pat] (NormalB caseE) []	
+                     ; let clause = Clause [pat] (NormalB caseE) []
                      ; return (nestedTyNames, [instD, FunD specificPprName [clause]] )
                      } 
                    TyConI (DataD [] ty_name' [] cons  derives) | isRecordType cons -> do

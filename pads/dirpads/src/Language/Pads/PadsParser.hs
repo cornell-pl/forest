@@ -128,10 +128,12 @@ p <||> q = PadsParser $ \bs -> (p # bs) <++> (q # bs)
 
 -------------------------
 
-parseMaybe :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
+parseMaybe :: PadsMD md => 
+    PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
 parseMaybe p = parseJust p <||> parseNothing
 
-parseJust :: PadsMD md => PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
+parseJust :: PadsMD md => 
+    PadsParser (rep,md) -> PadsParser (Maybe rep, (Base_md, Maybe md))
 parseJust p = do
   (r,md) <- p
   return (Just r, (get_md_header md, Just md))
@@ -148,7 +150,8 @@ parseTry p = PadsParser $ \bs -> replaceSource bs (p # bs)
 
 -------------
 
-parseConstraint :: PadsMD md => PadsParser(rep,md) -> (rep -> md -> Bool) -> PadsParser(rep, (Base_md, md))
+parseConstraint :: PadsMD md => 
+    PadsParser(rep,md) -> (rep -> md -> Bool) -> PadsParser(rep, (Base_md, md))
 parseConstraint p pred = do 
   (rep,md) <- p
   return (rep, (constraintReport (pred rep md) md, md))
@@ -191,10 +194,10 @@ parseListTermSep :: (PadsMD md, PadsMD mdSep, PadsMD mdTerm) =>
 parseListTermSep sep term p = listReport (parseManySepTerm sep term p)
 
 
-listReport  :: (Monad m, PadsMD b) => m [(a, b)] -> m ([a], (Base_md, [b]))
+listReport  :: PadsMD b => PadsParser [(a, b)] -> PadsParser ([a], (Base_md, [b]))
 listReport p = do 
-  elems <- p
-  let (reps, mds) = unzip elems
+  listElems <- p
+  let (reps, mds) = unzip listElems
   let hmds = map get_md_header mds
   return (reps, (mergeBaseMDs hmds, mds))
 
@@ -202,14 +205,13 @@ listReport p = do
 -----------------------------------
 
 parseMany :: PadsMD md => PadsParser (rep,md) -> PadsParser [(rep,md)]
-parseMany p = do { (r,m) <- p
-                 ; if (numErrors (get_md_header m) == 0)
+parseMany p = do (r,m) <- p
+                 if (numErrors (get_md_header m) == 0)
                    then do { rms <- parseMany p
                            ; return ((r,m) : rms)}
                    else badReturn [] 
-                 } 
-            <||>
-              return []
+ 
+              <||> return []
 
 
 parseManySep :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
@@ -219,14 +221,11 @@ parseManySep sep p = do { rm <- p
                         }
 
 parseManySep1 :: (PadsMD md, PadsMD mdSep) => PadsParser (repSep,mdSep) -> PadsParser(rep, md) -> PadsParser [(rep,md)]
-parseManySep1 sep p = do { (r,m) <- sep
-                         ; if (numErrors (get_md_header m) == 0)
+parseManySep1 sep p = do (r,m) <- sep
+                         if (numErrors (get_md_header m) == 0)
                            then parseManySep sep p
-                           else badReturn [] -- terminate the recursion if separator error found
-                                             -- return would work too, as p will create the badness
-                         } 
-                      <||>
-                        return []
+                           else badReturn [] 
+                      <||> return []
 
 -----------------------------------
 

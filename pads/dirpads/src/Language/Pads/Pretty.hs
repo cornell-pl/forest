@@ -169,9 +169,6 @@ instance Pretty PadsTy where
 instance Pretty PadsDecl where
     ppr (PadsDecl (name,pat,padsty)) = ppr name <+>  text (show pat) <+> text "=" <+> ppr padsty
 
-instance Pretty Id where
-    ppr (Id ident)  = text ident
-    ppr (AntiId v)  = ppr "$id:" <> ppr v
 
 {-
 instance Pretty a => Pretty (Result a) where

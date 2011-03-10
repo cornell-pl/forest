@@ -10,7 +10,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString.Lazy.Char8 as B
 
 [pads|
-  type AI    = [Entry] with sep Eor and term Eof
+  type AI    = [Line Entry] with term Eof
 
   data Entry = {     host       :: Src, 
                ' ',  identdID   :: ID, 
@@ -41,8 +41,8 @@ import qualified Data.ByteString.Lazy.Char8 as B
 
 
   data Request = { '"',  method  :: Method,       
-                     ' ',  url     :: Pstring ' ', 
-                     ' ',  version :: Version  where <| checkVersion method version |>,  '"'
+                   ' ',  url     :: Pstring ' ', 
+                   ' ',  version :: Version  where <| checkVersion method version |>,  '"'
                     }  
   data Method  = GET | PUT | POST | HEAD | DELETE
                  | LINK | UNLINK      -- obsolete after http 1.0
@@ -59,7 +59,6 @@ checkVersion method version =
 [pads|
   type Response = constrain r :: Pint where <| 100 <= r && r < 600 |> 
 
-
   data ContentLength = NotAvailable '-' | ContentLength Pint 
   |]
 
@@ -68,8 +67,8 @@ mkPrettyInstance ''AI
 mkPrettyInstance ''AI_md
 
 ai_file = ai_big
-ai_3000 = "data/ai.3000"
-ai_big  = "data/ai.big"
+ai_3000 = "Examples/data/ai.3000"
+ai_big  = "Examples/data/ai.big"
 
 (ai_rep, ai_md) = let (AI rep, md) = unsafePerformIO $ parseFile ai_file in (rep,md)
 
@@ -82,6 +81,9 @@ result n  = do
      } 
 
 
+[pads|
+
+  |]
 
 example = Prelude.take 2 $ fst $ parseStringInput (parseMany pdigit_parseM) str
 

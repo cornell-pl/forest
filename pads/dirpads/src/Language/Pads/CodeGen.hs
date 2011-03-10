@@ -60,10 +60,7 @@ make_pads_declarations :: [PadsDecl] -> Q [Dec]
 make_pads_declarations ds = fmap concat (mapM make_pads_declaration ds)
 
 make_pads_declaration :: PadsDecl -> Q [Dec]
-make_pads_declaration (PadsDecl (id, pat, padsTy)) = do
-   let p_name = case id of
-                   Id str -> str
-                   AntiId str -> error "Did not expect antiquotation in defining context."
+make_pads_declaration (PadsDecl (p_name, pat, padsTy)) = do
    let ty_name    = getTyName    p_name
    let md_ty_name = getMDName    p_name
    let parse_name = getParseName p_name
@@ -224,19 +221,20 @@ genPadsInstance parse_name print_name ty_name md_ty mpat_info =
 
 {- This generates a type-specific name for the parseS function by redirecting to the generic function. -}
 genPadsParseS :: String -> Name -> Name -> Name -> PadsTy -> Maybe(TH.Pat, TH.Type) -> Q [Dec]
-genPadsParseS p_name parse_name rep_name pd_name padsTy mpat_info = do
-   let parseSName  = getParseSName p_name
-   let stringTy    = ConT ''String
-   let padsPairTy  = AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)
-   let resultTy    = AppT (AppT (TupleT 2) padsPairTy) stringTy
-   let core_ty     = arrowTy stringTy resultTy
-   let (bodyE, ty) = case mpat_info of
+genPadsParseS p_name parse_name rep_name pd_name padsTy mpat_info = return [sigD, funD]
+  where
+       parseSName  = getParseSName p_name
+       stringTy    = ConT ''String
+       padsPairTy  = AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)
+       resultTy    = AppT (AppT (TupleT 2) padsPairTy) stringTy
+       core_ty     = arrowTy stringTy resultTy
+       (bodyE, ty) = case mpat_info of
                       Nothing -> (VarE 'parseS, core_ty)
                       Just (pat,pat_ty) -> (LamE [pat] (AppE (VarE 'parseS1) (patToExp pat)),
                                             arrowTy pat_ty core_ty)
-   let sigD = SigD parseSName ty
-   let funD = ValD (VarP parseSName) (NormalB bodyE ) []
-   return [sigD, funD]
+       sigD = SigD parseSName ty
+       funD = ValD (VarP parseSName) (NormalB bodyE ) []
+   
 
 
 genPadsParseM :: Name -> Name -> Name -> PadsTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
@@ -270,6 +268,7 @@ wrapRepP repN ty repP = case ty of
   do (rep,md) <- rhsE
      return (Rep rep, md)
 -}
+
 genParseBody :: Name -> Name -> PadsTy -> Q TH.Exp
 genParseBody repN mdN ty = do
    repName     <- genRepName 
