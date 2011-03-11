@@ -318,3 +318,78 @@ PushPull:
     vi' = vi and valid(di') iff valid(di) for 1 from 1 to k
   It follows that [v1,...,vk] = [v1',...,vk'] and 
   valid(b',[d1',...,dk']) iff valid(b,[d1,...,dk]).
+
++--------+
+| OPTION |
++--------+ 
+
+(s?).pull (E,r) F = 
+  if F(r) defined then 
+    let v,d = s.pull (E,r) F in 
+    (Some v, (valid d, Some d))
+  else 
+    (None, (false, None))
+
+(s?).push (E,r) (vo,(b,do)) F = 
+  if vo = Some v and do = Some do then 
+    let phi,F' = s.push (E,r) (v,d) F in 
+    (fun F -> b && F(r) defined && phi(F))
+  else 
+    (fun F -> not b && vo = do = None && F(r) undefined, del F(r))
+
+PullPush:
+  Assume 
+    pull (E,r) F = (vo,(b,do))
+    push (E,r) (vo,(b,do)) F = phi,F'
+  We analyze two cases.
+  Case F(r) defined:
+    By the definition of pull we have 
+      v,d = s.pull (E,r) F
+      vo,do = (Some v, Some d)
+    By the definition of push we have 
+      phi1,F' = s.push (E,r) (v,d) F
+      phi = (fun F -> b && F(r) defined && phi1(F))
+    By PullPush for s we have 
+      F = F' and phi1(F')
+    It follows that phi(F').
+  Case F(r) undefined:
+    By the definition of pull we have 
+      vo = Do = None
+    By the definition of push we have 
+      phi = (Fun F -> not b && vo = do = None && F(r) undefined)
+      F' = del F(r)
+    It follows that phi(F') and F' = F as F(r) is undefined.
+
+PushPull:
+  Assume
+    push (E,r) (vo,(b,do)) F = phi,F'
+    phi(G1++F'++G2)
+    pull (E,r) (G1++F'++G2) = (vo',(b',do'))
+  We analyze two cases.
+  Case vo = Some v and do = Some d:
+    By the definition of push we have 
+      phi1,F' = s.push (E,r) (v,d) 
+      phi = (fun F -> b && F(r) defined && phi1(f))
+    By the definition of phi we have 
+      (G1++F'++G2)(r) defined
+      phi1(G1++F'++G2)
+      b = true
+    By the definition of pull we have 
+       v',d' = s.pull (E,r,) (G1++F'++G2)
+       vo',do' = (Some v', Some d')       
+       b' = true
+    By PushPull for s we have 
+       v' =  v and valid(d') iff valid(d) 
+    It follows that vo = vo' and valid(b,do) iff valid(b',do').
+  Case vo = None or do = None:
+    By the definition of push we have 
+      phi = (Fun F -> not b && vo = do = None && F(r) undefined)
+      F' = del F(r)
+    By the definition of phi we have 
+      (G1++F'++G2)(r) undefined
+      vo = do = None
+      b = false
+    By the definition of pull we have 
+      vo',do' = (None, None) 
+      b' = false
+    Thus, we immediately have vo = vo' and valid(b,do) iff valid(b',do'). 
