@@ -5,8 +5,11 @@
 \newcommand{\File}[1]{\ensuremath{\mathsf{File}(#1)}}
 \newcommand{\Dir}[1]{\ensuremath{\mathsf{Dir}(#1)}}
 \newcommand{\Link}[1]{\ensuremath{\mathsf{Link}(#1)}}
-\newcommand{\Set}[1]{\ensuremath{\{ #1 \}}}
+\newcommand{\List}[1]{\ensuremath{[ #1 ]}}
 \newcommand{\Map}[1]{\ensuremath{\{\!\mid #1 \mid\!\}}}
+\newcommand{\FAppend}{\ensuremath{\mathord{++}}}
+\newcommand{\FUpdate}[3]{\ensuremath{#1[#2 := #3]}}
+\newcommand{\FDelete}[2]{\ensuremath{\mathsf{Del}~#1(#2)}}
 \newcommand{\PNil}{\ensuremath{\bullet}}
 \newcommand{\PCons}[2]{\ensuremath{#1\,\textsf{/}\,#2}}
 \newcommand{\Just}[1]{\ensuremath{\mathsf{Just(#1)}}}
@@ -20,7 +23,7 @@
 \newcommand{\SPath}[2]{\ensuremath{#1\,{::}\,#2}}
 \newcommand{\SPair}[3]{\ensuremath{\langle #1 {:} #2, #3 \rangle}}
 \newcommand{\SOption}[1]{\ensuremath{#1?}}
-\newcommand{\SSetComp}[3]{\ensuremath{\{ #1 \mid #2 \in #3 \}}}
+\newcommand{\SComp}[3]{\ensuremath{[ #1 \mid #2 \in #3 ]}}
 \newcommand{\Env}{\ensuremath{\mathcal{E}}}
 \newcommand{\ENil}{\ensuremath{\bullet}}
 \newcommand{\yields}{\ensuremath{\rightsquigarrow}}
@@ -39,10 +42,13 @@
 \newcommand{\defaultatt}{\ensuremath{\att_{\mathsf{default}}}}
 \newcommand{\repty}[1]{{\cal R}[\![ #1 ]\!]}
 \newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
-\newcommand{\checkk}[3]{\fn{\mathit{ck}}{#1,#2,#3}}
+\newcommand{\loadk}[3]{\fn{\mathit{ld}}{#1,#2,#3}}
+\newcommand{\storek}[4]{\fn{\mathit{st}}{#1,#2,#3,#4}}
 \newcommand{\stringty}{{string}}
 \newcommand{\metapdty}{\meta}
- 
+\newcommand{\load}[5]{#1;#2;#3 \models #4 \yields #5 }
+\newcommand{\store}[6]{#1;#2;#3;#4 \models #5 \yields #6 }
+
 \begin{figure}
 \[
 \begin{array}{rr@{\;}r@{\;}l}
@@ -50,7 +56,7 @@
 \textit{Paths}          & r,s & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
 \textit{Attributes}     & \att  & \bnfdef & \dots\\[1ex]
 \textit{Filesystem}     & T  & \bnfdef & \File{n} \\
-\textit{Contents}       &    & \bnfalt & \Dir{ \Set{n_1,\dots,n_k} }\\
+\textit{Contents}       &    & \bnfalt & \Dir{ \List{n_1,\dots,n_k} }\\
                         &    & \bnfalt & \Link{r}\\[1ex]
 \textit{Filesystems}    & F & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots r_k \mapsto (\att_k,T_k) }\\[1ex]
 \textit{Values}         & v & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
@@ -61,7 +67,7 @@
                               \bnfalt \SAdhoc{b}
                               \bnfalt \SPath{e}{s}
                               \bnfalt \SPair{x}{s_1}{s_2}\\[1ex]
-                        &   & \bnfalt & \SSetComp{s}{x}{e}
+                        &   & \bnfalt & \SComp{s}{x}{e}
                               \bnfalt \SPred{e}
                               \bnfalt \SOption{s}\\[1ex]
 \end{array}
@@ -90,7 +96,7 @@ attribute records abstract; they should include the usual fields:
 owner, group, date modified, {\it etc.}  We write $\defaultatt$ for
 a default attribute record where necessary.  The contents $T$ of a
 node in the file system may be a file $\File{n}$ (with underlying
-string contents $n$), a directory $\Dir{ \Set{n_1,\dots,n_k} }$ (with
+string contents $n$), a directory $\Dir{ \List{n_1,\dots,n_k} }$ (with
 contents named $n_1, \ldots, n_k$) or a symbolic link $\Link{r}$
 (where $r$ is the path pointed to by the link).
 
@@ -99,23 +105,19 @@ with directories forming internal nodes and files and symbolic links
 at the leaves.  In addition, these conditions must hold:
 \begin{itemize}
 \item The domain of $F$ must be prefix-closed.
-\item If $F(r) = (\att,\Dir{ \Set{n_1,\dots,n_k} })$ then for $i=1,\ldots,k$,
+\item If $F(r) = (\att,\Dir{ \List{n_1,\dots,n_k} })$ then for $i=1,\ldots,k$,
 $\PCons{r}{n_i} \in \dom{F}$.
 \item  If $F(r) = (\att,\File{n_r})$ or $(\att,\Link{r'})$ then 
 there does not exist $n$ such that $\PCons{r}{n} \in \dom{F}$.
 \end{itemize}
-% JNF: this sentence seems out of place...
-% Checking functions for other constants such as directories, links,
-% ascii or binary files may be defined similarly.
 
 Figure~\ref{fig:calculus-syntax} also presents the syntax of a simple
 computation language $e$ and our file system specifications $s$.  The
 computation language $e$ contains values $v$, variables $x$, and other
 operators, which we leave unspecified.  An environment $\Env$ maps
-variables to values.  The semantic function $\eval{\tau}{\Env,F,r,e}$
-evaluates an expression $e$ in an environment $\Env$ and file system
-$F$ with respect to a current path $r$, yielding a value $v$ of type
-$\tau$.
+variables to values.  The semantic function $\eval{\tau}{\Env,r,e}$
+evaluates an expression $e$ in an environment $\Env$ with respect to a
+current path $r$, yielding a value $v$ of type $\tau$.
 
 The simplest file system specifications are constants $k$, which range
 over basic specifications such as those for files (\pfile), text files
@@ -136,14 +138,15 @@ specifications are written \SPair{x}{s_1}{s_2}, where $x$ may appear
 in $s_2$.  Path specifications are written $\SPath{e}{s}$, where $e$
 is a path name (to be appended to the current path) and $s$ specifies
 a fragment of the file system at that path. Comprehension
-specifications are written $\SSetComp{s}{x}{e}$, where $e$ is a set of
+specifications are written $\SComp{s}{x}{e}$, where $e$ is a set of
 values, $x$ is a variable, and $s$, which may depend on $x$, specifies
-a fragment of the file system for each value of $x$.
-\forest{}'s combined record-and-path construct 
-\cd{\{c \kw{is} "c.txt" :: C, d \kw{is} "d.txt" :: D c\}} is encoded in the calculus as
-$\SPair{x}{(\SPath{\texttt{"}\mathtt{c.txt}\texttt{"}}{C})}{(\SPath{\texttt{"}\mathtt{d.txt}\texttt{"}}{D\; x})}$.  Similarly, \forest{}'s comprehension 
-\cd{[x :: s | x <- e]} is encoded as the composition of the
-calculus constructors $\SSetComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$.
+a fragment of the file system for each value of $x$.  \forest{}'s
+combined record-and-path construct \cd{\{c \kw{is} "c.txt" :: C, d
+  \kw{is} "d.txt" :: D c\}} is encoded in the calculus as
+$\SPair{x}{(\SPath{\texttt{"}\mathtt{c.txt}\texttt{"}}{C})}{(\SPath{\texttt{"}\mathtt{d.txt}\texttt{"}}{D\;
+    x})}$.  Similarly, \forest{}'s comprehension \cd{[x :: s | x <-
+  e]} is encoded as the composition of the calculus constructors
+$\SComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$.
 
 Predicate specifications $\SPred{e}$ succeed when $e$ evaluates to
 \True{} and fail when $e$ evaluates to \False{} under the current
@@ -154,38 +157,29 @@ $\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$
 Finally, maybe specifications are written as $\SOption{s}$ in the
 calculus.
 
-%\jnf{ The metadata type for adhoc is $\tau_m~\mathit{pd}$ but the
-%  actual metadata computed by the inference rule below is
-%  $(\valid{d},(d,a))$ which has type $(\tau_m \times
-%  \meta)~\mathit{pd}$. We can fix this either by eliminating the
-%  metadata or by changing the definition of $\mdty{\cdot}$. I'm not
-%  sure which is better?}
-
 \begin{figure}
 \[
 \infrule
 { }
-{ \Env;F;r \models \Sk \yields \checkk{\Sk}{F}{r} }
-{}
+{ \load{\Env}{F}{r}{\Sk}{ \loadk{\Sk}{F}{r} } }
+{ }
 \]
 
 \[
 \infrule
 { F(r) = (\att,\File{n}) \qquad 
   b^{\tau_m}_{\tau_r}(E,n) = v,d }
-{ \Env;F;r \models \SAdhoc{b} \yields v,(\valid{d},(d,\att)) }
+{ \load{\Env}{F}{r}{\SAdhoc{b}}{ v,(\valid{d},(d,\att)) } }
 { }
 \]
 
 \[
 \infrule
-{ %\begin{array}{l}
-  F(r) = (\att,T) \qquad T \neq \File{n} \qquad
+{ F(r) = (\att,T) \qquad T \neq \File{n} \qquad
   b^{\tau_m}_{\tau_r}(E,\epsilon) = (v,d)
-  %\end{array} 
 }
-{ \Env;F;r \models \SAdhoc{b} \yields v,(\False,(d,\att)) }
-{}
+{ \load{\Env}{F}{r}{\SAdhoc{b}}{ v,(\valid{d},(d,\att)) } }
+{ }
 \]
 
 \[
@@ -194,35 +188,36 @@ calculus.
   r \not\in \dom{F}  \qquad
   b(E,\epsilon) = (v,d)
 }
-{ \Env;F;r \models \SAdhoc{b} \yields v,(\False,(d,\defaultatt)) }
-{}
+{ \load{\Env}{F}{r}{\SAdhoc{b}}{ v,(\False,(d,\defaultatt)) } }
+{ }
 \]
 
 \[
 \infrule
-{ \Env;F;\eval{path}{E,F,r,\PCons{r}{e}} \models s \yields v,d }
-{ \Env;F;r \models \SPath{e}{s} \yields v,d }
+{ \load{\Env}{F}{\eval{path}{E,r,\PCons{r}{e}}}{s}{v,d} }
+{ \load{\Env}{F}{r}{\SPath{e}{s}}{v,d} }
 { }
 \]
 
 \[
 \infrule
 { \begin{array}{c}
-  \Env;F;r \models s_1 \yields v_1,d_1 \\
-  \Env[x \mapsto v_1, x_d \mapsto d_1];F;r \models s_2 \yields v_2,d_2 \\
-%  v = (v_1,v_2) \qquad d = (d_1,d_2) 
+  \load{\Env}{F}{r}{s_1}{ v_1,d_1 } \\
+  \load{\Env[x \mapsto v_1}{F}{r}{s_2}{ v_2,d_2 }
   \end{array} }
-{ \Env;F;r \models \SPair{x}{s_1}{s_2} \yields (v_1,v_2),(\valid{d_1} \wedge \valid{d_2}, (d_1,d_2)) }
+{ \load{\Env}{F}{r}{\SPair{x}{s_1}{s_2}}{ (v_1,v_2),(\valid{d_1} \wedge \valid{d_2}, (d_1,d_2)) } }
 { }
 \]
 
 \[
 \infrule
 { \begin{array}{c}
-  \eval{(\tau\ set)}{\Env,F,r,e} = \{ v_1,\dots,v_k \} \\
-  S = \Set{ (v,d) \mid v' \in \{ v_1,\dots,v_k \} \text{ and } \Env[x \mapsto v'];F;r \models s \yields v,d }
+  \eval{(\tau\ \mathit{list})}{\Env,r,e} = [w_1,\dots,w_k ]\\
+  \load{\Env[x \mapsto w_1]}{F}{r}{s}{v_1,d_1}\\
+  \vdots \\
+  \load{\Env[x \mapsto w_k]}{F}{r}{s}{v_k,d_k}
   \end{array} }
-{ \Env;F;r \models \SSetComp{s}{x}{e} \yields \pi_1~S,(\bigwedge~\valid{\pi_2~S}, \pi_2~S) }
+{ \load{\Env}{F}{r}{ \SComp{s}{x}{e} }{ [v_1,\dots,v_k],(\bigwedge_i \valid{d_i},[d_1,\dots,d_k]) } }
 { }
 \]
 
@@ -230,7 +225,7 @@ calculus.
 \[
 \infrule
 { }
-{ \Env;F;r \models \SPred{e} \yields (),(\eval{bool}{E,F,r,e},()) }
+{ \load{\Env}{F}{r}{ \SPred{e} }{ (),(\eval{bool}{E,r,e},()) } }
 { }
 \]
 
@@ -238,22 +233,100 @@ calculus.
 \[
 \infrule
 { r \not\in \dom{F} }
-{ \Env;F;r \models \SOption{s} \yields \Nothing,(\False,\Nothing) }
+{ \load{\Env}{F}{r}{ \SOption{s} }{ \Nothing,(\False,\Nothing) } }
 { }
 \]
 
 \[
 \infrule
 { r \in \dom{F} \qquad \Env;F;r \models s \yields v,d }
-{ \Env;F;r \models \SOption{s} \yields \Just{v},(\valid{d},\Just{d}) }
+{ \load{\Env}{F}{r}{ \SOption{s} }{ \Just{v},(\valid{d},\Just{d}) } }
+{ }
+\]
+\caption{\forest{} calculus loading semantics}
+\label{fig:calculus-load-semantics}
+\end{figure}
+
+\begin{figure}
+\[
+\infrule
+{ }
+{ \store{\Env}{F}{r}{v,d}{\Sk}{ \storek{\Sk}{F}{r}{v,d} } }
 { }
 \]
 
+\[
+\infrule
+{ \begin{array}{c}
+  b^{\tau_m}_{\tau_r}(E,v,d) = n\\
+  F' = \FUpdate{F}{r}{(\att,\File{n})}\\
+  \phi = (\lambda F'.~F'(r) = (\_,\File{n}))
+  \end{array} }
+{ \store{\Env}{F}{r}{ v,(\True,(d,\att)) }{\SAdhoc{b}}{F',\phi } }
+{ }
+\]
 
-\caption{\forest{} calculus semantics}
-\label{fig:calculus-semantics}
+\[
+\infrule
+{ \phi = (\lambda F'.~v = \epsilon \wedge \neg \exists \att',n'.~F'(r) = (\att',\File{n'})) }
+{ \store{\Env}{F}{r}{ v,(\False,(d,\att)) }{\SAdhoc{b}}{ F, \phi } }
+{ }
+\]
+
+\[
+\infrule
+{ \store{\Env}{F}{\eval{path}{E,r,\PCons{r}{e}}}{v,d}{s}{F',\phi} }
+{ \store{\Env}{F}{r}{v,d}{\SPath{e}{s}}{F',\phi } }
+{ }
+\]
+
+\[
+\infrule
+{ \begin{array}{c}
+  \store{\Env}{F}{r}{  v_1,d_1 }{s_1}{ F_1',\phi_1 } \\
+  \store{\Env[x \mapsto v_1}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\
+  F' = F_1' \FAppend F_2'\\
+  \phi = \lambda F'.~\phi_1(F') \wedge \phi_2(F')
+  \end{array} }
+{ \store{\Env}{F}{r}{ (v_1,v_2),(d, (d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F',\phi } }
+{ }
+\]
+
+\[
+\infrule
+{ \begin{array}{c}  
+  \eval{(\tau\ \mathit{list})}{\Env,r,e} = [w_1,\dots,w_m ]\\  
+  k = \min{j,l,m} \\
+  \store{\Env[x \mapsto w_1]}{F}{r}{v_1,d_1}{s}{F_1',\phi_1}\\
+  \vdots \\
+  \store{\Env[x \mapsto w_k]}{F}{r}{v_k,d_k}{s}{F_k',\phi_k}\\
+  F' = F_1' \FAppend \dots \FAppend F_k'\\
+  \phi = \lambda F'.~j = l = m \wedge \bigwedge_i phi_i(F')
+  \end{array} }
+{ \store{\Env}{F}{r}{[v_1,\dots,v_j],(d,[v_1,\dots,v_l])}{ \SComp{s}{x}{e} }{ F',\phi } }
+{ }
+\]
+
+\[
+\infrule
+{ \phi = \lambda F'.~b }
+{ \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi } }
+{ }
+\]
+
+\[
+\infrule
+{ \begin{array}{c}
+  \store{\Env}{F}{r}{ v,d }{ s }{ F',\phi }\\
+  \phi' = \lambda F'.~b \wedge r \in \dom{F'} \wedge \phi(F')
+  \end{array} }
+{ \store{\Env}{F}{r}{ \Just{v},(b,\Just{d}) }{ \SOption{s} }{ F',\phi } }
+{ }
+\]
+
+\caption{\forest{} calculus storing semantics}
+\label{fig:calculus-store-semantics}
 \end{figure}
-
 
 \paragraph*{Calculus Semantics.}
 %
@@ -327,7 +400,7 @@ s & \repty{s} = & \mdty{s} =  \\
 \SAdhoc{b} & \tau_r & (\tau_m \times \meta)~\mathit{md} \\
 \SPath{e}{s} & \repty{s} & \mdty{s} \\
 \SPair{x}{s_1}{s_2} & \repty{s_1} \times \repty{s_2} & \md{\mdty{s_1} \times \mdty{s_2}} \\
-\SSetComp{s}{x}{e} & \repty{s}~\typ{list} & \md{\mdty{s}~\typ{list}}    \\
+\SComp{s}{x}{e} & \repty{s}~\typ{list} & \md{\mdty{s}~\typ{list}}    \\
 \SPred{e} & \typ{unit} & \typ{unit}~\mathit{md}\\
 \SOption{s} & \repty{s}~\typ{option} & \md{\mdty{s}~\typ{option}} %\\
 %\hline
@@ -355,7 +428,7 @@ s & \repty{s} = & \mdty{s} =  \\
 % \repty{\SAdhoc{b}} & = & \tau_r \\
 % \repty{\SPath{e}{s}} & = & \repty{s} \\
 % \repty{\SPair{x}{s_1}{s_2}} & = & \repty{s_1} \times \repty{s_2} \\
-% \repty{\SSetComp{s}{x}{e}} & = & \repty{s}~\typ{list}  \\
+% \repty{\SComp{s}{x}{e}} & = & \repty{s}~\typ{list}  \\
 % \repty{\SPred{e}} & = & \typ{unit} \\
 % \repty{\SOption{s}} & = & \repty{s}~\typ{option}  \\
 % \\
@@ -363,7 +436,7 @@ s & \repty{s} = & \mdty{s} =  \\
 % \mdty{\SAdhoc{b}} & = & (\tau_m \times \meta)~\mathit{md}\\
 % \mdty{\SPath{e}{s}} & = & \mdty{s} \\
 % \mdty{\SPair{x}{s_1}{s_2}} & = & \md{\mdty{s_1} \times \mdty{s_2}} \\
-% \mdty{\SSetComp{s}{x}{e}} & = & \md{\mdty{s}~\typ{list}}  \\
+% \mdty{\SComp{s}{x}{e}} & = & \md{\mdty{s}~\typ{list}}  \\
 % \mdty{\SPred{e}} & = & \typ{unit}~\mathit{md}\\
 % \mdty{\SOption{s}} & = & \md{\mdty{s}~\typ{option}}  \\
 % \\
@@ -374,3 +447,11 @@ s & \repty{s} = & \mdty{s} =  \\
 % \caption{\forest{} calculus data and metadata types}
 % \label{fig:calculus-types}
 % \end{figure}
+
+\begin{theorem}
+$\load{E}{F}{r}{s}{v,d} \wedge \store{E}{F}{r}{v,d}{s}{F',\phi} \Rightarrow F' = F \wedge \phi(F')$
+\end{theorem}
+
+\begin{theorem}
+$\store{E}{F}{r}{v,d}{s}{F',\phi} \wedge \phi(G \FAppend F' \FAppend H) \wedge \load{E}{(G \FAppend F' \FAppend H)}{r}{s}{v',d'} \Rightarrow v' = v \wedge \valid{d} \Leftrightarrow \valid{d'}$
+\end{theorem}
