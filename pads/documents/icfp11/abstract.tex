@@ -1,32 +1,33 @@
-A {\em filestore} is a structured collection of data files housed
-in a conventional hierarchical file system.  Many applications
-use filestores as a poor-man's data base and correct execution of 
-these applications typically requires that filestore structure 
-and attributes satisfy a variety of invariants.  Unfortunately, while
-creating filestores is expedient, maintaining their invariants is 
-usually tedious and error-prone.  Unfortunately, current programming 
-languages provide little support for documenting assumptions about 
-file stores, detecting errors, or safely loading from or storing to 
-them.
+A {\em filestore} is a structured collection of data files housed in a
+conventional hierarchical file system. Many applications use file
+systems as a poor-man's database but the correct execution of these
+applications requires that the collection of files, directories, and
+symbolic links stored on disk satisfy a variety of precise
+invariants. Moreover, all of these structures must have acceptable
+ownership, permission, and timestamp attributes. Unfortunately,
+current programming languages do not provide support for documenting
+assumptions about filestores, detecting errors, or safely loading from
+and storing to them.
 
-This paper describes the design, implementation and semantics
-of \forest{}, a new domain-specific language
-embedded in \haskell{} for documenting and managing filestores.
-The core of the \forest{} design is a declarative filestore
-description language.  This description language uses a type-based
-metaphore to specify the structure, attributes and invariants
-required of filestores.  \forest{} descriptions
-have first-class status with \haskell{} and programmers
-may refer to them directly to obtain a variety of
-useful utilities for reliably connecting to data on disk.
-\forest{} also exploits \haskell{}'s powerful generic programming
-infrastructure to make it easy for third-party developers to build
-tools that work with any \forest{} description.  We illustrate the use
-of this infrastructure to build a number of powerful tools, including a
-file system
-visualizer, a file access checker, and a
-number of description-directed variants of
-standard shell tools.  Finally, core \forest{} has a precise,
-formal semantics inspired by classical tree logics.  We use the semantics
-to prove a variety of round-tripping laws for \forest{}'s loading
-and storing infrastructure.
+This paper describes the design, implementation, and semantics of
+\forest{}, a novel domain-specific language for describing
+filestores. The language uses a type-based metaphor to specify the
+expected structure, attributes, and invariants of filestores.
+\forest{} generates loading and storing functions that make it easy to
+connect data on disk to an isomorphic representation in memory that
+can be manipulated as if it were any other data structure.  \forest{}
+also generates metadata that describes the degree to which the
+structures on the disk conform to the specification, making error
+detection easy.
+
+We have implemented \forest{} as an embedded domain-specific language
+in \haskell{}. Our implementation leverages \haskell{}'s powerful
+generic programming infrastructure to provide a toolkit that makes it
+easy for third-party developers to build tools that work with
+arbitrary \forest{} descriptions.  We show the use of this toolkit on
+a number of examples including a file system visualizer, an access
+checker, and description-directed variants of several standard UNIX
+shell tools. Finally, we formalize a core fragment \forest{} in a
+semantics inspired by classical tree logics and prove round-tripping
+laws showing that the loading and storing functions behave as
+expected.
