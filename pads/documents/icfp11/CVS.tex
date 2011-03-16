@@ -1,0 +1,80 @@
+\begin{code}
+\textcolor{red}{-- PADS description of CVS file formats}
+[pads| \kw{type} Repository_f = Line Pstringln
+
+       \kw{data} Mode_t = Ext ":ext:" | Local ":local:" | Server ":server:" 
+
+       \kw{data} Root_t = \{ cvs_mode :: Maybe Mode_t
+                     , machine  :: Pstring ':', ':'
+                     , path     :: Pstringln            
+                     \}                                  
+       \kw{type} Root_f = Line Root_t
+
+       \kw{data} Dentry_t = \{ "D/"
+                       , dirname :: Pstring '/'
+                       , "////"
+                       \}
+\mbox{}
+       \kw{data} Revision_t  = Version (Pint, '.', Pint) | Added '0' | Removed '-'
+       \kw{data} TimeStamp_t = \{ ts       :: PstringSE (RE "[/+]")
+                          , conflict :: Maybe ('+', Pstring '/') \}
+\mbox{}
+       \kw{type} Fentry_t = \{                                  "/"  
+                       , filename   :: Pstring '/',       "/"
+                       , revision   :: Revision_t,        "/"
+                       , timestamp  :: TimeStamp_t,       "/"   
+                       , options    :: Pstring '/',       "/"  
+                       , tagdate    :: Pstringln
+                       \}
+
+       \kw{data} Entry_t   = Dir Dentry_t | File Fentry_t | NoDir 'D'
+     
+       \kw{type} Entries_f = [Line Entry_t] \kw{with} term Eof
+|]
+\end{code}
+\begin{code}
+
+\textcolor{red}{-- Auxiliary Haskell functions}
+getEntries cvs = \kw{let} (Entries_f l) = entries cvs \kw{in} l
+getDirName  d  = \kw{let} (Pstring s)   = dirname   d \kw{in} s
+getFileName f  = \kw{let} (Pstring s)   = filename  f \kw{in} s
+\mbox{}             
+isDir entry  = \kw{case} entry \kw{of} {Dir _  -> True; otherwise -> False}
+isFile entry = \kw{case} entry \kw{of} {File _ -> True; otherwise -> False}
+\mbox{}                            
+
+getDirs  cvs = map (\textbackslash(Dir d)  -> d) (filter isDir  (getEntries cvs))
+getFiles cvs = map (\textbackslash(File f) -> f) (filter isFile (getEntries cvs))
+\end{code}
+\begin{code}
+
+\textcolor{red}{-- FOREST description of CVS directory structure}
+\textcolor{red}{-- Note that this description is recursive.}
+\textcolor{red}{-- Note also that the collection of dirs and the 
+-- collection of files are determined from information in the cvs 
+-- directory.}
+[forest| \kw{type} CVS_d = \kw{Directory}
+              \{ repository \kw{is} "Repository" :: File Repository_f
+              , root       \kw{is} "Root"       :: File Root_f
+              , entries    \kw{is} "Entries"    :: File Entries_f
+              \}
+\mbox{}             
+         \kw{type} CVS_Repository_d = Directory
+             \{ cvs         \kw{is} "CVS"                 :: CVS_d
+             , dirs        \kw{is} [ n \kw{as} <| getDirName  d |> :: CVS_Repository_d | d <- <| getDirs  cvs |> ]
+             , files       \kw{is} [ <| getFileName f |> :: Text       | f <- <| getFiles cvs |> ]
+             \} |]
+
+\end{code}
+\begin{code}
+\textcolor{red}{-- Sample use of PADS and FOREST descriptions}
+meta_dir     = "Examples/CVS"
+entries_file = meta_dir ++ "/Entries"
+doParseEntries = \kw{do} \{
+ (rep, md)  <- parseFile entries_file
+\}
+\mbox{}             
+doLoadCVS = \kw{do} \{
+   (meta_rep, meta_md) <- cVS_d_load meta_dir
+\}
+\end{code}

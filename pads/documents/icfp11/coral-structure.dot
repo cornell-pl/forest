@@ -1,0 +1,36 @@
+digraph {
+	graph [ordering=out, rankdir=LR];
+	node [label="\N"];
+	graph [bb="0,0,708,468"];
+	0 [label=logs, fontname=Courier, shape=box, pos="27,206", width="0.75", height="0.50"];
+	1 [label="planetlab-2.stanford.edu", fontname=Courier, shape=box, pos="199,247", width="3.03", height="0.50"];
+	2 [label="2005_08_14-00_33", fontname=Courier, shape=box, pos="419,369", width="2.08", height="0.50"];
+	3 [label="coralwebsrv.log.gz", fontname=Courier, penwidth=2, pos="619,450", width="2.44", height="0.50"];
+	4 [label="probed.log.gz", fontname=Courier, penwidth=2, pos="619,396", width="1.86", height="0.50"];
+	5 [label="corald.log.gz", fontname=Courier, penwidth=2, pos="619,342", width="1.86", height="0.50"];
+	6 [label="2005_08_14-00_01", fontname=Courier, shape=box, pos="419,247", width="2.08", height="0.50"];
+	7 [label="coralwebsrv.log.gz", fontname=Courier, penwidth=2, pos="619,288", width="2.44", height="0.50"];
+	8 [label="corald.log.gz", fontname=Courier, penwidth=2, pos="619,234", width="1.86", height="0.50"];
+	9 [label="planetlab3.williams.edu", fontname=Courier, shape=box, pos="199,166", width="2.89", height="0.50"];
+	10 [label="2009_09_16-00_01", fontname=Courier, shape=box, pos="419,166", width="2.08", height="0.50"];
+	11 [label="coralwebsrv.log.gz", fontname=Courier, penwidth=2, pos="619,180", width="2.44", height="0.50"];
+	12 [label="coraldnssrv.log.gz", fontname=Courier, penwidth=2, pos="619,126", width="1.86", height="0.50"];
+	13 [label="2008_08_15-00_01", fontname=Courier, shape=box, pos="419,72", width="2.08", height="0.50"];
+	14 [label="coralwebsrv.log.gz", fontname=Courier, penwidth=2, pos="619,72", width="2.44", height="0.50"];
+	15 [label="corald.log.gz", fontname=Courier, penwidth=2, pos="619,18", width="1.86", height="0.50"];
+	0 -> 1 [pos="e,124,229 54,212 70,216 92,221 114,227"];
+	0 -> 9 [pos="e,121,184 54,200 70,197 90,192 111,186"];
+	1 -> 2 [pos="e,386,351 231,265 270,286 335,323 377,346"];
+	1 -> 6 [pos="e,344,247 308,247 317,247 325,247 334,247"];
+	2 -> 3 [pos="e,567,435 453,387 475,398 504,412 530,423 539,427 548,430 557,432"];
+	2 -> 4 [pos="e,559,388 494,379 512,382 531,384 549,387"];
+	2 -> 5 [pos="e,559,350 494,359 512,356 531,354 549,351"];
+	6 -> 7 [pos="e,557,275 494,262 512,265 530,269 547,273"];
+	6 -> 8 [pos="e,553,238 494,242 510,241 527,240 543,239"];
+	9 -> 10 [pos="e,344,166 304,166 314,166 324,166 334,166"];
+	9 -> 13 [pos="e,377,90 241,148 277,132 329,111 368,94"];
+	10 -> 11 [pos="e,536,174 494,171 505,172 515,173 526,173"];
+	10 -> 12 [pos="e,565,137 494,151 514,147 536,142 555,139"];
+	13 -> 14 [pos="e,530,72 494,72 503,72 511,72 520,72"];
+	13 -> 15 [pos="e,571,31 486,54 510,47 538,40 561,34"];
+}

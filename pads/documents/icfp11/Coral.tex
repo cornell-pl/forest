@@ -1,0 +1,176 @@
+
+\begin{code}
+\textcolor{red}{-- Auxiliary Haskell definitions for PADS description}
+comma\_ws = RE ",[ \t]*"
+status\_re = RE "[0-9]+"
+\mbox{}
+\textcolor{red}{-- PADS description of CoralCDN Webserver Log Format}
+[pads|
+  \kw{type} Time = (Pint, ".", Pint)
+\mbox{}
+  \kw{type} Byte = constrain x :: Pint \kw{where} <| 0 <= x && x <= 256 |>
+\mbox{}
+  \kw{type} IP\_Port = 
+    \{ '"', 
+      ip :: (Byte,'.',Byte,'.',Byte,'.', Byte), ":",
+      port :: Pint, '"' \}
+\mbox{}
+  \kw{type} Status = PstringME(status\_re)
+\mbox{}
+  \kw{type} Statistics = 
+    \{ stats\_size       :: Pint,      comma\_ws
+    , stats\_proxy      :: Pre "[01]",  comma\_ws
+    , stats\_level      :: Pint,      comma\_ws
+    , stats\_lookup     :: Pint,      comma\_ws
+    , stats\_xfer       :: Pint,      comma\_ws
+    , stats\_total      :: Pint \}
+\mbox{}
+  \kw{type} NoQuote = PstringME (RE "[^\\"]*")
+\mbox{}
+  \kw{type} Generic = ('"',NoQuote,'"')
+\mbox{}
+  \kw{type} Url = Generic
+\mbox{}
+  \kw{data} Header = 
+    \{ version       :: Maybe (Pre "[12],[ \\t]*")
+    , time          :: Time     \}
+\mbox{}
+  \kw{data} Request = 
+   \{ src       :: IP\_Port, comma\_ws
+   , dst       :: IP\_Port, comma\_ws
+   , url       :: Url \} 
+\mbox{}
+  \kw{data} InData =
+    \{ "\\"IN\\"",               comma\_ws
+    , in\_req     :: Request,  comma\_ws
+    , in\_status1 :: Status,   comma\_ws
+    , in\_status2 :: Status,   comma\_ws
+    , in\_stats   :: Statistics \}
+\mbox{}
+  \kw{data} OutData = 
+    \{ "\\"OUT\\"",                            comma\_ws 
+    , out\_remote    :: Pre "\\"(REM|LOC)\\"", comma\_ws
+    , out\_req       :: Request,             comma\_ws
+    , out\_referrer  :: Url,                 comma\_ws
+    , out\_status    :: Status,              comma\_ws
+    , out\_stats     :: Statistics,          comma\_ws
+    , out\_forwarded :: Generic,             comma\_ws
+    , out\_via       :: Generic  \}
+\mbox{}
+  \kw{data} InOut = In InData | Out OutData
+\mbox{}
+  \kw{data} Entry = 
+    \{ header  :: Header,   comma\_ws
+    , payload :: InOut
+    , Eor \}
+\mbox{}
+  \kw{type} Entries = [Entry] \kw{with} term Eor
+\mbox{}  
+  \kw{type} Coral = (Entries, Eof)
+|]
+\end{code}
+
+\begin{code}
+\textcolor{red}{-- Forest description of CoralCDN Log Repository}
+[forest|
+  \textcolor{red}{-- Directory containing log files}
+  \kw{type} Log = \kw{Directory}
+    \{ web \kw{is} "coralwebsrv.log.gz" :: Gzip (File Coral),          
+      dns \kw{is} "coraldnssrv.log.gz" :: Maybe (Gzip (File Ptext)),
+      prb \kw{is} "probed.log.gz"      :: Maybe (Gzip (File Ptext)),
+      dmn \kw{is} "corald.log.gz"      :: Maybe (Gzip (File Ptext)) \}
+\mbox{}
+  \textcolor{red}{-- Directory containing dates}
+  \kw{type} Site = [ d :: Log | d <- \kw{matches} (RE "[0-9]\{4\}\_[0-9]\{2\}\_[0-9]\{2\}-[0-9]\{2\}\_[0-9]\{2\}") ] 
+\mbox{}
+  \textcolor{red}{-- Directory containing sites}
+  \kw{type} Top = [ s :: Site | s <- \kw{matches} (RE "[^.].*") ] 
+|]
+\end{code}
+
+\begin{code}
+
+\textcolor{red}{-- Load function for CoralCDN description}
+(rep,md) = unsafePerformIO \$ top\_load "/var/log/coral"
+\mbox{}
+\textcolor{red}{-- Helpers: deconstruct representations }
+get\_sites :: Top -> [(String,Site)]
+get\_dates :: Site -> [(String,Log)]
+get\_entries :: Log -> [Entry]
+\mbox{}
+\textcolor{red}{-- Helpers: project fields }
+get\_stats :: Entry -> Statistics
+get\_total :: Entry -> Int
+get\_date :: String -> String 
+get\_url::Entry -> String
+string\_of\_url :: Url -> String
+is\_in :: Entry -> Bool
+is\_out :: Entry -> Bool
+\mbox{}
+\textcolor{red}{-- Helper: builds an association list }
+lmap f p tdir = 
+   [ f host datetime e | (host,hdir) <- get\_sites tdir,
+                         (datetime,ldir) <- get\_dates hdir,
+                          e <- get\_entries ldir,
+                          p e ]
+\mbox{}
+\textcolor{red}{-- Uses of lmap}
+by\_date = lmap ({\char92}h d e -> (get\_date d, get\_total e))
+by\_host = lmap ({\char92}h d e -> (h, get\_total e))
+by\_url\_bytes = lmap ({\char92}h d e -> (get\_url e, get\_total e))
+by\_url\_counts = lmap ({\char92}h d e -> (get\_url e, 1))
+
+\mbox{}
+\textcolor{red}{-- Helpers: fold down an association list}
+go\_bins m p = fromListWith (+) (m p rep)
+\mbox{}
+count\_bins m = fromListWith (+) (fold ({\char92} c l -> (c,1):l) [] m)
+\mbox{}
+go\_flat p = 
+  sum [ (get\_total e) | (host,hdir) <- get\_sites tdir,
+                        (datetime,ldir) <- get\_dates hdir,
+                        e <- get\_entries ldir,
+                        p e ]
+\mbox{}
+\textcolor{red}{-- Several useful queries }
+in\_total = go\_flat is\_in
+out\_total = go\_flat is\_out
+in\_by\_host = go\_bins by\_host is\_in
+out\_by\_host = go\_bins by\_host is\_out 
+in\_by\_date = go\_bins by\_date is\_in 
+out\_by\_date = go\_bins by\_date is\_out
+in\_url\_bytes = go\_bins by\_url\_bytes is\_in
+out\_url\_bytes = go\_bins by\_url\_bytes is\_out
+in\_url\_counts = go\_bins by\_url\_counts is\_in
+out\_url\_counts = go\_bins by\_url\_counts is\_out
+in\_counts\_urls = count\_bins \$ go\_bins by\_url\_counts is\_in
+out\_counts\_urls = count\_bins \$ go\_bins by\_url\_counts is\_out
+num\_sites () = case load\_logs () of Top l -> List.length l
+\mbox{}
+\textcolor{red}{-- Top-k URLs } 
+topk k = 
+  take k \$ sortBy sortDown \$ toList \$
+  fromListWith (+)
+    [ (get\_url e, get\_total e)
+    | (site,sdir) <- get\_sites rep,
+      (datetime,ldir) <- get\_dates sdir,
+      e <- get\_entries ldir,
+      is\_in e ]
+\end{code}
+
+
+%\begin{figure}
+\begin{center}
+\centerline{\noindent\tikz\node[scale=.7]{\pgfimage{Coral}};}
+\end{center}
+%\caption{Graph showing structure of the CoralCND log repository,
+%  generated from the description using \texttt{ForestGraph}}
+%\label{fig:coral}
+%\end{figure}
+
+
+
+
+
+
+

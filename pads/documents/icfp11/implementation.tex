@@ -1,0 +1,62 @@
+\section{Implementation}
+\label{sec:implementation}
+We have fully implemented the \forest{} language and anticipate making
+it publicly available within the next few months.
+\haskell{} provides powerful language features and libraries that
+greatly facilitated the implementation of \forest{}.  The most obvious
+of these features is the quasi-quoting~\cite{Mainland:quasi} mechanism
+that we used to embed \forest{} into \haskell{}.  This mechanism
+allowed us to enjoy the benefits of being an embedded domain-specific
+language without having to sacrifice the flexibility of
+defining our own syntax. To use quasi-quoting, we defined a \haskell{}
+value \cd{forest} of type \cd{QuasiQuoter} which specifies how to
+convert an input string representing a \forest{} declaration into the
+\template{}~\cite{Sheard+:templatehaskell} 
+data structures that represent the syntax of the
+corresponding collection of \haskell{} declarations.
+The quasi-quoting syntax \cd{[forest| <input> |]}
+is legal anywhere the identifier \cd{forest} is in scope.
+When the \haskell{} compiler processes this declaration, it first
+passes \cd{<input>} as a string to the \cd{forest} quasi-quoter, and
+then it compiles the resulting \template{} data structures as if the
+corresponding \haskell{} code had appeared in the input at the
+location of the quasi-quote.  Early versions of quasi-quoting
+supported quoting only expression and pattern forms.  Simon Peyton
+Jones extended the mechanism to permit declaration and type
+quasi-quoting partly to enable the \forest{} implementation.  We used
+this same approach to implement \padshaskell{}, which we built
+concomitantly. 
+
+\paragraph{Parsing.}  
+We used the parsec 3.1.0 parser
+combinator library~\cite{LeijenMeijer:parsec} to implement the \forest{} parser.  One key element
+of the \forest{} design is to allow arbitrary \haskell{} expressions
+in various places inside \forest{} descriptions.  We did not want to
+reimplement the grammar for \haskell{} expressions, which is quite
+complicated.  Instead, we structured the \forest{} grammar so we could
+always determine the extent of any embedded \haskell{} code.  We then
+used the Haskell Source Extension package~\cite{haskell-src-exts} to parse
+these fragments.  The data structure that this library returns is
+unfortunately not the data structure that \template{} requires, so we
+used yet another library, the Haskell Source Meta
+package~\cite{haskell-src-meta}, that provides this translation. 
+
+
+\paragraph{Type checking.}
+We would like to give users high-quality error messages if there
+are type errors in their \forest{} declarations.  At the moment, 
+typechecking occurs, but only after the \forest{} declarations have
+been expanded to the corresponding \haskell{} code.  Although these
+error messages can be quite informative, it is sub-optimal to report
+errors in terms of generated code.  Type checking the \forest{} source
+is complicated by the embedded fragments of \haskell{}.  As with the
+syntax, we do not want to reimplement the \haskell{} typechecker!  
+There is an active proposal~\cite{extend-templates} to extend the \template{} infrastructure
+with functions that would enable us to ask the native \haskell{}
+typechecker for the types of embedded expressions and to extend the
+current type environment with type bindings for new identifiers.  With
+this combination of features, we will be able to type check \forest{}
+sources directly.
+%, yielding a fully satisfactory embedded
+%domain-specific language.
+
