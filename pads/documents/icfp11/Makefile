@@ -5,7 +5,7 @@ all:	paper
 
 
 clean:	
-	rm -rf *.aux *.log *.blg *.dvi *.ps *.pdf *.toc
+	rm -rf *.aux *.log *.blg *.dvi *.ps *.toc
 
 quick: 	paper.tex
 	latex paper.tex; dvips paper.dvi -o paper.ps

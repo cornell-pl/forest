@@ -1,11 +1,16 @@
 \documentclass[nocopyrightspace,natbib,preprint]{sigplanconf}
 
-\newif\ifdraft\draftfalse  %% set to false in final version
+\newif\ifdraft\drafttrue  %% set to false in final version
 \newif\ifanon\anonfalse  %% set to false in final version
 
 \usepackage{xspace,pads,amsmath,math-cmds,
             math-envs,inference-rules,times,
             verbatim,alltt,multicol,proof,url}
+\usepackage{jnf-proof}
+\usepackage{xcolor}
+\definecolor{dkblue}{cmyk}{1,.65,0,.3}
+\definecolor{dkred}{cmyk}{0,1,.65,.34}
+\usepackage[colorlinks=true,linkcolor={dkblue},citecolor={dkred}]{hyperref}
 \usepackage{epsfig}
 \usepackage{code} 
 \usepackage{tikz}
@@ -13,7 +18,7 @@
 \begin{document}
 \input{definitions}
 
-\conferenceinfo{PLDI'11,}{} 
+\conferenceinfo{ICFP'11,}{} 
 \copyrightyear{2011} 
 \copyrightdata{} 
 
@@ -87,6 +92,17 @@ and do not necessarily reflect the views of the NSF.
 \onecolumn
 \newpage
 \appendix
+
+% JNF: TeX hackery for deferring proofs :-)
+\closeproofchan
+\section{Proofs}
+
+\noindent This appendix contains the proofs of the theorems stated in
+Section~\ref{sec:theory}.
+
+\label{sec:proof-appendix}
+\input{proof-appendix}
+
 \input{pldiaux}
 \fi
 

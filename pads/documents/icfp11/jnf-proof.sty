@@ -1,0 +1,65 @@
+% TeX hacks for deferring proofs
+% (c) 2008 Nate Foster
+
+\def\prooffile{proof-appendix}
+
+\newwrite\proofchan
+
+\def\open@proofchan{
+  \immediate\openout\proofchan=\prooffile\relax
+  \global\let\open@proofchan=\relax
+}
+
+\newcommand{\closeproofchan}{
+  \immediate\closeout\proofchan
+}
+
+\newcommand{\emit}[1]{
+  \open@proofchan 
+  \immediate\write\proofchan{#1}
+}
+
+\newcommand{\genref}[2]{
+  \csname #1def#2\endcsname
+}
+
+\newcommand{\genemit}[2]{
+  \emit{\expandafter\string\csname #1def#2\endcsname}
+}
+
+\newcommand{\defer}[2]{
+  \expandafter\gdef\csname #1def\endcsname{
+    #2
+  }
+  \genemit{#1}{}
+}
+
+\def\@empty{}
+
+% #1 - type  
+% #2 - name 
+% #3 - description
+% #4 - statement
+% #5 - proof
+\newcommand{\deferproof}[5]{  
+  \expandafter\gdef\csname #1def#2\endcsname{
+    \def\desc{#3}
+    \ifx\desc\empty\begin{#2}\else\begin{#1}[#3]\fi \label{#1:#2} #4 \end{#1}
+    \vspace*{-\medskipamount}
+    \begin{proof} See Appendix \hyperref[proof:#2]{\ref{sec:proof-appendix}}.\end{proof}
+
+    % redefine for subsequent uses
+    \expandafter\gdef\csname #1def#2\endcsname{
+      \def\desc{#3}
+      \renewcommand{\thethm}{\ref{#1:#2}}
+      \ifx\desc\@empty\begin{#2}\else\begin{#1}[#3]\fi #4 \end{#1}
+      \renewcommand{\thethm}{\arabic{thm}}
+    }
+  }
+  \expandafter\gdef\csname proofdef#2\endcsname{
+    \begin{proof}\label{proof:#2} #5 \end{proof}
+  }
+  \genref{#1}{#2}
+  \genemit{#1}{#2}
+  \genemit{proof}{#2}
+}
