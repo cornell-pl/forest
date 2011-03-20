@@ -35,7 +35,7 @@
 \newcommand{\REP}{\ensuremath{\mathit{REP}}}
 \newcommand{\MD}{\ensuremath{\mathit{MD}}}
 \newcommand{\md}[1]{\ensuremath{(#1)~\mathit{md}}}
-\newcommand{\eval}[2]{\ensuremath{\mathsf{eval}_{#1}(#2)}}
+\newcommand{\eval}[3]{\ensuremath{[\![#1]\!]^{#2}_{#3}}}
 \newcommand{\pfile}{\ensuremath{\mathsf{F}}}
 \newcommand{\ptext}{\ensuremath{\mathsf{T}}}
 \newcommand{\pbin}{\ensuremath{\mathsf{B}}}
@@ -46,12 +46,12 @@
 \newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
 \newcommand{\loadkname}[1]{\ensuremath{\mathit{load}_{#1}}}
 \newcommand{\storekname}[1]{\ensuremath{\mathit{store}_{#1}}}
-\newcommand{\storek}[4]{\fn{\storekname{#1}}{#2,#3,#4}}
+\newcommand{\storek}[5]{\fn{\storekname{#1}}{#2,#3,#4,#5}}
 \newcommand{\loadk}[4]{\fn{\loadkname{#1}}{#2,#3,#4}}
 \newcommand{\stringty}{{string}}
 \newcommand{\metapdty}{\meta}
-\newcommand{\load}[5]{#1;#2;#3 \models #4 \yields #5 }
-\newcommand{\store}[6]{#1;#2;#3;#4 \models #5 \yields #6 }
+\newcommand{\load}[5]{#1;#3 \models #4 ~~ #2 \rhd (#5) }
+\newcommand{\store}[6]{#1;#3 \models #5 ~~ (#6) \lhd (#2,#4) }
 
 \begin{figure}
 \[
@@ -147,7 +147,7 @@ Figure~\ref{fig:calculus-syntax} presents the syntax of a simple
 computation language $e$ and our file system specifications $s$.  The
 computation language $e$ contains values $v$, variables $x$, and other
 operators, which we leave unspecified.  An environment $\Env$ maps
-variables to values.  The semantic function $\eval{\tau}{\Env,r,e}$
+variables to values.  The semantic function $\eval{e}{\Env,r}{\tau}$
 evaluates an expression $e$ in an environment $\Env$ with respect to a
 current path $r$, yielding a value $v$ of type $\tau$.
 
@@ -194,16 +194,16 @@ Finally, maybe specifications are written as $\SOption{s}$ in the
 calculus.
 
 \begin{figure*}
-\begin{minipage}{.475\textwidth}
+\begin{minipage}[t]{.475\textwidth}
 \[
 \begin{array}{c}
 \infrule
 { }
-{ \load{\Env}{F}{r}{\Sk}{ \loadk{\Sk}{\Env}{F}{r} } }
+{ \load{\Env}{F}{r}{\Sk}{ \loadk{k}{\Env}{F}{r} } }
 { }
 \\[1.5em]
 \infrule
-{ \load{\Env}{F}{\eval{path}{E,r,\PCons{r}{e}}}{s}{v,d} }
+{ \load{\Env}{F}{\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}}{s}{v,d} }
 { \load{\Env}{F}{r}{\SPath{e}{s}}{v,d} }
 { }
 \\[1.5em]
@@ -218,7 +218,7 @@ calculus.
 \\[1.5em]
 \infrule
 { \begin{array}{c}
-  \eval{(\tau\ \mathit{list})}{\Env,r,e} = [w_1,\dots,w_k ]\\
+  \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_k ]\\
   \forall i \in \{1,\dots,k\}.~\load{\Env[x \mapsto w_i]}{F}{r}{s}{v_i,d_i}\\
   b = \bigwedge_i \valid{d_i}
   \end{array} }
@@ -226,7 +226,7 @@ calculus.
 { }
 \\[1.5em]
 \infrule
-{ b = \eval{bool}{E,r,e} }
+{ b = \eval{e}{\Env,r}{\mathit{bool}} }
 { \load{\Env}{F}{r}{ \SPred{e} }{ (),(b,()) } }
 { }
 \\[1.5em]
@@ -240,26 +240,25 @@ calculus.
 { \load{\Env}{F}{r}{ \SOption{s} }{ \Just{v},(\valid{d},\Just{d}) } }
 { }
 \\[1.5em]
-\text{(a)}
 \end{array}
 \]
-\end{minipage}\hfill\vrule\hfill\begin{minipage}{.475\textwidth}
+\end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.475\textwidth}
 \[
 \begin{array}{c}
 \infrule
 { }
-{ \store{\Env}{F}{r}{v,d}{\Sk}{ \storek{\Sk}{F}{r}{v,d} } }
+{ \store{\Env}{F}{r}{v,d}{\Sk}{ \storek{k}{\Env}{F}{r}{v,d} } }
 { }
 \\[1.5em]
 \infrule
-{ \store{\Env}{F}{\eval{path}{E,r,\PCons{r}{e}}}{v,d}{s}{F',\phi} }
+{ \store{\Env}{F}{\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}}{v,d}{s}{F',\phi} }
 { \store{\Env}{F}{r}{v,d}{\SPath{e}{s}}{F',\phi } }
 { }
 \\[1.5em]
 \infrule
 { \begin{array}{c}
   \store{\Env}{F}{r}{  v_1,d_1 }{s_1}{ F_1',\phi_1 } \\
-  \store{\Env[x \mapsto v_1}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\
+  \store{\Env[x \mapsto v_1]}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\
   F' = F_1' \FAppend F_2'\\
   \phi(F') = (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1(F') \wedge \phi_2(F')
   \end{array} }
@@ -268,7 +267,7 @@ calculus.
 \\[1.5em]
 \infrule
 { \begin{array}{c}  
-  \eval{(\tau\ \mathit{list})}{\Env,r,e} = [w_1,\dots,w_m ]\\  
+  \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ]\\  
   k = \min{(j,l,m)} \\
   \forall i \in \{1,\dots,k\}.~\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}\\
   F' = F_1' \FAppend \dots \FAppend F_k'\\
@@ -278,7 +277,7 @@ calculus.
 { }
 \\[1.5em]
 \infrule
-{ \phi(F') = b = \eval{bool}{E,r,e} }
+{ \phi(F') = b = \eval{e}{\Env,r}{\mathit{bool}} }
 { \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi } }
 { }
 \\[1.5em]
@@ -298,10 +297,11 @@ calculus.
 { \store{\Env}{F}{r}{ v,(b,d) }{ \SOption{s} }{ \FDelete{F'}{r},\phi' } }
 { }
 \\[1.5em]
-\text{(b)}
 \end{array}
 \]
+\vfill
 \end{minipage}
+\centerline{\hfill (a) \hfill\hfill (b) \hfill}
 \caption{\forest{} calculus semantics for (a) loading and (b) storing}
 \label{fig:calculus-semantics}
 \end{figure*}
@@ -357,12 +357,12 @@ The proof is by induction on $s$.
 By the definitions of the load and store functions we have 
 \[ 
 \begin{array}{rcll}
-v,d  &=& \loadk{\Env}{F}{r}\\
-F',\phi' &=& \storek{\Env}{F}{r}{v,d}\\
+v,d  &=& \loadk{k}{\Env}{F}{r}\\
+F',\phi' &=& \storek{k}{\Env}{F}{r}{v,d}\\
 \end{array}
 \]
-By assumptions about the behavior of $\loadkname{\Sk}$ and
-$\storekname{\Sk}$, we have $F' = F$ and $\phi'(F')$, which finishes
+By assumptions about the behavior of $\loadkname{k}$ and
+$\storekname{k}$, we have $F' = F$ and $\phi'(F')$, which finishes
 the case.
 
 %%%
@@ -375,7 +375,7 @@ By the definitions of the load and store functions we have
 \begin{array}{rcll}
 \multicolumn{3}{l}{\load{\Env}{F}{r'}{s_1}{v,d}}\\
 \multicolumn{3}{l}{\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}}\\
-r' &=& \eval{path}{E,r,\PCons{r}{e}}\\
+r' &=& \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
 \end{array}
 \]
 By the induction hypothesis applied to $s_1$ we have $F' = F$ and
@@ -414,7 +414,7 @@ the case.
 By the definitions of the load and store functions we have 
 \[ 
 \begin{array}{rcll}
-\eval{(\tau\ \mathit{list})}{\Env,r,e} &=& [w_1,\dots,w_k ]\\
+\eval{e}{\Env,r}{(\tau\ \mathit{list})} &=& [w_1,\dots,w_k ]\\
 \multicolumn{3}{l}{\load{\Env[ x \mapsto w_i]}{F}{r}{s_1}{v_i,d_i} \quad \text{for}~i \in \{1,\dots,k\}} \\
 \multicolumn{3}{l}{\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i} \quad \text{for}~i \in \{1,\dots,k\}}\\
 v &=& [v_1,\dots,v_k]\\
@@ -439,9 +439,9 @@ By the definition of the load and store functions we have
 \begin{array}{rcll}
 v = ()\\
 d = (b,())\\
-b = \eval{bool}{E,r,e}\\
+b = \eval{e}{\Env,r}{\mathit{bool}}\\
 F' = F\\
-\phi(F') = (b = \eval{bool}{E,r,e})\\
+\phi(F') = (b = \eval{e}{\Env,r}{\mathit{bool}})\\
 \end{array}
 \]
 Thus, we immediately have $F' = F$ and $\phi'(F')$.
@@ -511,12 +511,12 @@ The proof is by induction on $s$.
 By the definitions of the load and store functions we have 
 \[ 
 \begin{array}{rcll}
-F',\phi &=& \storek{\Env}{F}{r}{v,d}\\
-v',d'  &=& \loadk{\Env}{(G_1 \FAppend F' \FAppend G_2)}{rs}\\
+F',\phi &=& \storek{k}{\Env}{F}{r}{v,d}\\
+v',d'  &=& \loadk{k}{\Env}{(G_1 \FAppend F' \FAppend G_2)}{rs}\\
 \end{array}
 \]
-By assumptions about the behavior of $\loadkname{\Sk}$ and
-$\storekname{\Sk}$, we have $v' = v$ and $\valid{d} \iff \valid{d'}$,
+By assumptions about the behavior of $\loadkname{k}$ and
+$\storekname{k}$, we have $v' = v$ and $\valid{d} \iff \valid{d'}$,
 which finishes the case. 
 
 %%%
@@ -527,7 +527,7 @@ which finishes the case.
 By the definitions of the load and store functions we have
 \[
 \begin{array}{rcll}
-r' &=& \eval{path}{E,r,\PCons{r}{e}}\\
+r' &=& \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
 \multicolumn{3}{l}{\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}}\\
 \multicolumn{3}{l}{\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r'}{s_1}{v',d'}}\\
 \end{array}
@@ -608,7 +608,7 @@ By the definition of the store function we have
 \multicolumn{3}{l}{\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}} & \text{for}~i \in \{1,\dots,k\}\\
 v &=& [v_1,\dots,v_j]\\
 d &=& [d_1,\dots,d_l]\\
-\eval{(\tau\ \mathit{list})}{\Env,r,e} &=& [w_1,\dots,w_m ]\\
+\eval{e}{\Env,r}{(\tau\ \mathit{list})} &=& [w_1,\dots,w_m ]\\
 k &=& \min{(j,l,m)}\\
 F' &=& F_1' \FAppend \dots \FAppend F_k'\\
 \phi(F') &=& j = k = l \wedge b = (\bigwedge_i^k \valid{d_i}) \bigwedge_i^k \phi_i(F')\\
@@ -661,15 +661,15 @@ By the definitions of the store and load functions we have
 v = ()\\
 d = ((),b)
 F' = F\\
-\phi'(F') = (b = \eval{bool}{E,r,e})\\
+\phi'(F') = (b = \eval{e}{\Env,r}{\mathit{bool}})\\
 v' &=& ()\\
 d' &=& (b',())\\
-b' &=& \eval{bool}{E,r,e}\\
+b' &=& \eval{e}{\Env,r}{\mathit{bool}}\\
 \end{array}
 \]
-By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $(b =
-\eval{bool}{E,r,e})$. It follows that $v = v'$ and $b \iff b'$, which
-finishes the case.
+By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $b =
+\eval{e}{\Env,r}{\mathit{bool}}$. It follows that $v = v'$ and $b \iff
+b'$, which finishes the case.
 
 %%%
 %%% Option
