@@ -494,8 +494,8 @@ systems, $r$ a path, $s$ a specification, $v$ and $v'$
 representations, $d$ and $d'$ metadata, and $\phi'$ a predicate such
 that:
 \[
-\begin{array}{c}
-\store{\Env}{F}{r}{v,d}{s}{F',\phi'} \\
+\begin{array}{c@{\qquad}c}
+\store{\Env}{F}{r}{v,d}{s}{F',\phi'} & 
 \phi'(G_1 \FAppend F' \FAppend G_2) \\
 \load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r}{s}{v',d'}
 \end{array}
