@@ -194,7 +194,7 @@ Finally, maybe specifications are written as $\SOption{s}$ in the
 calculus.
 
 \begin{figure*}
-\begin{minipage}[t]{.475\textwidth}
+\begin{minipage}[t]{.425\textwidth}
 \[
 \begin{array}{c}
 \infrule
@@ -232,17 +232,17 @@ calculus.
 \\[1.5em]
 \infrule
 { r \not\in \dom{F} }
-{ \load{\Env}{F}{r}{ \SOption{s} }{ \Nothing,(\False,\Nothing) } }
+{ \load{\Env}{F}{r}{ \SOption{s_1} }{ \Nothing,(\False,\Nothing) } }
 { }
 \\[1.5em]
 \infrule
-{ r \in \dom{F} \qquad \load{\Env}{F}{r}{s}{v,d} }
-{ \load{\Env}{F}{r}{ \SOption{s} }{ \Just{v},(\valid{d},\Just{d}) } }
+{ r \in \dom{F} \qquad \load{\Env}{F}{r}{s_1}{v_1,d_1} }
+{ \load{\Env}{F}{r}{ \SOption{s_1} }{ \Just{v_1},(\valid{d_1},\Just{d_1}) } }
 { }
 \\[1.5em]
 \end{array}
 \]
-\end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.475\textwidth}
+\end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.525\textwidth}
 \[
 \begin{array}{c}
 \infrule
@@ -251,8 +251,8 @@ calculus.
 { }
 \\[1.5em]
 \infrule
-{ \store{\Env}{F}{\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}}{v,d}{s}{F',\phi} }
-{ \store{\Env}{F}{r}{v,d}{\SPath{e}{s}}{F',\phi } }
+{ \store{\Env}{F}{\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}}{v,d}{s}{F',\phi'} }
+{ \store{\Env}{F}{r}{v,d}{\SPath{e}{s}}{F',\phi' } }
 { }
 \\[1.5em]
 \infrule
@@ -260,48 +260,48 @@ calculus.
   \store{\Env}{F}{r}{  v_1,d_1 }{s_1}{ F_1',\phi_1 } \\
   \store{\Env[x \mapsto v_1]}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\
   F' = F_1' \FAppend F_2'\\
-  \phi(F') = (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1(F') \wedge \phi_2(F')
+  \phi'(F') = (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')
   \end{array} }
-{ \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F',\phi } }
+{ \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F',\phi' } }
 { }
 \\[1.5em]
 \infrule
 { \begin{array}{c}  
   \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ]\\  
   k = \min{(j,l,m)} \\
-  \forall i \in \{1,\dots,k\}.~\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}\\
+  \forall i \in \{1,\dots,k\}.~\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
   F' = F_1' \FAppend \dots \FAppend F_k'\\
-  \phi(F') = (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge \bigwedge_i^k \phi_i(F')
+  \phi'(F') = (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge \bigwedge_i^k \phi_i'(F')
   \end{array} }
-{ \store{\Env}{F}{r}{[v_1,\dots,v_j],(d,[d_1,\dots,d_l])}{ \SComp{s}{x}{e} }{ F',\phi } }
+{ \store{\Env}{F}{r}{[v_1,\dots,v_j],(d,[d_1,\dots,d_l])}{ \SComp{s}{x}{e} }{ F',\phi' } }
 { }
 \\[1.5em]
 \infrule
-{ \phi(F') = b = \eval{e}{\Env,r}{\mathit{bool}} }
-{ \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi } }
+{ \phi'(F') = b = \eval{e}{\Env,r}{\mathit{bool}} }
+{ \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi' } }
 { }
 \\[1.5em]
 \infrule
 { \begin{array}{c}
-  \store{\Env}{F}{r}{ v,d }{ s }{ F',\phi' }\\
-  \phi(F') = (b = \valid{d}) \wedge (r \in \dom{F'}) \wedge \phi'(F')
+  \store{\Env}{F}{r}{ v_1,d_1 }{ s_1 }{ F',\phi_1' }\\
+  \phi'(F') = (b = \valid{d_1}) \wedge (r \in \dom{F'}) \wedge \phi_1'(F')
   \end{array} }
-{ \store{\Env}{F}{r}{ \Just{v},(b,\Just{d}) }{ \SOption{s} }{ F',\phi } }
+{ \store{\Env}{F}{r}{ \Just{v_1},(b,\Just{d_1}) }{ \SOption{s_1} }{ F',\phi' } }
 { }
 \\[1.5em]
 \infrule
 { \begin{array}{c}
   v = \Nothing \vee d = \Nothing\\
-  \phi(F') = (v = \Nothing) \wedge (d = \Nothing) \wedge (\neg b) \wedge r \not\in \dom{F'}
+  \phi'(F') = (v = \Nothing) \wedge (d = \Nothing) \wedge \neg b \wedge r \not\in \dom{F'}
   \end{array} }
-{ \store{\Env}{F}{r}{ v,(b,d) }{ \SOption{s} }{ \FDelete{F'}{r},\phi' } }
+{ \store{\Env}{F}{r}{ v,(b,d) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
 { }
 \\[1.5em]
 \end{array}
 \]
 \vfill
 \end{minipage}
-\centerline{\hfill (a) \hfill\hfill (b) \hfill}
+\centerline{\hfill (a) \hfill\hfill \hspace*{.05\textwidth} (b) \hfill}
 \caption{\forest{} calculus semantics for (a) loading and (b) storing}
 \label{fig:calculus-semantics}
 \end{figure*}
