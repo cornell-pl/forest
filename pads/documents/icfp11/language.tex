@@ -507,18 +507,18 @@ Some files need to be processed before they can be used.  A typical
 example is a compressed file such as the gzipped log files in 
 \coral{}.  \forest{} provides processing-specific type
 constructors to describe such files.   For example, if
-\cd{CoralInfo} is a \padshaskell{} 
+\cd{CoralLog} is a \padshaskell{} 
 description of a \coral{} log file then 
 \begin{code}
-\kw{type} CoralLog = Gzip (File CoralInfo)
+\kw{type} Info = Gzip (File CoralLog)
 \end{code}
 describes a gzipped log file.
 Likewise, suppose \cd{logs.tar.gz} is a gzipped tar file and that the type
-\cd{Coral} describes the directory of log files that \cd{logs.tar} expands
+\cd{ManyLogs} describes the directory of log files that \cd{logs.tar} expands
 to when untarred.  Such a situation can be described using a
 combination of the \cd{Tar} and \cd{Gzip} type constructors:
 \begin{code}
-\kw{type} Coral = Gzip (Tar Coral)
+\kw{type} MoreInfo = Gzip (Tar ManyLogs)
 \end{code}
 
 

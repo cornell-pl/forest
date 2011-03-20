@@ -6,7 +6,18 @@ Load Functions:
 \begin{code}
 log_load   :: FilePath -> IO (Log, Log_md),
 site_load  :: FilePath -> IO (Site, Site_md)
-coral_load :: FilePath -> IO (Top, Top_md),
+dat_load   :: FilePath -> IO (Dat, Dat_md),
+stats_load :: FilePath -> IO (Stats, Stats_md)
+\end{code}
+Store Functions:
+\begin{code}
+log_manifest   :: (Log, Log_md)     -> IO Manifest
+site_manifest  :: (Site, Site_md)   -> IO Manifest
+dat_manifest   :: (Dat, Dat_md)     -> IO Manifest
+stats_manifest :: (Stats, Stats_md) -> IO Manifest
+\mbox{}
+storeAt        :: FilePath -> Manifest -> IO ()
+store          ::             Manifest -> IO ()
 \end{code}
 %\caption{Load functions for Coral}
 %\label{fig:coral-load}
@@ -17,7 +28,8 @@ Representation Types:
 \begin{code}
 \kw{data}    Log   = Log   \{log :: CoralLog\}
 \kw{newtype} Site  = Site  [(String, Log)]
-\kw{newtype} Coral = Coral [(String, Site)]
+\kw{newtype} Dat   = Dat   [(String, Site)]
+\kw{newtype} Stats = Stats \{last :: Last, topk :: Topk\}
 \end{code}
 %\caption{Representation types for Coral}
 %\label{fig:coral-rep}
@@ -26,21 +38,29 @@ Representation Types:
 %\begin{figure}
 Metadata Types:
 \begin{code}
-\kw{data} Log_inner_md = 
-  Log_inner_md \{log_md :: (Forest_md, CoralLog_md)\}
+\kw{data} Log_inner_md = Log_inner_md 
+    \{log_md :: (Forest_md, CoralLog_md)\}
 \kw{type} Log_md   = (Forest_md, Log_inner_md)
 \kw{type} Site_md  = (Forest_md, [(String, Log_md)])
-\kw{type} Coral_md = (Forest_md, [(String, Site_md)])
+\kw{type} Dat_md   = (Forest_md, [(String, Site_md)])
+\kw{data} Stats_inner_md = Stats_inner_md 
+    \{last_md :: (Forest_md, Last_md),
+     topk_md :: (Forest_md, Topk_md)\}
+\kw{type} Stats_md = (Forest_md, Stats_inner_md)
+\mbox{}
+md_default :: a
 \end{code}
-\caption{Coral load functions, representation and metadata types}
+\caption{Coral load and store functions; rep. and metadata types}
 \label{fig:coral-aux}
 \end{figure}
 
-Most \forest{} programs work in two phases. In the first phase they
+Many \forest{} programs work in two phases. In the first phase they
 use \forest{} to load relevant portions of the file system into memory,
 and in the second phase they use an ordinary Haskell function to
 traverse the in-memory representation of the data (or its associated
-metadata) and compute the desired result.
+metadata) and compute the desired result.  Some \forest{} programs
+add a third phase in which they store updated structures back to the
+filestore.
 \jnf{TODOs
 \begin{itemize}
 \item Format of coralwebsrv.log.gz is not currently explained anywhere.
@@ -52,28 +72,55 @@ To facilitate this style of programming, the \forest{} compiler
 generates several Haskell functions and types from every \forest{}
 description.  It generates a \emph{load function}, which traverses the
 file system and reads the files, directories, and symbolic links
-mentioned in the description into a structured object in memory; it
+mentioned in the description into a structured object in memory; 
+it
 generates a Haskell type for the in-memory \emph{representation} of
 the data produced by the load function; and it generates a Haskell
-type for the \emph{metadata} associated with the representation. For
-example, from the descriptions for \coral{} logs in
-Figure~\ref{fig:coral-description}, the compiler generates the load
-functions, the representation types, and the metadata types presented in
+type for the \emph{metadata} associated with the representation. 
+To reverse the process of reading data in to memory, \forest{}
+also generates a \emph{manifest function}, which reads an in-memory
+data structure, writes its contents out to disk in a temporary
+space, and prepares a 
+\emph{manifest log}.  The manifest log records inconsistencies
+that are detected during the printing process as well as the sequence
+of operations necessary to move data from the temporary space to
+its final resting point.  Inconsistences
+can arise when a programmer creates an erroneous in-memory
+representation of a \filestore{}
+--- due to the dependencies that may be present in
+\forest{} descriptions, not all such inconsistencies 
+are detected statically by the Haskell type system.
+Once the manifest log has been created, a programmer may analyze it
+and decide once and for all whether to execute the 
+generic \cd{store} or \cd{storeAt}
+functions, which move a manifest (inconsistencies and all) to its 
+rightful position on disk, potentially clobbering any pre-existing data 
+there.  Details concerning the semantics of printing, 
+especially where it concerns inconsistencies,
+are explained in further depth in Section~\ref{sec:semantics}.
+
+As an example, consider the \coral{} logs described in
+Figure~\ref{fig:coral-description}.  The corresponding load and store
+functions, the representation types, and the metadata types appear in
 Figure~\ref{fig:coral-aux}. Note that the structure of each of these
 artifacts mirrors the structure of the \forest{}
 description that generated them. This close correspondence makes it
 easy for programmers to write programs using these \forest{}-generated artifacts.
+Note that when storing freshly computed data, one often needs
+a meta-data structure.  The type-directed function \cd{md_default}
+listed in Figure~\ref{fig:coral-aux} will compute default meta-data
+of any type required.
 
-As a simple example, consider the \cd{Coral} description in
-Figure~\ref{fig:coral-description}. The \cd{coral\_load} function takes
+As a simple example, consider the \cd{Dat} description in
+Figure~\ref{fig:coral-description}. The \cd{dat\_load} function takes
 a path as an argument and produces the representation and metadata
 obtained by loading each of the site directories contained in the
 directory at that path:
 %
 \begin{code}
-(rep,md) <- coral_load "/var/log/coral1"
+(rep,md) <- dat_load "/var/log/coral/dat"
 \end{code}
-Because \cd{Coral} is a comprehension, both \cd{rep} and \cd{md} are
+Because \cd{Dat} is a comprehension, both \cd{rep} and \cd{md} are
 lists. More specifically, \cd{rep} has the form
 \begin{code}
 Coral [("planetab2.eecs.wsu.edu", Site [...]),
@@ -93,7 +140,7 @@ Forest_md
   \{ numErrors = 0, 
     errorMsg = Nothing, 
     fileInfo = FileInfo
-      \{ fullpath = /var/log/coral, 
+      \{ fullpath = /var/log/coral/dat, 
         owner = alice, group = staff, size = 102, 
         access_time = Fri Nov 19 01:47:09 2010, 
         mod_time = Thu Nov 18 20:42:37 2010, 
@@ -110,7 +157,7 @@ of sites we can simply compute the length of the nested list in
 \cd{rep}:
 %
 \begin{code}
-num_sites = \kw{case} rep \kw{of} Coral l -> List.length l 
+num_sites = \kw{case} rep \kw{of} Dat l -> List.length l 
 \end{code}
 %
 More interestingly, since the internals of the web log are specified
@@ -126,7 +173,7 @@ element in the resulting list of pairs:
 get_site = fst
 get_mod (_,(f,_)) = mod_time . fileInfo $ f  
 sites_mod () = 
-  \kw{case} (rep,md) \kw{of} (Coral rs, (_,ms)) -> 
+  \kw{case} (rep,md) \kw{of} (Dat rs, (_,ms)) -> 
     map (get_site *** get_mod) (zip rs ms)
 \end{code}
 % $
@@ -143,7 +190,7 @@ read the portions of the file system that are needed to compute the
 result---in this case, only the site directories and not the gzipped
 log files contained within them.
 
-As a final example, consider a program that computes the top-$k$
+As a final analysis example, consider a program that computes the top-$k$
 requested URLs from all \coral{} nodes by size. The \coral{}
 administrators compute this statistic periodically to help monitor and
 tune the performance of the system~\cite{freedman:coral-experience}. 
@@ -170,6 +217,17 @@ size of the request. It then sums the sizes of all requests for the
 same URL using the \cd{fromListWith} function from the \cd{Data.Map}
 module. Next, it sorts the entries in descending order. Finally, it
 returns the first $k$ entries of the list as the final result.
+
+Given these analyses, a programmer will want to store their results.
+They may do so in the \cd{stats} directory using the following code.
+
+\begin{code}
+manifest 
+   <- stats_manifest 
+        ( Stats \{last = sites_mod (), topk = top 10\}
+        , md_default::Stats_md )
+() <- storeAt "/var/log/coral/stats" manifest 
+\end{code}
 
 Overall, the main take-away from this section is how 
 the \forest{}-generated infrastructure and tight coupling

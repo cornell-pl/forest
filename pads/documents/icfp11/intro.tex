@@ -75,12 +75,14 @@ managing \filestores{}.
 This language, called \forest{}, is an embedded domain-specific
 language in \haskell{}.
 \forest{} allows programmers to describe the expected shape of a
-\filestore{} and to lazily materialize it as
-format-specific \haskell{} data structures with the
-goal of making programming with \filestores{} as
+\filestore{} and to materialize it as typed,
+format-specific \haskell{} data structures.  Conversely,
+given data structures with the appropriate type, \forest{}
+makes it straightforward to dematerialize these structures
+and write them out to disk.  In either case, the
+goal is to making programming with \filestores{} as
 easy and robust as programming with any other \haskell{} data
-structure.
-Furthermore, \forest{} leverages
+structure.  Furthermore, \forest{} leverages
 \haskell{}'s support for generic programming to make it easy to define
 tools that work for any \filestore{} with a \forest{} description.  
 
@@ -117,8 +119,9 @@ In exchange for writing a \forest{} specification,  programmers obtain
 a number of benefits.  These benefits include 
 (1) a set of type declarations to represent the \filestore{} in memory,
 (2) a set of type declarations that capture errors and file system attributes for the \filestore{},
-(3) a loading function to populate these in-memory structures, and
-(4) type class instance declarations that make it possible for
+(3) a loading function to populate these in-memory structures, 
+(4) a storing function to push updates back out to disk, and
+(5) type class instance declarations that make it possible for
    programmers to query, analyze, and transform \filestore{} data
    using generic functions.
 
