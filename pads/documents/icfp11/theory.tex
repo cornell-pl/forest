@@ -50,8 +50,8 @@
 \newcommand{\loadk}[4]{\fn{\loadkname{#1}}{#2,#3,#4}}
 \newcommand{\stringty}{{string}}
 \newcommand{\metapdty}{\meta}
-\newcommand{\load}[5]{#1;#3 \models #4 ~~ #2 \rhd (#5) }
-\newcommand{\store}[6]{#1;#3 \models #5 ~~ (#6) \lhd (#2,#4) }
+\newcommand{\load}[5]{#1;#3~\models~#4~~#2~\rhd~(#5) }
+\newcommand{\store}[6]{#1;#3~\models~#5~~(#6)~\lhd~(#2,#4) }
 
 \begin{figure}
 \[
@@ -195,6 +195,7 @@ calculus.
 
 \begin{figure*}
 \begin{minipage}[t]{.425\textwidth}
+\fbox{$\load{\Env}{F}{r}{s}{v,d}$}
 \[
 \begin{array}{c}
 \infrule
@@ -243,6 +244,7 @@ calculus.
 \end{array}
 \]
 \end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.525\textwidth}
+\fbox{$\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$}\\
 \[
 \begin{array}{c}
 \infrule
@@ -337,17 +339,12 @@ preserved on round-trips, as captured in the following theorems:
 %
 
 \deferproof{theorem}{loadstore}{LoadStore}{%
-  Let $\Env$ be an environment, $F$ a file system, $r$ a path, $s$ a
-  specification, $v$ a representation, and $d$ metadata such that:
-%
-\[
-  \load{\Env}{F}{r}{s}{v,d} \qquad \text{and} \qquad
-  \store{\Env}{F}{r}{v,d}{s}{F',\phi}
-\]
-%
-Then $F = F'$ and $\phi'(F')$. 
-}{ 
-The proof is by induction on $s$. 
+  For all environments $\Env$, file systems $F$, paths $r$,
+  specifications $s$, representations $v$, and metadata $d$ with
+  $\load{\Env}{F}{r}{s}{v,d}$ and
+  $\store{\Env}{F}{r}{v,d}{s}{F',\phi}$ we have $F = F'$ and 
+  $\phi'(F')$.}{%
+  The proof is by induction on $s$.
 \begin{description}
 %%%
 %%% CONST
@@ -488,20 +485,20 @@ and the inductive proof. \hfill \qed
 \end{description}
 }
 
-\deferproof{theorem}{storeload}{StoreLoad}{
-Let $\Env$ be an environment, $F$, $F'$, $G_1$, and $G_2$ file
-systems, $r$ a path, $s$ a specification, $v$ and $v'$
-representations, $d$ and $d'$ metadata, and $\phi'$ a predicate such
-that:
-\[
-\begin{array}{c@{\qquad}c}
-\store{\Env}{F}{r}{v,d}{s}{F',\phi'} & 
-\phi'(G_1 \FAppend F' \FAppend G_2) \\
-\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r}{s}{v',d'}
-\end{array}
-\]
-Then $v' = v$ and $\valid{d} \iff \valid{d'}$.}{
-The proof is by induction on $s$.
+\deferproof{theorem}{storeload}{StoreLoad}{ For all environments
+  $\Env$, file systems $F$ and $F'$, paths $r$, specifications $s$,
+  representations $v$ and $v'$, metadata $d$ and $d'$, and constraints
+  $\phi'$ with $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$ and $\phi'(F')$
+  and $\load{\Env}{F'}{r}{s}{v',d'}$ we have $v' = v$ and $\valid{d} =
+  \valid{d'}$.}{%
+  We will prove a slightly stronger result that implies the theorem:
+  for all environments $\Env$, file systems $F$, $G_1$, $G_2$, and
+  $F'$, paths $r$, specifications $s$, representations $v$ and $v'$,
+  metadata $d$ and $d'$, and constraints $\phi'$ with
+  $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$ and $\phi'(G_1 \FAppend F'
+  \FAppend G_2)$ and $\load{\Env}{(G_1 \FAppend F' \FAppend
+    G_2)}{r}{s}{v',d'}$ we have $v' = v$ and $\valid{d} =
+  \valid{d'}$. The proof is by induction on $s$.
 \begin{description}
 %%%
 %%% Constant
@@ -516,7 +513,7 @@ v',d'  &=& \loadk{k}{\Env}{(G_1 \FAppend F' \FAppend G_2)}{rs}\\
 \end{array}
 \]
 By assumptions about the behavior of $\loadkname{k}$ and
-$\storekname{k}$, we have $v' = v$ and $\valid{d} \iff \valid{d'}$,
+$\storekname{k}$, we have $v' = v$ and $\valid{d} = \valid{d'}$,
 which finishes the case. 
 
 %%%
@@ -534,7 +531,7 @@ r' &=& \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
 \]
 %
 By the induction hypothesis applied to $s_1$ we have $v' = v$ and
-$\valid{d} \iff \valid{d'}$, which finishes the case.
+$\valid{d} = \valid{d'}$, which finishes the case.
 
 %%%
 %%% Pair
@@ -591,21 +588,21 @@ By the induction hypothesis applied to $s_1$ and $s_2$, we have
 \begin{array}{l}
 v_1' = v_1\\
 v_2' = v_2\\
-\valid{d_1} \iff \valid{d_1'}\\
-\valid{d_2} \iff \valid{d_2'}\\
+\valid{d_1} = \valid{d_1'}\\
+\valid{d_2} = \valid{d_2'}\\
 \end{array}
 \]
-It follows that $(v_1,v_2) = (v_1',v_2')$ and $b \iff b'$, which
+It follows that $(v_1,v_2) = (v_1',v_2')$ and $b = b'$, which
 finishes the case.
 
 %%%
 %%% Comprehension
 %%%
-\item{Case $s = \SComp{s}{x}{e}$:}
+\item[Case:] $s = \SComp{s}{x}{e}$\\[1ex]
 By the definition of the store function we have
 \[
 \begin{array}{rcll}
-\multicolumn{3}{l}{\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}} & \text{for}~i \in \{1,\dots,k\}\\
+\multicolumn{3}{l}{\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i} \quad \text{for}~i \in \{1,\dots,k\}}\\
 v &=& [v_1,\dots,v_j]\\
 d &=& [d_1,\dots,d_l]\\
 \eval{e}{\Env,r}{(\tau\ \mathit{list})} &=& [w_1,\dots,w_m ]\\
@@ -638,7 +635,7 @@ and hence we have:
 By the definition of the load function we also have 
 \[ 
 \begin{array}{rcll}
-\multicolumn{3}{l}{\load{\Env[ x \mapsto w_i]}{((G_1\FAppend F_1\FAppend \dots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \dots \FAppend F_k \FAppend G_2))}{r}{s_1}{v_i,d_i'}} & \text{for}~i \in \{1,\dots,k\}\\
+\multicolumn{3}{l}{\load{\Env[ x \mapsto w_i]}{((G_1\FAppend F_1\FAppend \dots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \dots \FAppend F_k \FAppend G_2))}{r}{s_1}{v_i,d_i'} \quad \text{for}~i \in \{1,\dots,k\}}\\
 v' &=& [v_1',\dots,v_k']\\
 b' &= &\bigwedge_i \valid{d_i'}\\
 d' &=& (b',[d_1',\dots,d_k'])\\
@@ -646,8 +643,8 @@ d' &=& (b',[d_1',\dots,d_k'])\\
 \]
 %
 By the induction hypothesis applied to $s$ ($k$ times), we have $v_i'
-= v_i$ and $\valid{d_i'} \iff \valid{d_i}$ for = $i$ from $1$ to
-$k$. It follows that $[v_1,\dots,v_k] = [v_1',\dots,v_k']$ and $b \iff
+= v_i$ and $\valid{d_i'} = \valid{d_i}$ for = $i$ from $1$ to
+$k$. It follows that $[v_1,\dots,v_k] = [v_1',\dots,v_k']$ and $b =
 b'$, which finishes the case.
 
 %%%
@@ -668,7 +665,7 @@ b' &=& \eval{e}{\Env,r}{\mathit{bool}}\\
 \end{array}
 \]
 By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $b =
-\eval{e}{\Env,r}{\mathit{bool}}$. It follows that $v = v'$ and $b \iff
+\eval{e}{\Env,r}{\mathit{bool}}$. It follows that $v = v'$ and $b =
 b'$, which finishes the case.
 
 %%%
@@ -680,7 +677,7 @@ We analyze two subcases:
 \begin{description}
 \item[Subcase:] $v = \Just{v_1}$ and $d = (b,\Just{d_1})$\\[1ex]
 %
-By the definitions of the store and load functions we have
+By the definition of the store function we have
 \[
 \begin{array}{rcll}
 \multicolumn{3}{l}{\store{\Env}{F}{r}{ v_1,d_1 }{s}{ F',\phi_1' }}\\
@@ -700,11 +697,11 @@ d' = (b',\Just{d_1'})\\
 \end{array}
 \]
 By the induction hypothesis applied to $s_1$ we have $v_1' = v_1$ and
-$b' \iff b$. It follows that $v' = v$.
+$b' = b$. It follows that $v' = v$.
 
 \item[Subcase:] $r \not\in \dom{F}$\\[1ex]
 %
-By the definition of the store function we also have
+By the definition of the store function we have
 \[
 \begin{array}{rcll}
 F' &=& \FDelete{F}{r}\\
@@ -715,7 +712,7 @@ By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $v = \Nothing$ and $d
 = \Nothing$ and $\neg b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
   G_2}$.
 %
-By the definition of the load function we have 
+By the definition of the load function we also have 
 \[ 
 \begin{array}{rcll}
 v' &=& \Nothing\\
