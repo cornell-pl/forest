@@ -353,7 +353,7 @@ preserved on round-trips, as captured in the following theorems:
 %
 By the definitions of the load and store functions we have 
 \[ 
-\begin{array}{rcll}
+\begin{array}{rcl}
 v,d  &=& \loadk{k}{\Env}{F}{r}\\
 F',\phi' &=& \storek{k}{\Env}{F}{r}{v,d}\\
 \end{array}
@@ -369,9 +369,11 @@ the case.
 %
 By the definitions of the load and store functions we have 
 \[ 
-\begin{array}{rcll}
-\multicolumn{3}{l}{\load{\Env}{F}{r'}{s_1}{v,d}}\\
-\multicolumn{3}{l}{\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}}\\
+\begin{array}{l}
+\load{\Env}{F}{r'}{s_1}{v,d}\\
+\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}\\
+\end{array} \hspace*{2cm}
+\begin{array}{rcl}
 r' &=& \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
 \end{array}
 \]
@@ -385,16 +387,18 @@ $\phi'(F')$, which finishes the case.
 %
 By the definitions of the load and store functions we have 
 \[ 
-\begin{array}{rcll}
-\multicolumn{3}{l}{\load{\Env}{F}{r}{s_1}{v_1,d_1}}\\
-\multicolumn{3}{l}{\load{\Env[x \mapsto v_1]}{F}{r}{s_2}{v_2,d_2}}\\
-\multicolumn{3}{l}{\store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}}\\
-\multicolumn{3}{l}{\store{\Env[x \mapsto v_1]}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}}\\
+\begin{array}{l}
+\load{\Env}{F}{r}{s_1}{v_1,d_1}\\
+\store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}\\
+\load{\Env[x \mapsto v_1]}{F}{r}{s_2}{v_2,d_2}\\
+\store{\Env[x \mapsto v_1]}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
+\end{array} \hspace*{2cm}
+\begin{array}{rcl}
 b &= & \valid{d_1} \wedge \valid{d_2}\\
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
 F' &=& F_1' \FAppend F_2'\\
-\phi(F') &=& (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1(F') \wedge \phi_2(F')\\
+\phi'(F') &=& (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')\\
 \end{array}
 \]
 By the induction hypothesis applied to $s_1$, we have $F_1' = F$ and
@@ -410,15 +414,16 @@ the case.
 %
 By the definitions of the load and store functions we have 
 \[ 
-\begin{array}{rcll}
-\eval{e}{\Env,r}{(\tau\ \mathit{list})} &=& [w_1,\dots,w_k ]\\
-\multicolumn{3}{l}{\load{\Env[ x \mapsto w_i]}{F}{r}{s_1}{v_i,d_i} \quad \text{for}~i \in \{1,\dots,k\}} \\
-\multicolumn{3}{l}{\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i} \quad \text{for}~i \in \{1,\dots,k\}}\\
+\begin{array}{l}
+\eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_k ]\\
+\forall i \in \{1,...,k\}.\,\load{\Env[ x \mapsto w_i]}{F}{r}{s_1}{v_i,d_i}\\
+\forall i \in \{1,...,k\}.\,\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
+\end{array}\hspace*{.75cm}\begin{array}{rcl}
 v &=& [v_1,\dots,v_k]\\
 b &= &\bigwedge_i^k \valid{d_i}\\
 d &=& (b,[d_1,\dots,d_k])\\
 F' &=& F_1' \FAppend \dots \FAppend F_k'\\
-\phi(F') &=& (k = k = k) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i(F'))\\
+\phi'(F') &=& (k = k = k) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
 \end{array}
 \]
 By the induction hypothesis applied to $s$ ($k$ times), we have $F_i'
@@ -433,12 +438,13 @@ the case.
 %
 By the definition of the load and store functions we have
 \[
-\begin{array}{rcll}
-v = ()\\
-d = (b,())\\
-b = \eval{e}{\Env,r}{\mathit{bool}}\\
-F' = F\\
-\phi(F') = (b = \eval{e}{\Env,r}{\mathit{bool}})\\
+\begin{array}{rcl}
+v &=& ()\\
+d &=& (b,())\\
+b &=& \eval{e}{\Env,r}{\mathit{bool}}\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
+F' &=& F\\
+\phi'(F') &=& (b = \eval{e}{\Env,r}{\mathit{bool}})\\
 \end{array}
 \]
 Thus, we immediately have $F' = F$ and $\phi'(F')$.
@@ -454,13 +460,14 @@ We analyze two subcases:
 %
 By the definition of the load and store functions we have
 \[ 
-\begin{array}{rcll}
-\multicolumn{3}{l}{\load{\Env}{F}{r}{s}{v_1,d_1}}\\
-\multicolumn{3}{l}{\store{\Env}{F}{r}{v_1,d_1}{s}{ F',\phi_1' }}\\
-v = \Just{v}\\
-d = (b,\Just{d})\\
-b = \valid{d}\\
-\phi'(F') &=& (b = \valid{d}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')
+\begin{array}{l}
+\load{\Env}{F}{r}{s}{v_1,d_1}\\
+\store{\Env}{F}{r}{v_1,d_1}{s}{ F',\phi_1' }\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
+v &=& \Just{v_1}\\
+d &=& (b,\Just{d_1})\\
+b &=& \valid{d_1}\\
+\phi'(F') &=& (b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')\\
 \end{array}
 \]
 %
@@ -471,12 +478,14 @@ $\phi_1'(F')$. We immediately have $\phi'(F')$.
 %
 By the definition of the load and store functions we have 
 \[ 
-\begin{array}{rcll}
+\begin{array}{rcl}
 v &=& \Nothing\\
-d &=& (b,d')\\
+d &=& (b,d_1)\\
+d_1 &=& \Nothing\\
 b &=& \False\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi'(F') &=& (v = \Nothing) \wedge (d' = \Nothing) \wedge (\neg b) \wedge  (r \not\in \dom{F'})
+\phi'(F') &=& (v = \Nothing) \wedge (d_1 = \Nothing) \wedge (\neg b) \wedge  (r \not\in \dom{F'})
 \end{array}
 \]
 We immediately have $F' = F$ and $\phi'(F')$, which finishes the case
@@ -523,10 +532,11 @@ which finishes the case.
 %
 By the definitions of the load and store functions we have
 \[
-\begin{array}{rcll}
+\begin{array}{l}
+\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}\\
+\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r'}{s_1}{v',d'}\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
 r' &=& \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
-\multicolumn{3}{l}{\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}}\\
-\multicolumn{3}{l}{\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r'}{s_1}{v',d'}}\\
 \end{array}
 \]
 %
@@ -540,13 +550,14 @@ $\valid{d} = \valid{d'}$, which finishes the case.
 %
 By the definition of the load function we have
 \[
-\begin{array}{rcll}
-\multicolumn{3}{l}{\store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}}\\
-\multicolumn{3}{l}{\store{\Env[x \mapsto v_1]}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}}\\
+\begin{array}{l}
+\store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}\\
+\store{\Env[x \mapsto v_1]}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
 F' &=& F_1' \FAppend F_2'\\
-\phi'(F') &=& (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')
+\phi'(F') &=& (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')\\
 \end{array}
 \]
 By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have
@@ -558,14 +569,14 @@ b = \valid{d_1} \wedge \valid{d_2}\\
 \end{array}
 \]
 %
-As $(\FAppend)$ is associative we have,
+As $(\FAppend)$ is associative we also have,
 \[
 \begin{array}{rcl}
 (G_1\FAppend (F_1\FAppend F_2)\FAppend G_2) &=& (G_1\FAppend F_1\FAppend (F_2\FAppend G_2))\\
 (G_1\FAppend (F_1\FAppend F_2)\FAppend G_2) &=& ((G_1\FAppend F_1)\FAppend F_2\FAppend G_2),\\
 \end{array}
 \]
-and hence we also have:
+and hence:
 \[
 \begin{array}{l}
 \phi_1'(G_1\FAppend F_1\FAppend (F_2\FAppend G_2))\\
@@ -575,8 +586,9 @@ and hence we also have:
 By the definition of the load function we have 
 \[ 
 \begin{array}{rcll}
-\multicolumn{3}{l}{\load{\Env}{(G_1 \FAppend F_1 \FAppend (F_2 \FAppend G_2))}{r}{s_1}{v_1',d_1'}}\\
-\multicolumn{3}{l}{\load{\Env[x \mapsto v_1}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}}\\
+\load{\Env}{(G_1 \FAppend F_1 \FAppend (F_2 \FAppend G_2))}{r}{s_1}{v_1',d_1'}\\
+\load{\Env[x \mapsto v_1}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& (v_1',v_2')\\
 b' &= & \valid{d_1} \wedge \valid{d_2}\\
 d' &=& (b',(d_1',d_2'))\\
@@ -588,6 +600,7 @@ By the induction hypothesis applied to $s_1$ and $s_2$, we have
 \begin{array}{l}
 v_1' = v_1\\
 v_2' = v_2\\
+\end{array}\hspace*{2cm}\begin{array}{l}
 \valid{d_1} = \valid{d_1'}\\
 \valid{d_2} = \valid{d_2'}\\
 \end{array}
@@ -601,11 +614,12 @@ finishes the case.
 \item[Case:] $s = \SComp{s}{x}{e}$\\[1ex]
 By the definition of the store function we have
 \[
-\begin{array}{rcll}
-\multicolumn{3}{l}{\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i} \quad \text{for}~i \in \{1,\dots,k\}}\\
+\begin{array}{l}
+\forall i \in \{1,\dots,k\}.\,\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}\\
+\eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ]\\
+\end{array}\hspace*{.75cm}\begin{array}{rcl}
 v &=& [v_1,\dots,v_j]\\
 d &=& [d_1,\dots,d_l]\\
-\eval{e}{\Env,r}{(\tau\ \mathit{list})} &=& [w_1,\dots,w_m ]\\
 k &=& \min{(j,l,m)}\\
 F' &=& F_1' \FAppend \dots \FAppend F_k'\\
 \phi(F') &=& j = k = l \wedge b = (\bigwedge_i^k \valid{d_i}) \bigwedge_i^k \phi_i(F')\\
@@ -613,31 +627,34 @@ F' &=& F_1' \FAppend \dots \FAppend F_k'\\
 \]
 By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have
 \[
-\begin{array}{rcll}
-\multicolumn{3}{l}{j = l = m}\\
-b &=& (\bigwedge_i \valid{d_i})\\
-\multicolumn{3}{l}{\phi_i'(G_1 \FAppend F' \FAppend G_2) \quad \text{for}~i \in \{1,\dots,k\}}\\
+\begin{array}{l}
+k = j = l = m\\
+b = (\bigwedge_i \valid{d_i})\\
+\end{array}\hspace*{2cm}\begin{array}{l}
+\forall i \in \{1,\dots,k\}.\,\phi_i'(G_1 \FAppend F' \FAppend G_2) \\
 \end{array}
 \]
 %
-As $(\FAppend)$ is associative we have,
+Let
 \[
-(G_1\FAppend (F_1\FAppend \dots \FAppend F_k)\FAppend G_2) =
-((G_1\FAppend F_1\FAppend \dots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \dots \FAppend F_k \FAppend G_2)) 
-\quad \text{for}~i \in \{1,\dots,k\}
+H_i = ((G_1\FAppend F_1\FAppend \dots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \dots \FAppend F_k \FAppend G_2))
 \]
-and hence we have:
+for $i$ from $1$ to $k$. As $(\FAppend)$ is associative we have,
 \[
-\phi_i'((G_1\FAppend F_1\FAppend \dots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \dots \FAppend F_k \FAppend G_2)) 
-\quad \text{for}~i \in \{1,\dots,k\}
+(G_1\FAppend (F_1\FAppend \dots \FAppend F_k)\FAppend G_2) = H_i \quad \text{for}~i \in \{1,\dots,k\}
+\]
+and hence:
+\[
+\phi_i'(H_i) \quad \text{for}~i \in \{1,\dots,k\}
 \]
 %
 By the definition of the load function we also have 
 \[ 
-\begin{array}{rcll}
-\multicolumn{3}{l}{\load{\Env[ x \mapsto w_i]}{((G_1\FAppend F_1\FAppend \dots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \dots \FAppend F_k \FAppend G_2))}{r}{s_1}{v_i,d_i'} \quad \text{for}~i \in \{1,\dots,k\}}\\
+\begin{array}{l}
+\forall i \in \{1,\dots,k\}\,\load{\Env[ x \mapsto w_i]}{H_i}{r}{s_1}{v_i,d_i'}\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& [v_1',\dots,v_k']\\
-b' &= &\bigwedge_i \valid{d_i'}\\
+b' &=& \bigwedge_i \valid{d_i'}\\
 d' &=& (b',[d_1',\dots,d_k'])\\
 \end{array}
 \]
@@ -654,11 +671,12 @@ b'$, which finishes the case.
 %
 By the definitions of the store and load functions we have
 \[
-\begin{array}{rcll}
-v = ()\\
-d = ((),b)
-F' = F\\
-\phi'(F') = (b = \eval{e}{\Env,r}{\mathit{bool}})\\
+\begin{array}{rcl}
+v &=& ()\\
+d &=& ((),b)\\
+F' &=& F\\
+\phi'(F') &=& (b = \eval{e}{\Env,r}{\mathit{bool}})\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& ()\\
 d' &=& (b',())\\
 b' &=& \eval{e}{\Env,r}{\mathit{bool}}\\
@@ -679,9 +697,10 @@ We analyze two subcases:
 %
 By the definition of the store function we have
 \[
-\begin{array}{rcll}
-\multicolumn{3}{l}{\store{\Env}{F}{r}{ v_1,d_1 }{s}{ F',\phi_1' }}\\
-\phi'(F') &=& (b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')
+\begin{array}{l}
+\store{\Env}{F}{r}{ v_1,d_1 }{s}{F',\phi_1'}\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
+\phi'(F') &=& (b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')\\
 \end{array}
 \]
 %
@@ -690,10 +709,11 @@ $r \in \dom{G_1 \FAppend F' \FAppend G_2}$.  By the definition of the
 load function we also have
 \[ 
 \begin{array}{rcll}
-\multicolumn{3}{l}{\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r}{s}{v_1',d_1'}}\\
-v' = \Just{v_1'}\\
-b' = \valid{d_1'}\\
-d' = (b',\Just{d_1'})\\
+\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r}{s}{v_1',d_1'}\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
+v' &=& \Just{v_1'}\\
+b' &=& \valid{d_1'}\\
+d' &=& (b',\Just{d_1'})\\
 \end{array}
 \]
 By the induction hypothesis applied to $s_1$ we have $v_1' = v_1$ and
@@ -701,27 +721,20 @@ $b' = b$. It follows that $v' = v$.
 
 \item[Subcase:] $r \not\in \dom{F}$\\[1ex]
 %
-By the definition of the store function we have
+By the definition of the store and load functions we have
 \[
-\begin{array}{rcll}
+\begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi'(F') &=& (v = \Nothing) \wedge (d = \Nothing) \wedge (\neg b) (\wedge r \not\in \dom{F'})
-\end{array}
-\]
-By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $v = \Nothing$ and $d
-= \Nothing$ and $\neg b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
-  G_2}$.
-%
-By the definition of the load function we also have 
-\[ 
-\begin{array}{rcll}
+\phi'(F') &=& (v = \Nothing) \wedge (d = \Nothing) \wedge (\neg b) \wedge (r \not\in \dom{F'})\\
+\end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& \Nothing\\
 b' &=& \False\\
 d' &=& (b',\Nothing)\\
 \end{array}
 \]
-%
-We immediately have $v' = v$ and $b' = b$, which finishes the case and
+As $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $v = \Nothing$ and $d
+= \Nothing$ and $\neg b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
+  G_2}$. Thus, we immediately have $v' = v$ and $b' = b$, which finishes the case and
 the inductive proof. \hfill \qed
 \end{description}
 \end{description}}
