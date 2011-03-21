@@ -21,7 +21,8 @@ import Data.List hiding (sort)
 
 
 
-ws   = REd "[ \t]+" " "
+
+ws  = REd "[ \t]+" " "
 ows  = REd "[ \t]*" " "
 junk = REd ".*"     " "
 space = ' '

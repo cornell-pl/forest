@@ -1,4 +1,4 @@
-module Language.Pads.Parser (parsePadsDecls) where 
+module Language.Pads.Parser (parsePadsDecls, lit) where 
 
 {-
 ** *********************************************************************

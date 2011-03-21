@@ -26,7 +26,7 @@ import qualified Data.ByteString.Lazy.Char8 as B
   type Host = Pstring ' '
 
 
-  data ID = Missing '-' | Id (Pstring ' ')
+  data ID = Missing '-' | Id (Pstring ' ') 
 
 
   type TimeStamp = ('[', Date, ':', Time, ' ', TimeZone, ']')   

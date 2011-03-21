@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DeriveDataTypeable, ScopedTypeVariables, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Examples.Second where
+module Second where
 
 import Language.Pads.Padsc
 

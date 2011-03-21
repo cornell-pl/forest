@@ -61,9 +61,8 @@ module Examples.Simple where
 
 import Language.Pads.Padsc
 import Language.Forest.Forestc
+
 import Language.Haskell.TH hiding (ppr)
---import Language.Forest.Syntax
---import Language.Forest.CodeGen
 import System.Time.Utils
 import Language.Pads.GenPretty
 import Language.Forest.Graph
@@ -89,21 +88,22 @@ getHost (Hosts_t hs) = case hs of
                          
 
 [forest| type Hosts_f  = File Hosts_t        -- Hosts_t is expected to be a PADS type 
+         type ReadOnly    = Text where <| get_modes this_att == "-rw-r--r--" |>
+         type CheckPerm (perm :: String)    = Text where <| get_modes this_att == perm |>
 
-         type Scores_d = Directory { scores :: File Ptext }
+         type Scores_d = Directory { scores :: CheckPerm "-rw-r--r--" }
 
          type Simple_d (file_name :: String ) = Directory 
                          { local  is "local.txt"              :: File Hosts_t where <| (get_owner local_md) == "kfisher" |> 
+                         , mylink                             :: Scores_d
+                         , fileLink                           :: Hosts_f
                          , remote is <|file_name ++ ".txt"|>  :: Hosts_f      where <| (get_modes remote_md) == "-rw-rw-r--" |>
                          , nested is <|getHost local|>        :: Scores_d     where <| (get_group nested_md) == (get_owner local_md) |> 
                          , mylink_sym is "mylink"             :: SymLink      where <| mylink_sym == "quantum" |>
-                         , mylink                             :: Scores_d
---                         , generic matches (GL "Generic.*")   :: File Pbinary
---                         , airef  is ai_file                  :: File AI_t
+                         , optFile                            :: Maybe ReadOnly
                          }    
 
          type PrivateFile = constrain this :: File Ptext where <| get_modes this_md == "-rw-rw-r--" |>
-         type ReadOnly    = Text where <| get_modes this_att == "-rw-r--r--" |>
 
          type TextFiles = Set [ f :: File Ptext | f <- matches (GL "*.txt") ]
 
@@ -112,14 +112,25 @@ getHost (Hosts_t hs) = case hs of
              | b <- matches (GL "*"), 
               <|get_kind b_att == BinaryK|> ]
              where <|length this == 0|>
-
 |] 
 
 mkPrettyInstance ''TextFiles
 
-
 mkPrettyInstance ''Simple_d
 mkPrettyInstance ''Simple_d_md
+
+doSimpleTest :: IO Manifest
+doSimpleTest = do 
+ { pResult <- simple_d_load "remote" host_dir
+ ; emptyManifest <- newManifest
+ ; simple_d_updateManifest "remote" pResult emptyManifest
+ }
+
+doSimpleManifest :: Manifest -> IO ()
+doSimpleManifest manifest = 
+   storeManifestAt "/Users/kfisher/temp" "/Users/kfisher/pads/dirpads/src/Examples/data/" manifest
+
+
 
 local_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/local.txt"
 remote_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/remote.txt"
@@ -129,18 +140,40 @@ remote_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/remote.txt"
 (rread_rep, rread_md) =  unsafePerformIO $ readOnly_load remote_file
 
 host_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/local.txt"
+(Hosts_f host_result, hostMD)  = unsafePerformIO $ hosts_f_load host_file
 (host_rep, host_md) = let (Hosts_t rep, md) = unsafePerformIO $ parseFile host_file in (rep,md)
 host_file_length = Prelude.length host_rep
 host_file_take n  = Prelude.take n host_rep
 
+doHostTest :: IO Manifest
+doHostTest = do 
+ { pResult <- hosts_f_load host_file
+ ; emptyManifest <- newManifest
+ ; hosts_f_updateManifest pResult emptyManifest
+ }
+
 host_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple"
 (simple_rep, simple_md) = unsafePerformIO $ simple_d_load "remote" host_dir
+
 
 resultSimpleIO =  mdToPDF simple_md "/Users/kfisher/pads/dirpads/src/Examples/Simple.pdf"
 
 (text_rep, text_md) = unsafePerformIO $ textFiles_load host_dir
 
+doListTest :: IO Manifest
+doListTest = do 
+ { pResult <- textFiles_load host_dir
+ ; emptyManifest <- newManifest
+ ; textFiles_updateManifest pResult emptyManifest
+ }
+
+doListManifest :: Manifest -> IO ()
+doListManifest manifest = 
+   storeManifestAt "/Users/kfisher/temp" "/Users/kfisher/pads/dirpads/src/Examples/data/" manifest
+
+
 notChina h = h /= "china"
+
 
 [forest| type Nested_d (file_name :: String) = Directory 
                { hostIndex is <|file_name++".txt"|>  :: File Hosts_t 
@@ -149,6 +182,15 @@ notChina h = h /= "china"
                }  |]
 
 
+doNestedTest = do 
+ { pResult <- nested_d_load "remote" host_dir
+ ; emptyManifest <- newManifest
+ ; nested_d_updateManifest "remote" pResult emptyManifest
+ }
+
+doManifest :: Manifest -> IO ()
+doManifest manifest = 
+   storeManifestAt "/Users/kfisher/temp" "/Users/kfisher/pads/dirpads/src/Examples/data/" manifest
 
 (nested_remote_rep, nested_remote_md) = unsafePerformIO $ nested_d_load "remote" host_dir
 (nested_local_rep, nested_local_md) = unsafePerformIO $ nested_d_load "local" host_dir

@@ -2,7 +2,11 @@
 
 module Main where
 
-import Examples.Second
+--import Second
 import Test.HUnit
+import Universal
 
-main = runTestTT tests
+--main = runTestTT tests
+main = do
+  res <- getDesc "data/CS"
+  print (show res)
