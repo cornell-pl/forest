@@ -36,6 +36,7 @@ module Language.Forest.MetaData where
 import System.Posix.Files
 import System.Posix.User
 import System.Posix.Types
+import System.FilePath.Posix
 import System.Process
 import GHC.IO.Handle
 import Foreign.C.Types
@@ -89,7 +90,7 @@ data FileInfo = FileInfo { fullpath :: FilePath
                          , mod_time :: EpochTime
                          , read_time :: EpochTime
                          , mode :: FileMode
-                         , isSymLink :: Bool
+                         , symLink :: Maybe FilePath
                          , kind :: FileType
                          }
        deriving (Eq, Data, Typeable, Ord)
@@ -106,7 +107,7 @@ instance Show FileInfo where
                     ++  "mod_time = "        ++ (show $ epochToClockTime $ mod_time f)     ++ ", "
                     ++  "read_time = "       ++ (show $ epochToClockTime $ read_time f)    ++ ", "
                     ++  "mode = "            ++ (modeToModeString $ mode f)                ++ ", "
-                    ++  "isSymLink = "       ++ (show $ isSymLink f)                       ++ ", "
+                    ++  "symLink = "         ++ (show $ symLink f)                       ++ ", "
                     ++  "kind = "            ++ (show $ kind f)                            ++ "}"
 
 
@@ -129,7 +130,7 @@ fileInfo_def = FileInfo { fullpath = ""
                         , read_time = 0
                         , mod_time = 0
                         , mode = 0
-                        , isSymLink = False
+                        , symLink = Nothing
                         , kind = UnknownK       
                         }
 
@@ -143,7 +144,7 @@ errorFileInfo  = FileInfo
      , read_time = -1
      , mod_time = -1
      , mode     = -1
-     , isSymLink = False
+     , symLink = Nothing
      , kind = UnknownK
      }
 
@@ -157,7 +158,7 @@ mkErrorFileInfo  path = FileInfo
      , read_time = -1
      , mod_time = -1
      , mode     = -1
-     , isSymLink = False
+     , symLink = Nothing
      , kind = UnknownK
      }
 
@@ -198,8 +199,8 @@ class Data md => ForestMD md where
   get_mode md = mode $ fileInfo (get_fmd_header md)
   get_modes :: md -> String
   get_modes md = modeToModeString $ mode $ fileInfo (get_fmd_header md)
-  get_isSym :: md -> Bool
-  get_isSym md = isSymLink $ fileInfo (get_fmd_header md)
+  get_symLink :: md -> Maybe FilePath
+  get_symLink md = symLink $ fileInfo (get_fmd_header md)
   get_kind :: md -> FileType
   get_kind md = kind $ fileInfo (get_fmd_header md)
 
@@ -226,6 +227,53 @@ mergeErrors m1 m2 = case (m1,m2) of
             (Just a, _) -> Just a
             (_, Just b) -> Just b
 
+cleanForestMDwithFile :: FilePath -> Forest_md
+cleanForestMDwithFile path = setFilePathinMD path cleanForestMD
+
+removeGzipSuffix :: Forest_md -> Forest_md
+removeGzipSuffix fmd = 
+  let fp = get_fullpath fmd
+      fp' = System.FilePath.Posix.dropExtension fp
+  in setFilePathinMD fp' fmd
+
+getTempForestDirectory :: IO FilePath
+getTempForestDirectory = do 
+  { tempDir <- getTemporaryDirectory 
+  ; let forestDir = combine tempDir "Forest"
+  ; createDirectoryIfMissing False forestDir
+  ; return forestDir
+  }
+
+
+setFilePathinMD :: FilePath -> Forest_md -> Forest_md
+setFilePathinMD path (Forest_md {numErrors, errorMsg, fileInfo}) = 
+                Forest_md {numErrors, errorMsg, fileInfo = setFilePathinFileInfo path fileInfo}
+
+setFilePathinFileInfo :: FilePath -> FileInfo -> FileInfo
+setFilePathinFileInfo path 
+               (FileInfo { fullpath 
+                         , owner
+                         , group
+                         , size
+                         , access_time
+                         , mod_time
+                         , read_time
+                         , mode 
+                         , symLink
+                         , kind
+                         }) = 
+                FileInfo { fullpath = path 
+                         , owner
+                         , group
+                         , size
+                         , access_time
+                         , mod_time
+                         , read_time
+                         , mode 
+                         , symLink
+                         , kind
+                         }  
+
 
 mergeForestMDs mds = 
      Data.List.foldl (\(Forest_md {numErrors=num1, errorMsg = errorMsg1, fileInfo=info1}) 
@@ -244,14 +292,22 @@ updateForestMDwith base updates =  let
                   , fileInfo=infod})
 
 
-isAscii :: FilePath -> IO Bool
-isAscii fp = do 
+isAscii_old :: FilePath -> IO Bool
+isAscii_old fp = do 
   { let cmd = "file -i -L " ++ fp
   ; (_, Just hout, _, ph) <-
        createProcess (shell cmd){ std_out = CreatePipe }
+
   ; result <- hGetLine hout
   ; hClose hout
-  ; terminateProcess ph
+  ; waitForProcess ph
+  ; return ("ascii" `Data.List.isSuffixOf` result)
+  }
+
+isAscii :: FilePath -> IO Bool
+isAscii fp =  do
+  { let cmd = "file -i -L " ++ fp
+  ; result <- doShellCmd cmd
   ; return ("ascii" `Data.List.isSuffixOf` result)
   }
 
@@ -390,6 +446,7 @@ getForestMD path = do
          ; let file_groupID = fileGroup fd
          ; groupEntry <- getGroupEntryForID file_groupID
          ; fdsym <- getSymbolicLinkStatus path
+         ; symLinkOpt <- if isSymbolicLink fdsym then readOptSymLink path else return Nothing
          ; readTime <- epochTime
          ; knd <- fileStatusToKind path fd
          ; return (Forest_md{ numErrors = 0
@@ -403,7 +460,7 @@ getForestMD path = do
                                           , mod_time = modificationTime fd
                                           , read_time = readTime
                                           , mode     =  fileMode fd
-                                          , isSymLink = isSymbolicLink fdsym
+                                          , symLink =symLinkOpt
                                           , kind  = knd
                                           }
                             })
@@ -412,8 +469,11 @@ getForestMD path = do
 getRelForestMD :: FilePath -> FilePath -> IO Forest_md
 getRelForestMD root local = getForestMD (root++"/"++local)
 
-
-
+readOptSymLink :: FilePath -> IO (Maybe FilePath)
+readOptSymLink fp = do 
+  { link <- readSymbolicLink fp
+  ; return (Just link)
+  }
 
 {- Get a list of the files in the argument directory. 
    Replaced by getDirectoryContents -}
@@ -431,3 +491,21 @@ getFiles' path = do
                                              } 
                      }
 
+doShellCmd :: String -> IO String
+doShellCmd cmd = do 
+  { print "Executing cmd: "
+  ; print cmd
+  ; print "\n"
+  ; (_, Just hout, _, ph) <-
+       createProcess (shell cmd){ std_out = CreatePipe }
+  ; isEof <- hIsEOF hout
+  ; if isEof 
+    then do { waitForProcess ph
+            ; return ""
+            }
+    else do { result <- hGetLine hout
+            ; hClose hout
+            ; waitForProcess ph
+            ; return result
+            }
+  }

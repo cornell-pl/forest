@@ -63,6 +63,7 @@ type BasicField = (String, Bool, TH.Exp, ForestTy, Maybe TH.Exp)
 data Generator = Explicit TH.Exp | Matches TH.Exp
     deriving (Ord, Eq, Data, Typeable, Show)
 
+data GeneratedPaths a = ExpPaths [FilePath] | MatchPaths a
 
 data CompField = CompField 
         { internalName :: String

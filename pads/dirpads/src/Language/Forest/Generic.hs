@@ -37,6 +37,7 @@ import Data.Data
 import Data.Generics
 import Language.Pads.Generic
 import Language.Forest.MetaData
+import Language.Forest.Writing
 import Data.Map hiding (map)
 import Data.Set hiding (map)
 import qualified Data.List as L
@@ -45,11 +46,13 @@ class (Data rep, ForestMD md) => Forest rep md | rep -> md  where
  load :: FilePath -> IO(rep, md)
  fdef :: rep
  fdef = myempty
+ updateManifest :: (rep,md) -> Manifest -> IO Manifest
 
 class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
  load1 :: arg -> FilePath -> IO(rep, md)
  fdef1 :: arg -> rep
  fdef1 = \s->myempty
+ updateManifest1 :: arg -> (rep,md) -> Manifest -> IO Manifest
 
 class File rep md where
   fileLoad :: FilePath -> IO (rep, (Forest_md, md))
@@ -58,6 +61,20 @@ class File1 arg rep md where
   fileLoad1 :: arg -> FilePath -> IO (rep, (Forest_md, md))
 
 
+{- Note, other useful functions on manifests are in Language.Forest.Writing -}
+generateManifest :: Forest rep md => (rep, md) -> IO Manifest
+generateManifest forest = do
+  { origManifest <- newManifest
+  ; rawManifest <- updateManifest forest origManifest
+  ; validateManifest rawManifest
+  }
+
+generateManifest1 :: Forest1 arg rep md => arg -> (rep, md) -> IO Manifest
+generateManifest1 arg forest = do
+  { origManifest <- newManifest
+  ; rawManifest <- updateManifest1 arg forest origManifest
+  ; validateManifest rawManifest
+  }
 
 
 listDirs :: (ForestMD md) => md -> [FilePath] 

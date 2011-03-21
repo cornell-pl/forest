@@ -50,6 +50,7 @@ import System.Directory
 import System.IO
 import System.IO.Unsafe
 import Text.Regex
+import System.FilePath.Posix
 
 -- import Data.Time.Clock (getCurrentTime :: IO UTCTime)
 -- import Data.Time.Clock.Posix (getPOSIXTime:: IO POSIXTime)
@@ -64,7 +65,7 @@ import qualified Control.Exception as CE
 
 import Data.Data
 import Data.Maybe
-
+import System.Random
 
 
 fileload :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
@@ -73,10 +74,25 @@ fileload path = checkPath path (do
    ~(rep, md) <- unsafeInterleaveIO (parseFile path)
    return (rep, (fmd, md)))
 
+
+fileload' :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
+fileload' path = checkPath path (do
+   fmd        <- (getForestMD path)
+   ~(rep, md) <- (parseFile path)
+   return (rep, (fmd, md)))
+
+
 fileload1 :: Pads1 arg pads md => arg -> FilePath -> IO (pads, (Forest_md, md))
 fileload1 arg path = checkPath path (do
    fmd       <- unsafeInterleaveIO (getForestMD path)
    ~(rep, md) <- unsafeInterleaveIO (parseFile1 arg path)
+   return (rep, (fmd, md)))
+
+
+fileload1' :: Pads1 arg pads md => arg -> FilePath -> IO (pads, (Forest_md, md))
+fileload1' arg path = checkPath path (do
+   fmd       <-  (getForestMD path)
+   ~(rep, md) <-  (parseFile1 arg path)
    return (rep, (fmd, md)))
 
 instance (Pads rep md) => File rep md where
@@ -86,19 +102,34 @@ instance (Pads1 arg rep md) => File1 arg rep md where
   fileLoad1 = fileload1
 
 
+
+getTempForestScratchDirectory :: IO FilePath
+getTempForestScratchDirectory = do 
+  { tempDir <- getTempForestDirectory 
+  ; let forestScratchDir = combine tempDir "Scratch"
+  ; createDirectoryIfMissing False forestScratchDir
+  ; return forestScratchDir
+  }
+
 getTempFile :: IO FilePath
 getTempFile = do 
- { fp <- getTemporaryDirectory
- ; (fp, handle) <- openTempFile fp "Forest"
+ { fp <- getTempForestScratchDirectory
+ ; (fp', handle) <- openTempFile fp "Forest"
  ; hClose handle
- ; system ("rm -f " ++ fp)
+ ; system ("rm -f " ++ fp')
+ ; return fp'
+ }
+
+getTempDir :: IO FilePath
+getTempDir = do 
+ { fp <- getTempFile;
+ ; createDirectoryIfMissing False fp
  ; return fp
  }
 
 untar :: FilePath -> IO(ExitCode, FilePath, FilePath)  
 untar path = do 
- { tempDir <- getTempFile
- ; createDirectory tempDir
+ { tempDir <- getTempDir
  ; oldCurDir <-  getCurrentDirectory
  ; setCurrentDirectory tempDir
  ; let cmd = "tar -xf " ++ path
@@ -139,7 +170,7 @@ tarload load path = checkPath path (do
                   ; return (myempty, md')
                   }
   ; setCurrentDirectory savedCurDir
-  ; remove tempDir
+--  ; remove tempDir
   ; return (rep, md)
   })
 
@@ -153,7 +184,7 @@ gzipload load path = checkPath path (do
       ExitSuccess -> do
         { (rep, md_zip) <- load newpath
         ; let md' = replace_fmd_header md_zip md
-        ; remove newpath
+--        ; remove newpath
         ; return (rep, md')
         }
       ExitFailure errCode -> do
@@ -197,13 +228,13 @@ doLoadMaybe :: ForestMD md =>  FilePath -> IO (rep,md) -> IO (Maybe rep, (Forest
 doLoadMaybe path f = do
    { exists <- fileExist path
    ; if not exists then
-       return (Nothing, (cleanForestMD, Nothing))
+       return (Nothing, (cleanForestMDwithFile path, Nothing))
      else do
       { (r,fmd) <- f 
       ; let bfmd = get_fmd_header fmd
       ; if Language.Forest.MetaData.numErrors bfmd == 0 
          then return (Just r, (bfmd, Just fmd))
-         else return (Nothing, (cleanForestMD, Nothing))
+         else return (Nothing, (cleanForestMDwithFile path, Nothing))
       }
    }
 
@@ -326,4 +357,6 @@ concatPath stem new =
      ('/':rest) -> new
      otherwise -> stem ++ "/" ++ new
 
-envVar str = fromJust (unsafePerformIO $ (System.Posix.Env.getEnv str))
+
+
+--envVar str = fromJust (unsafePerformIO $ (System.Posix.Env.getEnv str))

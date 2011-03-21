@@ -38,6 +38,7 @@ module Language.Forest.Forestc (
      module Language.Forest.Quote,
      module Language.Forest.ForestIO,
      module Language.Forest.BaseTypes,
+     module Language.Forest.Writing,
      Map
   ) 
   where
@@ -50,6 +51,7 @@ import Language.Forest.Quote
 import Language.Forest.ForestIO
 import Language.Forest.BaseTypes
 import Data.Map
+import Language.Forest.Writing
 
 
 

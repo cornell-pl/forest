@@ -39,6 +39,7 @@ import Data.GraphViz
 import System.FilePath.Posix
 import Data.Map 
 import Data.List
+import qualified Data.Maybe as Maybe
 
 type NodeTy = Forest_md
 type EdgeLabel = ()
@@ -64,13 +65,13 @@ displayNodes (n,fmd) =
                BinaryK  -> [PenWidth 2.0]
                AsciiK   -> []
                otherwise -> []
-      symLink = if isSymLink fInfo
+      symLink' = if Maybe.isJust (symLink fInfo)
                  then [Style [SItem Dashed []]]
                  else []
       color = if numErrors fmd > 0
                 then [Color[myred]]
                 else []
-  in [FontName "Courier", mkLabel name] ++ color ++ shape ++ symLink
+  in [FontName "Courier", mkLabel name] ++ color ++ shape ++ symLink'
 
 mdToPDF :: ForestMD md => md -> FilePath -> IO(Maybe String)
 mdToPDF md filePath = mdToPDFWithParams defaultGraphVizParams md filePath 

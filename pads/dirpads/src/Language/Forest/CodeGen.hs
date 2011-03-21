@@ -39,6 +39,9 @@ import Language.Forest.Syntax as PS
 import Language.Forest.MetaData
 import Language.Forest.Generic
 import qualified Language.Forest.Errors as E
+import Language.Forest.Writing
+import System.Directory
+import System.FilePath.Posix
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax
@@ -48,8 +51,10 @@ import Language.Forest.ForestIO
 
 import Data.Data
 import Data.Char
-import Data.Map 
+import qualified Data.Map as Map
+import qualified Data.List as List
 import qualified Control.Exception as CE
+import Control.Monad
 
 
 
@@ -63,28 +68,250 @@ make_forest_declaration (ForestDecl (id, pat, forestTy)) = do
    let ty_name    = getTyName    id
    let md_ty_name = getMDName    id
    let load_name  = getLoadName  id
+   let wn         = getWriteManifestName id
    let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
    (ty_decl, md_ty_decls, md_ty) <- genRepMDDecl forestTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
-   let forestInstance       :: [Dec] = genFInst    load_name ty_name md_ty      forestTy arg_info_opt
-   loadM :: [Dec]                   <- genLoadM    load_name ty_name md_ty_name forestTy arg_info_opt
+   let forestInstance       :: [Dec] = genFInst    load_name wn ty_name md_ty      forestTy arg_info_opt
+   loadM :: [Dec]                   <- genLoadM    load_name    ty_name md_ty_name forestTy arg_info_opt
+   writeManifest :: [Dec]           <- genWriteManifest wn      ty_name md_ty_name forestTy arg_info_opt
    return (   [ty_decl]    
            ++ md_ty_decls  
            ++ forestInstance
            ++ loadM
+           ++ writeManifest
            )
 
-genFInst load_name ty_name md_ty forestTy mpat_info = 
-      let (inst, load) = case mpat_info of
+genFInst load_name wn_name ty_name md_ty forestTy mpat_info = 
+      let (inst, load, wn) = case mpat_info of
                           Nothing -> (AppT (AppT (ConT ''Forest) (ConT ty_name)) md_ty,   -- Forest RepTy MDTy
-                                      mkName "load")
+                                      mkName "load",
+                                      mkName "updateManifest")
                           Just (p,arg_ty) -> 
                                      (AppT 
                                         (AppT (AppT (ConT ''Forest1) arg_ty) (ConT ty_name)) 
                                         md_ty,   -- Forest1 Arg RepTy MDTy
-                                      mkName "load1")
+                                      mkName "load1",
+                                      mkName "updateManifest1")
           load_method = ValD (VarP load) (NormalB (VarE load_name)) []
-      in [InstanceD [] inst [load_method]]
+          update_manifest_method = ValD (VarP wn) (NormalB (VarE wn_name)) []
+      in [InstanceD [] inst [load_method, update_manifest_method]]
 
+
+genWriteManifest :: Name -> Name ->  Name -> ForestTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
+genWriteManifest    funName rep_name md_name forestTy mpat_info = do 
+   core_bodyE <- writeE rep_name forestTy
+   let core_ty = arrowTy (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT md_name)) 
+                (arrowTy (ConT (mkName "Manifest")) 
+                (AppT (ConT ''IO) (ConT (mkName "Manifest"))))
+   let (bodyE,ty) = case mpat_info of
+                     Nothing -> (core_bodyE, core_ty)
+                     Just (pat,pat_ty) -> ( LamE [pat] core_bodyE,
+                                            arrowTy pat_ty core_ty)
+   let sigD = SigD funName ty
+   let funD = ValD (VarP funName) (NormalB bodyE) []
+   return [sigD, funD]
+
+writeE :: Name -> ForestTy -> Q TH.Exp
+writeE repN ty = do
+   repName  <- genRepName 
+   mdName   <- genMdName
+   manName  <- genManName
+   let (repE, repP) = genPE repName
+   let (mdE,  mdP)  = genPE mdName
+   let (manE, manP) = genPE manName
+   let frepP       = wrapRepP repN ty repP 
+   rhsE        <- writeE' (ty, repE, mdE, manE)
+   let writeFun = LamE [TupP [frepP, mdP]] (LamE [manP] rhsE)
+   return writeFun
+
+wrapRepP :: Name -> ForestTy -> TH.Pat -> TH.Pat
+wrapRepP repN fty repP = case fty of
+  Directory _ -> repP
+  otherwise   -> ConP repN [repP]
+
+
+
+writeE' :: (ForestTy, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
+writeE' (forestTy, repE, mdE, manE) = case forestTy of
+  File fTy -> writeFileManifest fTy repE mdE manE
+  Directory dTy -> writeDirManifest dTy repE mdE manE
+  Named f_name -> return (AppE (AppE  (VarE (getWriteManifestName f_name))  (TupE [repE, mdE])) manE)
+  SymLink -> return (AppE (AppE (VarE 'updateManifestWithLink) (AppE (VarE 'fst) mdE)) manE)
+  FConstraint _ ty _ -> writeE' (ty, repE, mdE, manE)
+  Fapp ty argE -> writeAppManifest ty argE repE mdE manE
+  FMaybe ty -> writeMaybeManifest ty repE mdE manE
+  FComp comp -> writeListManifest comp repE mdE manE
+  Gzip fty -> writeGzipManifest fty repE mdE manE
+  Tar fty -> writeTarManifest fty repE mdE manE
+  otherwise -> return (VarE 'undefined)
+
+writeTarManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
+writeTarManifest fty repE mdE manE = do
+  { (irepE, irepP) <- doGenPE "rep"
+  ; (imdE,  imdP)  <- doGenPE "md"
+  ; (imanE, imanP) <- doGenPE "manifest"
+  ; writeItemE <- writeE' (fty, irepE, imdE, imanE)
+  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
+  ; return (AppE (AppE (AppE (AppE (VarE 'doWriteTarManifest) repE) mdE) itemFnE) manE)
+  }
+
+
+doWriteTarManifest rep (md @ (fmd,base)) doItem manifest = do 
+  { freshManifest <- newManifest
+  ; rawContentManifest <- doItem (rep,md) freshManifest
+  ; contentManifest <- validateManifest rawContentManifest
+  ; let tarStatus = collectManifestErrors contentManifest
+  ; print "Finished generating manifest for tar"
+  ; let localDirToTarName = takeBaseName(dropExtensions (fullpath (fileInfo fmd)))
+  ; print ("name of directory to tar: " ++ localDirToTarName)
+  ; let tarName = addExtension  localDirToTarName "tar"
+  ; scratchDir <- getTempForestScratchDirectory
+  ; let dirToTarName = combine scratchDir localDirToTarName
+  ; createDirectoryIfMissing True dirToTarName
+  ; canonScratchDir <- System.Directory.canonicalizePath scratchDir
+  ; let clipPath = getClipPathFromTarManifest contentManifest canonScratchDir
+  ; storeManifestAt dirToTarName  clipPath contentManifest
+  ; oldCurDir <- getCurrentDirectory
+  ; setCurrentDirectory scratchDir
+  ; doShellCmd ("tar -cvf " ++ tarName  ++ " " ++ localDirToTarName )
+  ; doShellCmd ("mv " ++ tarName  ++ " " ++ (tempDir manifest) )
+  ; setCurrentDirectory oldCurDir
+  ; updateManifestWithTar tarName tarStatus fmd manifest   --XXX: need to pass errors in temp manifest on to higher-level manifest
+  }
+
+
+writeGzipManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
+writeGzipManifest fty repE mdE manE = do
+  { (irepE, irepP) <- doGenPE "rep"
+  ; (imdE,  imdP)  <- doGenPE "md"
+  ; (imanE, imanP) <- doGenPE "manifest"
+  ; writeItemE <- writeE' (fty, irepE, imdE, imanE)
+  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
+  ; return (AppE (AppE (AppE (AppE (VarE 'doWriteGzipManifest) repE) mdE) itemFnE) manE)
+  }
+
+doWriteGzipManifest rep (fmd,base) doItem manifest = do 
+  { let fmd' = removeGzipSuffix fmd
+  ; manifest' <- doItem (rep,(fmd',base)) manifest
+  ; gzipManifestEntry fmd manifest'
+  }
+
+gSnd expE = AppE (VarE 'snd) expE
+
+writeListManifest :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp 
+writeListManifest comp repE mdE manE = do
+  {  (fp_repEs, fp_mdEs) <- case tyConNameOpt comp of
+        Nothing -> return (repE, gSnd mdE)
+        Just str -> do { arity <- getTyConArity str
+                       ; if arity == 1 then 
+                              return (AppE (VarE 'toList1) repE,  AppE (VarE 'toList1) (gSnd mdE))
+                         else 
+                              return (AppE (VarE 'toList2) repE,  AppE (VarE 'toList2) (gSnd mdE))
+                       }
+  ; let pathsE = case (generatorG comp) of
+              Explicit expE  -> AppE (ConE 'ExpPaths) expE
+              Matches matchE -> AppE (ConE 'MatchPaths) matchE
+  ; (irepE, irepP) <- doGenPE "rep"
+  ; (imdE,  imdP)  <- doGenPE "md"
+  ; (imanE, imanP) <- doGenPE "manifest"
+  ; writeItemE <- writeE' (descTy comp, irepE, imdE, imanE)
+  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
+  ; return (AppE (AppE (AppE (AppE (AppE (VarE 'doWriteList) pathsE) fp_repEs) fp_mdEs) itemFnE) manE)
+  }
+
+--doWriteList :: Forest rep md  => 
+--    [(FilePath,rep)] -> [(FilePath,md)] ->  ((rep, md) -> Manifest -> IO Manifest ) -> Manifest -> IO Manifest
+doWriteList paths fp_reps fp_mds doItem manifest = do
+   { let rep = snd (List.unzip fp_reps)
+   ; let mds = snd (List.unzip fp_mds)
+   ; let rep_mds = List.zip rep mds
+   ; foldM (\manifest'' rm -> doItem rm manifest'')  manifest rep_mds
+   }
+
+
+writeMaybeManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
+writeMaybeManifest ty repE mdE manE = do 
+  (jrepE, jrepP) <- doGenPE "rep"
+  (jmdE,  jmdP)  <- doGenPE "md"
+  (freshFmdE, freshFmdP) <- doGenPE "fmd"
+  justE <- writeE' (ty, jrepE, jmdE, manE)
+  let justB = NormalB justE
+  let jrepPat = ConP 'Just [jrepP]
+  let jmdPat =  TupP[freshFmdP, ConP 'Just [jmdP]]
+  let justPat = TupP [jrepPat, jmdPat]
+  let justmatch = Match justPat justB []
+  let nrepPat = ConP 'Nothing []
+  let nmdPat =  TupP[freshFmdP, ConP 'Nothing []]
+  let nPat = TupP [nrepPat, nmdPat]
+  let nmatchE = AppE (AppE (VarE 'updateManifestWithNone) freshFmdE) manE
+  let nmatch = Match nPat (NormalB nmatchE) []
+  let caseE = CaseE(TupE[repE,mdE]) [justmatch,nmatch]
+  return caseE
+
+writeAppManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
+writeAppManifest ty argE repE mdE manE = case ty of
+  Named f_name   -> return (AppE (AppE (AppE  (VarE (getWriteManifestName f_name))  argE) (TupE [repE, mdE])) manE)
+
+
+writeDirManifest :: DirectoryTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
+writeDirManifest (Record fty_name  fields) repE mdE manE = do
+  { let (repEs, repPs) = getPEforFields getBranchNameL fields
+  ; let (mdEs,   mdPs)  = getPEforFields getBranchMDNameL fields
+  ; (freshFmdE, freshFmdP) <- doGenPE "fmd"
+  ; (symManE, symManP) <- doGenPE "manifest_sym"
+  ; let mdPat  = TupP[freshFmdP, RecP (getStructInnerMDName (mkName fty_name)) mdPs]
+  ; let repPat = RecP (mkName fty_name) repPs
+  ; let casePat = TupP [repPat, mdPat]
+-- calculate the body
+  ; let symCheckE = AppE (AppE (VarE 'updateManifestWithDir) freshFmdE) manE
+  ; let checkS = BindS symManP symCheckE
+  ; (freshManE, freshManP) <- doGenPE "manifest"
+  ; let fields_rep_mds_manifest = List.zip4 fields repEs mdEs (repeat freshManE)
+  ; expE <- mapM (writeField freshManP) fields_rep_mds_manifest
+  ; let printItemsE = ListE expE
+  ; let doFieldsS = NoBindS (AppE (AppE (VarE 'doWriteFields) symManE) printItemsE)
+  ; let caseBody = NormalB (DoE [checkS, doFieldsS])
+  ; let match = Match casePat caseBody []
+  ; let caseE = CaseE (TupE [repE, mdE]) [match]
+  ; return caseE
+  }
+
+
+doWriteFields  :: Monad m => a -> [a -> m a] -> m a
+doWriteFields = foldM (\manifest' doItem -> doItem manifest') 
+
+writeField :: TH.Pat -> (Field, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
+writeField manP (field, repE, mdE, manE) = do
+  { bodyE <- case field of
+             Simple (_,_,_,fTy,_) ->  writeE' (fTy, repE, mdE, manE)
+             Comp comp            ->  writeListManifest comp repE (TupE [VarE 'undefined, mdE]) manE  
+  ; return (LamE [manP] bodyE)  
+  }
+
+
+
+getPEforFields :: (String -> Name) -> [Field] ->  ([TH.Exp], [TH.FieldPat])
+getPEforFields mkFieldNm fields = 
+  let eps =  List.map (getPEforField mkFieldNm) fields
+      (es, fps) = List.unzip eps
+  in (es, fps)
+
+getPEforField :: (String -> Name) -> Field -> (TH.Exp, TH.FieldPat)
+getPEforField mkFieldNm field = 
+  let fieldStr = case field of
+                   Simple (name, _, _, _, _) -> name
+                   Comp r -> internalName r
+      (varE, varP) = genPE (mkFieldNm fieldStr)
+  in  (varE, (mkFieldNm fieldStr, varP))
+
+writeFileManifest :: (String, Maybe TH.Exp) -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
+writeFileManifest (pty_name, optArg) repE mdE manE = do
+ { let funE = case optArg of 
+               Nothing   -> VarE 'updateManifestPads
+               Just argE -> VarE 'updateManifestPads1
+ ; let resultE = AppE (AppE funE (TupE [repE, mdE])) manE
+ ; return resultE
+ }
 
 genLoadM :: Name -> Name -> Name -> ForestTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
 genLoadM load_name rep_name pd_name forestTy mpat_info = do 
@@ -370,8 +597,8 @@ modPredE externalP predE = case externalP of
 
 
 
-emptyMap :: Map a b
-emptyMap = Data.Map.empty
+emptyMap :: Map.Map a b
+emptyMap = Map.empty
 
 
 
@@ -524,6 +751,8 @@ genRepMDTy ty = case ty of
 {- Name manipulation functions -}
 genUniqueName base = newName base
 genRepName = genUniqueName "rep" 
+genRepMDName = genUniqueName "rep_md" 
+genManName = genUniqueName "manifest" 
 genMdName  = genUniqueName "md" 
 genBMdName = genUniqueName "bmd"
 getMDName pname = mkName ((strToUpper pname) ++ "_md")
@@ -543,6 +772,7 @@ getBranchNameL   str = mkName  (strToLower str)
 getTyName pname = mkName  (strToUpper pname)
 
 getLoadName pname = mkName ((strToLower pname) ++ "_load")
+getWriteManifestName pname = mkName ((strToLower pname) ++ "_updateManifest")
 
 
 

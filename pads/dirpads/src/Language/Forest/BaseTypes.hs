@@ -36,6 +36,7 @@ module Language.Forest.BaseTypes where
 import Language.Forest.Generic
 import Language.Forest.MetaData
 import Language.Forest.Quote
+import Language.Forest.Writing
 import Language.Pads.Padsc
 
 [forest|
