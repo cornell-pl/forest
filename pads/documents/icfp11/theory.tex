@@ -1,5 +1,6 @@
 \section{A Core Calculus for \forest{}}
 \label{sec:theory}
+\newcommand{\us}{\ensuremath{\_\!\_}}
 \newcommand{\defeq}{\ensuremath{\triangleq}}
 \renewcommand{\bnfdef}{\ensuremath{\mathord{::=}}}
 \newcommand{\slsh}{\ensuremath{\mathord{\textsf{/}}}}
@@ -36,10 +37,9 @@
 \newcommand{\MD}{\ensuremath{\mathit{MD}}}
 \newcommand{\md}[1]{\ensuremath{(#1)~\mathit{md}}}
 \newcommand{\eval}[3]{\ensuremath{[\![#1]\!]^{#2}_{#3}}}
-\newcommand{\pfile}{\ensuremath{\mathsf{F}}}
-\newcommand{\ptext}{\ensuremath{\mathsf{T}}}
-\newcommand{\pbin}{\ensuremath{\mathsf{B}}}
-\newcommand{\pany}{\ensuremath{\mathsf{A}}}
+\newcommand{\pfile}{\ensuremath{\mathsf{File}}}
+\newcommand{\pdir}{\ensuremath{\mathsf{Dir}}}
+\newcommand{\plink}{\ensuremath{\mathsf{Link}}}
 \newcommand{\att}{\ensuremath{\mathsf{a}}}
 \newcommand{\defaultatt}{\ensuremath{\att_{\mathsf{default}}}}
 \newcommand{\repty}[1]{{\cal R}[\![ #1 ]\!]}
@@ -60,141 +60,179 @@
 \textit{Paths}          & r,s & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
 \textit{Attributes}     & \att  & \bnfdef & \dots\\[1ex]
 \textit{Filesystem}     & T  & \bnfdef & \File{n} \\
-\textit{Contents}       &    & \bnfalt & \Dir{ \Set{n_1,\dots,n_k} }\\
-                        &    & \bnfalt & \Link{r}\\[1ex]
-\textit{Filesystems}    & F & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots r_k \mapsto (\att_k,T_k) }\\[1ex]
+                        &    & \bnfalt & \Link{r}\\
+\textit{Contents}       &    & \bnfalt & \Dir{ \Set{n_1,\dots,n_k} }\\[1ex]
+\textit{Filesystems}    & F & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots, r_k \mapsto (\att_k,T_k) }\\[1ex]
 \textit{Values}         & v & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
-                        &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \{ v_1,\dots,v_k \}\\
+                        &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\dots,v_k}\\
 \textit{Expressions}    & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
 \textit{Environments}   & \Env & \bnfdef & \ENil \bnfalt E,x\mapsto v \\[1ex]
 \textit{Specifications} & s & \bnfdef & \Sk 
-                              \bnfalt \SAdhoc{b}
                               \bnfalt \SPath{e}{s}
                               \bnfalt \SPair{x}{s_1}{s_2}\\[1ex]
                         &   & \bnfalt & \SComp{s}{x}{e}
                               \bnfalt \SPred{e}
-                              \bnfalt \SOption{s}\\[1ex]
+                              \bnfalt \SOption{s}
 \end{array}
 \]
-\caption{File systems and their specifications}
 \label{fig:calculus-syntax}
+\caption{\forest{} calculus syntax}
 \end{figure}
 
-We have defined an idealized core calculus that captures the
-essence of \forest{}.  This calculus helped us to design various
-aspects of the language and provides a compact way of describing the
-central features of the language in a precise way.  It is inspired by
-classical (\ie{}, not separating, substructural or ambient)
-unordered tree logics, customized slightly to our application domain.
+This section describes a core calculus that formalizes the essential
+features of \forest{} precisely in a simple setting. It is inspired by
+classical (\ie{}, not separating, substructural or ambient) unordered
+tree logics, customized for file systems. We used this calculus to
+investigate various features and prove theorems (such as the
+round-tripping properties presented at the end of this section) as we
+developed \forest{}.
 
-\paragraph*{File system model and specification syntax.}
+\paragraph*{File system model.}
 %
 Figure~\ref{fig:calculus-syntax} presents the formal file system
-model.  File paths $r$ are sequences of string names\footnote{For
-  simplicity, we ignore the special path elements ``..'' and ``.''.
-  It would be easy to add these features, but the semantics would
-  become more complicated because path expressions would need to be
-  normalized.}  and file systems $F$ are finite partial maps from
-paths to pairs of file attributes $\att$ and file system contents $T$.
-We leave the attribute records abstract; they should include the usual
-fields: owner, group, date modified, {\it etc.}  We write
-$\defaultatt$ for a default attribute record where necessary.  The
-contents $T$ of a node in the file system may be a file $\File{n}$
-(with underlying string contents $n$), a directory $\Dir{
-  \Set{n_1,\dots,n_k} }$ (with contents named $n_1, \ldots, n_k$) or a
-symbolic link $\Link{r}$ (where $r$ is the path pointed to by the
-link). We write $\dom{F}$ for the set of paths that $F$ is defined on,
-and $F(r) = \bot$ when $r \not\in \dom{F}$.
+model. A path $r$ is a sequence of strings\footnote{For simplicity, we
+  ignore the special path elements ``..'' and ``.''.  It would be easy
+  to add these features, at the cost of complicating the semantics.}
+and a file systems $F$ is finite map from paths to pairs of attributes
+$\att$ and file system contents $T$.  We leave attributes abstract but
+expect that they include the usual fields: owner, group, date
+modified, {\it etc.}  The attribute $\defaultatt$ contains default
+values for all fields. The contents $T$ of a node in the file system
+is either a file $\File{n}$ (where $n$ is the string contents of the
+fiel), a symbolic link $\Link{r}$ (where $r$ is the path pointed to by
+the link), or a directory $\Dir{\Set{n_1,\dots,n_k}}$ (with paths
+$n_1$ to $n_k$). We write $\dom{F}$ for the set of paths defined in
+$F$, $F(r)$ for the contents at $r$, and $F(r) = \bot$ when $r$ is not
+in $\dom{F}$.
 
-A file system model $F$ is {\em well-formed} if it is tree-shaped,
-with directories forming internal nodes and files and symbolic links
-at the leaves. In addition, we require that:
-hold:
+A file system $F$ is {\em well-formed} if it encodes a tree with
+directories at the internal nodes and files and symbolic links at the
+leaves. More formally, we say that $F$ is well-formed if
 %
 \begin{itemize}
-\item the domain of $F$ be prefix-closed,
-\item if $F(r) = (\att,\Dir{ \Set{n_1,\dots,n_k} })$ then
-  $\PCons{r}{n_i} \in \dom{F}$ for $i \in \{1,\ldots,k\}$,
-\item if $F(r) = (\att,\File{n_r})$ or $(\att,\Link{r'})$ then
-  $\PCons{r}{n} \not\in \dom{F}$ for every $n$.
+\item $\dom{F}$ is prefix-closed,
+\item $F(r) = (\att,\Dir{ \Set{n_1,\dots,n_k} }) \implies$\\ \hspace*{3.3mm}$\forall i \in \{1,\dots,k\}.~\PCons{r}{n_i} \in \dom{F}$, and
+\item $F(r) = (\att,\File{n_r}) \vee F(r) = (\att,\Link{r'}) \implies$\\ \hspace*{3.3mm}$\forall n.~\PCons{r}{n} \not\in \dom{F}$.
 \end{itemize}
 %
+Note that although the structure of a well-formed file system is
+tree-shaped, cycles can be also expressed using symbolic links that
+point ``up'' in the file system.
 
-We combine file systems using a right-biased concatenation operator:
+\paragraph{File system specifications.}
+%
+Figure~\ref{fig:calculus-syntax} presents the syntax of file system
+specifications $s$.  We leave the syntax of expression language
+abstract but assume that it contains values $v$, variables $x$, and
+other operators (in the full \forest{} language, expressions can be
+arbitrary Haskell code).  An environment $\Env$ maps variables to
+values.  The semantic function $\eval{e}{\Env,r}{\tau}$ evaluates an
+expression $e$ in the environment $\Env$ at path $r$, yielding a value
+$v$ of type $\tau$.
+
+The simplest file system specifications are constants $\Sk$, which
+range over specifications for files (\pfile), directories (\pdir),
+links (\plink), and \padshaskell{}-described files (\SAdhoc{b}). The
+type annotations $\tau_r$ and $\tau_m$ are described below. In
+addition, we assume that each constant has associated functions
+$\loadkname{k}$ and $\loadkname{k}$. For example, the $\loadkname{}$
+function for the \pfile{} construct, which describes any file (but not
+symbolic links or directories), is defined as follows:
+%
+\[
+\loadkname{\pfile}~(\Env,F,r) =
+\begin{cases}
+  (n,(\True,\att)), \mathrm{if } F(r) = (\att,\File{n}) \\
+  ("",(\False,\defaultatt)), \mathrm{otherwise}\\
+\end{cases}
+\]
+%
+It either returns the contents and attributes of the file at path $r$
+if it exists, or $""$ and default attributes if $F$ does not contain a
+file at $r$. The load functions for the \plink{} and \pdir{} constants
+are similar. The load function for \SAdhoc{b}{} reads the file system
+in the same way as \pfile{}, but invokes $b$ parser to produce the
+final representation.  The $\storekname{}$ function for \pfile{} is
+defined as follows:
+%
 \[
 \begin{array}{l}
-(F_1 \FAppend F_2)(r) = \\
-\qquad 
+\storekname{\pfile}~(\Env,F,r,v,d) =\\[.5ex]
+\quad 
 \begin{cases}
-  (\att_2,\Dir{N_1 \cup N_2}) & \text{if}~F_1(r) = (\att_1,\Dir{N_1}) \; \wedge \\
-                              & \;\;\; F_2(r) = (\att_2,\Dir{N_2})\\
-  F_1(r) & \text{if}~F_2(r) = \bot\\
-  F_2(r) & \text{otherwise}\\
+  (\FUpdate{F}{r}{(\att,\File{v})},            & \text{if}~d = (\True,\att)\\
+   \; \phi'(F') = (F'(r) = (\att,\File{v})))\\[1ex]
+  \FDelete{F}{r},                              & \text{if}~d = (\False,\att)~\wedge\\
+   \; \phi'(F') = F'(r) \neq (\us,\File{\us})) & \;\;\; F(r) = (\us,\File{\us})\\[1ex]
+  F,              & \text{otherwise}\\
+   \; \phi'(F') = F'(r) \neq (\us,\File{\us}))\\
 \end{cases}
 \end{array}
 \]
-%
-\begin{prop} 
-  File system conceatenation is associative and idempotent: 
-  \begin{itemize}
-  \item $\forall F_1,F_2,F_3.~((F_1 \FAppend F_2) \FAppend F_3) = (F_1 \FAppend (F_2 \FAppend
-    F_3))$, 
-  \item $\forall F.~F \FAppend F = F$
-\end{itemize}
-\end{prop}
+It produces two results: an update file system $F'$ and a predicate
+$\phi'$ that records the constraints needed to ensure
+consistency. Given a representation $v$ and metadata $d$, it
+overwrites the contents of the file system $F$ at path $r$ to
+$(\att,File{v})$ if $d$ is valid (and contains $\att$), deletes the
+contents of $F$ at $r$ if $d$ is not valid but $F(r)$ contains a file,
+and otherwise returns $F$ unchanged. The predicate $\phi'$ requires
+that $F'(r)$, the contents of the new file system $F'$ at $r$, be
+$\File{v}$ in first case and that $F'(r)$ not be a file in the other
+two cases. These constraints are needed to ensure properties such as
+the round-tripping properties presented at the end of this section.
 
-Figure~\ref{fig:calculus-syntax} presents the syntax of a simple
-computation language $e$ and our file system specifications $s$.  The
-computation language $e$ contains values $v$, variables $x$, and other
-operators, which we leave unspecified.  An environment $\Env$ maps
-variables to values.  The semantic function $\eval{e}{\Env,r}{\tau}$
-evaluates an expression $e$ in an environment $\Env$ with respect to a
-current path $r$, yielding a value $v$ of type $\tau$.
-
-\jnf{I wonder if it would be clearer to define a few constants like
-  File and Directory and note that we can have others as longs as they
-  satisfy a few simple properties?}
-%
-The simplest file system specifications are constants $k$, which range
-over basic specifications such as those for files (\pfile), text files
-(\ptext), binary files (\pbin), or any file system contents at all
-(\pany).
-
-\padshaskell{} specifications are modeled as \SAdhoc{b} where
-$b^{\tau_m}_{\tau_r}$ is a parser---i.e., a total function from pairs
-of environments and strings to pairs of type $\tau_r \times \tau_m$,
-where the first element is the representation for the parsed data and
-the second element is its metadata.
-
-\forest{}'s surface syntax combines specifications for records and
-paths into a single construct (and similarly for comprehensions and
-paths). The calculus models (dependent) records, paths, and
-comprehensions as independent, orthogonal constructs.  Record
-specifications are written \SPair{x}{s_1}{s_2}, where $x$ may appear
-in $s_2$.  Path specifications are written $\SPath{e}{s}$, where $e$
-is a path name (to be appended to the current path) and $s$ specifies
-a fragment of the file system at that path. Comprehension
-specifications are written $\SComp{s}{x}{e}$, where $e$ is a set of
+In the \forest{} surface syntax, records and paths are specified using
+a single construct (and similarly for comprehensions) while the core
+calculus models (dependent) records, paths, and comprehensions as
+independent, orthogonal constructs.  Path specifications are written
+$\SPath{e}{s}$, where $e$ is a path name (to be appended to the
+current path) and $s$ specifies a fragment of the file system at that
+path. Record specifications are written \SPair{x}{s_1}{s_2}, where $x$
+may appear in $s_2$. Comprehension specifications are written
+$\SComp{s}{x}{e}$, where $e$ is an expression that describes a set of
 values, $x$ is a variable, and $s$, which may depend on $x$, specifies
-a fragment of the file system for each value of $x$.  \forest{}'s
-combined record-and-path construct \cd{\{c \kw{is} "c.txt" :: C, d
-  \kw{is} "d.txt" :: D c\}} is encoded in the calculus as
-$\SPair{x}{(\SPath{\texttt{"}\mathtt{c.txt}\texttt{"}}{C})}{(\SPath{\texttt{"}\mathtt{d.txt}\texttt{"}}{D\;
-    x})}$.  Similarly, \forest{}'s comprehension \cd{[x :: s | x <-
-  e]} is encoded as the composition of the calculus constructors
-$\SComp{s_1}{x}{e}$ and $s_1 = \SPath{x}{s}$.
-
-Predicate specifications $\SPred{e}$ succeed when $e$ evaluates to
+a fragment of the file system for each value of $x$.  For example, the
+specification
+\begin{center}
+\cd{\{c \kw{is} "c.txt" :: C, d \kw{is} "d.txt" :: D c\}} 
+\end{center}
+is encoded in the calculus as
+%
+\[
+\SPair{x\,}{\,(\SPath{\texttt{"}\mathtt{c.txt}\texttt{"}}{C})}{(\SPath{\texttt{"}\mathtt{d.txt}\texttt{"}}{D\; x})}, 
+\]
+Similarly, the comprehension
+\begin{center}
+\cd{[c :: C | c <- \kw{matches} (GL "*")]} 
+\end{center}
+is encoded as: \(\SPair{x}{\pdir}{\SComp{\SPath{y}{C}}{y}{x}}
+\). Predicate specifications $\SPred{e}$ succeed when $e$ evaluates to
 \True{} and fail when $e$ evaluates to \False{} under the current
-environment.  A \forest{} constraint of the form \cd{s \kw{where} e} is
-encoded in the calculus as a dependent pair with a predicate:
-$\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$
+environment.  A \forest{} constraint of the form \cd{s \kw{where} e}
+is encoded in the calculus using a dependent pair and a predicate:
+$\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$ Finally, maybe
+specifications are written as $\SOption{s}$ in the calculus.
 
-Finally, maybe specifications are written as $\SOption{s}$ in the
-calculus.
+\begin{figure}
+\[
+\begin{array}{l|l|l}
+s & \repty{s} = & \mdty{s} =  \\
+\hline
+\Sk & \tau_r &  \tau_m~\mathit{md} \\
+\SPath{e}{s} & \repty{s} & \mdty{s} \\
+\SPair{x}{s_1}{s_2} & \repty{s_1} \times \repty{s_2} & \md{\mdty{s_1} \times \mdty{s_2}} \\
+\SComp{s}{x}{e} & \repty{s}~\typ{list} & \md{\mdty{s}~\typ{list}}    \\
+\SPred{e} & \typ{unit} & \typ{unit}~\mathit{md}\\
+\SOption{s} & \repty{s}~\typ{option} & \md{\mdty{s}~\typ{option}} %\\
+\end{array}
+\]
+\caption{\forest{} calculus representation and metadata types}
+\label{fig:calculus-types}
+\end{figure}
+
 
 \begin{figure*}
-\begin{minipage}[t]{.425\textwidth}
+\begin{minipage}[t]{.45\textwidth}
 \fbox{$\load{\Env}{F}{r}{s}{v,d}$}
 \[
 \begin{array}{c}
@@ -221,9 +259,9 @@ calculus.
 { \begin{array}{c}
   \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_k ]\\
   \forall i \in \{1,\dots,k\}.~\load{\Env[x \mapsto w_i]}{F}{r}{s}{v_i,d_i}\\
-  b = \bigwedge_i \valid{d_i}
+  b = \bigwedge_i^k \valid{d_i} \quad \mathit{vs} = [v_1,\dots,v_k] \quad \mathit{ds} = [d_1,\dots,d_k] 
   \end{array} }
-{ \load{\Env}{F}{r}{ \SComp{s}{x}{e} }{ [v_1,\dots,v_k],(b,[d_1,\dots,d_k]) } }
+{ \load{\Env}{F}{r}{ \SComp{s}{x}{e} }{ \mathit{vs},(b,\mathit{ds}) } }
 { }
 \\[1.5em]
 \infrule
@@ -237,13 +275,13 @@ calculus.
 { }
 \\[1.5em]
 \infrule
-{ r \in \dom{F} \qquad \load{\Env}{F}{r}{s_1}{v_1,d_1} }
+{ r \in \dom{F} \quad \load{\Env}{F}{r}{s_1}{v_1,d_1} }
 { \load{\Env}{F}{r}{ \SOption{s_1} }{ \Just{v_1},(\valid{d_1},\Just{d_1}) } }
 { }
 \\[1.5em]
 \end{array}
 \]
-\end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.525\textwidth}
+\end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.5\textwidth}
 \fbox{$\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$}\\
 \[
 \begin{array}{c}
@@ -261,25 +299,23 @@ calculus.
 { \begin{array}{c}
   \store{\Env}{F}{r}{  v_1,d_1 }{s_1}{ F_1',\phi_1 } \\
   \store{\Env[x \mapsto v_1]}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\
-  F' = F_1' \FAppend F_2'\\
   \phi'(F') = (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')
   \end{array} }
-{ \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F',\phi' } }
+{ \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F_1' \FAppend F_2',\phi' } }
 { }
 \\[1.5em]
 \infrule
 { \begin{array}{c}  
-  \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ]\\  
-  k = \min{(j,l,m)} \\
+  \mathit{vs} = [v_1,\dots,v_j] \quad \mathit{ds} = [d_1,\dots,d_l]\\
+  \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ] \quad  k = \min{(j,l,m)} \\
   \forall i \in \{1,\dots,k\}.~\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
-  F' = F_1' \FAppend \dots \FAppend F_k'\\
-  \phi'(F') = (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge \bigwedge_i^k \phi_i'(F')
+  \phi'(F') = (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
   \end{array} }
-{ \store{\Env}{F}{r}{[v_1,\dots,v_j],(d,[d_1,\dots,d_l])}{ \SComp{s}{x}{e} }{ F',\phi' } }
+{ \store{\Env}{F}{r}{\mathit{vs},(b,\mathit{ds})}{ \SComp{s}{x}{e} }{ F_1' \FAppend \dots \FAppend F_k',\phi' } }
 { }
 \\[1.5em]
 \infrule
-{ \phi'(F') = b = \eval{e}{\Env,r}{\mathit{bool}} }
+{ \phi'(F') = (b = \eval{e}{\Env,r}{\mathit{bool}}) }
 { \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi' } }
 { }
 \\[1.5em]
@@ -308,43 +344,150 @@ calculus.
 \label{fig:calculus-semantics}
 \end{figure*}
 
+
+
 \paragraph*{Calculus Semantics.}
 %
 The semantics of the calculus is organized into three separate
 definitions, one for each of the three artifacts generated by the
-\forest{} compiler. These definitions are spelled out in
-Figures~\ref{fig:calculus-semantics} and \ref{fig:calculus-types}.
+\forest{} compiler.
 
-The first semantic judgement has the form $\load{\Env}{F}{r}{s}{v,d}$.
-This judgement captures the behavior of the load function.
-Intuitively, it states that in environment $\Env$ and file system $F$,
-specification $s$ matches the file system fragment at current path $r$
-and produces the representation $v$ and metadata $d$.  This judgement
-may also be viewed as a total function from $\Env$, $F$, $r$ and $s$
-to the pair $v$ and $d$.  The judgement is total because when file
-system fragments fail to match the given specification, defaults are
-generated for the representation $v$ and errors are recorded in the
-metadata $d$.  This design is preferable to failing as it allows a
-programmer to explore a file system fragment even when it contains
-errors, as is common in \filestores{}.
+Figure~\ref{fig:calculus-types} defines types for the representations
+($\repty{s}$) and metadata ($\mdty{s}$) generated by specifications
+$s$. The types for constants $\Sk$ are read off from their annotations
+while the types for other specifications are constructed from their
+structure in the obvious way---\eg, the type of representations for
+\SPair{x}{s_1}{s_2} is a product $(\repty{s_1} \times
+\repty{s_2}$. The type constructor $\mathit{md}$ provides a uniform
+representation for metadata and is defined as follows:
+\[
+\begin{array}{lcl}
+\tau~\mathit{md} & = & \typ{header} \times \tau \\
+\typ{header} & = & \typ{bool} 
+\end{array}
+\]
+The function $\valid{d}$ extracts the boolean from the metadata
+structure $d$, returning $\True$ if there are no errors in the
+structure and $\False$ otherwise. \jnf{Should this come later---\ie,
+  after defining the load judgment?} Our semantics obeys the following
+basic coherence property, which says that the load function for
+specifications $s$ generates representations and metadata belonging to
+$\repty{s}$ and $\mdty{s}$ respectively:
+%
+\begin{proposition}
+  If $\load{\Env}{F}{r}{s}{v,d}$ and $\repty{s} = \tau_{\mathcal{R}}$
+  and $\mdty{s} = \tau_{\mathcal{M}}$ then $\turn v :
+  \tau_{\mathcal{R}}$ and $\turn d : \tau_{\mathcal{M}}$,
+\end{proposition}
+%
+The judgment $\turn v : \tau$ states that $v$ has type $\tau$.
 
-The second judgement has the form
-$\store{\Env}{F}{r}{v,d}{s}{F',\phi}$ and captures the behavior of the
-store function.  It states that in environment $\Env$ and file system
-$F$, specification $s$ takes the representation $v$ and metadata $d$
-and produces a new file system $F'$ and constraints $\phi$. The
-constraint $\phi$ records the conditions that the new file system must
-satisfy to ensure that data in the representation and metadata will be
-preserved on round-trips, as captured in the following theorems:
+The inference rules on the left side of
+Figure~\ref{fig:calculus-semantics} define the semantics of the load
+function. Intuitively, the judgment $\load{\Env}{F}{r}{s}{v,d}$ states
+that in environment $\Env$ and file system $F$, the specification $s$
+matches the file system fragment at path $r$ and produces the
+representation $v$ and metadata $d$. This judgment may also be viewed
+as a total function from $\Env$, $F$, $r$ and $s$ to $(v,d)$. The
+judgment is total because when $F$ fails to match $s$, the load
+function generates defaults in the representation $v$ and records
+errors in the metadata $d$.  This design allows a programmer to
+explore a file system fragment even if it contains errors.
+
+Let us examine a few of the inference rules that define the store
+function in detail. The rule for constants $\Sk$ just invokes the
+associated $\loadkname{}$ function for $k$. The rule for
+$\SComp{s}{x}{e}$ comprehensions is more interesting: it first
+evaluates $e$ to a list $[w_1,\dots,w_k]$ and then invokes the store
+function for $s$ $k$ times in environments where $x$ is bound to each
+$w_i$. It then collects up the results into lists of reprsentations
+$[v_1,\dots,v_k]$ and metadata $[d_1,\dots,d_k]$, which is uses as the
+final result. The predicate $\SPred{e}$ construct tests whether an
+expression $e$ is satisfied. It returns $()$ as the representation and
+$(\eval{e}{\Env,r}{\mathit{bool}},())$ as the metadata. Finally,
+$\SOption{s}$ invokes $s$'s load function if the current path $r$
+exists in the file system, injecting the result into the maybe type
+using $\mathsf{Just}$, and otherwise returns $\Nothing$.
+
+The inference rules on the right side of
+Figure~\ref{fig:calculus-semantics} define the store function. The
+judgment $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$ states that in
+environment $\Env$ storing $(v,d)$ into file system $F$ using
+specification $s$ yields the file system $F'$ and predicate
+$\phi'$. The predicate $\phi'$ tracks the conditions on the file
+system needed to ensure that it accurately reflects the information in
+the representation and metadata.
+
+As a simple example to illustrate why predicates are needed, consider
+the specification $s = \SPair{x}{\pfile}{\pfile}$ and suppose that the
+load function is called in an environment $\Env$ with a file system
+$F$ and path $r$ where $F(r) = (\att,\File{n})$. The representation
+returned by load will be a pair $(n,n)$ containing two copies of the
+file contents and the metadata will also contain a pair
+$(\True,(\True,\att),(\True,\att)))$ with two copies of the metadata
+associated to that file. Now suppose that we change the representation
+to $(n,n')$, with $n \neq n'$, and we store the result back to the
+file system. Unfortunately, because the representation is
+inconsistent---it does not satisfy the dependency between the two
+components of the pair implied by $s$---the store function cannot
+produce a new file system containing the information in both $n$ and
+$n'$. Thus, it must store one and discard the other. The predicate
+$\phi'$ generated by the store function provides a way to track and
+report inconsistencies. The predicate generated by the store function
+for $s$ would express the constraint that the file at $r$ be equal to
+$n$ and $n'$, 
+%
+\[
+\phi'(F') = (F'(r) = (\att,\File{n})) \wedge (F'(r) = (\att,\File{n}))
+\]
+%
+which is obviously not satisfiable when $n' = n$. \jnf{Say more to
+  connect these to manifests?}
+
+Let us examine a few of the inference rules in detail. The rule for
+constants $\Sk$ simply invokes the $\storekname{}$ function for
+$k$. The rule for path specifications $\SPath{e}{s}$ passes off
+control to the store function for $s$ after replacing the current path
+$r$ with $\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}$. The rule for
+dependent pairs $\SPair{x}{s_1}{s_2}$ is more interesting. Given a
+pair $(v_1,v_2)$ as the representation, it first invokes the store
+function for $s_1$ with $v_1$, producing an updated file system $F_1'$
+and predicate $\phi_1'$. Next, it invokes the store function for $s_2$
+with $v_2$ in an extended environment where $x$ is bound to $v_1$,
+yielding another updated file system $F_2'$ and $\phi_2$'. It combines
+the updated file systems using the following right-biased
+concatenation operator,
+%
+\[
+\begin{array}{l}
+(F_1 \FAppend F_2)(r) = \\
+\qquad 
+\begin{cases}
+  (\att_2,\Dir{N_1 \cup N_2}) & \text{if}~F_1(r) = (\att_1,\Dir{N_1}) \; \wedge \\
+                              & \;\;\; F_2(r) = (\att_2,\Dir{N_2})\\
+  F_1(r) & \text{if}~F_2(r) = \bot\\
+  F_2(r) & \text{otherwise}\\
+\end{cases}
+\end{array}
+\]
+%
+Finally, it combines the predicates using conjunction. The result is a
+file system that contains the consistent changes made to the file
+system by the store functions for $s_1$ and $s_2$ as well as a
+predicate that checks for the consistency of all of their changes. 
+
+The correctness of our semantics is captured by two round-tripping
+properties, expressed in the following theorems:
 %
 
 \deferproof{theorem}{loadstore}{LoadStore}{%
   For all environments $\Env$, file systems $F$, paths $r$,
   specifications $s$, representations $v$, and metadata $d$ with
   $\load{\Env}{F}{r}{s}{v,d}$ and
-  $\store{\Env}{F}{r}{v,d}{s}{F',\phi}$ we have $F = F'$ and 
+  $\store{\Env}{F}{r}{v,d}{s}{F',\phi}$ we have $F = F'$ and
   $\phi'(F')$.}{%
-  The proof is by induction on $s$.
+  The proof is by induction on $s$. We assume that $\loadkname{k}$ and
+  $\storekname{k}$ obey the theorem for every constant $\Sk$.
 \begin{description}
 %%%
 %%% CONST
@@ -507,7 +650,9 @@ and the inductive proof. \hfill \qed
   $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$ and $\phi'(G_1 \FAppend F'
   \FAppend G_2)$ and $\load{\Env}{(G_1 \FAppend F' \FAppend
     G_2)}{r}{s}{v',d'}$ we have $v' = v$ and $\valid{d} =
-  \valid{d'}$. The proof is by induction on $s$.
+  \valid{d'}$. The proof is by induction on $s$. We assume that
+  $\loadkname{k}$ and $\storekname{k}$ obey the theorem for every
+  constant $\Sk$.
 \begin{description}
 %%%
 %%% Constant
@@ -629,7 +774,7 @@ By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have
 \[
 \begin{array}{l}
 k = j = l = m\\
-b = (\bigwedge_i \valid{d_i})\\
+b = (\bigwedge_i^k \valid{d_i})\\
 \end{array}\hspace*{2cm}\begin{array}{l}
 \forall i \in \{1,\dots,k\}.\,\phi_i'(G_1 \FAppend F' \FAppend G_2) \\
 \end{array}
@@ -654,7 +799,7 @@ By the definition of the load function we also have
 \forall i \in \{1,\dots,k\}\,\load{\Env[ x \mapsto w_i]}{H_i}{r}{s_1}{v_i,d_i'}\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& [v_1',\dots,v_k']\\
-b' &=& \bigwedge_i \valid{d_i'}\\
+b' &=& \bigwedge_i^k \valid{d_i'}\\
 d' &=& (b',[d_1',\dots,d_k'])\\
 \end{array}
 \]
@@ -739,64 +884,19 @@ the inductive proof. \hfill \qed
 \end{description}
 \end{description}}
 
-% The rule for constants depends upon an auxiliary function 
-% {\it ck} (pronounced ``check'') that interprets the constants.  For
-% example, the {\it ck} function for the (\pfile) construct, which
-% describes any file (but not symbolic links or directories), is defined
-% as follows:
-% \[
-% \begin{array}{@{}l}
-% ck(\mbox{\sf F}^{\metapdty}_{\stringty},F,r) = (n,(\True,\att)), \mathrm{if } F(r) = (\att,\File{n}) \\
-% ck(\mbox{\sf F}^{\metapdty}_{\stringty},F,r) = (\texttt{""},(\False,\att)), \mathrm{if } F(r) = (\att,T), T \not=\File{n} \\
-% ck(\mbox{\sf F}^{\metapdty}_{\stringty},F,r) = (\texttt{""},(\False,\defaultatt)), \mathrm{otherwise}
-% \end{array}
-% \]
+\smallskip
 
-The rule for \padshaskell{} parsers, and several of the other rules,
-use the function $valid(d)$.  This function extracts a boolean from
-the metadata structure $d$, returning $\True$ if there are no errors
-in the structure and $\False$ otherwise.
-
-The second and third semantic judgements specify the representation
-and metadata types for a given specification.  They have the form
-$\repty{s} = \tau$ and $\mdty{s} = \tau$, respectively.  Note here
-that $\meta$ is the type for file attribute records and the 
-$md$ type is defined as follows.
-\[
-\begin{array}{lcl}
-\tau~\mathit{md} & = & \typ{header} \times \tau \\
-\typ{header} & = & \typ{bool} 
-\end{array}
-\]
-
-The three sets of definitions obey the following basic coherence
-property, where $\turn v : \tau$ states that the value $v$ has type
-$\tau$.
-
-\begin{proposition}
-  If $\Env;F;r \models s \yields v,d$ and $\repty{s} =
-  \tau_{\mathcal{R}}$ and $\mdty{s} = \tau_{\mathcal{M}}$ then $\turn
-  v : \tau_{\mathcal{R}}$ and $\turn d : \tau_{\mathcal{M}}$
-\end{proposition}
-
-
-\begin{figure}
-
-\[
-\begin{array}{l|l|l}
-\hline
-s & \repty{s} = & \mdty{s} =  \\
-\hline
-\Sk & \tau_r &  \tau_m~\mathit{md} \\
-\SAdhoc{b} & \tau_r & (\tau_m \times \meta)~\mathit{md} \\
-\SPath{e}{s} & \repty{s} & \mdty{s} \\
-\SPair{x}{s_1}{s_2} & \repty{s_1} \times \repty{s_2} & \md{\mdty{s_1} \times \mdty{s_2}} \\
-\SComp{s}{x}{e} & \repty{s}~\typ{list} & \md{\mdty{s}~\typ{list}}    \\
-\SPred{e} & \typ{unit} & \typ{unit}~\mathit{md}\\
-\SOption{s} & \repty{s}~\typ{option} & \md{\mdty{s}~\typ{option}} %\\
-\end{array}
-\]
-\caption{\forest{} calculus data and metadata types}
-\label{fig:calculus-types}
-\end{figure}
+\noindent The first theorem states that loading from a file system $F$
+and immediately storing the resulting representation and metadata
+yields the original file system and, moreover, it satisfies the
+predicate produce by the store function. The second theorem states
+that storing an arbitrary representation and metadata and then loading
+the resulting file system yields the same representation and contains
+errors only if the original metadata also contained errors. These
+properties are based on the general correctness conditions that have
+been proposed for bidirectional transformations in the context of
+lenses~\cite{lenses}, but are generalized here to accommodate the
+inconsistencies that can arise when working with imperfect, ad hoc
+data. The proofs of these theorems can be found in
+Appendix~\ref{sec:proof-appendix}. 
 

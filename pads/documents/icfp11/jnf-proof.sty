@@ -46,8 +46,6 @@
     \def\desc{#3}
     \ifx\desc\empty\begin{#2}\else\begin{#1}[#3]\fi \label{#1:#2} #4 \end{#1}
     \vspace*{-\medskipamount}
-    \begin{proof} See Appendix \hyperref[proof:#2]{\ref{sec:proof-appendix}}.\end{proof}
-
     % redefine for subsequent uses
     \expandafter\gdef\csname #1def#2\endcsname{
       \def\desc{#3}
