@@ -148,7 +148,12 @@ descriptions.
 \item {\bf Language Design}: We present the design of \forest{}
   and illustrate its use on real-world examples.
   The design is expressive, concise and smoothly integrated into
-  Haskell.  It is supported by a formal semantics inspired by classical tree logics.
+  Haskell.  
+
+\item {\bf Theoretical}: We present a core calculus of \forest{}
+descriptions and analyze its semantics.  We use the semantics
+to prove several results including round-tripping theorems that
+establish a correspondence between loads and stores of \filestore{} data.
 
 \item {\bf Tool Generation}: We describe how third-party developers
   can use \haskell{}'s generic programming infrastructure to generate
@@ -166,6 +171,23 @@ descriptions.
   to our needs.  These modifications
   are available in the most recent release of \haskell{}.
 \end{itemize}
+
+\paragraph*{Related Work.}
+There has been much past work on domain-specific languages for
+describing, parsing and printing individual data files. 
+Examples include 
+systems such as Lex, Yacc,
+Antlr~\cite{antlr}, Parsec~\cite{LeijenMeijer:parsec} and 
+PADS~\cite{fisher+:toplas}, to name just a few.  
+However, \forest{} differs
+substantially from any of these systems because it focuses on technology
+for describing {\em entire file systems}.  More since 
+simple file systems are {\em trees} and complex ones with symbolic links are 
+{\em graphs}, whereas files are {\em sequences} (of characters or tokens), 
+the language design, formal systems,
+semantic issues, and underlying implementation 
+technology are all entirely different.  Section~\ref{sec:related}
+contains a further discussion of related work in this area.
 
 %Overall, \forest{} substantially lowers pragmatic barriers to programming 
 %with data on disk.
