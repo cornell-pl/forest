@@ -21,7 +21,8 @@
 \newcommand{\False}{\ensuremath{\mathsf{False}}}
 \newcommand{\fn}[2]{\ensuremath{#1(#2)}}
 \newcommand{\Sk}{k^{\tau_m}_{\tau_r}}
-\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1}^{\tau_m}_{\tau_r})}}
+%\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1}^{\tau_m}_{\tau_r})}}
+\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1})}}
 \newcommand{\SPred}[1]{\ensuremath{\mathsf{Pred}(#1)}}
 \newcommand{\SPath}[2]{\ensuremath{#1\,{::}\,#2}}
 \newcommand{\SPair}[3]{\ensuremath{\langle #1 {:} #2, #3 \rangle}}
@@ -87,7 +88,9 @@ investigate various features and prove theorems (such as the
 round-tripping properties presented at the end of this section) as we
 developed \forest{}.
 
-\paragraph*{File system model.}
+\subsection{The Basics: File Systems and Their Specifications}
+
+%\paragraph*{File system model.}
 %
 Figure~\ref{fig:calculus-syntax} presents the formal file system
 model. A path $r$ is a sequence of strings\footnote{For simplicity, we
@@ -119,9 +122,9 @@ Note that although the structure of a well-formed file system is
 tree-shaped, cycles can be also expressed using symbolic links that
 point ``up'' in the file system.
 
-\paragraph{File system specifications.}
+%\paragraph{File system specifications.}
 %
-Figure~\ref{fig:calculus-syntax} presents the syntax of file system
+Figure~\ref{fig:calculus-syntax} also presents the syntax of file system
 specifications $s$.  We leave the syntax of expression language
 abstract but assume that it contains values $v$, variables $x$, and
 other operators (in the full \forest{} language, expressions can be
@@ -130,12 +133,19 @@ values.  The semantic function $\eval{e}{\Env,r}{\tau}$ evaluates an
 expression $e$ in the environment $\Env$ at path $r$, yielding a value
 $v$ of type $\tau$.
 
-The simplest file system specifications are constants $\Sk$, which
-range over specifications for files (\pfile), directories (\pdir),
+These file system specifications are parameterized over a collection
+of constants $\Sk$, which include
+specifications for files (\pfile), directories (\pdir),
 links (\plink), and \padshaskell{}-described files (\SAdhoc{b}). The
-type annotations $\tau_r$ and $\tau_m$ are described below. In
-addition, we assume that each constant has associated functions
-$\loadkname{k}$ and $\loadkname{k}$. For example, the $\loadkname{}$
+annotations $\tau_r$ and $\tau_m$ supply the internal types
+of the the representation and the constant-specific portion of the meta-data. The
+meta-variable $b$ ranges over bi-directional functions:  in the forward
+direction, such functions load (parse) data; in the backwards direction 
+such functions store (print) it.
+
+To define the semantics of the overall language precisely,
+we assume that each constant is associated with functions
+$\loadkname{k}$ and $\storekname{k}$. For example, the $\loadkname{}$
 function for the \pfile{} construct, which describes any file (but not
 symbolic links or directories), is defined as follows:
 %
@@ -143,16 +153,15 @@ symbolic links or directories), is defined as follows:
 \loadkname{\pfile}~(\Env,F,r) =
 \begin{cases}
   (n,(\True,\att)), \mathrm{if } F(r) = (\att,\File{n}) \\
-  ("",(\False,\defaultatt)), \mathrm{otherwise}\\
+  ("{\,}",(\False,\defaultatt)), \mathrm{otherwise}\\
 \end{cases}
 \]
 %
-It either returns the contents and attributes of the file at path $r$
-if it exists, or $""$ and default attributes if $F$ does not contain a
-file at $r$. The load functions for the \plink{} and \pdir{} constants
-are similar. The load function for \SAdhoc{b}{} reads the file system
-in the same way as \pfile{}, but invokes $b$ parser to produce the
-final representation.  The $\storekname{}$ function for \pfile{} is
+The arguments to the function include an environment $\Env$, a file system $F$
+to load from, and a path $r$ within that file system.
+This function either returns the contents and attributes of the file at path $r$,
+if it exists, or "$\,$" and default attributes if $F$ does not contain a
+file at $r$.  The $\storekname{}$ function for \pfile{} is
 defined as follows:
 %
 \[
@@ -169,17 +178,26 @@ defined as follows:
 \end{cases}
 \end{array}
 \]
-It produces two results: an update file system $F'$ and a predicate
+The arguments to the store function include an environment $\Env$, an
+existing file system $F$ to store into, a path $r$ to store at, a
+representation $v$ for the data to store, and the metadata $d$ associated
+with that representation.  The store function
+produces two results: an update file system $F'$ and a predicate
 $\phi'$ that records the constraints needed to ensure
-consistency. Given a representation $v$ and metadata $d$, it
-overwrites the contents of the file system $F$ at path $r$ to
-$(\att,File{v})$ if $d$ is valid (and contains $\att$), deletes the
+consistency. In this case, the $\storekname{}$ function for \pfile{}
+overwrites the contents of the file system $F$ at path $r$ with
+$(\att,\File{v})$ if $d$ is valid (and contains $\att$), deletes the
 contents of $F$ at $r$ if $d$ is not valid but $F(r)$ contains a file,
 and otherwise returns $F$ unchanged. The predicate $\phi'$ requires
 that $F'(r)$, the contents of the new file system $F'$ at $r$, be
 $\File{v}$ in first case and that $F'(r)$ not be a file in the other
-two cases. These constraints are needed to ensure properties such as
+two cases. These constraints must be satisfied in order to guarantee
 the round-tripping properties presented at the end of this section.
+
+%The load functions for the \plink{} and \pdir{} constants
+%are similar. The load function for \SAdhoc{b}{} reads the file system
+%in the same way as \pfile{}, but invokes $b$ parser to produce the
+%final representation.
 
 In the \forest{} surface syntax, records and paths are specified using
 a single construct (and similarly for comprehensions) while the core
@@ -346,12 +364,13 @@ s & \repty{s} = & \mdty{s} =  \\
 
 
 
-\paragraph*{Calculus Semantics.}
+\subsection{Calculus Semantics}
 %
-The semantics of the calculus is organized into three separate
-definitions, one for each of the three artifacts generated by the
+The semantics of the calculus is organized into four separate
+definitions, one for each of the four major artifacts generated by the
 \forest{} compiler.
 
+\paragraph*{Type Definitions.}
 Figure~\ref{fig:calculus-types} defines types for the representations
 ($\repty{s}$) and metadata ($\mdty{s}$) generated by specifications
 $s$. The types for constants $\Sk$ are read off from their annotations
@@ -368,20 +387,9 @@ representation for metadata and is defined as follows:
 \]
 The function $\valid{d}$ extracts the boolean from the metadata
 structure $d$, returning $\True$ if there are no errors in the
-structure and $\False$ otherwise. \jnf{Should this come later---\ie,
-  after defining the load judgment?} Our semantics obeys the following
-basic coherence property, which says that the load function for
-specifications $s$ generates representations and metadata belonging to
-$\repty{s}$ and $\mdty{s}$ respectively:
-%
-\begin{proposition}
-  If $\load{\Env}{F}{r}{s}{v,d}$ and $\repty{s} = \tau_{\mathcal{R}}$
-  and $\mdty{s} = \tau_{\mathcal{M}}$ then $\turn v :
-  \tau_{\mathcal{R}}$ and $\turn d : \tau_{\mathcal{M}}$,
-\end{proposition}
-%
-The judgment $\turn v : \tau$ states that $v$ has type $\tau$.
+structure and $\False$ otherwise. 
 
+\paragraph*{Semantics of Loading and Storing.}
 The inference rules on the left side of
 Figure~\ref{fig:calculus-semantics} define the semantics of the load
 function. Intuitively, the judgment $\load{\Env}{F}{r}{s}{v,d}$ states
@@ -476,8 +484,26 @@ file system that contains the consistent changes made to the file
 system by the store functions for $s_1$ and $s_2$ as well as a
 predicate that checks for the consistency of all of their changes. 
 
-The correctness of our semantics is captured by two round-tripping
-properties, expressed in the following theorems:
+\subsection{Formal Properties}
+
+The first basic property the \forest{} calculus obeys is a {\em coherence
+property}, which states that the load function for
+specifications $s$ generates representations and metadata belonging to
+$\repty{s}$ and $\mdty{s}$ respectively:
+%
+\begin{proposition}
+  If $\load{\Env}{F}{r}{s}{v,d}$ and $\repty{s} = \tau_{\mathcal{R}}$
+  and $\mdty{s} = \tau_{\mathcal{M}}$ then $\turn v :
+  \tau_{\mathcal{R}}$ and $\turn d : \tau_{\mathcal{M}}$,
+\end{proposition}
+%
+The judgment $\turn v : \tau$ is standard; it states that value $v$ has type $\tau$.
+
+The above property demonstrates that our type definitions are properly
+aligned with the semantics of loading.  To ensure that the semantics
+of loading is, in turn, properly defined with respect to semantics of 
+storing, we also prove the following two round-tripping
+properties.
 %
 
 \deferproof{theorem}{loadstore}{LoadStore}{%
