@@ -106,13 +106,14 @@ values for all fields. The contents $T$ of a node in the file system
 is either a file $\File{n}$ (where $n$ is the string contents of the
 fiel), a symbolic link $\Link{r}$ (where $r$ is the path pointed to by
 the link), or a directory $\Dir{\Set{n_1,\dots,n_k}}$ (with paths
-$n_1$ to $n_k$). We write $\dom{F}$ for the set of paths defined in
-$F$, $F(r)$ for the contents at $r$, and $F(r) = \bot$ when $r$ is not
+$n_1$ to $n_k$). We write $\dom{F}$ for the set of paths $F$ is defined on, 
+$F(r)$ for the contents at $r$, and $F(r) = \bot$ when $r$ is not
 in $\dom{F}$.
 
 A file system $F$ is {\em well-formed} if it encodes a tree with
 directories at the internal nodes and files and symbolic links at the
-leaves. More formally, we say that $F$ is well-formed if
+leaves. More formally, $F$ is well-formed if the following conditions
+hold:
 %
 \begin{itemize}
 \item $\dom{F}$ is prefix-closed,
@@ -122,28 +123,27 @@ leaves. More formally, we say that $F$ is well-formed if
 %
 Note that although the structure of a well-formed file system is
 tree-shaped, cycles can be also expressed using symbolic links that
-point ``up'' in the file system.
+point ``upwards'' in the file system.
 
 %\paragraph{File system specifications.}
 %
-Figure~\ref{fig:calculus-syntax} also presents the syntax of file system
-specifications $s$.  We leave the syntax of expression language
+Figure~\ref{fig:calculus-syntax} also presents the syntax of file
+system specifications $s$.  We leave the syntax of expression language
 abstract but assume that it contains values $v$, variables $x$, and
-other operators (in the full \forest{} language, expressions can be
-arbitrary Haskell code).  An environment $\Env$ maps variables to
-values.  The semantic function $\eval{e}{\Env,r}{\tau}$ evaluates an
-expression $e$ in the environment $\Env$ at path $r$, yielding a value
-$v$ of type $\tau$.
+other operators (of course, in the full \forest{} language,
+expressions can be arbitrary Haskell code).  An environment $\Env$
+maps variables to values.  The semantic function
+$\eval{e}{\Env,r}{\tau}$ evaluates an expression $e$ in the
+environment $\Env$ at path $r$, yielding a value $v$ of type $\tau$.
 
 These file system specifications are parameterized over a collection
-of constants $\Sk$, which include
-specifications for files (\pfile), directories (\pdir),
-links (\plink), and \padshaskell{}-described files (\SAdhoc{b}). The
-annotations $\tau_r$ and $\tau_m$ supply the internal types
-of the the representation and the constant-specific portion of the meta-data. The
-meta-variable $b$ ranges over bi-directional functions:  in the forward
-direction, such functions load (parse) data; in the backwards direction 
-such functions store (print) it.
+of constants $\Sk$, which include specifications for files (\pfile),
+directories (\pdir), links (\plink), and \padshaskell{}-described
+files (\SAdhoc{b}). The annotations $\tau_r$ and $\tau_m$ supply the
+internal types of the the representation and the constant-specific
+portion of the meta-data. The meta-variable $b$ ranges over
+bidirectional functions: in the forward direction, such functions load
+(parse) data; in the reverse direction they store (print) it.
 
 To define the semantics of the overall language precisely,
 we assume that each constant is associated with functions
@@ -155,14 +155,14 @@ symbolic links or directories), is defined as follows:
 \loadkname{\pfile}~(\Env,F,r) =
 \begin{cases}
   (n,(\True,\att)), \mathrm{if } F(r) = (\att,\File{n}) \\
-  ("{\,}",(\False,\defaultatt)), \mathrm{otherwise}\\
+  (\text{``}{\,}\text{''},(\False,\defaultatt)), \mathrm{otherwise}\\
 \end{cases}
 \]
 %
 The arguments to the function include an environment $\Env$, a file system $F$
 to load from, and a path $r$ within that file system.
 This function either returns the contents and attributes of the file at path $r$,
-if it exists, or "$\,$" and default attributes if $F$ does not contain a
+if it exists, or ``$\,$'' and default attributes if $F$ does not contain a
 file at $r$.  The $\storekname{}$ function for \pfile{} is
 defined as follows:
 %
@@ -184,7 +184,7 @@ The arguments to the store function include an environment $\Env$, an
 existing file system $F$ to store into, a path $r$ to store at, a
 representation $v$ for the data to store, and the metadata $d$ associated
 with that representation.  The store function
-produces two results: an update file system $F'$ and a predicate
+produces two results: an updated file system $F'$ and a predicate
 $\phi'$ that records the constraints needed to ensure
 consistency. In this case, the $\storekname{}$ function for \pfile{}
 overwrites the contents of the file system $F$ at path $r$ with
@@ -256,6 +256,7 @@ s & \repty{s} = & \mdty{s} =  \\
 \fbox{$\load{\Env}{F}{r}{s}{v,d}$}
 \[
 \begin{array}{c}
+\\[-2.5em]
 \infrule
 { }
 { \load{\Env}{F}{r}{\Sk}{ \loadk{k}{\Env}{F}{r} } }
@@ -298,13 +299,13 @@ s & \repty{s} = & \mdty{s} =  \\
 { r \in \dom{F} \quad \load{\Env}{F}{r}{s_1}{v_1,d_1} }
 { \load{\Env}{F}{r}{ \SOption{s_1} }{ \Just{v_1},(\valid{d_1},\Just{d_1}) } }
 { }
-\\[1.5em]
 \end{array}
 \]
 \end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.5\textwidth}
 \fbox{$\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$}\\
 \[
 \begin{array}{c}
+\\[-2.5em]
 \infrule
 { }
 { \store{\Env}{F}{r}{v,d}{\Sk}{ \storek{k}{\Env}{F}{r}{v,d} } }
@@ -354,10 +355,8 @@ s & \repty{s} = & \mdty{s} =  \\
   \end{array} }
 { \store{\Env}{F}{r}{ v,(b,d) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
 { }
-\\[1.5em]
 \end{array}
 \]
-\vfill
 \end{minipage}
 \centerline{\hfill (a) \hfill\hfill \hspace*{.05\textwidth} (b) \hfill}
 \caption{\forest{} calculus semantics for (a) loading and (b) storing}
@@ -379,7 +378,7 @@ $s$. The types for constants $\Sk$ are read off from their annotations
 while the types for other specifications are constructed from their
 structure in the obvious way---\eg, the type of representations for
 \SPair{x}{s_1}{s_2} is a product $(\repty{s_1} \times
-\repty{s_2}$. The type constructor $\mathit{md}$ provides a uniform
+\repty{s_2})$. The type constructor $\mathit{md}$ provides a uniform
 representation for metadata and is defined as follows:
 \[
 \begin{array}{lcl}
@@ -409,7 +408,7 @@ given specification exactly.
 
 Let us examine a few of the inference rules that define the store
 function in detail. The rule for constants $\Sk$ just invokes the
-associated $\loadkname{}$ function for $k$. The rule for
+associated $\loadkname{k}$ function. The rule for
 $\SComp{s}{x}{e}$ comprehensions is more interesting: it first
 evaluates $e$ to a list $[w_1,\dots,w_k]$ and then invokes the store
 function for $s$ $k$ times in environments where $x$ is bound to each
@@ -436,19 +435,18 @@ the specification $s = \SPair{x}{\pfile}{\pfile}$ and suppose that the
 load function is called in an environment $\Env$ with a file system
 $F$ and path $r$ where $F(r) = (\att,\File{n})$. The representation
 returned by load will be a pair $(n,n)$ containing two copies of the
-file contents and the metadata will also contain a pair
+file contents at $r$ and the metadata will also contain a pair
 $(\True,(\True,\att),(\True,\att)))$ with two copies of the metadata
-associated with that file. Now suppose that we change the representation
-to $(n,n')$, with $n \neq n'$, and we store the result back to the
-file system. Unfortunately, because the representation is
+associated with that file. Now suppose that we change the
+representation to $(n,n')$, with $n \neq n'$, and we store the result
+back to the file system. Unfortunately, because the representation is
 inconsistent---it does not satisfy the dependency between the two
 components of the pair implied by $s$---the store function cannot
 produce a new file system containing the information in both $n$ and
-$n'$. Thus, it must store one and discard the other. 
-The predicate
+$n'$. Thus, it must store one and discard the other.  The predicate
 $\phi'$ generated by the store function provides a way to track and
-report inconsistencies. In this case, the generated predicate will
-be equivalent to the following:
+report inconsistencies. In this case, the predicate will be equivalent
+to the following:
 %
 \[
 \phi' = \lambda F'.~ (F'(r) = (\att,\File{n})) \wedge (F'(r) = (\att,\File{n'})
@@ -462,8 +460,8 @@ which is obviously not satisfiable when $n \not= n'$.
 Now that the overall structure of the store judgement has been
 explained,
 let us examine a few of the inference rules in detail. The rule for
-constants $\Sk$ simply invokes the $\storekname{}$ function for
-$k$. The rule for path specifications $\SPath{e}{s}$ passes off
+constants $\Sk$ simply invokes the $\storekname{k}$ function. 
+The rule for path specifications $\SPath{e}{s}$ passes off
 control to the store function for $s$ after replacing the current path
 $r$ with $\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}$. The rule for
 dependent pairs $\SPair{x}{s_1}{s_2}$ is more interesting. Given a

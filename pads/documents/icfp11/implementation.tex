@@ -4,23 +4,23 @@ We have fully implemented the \forest{} language and anticipate making
 it publicly available within the next few months.
 \haskell{} provides powerful language features and libraries that
 greatly facilitated the implementation of \forest{}.  The most obvious
-of these features is the quasi-quoting~\cite{Mainland:quasi} mechanism
-that we used to embed \forest{} into \haskell{}.  This mechanism
+of these features is the quasiquotation mechanism~\cite{Mainland:quasi}
+we used to embed \forest{} into \haskell{}.  This mechanism
 allowed us to enjoy the benefits of being an embedded domain-specific
 language without having to sacrifice the flexibility of
-defining our own syntax. To use quasi-quoting, we defined a \haskell{}
+defining our own syntax. To use quasiquoting, we defined a \haskell{}
 value \cd{forest} of type \cd{QuasiQuoter} which specifies how to
 convert an input string representing a \forest{} declaration into the
 \template{}~\cite{Sheard+:templatehaskell} 
 data structures that represent the syntax of the
 corresponding collection of \haskell{} declarations.
-The quasi-quoting syntax \cd{[forest| <input> |]}
+The quasiquoted syntax \cd{[forest| <input> |]}
 is legal anywhere the identifier \cd{forest} is in scope.
 When the \haskell{} compiler processes this declaration, it first
-passes \cd{<input>} as a string to the \cd{forest} quasi-quoter, and
+passes \cd{<input>} as a string to the \cd{forest} quasiquoter, and
 then it compiles the resulting \template{} data structures as if the
 corresponding \haskell{} code had appeared in the input at the
-location of the quasi-quote.  Early versions of quasi-quoting
+location of the quasiquote.  Early versions of quasiquoting
 supported quoting only expression and pattern forms.  Simon Peyton
 Jones extended the mechanism to permit declaration and type
 quasi-quoting partly to enable the \forest{} implementation.  We used
