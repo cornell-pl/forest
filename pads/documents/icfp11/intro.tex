@@ -4,7 +4,7 @@
 Databases are an effective, time-tested technology for storing
 structured and semi-structured data.  Nevertheless, many computer
 users eschew the benefits of structured databases and store important
-semi-structured information in collections of conventional files
+semi-structured information in collections of files
 and directories in a conventional file system instead.  For example, the
 Princeton Computer Science Department
 stores records of undergraduate student grades in a structured set of
@@ -18,11 +18,11 @@ mines the logs for information on system security and performance.  At
 Harvard, physics professor Vinothan Manoharan stores 
 his experimental data in sets of files and
 extracts information using python scripts.  At AT\&T, vast structured
-repositories contain networking information,
-phone call detail and billing data.  
+repositories contain network monitoring information,
+phone call records, and billing data.  
 Many software code bases, including Haskell and its associated Cabal libraries,
-require particular files in particular formats to exist in precise
-locations described by other files. 
+require that specific files exist in particular formats at precise
+locations described in other files. 
 Similarly, version control systems like \texttt{cvs} utilize the file
 system to store revision information. Web sites require various types
 of files to exist in particular directories according to content type,
@@ -37,8 +37,7 @@ of reasons. A key factor is  that using
 databases often requires paying substantial up-front costs such as:
 (1) finding and evaluating the appropriate database software (and
 possibly paying for it); (2) learning how to load data into the
-database; (3) possibly writing programs that transform raw data 
-so it may be loaded; (4) learning how
+database; (3) writing programs to transform the raw data for loading into the database; (4) learning how
 to access the data once it is in the database; and (5) interfacing the
 database with a conventional programming language to support
 applications that use the data.  Finally, it may be the case that the
@@ -63,7 +62,7 @@ to evolve: new elements are added and old formats are changed, sometimes
 accidentally.  Such evolution can cause hacked-up data processing
 tools to break or return erroneous results; it also further complicates
 understanding the data.  Third, there is often no
-systematic means for detecting data errors even though data errors can
+systematic means for detecting errors even though data errors can
 be immensely
 important.  For example, for \filestores{} containing monitoring information,
 errors can signal that some portion of the monitored system is broken.
@@ -72,7 +71,7 @@ There is no auxiliary query or tool support and no help with debugging.
 Tools tend to be ``one-off'' efforts that are not
 reuseable.  Fifth, dealing with
 large data sets, which are common in this setting, imposes extra
-difficulties.  For example,  standard tools
+difficulties.  For example,  standard shell tools
 such as \cd{ls} fail when more than 256 files appear on the
 command line.  Hence, programmers must  break up their data
 and process it in smaller sets, a tedious task.
@@ -80,7 +79,7 @@ and process it in smaller sets, a tedious task.
 We propose a better way: A type-based
 specification language, programming environment and toolkit for
 managing \filestores{}.  
-This language, called \forest{}, is an embedded domain-specific
+This language, called \forest{}, is implemented as an embedded domain-specific
 language in \haskell{}.
 \forest{} allows programmers to describe the expected shape of a
 \filestore{} and to materialize it as typed,
@@ -97,13 +96,10 @@ tools that work for any \filestore{} with a \forest{} description.
 
 \forest{} descriptions provide {\em executable documentation} that can
 be used to check whether a given \filestore{} conforms to its
-specification.  For example, Unix file systems should be laid out as
-described by the Filesystem Hierarchy Standard Group in an informal
-standards document~\cite{fsh}.  In addition, the standard requires that certain
-directories contain \textit{only} the specified files, presumably for
-security reasons. \forest{} provides a language for writing such
-standards precisely and a checker that allows users to verify that
-their installation conforms to the standard.  As another example, the
+specification.  For example, Unix file systems should be laid out according to the informal standard set forth by the Filesystem Hierarchy Standard Group~\cite{fsh}, which requires, among other things, that certain
+directories \textit{only} contain certain files, presumably for
+security reasons. \forest{} provides a language for expressing 
+standards precisely and for checking that given file systems conform to them.  As another example, the
 \pads{} website~\cite{padsweb} contains a complex set of scripts and
 data files to implement an online demo.  Unless all of the required
 data files, directories, and symbolic links are configured correctly,
@@ -128,13 +124,13 @@ a number of benefits:
 (1) a set of type declarations to represent the \filestore{} in memory,
 (2) a set of type declarations that capture errors and file system attributes for the \filestore{},
 (3) a loading function to populate these in-memory structures, 
-(4) a storing function to push updates back out to disk, and
+(4) a storing function to push possibly updated structures back out to disk, and
 (5) type class instance declarations that make it possible for
    programmers to query, analyze, and transform \filestore{} data
    using generic functions.
 
-To illustrate the power of the generic programming infrastructure and
-to increase the value of writing a \forest{} specification, we built a
+To illustrate the power of the generic programming infrastructure, and
+to increase the value of writing a \forest{} specification, we have built a
 number of tools that work for any \filestore{} with a
 \forest{} specification.  These tools include a \filestore{}
 visualizer, a permission checker, and \filestore{}-specific versions
@@ -186,7 +182,7 @@ describing, parsing and printing individual data files.
 Examples include 
 Lex, Yacc,
 Antlr~\cite{antlr}, Parsec~\cite{LeijenMeijer:parsec} and 
-PADS~\cite{fisher+:toplas}, to name just a few.  
+Pads~\cite{fisher+:toplas}, to name just a few.  
 However, \forest{} differs
 substantially from any of these systems because it focuses on technology
 for describing {\em entire file systems}.  
