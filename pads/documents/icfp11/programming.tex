@@ -2,6 +2,51 @@
 \label{sec:exp}
 
 \begin{figure}
+%\caption{Load functions for Coral}
+%\label{fig:coral-load}
+%\end{figure}
+%
+%\begin{figure}
+Coral Representation Types:
+\begin{code}
+\kw{newtype} Stats = Stats \{last :: Last, topk :: Topk\}
+\kw{newtype} Dat   = Dat   [(String, Site)]
+\kw{newtype} Site  = Site  [(String, Log)]
+\kw{data}    Log   = Log   \{log :: CoralLog\}
+\end{code}
+%\caption{Representation types for Coral}
+%\label{fig:coral-rep}
+%\end{figure}
+%
+%\begin{figure}
+Coral Metadata Types:
+\begin{code}
+\kw{type} Stats_md = (Forest_md, Stats_inner_md)
+\kw{data} Stats_inner_md = Stats_inner_md 
+    \{last_md :: (Forest_md, Last_md),
+     topk_md :: (Forest_md, Topk_md)\}
+\kw{type} Dat_md   = (Forest_md, [(String, Site_md)])
+\kw{type} Site_md  = (Forest_md, [(String, Log_md)])
+\kw{type} Log_md   = (Forest_md, Log_inner_md)
+\kw{data} Log_inner_md = Log_inner_md 
+    \{log_md :: (Forest_md, CoralLog_md)\}
+\end{code}
+%Forest Type Class (Selected Elements):
+%\begin{code}
+%class (Data rep, ForestMD md) => 
+%  Forest rep md | rep -> md  
+%where
+%  load :: FilePath -> IO(rep, md)
+%  generateManifest :: (rep,md) -> IO Manifest
+%  defaultMd :: rep -> FilePath -> md
+%\end{code}
+%Store Functions:
+%\begin{code}
+%storeAt        :: FilePath -> Manifest -> IO ()
+%store          ::             Manifest -> IO ()
+%\end{code}
+%%\mbox{}
+%%md_default :: a
 Load Functions:
 \begin{code}
 stats_load :: FilePath -> IO (Stats, Stats_md)
@@ -19,38 +64,7 @@ log_manifest   :: (Log, Log_md)     -> IO Manifest
 storeAt        :: FilePath -> Manifest -> IO ()
 store          ::             Manifest -> IO ()
 \end{code}
-%\caption{Load functions for Coral}
-%\label{fig:coral-load}
-%\end{figure}
-%
-%\begin{figure}
-Representation Types:
-\begin{code}
-\kw{newtype} Stats = Stats \{last :: Last, topk :: Topk\}
-\kw{newtype} Dat   = Dat   [(String, Site)]
-\kw{newtype} Site  = Site  [(String, Log)]
-\kw{data}    Log   = Log   \{log :: CoralLog\}
-\end{code}
-%\caption{Representation types for Coral}
-%\label{fig:coral-rep}
-%\end{figure}
-%
-%\begin{figure}
-Metadata Types:
-\begin{code}
-\kw{type} Stats_md = (Forest_md, Stats_inner_md)
-\kw{data} Stats_inner_md = Stats_inner_md 
-    \{last_md :: (Forest_md, Last_md),
-     topk_md :: (Forest_md, Topk_md)\}
-\kw{type} Dat_md   = (Forest_md, [(String, Site_md)])
-\kw{type} Site_md  = (Forest_md, [(String, Log_md)])
-\kw{type} Log_md   = (Forest_md, Log_inner_md)
-\kw{data} Log_inner_md = Log_inner_md 
-    \{log_md :: (Forest_md, CoralLog_md)\}
-\end{code}
-%%\mbox{}
-%%md_default :: a
-\caption{Coral load and store functions; rep. and metadata types}
+\caption{Coral rep. and metadata types; load and store functions}
 \label{fig:coral-aux}
 \end{figure}
 
@@ -64,7 +78,9 @@ filestore.
 
 To facilitate this style of programming, the \forest{} compiler
 generates several Haskell functions and types from every \forest{}
-description.  It generates a \emph{load function}, which traverses the
+description.\footnote{The collection of generated types and functions 
+together form an instance of the \cd{Forest} type class.}
+It generates a \emph{load function}, which traverses the
 file system and reads the files, directories, and symbolic links
 mentioned in the description into a structured object in memory; 
 it
@@ -88,25 +104,13 @@ After creating a manifest, a programmer may analyze it
 and decide whether to execute the 
 generic \cd{store} or \cd{storeAt}
 functions, which move a manifest (inconsistencies and all) to its 
-rightful position on disk. \jnf{Is this accurate?}If the manifest reports no
-inconsistencies, then Forest ensures that the resulting filestore will
-be consistent.
+rightful position on disk. 
+%\jnf{Is this accurate?}If the manifest reports no
+%inconsistencies, then Forest ensures that the resulting filestore will
+%be consistent.
 Details concerning the semantics of storing, 
 especially where it concerns inconsistencies,
 are explained in further depth in Section~\ref{sec:theory}.
-
-Forest provides the type class \cd{Forest rep md} that collects 
-useful functions on Forest representation and metadata
-structures. These functions include the \cd{load} and \cd{generateManifest}
-functions described above as well as a variety of utility functions. One such utility
-function is \cd{defaultMd}, which takes a representation and a 
-path and creates a corresponding default metadata structure rooted at
-the supplied path. Variants of this function take parameters for
-setting groups, owners, and permissions.  For descriptions
-containing dynamically-determined paths, \cd{defaultMd} leaves the
-paths empty.  In such cases, the programmer must fill in the
-appropriate paths manually.
-
 
 As an example, consider the \coral{} logs described in
 Figure~\ref{fig:coral-description}.  The corresponding load and store
@@ -227,18 +231,36 @@ same URL using the \cd{fromListWith} function from the \cd{Data.Map}
 module. Next, it sorts the entries in descending order. Finally, it
 returns the first $k$ entries of the list as the final result.
 
-Given these analyses, a programmer can store  results
-in the \cd{stats} directory using the following code.
+Having implemented these analyses, a programmer may wish to store their
+results.  She may do so via the following code, which
+uses \cd{stats_manifest} to generate a manifest and \cd{store}
+to copy it over to the \cd{stats} directory.  In addition,
+the code uses \cd{stats_defaultMd}, which is a generic function
+that constructs default metadata (a useful piece in situations 
+like this one where newly constructed data must be stored).
 
-\jnf{Is this code right? Do does it need a ``do''?}
 \begin{code}
 let result = Stats \{ last = sites_mod ()
-                   , topk = top 10\}
-manifest <- generateManifest 
+                   , topk = topk 10\}
+manifest <- stats_manifest 
   ( result
-  , defaultMd result "/var/log/coral/stats")
+  , stats_defaultMd result "/var/log/coral/stats")
 store manifest 
 \end{code}
+
+
+%Forest provides the type class \cd{Forest rep md} that collects 
+%useful functions on Forest representation and metadata
+%structures. These functions include the \cd{load} and \cd{generateManifest}
+%functions described above as well as a variety of utility functions. One such utility
+%function is \cd{defaultMd}, which takes a representation and a 
+%path and creates a corresponding default metadata structure rooted at
+%the supplied path. Variants of this function take parameters for
+%setting groups, owners, and permissions.  For descriptions
+%containing dynamically-determined paths, \cd{defaultMd} leaves the
+%paths empty.  In such cases, the programmer must fill in the
+%appropriate paths manually.
+
 
 Overall, the main take-away from this section is how 
 \forest{} and its tight integration with
