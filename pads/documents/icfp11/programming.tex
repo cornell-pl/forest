@@ -235,8 +235,9 @@ Having implemented these analyses, a programmer may wish to store their
 results.  She may do so via the following code, which
 uses \cd{stats_manifest} to generate a manifest and \cd{store}
 to copy it over to the \cd{stats} directory.  In addition,
-the code uses \cd{stats_defaultMd}, which is a generic function
-that constructs default metadata (a useful piece in situations 
+the code uses \cd{stats_defaultMd}, a function
+that constructs default metadata for stats structures
+(a useful piece in situations 
 like this one where newly constructed data must be stored).
 
 \begin{code}
