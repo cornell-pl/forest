@@ -88,7 +88,7 @@ After creating a manifest, a programmer may analyze it
 and decide whether to execute the 
 generic \cd{store} or \cd{storeAt}
 functions, which move a manifest (inconsistencies and all) to its 
-rightful position on disk.  If the manifest reports no
+rightful position on disk. \jnf{Is this accurate?}If the manifest reports no
 inconsistencies, then Forest ensures that the resulting filestore will
 be consistent.
 Details concerning the semantics of storing, 
@@ -119,8 +119,8 @@ easy for programmers to write programs using these \forest{}-generated artifacts
 %%a metadata structure.  The type-directed function \cd{f_default}
 %%listed in Figure~\ref{fig:coral-aux} computes default metadata
 %%of any type required.
-
-As a simple example, consider the \cd{Dat} description in
+%
+For instance, consider the \cd{Dat} description in
 Figure~\ref{fig:coral-description}. The \cd{dat\_load} function takes
 a path as an argument and produces the representation and metadata
 obtained by loading each of the site directories contained in the
@@ -159,7 +159,7 @@ Forest_md
 [("planetlab2.eecs.wsu.edu", Forest_md \{...\}),
  ("planetlab3.williams.edu", Forest_md \{...\}), ...]
 \end{code}
-%
+
 Using these functions and types, it is easy to formulate many useful
 queries as simple Haskell programs. For instance, to count the number
 of sites we can simply compute the length of the nested list in
@@ -187,17 +187,17 @@ sites_mod () =
 \end{code}
 % $
 
-These simple examples show how \forest{} blurs the distinction
-between data represented on disk and in memory. After writing a
-suitable \forest{} description, programmers can write programs that
-work on file system data as if it were in memory. Moreover, because
-Forest uses lazy I/O operations, many simple programs do not require
-constructing an explicit representation of the entire directory being
-loaded in memory---a good thing as the directory of \coral{} logs
-contains approximately 1GB of data!  Instead, the load functions only
-read the portions of the file system that are needed to compute the
-result---in this case, only the site directories and not the gzipped
-log files contained within them.
+As this example shows, \forest{} blurs the distinction between data
+represented on disk and in memory. After writing a suitable \forest{}
+description, programmers can write programs that work on file system
+data as if it were in memory. Moreover, because Forest uses lazy I/O
+operations, many simple programs do not require constructing an
+explicit representation of the entire directory being loaded in
+memory---a good thing as the directory of \coral{} logs contains
+approximately 1GB of data!  Instead, the load functions only read the
+portions of the file system that are needed to compute the result---in
+this case, only the site directories and not the gzipped log files
+contained within them.
 
 As a final analysis example, consider a program that computes the top-$k$
 requested URLs from all \coral{} nodes by size. The \coral{}
@@ -230,6 +230,7 @@ returns the first $k$ entries of the list as the final result.
 Given these analyses, a programmer can store  results
 in the \cd{stats} directory using the following code.
 
+\jnf{Is this code right? Do does it need a ``do''?}
 \begin{code}
 let result = Stats \{ last = sites_mod ()
                    , topk = top 10\}
@@ -249,6 +250,6 @@ contents, file attributes and directory structures.
 %%in this new programming paradigm is light-weight, easy and highly effective.
 %how the tight coupling of \forest{} and \haskell{} lead to highly
 %productive programming practice.  
-\jnf{compare with the hand-written Python program Mike
-  actually uses? Highlight difficulties of dealing with large number
-  of huge files? dpw: it would be great to give some kind of comparison}
+% \jnf{compare with the hand-written Python program Mike
+%   actually uses? Highlight difficulties of dealing with large number
+%   of huge files? dpw: it would be great to give some kind of comparison}

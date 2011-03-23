@@ -351,8 +351,9 @@ As an example, we can use a list comprehension to specify the
 
 \begin{code}
 > getYear s = 
->   toInteger (reverse (take 2 (reverse s)))
+>   toInteger $ reverse $ take 2 $ reverse s
 > cRE = RE "classof[0-9][0-9]"
+%% $
 \mbox{}
 \kw{type} Grads = 
   [c :: Class <|getYear c|> | c <- \kw{matches} cRE]
