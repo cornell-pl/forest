@@ -76,8 +76,7 @@ in-memory representations and set the metadata on demand.
 \kw{data} Forest_md = Forest_md 
    \{ numErrors :: Int
    , errorMsg  :: Maybe ErrMsg
-   , fileInfo  :: FileInfo      
-   \}
+   , fileInfo  :: FileInfo \}
 \mbox{}
 \kw{data} FileInfo = FileInfo 
    \{ fullpath    :: FilePath
@@ -89,8 +88,7 @@ in-memory representations and set the metadata on demand.
    , read_time   :: EpochTime
    , mode        :: FileMode
    , isSymLink   :: Bool
-   , kind        :: FileType     
-   \}
+   , kind        :: FileType \}
 \end{centercode}
 \caption{\forest{} metadata types.}
 \label{fig:forest-md}
@@ -203,8 +201,7 @@ directory holding all graduated classes.
   \{ notes   \kw{is} "README"    :: Text
   , seniors \kw{is} "classof11" :: Class 11
   , juniors \kw{is} "classof12" :: Class 12
-  , grads   \kw{is} "graduates" :: Grads
-  \}
+  , grads   \kw{is} "graduates" :: Grads \}
 \end{code}
 Each field of the record describes a single file system object.  It has three components:  
 (1) an internal name (\eg{}, \cd{notes} or \cd{seniors}) that
@@ -221,8 +218,7 @@ it, in which case \forest{} uses the label as the on-disk name:
   \{ notes \kw{is} "README" :: Text
   , classof11 :: Class 11
   , classof12 :: Class 12
-  , graduates :: Grads
-  \}
+  , graduates :: Grads \}
 \end{code}
 We could not abbreviate the \cd{notes} field because labels must start
 with a lowercase letter in Haskell. 
@@ -291,8 +287,7 @@ to \textit{construct} the appropriate file names using Haskell functions:
   \{ notes   \kw{is} "README" :: Text
   , seniors \kw{is} <|mkClass y    |> :: Class y
   , juniors \kw{is} <|mkclass (y+1)|> :: Class <|y+1|>
-  , graduates :: Grads
-  \}
+  , graduates :: Grads \}
 \end{code}
 The bracket syntax \cd{<|...|>} provides an escape so that we may use
 Haskell within \forest{} code to specify arbitrary computations.  This example also
@@ -327,8 +322,7 @@ describe the class directory:
   , ab  \kw{is} <|"AB"  ++ (toString y)|> :: Major   
   , trans \kw{matches} transRE :: Maybe Major      
   , withd \kw{matches} wdRE    :: Maybe Major
-  , leave \kw{matches} leaveRE :: Maybe Major 
-  \}
+  , leave \kw{matches} leaveRE :: Maybe Major \}
 \end{code}
 A field with the form \cd{<label> \kw{matches} <regexp> :: T}
 finds the set of paths in the files system that match \cd{currentPath/} \cd{<regexp>}.
@@ -462,8 +456,7 @@ any directory:
           <| get_kind d_att == DirectoryK |> ]
   , sym \kw{is} [ s :: SymLink 
            | s <- \kw{matches} (GL "*"), 
-          <| get_sym s_att == True |> ]
-  \}
+          <| get_sym s_att == True |> ] \}
 \end{code}
 The description requires recursion to describe the directory case,
 which \forest{} supports.

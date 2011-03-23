@@ -4,16 +4,14 @@
    \{ notes   \kw{is} "README" :: Text
    , seniors \kw{is} <|mkClass y    |> :: Class y
    , juniors \kw{is} <|mkclass (y+1)|> :: Class <|y+1|>
-   , graduates :: Grads
-   \}
+   , graduates :: Grads \}
 \mbox{}
  \kw{data} Class (y::Integer) = \kw{Directory}
    \{ bse \kw{is} <|"BSE" ++ (toString y)|> :: Major
    , ab  \kw{is} <|"AB"  ++ (toString y)|> :: Major   
    , trans \kw{matches} transRE :: Maybe Major      
    , withd \kw{matches} wdRE    :: Maybe Major
-   , leave \kw{matches} leaveRE :: Maybe Major 
-   \}
+   , leave \kw{matches} leaveRE :: Maybe Major \}
 \mbox{}
  \kw{type} Grads = 
    [c :: Class <|getYear c|> | c <- \kw{matches} cRE]
