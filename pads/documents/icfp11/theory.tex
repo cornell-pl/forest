@@ -58,22 +58,20 @@
 
 \begin{figure}
 \[
-\begin{array}{rr@{\;}r@{\;}l}
+\begin{array}{@{}r@{\,}r@{\,}c@{\,}l}
 \textit{Strings}        & n & \in & \Sigma^{\ast} \\[1ex]
-\textit{Paths}          & r,s & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
+\textit{Paths}          & r & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
 \textit{Attributes}     & \att  & \bnfdef & \dots\\[1ex]
-\textit{Filesystem}     & T  & \bnfdef & \File{n} \\
-                        &    & \bnfalt & \Link{r}\\
-\textit{Contents}       &    & \bnfalt & \Dir{ \Set{n_1,\dots,n_k} }\\[1ex]
-\textit{Filesystems}    & F & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots, r_k \mapsto (\att_k,T_k) }\\[1ex]
+\textit{Contents}       & T  & \bnfdef & \File{n} \bnfalt \Link{r} \bnfalt \Dir{ \Set{n_1,\dots,n_k} }\\[1ex]
+\textit{File sys.}      & F & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots, r_k \mapsto (\att_k,T_k) }\\[1ex]
 \textit{Values}         & v & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
-                        &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\dots,v_k}\\
-\textit{Expressions}    & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
-\textit{Environments}   & \Env & \bnfdef & \ENil \bnfalt E,x\mapsto v \\[1ex]
-\textit{Specifications} & s & \bnfdef & \Sk 
+                        &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\dots,v_k}\\[1ex]
+\textit{Exprs.}         & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
+\textit{Envs.}          & \Env & \bnfdef & \ENil \bnfalt E,x\mapsto v \\[1ex]
+\textit{Specs.}         & s & \bnfdef & \Sk 
                               \bnfalt \SPath{e}{s}
-                              \bnfalt \SPair{x}{s_1}{s_2}\\[1ex]
-                        &   & \bnfalt & \SComp{s}{x}{e}
+                              \bnfalt \SPair{x}{s_1}{s_2} 
+                              \bnfalt \SComp{s}{x}{e}
                               \bnfalt \SPred{e}
                               \bnfalt \SOption{s}
 \end{array}
