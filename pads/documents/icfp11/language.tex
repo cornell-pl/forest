@@ -67,6 +67,11 @@ information: (1) the number and kind of any errors that occurred while
 loading the file and (2) the attributes associated with the file.
 %% File-content metadata typically describes errors within the file, but
 %%can be used for other purposes.  
+\jnf{The transition right here confusing and abrupt. I was reading the
+  figure carefully, which steps the reader through file system
+  metadata and missed the stack pop back up to the top-level
+  discussion of metadata...}
+%
 File-content metadata describes errors within the file.
 For these three file types, there is
 no meaningful content metadata and so this type is the unit type.
@@ -118,9 +123,7 @@ begins the \pads{} specification of the Princeton student record
 format: 
 \noindent
 \begin{code}
-[pads| 
-  \kw{data} Student (name :: String) = < pads decl >
-|]
+[pads| \kw{data} Student(name::String) = <pads decl> |]
 \end{code}
 This description is parameterized by the name of the student whose
 data is in the file; the complete description appears in the appendix.
@@ -131,9 +134,7 @@ type \cd{Student_md}, and a parsing function.
 \forest{} provides the \cd{File} type constructor to lift \pads{}
 types to \forest{} file types.  For example, the declaration
 \begin{code}
-[forest| 
-  \kw{type} SFile (n :: String) = File (Student n) 
-|]
+[forest| \kw{type} SFile(n::String) = File(Student n) |]
 \end{code}
 introduces a new file type named \cd{SFile} whose format is given by
 the \pads{} type \cd{Student}.  As with the \pads{} type, \cd{SFile}
@@ -185,7 +186,7 @@ target, such as requiring it to be to a specific file.
 In \forest{}, any file system object may be described in multiple ways.
 Hence, in the case of a symbolic link, it is possible to use one declaration to
 specify that the object is a symbolic link and a second to specify
-the type of the link target.  We will see such a specification in the
+the type of the link target.  We will see an example of such a specification in the
 next subsection. 
 
 \subsection{Directories}
@@ -417,7 +418,7 @@ if a \forest{} identifier \cd{id} refers to a path, the attributes for the objec
 path are available through the identifier \cd{id_att}, which has
 type \cd{Forest_md} (\figref{fig:forest-md}).  Forest defines
 accessor functions such as \cd{get_modes} (get permissions), \cd{get_kind} (get
-ascii/binary/directory characteristics) and others to inspect
+ASCII/binary/directory characteristics) and others to inspect
 these attributes.
 %Figure~\ref{fig:metadata-components} lists a set of helper functions that
 %extract useful information from attribute structures.

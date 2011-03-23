@@ -18,8 +18,7 @@
 \mbox{}
  \kw{type} Major = Map
     [ s :: File (Student <|dropExtension s|>) 
-    | s <- \kw{matches} txt, <|not (template s)|>]
-|]
+    | s <- \kw{matches} txt, <|not (template s)|>] |]
 \end{code}
 % \mbox{}
 % [pads|
