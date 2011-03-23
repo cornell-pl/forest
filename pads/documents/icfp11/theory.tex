@@ -172,11 +172,11 @@ defined as follows:
 \quad 
 \begin{cases}
   (\FUpdate{F}{r}{(\att,\File{v})},            & \text{if}~d = (\True,\att)\\
-   \; \phi'(F') = (F'(r) = (\att,\File{v})))\\[1ex]
+   \; \phi' = \lambda F'.~ (F'(r) = (\att,\File{v})))\\[1ex]
   \FDelete{F}{r},                              & \text{if}~d = (\False,\att)~\wedge\\
-   \; \phi'(F') = F'(r) \neq (\us,\File{\us})) & \;\;\; F(r) = (\us,\File{\us})\\[1ex]
+   \; \phi' = \lambda F'.~ F'(r) \neq (\us,\File{\us})) & \;\;\; F(r) = (\us,\File{\us})\\[1ex]
   F,              & \text{otherwise}\\
-   \; \phi'(F') = F'(r) \neq (\us,\File{\us}))\\
+   \; \phi' = \lambda F'.~ F'(r) \neq (\us,\File{\us}))\\
 \end{cases}
 \end{array}
 \]
@@ -319,7 +319,7 @@ s & \repty{s} = & \mdty{s} =  \\
 { \begin{array}{c}
   \store{\Env}{F}{r}{  v_1,d_1 }{s_1}{ F_1',\phi_1 } \\
   \store{\Env[x \mapsto v_1]}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\
-  \phi'(F') = (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')
+  \phi' = \lambda F'.~ (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')
   \end{array} }
 { \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F_1' \FAppend F_2',\phi' } }
 { }
@@ -329,20 +329,20 @@ s & \repty{s} = & \mdty{s} =  \\
   \mathit{vs} = [v_1,\dots,v_j] \quad \mathit{ds} = [d_1,\dots,d_l]\\
   \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ] \quad  k = \min{(j,l,m)} \\
   \forall i \in \{1,\dots,k\}.~\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
-  \phi'(F') = (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
+  \phi' = \lambda F'.~ (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
   \end{array} }
 { \store{\Env}{F}{r}{\mathit{vs},(b,\mathit{ds})}{ \SComp{s}{x}{e} }{ F_1' \FAppend \dots \FAppend F_k',\phi' } }
 { }
 \\[1.5em]
 \infrule
-{ \phi'(F') = (b = \eval{e}{\Env,r}{\mathit{bool}}) }
+{ \phi' = \lambda F'.~ (b = \eval{e}{\Env,r}{\mathit{bool}}) }
 { \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi' } }
 { }
 \\[1.5em]
 \infrule
 { \begin{array}{c}
   \store{\Env}{F}{r}{ v_1,d_1 }{ s_1 }{ F',\phi_1' }\\
-  \phi'(F') = (b = \valid{d_1}) \wedge (r \in \dom{F'}) \wedge \phi_1'(F')
+  \phi' = \lambda F'.~ (b = \valid{d_1}) \wedge (r \in \dom{F'}) \wedge \phi_1'(F')
   \end{array} }
 { \store{\Env}{F}{r}{ \Just{v_1},(b,\Just{d_1}) }{ \SOption{s_1} }{ F',\phi' } }
 { }
@@ -350,7 +350,7 @@ s & \repty{s} = & \mdty{s} =  \\
 \infrule
 { \begin{array}{c}
   v = \Nothing \vee d = \Nothing\\
-  \phi'(F') = (v = \Nothing) \wedge (d = \Nothing) \wedge \neg b \wedge r \not\in \dom{F'}
+  \phi' = \lambda F'.~ (v = \Nothing) \wedge (d = \Nothing) \wedge \neg b \wedge r \not\in \dom{F'}
   \end{array} }
 { \store{\Env}{F}{r}{ v,(b,d) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
 { }
@@ -451,7 +451,7 @@ report inconsistencies. In this case, the generated predicate will
 be equivalent to the following:
 %
 \[
-\phi'(F') = (F'(r) = (\att,\File{n})) \wedge (F'(r) = (\att,\File{n'})
+\phi' = \lambda F'.~ (F'(r) = (\att,\File{n})) \wedge (F'(r) = (\att,\File{n'})
 \]
 %
 which is obviously not satisfiable when $n \not= n'$. 
@@ -576,7 +576,7 @@ b &= & \valid{d_1} \wedge \valid{d_2}\\
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
 F' &=& F_1' \FAppend F_2'\\
-\phi'(F') &=& (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')\\
+\phi' &=& \lambda F'.~(b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')\\
 \end{array}
 \]
 By the induction hypothesis applied to $s_1$, we have $F_1' = F$ and
@@ -601,7 +601,7 @@ v &=& [v_1,\dots,v_k]\\
 b &= &\bigwedge_i^k \valid{d_i}\\
 d &=& (b,[d_1,\dots,d_k])\\
 F' &=& F_1' \FAppend \dots \FAppend F_k'\\
-\phi'(F') &=& (k = k = k) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
+\phi' &=& \lambda F'.~(k = k = k) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
 \end{array}
 \]
 By the induction hypothesis applied to $s$ ($k$ times), we have $F_i'
@@ -622,7 +622,7 @@ d &=& (b,())\\
 b &=& \eval{e}{\Env,r}{\mathit{bool}}\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
 F' &=& F\\
-\phi'(F') &=& (b = \eval{e}{\Env,r}{\mathit{bool}})\\
+\phi' &=& \lambda F'.~(b = \eval{e}{\Env,r}{\mathit{bool}})\\
 \end{array}
 \]
 Thus, we immediately have $F' = F$ and $\phi'(F')$.
@@ -645,7 +645,7 @@ By the definition of the load and store functions we have
 v &=& \Just{v_1}\\
 d &=& (b,\Just{d_1})\\
 b &=& \valid{d_1}\\
-\phi'(F') &=& (b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')\\
+\phi' &=& \lambda F'.~(b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')\\
 \end{array}
 \]
 %
@@ -663,7 +663,7 @@ d_1 &=& \Nothing\\
 b &=& \False\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi'(F') &=& (v = \Nothing) \wedge (d_1 = \Nothing) \wedge (\neg b) \wedge  (r \not\in \dom{F'})
+\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d_1 = \Nothing) \wedge (\neg b) \wedge  (r \not\in \dom{F'})
 \end{array}
 \]
 We immediately have $F' = F$ and $\phi'(F')$, which finishes the case
@@ -737,7 +737,7 @@ By the definition of the load function we have
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
 F' &=& F_1' \FAppend F_2'\\
-\phi'(F') &=& (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')\\
+\phi' &=& \lambda F'.~(b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')\\
 \end{array}
 \]
 By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have
@@ -802,7 +802,7 @@ v &=& [v_1,\dots,v_j]\\
 d &=& [d_1,\dots,d_l]\\
 k &=& \min{(j,l,m)}\\
 F' &=& F_1' \FAppend \dots \FAppend F_k'\\
-\phi(F') &=& j = k = l \wedge b = (\bigwedge_i^k \valid{d_i}) \bigwedge_i^k \phi_i(F')\\
+\phi &=& \lambda F'.~(j = k = l) \wedge (b = \bigwedge_i^k \valid{d_i}) \bigwedge_i^k \phi_i(F')\\
 \end{array}
 \]
 By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have
@@ -855,7 +855,7 @@ By the definitions of the store and load functions we have
 v &=& ()\\
 d &=& ((),b)\\
 F' &=& F\\
-\phi'(F') &=& (b = \eval{e}{\Env,r}{\mathit{bool}})\\
+\phi' &=& \lambda F'.~(b = \eval{e}{\Env,r}{\mathit{bool}})\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& ()\\
 d' &=& (b',())\\
@@ -880,7 +880,7 @@ By the definition of the store function we have
 \begin{array}{l}
 \store{\Env}{F}{r}{ v_1,d_1 }{s}{F',\phi_1'}\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
-\phi'(F') &=& (b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')\\
+\phi' &=& \lambda F'.~(b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')\\
 \end{array}
 \]
 %
@@ -905,7 +905,7 @@ By the definition of the store and load functions we have
 \[
 \begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi'(F') &=& (v = \Nothing) \wedge (d = \Nothing) \wedge (\neg b) \wedge (r \not\in \dom{F'})\\
+\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d = \Nothing) \wedge (\neg b) \wedge (r \not\in \dom{F'})\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& \Nothing\\
 b' &=& \False\\
