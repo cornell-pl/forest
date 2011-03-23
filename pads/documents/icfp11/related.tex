@@ -35,22 +35,32 @@ capable of interpreting \forest{} file system schema and ingesting
 the described data, thereby making any \forest{}-described data available
 in F\#.
 
-In the databases community, a number of XML-based
-description languages have been defined for specifying
-file formats, file organization and file locations.
-One example of such a language is XFiles~\cite{xml-file-sys}.
-XFiles has many features in common with \forest{}.  It can
-describe file locations, permissions, ownership and other
-attributes.  It can also specify the name of an application capable of
-parsing the files in question.  The main difference between
-a language like XFiles and \forest{} is that \forest{} is
-tightly integrated into a general-purpose, conventional programming
-language.  \forest{} declarations generate types, functions
-and data structures that materialize the data within
-a surrounding \haskell{} program. XFiles does not interoperate
-directly with conventional programming languages. 
+Several XML-based languages for specifying file formats, file
+organization and file locations have been proposed. One example of
+such a language is XFiles~\cite{xml-file-sys}.  XFiles uses RDF
+specifications to describe the location, permissions, ownership, and
+other attributes of files, as well as the name of an application
+capable of parsing specific files.  The key difference between XFiles
+and \forest{} is that \forest{} is tightly integrated into a
+general-purpose, conventional programming language.  \forest{}
+declarations generate types, functions and data structures that
+materialize the data within a surrounding \haskell{} program while
+XFiles does not interoperate directly with a conventional programming
+language.
 
-% The round-tripping properties obeyed by core \Forest{} programs are
-% based on the laws that have been proposed for well-behaved
-% lenses~\cite{lenses}. \jnf{Add Philippa's MSc student's thesis if
-%   he sends us a link in time.}
+A recent MSc thesis by Ntzik proposes using an extension of context
+logic~\cite{context-logic}~\cite{segment-logic}, to reason about the
+effects of updates made to file systems using standard POSIX
+commands~\cite{ntzik-msc}. This approach is different than the one
+followed in \forest{}, which is based on a classical tree logic, and
+leads to a simpler treatment of updates. We plan to study the
+relationship to Ntzik's work in the future.
+
+The round-tripping properties that core \forest{} programs obey are
+based on laws that have been proposed in the context of well-behaved
+bidirectional transformations, often called lenses~\cite{lenses}. As
+far as we are aware, lenses for file systems have not been developed
+but some of the same fundamental issues that arise in core \forest{}
+have been studied Hu and his colleagues including handling data with
+internal dependencies~\cite{MuAlgebraic2004} as well as graph
+structures~\cite{hidaka-graphs}.
