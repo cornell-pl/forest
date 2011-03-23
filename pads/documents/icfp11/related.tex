@@ -28,12 +28,15 @@ declaratively specifying the structure of, and then ingesting,
 experimental feature 
 of F\#, help programmers materialize standard data sources equipped with
 predefined schema (such as \xml{} documents or databases) in memory in
-an F\# program.  Type Providers and \forest{} descriptions
-are complementary language
-features.\jnf{In what sense?}  In fact, it may be possible to define a new F\# Type Provider
-capable of interpreting \forest{} file system schema and ingesting
-the described data, thereby making any \forest{}-described data available
-in F\#.
+an F\# program.  Type Providers
+do not themselves provide a new means for describing data sources (as
+\forest{} does). 
+%Type Providers and \forest{} descriptions
+%are complementary language
+%features.\jnf{In what sense?}  In fact, it may be possible to define a new F\# Type Provider
+%capable of interpreting \forest{} file system schema and ingesting
+%the described data, thereby making any \forest{}-described data available
+%in F\#.
 
 Several XML-based languages for specifying file formats, file
 organization and file locations have been proposed. One example of
@@ -49,12 +52,17 @@ XFiles does not interoperate directly with a conventional programming
 language.
 
 A recent MSc thesis by Ntzik proposes using an extension of context
-logic~\cite{context-logic}, to reason about the effects of updates
+logic~\cite{context-logic} to reason about the effects of updates
 made to file systems using standard POSIX
-commands~\cite{ntzik-msc}. This approach is different than the one
-followed in \forest{}, which is based on a classical tree logic, and
-leads to a simpler treatment of updates. We plan to study the
-relationship to Ntzik's work in the future.
+commands~\cite{ntzik-msc}.  The core goal of Ntzik's work
+is to create a new kind of Hoare Logic, and consequently,
+it is quite different from \forest{}.  In addition, technically,
+\forest{} is more closely related to classical tree logics than
+it is to substructural logics such as the context logic.
+%, and
+%leads to a simpler treatment of updates. 
+%We plan to study the
+%relationship to Ntzik's work in the future.
 
 The round-tripping properties that core \forest{} programs obey are
 based on laws that have been proposed in the context of well-behaved
