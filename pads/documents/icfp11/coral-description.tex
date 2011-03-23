@@ -1,12 +1,11 @@
 \begin{code}
 [forest|
-  \kw{type} Stats = \kw{Directory}
-    \{ last :: File Last, topk :: File Topk \}
-  \kw{type} Dat   = [ s :: Site | s <- \kw{matches} site ]
-  \kw{type} Site  = [ d :: Log  | d <- \kw{matches} time ]
-  \kw{data} Log = \kw{Directory}
-    \{ log \kw{is} coralwebsrv :: Gzip (File CoralLog) \}
-|]
+ \kw{type} Stats = \kw{Directory}
+   \{ last :: File Last, topk :: File Topk \}
+ \kw{type} Dat   = [ s :: Site | s <- \kw{matches} site ]
+ \kw{type} Site  = [ d :: Log  | d <- \kw{matches} time ]
+ \kw{data} Log = \kw{Directory}
+   \{ log \kw{is} coralwebsrv :: Gzip (File CoralLog) \} |]
 \end{code}
 \vskip -5pt
 %\mbox{}
