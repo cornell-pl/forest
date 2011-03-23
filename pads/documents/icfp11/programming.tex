@@ -132,8 +132,8 @@ directory at that path:
 \begin{code}
 (rep,md) <- dat_load "/var/log/coral/dat"
 \end{code}
-Because \cd{Dat} is a comprehension, both \cd{rep} and \cd{md} are
-lists. More specifically, \cd{rep} has the form
+Because \cd{Dat} is a comprehension, the \cd{rep} is a
+list. More specifically, \cd{rep} has the form
 \begin{code}
 Coral [("planetab2.eecs.wsu.edu", Site [...]),
        ("planetlab3.williams.edu",Site [...]),...]
@@ -142,8 +142,8 @@ where the list contains pairs of names of subdirectories and
 representations for the data loaded from those directories. The
 metadata is a pair consisting of a generic header of type
 \cd{Forest\_md} and a list of pairs of names of subdirectories and
-their associated metadata. The header records aggregate information
-about any errors encountered during loading as well as the file system
+their associated metadata. The header collects information
+about errors encountered during loading and it stores the file system
 attributes of each file, directory, or symbolic link loaded from the
 file system:
 %
@@ -236,8 +236,9 @@ uses \cd{stats_manifest} to generate a manifest and \cd{store}
 to copy it over to the \cd{stats} directory.  In addition,
 the code uses \cd{stats_defaultMd}, a function
 that constructs default metadata for stats structures
-(a useful piece in situations 
-like this one where newly constructed data must be stored).
+(a useful function in situations that require storing newly
+constructed data).
+
 
 \begin{code}
 let result = Stats \{ last = sites_mod ()
