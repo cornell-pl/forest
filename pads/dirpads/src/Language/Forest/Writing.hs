@@ -22,6 +22,7 @@ type Message = String
 data Content = Local FilePath     -- contents are in file in temp directory with given name
              | Link FilePath      -- contents are symbolic link, with given target
              | Dir
+             | ListComp [FilePath]
              | None               -- file path should not exist
              | LocalGzip FilePath      -- like local, except file has been gzipped
              | LocalTar  FilePath      -- like local, except file has been tarred
@@ -35,12 +36,13 @@ data ManifestEntry =  ManifestEntry
          , sources       :: [FilePath]   -- list of files that mapped to canonical path
          , status        :: Status       -- report on validity of manifest
          }  
-       deriving (Show)
+       deriving (Show,Eq)
 
 type ManifestTable = Map.Map FilePath ManifestEntry
 
 data Manifest = Manifest 
      { count   :: Int             -- used for generating unique local names
+     , pathToRoot    :: Maybe FilePath     -- path to parent directory of FileStore
      , tempDir :: FilePath        -- temp directory in which local files are written
      , entries :: ManifestTable   -- map from canonical names to manifest entries
      } deriving (Show)
@@ -48,9 +50,11 @@ data Manifest = Manifest
 newManifest :: IO Manifest
 newManifest = do 
   forestDir <- getTempForestManifestDirectory
+  canonTemp <- canonicalizePath forestDir
   return (Manifest
            { count = 0
-           , tempDir = forestDir
+           , pathToRoot = Nothing
+           , tempDir = canonTemp
            , entries = Map.empty
            })
 
@@ -61,18 +65,25 @@ storeManifest  (Manifest {tempDir, entries, ..}) = do
   ; mapM_ (storeManifestEntryAt [] [] tempDir) mlist
   }
 
-storeManifestAt :: FilePath -> FilePath -> Manifest -> IO ()
-storeManifestAt destDir clipPath (Manifest {tempDir, entries, ..}) = do
+storeManifestAt :: FilePath -> Manifest -> IO ()
+storeManifestAt destDir (Manifest {tempDir, pathToRoot, entries, ..}) = do
+  { let mlist = Map.toList entries
+  ; let clipPath = case pathToRoot of {Nothing -> [] ; Just r -> dropFileName r}
+  ; mapM_ (storeManifestEntryAt destDir clipPath tempDir) mlist
+  }
+
+storeManifestAt' :: FilePath -> FilePath -> Manifest -> IO ()
+storeManifestAt' destDir clipPath (Manifest {tempDir, entries, ..}) = do
   { let mlist = Map.toList entries
   ; mapM_ (storeManifestEntryAt destDir clipPath tempDir) mlist
   }
 
 
 validateManifest :: Manifest -> IO Manifest
-validateManifest (Manifest {tempDir, entries, count}) = do
+validateManifest (Manifest {tempDir, entries, count, pathToRoot}) = do
   { let mlist = Map.toList entries
   ; mlist' <- mapM (detectConflictInEntry tempDir) mlist
-  ; return (Manifest{count, tempDir, entries = (Map.fromList mlist') })
+  ; return (Manifest{count, pathToRoot, tempDir, entries = (Map.fromList mlist') })
   }
 
 cleanManifest :: Manifest -> IO ()
@@ -83,12 +94,76 @@ cleanManifest manifest = do
   ; return ()
   }
 
+
+
+setManifestRoot :: (ForestMD fmd) => fmd -> Manifest -> IO Manifest
+setManifestRoot fmd (m @ Manifest{count,pathToRoot,tempDir,entries}) = case pathToRoot of 
+  Nothing -> do { canon_path <- canonicalizePath (get_fullpath fmd)
+                ; return  ( Manifest{count,pathToRoot = Just canon_path,tempDir,entries})
+                }
+  Just _  -> return m
+
 collectManifestErrors :: Manifest -> Status
 collectManifestErrors manifest = joinStatus (collectErrorsManifestTable (entries manifest))
 
 collectErrorsManifestTable :: ManifestTable -> [Status]
 collectErrorsManifestTable entries = List.map (\(fp, entry) -> status entry) (Map.toList entries)
 
+--- XXXXXXXXXXXXXXXXXXXXXXX
+detectConflictsInListComps :: Manifest -> Manifest -> Manifest
+detectConflictsInListComps (Manifest{count,pathToRoot=orig_pathToRoot,tempDir,entries=orig_entries}) test_manifest = 
+  let orig_rootDir = dropFileName (Maybe.fromJust orig_pathToRoot)
+      test_rootDir = dropFileName (Maybe.fromJust (pathToRoot test_manifest))
+      orig_entries' = listCompConflictsInManifestEntities test_rootDir (entries test_manifest) orig_rootDir orig_entries
+  in Manifest{count,pathToRoot=orig_pathToRoot,tempDir,entries=orig_entries'}
+
+listCompConflictsInManifestEntities test_rootDir test_entries orig_rootDir orig_entries = 
+  Map.mapWithKey (updateOne test_rootDir test_entries orig_rootDir) orig_entries
+
+updateOne test_rootDir test_entries orig_rootDir orig_pathToEntry orig_entry = 
+  let orig_RelPath = Maybe.fromJust (List.stripPrefix orig_rootDir orig_pathToEntry)
+      test_pathToEntry = combine test_rootDir orig_RelPath
+      test_entry = test_entries Map.! test_pathToEntry
+  in listCompConflictsInManifestEntry orig_entry test_entry
+
+listCompConflictsInManifestEntry (ManifestEntry{content=orig_content,sources=orig_sources,status=orig_status})
+                                 (ManifestEntry{content=test_content,sources=test_sources,status=test_status}) = 
+  let orig_complists = List.filter isListComp orig_content
+      test_complists = List.filter isListComp test_content
+      new_status = if orig_complists == test_complists then 
+                      promoteNotValidated orig_status
+                   else Invalid ("Conflict detected in list comprehensions: original comprehension had "  
+                                 ++ (show orig_complists) 
+                                 ++ "while after printing comprehension had "
+                                 ++ (show test_complists))
+  in ManifestEntry{content=orig_content,sources=orig_sources,status=new_status}
+ 
+
+isListComp :: Content -> Bool
+isListComp c = case c of
+  ListComp _ -> True
+  otherwise  -> False
+
+{-
+detectConflictInEntry :: FilePath -> (FilePath, ManifestEntry) -> IO (FilePath, ManifestEntry)
+detectConflictInEntry manifestDir (fp, ManifestEntry{content,sources,status}) = do 
+  { status' <- detectContentConflict manifestDir (List.zip content sources)
+  ; return (fp, ManifestEntry{content,sources,status = status'})
+  }
+
+  
+
+  orig_mtl = Map.toList (entries orig_manifest)
+  test_mtl = Map.toList (entries test_manifest)
+  orig_compsAbs = List.concatMap getComps orig_mtl
+  test_compsAbs = List.concatMap getComps test_mtl
+  orig_compsRel = List.map (\(fp,files) -> (fromJust fp, files)) orig_compsAbs
+  test_compsRel = List.map (\(fp,files) -> (fromJust fp, files)) test_compsAbs
+  if orig_compsRel == test_compsRel then 
+
+getComps (fp, ManifestEntry {content,sources,status}) = 
+  List.concatMap (\contentItem -> case contentItem of { ListComp files -> [(fp, files)]; _ -> []}) content
+-}
 
 detectConflictInEntry :: FilePath -> (FilePath, ManifestEntry) -> IO (FilePath, ManifestEntry)
 detectConflictInEntry manifestDir (fp, ManifestEntry{content,sources,status}) = do 
@@ -107,6 +182,11 @@ detectContentConflict manifestDir content_fp = case content_fp of
 
 joinStatus :: [Status] -> Status
 joinStatus ss = List.foldl combineStatus Valid ss
+
+promoteNotValidated :: Status -> Status
+promoteNotValidated status = case status of 
+  NotValidated -> Valid
+  x -> x
 
 combineStatus :: Status -> Status -> Status
 combineStatus s1 s2 = case (s1,s2) of
@@ -140,6 +220,9 @@ detectPairConflict manifestDir (c1,s1) (c2,s2) = case (c1,c2) of
         if target1 == target2 then return Valid
                               else return (Invalid ("Link " ++ target1 ++ " clashed with target " ++ target2))
   (Dir, Dir) -> return Valid   --- update this to manage conflicts with contained comprehensions
+  (ListComp f1, ListComp f2) -> return NotValidated  -- We will check this in the next stage...
+  (ListComp _, Dir) -> return Valid
+  (Dir, ListComp _) -> return Valid
   (t1, t2) -> return (Invalid ((show t1) ++ " is in conflict with "  ++ (show t2)))
 
   
@@ -166,6 +249,20 @@ getTempForestManifestDirectory = do
   ; hClose handle
   ; system ("rm -f " ++ fp)
   ; print ("temp directory name is: " ++ fp)
+  ; createDirectoryIfMissing False fp
+  ; return fp
+  }
+
+
+getTempForestListDirectory :: IO FilePath
+getTempForestListDirectory = do 
+  { tempDir <- getTempForestDirectory 
+  ; let forestManifestDir = combine tempDir "Lists"
+  ; createDirectoryIfMissing False forestManifestDir
+  ; (fp, handle) <- openTempFile forestManifestDir "List"
+  ; hClose handle
+  ; system ("rm -f " ++ fp)
+  ; print ("temp list directory name is: " ++ fp)
   ; createDirectoryIfMissing False fp
   ; return fp
   }
@@ -200,6 +297,7 @@ storeManifestEntryAt destDir clipPath tempDir (canonPath, (ManifestEntry {conten
         ; return ()
         }
       Dir -> return ()  -- Nothing needs to be done in this case because dir is already created
+      ListComp files -> return () -- Nothing needs to be done in this case because files are listed separately
       None -> do
         { doShellCmd ("rm -rf "  ++ targetPath)
         ; return ()
@@ -208,14 +306,9 @@ storeManifestEntryAt destDir clipPath tempDir (canonPath, (ManifestEntry {conten
   }
 
 
--- should check to make sure that resulting gzip file does not conflict with any other files
--- really have to do this at the end; perhaps all validation should be done after manifest is generated?
--- ie, split into three phases: 1. generate manifest, 2. validate manifest, 3. store manifest?
--- need to handle possible failure of gzip command as well.
-
 gzipManifestEntry :: ForestMD fmd => fmd -> Manifest -> IO Manifest
-gzipManifestEntry fmd (Manifest {count, tempDir, entries}) = do
-  { let fp = get_fullpath fmd
+gzipManifestEntry fmd (Manifest {count, pathToRoot, tempDir, entries}) = do
+  { fp <- canonicalizePath (get_fullpath fmd)
   ; let fp_noZip = dropExtension fp
   ; print ("gzipping filepath: " ++ fp_noZip)
   ; let (ManifestEntry {content = (c1:cs), sources, status=orig_status}) = entries Map.! fp_noZip
@@ -236,15 +329,15 @@ gzipManifestEntry fmd (Manifest {count, tempDir, entries}) = do
                   }
   ; let entries'  = Map.delete fp_noZip entries
   ; let entries'' = Map.insert fp entry' entries'
-  ; return (Manifest{count, tempDir, entries=entries''})
+  ; return (Manifest{count, pathToRoot, tempDir, entries=entries''})
   }
 
 getNewLocalName :: FilePath -> Manifest -> (FilePath, FilePath, Manifest)
-getNewLocalName baseName (Manifest{count=oldCount,tempDir,entries}) = 
+getNewLocalName baseName (Manifest{count=oldCount,pathToRoot, tempDir,entries}) = 
  let localName =  baseName ++ (show oldCount)
  in ( localName
     , combine tempDir localName
-    , Manifest {count = oldCount + 1, tempDir, entries}
+    , Manifest {count = oldCount + 1, pathToRoot,tempDir, entries}
     )
 
 
@@ -277,14 +370,15 @@ updateManifestWith printF payload fmd manifest0 = do
    ; let isLink   = get_symLink fmd
    ; if Maybe.isJust isLink then print ("found symlink:" ++ fullPath) else print ("not symlink: " ++ fullPath)
    ; canonPath <- canonicalizePath fullPath
+   ; mostlyCanonPath <- mostlyCanonicalizeLink fullPath
    ; let baseName = takeBaseName canonPath
    ; let (localName, targetPath, manifest1) = getNewLocalName baseName manifest0
    ; printF targetPath payload 
-   ; return (updateManifestRaw canonPath fullPath localName isLink manifest1)
+   ; return (updateManifestRaw canonPath mostlyCanonPath localName isLink manifest1)
    }
 
 updateManifestRaw :: FilePath -> FilePath -> FilePath -> Maybe FilePath -> Manifest -> Manifest
-updateManifestRaw  canonPath origPath localName optLinkTarget (manifest @ Manifest{count,tempDir,entries=orig_entries}) = 
+updateManifestRaw  canonPath origPath localName optLinkTarget (manifest @ Manifest{count,pathToRoot,tempDir,entries=orig_entries}) = 
    let entries_withFile = case Map.lookup canonPath orig_entries of 
                             Nothing -> addFile canonPath origPath localName orig_entries
                             Just manifestEntry -> updateFile manifestEntry canonPath origPath localName manifest orig_entries
@@ -294,7 +388,7 @@ updateManifestRaw  canonPath origPath localName optLinkTarget (manifest @ Manife
                                  Nothing ->  addLink origPath canonPath orig_entries   -- record link from source of sym link to canon Path
                                  Just manifestEntry -> updateWithLink manifestEntry origPath canonPath manifest orig_entries
                             Nothing ->   entries_withFile
-   in  Manifest{count, tempDir, entries=new_entries}
+   in  Manifest{count, pathToRoot, tempDir, entries=new_entries}
 
 
 addFile :: FilePath -> FilePath -> FilePath -> ManifestTable -> ManifestTable
@@ -321,11 +415,11 @@ updateManifestWithTar tarredFile status fmd manifest = do
    }
 
 updateManifestWithTarRaw :: FilePath -> Status -> FilePath ->  Manifest ->  Manifest
-updateManifestWithTarRaw  tarredFile status tarPath (manifest @ Manifest{count,tempDir,entries=orig_entries}) = 
+updateManifestWithTarRaw  tarredFile status tarPath (manifest @ Manifest{count,pathToRoot,tempDir,entries=orig_entries}) = 
   let  new_entries =  case Map.lookup tarPath orig_entries of
                           Nothing -> addTar tarredFile status tarPath orig_entries   -- record link from source of sym link to canon Path
                           Just manifestEntry -> updateWithTar manifestEntry tarredFile status tarPath manifest orig_entries
-  in (Manifest{count, tempDir, entries=new_entries})
+  in (Manifest{count, pathToRoot,tempDir, entries=new_entries})
 
 addTar :: FilePath -> Status -> FilePath -> ManifestTable -> ManifestTable
 addTar tarredFile tarStatus tarPath mp = 
@@ -349,11 +443,11 @@ updateManifestWithNone fmd manifest = do
    }
 
 updateManifestWithNoneRaw :: FilePath ->  Manifest ->  Manifest
-updateManifestWithNoneRaw  nonePath (manifest @ Manifest{count,tempDir,entries=orig_entries}) = 
+updateManifestWithNoneRaw  nonePath (manifest @ Manifest{count,pathToRoot,tempDir,entries=orig_entries}) = 
   let  new_entries =  case Map.lookup nonePath orig_entries of
                           Nothing -> addNone nonePath orig_entries   -- record link from source of sym link to canon Path
                           Just manifestEntry -> updateWithNone manifestEntry nonePath manifest orig_entries
-  in (Manifest{count, tempDir, entries=new_entries})
+  in (Manifest{count, pathToRoot, tempDir, entries=new_entries})
 
 addNone :: FilePath -> ManifestTable -> ManifestTable
 addNone nonePath mp = 
@@ -376,11 +470,11 @@ updateManifestWithDir fmd manifest = do
    }
 
 updateManifestWithDirRaw :: FilePath ->  Manifest ->  Manifest
-updateManifestWithDirRaw  dirPath (manifest @ Manifest{count,tempDir,entries=orig_entries}) = 
+updateManifestWithDirRaw  dirPath (manifest @ Manifest{count,pathToRoot,tempDir,entries=orig_entries}) = 
   let  new_entries =  case Map.lookup dirPath orig_entries of
                           Nothing -> addDir dirPath orig_entries   -- record link from source of sym link to canon Path
                           Just manifestEntry -> updateWithDir manifestEntry dirPath manifest orig_entries
-  in (Manifest{count, tempDir, entries=new_entries})
+  in (Manifest{count, pathToRoot,tempDir, entries=new_entries})
 
 addDir :: FilePath -> ManifestTable -> ManifestTable
 addDir dirPath mp = 
@@ -404,13 +498,21 @@ updateManifestWithLink fmd manifest = case get_symLink fmd of
     }
 
 updateManifestWithLinkRaw :: FilePath -> FilePath ->  Manifest -> IO Manifest
-updateManifestWithLinkRaw  source target (manifest @ Manifest{count,tempDir,entries=orig_entries}) = do
+updateManifestWithLinkRaw  source target (manifest @ Manifest{count,pathToRoot,tempDir,entries=orig_entries}) = do
   { new_entries <-  case Map.lookup source orig_entries of
                           Nothing -> return (addLink source target orig_entries)   -- record link from source of sym link to canon Path
                           Just manifestEntry -> return (updateWithLink manifestEntry source target manifest orig_entries)
-  ; return (Manifest{count, tempDir, entries=new_entries})
+  ; return (Manifest{count, pathToRoot,tempDir, entries=new_entries})
   }
 
+
+mostlyCanonicalizeLink :: FilePath -> IO FilePath
+mostlyCanonicalizeLink fp = do
+ { let root = dropFileName fp
+ ; let fileName = takeFileName fp
+ ; root_canon <- canonicalizePath root
+ ; return (combine root_canon fileName)
+ }
 
 addLink :: FilePath -> FilePath -> ManifestTable -> ManifestTable
 addLink source target mp = 
@@ -424,6 +526,37 @@ updateWithLink (ManifestEntry {content=lN0, sources=src1, status=status1}) sourc
                                 , status = combineStatus NotValidated status1
                                 }
    in (Map.insert source newEntry table)      
+
+
+updateManifestWithComp :: ForestMD fmd => fmd -> [FilePath] -> Manifest -> IO Manifest
+updateManifestWithComp fmd files manifest = do
+    { let fullPath = get_fullpath fmd
+    ; canonPath <- canonicalizePath fullPath
+    ; print ("entering comprehension in directory  " ++ canonPath)
+    ; updateManifestWithCompRaw canonPath files manifest   
+    }
+
+updateManifestWithCompRaw :: FilePath -> [FilePath] ->  Manifest -> IO Manifest
+updateManifestWithCompRaw  compDir files (manifest @ Manifest{count,pathToRoot,tempDir,entries=orig_entries}) = do
+  { new_entries <-  case Map.lookup compDir orig_entries of
+                          Nothing -> return (addComp compDir files orig_entries)   -- record link from source of sym link to canon Path
+                          Just manifestEntry -> return (updateWithComp manifestEntry compDir files manifest orig_entries)
+  ; return (Manifest{count, pathToRoot,tempDir, entries=new_entries})
+  }
+
+
+addComp :: FilePath -> [FilePath] -> ManifestTable -> ManifestTable
+addComp compDir files mp = 
+     Map.insert compDir    (ManifestEntry{content= [ListComp files], sources = [compDir], status= NotValidated}) mp
+
+
+updateWithComp :: ManifestEntry -> FilePath -> [FilePath] ->  Manifest -> ManifestTable -> ManifestTable
+updateWithComp (ManifestEntry {content=lN0, sources=src1, status=status1}) compDir files manifest table = 
+   let newEntry = ManifestEntry{ content = (ListComp  files) : lN0
+                                , sources = compDir : src1
+                                , status = combineStatus NotValidated status1
+                                }
+   in (Map.insert compDir newEntry table)      
 
 
 

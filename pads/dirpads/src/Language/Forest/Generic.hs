@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, FlexibleInstances, NamedFieldPuns #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -38,18 +38,24 @@ import Data.Generics
 import Language.Pads.Generic
 import Language.Forest.MetaData
 import Language.Forest.Writing
+import System.FilePath.Posix
 import Data.Map hiding (map)
 import Data.Set hiding (map)
 import qualified Data.List as L
 
 class (Data rep, ForestMD md) => Forest rep md | rep -> md  where
  load :: FilePath -> IO(rep, md)
+ generateManifest :: (rep,md) -> IO Manifest
+ updateManifest :: (rep,md) -> Manifest -> IO Manifest
  fdef :: rep
  fdef = myempty
- updateManifest :: (rep,md) -> Manifest -> IO Manifest
+ defaultMd :: rep -> FilePath -> md
+
+ 
 
 class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
  load1 :: arg -> FilePath -> IO(rep, md)
+ generateManifest1 :: arg -> (rep,md) -> IO Manifest
  fdef1 :: arg -> rep
  fdef1 = \s->myempty
  updateManifest1 :: arg -> (rep,md) -> Manifest -> IO Manifest
@@ -61,20 +67,31 @@ class File1 arg rep md where
   fileLoad1 :: arg -> FilePath -> IO (rep, (Forest_md, md))
 
 
-{- Note, other useful functions on manifests are in Language.Forest.Writing -}
-generateManifest :: Forest rep md => (rep, md) -> IO Manifest
-generateManifest forest = do
-  { origManifest <- newManifest
-  ; rawManifest <- updateManifest forest origManifest
-  ; validateManifest rawManifest
+validateLists
+  :: (FilePath -> IO a)
+     -> (a -> Manifest -> IO Manifest)
+     -> Manifest
+     -> IO Manifest
+validateLists  load updateMan (m @ Manifest {tempDir, pathToRoot, entries, count}) = do
+  { listValidDir <- getTempForestListDirectory
+  ; storeManifestAt listValidDir m
+  ; let fileName = case pathToRoot of { Nothing -> error "pathToRoot should not be null." ; Just p -> takeFileName p}
+  ; let pathToDir = combine listValidDir fileName
+  ; print ("loading from: "++pathToDir)
+  ; testResult <- load pathToDir
+  ; emptyManifest <- newManifest
+  ; testManifest <- updateMan testResult emptyManifest
+  ; return (detectConflictsInListComps m testManifest)
   }
 
-generateManifest1 :: Forest1 arg rep md => arg -> (rep, md) -> IO Manifest
-generateManifest1 arg forest = do
+
+rawManifest1 :: Forest1 arg rep md => arg -> (rep, md) -> IO Manifest
+rawManifest1 arg forest = do
   { origManifest <- newManifest
-  ; rawManifest <- updateManifest1 arg forest origManifest
-  ; validateManifest rawManifest
+  ; updateManifest1 arg forest origManifest
   }
+
+
 
 
 listDirs :: (ForestMD md) => md -> [FilePath] 

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables, NamedFieldPuns #-}
 
 {- To do:
    TOOL: lookup :: (Data a) => String -> Maybe a  (where a = String_t)
@@ -64,6 +64,7 @@ import Language.Forest.Forestc
 
 import Language.Haskell.TH hiding (ppr)
 import System.Time.Utils
+import System.FilePath.Posix
 import Language.Pads.GenPretty
 import Language.Forest.Graph
 
@@ -126,11 +127,6 @@ doSimpleTest = do
  ; simple_d_updateManifest "remote" pResult emptyManifest
  }
 
-doSimpleManifest :: Manifest -> IO ()
-doSimpleManifest manifest = 
-   storeManifestAt "/Users/kfisher/temp" "/Users/kfisher/pads/dirpads/src/Examples/data/" manifest
-
-
 
 local_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/local.txt"
 remote_file = "/Users/kfisher/pads/dirpads/src/Examples/data/Simple/remote.txt"
@@ -167,10 +163,6 @@ doListTest = do
  ; textFiles_updateManifest pResult emptyManifest
  }
 
-doListManifest :: Manifest -> IO ()
-doListManifest manifest = 
-   storeManifestAt "/Users/kfisher/temp" "/Users/kfisher/pads/dirpads/src/Examples/data/" manifest
-
 
 notChina h = h /= "china"
 
@@ -184,13 +176,14 @@ notChina h = h /= "china"
 
 doNestedTest = do 
  { pResult <- nested_d_load "remote" host_dir
- ; emptyManifest <- newManifest
- ; nested_d_updateManifest "remote" pResult emptyManifest
+ ; generateManifest1 "remote" pResult
  }
+
+
 
 doManifest :: Manifest -> IO ()
 doManifest manifest = 
-   storeManifestAt "/Users/kfisher/temp" "/Users/kfisher/pads/dirpads/src/Examples/data/" manifest
+   storeManifestAt "/Users/kfisher/temp"  manifest
 
 (nested_remote_rep, nested_remote_md) = unsafePerformIO $ nested_d_load "remote" host_dir
 (nested_local_rep, nested_local_md) = unsafePerformIO $ nested_d_load "local" host_dir

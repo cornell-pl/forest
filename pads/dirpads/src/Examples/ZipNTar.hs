@@ -60,15 +60,12 @@ doZipTest = do
  ; generateManifest pResult
  }
 
-doZipTest' :: IO Manifest
-doZipTest' = do 
- { pResult <- scores_d_load scores_dir
- ; generateManifest pResult
- ; emptyManifest <- newManifest
- ; rawManifest <- scores_d_updateManifest pResult emptyManifest
- ; validateManifest rawManifest
- }
+
+doManifest' :: Manifest -> IO ()
+doManifest' manifest = 
+   storeManifestAt' "/Users/kfisher/temp" clip_path manifest
+
 
 doManifest :: Manifest -> IO ()
 doManifest manifest = 
-   storeManifestAt "/Users/kfisher/temp" clip_path manifest
+   storeManifestAt "/Users/kfisher/temp" manifest
