@@ -82,7 +82,7 @@ also generates a \emph{manifest function}, which reads an in-memory
 data structure, writes its contents out to disk in a temporary
 space, and prepares a 
 \emph{manifest log}.  The manifest log records inconsistencies
-detected during the storing process as well as the sequence
+detected during this process as well as the sequence
 of operations necessary to move data from the temporary space to
 its final resting point.  Inconsistences
 can arise when a programmer creates an erroneous in-memory
@@ -94,17 +94,25 @@ After creating a manifest, a programmer may analyze it
 and decide whether to execute the 
 generic \cd{store} or \cd{storeAt}
 functions, which move a manifest (inconsistencies and all) to its 
-rightful position on disk, potentially clobbering any pre-existing data 
-there.  Details concerning the semantics of storing, 
+rightful position on disk.  If the manifest reports no
+inconsistencies, then Forest ensures that the resulting filestore will
+be consistent.
+Details concerning the semantics of storing, 
 especially where it concerns inconsistencies,
 are explained in further depth in Section~\ref{sec:theory}.
 
 Forest provides the type class \cd{Forest rep md} that collects 
-useful functions on pairs of Forest representation and metadata
-structures. These functions include the load and manifest
-functions as well as other functions for constructing defaults
-(\cd{f_default}) and setting owners, permissions, and file locations
-(\cd{setLoc}).  
+useful functions on Forest representation and metadata
+structures. These functions include the \cd{load} and \cd{generateManifest}
+functions described above as well as a variety of utility functions. One such utility
+function is \cd{defaultMd}, which takes a representation and a 
+path and creates a corresponding default metadata structure rooted at
+the supplied path. Variants of this function take parameters for
+setting groups, owners, and permissions.  For descriptions
+containing dynamically-determined paths, \cd{defaultMd} leaves the
+paths empty.  In such cases, the programmer must fill in the
+appropriate paths manually.
+
 
 As an example, consider the \coral{} logs described in
 Figure~\ref{fig:coral-description}.  The corresponding load and store
@@ -229,9 +237,11 @@ Given these analyses, a programmer can store  results
 in the \cd{stats} directory using the following code.
 
 \begin{code}
-manifest <- stats_manifest 
-  ( Stats \{last = sites_mod (), topk = top 10\}
-  , stats_setLoc f_default "/var/log/coral/stats")
+let result = Stats \{ last = sites_mod ()
+                   , topk = top 10\}
+manifest <- generateManifest 
+  ( result
+  , defaultMd result "/var/log/coral/stats")
 store manifest 
 \end{code}
 
