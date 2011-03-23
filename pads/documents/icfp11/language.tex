@@ -65,8 +65,10 @@ contents.  The file-system metadata has type \cd{Forest\_md}, shown in
 \figref{fig:forest-md}.  This structure stores two kinds of
 information: (1) the number and kind of any errors that occurred while
 loading the file and (2) the attributes associated with the file.
-File-content metadata typically describes errors within the file, but
-can be used for other purposes.  For these three file types, there is
+%% File-content metadata typically describes errors within the file, but
+%%can be used for other purposes.  
+File-content metadata describes errors within the file.
+For these three file types, there is
 no meaningful content metadata and so this type is the unit type.
 Leveraging Haskell's laziness, the loading functions create the
 in-memory representations and set the metadata on demand.
@@ -130,7 +132,7 @@ type \cd{Student_md}, and a parsing function.
 types to \forest{} file types.  For example, the declaration
 \begin{code}
 [forest| 
-  \kw{type} SFile (n::String) = File (Student n) 
+  \kw{type} SFile (n :: String) = File (Student n) 
 |]
 \end{code}
 introduces a new file type named \cd{SFile} whose format is given by
@@ -140,7 +142,7 @@ is parameterized by the name of the student.
 Using \padshaskell{} descriptions in \forest{} not only helps specify
 the structure of ad hoc data files, but it also generates a structured
 in-memory representation of the data, allowing Haskell programmers to
-traverse, query and otherwise manipulate such data.  Indeed,
+traverse, query and otherwise manipulate such data.  
 \padshaskell{} and \forest{} were designed to work seamlessly
 together.  From the perspective of the Haskell programmer traversing
 a resulting in-memory data structure, there is effectively no difference
@@ -148,7 +150,7 @@ between iterating over files in a directory or structured sequences of
 lines or tokens within a file.
 
 While \padshaskell{} is independently interesting,
-the rest of this paper focuses on \forest{}.  Henceforth, any
+this paper focuses on \forest{}.  Henceforth, any
 unadorned declarations occur within the \forest{} scope
 \cd{[forest|...|]} unless otherwise noted.  Any declarations prefixed
 by \cd{>} 
@@ -271,8 +273,8 @@ suitable error information.
 \paragraph*{Computed Paths}
 \label{sec:computed-paths}
 
-The above descriptions are a good start for our application, but neither
-is ideal.  Every year, the directory for graduating seniors 
+The above descriptions are a good start for our application, but they are
+not ideal.  Every year, the directory for graduating seniors 
 (\ie{}, \cd{classof11}) is moved into the graduates directory,
 the juniors are promoted to seniors and a new junior class is created.
 As it stands, we would have to edit the description every year.
@@ -290,14 +292,15 @@ to \textit{construct} the appropriate file names using Haskell functions:
   , graduates :: Grads \}
 \end{code}
 The bracket syntax \cd{<|...|>} provides an escape so that we may use
-Haskell within \forest{} code to specify arbitrary computations.  This example also
-illustrates abstraction: any \forest{} declaration may be
-parameterized by specifying a legal Haskell expression identifier and
-its type.  The types of the fields for \cd{seniors} and \cd{juniors}
-illustrate the use of parameterized descriptions.
-When an argument is a constant or variable,
+Haskell within \forest{} code to specify arbitrary computations.  
+When an expression is a constant or variable,
 it may be supplied directly.  When an argument is more complex,
 however, it must be written in brackets to escape to Haskell.
+This example also
+illustrates abstraction: any \forest{} declaration may be
+parameterized by specifying a legal Haskell pattern and
+its type.  The types of the fields for \cd{seniors} and \cd{juniors}
+illustrate the use of parameterized descriptions.
 
 \paragraph*{Approximate Paths}
 As \filestores{} evolve, naming conventions may change.

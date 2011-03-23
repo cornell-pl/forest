@@ -4,17 +4,17 @@
 \begin{figure}
 Load Functions:
 \begin{code}
-log_load   :: FilePath -> IO (Log, Log_md),
-site_load  :: FilePath -> IO (Site, Site_md)
-dat_load   :: FilePath -> IO (Dat, Dat_md),
 stats_load :: FilePath -> IO (Stats, Stats_md)
+dat_load   :: FilePath -> IO (Dat, Dat_md)
+site_load  :: FilePath -> IO (Site, Site_md)
+log_load   :: FilePath -> IO (Log, Log_md)
 \end{code}
 Store Functions:
 \begin{code}
-log_manifest   :: (Log, Log_md)     -> IO Manifest
-site_manifest  :: (Site, Site_md)   -> IO Manifest
-dat_manifest   :: (Dat, Dat_md)     -> IO Manifest
 stats_manifest :: (Stats, Stats_md) -> IO Manifest
+dat_manifest   :: (Dat, Dat_md)     -> IO Manifest
+site_manifest  :: (Site, Site_md)   -> IO Manifest
+log_manifest   :: (Log, Log_md)     -> IO Manifest
 \mbox{}
 storeAt        :: FilePath -> Manifest -> IO ()
 store          ::             Manifest -> IO ()
@@ -26,10 +26,10 @@ store          ::             Manifest -> IO ()
 %\begin{figure}
 Representation Types:
 \begin{code}
-\kw{data}    Log   = Log   \{log :: CoralLog\}
-\kw{newtype} Site  = Site  [(String, Log)]
-\kw{newtype} Dat   = Dat   [(String, Site)]
 \kw{newtype} Stats = Stats \{last :: Last, topk :: Topk\}
+\kw{newtype} Dat   = Dat   [(String, Site)]
+\kw{newtype} Site  = Site  [(String, Log)]
+\kw{data}    Log   = Log   \{log :: CoralLog\}
 \end{code}
 %\caption{Representation types for Coral}
 %\label{fig:coral-rep}
@@ -38,18 +38,18 @@ Representation Types:
 %\begin{figure}
 Metadata Types:
 \begin{code}
-\kw{data} Log_inner_md = Log_inner_md 
-    \{log_md :: (Forest_md, CoralLog_md)\}
-\kw{type} Log_md   = (Forest_md, Log_inner_md)
-\kw{type} Site_md  = (Forest_md, [(String, Log_md)])
-\kw{type} Dat_md   = (Forest_md, [(String, Site_md)])
+\kw{type} Stats_md = (Forest_md, Stats_inner_md)
 \kw{data} Stats_inner_md = Stats_inner_md 
     \{last_md :: (Forest_md, Last_md),
      topk_md :: (Forest_md, Topk_md)\}
-\kw{type} Stats_md = (Forest_md, Stats_inner_md)
-\mbox{}
-md_default :: a
+\kw{type} Dat_md   = (Forest_md, [(String, Site_md)])
+\kw{type} Site_md  = (Forest_md, [(String, Log_md)])
+\kw{type} Log_md   = (Forest_md, Log_inner_md)
+\kw{data} Log_inner_md = Log_inner_md 
+    \{log_md :: (Forest_md, CoralLog_md)\}
 \end{code}
+%%\mbox{}
+%%md_default :: a
 \caption{Coral load and store functions; rep. and metadata types}
 \label{fig:coral-aux}
 \end{figure}
@@ -82,22 +82,29 @@ also generates a \emph{manifest function}, which reads an in-memory
 data structure, writes its contents out to disk in a temporary
 space, and prepares a 
 \emph{manifest log}.  The manifest log records inconsistencies
-that are detected during the printing process as well as the sequence
+detected during the storing process as well as the sequence
 of operations necessary to move data from the temporary space to
 its final resting point.  Inconsistences
 can arise when a programmer creates an erroneous in-memory
-representation of a \filestore{}
---- due to the dependencies that may be present in
-\forest{} descriptions, not all such inconsistencies 
-are detected statically by the Haskell type system.
-Once the manifest log has been created, a programmer may analyze it
-and decide once and for all whether to execute the 
+representation of a \filestore{}.
+The dependencies that may be present in
+\forest{} descriptions mean that not all such inconsistencies 
+can be detected statically by the Haskell type system.
+After creating a manifest, a programmer may analyze it
+and decide whether to execute the 
 generic \cd{store} or \cd{storeAt}
 functions, which move a manifest (inconsistencies and all) to its 
 rightful position on disk, potentially clobbering any pre-existing data 
-there.  Details concerning the semantics of printing, 
+there.  Details concerning the semantics of storing, 
 especially where it concerns inconsistencies,
-are explained in further depth in Section~\ref{sec:semantics}.
+are explained in further depth in Section~\ref{sec:theory}.
+
+Forest provides the type class \cd{Forest rep md} that collects 
+useful functions on pairs of Forest representation and metadata
+structures. These functions include the load and manifest
+functions as well as other functions for constructing defaults
+(\cd{f_default}) and setting owners, permissions, and file locations
+(\cd{setLoc}).  
 
 As an example, consider the \coral{} logs described in
 Figure~\ref{fig:coral-description}.  The corresponding load and store
@@ -106,10 +113,10 @@ Figure~\ref{fig:coral-aux}. Note that the structure of each of these
 artifacts mirrors the structure of the \forest{}
 description that generated them. This close correspondence makes it
 easy for programmers to write programs using these \forest{}-generated artifacts.
-Note that when storing freshly computed data, one often needs
-a meta-data structure.  The type-directed function \cd{md_default}
-listed in Figure~\ref{fig:coral-aux} will compute default meta-data
-of any type required.
+%%Note that when storing freshly computed data, one often needs
+%%a metadata structure.  The type-directed function \cd{f_default}
+%%listed in Figure~\ref{fig:coral-aux} computes default metadata
+%%of any type required.
 
 As a simple example, consider the \cd{Dat} description in
 Figure~\ref{fig:coral-description}. The \cd{dat\_load} function takes
@@ -218,23 +225,24 @@ same URL using the \cd{fromListWith} function from the \cd{Data.Map}
 module. Next, it sorts the entries in descending order. Finally, it
 returns the first $k$ entries of the list as the final result.
 
-Given these analyses, a programmer will want to store their results.
-They may do so in the \cd{stats} directory using the following code.
+Given these analyses, a programmer can store  results
+in the \cd{stats} directory using the following code.
 
 \begin{code}
-manifest 
-   <- stats_manifest 
-        ( Stats \{last = sites_mod (), topk = top 10\}
-        , md_default::Stats_md )
-() <- storeAt "/var/log/coral/stats" manifest 
+manifest <- stats_manifest 
+  ( Stats \{last = sites_mod (), topk = top 10\}
+  , stats_setLoc f_default "/var/log/coral/stats")
+store manifest 
 \end{code}
 
 Overall, the main take-away from this section is how 
-the \forest{}-generated infrastructure and tight coupling
-to \haskell{} facilitates construction
-of remarkably terse queries over the combination of file contents,
-file attributes and directory structure.  Exploratory data analysis
-in this new programming paradigm is light-weight, easy and highly effective.
+\forest{} and its tight integration with
+\haskell{} facilitates exploratory data analysis,
+enabling remarkably terse queries over the combination of file
+contents, file attributes and directory structures.
+
+%%Exploratory data analysis
+%%in this new programming paradigm is light-weight, easy and highly effective.
 %how the tight coupling of \forest{} and \haskell{} lead to highly
 %productive programming practice.  
 \jnf{compare with the hand-written Python program Mike

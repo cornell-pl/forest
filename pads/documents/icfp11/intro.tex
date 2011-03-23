@@ -5,7 +5,7 @@ Databases are an effective, time-tested technology for storing
 structured and semi-structured data.  Nevertheless, many computer
 users eschew the benefits of structured databases and store important
 semi-structured information in collections of conventional files
-scattered across a conventional file system instead.  For example, the
+and directories in a conventional file system instead.  For example, the
 Princeton Computer Science Department
 stores records of undergraduate student grades in a structured set of
 directories and uses scripts to compute averages and
@@ -14,15 +14,23 @@ sets of log files from \coral, a distributed content distribution
 network~\cite{freedman+:coral,freedman:coral-experience}.  
 The logs are organized in hierarchical
 directory structures based on machine name, time and date.  Freedman
-mines the logs for information on system security, health and performance.  At
-Harvard, Vinothan Manoharan, a physics professor, stores 
+mines the logs for information on system security and performance.  At
+Harvard, physics professor Vinothan Manoharan stores 
 his experimental data in sets of files and
 extracts information using python scripts.  At AT\&T, vast structured
 repositories contain networking information,
-phone call detail and billing data.  And there are
-many other examples across the computational sciences and social
+phone call detail and billing data.  
+Many software code bases, including Haskell and its associated Cabal libraries,
+require particular files in particular formats to exist in precise
+locations described by other files. 
+Similarly, version control systems like \texttt{cvs} utilize the file
+system to store revision information. Web sites require various types
+of files to exist in particular directories according to content type,
+and security considerations often require particular permissions on
+these files.
+Many other examples exist across the computational sciences and social
 sciences, in computer systems research, in computer
-systems administration, and in industry.
+systems administration and in industry.
 
 Users choose to implement ad hoc databases in this manner for a number
 of reasons. A key factor is  that using
@@ -35,12 +43,12 @@ to access the data once it is in the database; and (5) interfacing the
 database with a conventional programming language to support
 applications that use the data.  Finally, it may be the case that the
 database optimizes for a pattern of use not suited to the actual
-application, which makes paying the overhead of the database system even
+application, which makes the overhead of the database system even
 less desirable. 
 
 Rather than paying these costs, programmers often store data in
 the file system, using a combination of directory structure, file
-names and file contents to organize the data.  We will call such a
+names, file contents, and symbolic links to organize the data.  We call such a
 representation of a coherent set of data a \textit{\filestore{}}.
 The ``query language'' for a \filestore{}
 is often a shell script or conventional programming language.
@@ -69,7 +77,7 @@ such as \cd{ls} fail when more than 256 files appear on the
 command line.  Hence, programmers must  break up their data
 and process it in smaller sets, a tedious task.
 
-In this paper, we propose a better way: A novel type-based
+We propose a better way: A type-based
 specification language, programming environment and toolkit for
 managing \filestores{}.  
 This language, called \forest{}, is an embedded domain-specific
@@ -79,10 +87,10 @@ language in \haskell{}.
 format-specific \haskell{} data structures.  Conversely,
 given data structures with the appropriate type, \forest{}
 makes it straightforward to dematerialize these structures
-and write them out to disk.  In either case, the
-goal is to making programming with \filestores{} as
-easy and robust as programming with any other \haskell{} data
-structure.  Furthermore, \forest{} leverages
+and write them out to disk.  The
+goal is to make programming with \filestores{} as
+easy as programming with regular \haskell{} data
+structures.  Furthermore, \forest{} leverages
 \haskell{}'s support for generic programming to make it easy to define
 tools that work for any \filestore{} with a \forest{} description.  
 
@@ -116,7 +124,7 @@ benefits by writing one simple, compact file system specification.
 The automatically generated auxiliary support includes:}
 
 In exchange for writing a \forest{} specification,  programmers obtain
-a number of benefits.  These benefits include 
+a number of benefits:
 (1) a set of type declarations to represent the \filestore{} in memory,
 (2) a set of type declarations that capture errors and file system attributes for the \filestore{},
 (3) a loading function to populate these in-memory structures, 
@@ -160,11 +168,11 @@ establish a correspondence between loads and stores of \filestore{} data.
   \filestore{}-specific tools generically.
 
 \item {\bf Case Study in Domain-Specific Language Design}: \forest{}
-  is fully implemented and its design serves
-  as a case study in extensive, practical, domain-specific
-  language design in modern languages by combining a number of
+  is fully implemented and serves
+  as a case study in domain-specific
+  language design by combining a number of
   experimental features of \haskell{} such as quasi-quoting and \template{}.
-  Moreover, our \forest{} design and implementation experience 
+  The \forest{} design and implementation 
   has had practical impact on the \haskell{} implementation itself:  
   the \haskell{} team modified and extended \template{} and the
   quasi-quoting mechanism in response
@@ -176,18 +184,20 @@ establish a correspondence between loads and stores of \filestore{} data.
 There has been much past work on domain-specific languages for
 describing, parsing and printing individual data files. 
 Examples include 
-systems such as Lex, Yacc,
+Lex, Yacc,
 Antlr~\cite{antlr}, Parsec~\cite{LeijenMeijer:parsec} and 
 PADS~\cite{fisher+:toplas}, to name just a few.  
 However, \forest{} differs
 substantially from any of these systems because it focuses on technology
-for describing {\em entire file systems}.  Most importantly, since 
+for describing {\em entire file systems}.  
+A key difference is that
 simple file systems are {\em trees} and complex ones with symbolic links are 
-{\em graphs}, whereas files are {\em sequences} (of characters or tokens), 
+{\em graphs}, whereas files are {\em sequences} (of characters
+or tokens). Consequently,
 the language design, formal systems,
 semantic issues, and underlying implementation 
 technology are all entirely different.  Section~\ref{sec:related}
-contains a further discussion of related work in this area.
+contains a further discussion of related work.
 
 %Overall, \forest{} substantially lowers pragmatic barriers to programming 
 %with data on disk.
