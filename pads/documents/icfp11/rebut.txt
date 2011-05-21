@@ -1,0 +1,200 @@
+Thank you for the helpful reviews.  We understand that because this
+paper is primarily a language design paper, it is more difficult to
+evaluate than performance-oriented papers or program analysis papers,
+for which there are clearer criteria for judging results.
+To help reviewers evaluate our paper, we included the following
+elements:
+
+* a series of micro-descriptions to illustrate the way that each individual
+feature fits in with the whole
+
+* a series of larger descriptions laid out in the 20-page appendix.
+(One of the reviewers mentioned difficulty obtaining the appendix.
+It should be available through the HotCrp system.  We submitted it
+with the paper.  If it is unavailable there or difficult to locate
+for some reason, please ask the program chair or visit
+http://www.cs.princeton.edu/~dpw/papers/forest-draft-0411.pdf
+which contains the original, unmodified submission including the
+appendix)
+
+* a few simple programming examples to show the ease with which otherwise
+complex programs could be constructed
+
+* a set of generic tools to illustrate that the system is architected in a
+way to maximize reuse
+
+* a formal semantics and proofs to illustrate that the design satisfies useful
+theoretical properties.
+
+Reviewer B suggested several ways in which we could reallocate our use
+of space to deemphasize or omit some of the above elements that were deemed
+less important in order to expand on our discussion of others.  Reviewer
+A asked for some clarification on certain points.  Given the usual extra
+2 pages that may be purchased to extend an accepted SIGPLAN paper, there
+should be room for clarification.
+
+In the remainder of this rebuttle, we respond to the key questions of
+the reviewers.
+
+--------
+Review A
+--------
+
+> My first question has to do with whether Forest provides the database
+> world's usual ACID guarantees or related properties.
+
+The Forest implementation does not provide ACID guarantees.  The language
+design, which is the focus of the paper, does not preclude an implementation
+from providing such guarantees. However, we leave such an implementation 
+to future work -- it would likely be an additional substantial paper of its
+own.  (As an aside, the Princeton CS example does not require this feature -- 
+a single administrative assistant manages this grade repository.)
+
+
+> I don't understand how laziness is used to avoid loading unneeded
+> parts of the filestore.  Perhaps this uses some standard Haskell
+> feature that I'm unaware of, but I'd like to see more discussion,
+> probably in the "Implementation" section.
+
+Kathleen ...
+
+> What's the complexity of
+> the operation to save changes to a filestore?  Is it proportional to
+> the change size or the size of the whole filestore?
+
+Load and store functions are generated for every named type in a description.  
+Hence, updates may be made at any granularity for which there is a named type.
+
+> The generic tools in Section 5 don't seem to provide any value over
+> tools that work directly on conventional, schema-less filesystem
+> directory trees. ...  In
+> general, I'd like to understand why someone would want to use these
+> schema-generic tools instead of conventional UNIX tools.
+
+The Forest "schema" can be used to slice out an arbitrary fragment of
+a file system.  It may do so by delving into config files and using
+file system data to dynamically construct the slice.  This is much
+more powerful than the typical glob patterns (ie: *,?-patterns) used
+by conventional command-line unix tools.  Hence, even for simple
+commands (ie, Forest's version of grep, ls, etc.), Forest provides
+advantages over the conventional unix ones.  (Of course, in these
+cases, you could simulate what Forest does by using a shell script,
+but such a shell script would be much lower level and more
+complicated.)
+
+> For the other tools, is it worth implementing them with
+> Forest only because of some advantage that comes from working with
+> in-memory data structures?
+
+Yes, it is extremely convenient that Forest generates in-memory data
+structures in Haskell.  This makes it easy (for example), to develop
+the type inference tool (which uses a variety of Haskell libraries to
+pretty print the syntax of Forest descriptions) or the visualization
+tool (which must pretty print dot files).  Of course, it would not be
+impossible to write these tools using unix commands + shell scripts
+(they are Turing-complete languages), but doing so would be much more
+time consuming and much less robust.
+
+> Does the use of schema-specialized data
+> structures improve efficiency in practice?
+
+The main advantage of generating typed data structures from descriptions
+is not performance, it is ease of use and robustness of programs.  These
+advantages arise for the usual reasons that programming with typed data
+structures is advantageous.
+
+> Haskell strings are represented as lists, right?   If so, doesn't that
+> mean your in-memory representation of text files uses an order of
+> magnitude more memory than necessary (with 64-bit next pointers,
+> header words, etc.), and it also doesn't support constant-time access
+> to character positions within a string?
+
+Kathleen ... 
+
+> A footnote says that the generated types and functions for a
+> particular filestore format form a single instance of a type class.
+> Have you thought about using a type class where each record type is an
+> instance, so that you don't need to declare a *_load and *_manifest
+> function for each type, but rather make these operations methods of
+> the new type class?
+
+Kathleen ...
+
+
+--------
+Review B
+--------
+
+> Section 3 reads like a reference manual - as a long list of
+> features.  I'd like to hear more about why this list of features was
+> chosen - were these just useful in practice?  Or is there some kind of
+> theoretical argument for why these features are "good"?
+
+The features were chosen because they are useful in practice.  In the
+paper, we demonstrate the utility of each feature in an example to justify
+its existence.  In addition, there are a number of longer examples in the
+appendix, where you will see the same features used over and over again.
+Again, we understand that language design papers are traditionally very
+difficult to evaluate.  We did our best to illustrate the reasons for
+our choices by showing the simple, seemless way the features compose
+with one another and solve the problem of describing file system fragments.
+With additional space in any final version, we will have room for further
+comments on our design choices.
+
+The theoretical argument for the "goodness" of the features is that all
+of their meanings can be described in a uniform semantic framework.
+The features are also shown to be "good" by virtue of satisfying important
+round-tripping (printing/parsing) laws. 
+
+> Forest defines a dependent type system, but there's no mention of
+> any practical issues (e.g., type equality) that arise from programming
+> with it - do these just not show up in practice?  Or are they hidden
+> somewhere?  Is there any particular feature that you wish Haskell's
+> type system had?
+
+Forest checks that a particular *first-order value* (ie: the file system)
+has a given dependent type.  Type equality is typically required when
+one checks that a more general *expression* or *higher-order value*
+has a particular type.  Hence, Forest does not need to decide dependent type 
+equality.  If Haskell had full-blown Forest dependent types and dependent
+type checking then Haskell programs that transform file systems (ie: scripts)
+could be checked for a lack of any kind of transformation error at compile
+time.
+
+> It's unclear exactly how Forest gets translated into Haskell, and if
+> this process depends crucially on the kind of approach to generics
+> used (TemplateHaskell vs SYB vs..).
+
+Kathleen?
+
+> Forest uses staged compilation, but descriptions of when each type
+> of error (e.g, Forest-type error, filestore constraint violation, ...)
+> can occur are scattered throughout the text.  I'd like to see a list
+> of the kinds of things that can go wrong and when (and how) those
+> errors are dealt with.
+
+Kathleen?
+
+> It's a little unclear how Forest interacts with Pads.  This is
+> probably just an issue with presentation.  For example, the first
+> example Forest declaration (on page 3) basically reads "data Student =
+> <pads decl>" but at this point in the paper, we don't know what's
+> supposed to go on the RHS of the equality, so it's difficult to
+> understand what is meant by this.
+
+Due to space constraints, we decided to omit almost all discussion of 
+Pads/Haskell.  If the reviewers feel that filling in <pads decl> with
+something more meaningful is a priority, then we could consider it
+but it will mean cutting something else ...
+
+> I'm hoping extra space can also be used to expand Section 7.  Is
+> this formal semantics exactly what would would expect from an informal
+> intuition of how filesystems work?  Or is the model itself a large
+> contribution?  I can imagine re-using this model in a mechanical
+> setting (e.g., in Coq) would be useful in certifying the lower-levels
+> of the software stack.
+
+We agree that Section 7 is very terse and deserves more space.  (We were
+struggled with how to allocate our limited space in this paper.)  We do
+plan to expand our discussion of the semantics if the paper is accepted.
+

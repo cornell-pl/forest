@@ -1,0 +1,393 @@
+===========================================================================
+                          ICFP 2011 Review #42A
+                Updated Monday 11 Apr 2011 15:08:21 CEST
+---------------------------------------------------------------------------
+  Paper #42: Forest: A Language and Toolkit For Programming with
+             Filestores
+---------------------------------------------------------------------------
+
+                     Overall merit: 2. Weak reject
+                Reviewer expertise: 3. Knowledgeable
+
+                        ===== Paper summary =====
+
+Many applications involve somewhat ad-hoc databases encoded in
+filesystem directory trees that follow certain conventions.  This
+paper dubs such systems "filestores" and proposes a Haskell EDSL for
+loading them into Haskell values, modifying those values, and then
+writing them back to the filesystem.  As in the closely related work
+on the PADS systems, metadata is threaded throughout the
+representations to keep track of how closely a real filestore adheres
+to its specification.
+
+                     ===== Comments for author =====
+
+It seems that a system like this could help users of ad-hoc filestores
+add a little more principle to their routines, which sounds like a
+worthy goal.  I have a few questions about the particular of Forest,
+where without the answers I have a tough time deciding if Forest is
+the right tool for this job.
+
+My first question has to do with whether Forest provides the database
+world's usual ACID guarantees or related properties.  I'm guessing
+that Forest only provides the "I" and "D" from "ACID"; is that right?
+It seems that the whole filestore is always materialized, manipulated,
+and saved as a unit.  What about concurrent updates by other Forest
+programs or by users hand-editing the filestore?  Can "invariants"
+become violated as a result of such concurrency?  The "Princeton CS"
+scenario sounds like one where it's very likely that multiple users
+would be applying multiple text editing programs in parallel in
+uncoordinated ways, so the answer to the concurrency question seems
+important.
+
+I don't understand how laziness is used to avoid loading unneeded
+parts of the filestore.  Perhaps this uses some standard Haskell
+feature that I'm unaware of, but I'd like to see more discussion,
+probably in the "Implementation" section.  What's the complexity of
+the operation to save changes to a filestore?  Is it proportional to
+the change size or the size of the whole filestore?  If the latter,
+that sounds like it would make Forest impractical for some important
+applications, without significant interface changes.
+
+The generic tools in Section 5 don't seem to provide any value over
+tools that work directly on conventional, schema-less filesystem
+directory trees.  The only example where I'm not sure about this is
+the permission checker, because the description of that tool isn't
+specific enough for me to tell exactly which functionality is
+provided.  For the other tools, is it worth implementing them with
+Forest only because of some advantage that comes from working with
+in-memory data structures?  Does the use of schema-specialized data
+structures improve efficiency in practice?  It's probably hard to
+compete with the normal filesystem caches of popular OSes.  In
+general, I'd like to understand why someone would want to use these
+schema-generic tools instead of conventional UNIX tools.
+
+The specification language itself seems to follow fairly directly from
+past work on PADS, so the pragmatic issues I've asked about above seem
+to be key for evaluating the new contribution.
+
+For most of the paper, the generation of predicates by the store
+judgment is mysterious and undermotivated.  It would help to explain
+more clearly early on why it's present in the judgment, even before
+the current paragraph explaining the motivation for predicates.  I'm
+still not quite sure what's going on here, but it seems to have
+something to do with the fact that Forest data structures can have
+multiple fields that must be mapped to the same physical file, which
+opens the door for "unimplementable" data structure values.
+
+Haskell strings are represented as lists, right?  If so, doesn't that
+mean your in-memory representation of text files uses an order of
+magnitude more memory than necessary (with 64-bit next pointers,
+header words, etc.), and it also doesn't support constant-time access
+to character positions within a string?
+
+Do you ever feel any pain as a result of representing list data
+separately from a list of its metadata, such that types don't
+guarantee the two lists match in length?
+
+A footnote says that the generated types and functions for a
+particular filestore format form a single instance of a type class.
+Have you thought about using a type class where each record type is an
+instance, so that you don't need to declare a *_load and *_manifest
+function for each type, but rather make these operations methods of
+the new type class?
+
+In the semantics given for the core calculus, why are ML-style types
+used instead of Haskell-style types?  E.g., "option" instead of
+"Maybe", with the type parameter given before the type family name
+rather than after.  It would be nice to keep this sort of thing (ML-y
+or Haskell-y) consistent throughout the paper.
+
+p. 2:
+
+Figure 1: The lines in the figure appear all to be a single color to
+folks who are red-green color blind.  (And, of course, the distinction
+must be lost in the printed proceedings.)  How about different widths
+instead of different colors?
+
+p. 5:
+
+When you store the data in a Map here, how is each key/value pair
+chosen?  What part of the code expresses that rule?
+
+p. 7:
+
+How come the example CDN metadata includes values that look like
+strings but aren't in quotes?
+
+p. 9:
+
+Figure 6: Missing "\mathcal" for "E" in that non-terminal's definition.
+
+"a file systems F is finite map" -> "a file system F is a finite map"
+
+"fiel" -> "file"
+
+p. 10:
+
+Add word: "in [the] first case"
+
+Second-last sentence of 7.1 is missing a period.
+
+"a few of the inference rules that define the store function": Do you
+mean the load function?  The next sentence talks about load_k
+functions, which confused me.
+
+p. 11:
+
+Figure 8: Why does the second-last rule in the first column return
+"False" as its generic metadata?  Isn't that a signal of an error,
+even though "maybe" formats allow for missing data?
+
+p. 12:
+
+"equipped with predefined schema" -> "equipped with predefined schemas"?
+
+Add word and comma: "been studied [by] Hu and his colleagues[,]"
+
+===========================================================================
+                          ICFP 2011 Review #42B
+                 Updated Friday 6 May 2011 00:56:11 CEST
+---------------------------------------------------------------------------
+  Paper #42: Forest: A Language and Toolkit For Programming with
+             Filestores
+---------------------------------------------------------------------------
+
+                     Overall merit: 2. Weak reject
+                Reviewer expertise: 3. Knowledgeable
+
+                        ===== Paper summary =====
+
+This paper describes the design, implementation and semantics of
+Forest, a domain specific language embedded in Haskell via generics
+and quasi-quoting.  A Forest declaration is a type declaration in a
+simple dependent type system; the Forest types specify the expected
+structure, attributes, and invariants of a filestore.  The Forest
+compiler generates loading and storing functions to/from an isomorphic
+representation in memory.  The authors provide a formal semantics and
+prove round-tripping theorems.  Forest is integrated with Pads (for
+manipulating semi-structured data) and comes with an extensible
+toolkit, which includes, among other things, a filesystem visualizer
+and access-checker.
+
+                     ===== Comments for author =====
+
+This paper appears to be technically solid and describes a useful and
+practical engineering effort.  It's well-written and quick to read.
+My main concern is whether ICFP is an appropriate venue and whether
+the contributions are significant enough, as the work is "wide but
+shallow".  A conference on generic programming, DSLs, or Haskell
+itself might be more appropriate.  That being said, I think a suitable
+re-allocation of space would allay my concerns. Comments below:
+
+- the five (!) contributions range from overly broad ("we propose the
+*idea* of extending a modern programming language with *tightly
+integrated linguistic features for describing filestores*") to
+completely specific ("a case study in implementing domain-specific
+languages").
+
+- Section 3 reads like a reference manual - as a long list of
+features.  I'd like to hear more about why this list of features was
+chosen - were these just useful in practice?  Or is there some kind of
+theoretical argument for why these features are "good"?
+
+- Forest defines a dependent type system, but there's no mention of
+any practical issues (e.g., type equality) that arise from programming
+with it - do these just not show up in practice?  Or are they hidden
+somewhere?  Is there any particular feature that you wish Haskell's
+type system had?
+
+- It's unclear exactly how Forest gets translated into Haskell, and if
+this process depends crucially on the kind of approach to generics
+used (TemplateHaskell vs SYB vs..).  I seem to remember a reference to
+an appendix, but don't have one in my version.  This is described in
+Section 4, but only for about a page.
+
+- Forest uses staged compilation, but descriptions of when each type
+of error (e.g, Forest-type error, filestore constraint violation, ...)
+can occur are scattered throughout the text.  I'd like to see a list
+of the kinds of things that can go wrong and when (and how) those
+errors are dealt with.
+
+- By "Forest uses lazy I/O operations" (page 7), do you mean "Haskell
+uses lazy I/O operations"?  Or does Forest also have its own I/O
+operations?
+
+- It's a little unclear how Forest interacts with Pads.  This is
+probably just an issue with presentation.  For example, the first
+example Forest declaration (on page 3) basically reads "data Student =
+<pads decl>" but at this point in the paper, we don't know what's
+supposed to go on the RHS of the equality, so it's difficult to
+understand what is meant by this.
+
+- Several sections can be omitted entirely:
+- In Section 3.2 it sounds like Forest is responsible for the Maybe
+type.  Only the last sentence "Maybe T registers an error when" is
+informative.
+- Section 3.2 spends half a page describing comprehensions over
+various collections.  It's cool that you can put these into types
+(although maybe this means Forest isn't really a "simple" dependent
+type system anymore), but surely this can be described more
+succinctly.
+- Section 5, on the various tools.  It's good to have these tools, but
+it's  easy to imagine how they work.  They don't need an entire page.
+
+- Forest doesn't solve (or purport to solve) the problem of "magic
+strings" like "/var/log/coral/stats" strewn about.  I'm wondering if
+the authors' experience with semi-structured data processing has led
+to any insight into good language-based solutions to this problem.
+
+- I'm hoping extra space can also be used to expand Section 7.  Is
+this formal semantics exactly what would would expect from an informal
+intuition of how filesystems work?  Or is the model itself a large
+contribution?  I can imagine re-using this model in a mechanical
+setting (e.g., in Coq) would be useful in certifying the lower-levels
+of the software stack.
+
+- The only typo I could find: page 9, section 7.1 "of the fiel)"
+should be "of the field)".
+
+===========================================================================
+                          ICFP 2011 Review #42C
+               Updated Wednesday 11 May 2011 09:45:24 CEST
+---------------------------------------------------------------------------
+  Paper #42: Forest: A Language and Toolkit For Programming with
+             Filestores
+---------------------------------------------------------------------------
+
+                     Overall merit: 5. Strong accept
+                Reviewer expertise: 3. Knowledgeable
+
+                        ===== Paper summary =====
+
+This paper presents the motivation, practice, and theory for a
+domain-specific language (embedded in Haskell) that facilitates
+treating semi-structured file system directory hierarchies as program
+data.  The Forest language leverages prior work on the Pads ad-hoc
+data DSL to support specifying filestore structures, lazily loading
+and validating them, inspecting and generating metadata, and
+performing generic computations across them.  The language is
+interesting in its own right, but it also serves as a case-study in
+using Glasgow Haskell's quasi-quotation and template metaprogramming
+to construct a substantial domain-specific embedded language.
+
+                     ===== Comments for author =====
+
+This paper presents a substantial practical and real-world problem,
+suggests a solution, implements it, exhibits its theory, and evaluates
+it using real programs.  The problem is well-motivated and the
+structure of the Forest language as a solution seems well thought
+out.  As a test-case for GHC DSEL implementation, this project has
+pushed the boundaries enough to warrant extensions to GHC's facilities
+for quasi-quotation.  The resulting language enjoys the benefits of
+having a general-purpose language embedded in it, but suffers from
+some of the common difficulties with this approach to language
+design.
+
+One aspect of the language that I was not clear on is how symbolic
+links work.  Based on the mini-semantics, a symbolic link to a
+directory does not extend the set of valid paths in the file system,
+though a Unix shell, for example, typically treats them that way.  How
+does Forest handle them?
+
+
+p. 2: "Figure 1 shows a snippet of the ...filestore designed to
+illustrate its structure"  I think you mean "design".
+
+p. 9: Section 7.1 repeatedly refers to Figure 7 when I think it means
+Figure 6.
+
+"string contents of the /file/".
+
+p. 12: "...arise in core Forest have been studied /by/ Hu and his
+colleagues..."
+
+References: In Parr et al., "LL(K)" is mis-capitalized.
+
+===========================================================================
+                          ICFP 2011 Review #42D
+               Updated Wednesday 11 May 2011 23:17:45 CEST
+---------------------------------------------------------------------------
+  Paper #42: Forest: A Language and Toolkit For Programming with
+             Filestores
+---------------------------------------------------------------------------
+
+                     Overall merit: 4. Accept
+                Reviewer expertise: 3. Knowledgeable
+
+                        ===== Paper summary =====
+
+This paper presents Forest, a domain-specific language for describing
+and accessing filestores programmatically. Forest allows the
+specification of programmatic interfaces for ad hoc databases stored
+as a directory structure. Armed with these interfaces, accessing data
+stored in files is as convenient as walking an in-memory data
+structure. The type system of Forest catches errors that may occur
+from erroenous definitions. This paper is relevant to this conference
+largely because Forest is embedded in Haskell.
+
+                     ===== Comments for author =====
+
+The specification language itself is straighforward and easy to
+understand. It matches the file store to a tree using given names,
+where each node correspond to a directory, file or possibly a text
+block within a file. Each node is assigned a typed, and the tree
+constructed from the file store is checked to see if it conforms to
+the expected structure. The specification language is powerful enough
+to support recursive definitions, optional files, regular expressions
+for names, and attribute-based constraints.
+
+Overall, I think this is a very well-written paper which solves an
+interesting and practical problem. The technique is simple (a good
+thing!) and the idea is fairly common, but applied in a novel way to
+an unusual domain.
+
+A minor aspect of Forest I liked a lot is that it abstracts away the
+distinction between the structure of the file hierarchy and the
+structure of the data within the file using Pads. This keeps the
+interface consistent and also minimizes refactoring cost for certain
+file structure changes (for example if files now contain multiple
+student).
+
+One claim that I am not entirely convinced is how the type system can
+help to prevent errors. Is the claim that Forest type system is able
+to statically detect some 'impossible' defintions? Or just that it can
+detect non-conformance to the defined format at runtime? Detecting
+non-conformance would not be very interesting, but if Forest does more
+than that an example might help to illustrate the point. Also, the
+authors claim that Forest has a "dependent type system". I am not sure
+how this can be true unless the declared interface somehow changes
+when the physical file system is explored.
+
+** Other comments/clarifications:
+
+- Since the authors mentioned several practical uses of Forest in the
+introduction, it might be a bonus to include some of those as
+mini-case studies.
+
+- Is it possible to specify a node based on its structure rather than
+its name? For example, can I say:
+type d = Directory
+ ( sub_a is "*" :: Sub_A
+ , sub_b is "*" :: Sub_B )
+and have Forest decide which sub-directory matches Sub_A and which
+matches Sub_B? This is the expected behavior when parsing grammars,
+and the description for Pads seems to suggest it has this capability.
+
+- What is the performance overhead of Forest? I suspect it would be
+quite minimal since the matching does not do any intense computation,
+but it would be great if the authors can state it explicitly.
+
+** Detailed comments:
+
+- "programmers often store data in the file system" -> " "programmers
+often prefer to store data in file systems"
+
+- "as it evolved over time, there have been changes to its format" ->
+"its format changed over time"
+
+- "quasiquotation" vs "quasi-quotation" --- different spellings used
+in various places
+
+- "more closely related to classical tree logics than it is to" ->
+"... logics than to"
