@@ -324,7 +324,10 @@ Reviewer D
 > matches Sub_B? 
 
 [Yes, right? I would check this but my implementation is currently not
-working due to a laptop upgrade.]
+working due to a laptop upgrade.  KF: yes, but you would need to use
+set comprehensions; the description is saying you want all directories
+that match the given type.  The list captures the variability in
+number.  The universal description is an example of this.]
 
 > What is the performance overhead of Forest? I suspect it would be
 > quite minimal since the matching does not do any intense computation,
