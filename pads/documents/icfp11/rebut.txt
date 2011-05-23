@@ -37,7 +37,7 @@ following five elements:
 3. We used our implementation to build a number of Forest programs for
    substantial, real-world filestores. Space constraints prevented us
    from describing these in much detail but full descriptions are
-   given in the appendix.  Reviewer B mentioned that they could not
+   given in the appendix.  Reviewer B mentioned that he/she could not
    find the appendix in their version of the paper. It is available
    under the "topics, documents, and options" tab on the HotCRP
    submission site. If it cannot be found there for some reason,
@@ -49,7 +49,7 @@ following five elements:
 4. We developed infrastructure for generic programming in Forest and
    used it to build tools for several common tasks including querying,
    visualizing, and validating. These tools are interesting in their
-   own right, as a case studies of putting generic programming
+   own right, as case studies of putting generic programming
    techniques into practice, and also provide further evidence that
    our implementation is robust.
 
@@ -268,7 +268,7 @@ TemplateHaskell declarations and type checks this representation of
 Haskell declarations before performing the splice.  So, type errors in
 the Forest description are reported at splice time.  (We would like to
 do the type checking ourselves.  This requires enriching the
-TemplateHaskell API; Simon Peyton Jones has a proposal out do exactly
+TemplateHaskell API; Simon Peyton Jones has a proposal out to do exactly
 this, partly motivated by Forest).  Errors in the filestore are
 dynamic; they are noted when the user first touches something that
 requires a bit of the filestore that exhibits the problem.  These
