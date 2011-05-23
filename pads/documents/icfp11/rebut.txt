@@ -126,15 +126,6 @@ updates may be made at any granularity for which there is a named
 type, which is typically at the level of individual files. We plan to
 investigate better support for incremental updates in the future.
 
--- JNF: propose cutting this? Seems like too much detail.
--- We have discussed a scheme in which only files that have changed
--- are actually rewritten.  This strategy is straightforward to
--- implement, but we have not yet done it. For a given file that must
--- be updated, the complexity is proportional to the entire file, not
--- the changes.  Given that the files are in user-controlled formats,
--- a more optimized strategy would be difficult to find. (KSF: is this
--- too much detail?)
-
 > The generic tools in Section 5 don't seem to provide any value over
 > tools that work directly on conventional, schema-less filesystem
 > directory trees. ...  In general, I'd like to understand why someone
