@@ -1,5 +1,19 @@
 \section{Tools}
 \label{sec:tools}
+
+\reviewer{The generic tools [...] don't seem to provide any value over
+  tools that work directly on conventional, schema-less filesystem
+  directory trees.  The only example where I'm not sure about this is
+  the permission checker, because the description of that tool isn't
+  specific enough for me to tell exactly which functionality is
+  provided.  For the other tools, is it worth implementing them with
+  Forest only because of some advantage that comes from working with
+  in-memory data structures?  Does the use of schema-specialized data
+  structures improve efficiency in practice?}
+
+\reviewer{It's good to have these tools, but it's easy to imagine how
+  they work.  They don't need an entire page.}
+
 Third-party developers can use generic programming~\cite{Lammel+:syb} to
 generate tools that will work for any file system structure that has a
 \forest{} description.  As a proof of concept, we have written a

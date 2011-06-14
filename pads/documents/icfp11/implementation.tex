@@ -8,6 +8,11 @@
   complexity of the operation to save changes to a filestore?  Is it
   proportional to the change size or the size of the whole filestore?}
 
+\reviewer{What is the performance overhead of Forest? I suspect it
+  would be quite minimal since the matching does not do any intense
+  computation, but it would be great if the authors can state it
+  explicitly.}
+
 \reviewer{It's unclear exactly how Forest gets translated into
   Haskell, and if this process depends crucially on the kind of
   approach to generics used (TemplateHaskell vs SYB vs..).}
