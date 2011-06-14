@@ -27,7 +27,7 @@ declaratively specifying the structure of, and then ingesting,
 \filestores{}. {\em Type Providers}~\cite{syme+:type-providers}, an
 experimental feature 
 of F\#, help programmers materialize standard data sources equipped with
-predefined schema (such as \xml{} documents or databases) in memory in
+predefined schemas (such as \xml{} documents or databases) in memory in
 an F\# program.  Type Providers
 do not themselves provide a new means for describing data sources (as
 \forest{} does). 
@@ -52,13 +52,12 @@ XFiles does not interoperate directly with a conventional programming
 language.
 
 A recent MSc thesis by Ntzik proposes using an extension of context
-logic~\cite{context-logic} to reason about the effects of updates
-made to file systems using standard POSIX
-commands~\cite{ntzik-msc}.  The core goal of Ntzik's work
-is to create a new kind of Hoare Logic, and consequently,
-it is quite different from \forest{}.  In addition, technically,
-\forest{} is more closely related to classical tree logics than
-it is to substructural logics such as the context logic.
+logic~\cite{context-logic} to reason about the effects of updates made
+to file systems using standard POSIX commands~\cite{ntzik-msc}.  The
+core goal of Ntzik's work is to create a new kind of Hoare Logic, and
+consequently, it is quite different from \forest{}.  In addition,
+technically, \forest{} is more closely related to classical tree
+logics than to substructural logics such as context logic.
 %, and
 %leads to a simpler treatment of updates. 
 %We plan to study the
@@ -69,6 +68,6 @@ based on laws that have been proposed in the context of well-behaved
 bidirectional transformations, often called lenses~\cite{lenses}. As
 far as we are aware, lenses for file systems have not been developed
 but some of the same fundamental issues that arise in core \forest{}
-have been studied Hu and his colleagues including handling data with
-internal dependencies~\cite{MuAlgebraic2004} as well as graph
+have been studied by Hu and his colleagues, including handling data
+with internal dependencies~\cite{MuAlgebraic2004} as well as graph
 structures~\cite{hidaka-graphs}.

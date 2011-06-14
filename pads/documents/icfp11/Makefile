@@ -18,3 +18,9 @@ paper:  paper.tex pads.bib abstract.tex
 	bibtex paper;
 	pdflatex paper.tex; 
 	pdflatex paper.tex
+
+nate:  paper.tex pads.bib abstract.tex
+	xelatex paper.tex; 
+	bibtex paper;
+	xelatex paper.tex; 
+	xelatex paper.tex

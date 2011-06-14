@@ -1,6 +1,17 @@
 \section{\forest{} Design}
 \label{sec:language}
 
+\reviewer{Section 3 reads like a reference manual - as a long list of
+  features.  I'd like to hear more about why this list of features was
+  chosen - were these just useful in practice?  Or is there some kind
+  of theoretical argument for why these features are "good"?}
+
+\reviewer{Forest uses staged compilation, but descriptions of when
+  each type of error (e.g, Forest-type error, filestore constraint
+  violation, ...)  can occur are scattered throughout the text.  I'd
+  like to see a list of the kinds of things that can go wrong and when
+  (and how) those errors are dealt with.}
+
 \forest{} is a domain-specific language embedded within Haskell using
 the Quasiquote mechanism~\cite{Mainland:quasi}.  In a typical
 \forest{} description, \forest{} declarations are interleaved with ordinary
@@ -41,6 +52,25 @@ discussed later, is an example of an exception to the general rule.}
 register an attempt to load from that
 path as an error in the associated metadata structure.}
 
+\reviewer{Forest defines a dependent type system, but there's no
+  mention of any practical issues (e.g., type equality) that arise
+  from programming with it - do these just not show up in practice?
+  Or are they hidden somewhere?  Is there any particular feature that
+  you wish Haskell's type system had?}
+
+\reviewer{One claim that I am not entirely convinced is how the type
+  system can help to prevent errors. Is the claim that Forest type
+  system is able to statically detect some 'impossible' defintions? Or
+  just that it can detect non-conformance to the defined format at
+  runtime? Detecting non-conformance would not be very interesting,
+  but if Forest does more than that an example might help to
+  illustrate the point.}
+
+\reviewer{Also, the authors claim that Forest has a "dependent type
+  system". I am not sure how this can be true unless the declared
+  interface somehow changes when the physical file system is
+  explored.}
+
 At its core, \forest{} is a simple dependent type system in which base
 types denote files of various flavors and record types describe
 directories.  \forest{} also includes a list type to describe
@@ -59,10 +89,24 @@ files: \cd{Text} for ASCII files, \cd{Binary} for binary files, and
 these types specifies a representation type, a metadata type, and a
 loading function.  The in-memory representation for an ASCII file is a
 Haskell \cd{String}; for binary and arbitrary files, it is a
-\cd{ByteString}.  For all three file types, the metadata type pairs
-file-system metadata with metadata describing properties of the file
-contents.  The file-system metadata has type \cd{Forest\_md}, shown in
-\figref{fig:forest-md}.  This structure stores two kinds of
+\cd{ByteString}.  
+%
+\reviewer{Haskell strings are represented as lists, right?  If so,
+  doesn't that mean your in-memory representation of text files uses
+  an order of magnitude more memory than necessary (with 64-bit next
+  pointers, header words, etc.), and it also doesn't support
+  constant-time access to character positions within a string?}
+%
+For all three file types, the metadata type pairs file-system metadata
+with metadata describing properties of the file contents.  The
+file-system metadata has type \cd{Forest\_md}, shown in
+\figref{fig:forest-md}.  
+%
+\reviewer{Do you ever feel any pain as a result of representing list
+  data separately from a list of its metadata, such that types don't
+  guarantee the two lists match in length?}
+%
+This structure stores two kinds of
 information: (1) the number and kind of any errors that occurred while
 loading the file and (2) the attributes associated with the file.
 %% File-content metadata typically describes errors within the file, but
@@ -125,6 +169,13 @@ format:
 \begin{code}
 [pads| \kw{data} Student(name::String) = <pads decl> |]
 \end{code}
+%
+\reviewer{It's a little unclear how Forest interacts with Pads.  This
+  is probably just an issue with presentation.  For example, [in] the
+  first example Forest declaration [...] we don't know what's supposed
+  to go on the RHS of the equality, so it's difficult to understand
+  what is meant by this.}
+%
 This description is parameterized by the name of the student whose
 data is in the file; the complete description appears in the appendix.
 From this specification, the \pads{} compiler
@@ -159,6 +210,10 @@ are ordinary Haskell declarations.
 
 \subsection{Optional Files}
 \label{sec:maybe}
+\reviewer{Several sections can be omitted entirely: In Section 3.2 it
+  sounds like Forest is responsible for the Maybe type.  Only the last
+  sentence "Maybe T registers an error when" is informative.}
+
 Sometimes, a given file (or directory or symbolic link) may or may not
 be present in the file system, and either situation is valid.
 \forest{} provides the \cd{Maybe} type constructor for this
@@ -270,7 +325,6 @@ metadata in the metadata structure. For fields that do not
 match, \forest{} constructs default values and marks the metadata with
 suitable error information.
 
-
 \paragraph*{Computed Paths}
 \label{sec:computed-paths}
 
@@ -342,12 +396,18 @@ construct also allows \textit{glob patterns}, (\ie{}, patterns such as
 \subsection{List Comprehensions}
 \label{sec:comprehensions}
 
+\reviewer{Section 3.2 spends half a page describing comprehensions
+  over various collections.  It's cool that you can put these into
+  types (although maybe this means Forest isn't really a "simple"
+  dependent type system anymore), but surely this can be described
+  more succinctly.}
+%
 Record directories allow programmers to specify a fixed number of file
-system objects, each with its own type.
-List comprehensions, on the other hand, allow programmers to specify
-an arbitrary number of file system objects, each with the same type.
-As an example, we can use a list comprehension to specify the
-\cd{Grads} directory from \figref{fig:student-pic}:
+system objects, each with its own type.  List comprehensions, on the
+other hand, allow programmers to specify an arbitrary number of file
+system objects, each with the same type.  As an example, we can use a
+list comprehension to specify the \cd{Grads} directory from
+\figref{fig:student-pic}:
 
 \begin{code}
 > getYear s = 
@@ -396,6 +456,10 @@ matching with a glob pattern and filtering to exclude
 template files. It uses the \cd{Map} type constructor to specify that
 the data and metadata should be collected in a
 \cd{Map} rather than a list.
+%
+\reviewer{When you store the data in a Map here, how is each key/value
+  pair chosen?  What part of the code expresses that rule?}
+%
 \begin{code}
 > template s = s `elem` ["sss.txt", "sxx.txt"]
 > txt = GL "*.txt"
@@ -440,6 +504,13 @@ If a constraint is false, an error
 is registered in the metadata.  Within the constraint, \cd{this} refers to the representation 
 of the underlying object, \cd{this_att} refers to its attributes and \cd{this_md} 
 to its complete metadata.
+
+\reviewer{- Is it possible to specify a node based on its structure
+  rather than its name? For example, can I say: ``type d = Directory (
+  sub\_a is "*" :: Sub\_A , sub\_b is "*" :: Sub\_B )'' and have
+  Forest decide which sub-directory matches Sub\_A and which matches
+  Sub\_B? This is the expected behavior when parsing grammars, and the
+  description for Pads seems to suggest it has this capability.}
 
 Using attributes, we can write a \textit{universal
   directory description}, which is sufficiently general to describe

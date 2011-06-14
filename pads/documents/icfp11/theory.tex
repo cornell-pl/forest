@@ -1,4 +1,12 @@
 \section{A Core Calculus for \forest{}}
+
+\reviewer{I'm hoping extra space can also be used to expand Section 7.
+  Is this formal semantics exactly what would would expect from an
+  informal intuition of how filesystems work?  Or is the model itself
+  a large contribution?  I can imagine re-using this model in a
+  mechanical setting (e.g., in Coq) would be useful in certifying the
+  lower-levels of the software stack.}
+
 \label{sec:theory}
 \newcommand{\us}{\ensuremath{\_\!\_}}
 \newcommand{\defeq}{\ensuremath{\triangleq}}
@@ -67,7 +75,7 @@
 \textit{Values}         & v & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
                         &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\dots,v_k}\\[1ex]
 \textit{Exprs.}         & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
-\textit{Envs.}          & \Env & \bnfdef & \ENil \bnfalt E,x\mapsto v \\[1ex]
+\textit{Envs.}          & \Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v \\[1ex]
 \textit{Specs.}         & s & \bnfdef & \Sk 
                               \bnfalt \SPath{e}{s}
                               \bnfalt \SPair{x}{s_1}{s_2} 
@@ -79,6 +87,12 @@
 \label{fig:calculus-syntax}
 \caption{\forest{} calculus syntax}
 \end{figure}
+
+\reviewer{... repeatedly refers to Figure 7 when I think it means
+  Figure 6.}
+
+\reviewer{In the semantics given for the core calculus, why are
+  ML-style types used instead of Haskell-style types?}
 
 This section describes a core calculus that formalizes the essential
 features of \forest{} precisely in a simple setting. It is inspired by
@@ -96,13 +110,13 @@ Figure~\ref{fig:calculus-syntax} presents the formal file system
 model. A path $r$ is a sequence of strings\footnote{For simplicity, we
   ignore the special path elements ``..'' and ``.''.  It would be easy
   to add these features, at the cost of complicating the semantics.}
-and a file systems $F$ is finite map from paths to pairs of attributes
+and a file system $F$ is finite map from paths to pairs of attributes
 $\att$ and file system contents $T$.  We leave attributes abstract but
 expect that they include the usual fields: owner, group, date
 modified, {\it etc.}  The attribute $\defaultatt$ contains default
 values for all fields. The contents $T$ of a node in the file system
 is either a file $\File{n}$ (where $n$ is the string contents of the
-fiel), a symbolic link $\Link{r}$ (where $r$ is the path pointed to by
+file), a symbolic link $\Link{r}$ (where $r$ is the path pointed to by
 the link), or a directory $\Dir{\Set{n_1,\dots,n_k}}$ (with paths
 $n_1$ to $n_k$). We write $\dom{F}$ for the set of paths $F$ is defined on, 
 $F(r)$ for the contents at $r$, and $F(r) = \bot$ when $r$ is not
@@ -133,6 +147,12 @@ expressions can be arbitrary Haskell code).  An environment $\Env$
 maps variables to values.  The semantic function
 $\eval{e}{\Env,r}{\tau}$ evaluates an expression $e$ in the
 environment $\Env$ at path $r$, yielding a value $v$ of type $\tau$.
+
+\reviewer{One aspect of the language that I was not clear on is how
+  symbolic links work.  Based on the mini-semantics, a symbolic link
+  to a directory does not extend the set of valid paths in the file
+  system, though a Unix shell, for example, typically treats them that
+  way.  How does Forest handle them?}
 
 These file system specifications are parameterized over a collection
 of constants $\Sk$, which include specifications for files (\pfile),
@@ -178,6 +198,7 @@ defined as follows:
 \end{cases}
 \end{array}
 \]
+%
 The arguments to the store function include an environment $\Env$, an
 existing file system $F$ to store into, a path $r$ to store at, a
 representation $v$ for the data to store, and the metadata $d$ associated
@@ -190,9 +211,15 @@ $(\att,\File{v})$ if $d$ is valid (and contains $\att$), deletes the
 contents of $F$ at $r$ if $d$ is not valid but $F(r)$ contains a file,
 and otherwise returns $F$ unchanged. The predicate $\phi'$ requires
 that $F'(r)$, the contents of the new file system $F'$ at $r$, be
-$\File{v}$ in first case and that $F'(r)$ not be a file in the other
+$\File{v}$ in the first case and that $F'(r)$ not be a file in the other
 two cases. These constraints must be satisfied in order to guarantee
 the round-tripping properties presented at the end of this section.
+
+\reviewer{For most of the paper, the generation of predicates by the
+  store judgment is mysterious and undermotivated.  It would help to
+  explain more clearly early on why it's present in the judgment, even
+  before the current paragraph explaining the motivation for
+  predicates.}
 
 %The load functions for the \plink{} and \pdir{} constants
 %are similar. The load function for \SAdhoc{b}{} reads the file system
@@ -228,7 +255,7 @@ is encoded as: \(\SPair{x}{\pdir}{\SComp{\SPath{y}{C}}{y}{x}}
 \True{} and fail when $e$ evaluates to \False{} under the current
 environment.  A \forest{} constraint of the form \cd{s \kw{where} e}
 is encoded in the calculus using a dependent pair and a predicate:
-$\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$ Finally, maybe
+$\SPair{x}{s}{\SPred{e[x/\mathtt{this}]}}$. Finally, maybe
 specifications are written as $\SOption{s}$ in the calculus.
 
 \begin{figure}
@@ -247,7 +274,6 @@ s & \repty{s} = & \mdty{s} =  \\
 \caption{\forest{} calculus representation and metadata types}
 \label{fig:calculus-types}
 \end{figure}
-
 
 \begin{figure*}
 \begin{minipage}[t]{.45\textwidth}
@@ -361,7 +387,9 @@ s & \repty{s} = & \mdty{s} =  \\
 \label{fig:calculus-semantics}
 \end{figure*}
 
-
+\reviewer{Why does the second-last rule in the first column return
+  "False" as its generic metadata?  Isn't that a signal of an error,
+  even though "maybe" formats allow for missing data?}
 
 \subsection{Calculus Semantics}
 %
@@ -406,7 +434,7 @@ given specification exactly.
 
 Let us examine a few of the inference rules that define the store
 function in detail. The rule for constants $\Sk$ just invokes the
-associated $\loadkname{k}$ function. The rule for
+associated $\storekname{k}$ function. The rule for
 $\SComp{s}{x}{e}$ comprehensions is more interesting: it first
 evaluates $e$ to a list $[w_1,\dots,w_k]$ and then invokes the store
 function for $s$ $k$ times in environments where $x$ is bound to each

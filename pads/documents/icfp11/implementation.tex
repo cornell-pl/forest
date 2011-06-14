@@ -1,5 +1,17 @@
 \section{Implementation}
 \label{sec:implementation}
+
+\reviewer{I don't understand how laziness is used to avoid loading
+  unneeded parts of the filestore.  Perhaps this uses some standard
+  Haskell feature that I'm unaware of, but I'd like to see more
+  discussion, probably in the "Implementation" section.  What's the
+  complexity of the operation to save changes to a filestore?  Is it
+  proportional to the change size or the size of the whole filestore?}
+
+\reviewer{It's unclear exactly how Forest gets translated into
+  Haskell, and if this process depends crucially on the kind of
+  approach to generics used (TemplateHaskell vs SYB vs..).}
+
 We have fully implemented the \forest{} language and anticipate making
 it publicly available within the next few months.
 \haskell{} provides powerful language features and libraries that

@@ -78,7 +78,15 @@ filestore.
 To facilitate this style of programming, the \forest{} compiler
 generates several Haskell functions and types from every \forest{}
 description.\footnote{The collection of generated types and functions 
-together form an instance of the \cd{Forest} type class.}
+together form an instance of the \cd{Forest} type class.
+%
+\reviewer{A footnote says that the generated types and functions for a
+particular filestore format form a single instance of a type class.
+Have you thought about using a type class where each record type is an
+instance, so that you don't need to declare a *\_load and *\_manifest
+function for each type, but rather make these operations methods of
+the new type class?}}
+%
 It generates a \emph{load function}, which traverses the
 file system and reads the files, directories, and symbolic links
 mentioned in the description into a structured object in memory; 
@@ -162,6 +170,10 @@ Forest_md
 [("planetlab2.eecs.wsu.edu", Forest_md \{...\}),
  ("planetlab3.williams.edu", Forest_md \{...\}), ...]
 \end{code}
+%
+\reviewer{How come the example CDN metadata includes values that look
+  like strings but aren't in quotes?}
+%
 
 Using these functions and types, it is easy to formulate many useful
 queries as simple Haskell programs. For instance, to count the number
@@ -197,10 +209,15 @@ data as if it were in memory. Moreover, because Forest uses lazy I/O
 operations, many simple programs do not require constructing an
 explicit representation of the entire directory being loaded in
 memory---a good thing as the directory of \coral{} logs contains
-approximately 1GB of data!  Instead, the load functions only read the
-portions of the file system that are needed to compute the result---in
-this case, only the site directories and not the gzipped log files
-contained within them.
+approximately 1GB of data!
+%
+\reviewer{By "Forest uses lazy I/O operations" (page 7), do you mean
+  "Haskell uses lazy I/O operations"?  Or does Forest also have its
+  own I/O operations?}
+%
+Instead, the load functions only read the portions of the file system
+that are needed to compute the result---in this case, only the site
+directories and not the gzipped log files contained within them.
 
 As a final analysis example, consider a program that computes the top-$k$
 requested URLs from all \coral{} nodes by size. The \coral{}
@@ -249,6 +266,11 @@ manifest <- stats_manifest
 store manifest 
 \end{code}
 
+\reviewer{- Forest doesn't solve (or purport to solve) the problem of
+  "magic strings" like "/var/log/coral/stats" strewn about.  I'm
+  wondering if the authors' experience with semi-structured data
+  processing has led to any insight into good language-based solutions
+  to this problem.}
 
 %Forest provides the type class \cd{Forest rep md} that collects 
 %useful functions on Forest representation and metadata

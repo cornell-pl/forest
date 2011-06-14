@@ -1,3 +1,6 @@
+\reviewer{"quasiquotation" vs "quasi-quotation" --- different
+  spellings used in various places}
+
 \section {Introduction}
 \label{sec:intro}
 
@@ -44,6 +47,10 @@ applications that use the data.  Finally, it may be the case that the
 database optimizes for a pattern of use not suited to the actual
 application, which makes the overhead of the database system even
 less desirable. 
+
+\reviewer{"programmers often store data in the file system" -> "
+  "programmers often prefer to store data in file systems"}\jnf{Not
+  sure what the problem with our wording was...}
 
 Rather than paying these costs, programmers often store data in
 the file system, using a combination of directory structure, file
@@ -142,6 +149,13 @@ not have to start from scratch when writing a specification for their
 \filestores{}. 
 
 In summary, this paper makes the following contributions.
+%
+\reviewer{the five (!) contributions range from overly broad ("we
+  propose the *idea* of extending a modern programming language with
+  *tightly integrated linguistic features for describing filestores*")
+  to completely specific ("a case study in implementing
+  domain-specific languages").}
+%
 \begin{itemize}
 \item {\bf Conceptual}:  We propose the {\em idea} 
 of extending a modern programming language with
@@ -211,3 +225,7 @@ contains a further discussion of related work.
 %% \end{itemize}
 %% \item Custom programming against typed interface and querying using Haskell generic programming libraries
 %% \end{itemize}
+
+\reviewer{Since the authors mentioned several practical uses of Forest
+  in the introduction, it might be a bonus to include some of those as
+  mini-case studies.}
