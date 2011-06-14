@@ -96,24 +96,11 @@ makes it straightforward to dematerialize these structures
 and write them out to disk.  The
 goal is to make programming with \filestores{} as
 easy as programming with regular \haskell{} data
-structures.  Furthermore, \forest{} leverages
-\haskell{}'s support for generic programming to make it easy to define
-tools that work for any \filestore{} with a \forest{} description.  
+structures.  
+%Furthermore, \forest{} leverages
+%\haskell{}'s support for generic programming to make it easy to define
+%tools that work for any \filestore{} with a \forest{} description.  
 
-
-\forest{} descriptions provide {\em executable documentation} that can
-be used to check whether a given \filestore{} conforms to its
-specification.  For example, Unix file systems should be laid out according to the informal standard set forth by the Filesystem Hierarchy Standard Group~\cite{fsh}, which requires, among other things, that certain
-directories \textit{only} contain certain files, presumably for
-security reasons. \forest{} provides a language for expressing 
-standards precisely and for checking that given file systems conform to them.  As another example, the
-\pads{} website~\cite{padsweb} contains a complex set of scripts and
-data files to implement an online demo.  Unless all of the required
-data files, directories, and symbolic links are configured correctly,
-the web demo fails with an inscrutable error message.  \forest{}
-allows the \pads{} webmaster to precisely document all of these
-requirements and to detect specification violations, making it easy to
-find and repair errors.
 
 \cut{
 As well as serving as documentation, generating tools to check for
@@ -147,6 +134,25 @@ a \forest{} specification for the directory structure starting at a
 given path, which means programmers do
 not have to start from scratch when writing a specification for their
 \filestores{}. 
+
+In addition to serving as a programming tool,
+\forest{} descriptions provide {\em executable documentation} that can
+be used to check whether a given \filestore{} conforms to its
+specification.  For example, Unix file systems should be laid out
+according to the informal standard set forth by the Filesystem
+Hierarchy Standard Group~\cite{fsh}, which requires, among other
+things, that certain directories \textit{only} contain certain files,
+presumably for security reasons. \forest{} provides a language for
+expressing standards precisely and for checking that given file
+systems conform to them.  As another example, the
+\pads{} website~\cite{padsweb} contains a complex set of scripts and
+data files to implement an online demo.  Unless all of the required
+data files, directories, and symbolic links are configured correctly,
+the web demo fails with an inscrutable error message.  \forest{}
+allows the \pads{} webmaster to precisely document all of these
+requirements and to detect specification violations, making it easy to
+find and repair errors.
+
 
 In summary, this paper makes the following contributions.
 %
