@@ -18,16 +18,20 @@ connect data on disk to an isomorphic representation in memory that
 can be manipulated as if it were any other data structure.  \forest{}
 also generates metadata that describes the degree to which the
 structures on the disk conform to the specification, making error
-detection easy. \forest{} essentially extends the type discipline of
-programming languages to the untyped world of file systems.
+detection easy. Hence, in a nutshell, \forest{} extends the
+rigorous discipline of typed 
+programming languages and many of their benefits to the untyped 
+world of file systems.
 
 We have implemented \forest{} as an embedded domain-specific language
-in \haskell{}. Our implementation leverages \haskell{}'s 
-generic programming infrastructure to provide a toolkit so that
-third-party developers can build tools that work with
-arbitrary \forest{} descriptions.  We show the use of this toolkit on
-a number of examples including a file system visualizer, an access
-checker, and description-directed variants of several standard UNIX
-shell tools. Finally, we formalize a core fragment \forest{} in a
+in \haskell{}. In addition to generating infrastructure for reading,
+writing and checking file systems, our implementation generates a
+type class instances that make it easy to build generic tools that
+operate over arbitrary \filestores.  We illustrate the utility of
+this infrastructure by building a file system visualizer, a file access
+checker, a generic query interface, description-directed variants of 
+several standard UNIX shell tools and (circularly) a simple \forest{}
+description inference engine.   Finally, we formalize a core fragment 
+of \forest{} in a
 semantics inspired by classical tree logics and prove round-tripping
-laws showing that the loading and storing functions behave correctly.
+laws showing that the loading and storing functions behave sensibly.

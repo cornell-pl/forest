@@ -49,10 +49,6 @@ database optimizes for a pattern of use not suited to the actual
 application, which makes the overhead of the database system even
 less desirable. 
 
-\reviewer{"programmers often store data in the file system" -> "
-  "programmers often prefer to store data in file systems"}\jnf{Not
-  sure what the problem with our wording was...}
-
 Rather than paying these costs, programmers often store data in
 the file system, using a combination of directory structure, file
 names, file contents, and symbolic links to organize the data.  We call such a
@@ -60,7 +56,8 @@ representation of a coherent set of data a \textit{\filestore{}}.
 The ``query language'' for a \filestore{}
 is often a shell script or conventional programming language.
 
-Unfortunately, the informality of \filestores{} can have
+Unfortunately, despite their initial convenience,
+using \filestores{} can have a number of 
 negative consequences.  First, there is generally no documentation,
 which means it can be hard to understand the data and its
 organization.  New users struggle to learn the structure, and if
@@ -86,7 +83,7 @@ and process it in smaller sets, a tedious task.
 
 We propose a better way: A type-based
 specification language, programming environment and toolkit for
-managing \filestores{}.  
+describing and managing \filestores{}.  
 This language, called \forest{}, is implemented as an embedded domain-specific
 language in \haskell{}.
 \forest{} allows programmers to describe the expected shape of a
@@ -94,49 +91,16 @@ language in \haskell{}.
 format-specific \haskell{} data structures.  Conversely,
 given data structures with the appropriate type, \forest{}
 makes it straightforward to dematerialize these structures
-and write them out to disk.  The
-goal is to make programming with \filestores{} as
-easy as programming with regular \haskell{} data
-structures.  
+and write them out to disk.  
+%The
+%goal is to make programming with \filestores{} as
+%easy as programming with regular \haskell{} data
+%structures.  
 %Furthermore, \forest{} leverages
 %\haskell{}'s support for generic programming to make it easy to define
 %tools that work for any \filestore{} with a \forest{} description.  
 
-
-\cut{
-As well as serving as documentation, generating tools to check for
-consistency, and providing basic programming support by lazily
-materializing \filestores{} in memory, \forest{} 
-provides substantial additional support for
-programmers.  
-
-The goal is for programmers to obtain a whole range
-benefits by writing one simple, compact file system specification.
-The automatically generated auxiliary support includes:}
-
-In exchange for writing a \forest{} specification,  programmers obtain
-a number of benefits:
-(1) a set of type declarations to represent the \filestore{} in memory,
-(2) a set of type declarations that capture errors and file system attributes for the \filestore{},
-(3) a loading function to populate these in-memory structures, 
-(4) a storing function to push possibly updated structures back out to disk, and
-(5) type class instance declarations that make it possible for
-   programmers to query, analyze, and transform \filestore{} data
-   using generic functions.
-
-To illustrate the power of the generic programming infrastructure, and
-to increase the value of writing a \forest{} specification, we have built a
-number of tools that work for any \filestore{} with a
-\forest{} specification.  These tools include a \filestore{}
-visualizer, a permission checker, and \filestore{}-specific versions
-of standard command-line tools such as \cd{grep} and \cd{tar}.
-Using this same infrastructure, we built a tool to infer
-a \forest{} specification for the directory structure starting at a
-given path, which means programmers do
-not have to start from scratch when writing a specification for their
-\filestores{}. 
-
-In addition to serving as a programming tool,
+The first benefit of the \forest{} system is that 
 \forest{} descriptions provide {\em executable documentation} that can
 be used to check whether a given \filestore{} conforms to its
 specification.  For example, Unix file systems should be laid out
@@ -152,51 +116,107 @@ data files, directories, and symbolic links are configured correctly,
 the web demo fails with an inscrutable error message.  \forest{}
 allows the \pads{} webmaster to precisely document all of these
 requirements and to detect specification violations, making it easy to
-find and repair errors.
+find and repair errors.  And, of course, if the current webmaster were
+to leave her post, her successor could use the \forest{} description
+to help understand the system.
 
+As well as serving as executable documentation, \forest{} 
+provides substantial additional support for
+programmers.  The goal is for programmers to obtain a whole range
+benefits by writing one simple, compact file system specification.
+The automatically generated auxiliary support includes:
+%In exchange for writing a \forest{} specification,  programmers obtain
+%a number of benefits:
+(1) a set of type declarations to represent the \filestore{} in memory;
+(2) a set of type declarations that capture errors and file system attributes for the \filestore{};
+(3) a loading function to populate these in-memory structures;
+(4) a storing function to push possibly updated structures back out to disk;
+(5) type class instance declarations that make it possible for
+   programmers to query, analyze, and transform \filestore{} data
+   using generic functions; and 
+(6) a set of useful generic functions/scripts that operate over instances 
+    of these type classes.
 
-In summary, this paper makes the following contributions.
-%
-\reviewer{the five (!) contributions range from overly broad ("we
-  propose the *idea* of extending a modern programming language with
-  *tightly integrated linguistic features for describing filestores*")
-  to completely specific ("a case study in implementing
-  domain-specific languages").}
-%
+%% To illustrate the power of the generic programming infrastructure, and
+%% to increase the value of writing a \forest{} specification, we have built a
+%% number of tools that work for any \filestore{} with a
+%% \forest{} specification.  These tools include a \filestore{}
+%% visualizer, a permission checker, and \filestore{}-specific versions
+%% of standard command-line tools such as \cd{grep} and \cd{tar}.
+%% Using this same infrastructure, we built a tool to infer
+%% a \forest{} specification for the directory structure starting at a
+%% given path, which means programmers do
+%% not have to start from scratch when writing a specification for their
+%% \filestores{}. 
+
+Overall, in our view, the main high-level contribution of this work is
+conceptual: We propose the idea of extending a modern programming
+language with tightly integrated linguistic features for
+describing \filestores{} and for automatically generating programming
+infrastructure from such descriptions.  To demonstrate
+the potential of this idea, the following sections of this paper
+flesh our proposal in greater depth:
+
 \begin{itemize}
-\item {\bf Conceptual}:  We propose the {\em idea} 
-of extending a modern programming language with
-{\em tightly integrated linguistic features for describing \filestores{}}
-and for automatically generating programming infrastructure from such 
-descriptions.
+\item Section~\ref{sec:examples} begins with two concrete motivating 
+examples, drawn from the authors day-to-day experience managing
+computer systems.  While there are just two central examples in this
+paper, the \forest{} web site~\cite{forest-web-site} contains a number 
+of further examples and case studies.~\dpw{the forest web site citation 
+in the bib file is currently incorrect.  I don't know how to fill it in.
+What url?}
+\item Section~\ref{sec:language} describes a concrete language design.  
+The design is characterized by a simple, 
+intuitive and compositional syntax that is tightly integrated with
+Haskell, our host language.  The design is also tightly integrated
+with \padshaskell{}, a domain-specific language for describing 
+individual
+files (as opposed to entire file stores), inspired by past work
+on related data description languages~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml,fisher+:toplas}.
+This tight, seemless integration was a crucial design goal as it
+allows programmers to transition effortlessly
+between ordinary haskell data structures, file internals and 
+file collections, all in a uniform syntax.
+~\dpw{I wanted to be positive as opposed to defensive about
+similarities between pads and forest.}
+\item Section~\ref{sec:exp} explains how to write Haskell programs
+that operate over filestores described in \forest.  The goal of this
+section is to provide a sense of just how easy it is to write simple
+file system scripts or queries.
+\item Section~\ref{sec:tools} shows that it is possible to use \forest{}
+to make management
+of filestores even easier by developing general-purpose, generic
+tools capable of operating over any filestore!  We have developed
+several of these tools including a generic query interface, a file
+system visualization tool, an access control permission checker, and a 
+series of UNIX-like scripting tools.  We have also built a simple
+description-inference tool to
+help users write a new description for a given an existing file system.
+These tools are interesting in their
+own right and also as case studies of putting generic programming
+techniques into practice.  In addition, they provide evidence that
+our design is effectively integrated into the
+\haskell{} ecosystem.
+\item Section~\ref{sec:implementation} explains our implementation,
+which is complete and may be downloaded at the \forest{} web 
+site~\cite{forest-web-site}.  In addition to delivering a useful tool,
+our engineering work here 
+has the auxiliary benefit of serving
+as a rich case study in domain-specific language implementation. 
+In fact, it has already had significant impact as such by influencing the 
+development of \haskell{} itself:  
+the \haskell{} team modified and extended \template{} and the
+quasiquoting mechanism in response to our needs. 
 
-\item {\bf Language Design}: We present the design of \forest{}
-  and illustrate its use on real-world examples.
-  The design is expressive, concise and smoothly integrated into
-  Haskell.  
-
-\item {\bf Theoretical}: We present a core calculus of \forest{}
-descriptions and analyze its semantics.  We use the semantics
-to prove several results including round-tripping theorems that
-establish a correspondence between loads and stores of \filestore{} data.
-
-\item {\bf Tool Generation}: We describe how third-party developers
-  can use \haskell{}'s generic programming infrastructure to generate
-  \filestore{}-specific tools generically.
-
-\item {\bf Case Study in Domain-Specific Language Design}: \forest{}
-  is fully implemented and serves
-  as a case study in implementing domain-specific
-  languages. Its implementation combines a number of
-  experimental features of \haskell{} such as quasi-quoting and \template{}.
-  It has practical impact on the \haskell{} implementation itself:  
-  the \haskell{} team modified and extended \template{} and the
-  quasiquoting mechanism in response to our needs. 
-%  and made these modifications
-%   available in the most recent release of \haskell{}.
-\end{itemize}
-
-\paragraph*{Related Work.}
+\item Section~\ref{sec:theory} describes the 
+formal semantics for core Forest and states
+theorems demonstrating that the mappings between the file system and
+in-memory structures behave correctly. These theorems are inspired
+by the "round-tripping" laws for well-behaved lenses~\cite{lenses}, but are
+significantly more complicated as the load and store functions have
+to deal with inconsistencies stemming from dependencies,
+duplication, and invalid data.
+\item Section~\ref{sec:related} contains a discussion of related work.
 There has been much past work on domain-specific languages for
 describing, parsing and printing individual data files. 
 Examples include 
@@ -212,8 +232,61 @@ simple file systems are {\em trees} and complex ones with symbolic links are
 or tokens). Consequently,
 the language design, formal systems,
 semantic issues, and underlying implementation 
-technology are all entirely different.  Section~\ref{sec:related}
-contains a further discussion of related work.
+technology are all entirely different.  
+\item Finally, Section~\ref{sec:conclusion} concludes.
+\end{itemize}
+
+%% \begin{itemize}
+%% \item {\bf Conceptual}:  We propose the {\em idea} 
+%% of extending a modern programming language with
+%% {\em tightly integrated linguistic features for describing \filestores{}}
+%% and for automatically generating programming infrastructure from such 
+%% descriptions.
+
+%% \item {\bf Language Design}: We present the design of \forest{}
+%%   and illustrate its use on real-world examples.
+%%   The design is expressive, concise and smoothly integrated into
+%%   Haskell.  
+
+%% \item {\bf Theoretical}: We present a core calculus of \forest{}
+%% descriptions and analyze its semantics.  We use the semantics
+%% to prove several results including round-tripping theorems that
+%% establish a correspondence between loads and stores of \filestore{} data.
+
+%% \item {\bf Tool Generation}: We describe how third-party developers
+%%   can use \haskell{}'s generic programming infrastructure to generate
+%%   \filestore{}-specific tools generically.
+
+%% \item {\bf Case Study in Domain-Specific Language Design}: \forest{}
+%%   is fully implemented and serves
+%%   as a case study in implementing domain-specific
+%%   languages. Its implementation combines a number of
+%%   experimental features of \haskell{} such as quasi-quoting and \template{}.
+%%   It has practical impact on the \haskell{} implementation itself:  
+%%   the \haskell{} team modified and extended \template{} and the
+%%   quasiquoting mechanism in response to our needs. 
+%% %  and made these modifications
+%% %   available in the most recent release of \haskell{}.
+%% \end{itemize}
+
+%% \paragraph*{Related Work.}
+%% There has been much past work on domain-specific languages for
+%% describing, parsing and printing individual data files. 
+%% Examples include 
+%% Lex, Yacc,
+%% Antlr~\cite{antlr}, Parsec~\cite{LeijenMeijer:parsec} and 
+%% Pads~\cite{fisher+:toplas}, to name just a few.  
+%% However, \forest{} differs
+%% substantially from any of these systems because it focuses on technology
+%% for describing {\em entire file systems}.  
+%% A key difference is that
+%% simple file systems are {\em trees} and complex ones with symbolic links are 
+%% {\em graphs}, whereas files are {\em sequences} (of characters
+%% or tokens). Consequently,
+%% the language design, formal systems,
+%% semantic issues, and underlying implementation 
+%% technology are all entirely different.  Section~\ref{sec:related}
+%% contains a further discussion of related work.
 
 %Overall, \forest{} substantially lowers pragmatic barriers to programming 
 %with data on disk.
@@ -233,6 +306,3 @@ contains a further discussion of related work.
 %% \item Custom programming against typed interface and querying using Haskell generic programming libraries
 %% \end{itemize}
 
-\reviewer{Since the authors mentioned several practical uses of Forest
-  in the introduction, it might be a bonus to include some of those as
-  mini-case studies.}
