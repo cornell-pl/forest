@@ -174,7 +174,8 @@ metadata is a pair consisting of a generic header of type
 their associated metadata. The header collects information
 about errors encountered during loading and it stores the file system
 attributes of each file, directory, or symbolic link loaded from the
-file system:
+file system.  The following is the pretty-printed version of such a
+structure: 
 %
 \begin{code}
 Forest_md 
@@ -191,10 +192,7 @@ Forest_md
 [("planetlab2.eecs.wsu.edu", Forest_md \{...\}),
  ("planetlab3.williams.edu", Forest_md \{...\}), ...]
 \end{code}
-%
-\reviewer{How come the example CDN metadata includes values that look
-  like strings but aren't in quotes?}
-%
+
 
 Using these functions and types, it is easy to formulate many useful
 queries as simple Haskell programs. For instance, to count the number
@@ -282,12 +280,6 @@ manifest <- stats_manifest
   , stats_defaultMd result "/var/log/coral/stats")
 store manifest 
 \end{code}
-
-\reviewer{- Forest doesn't solve (or purport to solve) the problem of
-  "magic strings" like "/var/log/coral/stats" strewn about.  I'm
-  wondering if the authors' experience with semi-structured data
-  processing has led to any insight into good language-based solutions
-  to this problem.}
 
 %Forest provides the type class \cd{Forest rep md} that collects 
 %useful functions on Forest representation and metadata

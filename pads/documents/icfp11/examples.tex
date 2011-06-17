@@ -79,10 +79,10 @@ CoralCDN~\cite{freedman+:coral,freedman:coral-experience}. To
 monitor the performance and security of the system, the hosts
 participating in CoralCDN periodically send usage statistics back to
 a central server. These statistics are collected in a \filestore{}
-%similar to the one depicted in Figure~\ref{fig:coral-pic}.
-with a top-level directory named \cd{dat}. 
-This directory contains a set of subdirectories, 
-one for each host, and each of those directories contain
+similar to the one depicted in Figure~\ref{fig:coral-pic}.  The \filestore{}
+has a top-level directory named \cd{dat} which 
+contains a set of subdirectories, 
+one for each host. Each of those directories contain
 another set of directories, labeled by date and time.
 Finally, each of the
 date/time directories contain one or more compressed log files. For the
@@ -103,12 +103,12 @@ Freedman~\cite{freedman:coral-experience}.
 %  names, dates) is okay. Also, we will probably need to make
 %  the graph smaller by eliding some nodes.}
 
-% \begin{figure}
-% \vskip -.25in
-% \hskip -.15in\scalebox{.31}{\includegraphics{coral-structure.pdf}}
-% \vskip -.1in
-% %\epsfig{file=coral-structure.eps, width=0.9\columnwidth}
-% \caption{Coral system log data.}
-% \label{fig:coral-pic}
-% \end{figure}
+\begin{figure}
+\vskip -.25in
+\hskip -.15in\scalebox{.31}{\includegraphics{coral-structure.pdf}}
+\vskip -.1in
+%\epsfig{file=coral-structure.eps, width=0.9\columnwidth}
+\caption{Coral system log data.}
+\label{fig:coral-pic}
+\end{figure}
 
