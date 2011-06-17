@@ -12,7 +12,7 @@ Consequently, we
 adopted a type-based metaphor for the \forest{} language: base
 types denote various kinds of files while type constructors describe 
 various kinds of file structures.  This design mirrors traditional
-types, so we based our design on an underlying type theory, 
+type systems, so we based our design on an underlying type theory, 
 described in \secref{sec:theory}.   
 
 We want to allow programers to move seamlessly between on-disk and
@@ -22,19 +22,20 @@ programmers to manipulate \filestore{} data almost as if it were
 simply stored in data structures in the host language.  We chose
 Haskell as the host language because its support for type-directed
 programming is useful for building tools that work over any \forest{}
-description.  As a bonus, Haskell's quasiquoting mechanism proved a
+description.  As a bonus, Haskell's quasiquoting mechanism~\cite{Mainland:quasi} proved a
 useful way to implement \forest{}.  It enabled a smooth integration of
 the two languages while allowing us to control the syntax of \forest{}.  
-To foster this integration, we strove to have \forest{}
+In designing the language, we strove to have \forest{}
 declarations look like extensions of the corresponding Haskell
 declarations so that programmers would have an intuitive understanding
-of the generated Haskell structures.  Within this framework, we
+of the in-memory data structures generated for their \filestore{}s.
+Within this framework, we
 designed constructs that were sufficiently expressive to capture all
 the \filestore{}s we had seen in practice.
 
-Since \forest{} is a domain-specific language embedded within Haskell
-using the quasiquote mechanism~\cite{Mainland:quasi}, \forest{}
-declarations can be embedded in simple Haskell files in any context
+Since \forest{} is a domain-specific language embedded in Haskell
+using quasiquotes, \forest{}
+declarations can appear in normal Haskell files in any context
 expecting a declaration. To introduce new \forest{} declarations,
 the programmer simply opens the \forest{} sublanguage using
 Haskell's notation for quasiquotes:
@@ -56,16 +57,36 @@ Each such type declaration serves three purposes:
 \item It specifies the structure of the in-memory {\em metadata}
     that will be generated when the fragment loaded.
 \end{enumerate}
-Such metadata includes
-error information (missing file, insufficient
-permissions, \etc{})  as well as file system attributes (owner, size,
-\etc{}).
+Such metadata includes error information (missing file, insufficient
+permissions, \etc{})  as well as file system attributes (owner, size, \etc{}).
 Every \forest{} description is defined relative to a
 {\em current path} within the file system.  As 
 \forest{} matches a description against the file system, it 
 adjusts the current path to reflect its navigation.
 The effectiveness of the \forest{} language comes in part from the fact that these three 
 elements can all be specified in a single compact description.  
+
+\paragraph{Errors.}
+As with
+\pads{}~\cite{fisher+:pads,fisher+:toplas,mandelbaum+:pads-ml}, we do
+not assume that a given \filestore{} conforms perfectly to its associated
+\forest{} description.  Instead, we check during the loading process
+the extent to which the \filestore{} conforms, marking discrepencies
+in the metadata.  This design allows users to respond in
+application-specific ways to errors.  It also allows us to check
+dynamically the conditions implied by \forest{}'s dependent types,
+skirting issues of undecidability.  
+Because \forest{} loads data
+lazily, this choice means errors will not be detected unless the user
+program needs to touch the portion of the \filestore{} with the
+error. The user can force a complete conformance check by accessing
+the top-level error count.  It is possible for the
+\filestore{} to change during or after this check.  For the
+\filestores{} we have seen in practice, there are
+extra-linguistic procedures in place to prevent such concurrent
+modifications; we leave to future work the possibility of integrating
+with the operating system to monitor such changes. 
+
 
 In the remainder of this section, we discuss the types and type
 constructors that constitute the \forest{} language.  We use our
@@ -476,7 +497,7 @@ in \figref{fig:metadata-components}.
 \begin{figure}
 \input{student-description}
 \caption{\forest{} description of Princeton \filestore{}. (Associated Haskell and \pads{} code
-  appears in\ifanon\auxmaterials\else{} the appendix\fi.)}
+  appears in a technical report~\cite{forest-techreport}.)}
 \label{fig:student-description}
 \end{figure}
 
@@ -579,7 +600,7 @@ combination of the \cd{Tar} and \cd{Gzip} type constructors:
 \kw{type} MoreInfo = Gzip (Tar ManyLogs)
 \end{code}
 
-\subsection{Error detection}
+\cut{
 \reviewer{Forest uses staged compilation, but descriptions of when
   each type of error (e.g, Forest-type error, filestore constraint
   violation, ...)  can occur are scattered throughout the text.  I'd
@@ -604,8 +625,7 @@ combination of the \cd{Tar} and \cd{Gzip} type constructors:
   system". I am not sure how this can be true unless the declared
   interface somehow changes when the physical file system is
   explored.}
-
-
+}
 
 \subsection{Putting it all together}
 
@@ -614,7 +634,7 @@ Figures~\ref{fig:student-description} and~\ref{fig:coral-description}
 give the specifications for the two running examples, minus the
 associated \padshaskell{} and \haskell{} declarations.  The complete
 descriptions of these \filestores{} and additional descriptions are
-available in the \ifanon\auxmaterials\else appendix\fi, including
+available in a technical report~\cite{forest-techreport}, including
 descriptions of the \pads{} website, a Gene Ontology \filestore{}, and
 CVS repositories.
 
@@ -622,6 +642,6 @@ CVS repositories.
 %CoralCDN Description:
 \input{coral-description}
 \caption{\forest{} CoralCDN description. Associated Haskell and
-  \pads{} code appears in \ifanon\auxmaterials\else the appendix\fi.}
+  \pads{} code appears a technical report~\cite{forest-techreport}.}
 \label{fig:coral-description}
 \end{figure}
