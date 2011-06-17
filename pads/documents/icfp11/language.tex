@@ -6,121 +6,107 @@
   chosen - were these just useful in practice?  Or is there some kind
   of theoretical argument for why these features are "good"?}
 
-\reviewer{Forest uses staged compilation, but descriptions of when
-  each type of error (e.g, Forest-type error, filestore constraint
-  violation, ...)  can occur are scattered throughout the text.  I'd
-  like to see a list of the kinds of things that can go wrong and when
-  (and how) those errors are dealt with.}
+Data stored in \filestore{}s shares many characteristics of
+data stored in ad hoc data files or in in-memory data structures.
+Consequently, we
+adopted a type-based metaphor for the \forest{} language: base
+types denote various kinds of files while type constructors describe 
+various kinds of file structures.  This design mirrors traditional
+types, so we based our design on an underlying type theory, 
+described in \secref{sec:theory}.   
 
-\forest{} is a domain-specific language embedded within Haskell using
-the Quasiquote mechanism~\cite{Mainland:quasi}.  In a typical
-\forest{} description, \forest{} declarations are interleaved with ordinary
-Haskell declarations.  To introduce new \forest{} declarations,
-the programmer simply opens the \forest{} sublanguage scope:
+We want to allow programers to move seamlessly between on-disk and
+in-memory representations of \filestore{} data, so we implemented
+\forest{} as an embedded domain-specific language.  This choice allows
+programmers to manipulate \filestore{} data almost as if it were
+simply stored in data structures in the host language.  We chose
+Haskell as the host language because its support for type-directed
+programming is useful for building tools that work over any \forest{}
+description.  As a bonus, Haskell's quasiquoting mechanism proved a
+useful way to implement \forest{}.  It enabled a smooth integration of
+the two languages while allowing us to control the syntax of \forest{}.  
+To foster this integration, we strove to have \forest{}
+declarations look like extensions of the corresponding Haskell
+declarations so that programmers would have an intuitive understanding
+of the generated Haskell structures.  Within this framework, we
+designed constructs that were sufficiently expressive to capture all
+the \filestore{}s we had seen in practice.
+
+Since \forest{} is a domain-specific language embedded within Haskell
+using the quasiquote mechanism~\cite{Mainland:quasi}, \forest{}
+declarations can be embedded in simple Haskell files in any context
+expecting a declaration. To introduce new \forest{} declarations,
+the programmer simply opens the \forest{} sublanguage using
+Haskell's notation for quasiquotes:
 \begin{code}
 [forest| ... forest declarations ... |]
 \end{code}
+When processing such a quasiquote, the Haskell compiler invokes the
+\forest{} compiler,  which converts the given \forest{} declarations
+into a sequence of plain Haskell declarations that collectively
+implement the \forest{} declarations.
 
-\forest{} uses a type-based metaphor to describe directory
-structures, so once  within the \forest{} sublanguage, the programmer
-writes declarations that look and feel very much like extended Haskell
-type declarations. 
+Once within the \forest{} sublanguage, the programmer writes
+declarations that resemble extended Haskell type declarations. 
 Each such type declaration serves three purposes: 
-(1) it describes a fragment of the file system,
-(2) it specifies the structure of the in-memory {\em representation}
-    that will be constructed when the fragment is (lazily) loaded into a Haskell program, and 
-(3) it specifies the structure of the in-memory {\em metadata}
+\begin{enumerate}
+\item It describes a fragment of the file system.
+\item It specifies the structure of the in-memory {\em representation}
+    that will be constructed when the fragment is (lazily) loaded into a Haskell program. 
+\item It specifies the structure of the in-memory {\em metadata}
     that will be generated when the fragment loaded.
-Such metadata includes error information (missing file, insufficient
-permissions, \etc{})  as well as file system attributes (owner, size, \etc{}).
-As we explain the design of \forest{}, 
-readers should keep these three different aspects in mind.  
-The effectiveness of the \forest{} language comes in part from the fact that these three 
-elements can all be specified in a single compact description.  
-
+\end{enumerate}
+Such metadata includes
+error information (missing file, insufficient
+permissions, \etc{})  as well as file system attributes (owner, size,
+\etc{}).
 Every \forest{} description is defined relative to a
 {\em current path} within the file system.  As 
 \forest{} matches a description against the file system, it 
 adjusts the current path to reflect its navigation.
-\cut{
-In general, descriptions
-do not assume that the current path is a valid path in the file
-system.  
-When the current
-path is invalid, a description will generally\footnote{The \cd{Maybe} constructor,
-discussed later, is an example of an exception to the general rule.} 
-register an attempt to load from that
-path as an error in the associated metadata structure.}
+The effectiveness of the \forest{} language comes in part from the fact that these three 
+elements can all be specified in a single compact description.  
 
-\reviewer{Forest defines a dependent type system, but there's no
-  mention of any practical issues (e.g., type equality) that arise
-  from programming with it - do these just not show up in practice?
-  Or are they hidden somewhere?  Is there any particular feature that
-  you wish Haskell's type system had?}
-
-\reviewer{One claim that I am not entirely convinced is how the type
-  system can help to prevent errors. Is the claim that Forest type
-  system is able to statically detect some 'impossible' defintions? Or
-  just that it can detect non-conformance to the defined format at
-  runtime? Detecting non-conformance would not be very interesting,
-  but if Forest does more than that an example might help to
-  illustrate the point.}
-
-\reviewer{Also, the authors claim that Forest has a "dependent type
-  system". I am not sure how this can be true unless the declared
-  interface somehow changes when the physical file system is
-  explored.}
-
-At its core, \forest{} is a simple dependent type system in which base
-types denote files of various flavors and record types describe
-directories.  \forest{} also includes a list type to describe
-collections of files that all share some type.  We use a variety of
-other type constructors to build more refined structures from these
-basic building blocks.  We discuss each of these constructs in turn in
-the remainder of this section.  A note on terminology: we use the term
+In the remainder of this section, we discuss the types and type
+constructors that constitute the \forest{} language.  We use our
+running examples to illustrate the various constructs.  
+A note on terminology: we use the term
 ``file system object'' or more simply ``object'' to denote either a
 file, or a directory, or a symbolic link. 
 
-\subsection{Files}
+\subsection{Base Types: Files}
 \label{sec:basics}
 \forest{} provides a small collection of base types for describing
-files: \cd{Text} for ASCII files, \cd{Binary} for binary files, and
+individual files: \cd{Text} for ASCII files, \cd{Binary} for binary files, and
 \cd{Any} for arbitrary files.  As with all \forest{} types, each of
-these types specifies a representation type, a metadata type, and a
-loading function.  The in-memory representation for an ASCII file is a
-Haskell \cd{String}; for binary and arbitrary files, it is a
-\cd{ByteString}.  
-%
-\reviewer{Haskell strings are represented as lists, right?  If so,
-  doesn't that mean your in-memory representation of text files uses
-  an order of magnitude more memory than necessary (with 64-bit next
-  pointers, header words, etc.), and it also doesn't support
-  constant-time access to character positions within a string?}
-%
-For all three file types, the metadata type pairs file-system metadata
+these types specifies a representation type, a metadata type, and 
+loading and storing functions. 
+For all three file types, the representation type is a
+\cd{ByteString}.
+Similarly all three share a metadata type, which
+pairs file-system metadata
 with metadata describing properties of the file contents.  The
 file-system metadata has type \cd{Forest\_md}, shown in
 \figref{fig:forest-md}.  
 %
-\reviewer{Do you ever feel any pain as a result of representing list
-  data separately from a list of its metadata, such that types don't
-  guarantee the two lists match in length?}
+%\reviewer{Do you ever feel any pain as a result of representing list
+%  data separately from a list of its metadata, such that types don't
+%  guarantee the two lists match in length? -- I think this is too
+%  specific to worry about}
 %
 This structure stores two kinds of
-information: (1) the number and kind of any errors that occurred while
-loading the file and (2) the attributes associated with the file.
-%% File-content metadata typically describes errors within the file, but
-%%can be used for other purposes.  
-\jnf{The transition right here confusing and abrupt. I was reading the
-  figure carefully, which steps the reader through file system
-  metadata and missed the stack pop back up to the top-level
-  discussion of metadata...}
-%
+information: 
+\begin{enumerate} 
+\item the number and kind of any errors that occurred during loading 
+\item the attributes associated with the file (\cd{fileInfo})
+\end{enumerate} %
 File-content metadata describes errors within the file.
 For these three file types, there is
 no meaningful content metadata and so this type is the unit type.
 Leveraging Haskell's laziness, the loading functions create the
-in-memory representations and set the metadata on demand.
+in-memory representations and set the metadata on demand.  The storing
+functions, which are described in more detail in \secref{sec:exp},
+do the inverse.
 
 \begin{figure}
 \begin{centercode}
@@ -145,20 +131,21 @@ in-memory representations and set the metadata on demand.
 \label{fig:forest-md}
 \end{figure}
 
-Of course, there are many kinds of files, and the appropriate
-representation and content metadata type for each such file varies.
-Possible examples include XML documents, Makefiles, source files in
-various languages, shell scripts, \etc{}  To support such files,
-\forest{} provides a plug-in architecture, allowing third party users
-to define new file base types by specifying a representation type, a
-metadata type, and a corresponding loading function.
+Although useful, these three base types are not sufficient for
+describing the wide range of files used in practice, including XML
+documents, Makefiles, source files in various languages, shell
+scripts, \etc{} The appropriate representation and content metadata
+types for each such file varies. To support such files,
+\forest{} provides a plug-in architecture, allowing third-party users
+to define new file types by specifying a representation type, a
+metadata type, and corresponding loading and storing functions.
 
 A common class of files are \textit{ad hoc data files} containing
 semi-structured information, an example of which is the Princeton
 student record file format\ifanon{}~\cite{pldi-aux-materials}\fi. 
-In such cases, \forest{} can leverage the \padshaskell{} data
+In such cases, \forest{} can leverage the \padshaskell{}~\cite{fisher-walker:icdt} data
 description language to define format-specific in-memory
-representations, content metadata, and loading functions. 
+representations, content metadata, and loading and storing functions. 
 \padshaskell{} is a recently developed version of 
 \pads{}~\cite{fisher+:pads,fisher+:toplas,mandelbaum+:pads-ml}.
 Like \forest{}, \padshaskell{} is embedded in Haskell using
@@ -167,20 +154,20 @@ begins the \pads{} specification of the Princeton student record
 format: 
 \noindent
 \begin{code}
-[pads| \kw{data} Student(name::String) = <pads decl> |]
+[pads| \kw{data} Student(name::String) = 
+            \{ person  :: Line (Person name)
+            , Header  
+            , courses :: [Line Course]
+            , Trailer
+            \} 
+       ...  |]
 \end{code}
-%
-\reviewer{It's a little unclear how Forest interacts with Pads.  This
-  is probably just an issue with presentation.  For example, [in] the
-  first example Forest declaration [...] we don't know what's supposed
-  to go on the RHS of the equality, so it's difficult to understand
-  what is meant by this.}
-%
 This description is parameterized by the name of the student whose
-data is in the file; the complete description appears in the appendix.
+data is in the file; the complete description appears in the companion
+technical report~\cite{forest-techreport}.
 From this specification, the \pads{} compiler
 generates an in-memory representation type \cd{Student}, a content metadata
-type \cd{Student_md}, and a parsing function.  
+type \cd{Student_md}, and parsing and printing functions.  
 
 \forest{} provides the \cd{File} type constructor to lift \pads{}
 types to \forest{} file types.  For example, the declaration
@@ -195,7 +182,7 @@ Using \padshaskell{} descriptions in \forest{} not only helps specify
 the structure of ad hoc data files, but it also generates a structured
 in-memory representation of the data, allowing Haskell programmers to
 traverse, query and otherwise manipulate such data.  
-\padshaskell{} and \forest{} were designed to work seamlessly
+We designed \padshaskell{} and \forest{} to work seamlessly
 together.  From the perspective of the Haskell programmer traversing
 a resulting in-memory data structure, there is effectively no difference
 between iterating over files in a directory or structured sequences of
@@ -208,30 +195,12 @@ unadorned declarations occur within the \forest{} scope
 by \cd{>} 
 are ordinary Haskell declarations.
 
-\subsection{Optional Files}
-\label{sec:maybe}
-\reviewer{Several sections can be omitted entirely: In Section 3.2 it
-  sounds like Forest is responsible for the Maybe type.  Only the last
-  sentence "Maybe T registers an error when" is informative.}
-
-Sometimes, a given file (or directory or symbolic link) may or may not
-be present in the file system, and either situation is valid.
-\forest{} provides the \cd{Maybe} type constructor for this
-situation.  If \cd{T} is a \forest{} type, then \cd{Maybe T} is the
-\forest{} type denoting an optional \cd{T}.  In particular, 
-\cd{Maybe T} succeeds and returns representation \cd{None} when the
-current path does not exist in the file system.  \cd{Maybe T} also
-succeeds and returns \cd{Just v} for some \cd{v} of type \cd{T} 
-when the current path exists and matches \cd{T}.  \cd{Maybe T}
-registers an error in the metadata when the current path exists but
-the corresponding object does not match \cd{T}. 
-
-\subsection{Symbolic Links}
+\subsection{Base Type: Symbolic Links}
 \label{sec:symlinks}
-When symbolic links occur in a described file system fragment,
+When symbolic links occur in a described filestore,
 \forest{} follows the symbolic link to its target, mimicking 
-standard shell behavior.    In addition, however, it is possible
-for programmers to specify explicitly that a particular file is a
+standard shell behavior.    However, \forest{} allows
+programmers to specify explicitly that a particular file is a
 symbolic link using the base type \cd{SymLink}.  The in-memory
 representation for an explicit symbolic link is the path that is the
 target of the link.  It is possible to use constraints
@@ -244,7 +213,24 @@ specify that the object is a symbolic link and a second to specify
 the type of the link target.  We will see an example of such a specification in the
 next subsection. 
 
-\subsection{Directories}
+\subsection{Maybe: Optional File System Objects}
+\label{sec:maybe}
+Sometimes, a given file (or directory or symbolic link) may or may not
+be present in the file system, and either case is valid.
+To handle this situation, we leverage the idea of an option type by
+providing a \forest{}-level \cd{Maybe} type constructor that maps the
+optional file system object to a \cd{Maybe} type in Haskell. In particular,
+if \cd{T} is a \forest{} type, then \cd{Maybe T} is the
+\forest{} type denoting an optional \cd{T}.  The type
+\cd{Maybe T} succeeds and returns representation \cd{None} when the
+current path does not exist in the file system.  \cd{Maybe T} also
+succeeds and returns \cd{Just v} for some \cd{v} of type \cd{T} 
+when the current path exists and matches \cd{T}.  \cd{Maybe T}
+registers an error in the metadata when the current path exists but
+the corresponding object does not match \cd{T}. 
+
+
+\subsection{Records: Directories}
 \label{sec:directories}
 \forest{} directories are record-like datatype constructors that allow
 users to specify directory structures. For example, to specify the root directory
@@ -305,7 +291,7 @@ is common for directories to contain objects that users do not care
 about.  For example, a directory structure may contain extra files or
 directories related to a version control system, and a
 description writer may not want to clutter the \forest{} specification
-with that information.  As we will see shortly, it is possible to
+with that information.  We will see shortly that it is possible to
 specify the absence of file system objects using constraints.
 
 As suggested by the syntax, the in-memory representation of a
@@ -393,21 +379,24 @@ construct also allows \textit{glob patterns}, (\ie{}, patterns such as
 \cd{*.txt}),  to specify the names of files on disk. 
 
 
-\subsection{List Comprehensions}
+\subsection{Lists}
 \label{sec:comprehensions}
 
-\reviewer{Section 3.2 spends half a page describing comprehensions
-  over various collections.  It's cool that you can put these into
-  types (although maybe this means Forest isn't really a "simple"
-  dependent type system anymore), but surely this can be described
-  more succinctly.}
+%% I don't think so...
+%%\reviewer{Section 3.2 spends half a page describing comprehensions
+%%  over various collections.  It's cool that you can put these into
+%%  types (although maybe this means Forest isn't really a "simple"
+%%  dependent type system anymore), but surely this can be described
+%%  more succinctly.}
 %
-Record directories allow programmers to specify a fixed number of file
-system objects, each with its own type.  List comprehensions, on the
+Just as Haskell has both records and lists, so too does \forest{}.
+Records allow programmers to specify a fixed number of file
+system objects, each with its own type.  Lists, on the
 other hand, allow programmers to specify an arbitrary number of file
 system objects, each with the same type.  As an example, we can use a
-list comprehension to specify the \cd{Grads} directory from
-\figref{fig:student-pic}:
+list to specify the \cd{Grads} directory from
+\figref{fig:student-pic}.  We borrow Haskell's notation for set
+comprehensions to specify the names of the file system objects:
 
 \begin{code}
 > getYear s = 
@@ -423,7 +412,7 @@ In this specification, \cd{Grads} is a directory fragment containing a number of
 \cd{cRE}.  The Haskell function \cd{getYear} extracts the last two digits from the
 name of the directory, converts the string digits to an integer year, and passes
 the year to the underlying \cd{Class} specification.
-More generally, comprehensions have the form \cd{[path :: T | id <- gen, pred]} where \cd{id} 
+More generally, \forest{} lists have the form \cd{[path :: T | id <- gen, pred]} where \cd{id} 
 is bound in turn to each of the file names generated by \cd{gen}, which may be a \cd{matches} clause 
 (used to match against the files at the current path as in the previous section) or a list
 computed in Haskell.  These generated \cd{id}s are filtered by the
@@ -433,7 +422,7 @@ the current path.  The object at each such path should have the \forest{}
 type \cd{T}.  The identifier \cd{id} is in scope in \cd{pred},
 \cd{path}, and \cd{T}.  
 
-The in-memory representation of a comprehension is a list containing
+The in-memory representation of a \forest{} list is a Haskell list containing
 pairs of the name of a matching object and its representation.  The
 metadata is a list of the metadata of the matching objects paired with
 a summary metadata structure of type \cd{Forest_md}.
@@ -444,9 +433,12 @@ Although the list representation for comprehensions is useful, it can
 be desirable to use a more sophisticated data structure to
 represent such collections.  To support
 this usage, \forest{} allows programmers to prefix a list
-comprehension with any type constructor that belongs to a 
-container type class that supports operations to convert between the
-list representation and the desired container representation. 
+comprehension with any type constructor that belongs to a
+\forest{}-defined 
+container type class.  This type class contains functions that
+specify how to convert between the list representation and the
+desired container representation.  We have provided such instance
+declarations for Haskell's \cd{Map} and \cd{Set} type constructors.
 
 As an example, consider the specification of the \cd{Major} directory.
 Each such directory contains a list of student files and an additional
@@ -455,11 +447,8 @@ declaration below specifies the collection of student files by
 matching with a glob pattern and filtering to exclude 
 template files. It uses the \cd{Map} type constructor to specify that
 the data and metadata should be collected in a
-\cd{Map} rather than a list.
-%
-\reviewer{When you store the data in a Map here, how is each key/value
-  pair chosen?  What part of the code expresses that rule?}
-%
+\cd{Map} rather than a list.  
+
 \begin{code}
 > template s = s `elem` ["sss.txt", "sxx.txt"]
 > txt = GL "*.txt"
@@ -470,19 +459,18 @@ the data and metadata should be collected in a
 \end{code}
 
 
-\subsection{Attributes and Constraints}
+\subsection{Dependent Types: Attributes and Constraints}
 \label{sec:constraints}
 
-Every file system object has a number of attributes associated with
-it, such as the file owner and size.  In general,
-if a \forest{} identifier \cd{id} refers to a path, the attributes for the object at that
-path are available through the identifier \cd{id_att}, which has
-type \cd{Forest_md} (\figref{fig:forest-md}).  Forest defines
-accessor functions such as \cd{get_modes} (get permissions), \cd{get_kind} (get
-ASCII/binary/directory characteristics) and others to inspect
-these attributes.
-%Figure~\ref{fig:metadata-components} lists a set of helper functions that
-%extract useful information from attribute structures.
+Every file system object has a number of \textit{attributes} associated with
+it, such as its owner, group, permissions, and size.  In general,
+if a \forest{} identifier \cd{id} refers to a path, 
+then the identifier \cd{id_att} refers to the
+corresponding attributes.  This attribute identifier has type
+\cd{Forest_md}, shown in \figref{fig:forest-md}. 
+Forest defines
+helper functions to access these attributes, some of which are listed
+in \figref{fig:metadata-components}.
 
 
 \begin{figure}
@@ -493,24 +481,22 @@ these attributes.
 \end{figure}
 
 
-\textit{Constrained types} make use of attributes. For example, the
+\textit{Constrained types} are a simple form of dependent types that
+allow users to specify required attributes. 
+For example, the 
 type \cd{PrivateText} specifies a text file accessible only by its owner.
 \begin{code}
 \kw{type} PrivateFile = 
  Text \kw{where} <|get_modes this_att == "-rw-------"|>
 \end{code}
 The keyword \kw{where} introduces a constraint on the underlying type.
-If a constraint is false, an error 
-is registered in the metadata.  Within the constraint, \cd{this} refers to the representation 
+The load function for the type \cd{PrivateFile} checks this
+constraint during loading.  
+If the constraint is false, it records that fact in the metadata.
+Within constraints, the special identifier \cd{this} refers to the representation 
 of the underlying object, \cd{this_att} refers to its attributes and \cd{this_md} 
 to its complete metadata.
 
-\reviewer{- Is it possible to specify a node based on its structure
-  rather than its name? For example, can I say: ``type d = Directory (
-  sub\_a is "*" :: Sub\_A , sub\_b is "*" :: Sub\_B )'' and have
-  Forest decide which sub-directory matches Sub\_A and which matches
-  Sub\_B? This is the expected behavior when parsing grammars, and the
-  description for Pads seems to suggest it has this capability.}
 
 Using attributes, we can write a \textit{universal
   directory description}, which is sufficiently general to describe
@@ -530,17 +516,24 @@ any directory:
            | s <- \kw{matches} (GL "*"), 
           <| get_sym s_att == True |> ] \}
 \end{code}
-The description requires recursion to describe the directory case,
-which \forest{} supports.
-In the case that a symbolic link creates a cycle in the file system by
-pointing to a parent directory, the Haskell in-memory representation
-is a (lazy) infinite data structure.  
+When a directory is loaded using the \cd{Universal} description, all
+the ASCII files will end up the in \cd{asc} field, all the binary
+files in \cd{bin}, all the directories in \cd{dir}, and all the symbolic
+links in \cd{sym}.  Note that the description uses recursion to
+describe nested directories. In the case that a symbolic link creates
+a cycle in the file system by pointing to a parent directory, the
+Haskell in-memory representation is a (lazy) infinite data structure.  
+We view the fact that it is possible to write such a universal
+description in \forest{} as evidence that the language is
+appropriately expressive.  This description also serves as an example
+of how to describe a filestore by its \textit{structure} rather than
+its \textit{names}.   
 
-We can also use constraints to specify that certain files do not appear
+We can also use constraints to specify that certain files \textit{do not} appear
 in certain places.  As an example, we might want to require that no
 binaries appear in a directory given to an untrusted user as scratch
-space. The description below flags an error if a binary file exists
-in the directory. 
+space. The description below flags an error during loading if a binary
+file exists in the directory. 
 \begin{code}
 \kw{type} NoBin =
   [ b :: Binary | b <- \kw{matches} (GL "*"), 
@@ -548,24 +541,24 @@ in the directory.
   \kw{where} <|length this == 0|>
 \end{code}
 
-% \begin{figure}
-% \begin{center}
-% \begin{tabular}{l|l}
-% function name &  information \\
-% \hline
-% \cd{get_group} & object group\\
-% \cd{get_kind} & the sort of file or directory \\
-% \cd{get_modes} & permission string\\
-% \cd{get_owner} & object owner\\
-% \cd{get_size} & object size \\
-% \end{tabular}
-% \end{center}
-% \caption{Selected file attribute functions}
-% \label{fig:metadata-components}
-% \end{figure}
+\begin{figure}
+\begin{center}
+\begin{tabular}{l|l}
+function name &  information \\
+\hline
+\cd{get_group} & object group\\
+\cd{get_kind} & the sort of file or directory \\
+\cd{get_modes} & permission string\\
+\cd{get_owner} & object owner\\
+\cd{get_size} & object size \\
+\end{tabular}
+\end{center}
+\caption{Selected file attribute functions}
+\label{fig:metadata-components}
+\end{figure}
 
 
-\subsection{Gzip and Tar Type Constructors}
+\subsection{Specialized Constructors: Gzip and Tar}
 \label{sec:file-modifiers}
 
 Some files need to be processed before they can be used.  A typical
@@ -585,6 +578,33 @@ combination of the \cd{Tar} and \cd{Gzip} type constructors:
 \begin{code}
 \kw{type} MoreInfo = Gzip (Tar ManyLogs)
 \end{code}
+
+\subsection{Error detection}
+\reviewer{Forest uses staged compilation, but descriptions of when
+  each type of error (e.g, Forest-type error, filestore constraint
+  violation, ...)  can occur are scattered throughout the text.  I'd
+  like to see a list of the kinds of things that can go wrong and when
+  (and how) those errors are dealt with.}
+
+\reviewer{Forest defines a dependent type system, but there's no
+  mention of any practical issues (e.g., type equality) that arise
+  from programming with it - do these just not show up in practice?
+  Or are they hidden somewhere?  Is there any particular feature that
+  you wish Haskell's type system had?}
+
+\reviewer{One claim that I am not entirely convinced is how the type
+  system can help to prevent errors. Is the claim that Forest type
+  system is able to statically detect some 'impossible' defintions? Or
+  just that it can detect non-conformance to the defined format at
+  runtime? Detecting non-conformance would not be very interesting,
+  but if Forest does more than that an example might help to
+  illustrate the point.}
+
+\reviewer{Also, the authors claim that Forest has a "dependent type
+  system". I am not sure how this can be true unless the declared
+  interface somehow changes when the physical file system is
+  explored.}
+
 
 
 \subsection{Putting it all together}
