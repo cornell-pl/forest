@@ -1,7 +1,8 @@
 \documentclass[nocopyrightspace,natbib,preprint]{sigplanconf}
 
-\newif\ifdraft\drafttrue  %% set to false in final version
-\newif\ifanon\anonfalse  %% set to false in final version
+\newif\ifdraft\drafttrue         %% set to false in final version
+\newif\ifappendix\appendixfalse  %% set to false in final version
+\newif\ifanon\anonfalse          %% set to false in final version
 
 \usepackage{xspace,pads,amsmath,math-cmds,
             math-envs,inference-rules,times,
@@ -10,7 +11,7 @@
 \usepackage{xcolor}
 \definecolor{dkblue}{cmyk}{1,.65,0,.3}
 \definecolor{dkred}{cmyk}{0,1,.65,.34}
-\usepackage[colorlinks=true,linkcolor={dkblue},citecolor={dkred},urlcolor={black}]{hyperref}
+\usepackage[colorlinks=true,linkcolor={black},citecolor={black},urlcolor={black}]{hyperref}
 \usepackage{epsfig}
 \usepackage{code} 
 \usepackage{tikz}
@@ -73,16 +74,15 @@ We would like to thank Simon Peyton Jones for extending Haskell's
 Quasi-Quoting and Template Haskell mechanisms to support the \forest{}
 design and for help in using the mechanisms in general.
 
-This material is based upon work supported under NSF grant
-CCF-1016937.  Any opinions, findings, and conclusions or
+This material is based upon work supported under NSF grant CCF-1016937
+and ONR grant N00014-09-1-0652. Any opinions, findings, and
 recommendations expressed in this material are those of the authors
-and do not necessarily reflect the views of the NSF.
+and do not necessarily reflect the views of the NSF or the ONR.
 
 \bibliographystyle{abbrv}
 \bibliography{pads}
 
-\ifanon
-\else
+\ifappendix
 \onecolumn
 \newpage
 \appendix

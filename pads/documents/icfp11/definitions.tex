@@ -127,3 +127,58 @@
 \newcommand{\sskip}{\hspace*{5mm}}
 \newcommand{\shrink}{\vspace*{-4mm}}
 
+%%%%%%%%%%
+% THEORY %
+%%%%%%%%%%
+\newcommand{\us}{\ensuremath{\_\!\_}}
+\newcommand{\defeq}{\ensuremath{\triangleq}}
+\renewcommand{\bnfdef}{\ensuremath{\mathord{::=}}}
+\newcommand{\slsh}{\ensuremath{\mathord{\textsf{/}}}}
+\newcommand{\File}[1]{\ensuremath{\mathsf{File}~#1}}
+\newcommand{\Dir}[1]{\ensuremath{\mathsf{Dir}~#1}}
+\newcommand{\Link}[1]{\ensuremath{\mathsf{Link}~#1}}
+\newcommand{\List}[1]{\ensuremath{[ #1 ]}}
+\newcommand{\Set}[1]{\ensuremath{\{ #1 \}}}
+\newcommand{\Map}[1]{\ensuremath{\{\!\mid #1 \mid\!\}}}
+\newcommand{\FAppend}{\ensuremath{\text{++}}}
+\newcommand{\FUpdate}[3]{\ensuremath{#1[#2 := #3]}}
+\newcommand{\FDelete}[2]{\ensuremath{\FUpdate{F}{r}{\bot}}}
+\newcommand{\PNil}{\ensuremath{\cdot}}
+\newcommand{\PCons}[2]{\ensuremath{#1\,\textsf{/}\,#2}}
+\newcommand{\Just}[1]{\ensuremath{\mathsf{Just~#1}}}
+\newcommand{\Nothing}{\ensuremath{\mathsf{Nothing}}}
+\newcommand{\True}{\ensuremath{\mathsf{True}}}
+\newcommand{\False}{\ensuremath{\mathsf{False}}}
+\newcommand{\fn}[2]{\ensuremath{#1(#2)}}
+\newcommand{\Sk}{k^{\tau_m}_{\tau_r}}
+\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1})}}
+\newcommand{\SPred}[1]{\ensuremath{\mathsf{Pred}(#1)}}
+\newcommand{\SPath}[2]{\ensuremath{#1\,{::}\,#2}}
+\newcommand{\SPair}[3]{\ensuremath{\langle #1 {:} #2, #3 \rangle}}
+\newcommand{\SOption}[1]{\ensuremath{#1?}}
+\newcommand{\SComp}[3]{\ensuremath{[ #1 \mid #2 \in #3 ]}}
+\newcommand{\Env}{\ensuremath{\mathcal{E}}}
+\newcommand{\ENil}{\ensuremath{\bullet}}
+\newcommand{\yields}{\ensuremath{\rightsquigarrow}}
+\newcommand{\valid}[1]{\ensuremath{\mathit{valid}(#1)}}
+\newcommand{\typ}[1]{\ensuremath{\mathit{#1}}}
+\newcommand{\meta}{\typ{att}}
+\newcommand{\REP}{\ensuremath{\mathit{REP}}}
+\newcommand{\MD}{\ensuremath{\mathit{MD}}}
+\newcommand{\md}[1]{\ensuremath{(#1)~\mathit{md}}}
+\newcommand{\eval}[3]{\ensuremath{[\![#1]\!]^{#2}_{#3}}}
+\newcommand{\pfile}{\ensuremath{\mathsf{File}}}
+\newcommand{\pdir}{\ensuremath{\mathsf{Dir}}}
+\newcommand{\plink}{\ensuremath{\mathsf{Link}}}
+\newcommand{\att}{\ensuremath{\mathit{a}}}
+\newcommand{\defaultatt}{\ensuremath{\att_{\mathsf{default}}}}
+\newcommand{\repty}[1]{{\cal R}[\![ #1 ]\!]}
+\newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
+\newcommand{\loadkname}[1]{\ensuremath{\mathit{load}_{#1}}}
+\newcommand{\storekname}[1]{\ensuremath{\mathit{store}_{#1}}}
+\newcommand{\storek}[5]{\fn{\storekname{#1}}{#2,#3,#4,#5}}
+\newcommand{\loadk}[4]{\fn{\loadkname{#1}}{#2,#3,#4}}
+\newcommand{\stringty}{{string}}
+\newcommand{\metapdty}{\meta}
+\newcommand{\load}[5]{#1;#3;#4 \vdash #2~\rhd~(#5) }
+\newcommand{\store}[6]{#1;#3;#5 \vdash (#6)~\lhd~(#2,#4) }

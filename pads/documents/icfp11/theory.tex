@@ -1,98 +1,30 @@
 \section{A Core Calculus for \forest{}}
-
-\reviewer{I'm hoping extra space can also be used to expand Section 7.
-  Is this formal semantics exactly what would would expect from an
-  informal intuition of how filesystems work?  Or is the model itself
-  a large contribution?  I can imagine re-using this model in a
-  mechanical setting (e.g., in Coq) would be useful in certifying the
-  lower-levels of the software stack.}
-
 \label{sec:theory}
-\newcommand{\us}{\ensuremath{\_\!\_}}
-\newcommand{\defeq}{\ensuremath{\triangleq}}
-\renewcommand{\bnfdef}{\ensuremath{\mathord{::=}}}
-\newcommand{\slsh}{\ensuremath{\mathord{\textsf{/}}}}
-\newcommand{\File}[1]{\ensuremath{\mathsf{File}(#1)}}
-\newcommand{\Dir}[1]{\ensuremath{\mathsf{Dir}(#1)}}
-\newcommand{\Link}[1]{\ensuremath{\mathsf{Link}(#1)}}
-\newcommand{\List}[1]{\ensuremath{[ #1 ]}}
-\newcommand{\Set}[1]{\ensuremath{\{ #1 \}}}
-\newcommand{\Map}[1]{\ensuremath{\{\!\mid #1 \mid\!\}}}
-\newcommand{\FAppend}{\ensuremath{\text{++}}}
-\newcommand{\FUpdate}[3]{\ensuremath{#1[#2 := #3]}}
-\newcommand{\FDelete}[2]{\ensuremath{\FUpdate{F}{r}{\bot}}}
-\newcommand{\PNil}{\ensuremath{\bullet}}
-\newcommand{\PCons}[2]{\ensuremath{#1\,\textsf{/}\,#2}}
-\newcommand{\Just}[1]{\ensuremath{\mathsf{Just(#1)}}}
-\newcommand{\Nothing}{\ensuremath{\mathsf{Nothing}}}
-\newcommand{\True}{\ensuremath{\mathsf{True}}}
-\newcommand{\False}{\ensuremath{\mathsf{False}}}
-\newcommand{\fn}[2]{\ensuremath{#1(#2)}}
-\newcommand{\Sk}{k^{\tau_m}_{\tau_r}}
-%\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1}^{\tau_m}_{\tau_r})}}
-\newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1})}}
-\newcommand{\SPred}[1]{\ensuremath{\mathsf{Pred}(#1)}}
-\newcommand{\SPath}[2]{\ensuremath{#1\,{::}\,#2}}
-\newcommand{\SPair}[3]{\ensuremath{\langle #1 {:} #2, #3 \rangle}}
-\newcommand{\SOption}[1]{\ensuremath{(#1)?}}
-\newcommand{\SComp}[3]{\ensuremath{[ #1 \mid #2 \in #3 ]}}
-\newcommand{\Env}{\ensuremath{\mathcal{E}}}
-\newcommand{\ENil}{\ensuremath{\bullet}}
-\newcommand{\yields}{\ensuremath{\rightsquigarrow}}
-\newcommand{\valid}[1]{\ensuremath{\mathit{valid}(#1)}}
-\newcommand{\typ}[1]{\ensuremath{\mathit{#1}}}
-\newcommand{\meta}{\typ{att}}
-\newcommand{\REP}{\ensuremath{\mathit{REP}}}
-\newcommand{\MD}{\ensuremath{\mathit{MD}}}
-\newcommand{\md}[1]{\ensuremath{(#1)~\mathit{md}}}
-\newcommand{\eval}[3]{\ensuremath{[\![#1]\!]^{#2}_{#3}}}
-\newcommand{\pfile}{\ensuremath{\mathsf{File}}}
-\newcommand{\pdir}{\ensuremath{\mathsf{Dir}}}
-\newcommand{\plink}{\ensuremath{\mathsf{Link}}}
-\newcommand{\att}{\ensuremath{\mathsf{a}}}
-\newcommand{\defaultatt}{\ensuremath{\att_{\mathsf{default}}}}
-\newcommand{\repty}[1]{{\cal R}[\![ #1 ]\!]}
-\newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
-\newcommand{\loadkname}[1]{\ensuremath{\mathit{load}_{#1}}}
-\newcommand{\storekname}[1]{\ensuremath{\mathit{store}_{#1}}}
-\newcommand{\storek}[5]{\fn{\storekname{#1}}{#2,#3,#4,#5}}
-\newcommand{\loadk}[4]{\fn{\loadkname{#1}}{#2,#3,#4}}
-\newcommand{\stringty}{{string}}
-\newcommand{\metapdty}{\meta}
-%\newcommand{\load}[5]{#1;#3~\models~#4~~#2~\rhd~(#5) }
-%\newcommand{\store}[6]{#1;#3~\models~#5~~(#6)~\lhd~(#2,#4) }
-\newcommand{\load}[5]{#1;#3;#4 \vdash #2~\rhd~(#5) }
-\newcommand{\store}[6]{#1;#3;#5 \vdash (#6)~\lhd~(#2,#4) }
 
 \begin{figure}
 \[
-\begin{array}{@{}r@{\,}r@{\,}c@{\,}l}
-\textit{Strings}        & n & \in & \Sigma^{\ast} \\[1ex]
-\textit{Paths}          & r & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
-\textit{Attributes}     & \att  & \bnfdef & \dots\\[1ex]
-\textit{Contents}       & T  & \bnfdef & \File{n} \bnfalt \Link{r} \bnfalt \Dir{ \Set{n_1,\dots,n_k} }\\[1ex]
-\textit{File sys.}      & F & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots, r_k \mapsto (\att_k,T_k) }\\[1ex]
-\textit{Values}         & v & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
-                        &   & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\dots,v_k}\\[1ex]
-\textit{Exprs.}         & e & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
-\textit{Envs.}          & \Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v \\[1ex]
-\textit{Specs.}         & s & \bnfdef & \Sk 
-                              \bnfalt \SPath{e}{s}
-                              \bnfalt \SPair{x}{s_1}{s_2} 
-                              \bnfalt \SComp{s}{x}{e}
-                              \bnfalt \SPred{e}
-                              \bnfalt \SOption{s}
+\begin{array}{@{}r@{\;}r@{\;}r@{\;}l@{\quad}l@{}}
+\textit{Strings}        & n    & \in & \Sigma^{\ast} \\[1ex]
+\textit{Paths}          & r    & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
+\textit{Attributes}     & \att & \bnfdef & \dots\\[1ex]
+\textit{Contents}       & T    & \bnfdef & \File{n} \bnfalt \Link{r} \bnfalt \Dir{ \Set{n_1,\dots,n_k} }\\[1ex]
+\textit{File Systems}   & F    & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots, r_l \mapsto (\att_k,T_l) }\\[1ex]
+\textit{Values}         & v    & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
+                        &      & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\dots,v_k}\\[1ex]
+\textit{Expressions}    & e    & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
+\textit{Environments}   & \Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v \\[1ex]
+\textit{Specifications} & s    & \bnfdef & 
+        \Sk            
+\bnfalt \SPath{e}{s}        
+\bnfalt \SPair{x}{s_1}{s_2} 
+\bnfalt \SComp{s}{x}{e}     
+\bnfalt \SPred{e}           
+\bnfalt \SOption{s}         
 \end{array}
 \]
-\label{fig:calculus-syntax}
 \caption{\forest{} calculus syntax}
+\label{fig:csyntax}
 \end{figure}
-
-\reviewer{... repeatedly refers to Figure 7 when I think it means
-  Figure 6.}
-
-\reviewer{In the semantics given for the core calculus, why are
-  ML-style types used instead of Haskell-style types?}
 
 This section describes a core calculus that formalizes the essential
 features of \forest{} precisely in a simple setting. It is inspired by
@@ -106,7 +38,7 @@ developed \forest{}.
 
 %\paragraph*{File system model.}
 %
-Figure~\ref{fig:calculus-syntax} presents the formal file system
+Figure~\ref{fig:csyntax} presents the formal file system
 model. A path $r$ is a sequence of strings\footnote{For simplicity, we
   ignore the special path elements ``..'' and ``.''.  It would be easy
   to add these features, at the cost of complicating the semantics.}
@@ -139,7 +71,7 @@ point ``upwards'' in the file system.
 
 %\paragraph{File system specifications.}
 %
-Figure~\ref{fig:calculus-syntax} also presents the syntax of file
+Figure~\ref{fig:csyntax} also presents the syntax of file
 system specifications $s$.  We leave the syntax of expression language
 abstract but assume that it contains values $v$, variables $x$, and
 other operators (of course, in the full \forest{} language,
@@ -272,7 +204,7 @@ s & \repty{s} = & \mdty{s} =  \\
 \end{array}
 \]
 \caption{\forest{} calculus representation and metadata types}
-\label{fig:calculus-types}
+\label{fig:ctypes}
 \end{figure}
 
 \begin{figure*}
@@ -316,7 +248,7 @@ s & \repty{s} = & \mdty{s} =  \\
 \\[1.5em]
 \infrule
 { r \not\in \dom{F} }
-{ \load{\Env}{F}{r}{ \SOption{s_1} }{ \Nothing,(\False,\Nothing) } }
+{ \load{\Env}{F}{r}{ \SOption{s_1} }{ \Nothing,(\True,\Nothing) } }
 { }
 \\[1.5em]
 \infrule
@@ -373,23 +305,21 @@ s & \repty{s} = & \mdty{s} =  \\
 { }
 \\[1.5em]
 \infrule
-{ \begin{array}{c}
-  v = \Nothing \vee d = \Nothing\\
-  \phi' = \lambda F'.~ (v = \Nothing) \wedge (d = \Nothing) \wedge \neg b \wedge r \not\in \dom{F'}
-  \end{array} }
-{ \store{\Env}{F}{r}{ v,(b,d) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
+{ \phi' = \lambda F'.~(d = \Nothing) \wedge b \wedge r \not\in \dom{F'} }
+{ \store{\Env}{F}{r}{ \Nothing,(b,d) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
+{ }
+\\[1.5em]
+\infrule
+{ \phi' = \lambda F'.~ (v = \Nothing) \wedge b \wedge r \not\in \dom{F'} }
+{ \store{\Env}{F}{r}{ v,(b,\Nothing) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
 { }
 \end{array}
 \]
 \end{minipage}
 \centerline{\hfill (a) \hfill\hfill \hspace*{.05\textwidth} (b) \hfill}
 \caption{\forest{} calculus semantics for (a) loading and (b) storing}
-\label{fig:calculus-semantics}
+\label{fig:csemantics}
 \end{figure*}
-
-\reviewer{Why does the second-last rule in the first column return
-  "False" as its generic metadata?  Isn't that a signal of an error,
-  even though "maybe" formats allow for missing data?}
 
 \subsection{Calculus Semantics}
 %
@@ -398,7 +328,7 @@ definitions, one for each of the four major artifacts generated by the
 \forest{} compiler.
 
 \paragraph*{Type Definitions.}
-Figure~\ref{fig:calculus-types} defines types for the representations
+Figure~\ref{fig:csemantics} defines types for the representations
 ($\repty{s}$) and metadata ($\mdty{s}$) generated by specifications
 $s$. The types for constants $\Sk$ are read off from their annotations
 while the types for other specifications are constructed from their
@@ -418,7 +348,7 @@ structure and $\False$ otherwise.
 
 \paragraph*{Semantics of Loading and Storing.}
 The inference rules on the left side of
-Figure~\ref{fig:calculus-semantics} define the semantics of the load
+Figure~\ref{fig:csemantics} define the semantics of the load
 function. Reading from right to left, the judgment 
 $\load{\Env}{F}{r}{s}{v,d}$ states one can obtain the pair $(v,d)$ of
 representation and metadata, by materializing components
@@ -448,7 +378,7 @@ exists in the file system, injecting the result into the maybe type
 using $\mathsf{Just}$, and otherwise returns $\Nothing$.
 
 The inference rules on the right side of
-Figure~\ref{fig:calculus-semantics} define the store function. The
+Figure~\ref{fig:csemantics} define the store function. The
 judgment $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$ states that in
 environment $\Env$ storing $(v,d)$ into file system $F$ using
 specification $s$ yields the file system $F'$ and predicate
@@ -684,10 +614,10 @@ By the definition of the load and store functions we have
 v &=& \Nothing\\
 d &=& (b,d_1)\\
 d_1 &=& \Nothing\\
-b &=& \False\\
+b &=& \True\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d_1 = \Nothing) \wedge (\neg b) \wedge  (r \not\in \dom{F'})
+\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d_1 = \Nothing) \wedge b \wedge  (r \not\in \dom{F'})
 \end{array}
 \]
 We immediately have $F' = F$ and $\phi'(F')$, which finishes the case
@@ -929,15 +859,15 @@ By the definition of the store and load functions we have
 \[
 \begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d = \Nothing) \wedge (\neg b) \wedge (r \not\in \dom{F'})\\
+\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d = \Nothing) \wedge b \wedge (r \not\in \dom{F'})\\
 \end{array}\hspace*{2cm}\begin{array}{rcl}
 v' &=& \Nothing\\
-b' &=& \False\\
+b' &=& \True\\
 d' &=& (b',\Nothing)\\
 \end{array}
 \]
 As $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $v = \Nothing$ and $d
-= \Nothing$ and $\neg b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
+= \Nothing$ and $b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
   G_2}$. Thus, we immediately have $v' = v$ and $b' = b$, which finishes the case and
 the inductive proof. \hfill \qed
 \end{description}
