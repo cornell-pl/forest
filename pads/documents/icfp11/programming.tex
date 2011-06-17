@@ -76,9 +76,25 @@ add a third phase in which they store updated structures back to the
 filestore.
 
 To facilitate this style of programming, the \forest{} compiler
-generates several Haskell functions and types from every \forest{}
-description.\footnote{The collection of generated types and functions 
-together form an instance of the \cd{Forest} type class.
+generates several Haskell types and functions from every \forest{}
+declaration.  Collectively, these types and functions define an instance
+of the \cd{Forest} type class:
+\begin{code}
+\kw{class} (Data rep, ForestMD md) 
+      \kw{=>} Forest rep md | rep -> md  \kw{where}
+   load     :: FilePath -> IO(rep, md)
+   manifest :: (rep,md) -> IO Manifest
+   ...
+\end{code}
+In this type class, the type \cd{rep} is the generated in-memory
+representation type
+of the corresponding on-disk data.  The type \cd{md} is the generated type for the associated metadata.
+The \cd{ForestMD} type class provides
+operations for manipulating \forest{} metadata; all generated metadata
+types belong to this type class.
+\cut{
+\footnote{For each \forest{} type declaration, the
+  compiler makes the new type an instance of the \cd{Forest} type class.
 %
 \reviewer{A footnote says that the generated types and functions for a
 particular filestore format form a single instance of a type class.
@@ -87,13 +103,12 @@ instance, so that you don't need to declare a *\_load and *\_manifest
 function for each type, but rather make these operations methods of
 the new type class?}}
 %
-It generates a \emph{load function}, which traverses the
+}
+
+The generated load function lazily traverses the
 file system and reads the files, directories, and symbolic links
-mentioned in the description into a structured object in memory; 
-it
-generates a Haskell type for the in-memory \emph{representation} of
-the data produced by the load function; and it generates a Haskell
-type for the \emph{metadata} associated with the representation. 
+mentioned in the description into a pair of the in-memory
+representation and its metadata.
 To reverse the process of reading data in to memory, \forest{}
 also generates a \emph{manifest function}, which reads an in-memory
 data structure, writes its contents out to disk in a temporary
@@ -122,10 +137,16 @@ are explained in further depth in Section~\ref{sec:theory}.
 As an example, consider the \coral{} logs described in
 Figure~\ref{fig:coral-description}.  The corresponding load and store
 functions, the representation types, and the metadata types appear in
-Figure~\ref{fig:coral-aux}. Note that the structure of each of these
+Figure~\ref{fig:coral-aux}.\footnote{In the following examples, we use
+  type-specific names such as \cd{dat\_load} and
+  \cd{dat\_manifest}, rather than the overloaded names \cd{load} and \cd{manifest},
+  so the types area clear to the reader.}
+Note that the structure of each of these
 artifacts mirrors the structure of the \forest{}
 description that generated them. This close correspondence makes it
-easy for programmers to write programs using these \forest{}-generated artifacts.
+easy for programmers to write programs using these \forest{}-generated
+artifacts.
+
 %%Note that when storing freshly computed data, one often needs
 %%a metadata structure.  The type-directed function \cd{f_default}
 %%listed in Figure~\ref{fig:coral-aux} computes default metadata
@@ -140,7 +161,7 @@ directory at that path:
 \begin{code}
 (rep,md) <- dat_load "/var/log/coral/dat"
 \end{code}
-Because \cd{Dat} is a comprehension, the \cd{rep} is a
+Because \cd{Dat} is a \forest{} list, the \cd{rep} is a Haskell
 list. More specifically, \cd{rep} has the form
 \begin{code}
 Coral [("planetab2.eecs.wsu.edu", Site [...]),
@@ -185,8 +206,8 @@ num_sites = \kw{case} rep \kw{of} Dat l -> List.length l
 \end{code}
 %
 More interestingly, since the internals of the web log are specified
-using \padshaskell{} (see \ifanon\auxmaterials{}\else the appendix\fi{}
-for details), it is straightforward to dig in to the file data and
+using \padshaskell{} (see the
+technical report~\cite{forest-techreport} for details), it is straightforward to dig in to the file data and
 combine it with file metadata or attributes in queries.  For example,
 to calculate the time when statistics were last reported for each
 site, we can zip the lists in \cd{rep} and \cd{md} together and
@@ -205,16 +226,12 @@ sites_mod () =
 As this example shows, \forest{} blurs the distinction between data
 represented on disk and in memory. After writing a suitable \forest{}
 description, programmers can write programs that work on file system
-data as if it were in memory. Moreover, because Forest uses lazy I/O
+data as if it were in memory. Moreover, because Forest uses Haskell's
+lazy I/O 
 operations, many simple programs do not require constructing an
 explicit representation of the entire directory being loaded in
 memory---a good thing as the directory of \coral{} logs contains
 approximately 1GB of data!
-%
-\reviewer{By "Forest uses lazy I/O operations" (page 7), do you mean
-  "Haskell uses lazy I/O operations"?  Or does Forest also have its
-  own I/O operations?}
-%
 Instead, the load functions only read the portions of the file system
 that are needed to compute the result---in this case, only the site
 directories and not the gzipped log files contained within them.
