@@ -3,23 +3,24 @@
 
 \begin{figure}
 \[
-\begin{array}{@{}r@{\;}r@{\;}r@{\;}l@{\quad}l@{}}
-\textit{Strings}        & n    & \in & \Sigma^{\ast} \\[1ex]
-\textit{Paths}          & r    & \bnfdef & \PNil \mid \PCons{r}{n} \\[1ex]
-\textit{Attributes}     & \att & \bnfdef & \dots\\[1ex]
-\textit{Contents}       & T    & \bnfdef & \File{n} \bnfalt \Link{r} \bnfalt \Dir{ \Set{n_1,\dots,n_k} }\\[1ex]
-\textit{File Systems}   & F    & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \dots, r_l \mapsto (\att_k,T_l) }\\[1ex]
-\textit{Values}         & v    & \bnfdef & \att \bnfalt n \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2) \\
-                        &      & \bnfalt & \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\dots,v_k}\\[1ex]
-\textit{Expressions}    & e    & \bnfdef & x \bnfalt v \bnfalt \dots \\[1ex]
-\textit{Environments}   & \Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v \\[1ex]
-\textit{Specifications} & s    & \bnfdef & 
-        \Sk            
-\bnfalt \SPath{e}{s}        
-\bnfalt \SPair{x}{s_1}{s_2} 
-\bnfalt \SComp{s}{x}{e}     
-\bnfalt \SPred{e}           
-\bnfalt \SOption{s}         
+\begin{array}{r@{\;}c@{\;}l@{\quad}l@{}}
+\multicolumn{3}{@{}l}{\fbox{\textit{Basic Definitions}}}\\[1ex]
+n    & \in & \Sigma^{\ast} \\[.5ex]
+b    & \bnfdef & \True \bnfalt \False\\[.5ex]
+v    & \bnfdef & n \bnfalt b \bnfalt r \bnfalt () \bnfalt (v_1,v_2) \bnfalt \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\ldots,v_k}\\[.5ex]
+\tau & \bnfdef & \typ{Integer} \bnfalt \typ{Bool} \bnfalt \typ{()} \bnfalt (\tau_1,\tau_2) \bnfalt \typ{Maybe}~\tau \bnfalt \List{\tau} \bnfalt \dots\\[.5ex]
+\Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v \\[.5ex]
+e    & \bnfdef & x \bnfalt v \bnfalt \dots \\[2ex]
+%
+\multicolumn{3}{@{}l}{\fbox{\textit{File System Model}}}\\[1ex]
+\att & \bnfdef & \dots\\[.5ex]
+r    & \bnfdef & \PNil \mid \PCons{r}{n} \\[.5ex]
+T    & \bnfdef & \File{n} \bnfalt \Link{r} \bnfalt \Dir{ \Set{n_1,\ldots,n_k} }\\[.5ex]
+F    & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \ldots, r_l \mapsto (\att_k,T_l) }\\[2ex]
+%
+\multicolumn{3}{@{}l}{\fbox{\textit{Forest Specifications}}}\\[1ex]
+s    & \bnfdef & \Sk \bnfalt \SPath{e}{s} \bnfalt \SPair{x}{s_1}{s_2} \bnfalt 
+                 \SComp{s}{x}{e} \bnfalt \SPred{e} \bnfalt \SOption{s}         
 \end{array}
 \]
 \caption{\forest{} calculus syntax}
@@ -193,14 +194,17 @@ specifications are written as $\SOption{s}$ in the calculus.
 \begin{figure}
 \[
 \begin{array}{l|l|l}
-s & \repty{s} = & \mdty{s} =  \\
 \hline
-\Sk & \tau_r &  \tau_m~\mathit{md} \\
-\SPath{e}{s} & \repty{s} & \mdty{s} \\
-\SPair{x}{s_1}{s_2} & \repty{s_1} \times \repty{s_2} & \md{\mdty{s_1} \times \mdty{s_2}} \\
-\SComp{s}{x}{e} & \repty{s}~\typ{list} & \md{\mdty{s}~\typ{list}}    \\
-\SPred{e} & \typ{unit} & \typ{unit}~\mathit{md}\\
-\SOption{s} & \repty{s}~\typ{option} & \md{\mdty{s}~\typ{option}} %\\
+& & \\[-.85em]
+s & \repty{s} & \mdty{s} \\[.5ex]
+\hline
+& & \\[-.85em]
+\Sk & \tau_r &  \md{\tau_m} \\[.5ex]
+\SPath{e}{s} & \repty{s} & \mdty{s} \\[.5ex]
+\SPair{x}{s_1}{s_2} & (\repty{s_1}, \repty{s_2}) & \md{(\mdty{s_1}, \mdty{s_2})} \\[.5ex]
+\SComp{s}{x}{e} & \List{\repty{s}} & \md{\List{\mdty{s}}}\\[.5ex]
+\SPred{e} & () & \md{()}\\[.5ex]
+\SOption{s} & \typ{Maybe}~\repty{s} & \md{(\typ{Maybe}~\mdty{s})} 
 \end{array}
 \]
 \caption{\forest{} calculus representation and metadata types}
@@ -234,7 +238,7 @@ s & \repty{s} = & \mdty{s} =  \\
 \\[1.5em]
 \infrule
 { \begin{array}{c}
-  \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_k ]\\
+  \eval{e}{\Env,r}{\List{tau}} = [w_1,\dots,w_k ]\\
   \forall i \in \{1,\dots,k\}.~\load{\Env[x \mapsto w_i]}{F}{r}{s}{v_i,d_i}\\
   b = \bigwedge_i^k \valid{d_i} \quad \mathit{vs} = [v_1,\dots,v_k] \quad \mathit{ds} = [d_1,\dots,d_k] 
   \end{array} }
@@ -284,7 +288,7 @@ s & \repty{s} = & \mdty{s} =  \\
 \infrule
 { \begin{array}{c}  
   \mathit{vs} = [v_1,\dots,v_j] \quad \mathit{ds} = [d_1,\dots,d_l]\\
-  \eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ] \quad  k = \min{(j,l,m)} \\
+  \eval{e}{\Env,r}{\List{\tau}} = [w_1,\dots,w_m ] \quad  k = \min{(j,l,m)} \\
   \forall i \in \{1,\dots,k\}.~\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
   \phi' = \lambda F'.~ (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
   \end{array} }
@@ -333,13 +337,13 @@ Figure~\ref{fig:csemantics} defines types for the representations
 $s$. The types for constants $\Sk$ are read off from their annotations
 while the types for other specifications are constructed from their
 structure in the obvious way---\eg, the type of representations for
-\SPair{x}{s_1}{s_2} is a product $(\repty{s_1} \times
-\repty{s_2})$. The type constructor $\mathit{md}$ provides a uniform
-representation for metadata and is defined as follows:
+\SPair{x}{s_1}{s_2} is a product $(\repty{s_1}, \repty{s_2})$. The
+type constructor $\mathit{Md}$ provides a uniform representation for
+metadata and is defined as follows:
 \[
 \begin{array}{lcl}
-\tau~\mathit{md} & = & \typ{header} \times \tau \\
-\typ{header} & = & \typ{bool} 
+\md~{\tau} & = & (\typ{Header}, \tau) \\
+\typ{Beader} & = & \typ{Bool} 
 \end{array}
 \]
 The function $\valid{d}$ extracts the boolean from the metadata
@@ -547,7 +551,7 @@ the case.
 By the definitions of the load and store functions we have 
 \[ 
 \begin{array}{l}
-\eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_k ]\\
+\eval{e}{\Env,r}{\List{tau}} = [w_1,\dots,w_k ]\\
 \forall i \in \{1,...,k\}.\,\load{\Env[ x \mapsto w_i]}{F}{r}{s_1}{v_i,d_i}\\
 \forall i \in \{1,...,k\}.\,\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
 \end{array}\hspace*{.75cm}\begin{array}{rcl}
@@ -750,7 +754,7 @@ By the definition of the store function we have
 \[
 \begin{array}{l}
 \forall i \in \{1,\dots,k\}.\,\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}\\
-\eval{e}{\Env,r}{(\tau\ \mathit{list})} = [w_1,\dots,w_m ]\\
+\eval{e}{\Env,r}{\List{tau}} = [w_1,\dots,w_m ]\\
 \end{array}\hspace*{.75cm}\begin{array}{rcl}
 v &=& [v_1,\dots,v_j]\\
 d &=& [d_1,\dots,d_l]\\
