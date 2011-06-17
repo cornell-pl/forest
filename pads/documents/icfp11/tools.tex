@@ -1,6 +1,6 @@
 \section{Tools}
 \label{sec:tools}
-
+\cut{
 \reviewer{The generic tools [...] don't seem to provide any value over
   tools that work directly on conventional, schema-less filesystem
   directory trees.  The only example where I'm not sure about this is
@@ -10,20 +10,20 @@
   Forest only because of some advantage that comes from working with
   in-memory data structures?  Does the use of schema-specialized data
   structures improve efficiency in practice?}
-
+}
 \reviewer{It's good to have these tools, but it's easy to imagine how
   they work.  They don't need an entire page.}
 
 Third-party developers can use generic programming~\cite{Lammel+:syb} to
 generate tools that will work for any \filestore{} that has a
-\forest{} description.  An advantage of these tools, compared to tools
-that work directly on the untyped file system, is that they are
+\forest{} description.  An advantage of these tools compared to tools
+that work directly on the untyped file system is that they are
 specific to the fragment of the file system relevant to the
 \filestore{}.  This fragment can be difficult to specify when using
 conventional tools since it can rely on the contents of configuration
-files, file naming conventions, file system attributes, \etc
-It is precisely these relationships that are captured concisely in
-\forest{} descriptions; tools written to use \forest{} specifications
+files, file naming conventions, file system attributes, \etc\/
+It is precisely these relationships that \forest{} descriptions
+capture concisely; tools written to use \forest{} specifications 
 can leverage that information.
 
 As a proof of concept, we have written a
@@ -183,7 +183,7 @@ programmer productivity as it is
 easier for a programmer to edit a generated description than to
 start from scratch.   Our first tool in this vein is simple;
 a more sophisticated variant would collapse records of files
-into comprehensions when a width limit was exceeded or
+into lists when a width limit was exceeded or
 other criteria were met.  Another variant might
 collapse deeply nested directories into a universal directory
 description when a depth limit was exceeded.
