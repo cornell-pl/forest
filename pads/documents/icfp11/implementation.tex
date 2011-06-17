@@ -1,6 +1,6 @@
 \section{Implementation}
 \label{sec:implementation}
-
+\cut{
 \reviewer{I don't understand how laziness is used to avoid loading
   unneeded parts of the filestore.  Perhaps this uses some standard
   Haskell feature that I'm unaware of, but I'd like to see more
@@ -16,21 +16,25 @@
 \reviewer{It's unclear exactly how Forest gets translated into
   Haskell, and if this process depends crucially on the kind of
   approach to generics used (TemplateHaskell vs SYB vs..).}
+}
 
-We have fully implemented the \forest{} language and anticipate making
-it publicly available within the next few months.
+We have implemented the \forest{} language; the current
+implementation is available from the \forest{} web
+site:~\url{forestproj.org}. 
 \haskell{} provides powerful language features and libraries that
-greatly facilitated the implementation of \forest{}.  The most obvious
+greatly facilitated implementation of \forest{}.  The most obvious
 of these features is the quasiquotation mechanism~\cite{Mainland:quasi}
-we used to embed \forest{} into \haskell{}.  This mechanism
-allowed us to enjoy the benefits of being an embedded domain-specific
+that we used to embed \forest{} into \haskell{}.  This mechanism
+provided the benefits of being an embedded domain-specific
 language without having to sacrifice the flexibility of
 defining our own syntax. To use quasiquoting, we defined a \haskell{}
 value \cd{forest} of type \cd{QuasiQuoter} which specifies how to
-convert an input string representing a \forest{} declaration into the
+convert an input string representing a sequence of \forest{} declarations into the
 \template{}~\cite{Sheard+:templatehaskell} 
 data structures that represent the syntax of the
 corresponding collection of \haskell{} declarations.
+The Haskell compiler calls the \cd{forest} ``compilation'' function 
+during the compilation of any Haskell source file containing a \forest{} quasiquotation.
 The quasiquoted syntax \cd{[forest| <input> |]}
 is legal anywhere the identifier \cd{forest} is in scope.
 When the \haskell{} compiler processes this declaration, it first
@@ -42,7 +46,13 @@ supported quoting only expression and pattern forms.  Simon Peyton
 Jones extended the mechanism to permit declaration and type
 quasi-quoting partly to enable the \forest{} implementation.  We used
 this same approach to implement \padshaskell{}, which we built
-concomitantly. 
+concomitantly.  
+
+Note that in implementing \forest{}, we had to use \template{}
+rather than any of the other libraries that support generic programming,
+both because that is what the quasiquote library expects and
+because we need to generate type and datatype declarations.  Such
+declarations can only be generated at compile time.
 
 \paragraph{Parsing.}  
 We used the parsec 3.1.0 parser
@@ -76,4 +86,33 @@ this combination of features, we will be able to type check \forest{}
 sources directly.
 %, yielding a fully satisfactory embedded
 %domain-specific language.
+
+\paragraph{Runtime}
+Although \forest{} facilitates treating the file system as a
+persisent store, it does not provide the ACID guarantees familiar from
+databases.  None of the \filestore{}s we
+have encountered in practice are implemented in a system that provides
+such support; users instead have extra-linguistic mechanisms to make
+sure they do not corrupt their data with ill-timed concurrent reads
+and writes. That said, the \forest{} language does not preclude an
+implementation from providing such guarantees. We consider this issue
+very interesting future work. 
+
+\forest{} uses Haskell's \cd{unsafeInterleaveIO} to load each portion
+of a \filestore{} only when needed by an application program.
+We have not measured quantitatively the performance overhead of using
+\forest{} rather than directly accessing the files in Haskell or in a
+language with minimal overhead such as C. However, we have used our
+mostly-unoptimized implementation to manipulate filestores on the
+order of many gigabytes, so we anticipate the performance will be acceptable.  
+
+The running time of storing operations is proportional to the
+``footprint'' of the described \filestore{}. However, the \forest{}
+compiler generates \cd{load} and \cd{manifest} functions for each
+named type in a description. Thus, updates may be made at any
+granularity for which there is a named type, which is typically at the
+level of individual files. We plan to investigate better support for
+incremental updates in future work.
+
+
 
