@@ -9,7 +9,7 @@
   \else{#3}\fi
 }
 
-\newcommand{\reviewer}[1]{\textcolor{purple}{[\textbf{#1 --Reviewer}]}}
+\newcommand{\reviewer}[1]{\ifdraft\textcolor{purple}{[\textbf{#1 --Reviewer}]}\fi}
 
 \newcommand{\dpw}[1]{\Remark{dpw}{#1}{}}
 \newcommand{\kf}[1]{\Remark{kf}{#1}{}}
@@ -145,26 +145,26 @@
 \newcommand{\FDelete}[2]{\ensuremath{\FUpdate{F}{r}{\bot}}}
 \newcommand{\PNil}{\ensuremath{\cdot}}
 \newcommand{\PCons}[2]{\ensuremath{#1\,\textsf{/}\,#2}}
-\newcommand{\Just}[1]{\ensuremath{\mathsf{Just~#1}}}
-\newcommand{\Nothing}{\ensuremath{\mathsf{Nothing}}}
-\newcommand{\True}{\ensuremath{\mathsf{True}}}
-\newcommand{\False}{\ensuremath{\mathsf{False}}}
+\newcommand{\Just}[1]{\ensuremath{\mathit{Just~#1}}}
+\newcommand{\Nothing}{\ensuremath{\mathit{Nothing}}}
+\newcommand{\True}{\ensuremath{\mathit{True}}}
+\newcommand{\False}{\ensuremath{\mathit{False}}}
 \newcommand{\fn}[2]{\ensuremath{#1(#2)}}
-\newcommand{\Sk}{k^{\tau_m}_{\tau_r}}
+\newcommand{\Sk}{k_{\tau_1}^{\tau_2}}
 \newcommand{\SAdhoc}[1]{\ensuremath{\mathsf{Adhoc}({#1})}}
 \newcommand{\SPred}[1]{\ensuremath{\mathsf{P}(#1)}}
-\newcommand{\SPath}[2]{\ensuremath{#1\,{::}\,#2}}
+\newcommand{\SPath}[2]{\ensuremath{#1{::}#2}}
 \newcommand{\SPair}[3]{\ensuremath{\langle #1 {:} #2, #3 \rangle}}
 \newcommand{\SOption}[1]{\ensuremath{#1?}}
-\newcommand{\SComp}[3]{\ensuremath{[ #1 \mid #2 \in #3 ]}}
+\newcommand{\SComp}[3]{\ensuremath{[ #1\mid#2:#3 ]}}
 \newcommand{\Env}{\ensuremath{\mathcal{E}}}
 \newcommand{\ENil}{\ensuremath{\emptyset}}
 \newcommand{\yields}{\ensuremath{\rightsquigarrow}}
 \newcommand{\valid}[1]{\ensuremath{\mathit{valid}(#1)}}
 \newcommand{\typ}[1]{\ensuremath{\mathit{#1}}}
 \newcommand{\meta}{\typ{att}}
-\newcommand{\REP}{\ensuremath{\mathit{REP}}}
-\newcommand{\MD}{\ensuremath{\mathit{MD}}}
+\newcommand{\REP}{\ensuremath{\mathit{rep}}}
+\newcommand{\MD}{\ensuremath{\mathit{md}}}
 \newcommand{\md}[1]{\mathit{Md}~\ensuremath{#1}}
 \newcommand{\eval}[3]{\ensuremath{[\![#1]\!]^{#2}_{#3}}}
 \newcommand{\pfile}{\ensuremath{\mathsf{File}}}
@@ -172,6 +172,7 @@
 \newcommand{\plink}{\ensuremath{\mathsf{Link}}}
 \newcommand{\att}{\ensuremath{\mathit{a}}}
 \newcommand{\defaultatt}{\ensuremath{\att_{\mathsf{default}}}}
+\newcommand{\defaultmd}[1]{\ensuremath{d^{#1}_{\mathsf{default}}}}
 \newcommand{\repty}[1]{{\cal R}[\![ #1 ]\!]}
 \newcommand{\mdty}[1]{{\cal M}[\![ #1 ]\!]}
 \newcommand{\loadkname}[1]{\ensuremath{\mathit{load}_{#1}}}
@@ -180,5 +181,6 @@
 \newcommand{\loadk}[4]{\fn{\loadkname{#1}}{#2,#3,#4}}
 \newcommand{\stringty}{{string}}
 \newcommand{\metapdty}{\meta}
-\newcommand{\load}[5]{#1;#3;#4 \vdash #2~\rhd~(#5) }
-\newcommand{\store}[6]{#1;#3;#5 \vdash (#6)~\lhd~(#2,#4) }
+\newcommand{\load}[5]{#1;#3;#4 \vdash \mathsf{load}~#2~\rhd~(#5) }
+\newcommand{\store}[6]{#1;#3;#5 \vdash \mathsf{store}~(#2,#4)~\rhd~(#6) }
+\newcommand{\tdots}{\ensuremath{..}}

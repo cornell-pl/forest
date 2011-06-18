@@ -3,24 +3,23 @@
 
 \begin{figure}
 \[
-\begin{array}{r@{\;}c@{\;}l@{\quad}l@{}}
-\multicolumn{3}{@{}l}{\fbox{\textit{Basic Definitions}}}\\[1ex]
-n    & \in & \Sigma^{\ast} \\[.5ex]
-b    & \bnfdef & \True \bnfalt \False\\[.5ex]
-v    & \bnfdef & n \bnfalt b \bnfalt r \bnfalt () \bnfalt (v_1,v_2) \bnfalt \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\ldots,v_k}\\[.5ex]
-\tau & \bnfdef & \typ{Integer} \bnfalt \typ{Bool} \bnfalt \typ{()} \bnfalt (\tau_1,\tau_2) \bnfalt \typ{Maybe}~\tau \bnfalt \List{\tau} \bnfalt \dots\\[.5ex]
-\Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v \\[.5ex]
-e    & \bnfdef & x \bnfalt v \bnfalt \dots \\[2ex]
+\begin{array}{@{}l@{\;}r@{\;}r@{\;}l@{}}
+\multicolumn{4}{@{}l}{\fbox{\textit{Basic definitions}}}\\[1.5ex]
+\textit{Integers}     & n    & \in & \mathbb{Z}\\[1ex]
+\textit{Strings}      & u    & \in & \Sigma^{\ast}\\[1ex]
+\textit{Booleans}     & b    & \bnfdef & \True \bnfalt \False\\[1ex]
+\textit{Values}       & v    & \bnfdef & n \bnfalt u \bnfalt b \bnfalt \att \bnfalt r \bnfalt\\
+                      &      &         & () \bnfalt (v_1,v_2) \bnfalt \Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\tdots,v_n}\\[1ex]
+\textit{Types}        & \tau & \bnfdef & \typ{Int} \bnfalt \typ{Bool} \bnfalt \typ{()} \bnfalt (\tau_1,\tau_2) \bnfalt \typ{Maybe}~\tau \bnfalt \List{\tau}\\[1ex]
+\textit{Environments} & \Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v\\[1ex]
+\textit{Expressions}  & e    & \bnfdef & x \bnfalt \lambda x.~e \bnfalt e_1~e_2 \bnfalt \dots \\[2.5ex]
 %
-\multicolumn{3}{@{}l}{\fbox{\textit{File System Model}}}\\[1ex]
-\att & \bnfdef & \dots\\[.5ex]
-r    & \bnfdef & \PNil \mid \PCons{r}{n} \\[.5ex]
-T    & \bnfdef & \File{n} \bnfalt \Link{r} \bnfalt \Dir{ \Set{n_1,\ldots,n_k} }\\[.5ex]
-F    & \bnfdef & \Map{ r_1 \mapsto (\att_1,T_1), \ldots, r_l \mapsto (\att_k,T_l) }\\[2ex]
-%
-\multicolumn{3}{@{}l}{\fbox{\textit{Forest Specifications}}}\\[1ex]
-s    & \bnfdef & \Sk \bnfalt \SPath{e}{s} \bnfalt \SPair{x}{s_1}{s_2} \bnfalt 
-                 \SComp{s}{x}{e} \bnfalt \SPred{e} \bnfalt \SOption{s}         
+\multicolumn{4}{@{}l}{\fbox{\textit{Forest definitions}}}\\[1.5ex]
+\textit{Attributes}     & \att & \bnfdef & v\\[1ex]
+\textit{Paths}          & r    & \bnfdef & \PNil \mid \PCons{r}{u}\\[1ex]
+\textit{Contents}       & T    & \bnfdef & \File{u} \bnfalt \Link{r} \bnfalt \Dir{ \Set{u_1,\tdots,u_n} }\\[1ex]
+\textit{File systems}   & F    & \bnfdef & \Map{ \! r_1 \mapsto (\att_1,T_1), \tdots, r_n \mapsto (\att_k,T_n) \! }\\[1ex]
+\textit{Specifications} & s    & \bnfdef & \Sk \bnfalt \SPath{e}{s} \bnfalt \SPair{x}{s_1}{s_2} \bnfalt \SComp{s}{x}{e} \bnfalt \SPred{e} \bnfalt \SOption{s}
 \end{array}
 \]
 \caption{\forest{} calculus syntax}
@@ -90,7 +89,7 @@ environment $\Env$ at path $r$, yielding a value $v$ of type $\tau$.
 These file system specifications are parameterized over a collection
 of constants $\Sk$, which include specifications for files (\pfile),
 directories (\pdir), links (\plink), and \padshaskell{}-described
-files (\SAdhoc{b}). The annotations $\tau_r$ and $\tau_m$ supply the
+files (\SAdhoc{b}). The annotations $\tau_1$ and $\tau_2$ supply the
 internal types of the the representation and the constant-specific
 portion of the meta-data. The meta-variable $b$ ranges over
 bidirectional functions: in the forward direction, such functions load
@@ -199,7 +198,7 @@ specifications are written as $\SOption{s}$ in the calculus.
 s & \repty{s} & \mdty{s} \\[.5ex]
 \hline
 & & \\[-.85em]
-\Sk & \tau_r &  \md{\tau_m} \\[.5ex]
+\Sk & \tau_1 &  \md{\tau_2} \\[.5ex]
 \SPath{e}{s} & \repty{s} & \mdty{s} \\[.5ex]
 \SPair{x}{s_1}{s_2} & (\repty{s_1}, \repty{s_2}) & \md{(\mdty{s_1}, \mdty{s_2})} \\[.5ex]
 \SComp{s}{x}{e} & \List{\repty{s}} & \md{\List{\mdty{s}}}\\[.5ex]
@@ -213,54 +212,42 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 
 \begin{figure*}
 \begin{minipage}[t]{.45\textwidth}
-\vspace*{2em}
+\vspace*{3em}
 \fbox{$\load{\Env}{F}{r}{s}{v,d}$}
 \vspace*{1em}
 \[
 \begin{array}{c}
-\\[-2.5em]
-\infrule
+\inferrule
 { }
 { \load{\Env}{F}{r}{\Sk}{ \loadk{k}{\Env}{F}{r} } }
-{ }
-\\[1.5em]
-\infrule
+\\[2em]
+\inferrule
 { \load{\Env}{F}{\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}}{s}{v,d} }
 { \load{\Env}{F}{r}{\SPath{e}{s}}{v,d} }
-{ }
-\\[1.5em]
-\infrule
-{ \begin{array}{c}
-  \load{\Env}{F}{r}{s_1}{ v_1,d_1 } \\
-  \load{\Env[x \mapsto v_1]}{F}{r}{s_2}{ v_2,d_2 }\\
-  b = \valid{d_1} \wedge \valid{d_2}
-  \end{array} }
+\\[2em]
+\inferrule
+{ \load{\Env}{F}{r}{s_1}{ v_1,d_1 } \\\\
+  \load{(\Env,x_{\REP} \mapsto v_1,x_{\MD} \mapsto d_1)}{F}{r}{s_2}{ v_2,d_2 }\\\\
+  b = \valid{d_1} \wedge \valid{d_2} }
 { \load{\Env}{F}{r}{\SPair{x}{s_1}{s_2}}{ (v_1,v_2),(b, (d_1,d_2)) } }
-{ }
-\\[1.5em]
-\infrule
-{ \begin{array}{c}
-  \eval{e}{\Env,r}{\List{tau}} = [w_1,\dots,w_k ]\\
-  \forall i \in \{1,\dots,k\}.~\load{\Env[x \mapsto w_i]}{F}{r}{s}{v_i,d_i}\\
-  b = \bigwedge_i^k \valid{d_i} \quad \mathit{vs} = [v_1,\dots,v_k] \quad \mathit{ds} = [d_1,\dots,d_k] 
-  \end{array} }
+\\[2em]
+\inferrule
+{ \eval{e}{\Env,r}{\List{tau}} = [w_1,\dots,w_k ]\\\\
+  \forall i \in \{1,\dots,k\}.~\load{(\Env,x \mapsto w_i)}{F}{r}{s}{v_i,d_i}\\\\
+  b = \textstyle\bigwedge_i^k \valid{d_i} \quad \mathit{vs} = [v_1,\dots,v_k] \quad \mathit{ds} = [d_1,\dots,d_k] }
 { \load{\Env}{F}{r}{ \SComp{s}{x}{e} }{ \mathit{vs},(b,\mathit{ds}) } }
-{ }
-\\[1.5em]
-\infrule
+\\[2em]
+\inferrule
 { b = \eval{e}{\Env,r}{\mathit{bool}} }
 { \load{\Env}{F}{r}{ \SPred{e} }{ (),(b,()) } }
-{ }
-\\[1.5em]
-\infrule
+\\[2em]
+\inferrule
 { r \not\in \dom{F} }
 { \load{\Env}{F}{r}{ \SOption{s_1} }{ \Nothing,(\True,\Nothing) } }
-{ }
-\\[1.5em]
-\infrule
+\\[2em]
+\inferrule
 { r \in \dom{F} \quad \load{\Env}{F}{r}{s_1}{v_1,d_1} }
 { \load{\Env}{F}{r}{ \SOption{s_1} }{ \Just{v_1},(\valid{d_1},\Just{d_1}) } }
-{ }
 \end{array}
 \]
 \end{minipage}\hfill\vrule\hfill\begin{minipage}[t]{.5\textwidth}
@@ -268,58 +255,45 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 \vspace*{1em}
 \[
 \begin{array}{c}
-\\[-2.5em]
-\infrule
+\inferrule
 { }
 { \store{\Env}{F}{r}{v,d}{\Sk}{ \storek{k}{\Env}{F}{r}{v,d} } }
-{ }
-\\[1.5em]
-\infrule
+\\[2em]
+\inferrule
 { \store{\Env}{F}{\eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}}{v,d}{s}{F',\phi'} }
 { \store{\Env}{F}{r}{v,d}{\SPath{e}{s}}{F',\phi' } }
-{ }
-\\[1.5em]
-\infrule
-{ \begin{array}{c}
-  \store{\Env}{F}{r}{  v_1,d_1 }{s_1}{ F_1',\phi_1 } \\
-  \store{\Env[x \mapsto v_1]}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\
-  \phi' = \lambda F'.~ (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F')
-  \end{array} }
+\\[2em]
+\inferrule
+{ \store{\Env}{F}{r}{ v_1,d_1 }{s_1}{ F_1',\phi_1 } \\\\
+  \store{(\Env,x_{\REP} \mapsto v_1, x_{\MD} \mapsto d_1)}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\\\
+  \phi' = \lambda F'.~ (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F') }
 { \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F_1' \FAppend F_2',\phi' } }
-{ }
-\\[1.5em]
-\infrule
-{ \begin{array}{c}  
-  \mathit{vs} = [v_1,\dots,v_j] \quad \mathit{ds} = [d_1,\dots,d_l]\\
-  \eval{e}{\Env,r}{\List{\tau}} = [w_1,\dots,w_m ] \quad  k = \min{(j,l,m)} \\
-  \forall i \in \{1,\dots,k\}.~\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
-  \phi' = \lambda F'.~ (j = l = m) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
-  \end{array} }
+\\[2em]
+\inferrule
+{ \mathit{vs} = [v_1,\dots,v_j] \quad \mathit{ds} = [d_1,\dots,d_l]\\\\
+  \eval{e}{\Env,r}{\List{\tau}} = [w_1,\dots,w_m ] \quad  k = \min{(j,l,m)} \\\\
+  \forall i \in \{1,\dots,k\}.~\store{(\Env,x \mapsto w_i)}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\\\
+  \phi' = \lambda F'.~ (j = l = m) \wedge (b = \textstyle\bigwedge_i^k \valid{d_i}) \wedge (\textstyle\bigwedge_i^k \phi_i'(F')) }
 { \store{\Env}{F}{r}{\mathit{vs},(b,\mathit{ds})}{ \SComp{s}{x}{e} }{ F_1' \FAppend \dots \FAppend F_k',\phi' } }
-{ }
-\\[1.5em]
-\infrule
+\\[2em]
+\inferrule
 { \phi' = \lambda F'.~ (b = \eval{e}{\Env,r}{\mathit{bool}}) }
 { \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi' } }
-{ }
-\\[1.5em]
-\infrule
-{ \begin{array}{c}
-  \store{\Env}{F}{r}{ v_1,d_1 }{ s_1 }{ F',\phi_1' }\\
-  \phi' = \lambda F'.~ (b = \valid{d_1}) \wedge (r \in \dom{F'}) \wedge \phi_1'(F')
-  \end{array} }
+\\[2em]
+\inferrule
+{ \store{\Env}{F}{r}{ v_1,d_1 }{ s_1 }{ F',\phi_1' }\\\\
+  \phi' = \lambda F'.~ (b = \valid{d_1}) \wedge (r \in \dom{F'}) \wedge \phi_1'(F') }
 { \store{\Env}{F}{r}{ \Just{v_1},(b,\Just{d_1}) }{ \SOption{s_1} }{ F',\phi' } }
-{ }
-\\[1.5em]
-\infrule
+\\[2em]
+\inferrule
 { \phi' = \lambda F'.~(d = \Nothing) \wedge b \wedge r \not\in \dom{F'} }
 { \store{\Env}{F}{r}{ \Nothing,(b,d) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
-{ }
-\\[1.5em]
-\infrule
-{ \phi' = \lambda F'.~ (v = \Nothing) \wedge b \wedge r \not\in \dom{F'} }
-{ \store{\Env}{F}{r}{ v,(b,\Nothing) }{ \SOption{s_1} }{ \FDelete{F'}{r},\phi' } }
-{ }
+\\[2em]
+\inferrule
+{ \store{\Env}{F}{r}{ v_1,\defaultmd{s_1} }{ s_1 }{ F',\phi_1' }\\\\
+  \phi' = \lambda F'.~ \False }
+{ \store{\Env}{F}{r}{ \Just{v_1},(b,\Nothing) }{ \SOption{s_1} }{ F',\phi' } }
+\\[2em]
 \end{array}
 \]
 \end{minipage}
@@ -346,7 +320,7 @@ metadata and is defined as follows:
 \[
 \begin{array}{lcl}
 \md~{\tau} & = & (\typ{Header}, \tau) \\
-\typ{Beader} & = & \typ{Bool} 
+\typ{Header} & = & \typ{Bool} 
 \end{array}
 \]
 The function $\valid{d}$ extracts the boolean from the metadata
@@ -460,8 +434,6 @@ The first property of the \forest{} calculus is a basic type safety
 property, which states that the load function for
 specifications $s$ generates representations and metadata belonging to
 $\repty{s}$ and $\mdty{s}$ respectively.
-%The judgement $\turn v : \tau$ used below is standard; 
-%it states that value $v$ has type $\tau$.
 %
 \begin{proposition}[Type Safety]
   If $\load{\Env}{F}{r}{s}{v,d}$ and $\repty{s} = \tau_{\mathcal{R}}$
@@ -477,13 +449,18 @@ properties.
 %
 
 \deferproof{theorem}{loadstore}{LoadStore}{%
-  For all environments $\Env$, file systems $F$, paths $r$,
-  specifications $s$, representations $v$, and metadata $d$ with
-  $\load{\Env}{F}{r}{s}{v,d}$ and
-  $\store{\Env}{F}{r}{v,d}{s}{F',\phi}$ we have $F = F'$ and
-  $\phi'(F')$.}{%
-  The proof is by induction on $s$. We assume that $\loadkname{k}$ and
-  $\storekname{k}$ obey the theorem for every constant $\Sk$.
+  Let $\Env$ be an environment, $F$ a file system, $r$ a path, $s$ a
+  specification, $v$ a representation, and $d$ metadata.  If
+\[
+\begin{array}{c}
+\load{\Env}{F}{r}{s}{v,d} \\
+\store{\Env}{F}{r}{v,d}{s}{F',\phi}
+\end{array}
+\]
+then $F = F'$ and $\phi'(F')$.}
+%
+{ The proof is by induction on $s$. For every constant $\Sk$, we
+  assume that $\loadkname{k}$ and $\storekname{k}$ satisfy the theorem. 
 \begin{description}
 %%%
 %%% CONST
@@ -497,9 +474,9 @@ v,d  &=& \loadk{k}{\Env}{F}{r}\\
 F',\phi' &=& \storek{k}{\Env}{F}{r}{v,d}\\
 \end{array}
 \]
-By assumptions about the behavior of $\loadkname{k}$ and
-$\storekname{k}$, we have $F' = F$ and $\phi'(F')$, which finishes
-the case.
+By the assumptions about the behavior of $\loadkname{k}$ and
+$\storekname{k}$, we have $F' = F$ and $\phi'(F')$, which finishes the
+case.
 
 %%%
 %%% PATH
@@ -507,32 +484,36 @@ the case.
 \item[Case:] $s=\SPath{e}{s_1}$\\[1ex]
 %
 By the definitions of the load and store functions we have 
+%
 \[ 
 \begin{array}{l}
 \load{\Env}{F}{r'}{s_1}{v,d}\\
-\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}\\
-\end{array} \hspace*{2cm}
+\store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}
+\end{array} \hspace*{1cm}
 \begin{array}{rcl}
-r' &=& \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
+r' & = & \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
+\\
 \end{array}
 \]
+%
 By the induction hypothesis applied to $s_1$ we have $F' = F$ and
 $\phi'(F')$, which finishes the case.
 
 %%%
 %%% Pair
 %%%
-\item[Case:]$s = \SPair{x}{s_1}{s_2}$:]\\[1ex]
+\item[Case:]$s = \SPair{x}{s_1}{s_2}$\\[1ex]
 %
 By the definitions of the load and store functions we have 
 \[ 
 \begin{array}{l}
 \load{\Env}{F}{r}{s_1}{v_1,d_1}\\
+\load{\Env'}{F}{r}{s_2}{v_2,d_2}\\
 \store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}\\
-\load{\Env[x \mapsto v_1]}{F}{r}{s_2}{v_2,d_2}\\
-\store{\Env[x \mapsto v_1]}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
-\end{array} \hspace*{2cm}
+\store{\Env'}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
+\end{array} \hspace*{1cm}
 \begin{array}{rcl}
+\Env' &=& \Env,x_{\REP} \mapsto v_1, x_{\MD} \mapsto d_1\\
 b &= & \valid{d_1} \wedge \valid{d_2}\\
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
@@ -554,15 +535,15 @@ the case.
 By the definitions of the load and store functions we have 
 \[ 
 \begin{array}{l}
-\eval{e}{\Env,r}{\List{tau}} = [w_1,\dots,w_k ]\\
-\forall i \in \{1,...,k\}.\,\load{\Env[ x \mapsto w_i]}{F}{r}{s_1}{v_i,d_i}\\
-\forall i \in \{1,...,k\}.\,\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
+\eval{e}{\Env,r}{\List{tau}} = [w_1,\tdots,w_k ]\\
+\forall i \in \{1,...,k\}.\,\load{(\Env, x \mapsto w_i)}{F}{r}{s_1}{v_i,d_i}\\
+\forall i \in \{1,...,k\}.\,\store{(\Env, x \mapsto w_i)}{F}{r}{v_i,d_i}{s}{F_i',\phi_i'}\\
 \end{array}\hspace*{.75cm}\begin{array}{rcl}
-v &=& [v_1,\dots,v_k]\\
+v &=& [v_1,\tdots,v_k]\\
 b &= &\bigwedge_i^k \valid{d_i}\\
-d &=& (b,[d_1,\dots,d_k])\\
-F' &=& F_1' \FAppend \dots \FAppend F_k'\\
-\phi' &=& \lambda F'.~(k = k = k) \wedge (b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
+d &=& (b,[d_1,\tdots,d_k])\\
+F' &=& F_1' \FAppend \tdots \FAppend F_k'\\
+\phi' &=& \lambda F'.~(b = \bigwedge_i^k \valid{d_i}) \wedge (\bigwedge_i^k \phi_i'(F'))\\
 \end{array}
 \]
 By the induction hypothesis applied to $s$ ($k$ times), we have $F_i'
@@ -581,7 +562,7 @@ By the definition of the load and store functions we have
 v &=& ()\\
 d &=& (b,())\\
 b &=& \eval{e}{\Env,r}{\mathit{bool}}\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 F' &=& F\\
 \phi' &=& \lambda F'.~(b = \eval{e}{\Env,r}{\mathit{bool}})\\
 \end{array}
@@ -622,9 +603,9 @@ v &=& \Nothing\\
 d &=& (b,d_1)\\
 d_1 &=& \Nothing\\
 b &=& \True\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d_1 = \Nothing) \wedge b \wedge  (r \not\in \dom{F'})
+\phi' &=& \lambda F'.~(d_1 = \Nothing) \wedge b \wedge  (r \not\in \dom{F'})
 \end{array}
 \]
 We immediately have $F' = F$ and $\phi'(F')$, which finishes the case
@@ -633,22 +614,38 @@ and the inductive proof. \hfill \qed
 \end{description}
 }
 
-\deferproof{theorem}{storeload}{StoreLoad}{ For all environments
-  $\Env$, file systems $F$ and $F'$, paths $r$, specifications $s$,
-  representations $v$ and $v'$, metadata $d$ and $d'$, and constraints
-  $\phi'$ with $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$ and $\phi'(F')$
-  and $\load{\Env}{F'}{r}{s}{v',d'}$ we have $v' = v$ and $\valid{d} =
-  \valid{d'}$.}{%
-  We will prove a slightly stronger result that implies the theorem:
+\deferproof{theorem}{storeload}{StoreLoad}{ 
+%
+  Let $\Env$ be an environment, $F$ and $F'$ file systems, $r$ a path,
+  $s$ a specification, $v$ a representation, $d$ and $d'$ metadata,
+  and $\phi'$ a predicate. If 
+\[
+\begin{array}{c}
+\store{\Env}{F}{r}{v,d}{s}{F',\phi'}\\
+\phi'(F')\\
+\load{\Env}{F'}{r}{s}{v',d'}
+\end{array}
+\]
+then $v' = v$ and $\valid{d} = \valid{d'}$.}
+%
+{ We will prove a slightly stronger result that implies the theorem:
   for all environments $\Env$, file systems $F$, $G_1$, $G_2$, and
   $F'$, paths $r$, specifications $s$, representations $v$ and $v'$,
-  metadata $d$ and $d'$, and constraints $\phi'$ with
-  $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$ and $\phi'(G_1 \FAppend F'
-  \FAppend G_2)$ and $\load{\Env}{(G_1 \FAppend F' \FAppend
-    G_2)}{r}{s}{v',d'}$ we have $v' = v$ and $\valid{d} =
-  \valid{d'}$. The proof is by induction on $s$. We assume that
-  $\loadkname{k}$ and $\storekname{k}$ obey the theorem for every
-  constant $\Sk$.
+  metadata $d$ and $d'$, and constraints $\phi'$, if 
+%
+\[
+\begin{array}{c}
+  \store{\Env}{F}{r}{v,d}{s}{F',\phi'}\\
+  \phi'(G_1 \FAppend F' \FAppend G_2)\\
+  \load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r}{s}{v',d'}
+\end{array}
+\]
+%
+then $v' = v$ and $\valid{d} = \valid{d'}$. 
+
+The proof is by induction on $s$. For every constant $\Sk$, we assume
+that $\loadkname{k}$ and $\storekname{k}$ satisfy the strengthened
+property.
 \begin{description}
 %%%
 %%% Constant
@@ -675,9 +672,10 @@ By the definitions of the load and store functions we have
 \[
 \begin{array}{l}
 \store{\Env}{F}{r'}{v,d}{s_1}{F',\phi'}\\
-\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r'}{s_1}{v',d'}\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r'}{s_1}{v',d'}
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 r' &=& \eval{\PCons{r}{e}}{\Env,r}{\mathit{path}}\\
+\\
 \end{array}
 \]
 %
@@ -693,8 +691,8 @@ By the definition of the load function we have
 \[
 \begin{array}{l}
 \store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}\\
-\store{\Env[x \mapsto v_1]}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\store{(\Env, x \mapsto v_1)}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
 F' &=& F_1' \FAppend F_2'\\
@@ -728,8 +726,8 @@ By the definition of the load function we have
 \[ 
 \begin{array}{rcll}
 \load{\Env}{(G_1 \FAppend F_1 \FAppend (F_2 \FAppend G_2))}{r}{s_1}{v_1',d_1'}\\
-\load{\Env[x \mapsto v_1}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\load{(\Env, x \mapsto v_1)}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}\\
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 v' &=& (v_1',v_2')\\
 b' &= & \valid{d_1} \wedge \valid{d_2}\\
 d' &=& (b',(d_1',d_2'))\\
@@ -741,7 +739,7 @@ By the induction hypothesis applied to $s_1$ and $s_2$, we have
 \begin{array}{l}
 v_1' = v_1\\
 v_2' = v_2\\
-\end{array}\hspace*{2cm}\begin{array}{l}
+\end{array}\hspace*{1cm}\begin{array}{l}
 \valid{d_1} = \valid{d_1'}\\
 \valid{d_2} = \valid{d_2'}\\
 \end{array}
@@ -756,13 +754,13 @@ finishes the case.
 By the definition of the store function we have
 \[
 \begin{array}{l}
-\forall i \in \{1,\dots,k\}.\,\store{\Env[x \mapsto w_i]}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}\\
-\eval{e}{\Env,r}{\List{tau}} = [w_1,\dots,w_m ]\\
+\forall i \in \{1,\tdots,k\}.\,\store{(\Env, x \mapsto w_i)}{F}{r}{v_i,d_i}{s}{F_i',\phi_i}\\
+\eval{e}{\Env,r}{\List{tau}} = [w_1,\tdots,w_m ]\\
 \end{array}\hspace*{.75cm}\begin{array}{rcl}
-v &=& [v_1,\dots,v_j]\\
-d &=& [d_1,\dots,d_l]\\
+v &=& [v_1,\tdots,v_j]\\
+d &=& [d_1,\tdots,d_l]\\
 k &=& \min{(j,l,m)}\\
-F' &=& F_1' \FAppend \dots \FAppend F_k'\\
+F' &=& F_1' \FAppend \tdots \FAppend F_k'\\
 \phi &=& \lambda F'.~(j = k = l) \wedge (b = \bigwedge_i^k \valid{d_i}) \bigwedge_i^k \phi_i(F')\\
 \end{array}
 \]
@@ -771,38 +769,38 @@ By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have
 \begin{array}{l}
 k = j = l = m\\
 b = (\bigwedge_i^k \valid{d_i})\\
-\end{array}\hspace*{2cm}\begin{array}{l}
-\forall i \in \{1,\dots,k\}.\,\phi_i'(G_1 \FAppend F' \FAppend G_2) \\
+\end{array}\hspace*{1cm}\begin{array}{l}
+\forall i \in \{1,\tdots,k\}.\,\phi_i'(G_1 \FAppend F' \FAppend G_2) \\
 \end{array}
 \]
 %
 Let
 \[
-H_i = ((G_1\FAppend F_1\FAppend \dots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \dots \FAppend F_k \FAppend G_2))
+H_i = ((G_1\FAppend F_1\FAppend \tdots \FAppend F_{i-1}) \FAppend F_i \FAppend (F_{i+1} \FAppend \tdots \FAppend F_k \FAppend G_2))
 \]
 for $i$ from $1$ to $k$. As $(\FAppend)$ is associative we have,
 \[
-(G_1\FAppend (F_1\FAppend \dots \FAppend F_k)\FAppend G_2) = H_i \quad \text{for}~i \in \{1,\dots,k\}
+(G_1\FAppend (F_1\FAppend \tdots \FAppend F_k)\FAppend G_2) = H_i \quad \text{for}~i \in \{1,\tdots,k\}
 \]
 and hence:
 \[
-\phi_i'(H_i) \quad \text{for}~i \in \{1,\dots,k\}
+\phi_i'(H_i) \quad \text{for}~i \in \{1,\tdots,k\}
 \]
 %
 By the definition of the load function we also have 
 \[ 
 \begin{array}{l}
-\forall i \in \{1,\dots,k\}\,\load{\Env[ x \mapsto w_i]}{H_i}{r}{s_1}{v_i,d_i'}\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
-v' &=& [v_1',\dots,v_k']\\
+\forall i \in \{1,\tdots,k\}\,\load{(\Env, x \mapsto w_i)}{H_i}{r}{s_1}{v_i,d_i'}\\
+\end{array}\hspace*{1cm}\begin{array}{rcl}
+v' &=& [v_1',\tdots,v_k']\\
 b' &=& \bigwedge_i^k \valid{d_i'}\\
-d' &=& (b',[d_1',\dots,d_k'])\\
+d' &=& (b',[d_1',\tdots,d_k'])\\
 \end{array}
 \]
 %
 By the induction hypothesis applied to $s$ ($k$ times), we have $v_i'
 = v_i$ and $\valid{d_i'} = \valid{d_i}$ for = $i$ from $1$ to
-$k$. It follows that $[v_1,\dots,v_k] = [v_1',\dots,v_k']$ and $b =
+$k$. It follows that $[v_1,\tdots,v_k] = [v_1',\tdots,v_k']$ and $b =
 b'$, which finishes the case.
 
 %%%
@@ -817,7 +815,7 @@ v &=& ()\\
 d &=& ((),b)\\
 F' &=& F\\
 \phi' &=& \lambda F'.~(b = \eval{e}{\Env,r}{\mathit{bool}})\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 v' &=& ()\\
 d' &=& (b',())\\
 b' &=& \eval{e}{\Env,r}{\mathit{bool}}\\
@@ -832,15 +830,15 @@ b'$, which finishes the case.
 %%%
 \item[Case:] $s = \SOption{s_1}$\\[1ex]
 %
-We analyze two subcases:
+We analyze several subcases:
 \begin{description}
 \item[Subcase:] $v = \Just{v_1}$ and $d = (b,\Just{d_1})$\\[1ex]
 %
 By the definition of the store function we have
 \[
 \begin{array}{l}
-\store{\Env}{F}{r}{ v_1,d_1 }{s}{F',\phi_1'}\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\store{\Env}{F}{r}{ v_1,d_1 }{s_1}{F',\phi_1'}\\
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 \phi' &=& \lambda F'.~(b = \valid{d_1}) \wedge (r \in \dom{F}) \wedge \phi_1'(F')\\
 \end{array}
 \]
@@ -850,8 +848,8 @@ $r \in \dom{G_1 \FAppend F' \FAppend G_2}$.  By the definition of the
 load function we also have
 \[ 
 \begin{array}{rcll}
-\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r}{s}{v_1',d_1'}\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\load{\Env}{(G_1 \FAppend F' \FAppend G_2)}{r}{s_1}{v_1',d_1'}\\
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 v' &=& \Just{v_1'}\\
 b' &=& \valid{d_1'}\\
 d' &=& (b',\Just{d_1'})\\
@@ -860,24 +858,30 @@ d' &=& (b',\Just{d_1'})\\
 By the induction hypothesis applied to $s_1$ we have $v_1' = v_1$ and
 $b' = b$. It follows that $v' = v$.
 
-\item[Subcase:] $r \not\in \dom{F}$\\[1ex]
+\item[Subcase:] $v = \Nothing$\\[1ex]
 %
 By the definition of the store and load functions we have
 \[
 \begin{array}{rcl}
 F' &=& \FDelete{F}{r}\\
-\phi' &=& \lambda F'.~(v = \Nothing) \wedge (d = \Nothing) \wedge b \wedge (r \not\in \dom{F'})\\
-\end{array}\hspace*{2cm}\begin{array}{rcl}
+\phi' &=& \lambda F'.~(d = \Nothing) \wedge b \wedge (r \not\in \dom{F'})\\
+\end{array}\hspace*{1cm}\begin{array}{rcl}
 v' &=& \Nothing\\
 b' &=& \True\\
 d' &=& (b',\Nothing)\\
 \end{array}
 \]
-As $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $v = \Nothing$ and $d
+As $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $d
 = \Nothing$ and $b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
-  G_2}$. Thus, we immediately have $v' = v$ and $b' = b$, which finishes the case and
-the inductive proof. \hfill \qed
+  G_2}$. Thus, we immediately have $v' = v$ and $b' = b$. 
+\item[Subcase:] $v = \Just{v_1}$ and $d = \Nothing$\\[1ex]
+%
+Vacuously holds: by the definition of the store function we have
+$\phi' = \lambda F'.~\False$, which contradicts the assumption that
+$\phi'(G_1 \FAppend F' \FAppend G_2)$.
 \end{description}
+Thus, in each subcase we have $v' = v$ and $\valid{d} = \valid{d'}$,
+which finishes the subcase and the inductive proof. \hfill \qed
 \end{description}}
 
 \smallskip

@@ -1,13 +1,14 @@
-\documentclass[nocopyrightspace,natbib,preprint]{sigplanconf}
+\documentclass[natbib]{sigplanconf}
 
-\newif\ifdraft\drafttrue         %% set to false in final version
-\newif\ifappendix\appendixfalse  %% set to false in final version
+\newif\ifdraft\draftfalse        %% set to false in final version
+\newif\ifappendix\appendixtrue   %% set to false in final version
 \newif\ifanon\anonfalse          %% set to false in final version
 
 \usepackage{xspace,pads,amsmath,math-cmds,
-            math-envs,inference-rules,times,
+            math-envs,times,
             verbatim,alltt,multicol,proof,url}
 \usepackage{jnf-proof}
+\usepackage{mathpartir}
 \usepackage{xcolor}
 \definecolor{dkblue}{cmyk}{1,.65,0,.3}
 \definecolor{dkred}{cmyk}{0,1,.65,.34}
@@ -15,6 +16,7 @@
 \usepackage{epsfig}
 \usepackage{code} 
 \usepackage{tikz}
+\usepackage{balance}
 
 \begin{document}
 \input{definitions}
@@ -80,6 +82,7 @@ recommendations expressed in this material are those of the authors
 and do not necessarily reflect the views of the NSF or the ONR.
 
 \bibliographystyle{abbrv}
+\balance
 \bibliography{pads}
 
 \ifappendix
