@@ -52,7 +52,7 @@ less desirable.
 Rather than paying these costs, programmers often store data in
 the file system, using a combination of directory structure, file
 names, file contents, and symbolic links to organize the data.  We call such a
-representation of a coherent set of data a \textit{\filestore{}}.
+data representation a \textit{\filestore{}}.
 The ``query language'' for a \filestore{}
 is often a shell script or conventional programming language.
 
@@ -174,7 +174,7 @@ files (as opposed to entire file stores), inspired by past work
 on related data description languages~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml,fisher+:toplas}.
 This tight, seemless integration was a crucial design goal as it
 allows programmers to transition effortlessly
-between ordinary haskell data structures, file internals and 
+between ordinary \haskell{} data structures, file internals and 
 file collections, all in a uniform syntax.
 ~\dpw{I wanted to be positive as opposed to defensive about
 similarities between pads and forest.}
@@ -190,7 +190,7 @@ several of these tools including a generic query interface, a file
 system visualization tool, an access control permission checker, and a 
 series of UNIX-like scripting tools.  We have also built a simple
 description-inference tool to
-help users write a new description for a given an existing file system.
+help users write a new description for an existing file system.
 These tools are interesting in their
 own right and also as case studies of putting generic programming
 techniques into practice.  In addition, they provide evidence that
@@ -202,9 +202,8 @@ site~\cite{forest-web-site}.  In addition to delivering a useful tool,
 our engineering work here 
 has the auxiliary benefit of serving
 as a rich case study in domain-specific language implementation. 
-In fact, it has already had significant impact as such by influencing the 
-development of \haskell{} itself:  
-the \haskell{} team modified and extended  the
+In fact, it has already had significant impact as such:  
+the \haskell{} team modified and extended \haskell{}'s
 quasiquoting mechanism in response to our needs. 
 
 \item Section~\ref{sec:theory} describes the 
@@ -232,7 +231,6 @@ or tokens). Consequently,
 the language design, formal systems,
 semantic issues, and underlying implementation 
 technology are all entirely different.  
-\item Finally, Section~\ref{sec:conclusion} concludes.
 \end{itemize}
 
 %% \begin{itemize}

@@ -7,7 +7,7 @@
   of theoretical argument for why these features are "good"?}
 }
 
-Data stored in a \filestore{}s shares many characteristics of
+Data stored in \filestore{}s shares many characteristics of
 data stored in ordinary, in-memory programmer data structures.
 %Indeed, \filestore{}s are often merely a durable, readable representation of such
 %data structures.  
@@ -16,8 +16,8 @@ uses the same sort of language to describe \filestores{} as one uses to describe
 ordinary data structures --- the language of types. 
 Simple base
 types describe individual file system objects\footnote{We use the term
-``file system object'' or more simply ``object'' to denote either a
-file, or a directory, or a symbolic link.} and more complex types 
+\emph{file system object} or more simply \emph{object} to denote either a
+file, a directory, or a symbolic link.} and more complex types 
 describe organized collections of file system 
 objects. 
 This idea forms the basis for our design.
@@ -109,7 +109,7 @@ permissions, \etc{})  as well as file system attributes (owner, size, \etc{}).
 
 The effectiveness of the \forest{} language comes in part from the fact 
 that these three interpretations all arise from a single compact description.  
-Moreover to aid the programmer in navigating between interpretations, we
+Moreover, to aid the programmer in navigating between interpretations, we
 align the syntax of \forest{} with the syntax of \haskell{} where possible.
 For example, if the \haskell{} types for the in-memory representation and
 metadata are record types then the \forest{} syntax is designed to look similar
@@ -130,19 +130,19 @@ of \pads{} (which operates over sequence-based strings).
 As with
 \pads{}~\cite{fisher+:pads,fisher+:toplas,mandelbaum+:pads-ml}, we do
 not assume that a given \filestore{} conforms perfectly to its associated
-\forest{} description.  Instead, we check during the loading process
-the extent to which the \filestore{} conforms, marking discrepencies
+\forest{} description.  Instead, when loading data, we check that a 
+\filestore{} conforms and mark discrepencies
 in the metadata.  This design allows users to respond in
 application-specific ways to errors.  It also allows us to check
-dynamically the conditions implied by \forest{}'s dependent types,
-skirting issues of undecidability.\footnote{Validation that a file
+the arbitrarily complex conditions that may be specified by 
+\forest{}'s dependent types.\footnote{Validation that a file
 system obeys a Forest specification is akin type checking.  However,
-it is akin to type checking first-order values (trees and graphs)
-as opposed to type checking higher-order values (functions).
-Consequently, even though Forest has dependent types, type checking is 
-a simple linear traversal of the file system.  Forest does not
+it is akin to type checking closed, zero-order values (trees and graphs)
+as opposed to type checking parameterized, higher-order values (functions).
+Consequently, even though Forest has dependent types, type checking 
+is not algorithmically challenging.  For example, \forest{} does not
 have to decide equivalence of expressions with free variables as one  
-must do when type checking a dependent lambda calculus, for example.}  
+must do when type checking a dependent lambda calculus.}  
 Because \forest{} loads data
 lazily, this choice means errors will not be detected unless the user
 program needs to touch the portion of the \filestore{} with the

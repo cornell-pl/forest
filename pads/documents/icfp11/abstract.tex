@@ -20,12 +20,12 @@ also generates metadata that describes the degree to which the
 structures on the disk conform to the specification, making error
 detection easy. Hence, in a nutshell, \forest{} extends the
 rigorous discipline of typed 
-programming languages and many of their benefits to the untyped 
+programming languages, and many of their benefits, to the untyped 
 world of file systems.
 
 We have implemented \forest{} as an embedded domain-specific language
 in \haskell{}. In addition to generating infrastructure for reading,
-writing and checking file systems, our implementation generates a
+writing and checking file systems, our implementation generates 
 type class instances that make it easy to build generic tools that
 operate over arbitrary \filestores.  We illustrate the utility of
 this infrastructure by building a file system visualizer, a file access
