@@ -274,10 +274,10 @@ constructed data).
 
 \begin{code}
 let result = Stats \{ last = sites_mod ()
-                   , topk = topk 10\}
+                   , topk = topk 10 \}
 manifest <- stats_manifest 
   ( result
-  , stats_defaultMd result "/var/log/coral/stats")
+  , stats_defaultMd result "/var/log/coral/stats" )
 store manifest 
 \end{code}
 
