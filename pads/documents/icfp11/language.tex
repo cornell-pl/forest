@@ -8,38 +8,58 @@
 }
 
 Data stored in \filestore{}s shares many characteristics of
-data stored in ad hoc data files or in in-memory data structures.
-Consequently, we
-adopted a type-based metaphor for the \forest{} language: base
-types denote various kinds of files while type constructors describe 
-various kinds of file structures.  This design mirrors traditional
-type systems, so we based our design on an underlying type theory, 
-described in \secref{sec:theory}.   
+data stored in ordinary, in-memory programmer data structures.
+Indeed, \filestore{}s are often merely a durable, readable representation of such
+in-memory data structures.  Consequently, it is eminently sensible to describe
+\filestore{}s using the same sort of language that one uses to describe
+ordinary programmer data structures --- the language of types. 
+%Hence, 
+%\forest{} was designed as a 
+%type-based specification language.  
+In \forest{}, simple base
+types describe individual file system objects and more complex types 
+describe organized collections of file system objects.
+%This design mirrors traditional
+%type systems, so we based our design on an underlying type theory, 
+%described in \secref{sec:theory}.   
 
-We want to allow programers to move seamlessly between on-disk and
-in-memory representations of \filestore{} data, so we implemented
-\forest{} as an embedded domain-specific language.  This choice allows
-programmers to manipulate \filestore{} data almost as if it were
-simply stored in data structures in the host language.  We chose
-Haskell as the host language because its support for type-directed
-programming is useful for building tools that work over any \forest{}
-description.  As a bonus, Haskell's quasiquoting mechanism~\cite{Mainland:quasi} proved a
-useful way to implement \forest{}.  It enabled a smooth integration of
-the two languages while allowing us to control the syntax of \forest{}.  
-In designing the language, we strove to have \forest{}
-declarations look like extensions of the corresponding Haskell
-declarations so that programmers would have an intuitive understanding
-of the in-memory data structures generated for their \filestore{}s.
-Within this framework, we
-designed constructs that were sufficiently expressive to capture all
-the \filestore{}s we had seen in practice.
+\paragraph*{Embedding \forest{} in \haskell{}.}
+In order to define lightweight file-processing scripts easily, 
+programmers must be able to manipulate and transform file system 
+objects side-by-side with ordinary data structures.  Consequently,
+a language like \forest{} must be embedded within a more general
+host programming language.
+%and  move seamlessly between on-disk and
+%in-memory representations of \filestore{} data, so we implemented
+%\forest{} as an embedded domain-specific language.  
+%This choice allows
+%programmers to manipulate \filestore{} data almost as if it were
+%simply stored in data structures in the host language.  
+We chose
+Haskell as the host language primarily because of its rich support for 
+type-directed programming, which facilitates the construction of generic 
+tools that can operate over any \forest{}
+description.  As a bonus, \haskell{}'s quasiquoting 
+mechanism~\cite{Mainland:quasi} proved a
+useful way to implement \forest{}.  It enabled tight integration of
+the two languages, while admitting fine-grained control 
+over \forest{} syntax.
+  
+%% Given this host context, \forest{} declarations were designed to 
+%% look like extensions of the corresponding Haskell
+%% declarations.  This programmers would have an intuitive understanding
+%% of the in-memory data structures generated for their \filestore{}s.
+%% Within this framework, we
+%% developed constructs that were sufficiently expressive to capture all
+%% the \filestore{}s we had seen in practice.
 
-Since \forest{} is a domain-specific language embedded in Haskell
-using quasiquotes, \forest{}
-declarations can appear in normal Haskell files in any context
-expecting a declaration. To introduce new \forest{} declarations,
+%% Since \forest{} is a domain-specific language embedded in Haskell
+%% using quasiquotes, \forest{}
+%% declarations can appear in normal Haskell files in any context
+%% expecting a declaration.
+To introduce new \forest{} declarations within a \haskell{} program,
 the programmer simply opens the \forest{} sublanguage using
-Haskell's notation for quasiquotes:
+quasiquoting notation:
 \begin{code}
 [forest| ... forest declarations ... |]
 \end{code}
@@ -50,22 +70,52 @@ implement the \forest{} declarations.
 
 Once within the \forest{} sublanguage, the programmer writes
 declarations that resemble extended Haskell type declarations. 
-Each such type declaration serves three purposes: 
+Each such type declaration has three primary semantic interpretations: 
 \begin{enumerate}
-\item It describes a fragment of the file system.
-\item It specifies the structure of the in-memory {\em representation}
-    that will be constructed when the fragment is (lazily) loaded into a Haskell program. 
-\item It specifies the structure of the in-memory {\em metadata}
+\item An interpretation as an {\em expected on-disk shape} of a file system 
+    fragment.  
+\item An interpretation as an ordinary \haskell{} type for the in-memory {\em representation}
+    that will be constructed when the fragment is (lazily) loaded into 
+     a Haskell program. 
+\item An interpretation as an ordinary \haskell{} type for the in-memory 
+   {\em metadata}
     that will be generated when the fragment loaded.
 \end{enumerate}
+The first interpretation is used by a tool that, when supplied with
+a {\em current path}, validates that the file system rooted at that
+path has the correct shape.  If the expected shape is complicated,
+possibly involving several nested subshapes (and hence
+traversal through several subdirectories), the semantics of \forest{}
+dictates how the validator should adjust the current path 
+as it goes.
+The second interpretation is used by a tool
+that, when supplied with a current path, loads the matching file
+system fragment into memory and generates an in-memory data structure 
+to represent it -- the in-memory data structure is guaranteed to have the 
+corresponding \haskell{} type.
+The third interpretation is also used by the load tool.  It serves as the
+type for the metadata structure generated by the loader.
 Such metadata includes error information (missing file, insufficient
 permissions, \etc{})  as well as file system attributes (owner, size, \etc{}).
-Every \forest{} description is defined relative to a
-{\em current path} within the file system.  As 
-\forest{} matches a description against the file system, it 
-adjusts the current path to reflect its navigation.
-The effectiveness of the \forest{} language comes in part from the fact that these three 
-elements can all be specified in a single compact description.  
+%Every \forest{} description is defined relative to a
+%{\em current path} within the file system.  As 
+%\forest{} matches a description against the file system, it 
+%adjusts the current path to reflect its navigation.
+The effectiveness of the \forest{} language comes in part from the fact 
+that these three interpretations all arise from a single compact description.  
+Moreover to aid the programmer in navigating between interpretations, we
+align the syntax of \forest{} with the syntax of \haskell{} where possible.
+For example, if the \haskell{} types for the in-memory representation and
+metadata are record types then the \forest{} syntax is designed to look similar
+to a \haskell{} record type.  Likewise,  if the \haskell{} types for the in-memory representation and
+metadata are data types then the \forest{} syntax is designed to look similar
+to a \haskell{} data type.  
+
+These high-level design considerations were adopted
+from earlier work on \pads{}, though, as mentioned earlier,
+the semantics of \forest{} (which operates over graph-based file systems)
+is substantially different from the semantics
+of \pads{} (which operates over sequence-based strings).
 
 \paragraph{Errors.}
 As with
