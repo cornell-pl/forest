@@ -1,4 +1,4 @@
-\section{Tools}
+\section{Generic Tools}
 \label{sec:tools}
 \cut{
 \reviewer{The generic tools [...] don't seem to provide any value over
@@ -70,11 +70,14 @@ We map the \cd{fullpath} function over the resulting list of
 
 \subsection{File System Visualization}
 \fg{} generates a graphical representation of any directory structure
-that matches a \forest{} specification.  We generated the graph in~\figref{fig:student-pic} using  
+that matches a \forest{} specification.  We generated the graphs in 
+Figures~\ref{fig:student-pic} and \ref{fig:coral-pic} using  
 this tool.  In the default configuration, \fg{} uses boxes to denote
 directories and ovals to denote files. Borders of varying
 thickness distinguish between ASCII and binary files.  
 Dashed node boundaries indicate symbolic links and red nodes flag errors.
+\dpw{Change above sentence if we switch the graphviz pictures to do
+shading instead of red for errors.}
 
 The core functionality of \fg{} lies in the Haskell function \cd{mdToPDF}:
 \begin{code}
@@ -105,7 +108,7 @@ specifies how to map a value of type \cd{Forest\_md} into
 parameter, a user can customize the formatting of each node according
 to its owner, group, or permissions, \etc{}, as well as specify global
 properties of the graph such as its orientation and size.  \fg{} uses
-the Haskell binding of the \graphviz{} library to layout and render
+the Haskell binding of the \graphviz{} library to lay out and render
 the graphs, so all customizations provided by \graphviz{} are
 available.
 

@@ -18,9 +18,9 @@
   approach to generics used (TemplateHaskell vs SYB vs..).}
 }
 
-We have implemented the \forest{} language; the current
-implementation is available from the \forest{} web
+The current implementation of \forest{} is available from the project web
 site:~\url{forestproj.org}. 
+
 \haskell{} provides powerful language features and libraries that
 greatly facilitated implementation of \forest{}.  The most obvious
 of these features is the quasiquotation mechanism~\cite{Mainland:quasi}
@@ -51,8 +51,10 @@ concomitantly.
 Note that in implementing \forest{}, we had to use \template{}
 rather than any of the other libraries that support generic programming,
 both because that is what the quasiquote library expects and
-because we need to generate type and datatype declarations.  Such
-declarations can only be generated at compile time.
+because we need to generate type and datatype declarations (and to do
+so at compile time).  
+Other available generic libraries do not support the latter functionality.
+%declarations can only be generated at compile time.
 
 \paragraph{Parsing.}  
 We used the parsec 3.1.0 parser
@@ -82,7 +84,7 @@ There is an active proposal~\cite{extend-templates} to extend the \template{} in
 with functions that would enable us to ask the native \haskell{}
 typechecker for the types of embedded expressions and to extend the
 current type environment with type bindings for new identifiers.  With
-this combination of features, we will be able to type check \forest{}
+this combination of features, we would be able to type check \forest{}
 sources directly.
 %, yielding a fully satisfactory embedded
 %domain-specific language.
@@ -100,11 +102,11 @@ very interesting future work.
 
 \forest{} uses Haskell's \cd{unsafeInterleaveIO} to load each portion
 of a \filestore{} only when needed by an application program.
-We have not measured quantitatively the performance overhead of using
-\forest{} rather than directly accessing the files in Haskell or in a
-language with minimal overhead such as C. However, we have used our
+We have not measured the performance overhead of using
+\forest{} systematically.  However, we have used our
 mostly-unoptimized implementation to manipulate filestores on the
-order of many gigabytes, so we anticipate the performance will be acceptable.  
+order of many gigabytes.  Currently, the performance is acceptable
+for many applications.  
 
 The running time of storing operations is proportional to the
 ``footprint'' of the described \filestore{}. However, the \forest{}
