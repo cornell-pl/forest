@@ -5,24 +5,43 @@
   by users hand-editing the filestore?  Can "invariants" become
   violated as a result of such concurrency?}
 
-In this paper, we present the design of \forest{}, an embedded
-domain-specific language for describing \filestores{}.  A \forest{}
-description concisely specifies a collection of files, directories,
-and symbolic links as well as expected file system attributes such as
-owners and permissions.  From a description, the \forest{} compiler
-generates code to lazily load the on-disk data into an isomorphic
-in-memory representation, lowering the divide between on-disk and
-in-memory data.  
-%The generated metadata identifies errors in the
-%\filestore{}.  
-\forest{} also generates type class instances that make it 
-easy for third-party tool developers to use
-Haskell's generic programming infrastructure.  We have used this
-infrastructure ourselves to define a number of useful tools. 
-In addition, the language has a formal semantics based on classical tree logics and is
-fully implemented.  On the latter point, our work 
-serves as an extensive case study in domain-specific
-language design, and, as such, has inspired changes in the design of
-\template{}.  Source code for \forest{} is available from the
-\forest{} web site~\cite{forest-web-site}.
+In this paper, we proposed the idea of extending a modern, high-level
+programming language with tightly integrated features for
+processing coherent file system fragments, which we call
+\filestores{}.  To demonstrate the
+potential of this idea, we designed \forest{}, a
+domain-specific language 
+embedded in \haskell{}
+for describing and managing \filestores{}.  
+
+The \forest{} design has been informed by both
+theoretical analysis and practical experience.
+On the theoretical side, 
+we developed a formal
+calculus that models the core \forest{} functionality and
+we proved that our calculus obeys round-tripping laws
+derived from previous work on bi-directional programming paradigms.
+On the practical side, 
+we illustrated the utility of our design
+by describing several example \filestores{}, and showing how
+to use these descriptions
+to build simple, lightweight \haskell{} scripts that query,  
+analyze, and transform the example data in useful ways.
+We also provided evidence that
+\forest{} has effective support for building
+generic, description-directed tools by 
+implementing a number of such 
+tools ourselves, including a filesystem visualizer,
+a generic query interface, an access control checker, and
+(circularly) a simple description inference engine.
+An ancillary benefit of this 
+engineering work was that it
+served as an extensive case study in domain-specific
+language design, and, as such, inspired changes in the design of
+\template{}.  
+
+For further information about \forest{}, we direct readers to
+the \forest{} web site~\cite{forest-web-site}, where they may find
+our fully functional open source implementation and a number of
+additional examples.
 
