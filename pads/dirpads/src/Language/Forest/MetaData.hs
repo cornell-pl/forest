@@ -493,9 +493,9 @@ getFiles' path = do
 
 doShellCmd :: String -> IO String
 doShellCmd cmd = do 
-  { print "Executing cmd: "
-  ; print cmd
-  ; print "\n"
+  { -- print "Executing cmd: "
+--  ; print cmd
+--  ; print "\n"
   ; (_, Just hout, _, ph) <-
        createProcess (shell cmd){ std_out = CreatePipe }
   ; isEof <- hIsEOF hout

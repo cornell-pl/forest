@@ -69,7 +69,7 @@ displayNodes (n,fmd) =
                  then [Style [SItem Dashed []]]
                  else []
       color = if numErrors fmd > 0
-                then [Color[myred]]
+                then [FillColor myGrey, Style[SItem Filled []]]
                 else []
   in [FontName "Courier", mkLabel name] ++ color ++ shape ++ symLink'
 
@@ -115,3 +115,4 @@ myMkGraph = mkGraph
 
 mkLabel s = Label (StrLabel s)
 myred = X11Color Red
+myGrey = X11Color LightGray

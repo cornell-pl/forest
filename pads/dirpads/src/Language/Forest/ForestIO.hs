@@ -242,6 +242,7 @@ doLoadMaybe path f = do
 pickFile :: [FilePath] -> FilePath
 pickFile files = case files of
   [] -> "-This is an illegal file path according to POSIX Standard."  -- an illegal file path
+--  [] -> ""  -- an illegal file path
   f:fs -> f
 
 checkNonEmpty :: (Data rep, ForestMD md) => FilePath -> FilePath -> IO(rep,md) -> IO(rep,md)
@@ -251,6 +252,8 @@ checkNonEmpty path file ifExists =
           ; let new_md = replace_fmd_header def_md (fileMatchFailureForestMD path)
           ; return (myempty, new_md)
           }
+  else if file == "-This is an illegal file path according to POSIX Standard." then 
+          return (myempty, myempty)
   else ifExists
 
 checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
