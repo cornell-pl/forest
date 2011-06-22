@@ -31,7 +31,7 @@ the essential features of the language in a simple setting. The
 calculus is based on classical (\ie{}, not separating, substructural,
 or ambient) unordered tree logics, but has a number of features
 tailored to file systems. We used it to study various features of
-\forest{} as were developing it, and to prove key theorems like the
+\forest{} as we were developing it, and to prove key theorems like the
 round-tripping properties described at the end of the section.
 
 \subsection{Data Model}
@@ -41,7 +41,7 @@ file system model, which is given in Figure~\ref{fig:csyntax}. A path
 $r$ is a sequence of strings $u$,\footnote{For simplicity, we do not
   model special path elements such as ``..'' and ``.''.  It would be
   easy to add these at the cost of complicating the semantics.} and a
-file system $F$ is finite map from paths to pairs $(\att,T)$ of
+file system $F$ is a finite map from paths to pairs $(\att,T)$ of
 attributes $\att$ and file system contents $T$.  We do not specify the
 syntax of attributes precisely, but expect that they will contain the
 usual fields including owner, group, permissions, modification date
@@ -82,7 +82,10 @@ The syntax of specifications $s$ is given in
 Figure~\ref{fig:csyntax}. The calculus models the most important
 features of the full \forest{} language in the simplest possible way,
 using orthogonal, independent constructs. The set of specifications is
-parameterized over a collection of constants $\Sk$. In examples, we
+parameterized over a collection of constants $\Sk$, 
+where $\tau_1$ is the type of the generated representation and $\tau_2$ is
+the type of the generated metadata. We omit the type annotations in
+examples.  For the purpose of illustration, we
 will assume that constants for describing files $\pfile$, directories
 $\pdir$, and symbolic links $\plink$ all exist, as well as constants
 $\SAdhoc{p}$ parameterized on \padshaskell{} descriptions $p$ for
@@ -93,8 +96,8 @@ specification $s$ that describes the fragment of the file system at
 the extended path. We leave the syntax of expressions $e$ abstract but
 assume that it contains the features of a simple functional language
 (of course, in the full \forest{} language, expressions can be
-arbitrary snippets of Haskell code). We will assume a semantic
-function $\eval{e}{\Env}{\tau}$ that evaluates $e$ in $\Env$, yielding
+arbitrary fragments of Haskell code). We will assume a semantic
+function $\eval{e}{\Env}{\tau}$ that evaluates $e$ in environment $\Env$, yielding
 a value $v$ of type $\tau$. Dependent pairs are written
 $\SPair{x}{s_1}{s_2}$ where $s_1$ and $s_2$ are specifications that
 describe possibly overlapping fragments of the file system. When a
@@ -105,9 +108,9 @@ expression that evaluates to a set of values, and $s$ is a
 specification that describes a fragment of the file system for each
 value of $x$.  Predicates $\SPred{e}$ succeed when the expression $e$
 evaluates to \True{} and fail when it evaluates to \False{} under the
-current environment.  Finally, options $\SOption{s}$ describe the same
-fragment of the file system as $s$ but checks whether current path is
-valid in the file system.
+current environment.  Finally, the type $\SOption{s}$ describes
+either (1) a filesystem not containing the current path, or (2)
+a file system containing the current path and satisfying $s$. 
 
 To develop some intuitions about these constructs, let us encode a few
 of the more complicated features of the full \forest{} language in the
@@ -126,9 +129,9 @@ records, and has a separate construct for describing paths. Thus, to
 encode the specification above, we use the following specification:
 %
 \[
-\SPair{c\,}{\,(\SPath{\textrm{"}\mathrm{c.txt}\textrm{"}}{\mathrm{C}})\;}
-           {\SPair{d\,}{(\SPath{\textrm{"}\mathrm{d.txt}\textrm{"}}{\mathrm{D}\; c})\;}
-                       {(\SPath{\textrm{"}\mathrm{e.csv}\textrm{"}}{\mathrm{E}\; d})}} 
+\SPair{c\,}{\,(\SPath{\texttt{"}\mathrm{c.txt}\texttt{"}}{\mathrm{C}})\;}
+           {\SPair{d\,}{(\SPath{\texttt{"}\mathrm{d.txt}\texttt{"}}{\mathrm{D}\; c})\;}
+                       {(\SPath{\texttt{"}\mathrm{e.csv}\texttt{"}}{\mathrm{E}\; d})}} 
 \]
 %
 Similarly, a comprehension written as
@@ -179,13 +182,15 @@ preserve data on round trips.
 %
 The definitions of the types for the representations ($\repty{s}$) and
 metadata ($\mdty{s}$) generated for each specification $s$ appear in
-Figure~\ref{fig:csemantics}. The types for constants $\Sk$, are simply
-read off from the $\tau_1$ annotation. For other specifications, they
+Figure~\ref{fig:csemantics}. 
+The representation type for constants $\Sk$ is simply
+read off from $\tau_1$. For other specifications, representation types
 are built out of the types for sub-specifications in the obvious
 way---\eg, for pairs $\SPair{x}{s_1}{s_2}$, the type is a product
-$(\repty{s_1}, \repty{s_2})$. The types for metadata are more
+$(\repty{s_1}, \repty{s_2})$. 
+The types for metadata are more
 interesting.  In the \forest{} calculus we represent metadata using
-structured datatypes containing a boolean value each level of
+structured datatypes containing a boolean value at each level of
 structure. Intuitively, this value indicates whether there were any
 errors during loading. The $\mathit{Md}$ constructor provides a
 uniform representation for these structures,
@@ -207,7 +212,7 @@ as the number of errors, an optional error message, or file system
 attributes, as in Figure~\ref{fig:forest-md}; one would simply have to
 change the $\mathit{MdHeader}$ type and the $\valid{d}$ function.
 
-\paragraph*{Load Functions}
+\paragraph*{Load Functions.}
 %
 The most common use of \forest{} is as a tool for loading data from
 the file system into an in-memory representation. The functions
@@ -271,9 +276,7 @@ $v_1$ and metadata $d_1$, and then invokes the load function for $s_2$
 in an extended environment where $x$ is bound to $v_1$ and $x_{\MD}$
 to $d_1$, yielding $v_2$ and $d_2$. It returns $(v_1,v_2)$ and
 %
-\[
-(\valid{d_1} \wedge \valid{d_2},(d_1,d_2))
-\]
+$(\valid{d_1} \wedge \valid{d_2},(d_1,d_2))$
 %
 as the result. The load function for comprehensions $\SComp{s}{x}{e}$
 is similar. It evaluates the expression $e$ to a list
@@ -294,17 +297,18 @@ constructor. The second handles the case where $r$ does not exist in
 the file system. It returns $\Nothing$ for both the representation and
 metadata.
 
-\paragraph*{Store Functions}
+\paragraph*{Store Functions.}
 %
 Just as they can be used for loading, \forest{} specifications can
 also be used to store data back to the file system. The inference
 rules in Figure~\ref{fig:csemantics}~(b) define the judgment
 $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$, which holds if storing $(v,d)$
 into $F$ at $r$ using specification $s$ with respect to $\Env$ yields
-a modified file system $F'$ and a validator $\phi'$, which is a
+a modified file system $F'$ and a {\em validator} $\phi'$.  This
+last element, the validator, is a
 predicate on file systems that tests for inconsistencies during
-storing. As with load functions, this judgment may be read as a total
-function that maps $\Env$, $r$, $s$, $F$, and $(v,d)$ to $(F',\phi')$.
+storing --- it will be described in greater detail momentarily. As with load functions, the store judgment may be read as a total
+function; it maps $\Env$, $r$, $s$, $F$, and $(v,d)$ to $(F',\phi')$.
 
 Intuitively, it should be obvious that there are numerous ways that
 storing data back to the file system could go wrong. For example, the
@@ -351,7 +355,7 @@ which is clearly not satisfiable unless $u = u'$.
 The store functions also use validators to detect internal
 inconsistencies between the representation and metadata. For example,
 consider the specification $s$ defined as $\SOption{s_1}$, and
-suppose that invoke $s$'s load function with $\Env$, $F$, $r$ where
+suppose that invoking $s$'s load function with $\Env$, $F$, $r$ where
 $F(r)$ is undefined. The representation and metadata will be
 $\Nothing$ and $(\True,\Nothing)$ respectively. Now suppose that we
 change the representation to $\Just{u'}$, and invoke $s$'s store
@@ -383,8 +387,8 @@ function for \pfile{} is defined as follows:
   \; \lambda F'.~\False) \\
   \hfill\text{if}~d = (\False,\att)~\wedge F(r) = (\us,\File{\us})\\[1ex]
   (F,              
-  \; \lambda F'.~ ((v,\att) = (\text{``}{\,}\text{''},\defaultatt)) \wedge (F'(r) \neq (\us,\File{\us}))\\
-  \hfill\text{otherwise}
+  \; \lambda F'.~ (v=\text{``}{\,}\text{''} \wedge a=\defaultatt \wedge F'(r) \neq (\us,\File{\us}))\\
+  \hfill\text{if}~d = (\us,\att)
 \end{array}\right.
 \end{array}\]
 %
@@ -425,7 +429,7 @@ right-biased file system concatenation operator defined as follows:
 \end{array}
 \]
 %
-Finally, it conjoins the two validators $\phi_1'$ and $\phi_2$'. The
+Finally, it conjoins the two validators $\phi_1'$ and $\phi'_2$. The
 result is a file system that contains the consistent changes made to
 the file system by the store functions for $s_1$ and $s_2$ as well as
 a validator that checks for the consistency of all the changes. The
@@ -1026,11 +1030,11 @@ fragment of the file system described by the specification. It also
 establishes that the validator is not the trivial predicate on file
 systems that always returns false.
 
-The second theorem states that storing an arbitrary representation and
-metadata and then loading the resulting file system yields the same
-representation and contains errors only if the original metadata also
-contained errors when the intermediate file system produced after the
-first store satisfies the validator. This theorem ensures that the
+The second theorem states that storing an arbitrary representation 
+and then loading the resulting file system yields the same
+representation and equally valid metadata,
+provided the stored file system satisfies the validator.  
+ This theorem ensures that the
 store function reflects all of the information contained in the
 representation in the updated file system.
 
