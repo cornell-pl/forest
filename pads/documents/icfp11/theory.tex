@@ -483,7 +483,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 { \load{\Env}{F}{r}{\Sk}{ \loadk{k}{\Env}{F}{r} } }
 \\[2em]
 \inferrule
-{ \load{\Env}{F}{\eval{\PCons{r}{e}}{\Env}{\mathit{path}}}{s}{v,d} }
+{ \load{\Env}{F}{\eval{\PCons{r}{e}}{\Env}{\mathit{Path}}}{s}{v,d} }
 { \load{\Env}{F}{r}{\SPath{e}{s}}{v,d} }
 \\[2em]
 \inferrule
@@ -521,7 +521,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 { \store{\Env}{F}{r}{v,d}{\Sk}{ \storek{k}{\Env}{F}{r}{v,d} } }
 \\[2em]
 \inferrule
-{ \store{\Env}{F}{\eval{\PCons{r}{e}}{\Env}{\mathit{path}}}{v,d}{s}{F',\phi'} }
+{ \store{\Env}{F}{\eval{\PCons{r}{e}}{\Env}{\mathit{Path}}}{v,d}{s}{F',\phi'} }
 { \store{\Env}{F}{r}{v,d}{\SPath{e}{s}}{F',\phi' } }
 \\[2em]
 \inferrule
