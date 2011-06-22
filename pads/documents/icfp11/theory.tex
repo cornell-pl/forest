@@ -499,7 +499,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 { \load{\Env}{F}{r}{ \SComp{s}{x}{e} }{ \mathit{vs},(b,\mathit{ds}) } }
 \\[2em]
 \inferrule
-{ b = \eval{e}{\Env}{\mathit{bool}} }
+{ b = \eval{e}{\Env}{\mathit{Bool}} }
 { \load{\Env}{F}{r}{ \SPred{e} }{ (),(b,()) } }
 \\[2em]
 \inferrule
@@ -525,8 +525,8 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 { \store{\Env}{F}{r}{v,d}{\SPath{e}{s}}{F',\phi' } }
 \\[2em]
 \inferrule
-{ \store{\Env}{F}{r}{ v_1,d_1 }{s_1}{ F_1',\phi_1 } \\\\
-  \store{(\Env,x_{\REP} \mapsto v_1, x_{\MD} \mapsto d_1)}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2 } \\\\
+{ \store{\Env}{F}{r}{ v_1,d_1 }{s_1}{ F_1',\phi_1' } \\\\
+  \store{(\Env,x_{\REP} \mapsto v_1, x_{\MD} \mapsto d_1)}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2' } \\\\
   \phi' = \lambda F'.~ (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F') }
 { \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F_1' \FAppend F_2',\phi' } }
 \\[2em]
@@ -538,7 +538,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 { \store{\Env}{F}{r}{\mathit{vs},(b,\mathit{ds})}{ \SComp{s}{x}{e} }{ F_1' \FAppend \tdots \FAppend F_k',\phi' } }
 \\[2em]
 \inferrule
-{ \phi' = \lambda F'.~ (b = \eval{e}{\Env}{\mathit{bool}}) }
+{ \phi' = \lambda F'.~ (b = \eval{e}{\Env}{\mathit{Bool}}) }
 { \store{\Env}{F}{r}{(),(b,())}{ \SPred{e} }{ F,\phi' } }
 \\[2em]
 \inferrule
