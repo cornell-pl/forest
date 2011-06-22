@@ -249,7 +249,7 @@ begins the \pads{} specification of the Princeton student record
 format: 
 \noindent
 \begin{code}
-[pads| \kw{data} Student(name::String) = 
+[pads| \kw{data} Student(name::String) = Student
             \{ person  :: Line (Person name)
             , Header  
             , courses :: [Line Course]
