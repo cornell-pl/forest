@@ -52,7 +52,6 @@ class (Data rep, ForestMD md) => Forest rep md | rep -> md  where
  defaultMd :: rep -> FilePath -> md
 
  
-
 class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
  load1 :: arg -> FilePath -> IO(rep, md)
  generateManifest1 :: arg -> (rep,md) -> IO Manifest
@@ -83,6 +82,21 @@ validateLists  load updateMan (m @ Manifest {tempDir, pathToRoot, entries, count
   ; testManifest <- updateMan testResult emptyManifest
   ; return (detectConflictsInListComps m testManifest)
   }
+
+checkStore
+  :: (FilePath -> IO a)
+     -> (a -> Manifest -> IO Manifest)
+     -> FilePath
+     -> Manifest
+     -> IO [(FilePath, [FilePath])]
+checkStore load updateMan destDir writeManifest = do
+  { res <- load destDir
+  ; emptyManifest <- newManifest
+  ; targetManifest <- updateMan res emptyManifest
+  ; return (diffManifest targetManifest writeManifest)
+  }
+
+
 
 
 rawManifest1 :: Forest1 arg rep md => arg -> (rep, md) -> IO Manifest

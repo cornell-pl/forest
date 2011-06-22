@@ -6,7 +6,7 @@ Head compiler:
 
 7.01:
 
-~/sw/ghc-7.01/bin/ghci -XQuasiQuotes -XTemplateHaskell 
+~/sw/ghc-7.01/bin/ghci -XQuasiQuotes -XTemplateHaskell -XScopedTypeVariables
 
 ~/.cabal/bin/cabal install XXX  -w ~/sw/ghc-7.01/bin/ghc --with-haddock=/Users/kfisher/sw/ghc-7.01/bin/haddock --package-db=/Users/kfisher/sw/ghc-7.01/lib/ghc-7.0.1/package.conf.d
 
@@ -74,7 +74,7 @@ To uninstall GHC, execute
 
 {- 
 PRINTING result of pads compiler:
-let d = (make_pads_declarations [$pads|Foo = (Pint, '|', Pint)|]) 
+let d = (make_pads_declarations [pads|Foo = (Pint, '|', Pint)|]) 
 *Examples.First Language.Haskell.TH> :t d
 d :: Q [Dec]
 *Examples.First Language.Haskell.TH> runQ d >>= print
@@ -215,6 +215,22 @@ Prelude>:m +Parser
 Prelude Parser> :t parseModule
 
 
+****************************************************************************************************
+Platform information:
+What is Installed
+On Mac OS X, the Haskell Platform is installed in two major pieces: GHC and Haskell Platform. They are installed respectively in:
+/Library/Frameworks/GHC.framework 
+/Library/Haskell
+Executables are symlinked in /usr/bin and should be available in any shell.
+Configuring Cabal
+The cabal command manages the building and installation of packages, both your own, and those it can fetch from the Hackage repository.
+The first time you run cabal, a Mac specific configuration is written into the ~/.cabal directory.
+If this is the first time you have ever run cabal, it will be made your active configuration.
+If you have run cabal in the past, the new settings are in the file config.platform. You might want to review and incorporate some of the settings into your existing config file, or just replace your config file with it entirely.
+The configuration sets up cabal to install packages with the same layout as those installed with the Platform. Packages installed per user (--user, the default) are placed in a parallel tree in ~/Library/Haskell.
+N.B. Built executables will be symlink'd into ~/Library/Haskell/bin, you probably want to add that to your $PATH by adding this line to your ~/.bash_profile:
+export PATH="$HOME/Library/Haskell/bin:$PATH"
+****************************************************************************************************
 
 GETTING GHC TO TELL YOU MORE:
 kfisher-laptop:/Users/kfisher/pads/dirpads/language-c-quote>ghci -dppr-debug
@@ -228,6 +244,8 @@ data ghc-prim:GHC.Types.Int{(w) tc 3J}
   	-- Defined in ghc-prim:GHC.Types
 
 ***************************************************************
+
+
 TUPLES
 How should we deal with tuples and type classes?  We want to be able to make each pads
 type an instance of various type classes (Data, Typeable, Pads, Default, Show, etc).
@@ -340,3 +358,4 @@ Is it true that if the compiler needs a given dictionary, it always has the know
 When you declare a new class, you could also define a deriver for it.  
 The deriver should be a template haskell function that is given a representation of the type to be specialized
 and produces the representation of the dictionary for the class, specialized to the supplied type.
+

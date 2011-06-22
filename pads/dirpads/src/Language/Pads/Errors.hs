@@ -71,6 +71,14 @@ data ErrInfo = ErrInfo { msg      :: ErrMsg,
                          position :: Maybe S.Pos }
    deriving (Typeable, Data, Eq, Ord)
 
+instance Pretty ErrInfo where
+  ppr (ErrInfo {msg,position}) = PP.ppr msg <+> 
+       case position of 
+         Nothing -> empty
+         Just pos -> (text "at:") <+>  PP.ppr pos
+
+
+
 mergeErrInfo (ErrInfo{msg=msg1, position=position1}) (ErrInfo{msg=msg2, position=position2}) = 
              (ErrInfo{msg=msg1, position=position1})
 

@@ -651,7 +651,7 @@ test_hp_data = mkTestCase "HP Data" expect_hp_data result_hp_data
 
 
 
-test_file = "data/test_file"
+test_file = "Examples/data/test_file"
 result_hp_data_file_parse :: (HP_data, HP_data_md) = unsafePerformIO $
                                                      parseFile test_file
 expect_hp_data_file_parse = 
@@ -663,7 +663,7 @@ test_hp_data_file_parse = mkFileTestCase "HP file" expect_hp_data_file_parse res
 
 
 [pads| type MyDoc = Ptext |]
-myDoc_input_file = "data/test_file"
+myDoc_input_file = "Examples/data/test_file"
 myDoc_result :: (Ptext, Base_md) = unsafePerformIO $ parseFile myDoc_input_file
 myDoc_expects = (Ptext "8,Hermione\n3,Ron\n5,Harry\n",0)
 myDoc_test = mkFileTestCase "myDoc" myDoc_expects myDoc_result

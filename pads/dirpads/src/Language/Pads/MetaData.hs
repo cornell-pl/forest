@@ -33,8 +33,8 @@
 module Language.Pads.MetaData where
 
 import qualified Language.Pads.Errors as E
--- import Language.Pads.RegExp 
 import qualified Language.Pads.Source as S
+import Text.PrettyPrint.Mainland as PP
 
 import Data.Data
 import Data.List
@@ -59,6 +59,13 @@ instance PadsMD Base_md where
 instance Data b => PadsMD (Base_md,b) where
   get_md_header (h,b) = h
   replace_md_header (h1,b) h2 = (h2,b)
+
+instance Pretty Base_md where
+  ppr = pprBaseMD
+
+pprBaseMD Base_md {numErrors=num, errInfo = info} = text "Errors:" <+> PP.ppr num <+> 
+                                                    case info of Nothing -> empty
+                                                                 Just e -> PP.ppr e
 
 
 

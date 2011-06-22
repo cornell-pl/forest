@@ -14,6 +14,7 @@ import Language.Pads.Padsc
 import qualified Data.Map as Map
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
+import qualified Data.Set as Set
 
 type Message = String
 
@@ -109,7 +110,6 @@ collectManifestErrors manifest = joinStatus (collectErrorsManifestTable (entries
 collectErrorsManifestTable :: ManifestTable -> [Status]
 collectErrorsManifestTable entries = List.map (\(fp, entry) -> status entry) (Map.toList entries)
 
---- XXXXXXXXXXXXXXXXXXXXXXX
 detectConflictsInListComps :: Manifest -> Manifest -> Manifest
 detectConflictsInListComps (Manifest{count,pathToRoot=orig_pathToRoot,tempDir,entries=orig_entries}) test_manifest = 
   let orig_rootDir = dropFileName (Maybe.fromJust orig_pathToRoot)
@@ -137,33 +137,62 @@ listCompConflictsInManifestEntry (ManifestEntry{content=orig_content,sources=ori
                                  ++ "while after printing comprehension had "
                                  ++ (show test_complists))
   in ManifestEntry{content=orig_content,sources=orig_sources,status=new_status}
+
+
+diffManifest :: Manifest -> Manifest -> [(FilePath, [FilePath])]
+diffManifest (Manifest{count,pathToRoot=source_pathToRoot,tempDir,entries=source_entries}) target_manifest = []
+{-
+  let source_rootDir  = dropFileName (Maybe.fromJust source_pathToRoot)
+      target_rootDir  = dropFileName (Maybe.fromJust (pathToRoot target_manifest))
+      source_entriesL = Map.toList source_entries
+      target_entriesL = Map.toList (entries target_manifest)
+      source_complists = unwrapComp (List.filter isListComp' source_entriesL)
+      target_complists = unwrapComp (List.filter isListComp' target_entriesL)
+      source_complists' = List.groupBy (\(f1,c1) (f2,c2)  -> f1 == f2) source_complists
+      target_complists' = List.groupBy (\(f1,c1) (f2,c2)  -> f1 == f2) target_complists
+      source_complists'' = let (fps, contents) = List.unzip source_complists' in (List.head fps, contents)
+      target_complists'' = let (fps, contents) = List.unzip target_complists' in (List.head fps, contents)
+  -- r
+  in -- Map.toList (diffManifestEntities target_rootDir (entries target_manifest) source_rootDir source_entries)
+     []
+-}
+
+diffManifestEntities target_rootDir target_entries source_rootDir source_entries = 
+  Map.mapWithKey (diffOne target_rootDir target_entries source_rootDir) source_entries
+
+diffOne target_rootDir target_entries source_rootDir source_pathToEntry source_entry = 
+  let source_RelPath = Maybe.fromJust (List.stripPrefix source_rootDir source_pathToEntry)
+      target_pathToEntry = combine target_rootDir source_RelPath
+  in case Map.lookup target_pathToEntry target_entries of
+       Nothing -> []
+       Just target_entry -> diffManifestEntry  source_entry target_entry
+
+diffManifestEntry (ManifestEntry{content=source_content,sources=source_sources,status=source_status})
+                  (ManifestEntry{content=target_content,sources=target_sources,status=target_status}) = 
+  let source_complists = List.concatMap unwrapComp (List.filter isListComp source_content)
+      target_complists = List.concatMap unwrapComp (List.filter isListComp target_content)
+  -- return everything in targets that is not in source
+      sourceSet = Set.fromList source_complists
+      targetSet = Set.fromList target_complists
+      diff = Set.difference targetSet sourceSet
+  in Set.toList diff
  
+
+unwrapComp (ListComp x) = x
+unwrapComp' (fp, ListComp x) = (fp,x)
 
 isListComp :: Content -> Bool
 isListComp c = case c of
   ListComp _ -> True
   otherwise  -> False
 
-{-
-detectConflictInEntry :: FilePath -> (FilePath, ManifestEntry) -> IO (FilePath, ManifestEntry)
-detectConflictInEntry manifestDir (fp, ManifestEntry{content,sources,status}) = do 
-  { status' <- detectContentConflict manifestDir (List.zip content sources)
-  ; return (fp, ManifestEntry{content,sources,status = status'})
-  }
+isListComp' :: (FilePath, Content) -> Bool
+isListComp' (fp,c) = case c of
+  ListComp _ -> True
+  otherwise  -> False
 
-  
 
-  orig_mtl = Map.toList (entries orig_manifest)
-  test_mtl = Map.toList (entries test_manifest)
-  orig_compsAbs = List.concatMap getComps orig_mtl
-  test_compsAbs = List.concatMap getComps test_mtl
-  orig_compsRel = List.map (\(fp,files) -> (fromJust fp, files)) orig_compsAbs
-  test_compsRel = List.map (\(fp,files) -> (fromJust fp, files)) test_compsAbs
-  if orig_compsRel == test_compsRel then 
 
-getComps (fp, ManifestEntry {content,sources,status}) = 
-  List.concatMap (\contentItem -> case contentItem of { ListComp files -> [(fp, files)]; _ -> []}) content
--}
 
 detectConflictInEntry :: FilePath -> (FilePath, ManifestEntry) -> IO (FilePath, ManifestEntry)
 detectConflictInEntry manifestDir (fp, ManifestEntry{content,sources,status}) = do 

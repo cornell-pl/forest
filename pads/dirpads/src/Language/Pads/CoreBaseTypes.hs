@@ -103,7 +103,12 @@ instance Pretty Ptext where
 
 instance Pretty Pre where
   ppr (Pre s) = string s
-              
+
+instance Pretty Pint where
+  ppr (Pint i) = text (show i)              
+
+instance Pretty Pstring where
+  ppr (Pstring s) = string ("\"" ++ s ++ "\"")
 
 instance Pretty Pbinary where
   ppr (Pbinary str) = text "Binary"

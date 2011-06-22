@@ -35,16 +35,30 @@
 module Language.Pads.Pretty where
 import Char (isPrint, ord)
 import Numeric (showHex)
+import qualified Data.Map as M
 
 import Text.PrettyPrint.Mainland
 import Language.Pads.Syntax
-import Language.Pads.Errors
-import Language.Pads.CoreBaseTypes
-import Language.Pads.Source
-import Language.Pads.MetaData
-import Language.Pads.PadsParser
 
-import qualified Data.Map as M
+
+instance Pretty Lit where
+   ppr (CharL c) | isPrint c   = text $ show c
+                 | ord c == 0  = squotes $ text $ "\\0"
+                 | otherwise   = squotes $ text $
+                                 "\\x" ++ showHex (ord c) ""
+   ppr (StringL s) = text $ show s
+
+
+instance Pretty PadsTy where
+    ppr (Ptuple tys) = parens (commasep (map ppr tys))
+    ppr (Plit l) = ppr l
+    ppr (Pname s) = text s
+
+
+
+instance Pretty PadsDecl where
+    ppr (PadsDecl (name,pat,padsty)) = ppr name <+>  text (show pat) <+> text "=" <+> ppr padsty
+
 
 
 seplines :: Doc -> [Doc] -> Doc
@@ -94,87 +108,11 @@ namedlist_ppr name pprls = group $ hang 2 (text name <+/> (list_ppr pprls))
 
 
 
-pint_ppr :: Pint -> Doc
-pint_ppr (Pint x) = ppr x
-
-instance Pretty Pint where
- ppr = pint_ppr 
-
-pstring_ppr (Pstring s) = ppr s
-
-instance Pretty Pstring where
- ppr = pstring_ppr
-
-instance Pretty PstringME where
- ppr (PstringME s) = ppr s
-
-instance Pretty PstringSE where
- ppr (PstringSE s) = ppr s
-
---instance Pretty String where
--- ppr = pstring_ppr
-
---instance Pretty a => Pretty (Maybe a) where
--- ppr = maybe_ppr
 
 
 
 
 
-
-
-
-
-
-instance Pretty Lit where
-   ppr (CharL c) | isPrint c   = text $ show c
-                 | ord c == 0  = squotes $ text $ "\\0"
-                 | otherwise   = squotes $ text $
-                                 "\\x" ++ showHex (ord c) ""
-   ppr (StringL s) = text $ show s
-
-
-instance Pretty Loc where
- ppr (Loc{lineNumber,byteOffset}) = text "Line:" <+> ppr lineNumber <> text ", Offset:" <+> ppr byteOffset 
-
-instance Pretty Pos where 
-  ppr (Pos{begin,end}) = case end of
-                                Nothing -> ppr begin
-                                Just end_loc ->  text "from:" <+> ppr begin <+> text "to:" <+> ppr end_loc
-
-instance Pretty Source where 
-    ppr (Source{current, rest, ..}) = text "Current:" <+> text (show current)
-
-instance Pretty ErrInfo where
-  ppr (ErrInfo {msg,position}) = ppr msg <+> 
-       case position of 
-         Nothing -> empty
-         Just pos -> (text "at:") <+>  ppr pos
-
-instance Pretty Base_md where
-  ppr = pprBaseMD
-
-pprBaseMD Base_md {numErrors=num, errInfo = info} = text "Errors:" <+> ppr num <+> 
-                                                    case info of Nothing -> empty
-                                                                 Just e -> ppr e
-
-
-instance Pretty PadsTy where
-    ppr (Ptuple tys) = parens (commasep (map ppr tys))
-    ppr (Plit l) = ppr l
-    ppr (Pname s) = text s
-
-
-
-instance Pretty PadsDecl where
-    ppr (PadsDecl (name,pat,padsty)) = ppr name <+>  text (show pat) <+> text "=" <+> ppr padsty
-
-
-{-
-instance Pretty a => Pretty (Result a) where
-    ppr (Good r) = text "Good:" <+> ppr r
-    ppr (Bad  r) = text "Bad:"  <+> ppr r
--}
 
 instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e) => Pretty (a, b, c, d, e) where
     ppr (a, b, c, d, e) = parens $ commasep [ppr a, ppr b, ppr c, ppr d, ppr e]

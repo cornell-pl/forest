@@ -252,6 +252,7 @@ gFst expE = AppE (VarE 'fst) expE
 writeListManifest :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp 
 writeListManifest comp repE mdE manE = do
   { let fmdE = gFst mdE 
+  ; let fileP = generatorP comp
   ; (fp_repEs, fp_mdEs) <- case tyConNameOpt comp of
         Nothing -> return (repE, gSnd mdE)
         Just str -> do { arity <- getTyConArity str
@@ -264,7 +265,9 @@ writeListManifest comp repE mdE manE = do
   ; (imdE,  imdP)  <- doGenPE "md"
   ; (imanE, imanP) <- doGenPE "manifest"
   ; writeItemE <- writeE' (descTy comp, irepE, imdE, imanE)
-  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
+  ; let getPathE = AppE (VarE 'takeFileName) (AppE (VarE 'get_fullpath) imdE)
+  ; let writeItemBodyE = LetE[ ValD fileP (NormalB  getPathE ) []] writeItemE
+  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemBodyE
   ; return (AppE (AppE (AppE (AppE (AppE (VarE 'doWriteList) fmdE) fp_repEs) fp_mdEs) itemFnE) manE)
   }
 
@@ -358,7 +361,7 @@ writeFileManifest :: (String, Maybe TH.Exp) -> TH.Exp -> TH.Exp -> TH.Exp -> Q T
 writeFileManifest (pty_name, optArg) repE mdE manE = do
  { let funE = case optArg of 
                Nothing   -> VarE 'updateManifestPads
-               Just argE -> VarE 'updateManifestPads1
+               Just argE -> AppE (VarE 'updateManifestPads1) argE
  ; let resultE = AppE (AppE funE (TupE [repE, mdE])) manE
  ; return resultE
  }

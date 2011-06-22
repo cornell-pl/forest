@@ -20,9 +20,9 @@ import Data.List hiding (sort)
 
 
 
+-- ?? [pads| type REd (r::String, d::String) = transform StringME r <=> Void using (const Void, const d) |]
 
-
-ws  = REd "[ \t]+" " "
+ws   = REd "[ \t]+" " "
 ows  = REd "[ \t]*" " "
 junk = REd ".*"     " "
 space = ' '
@@ -110,7 +110,8 @@ txt         = GL "*.txt"
 
   -- Collection of directories containing graduated students
   type Grads = 
-     Map [ c :: Class <| getYear c |> | c <- matches cRE ] 
+     Map [ ergnotinscope :: Class <| getYear ergnotinscope |> | ergnotinscope <- matches cRE ] 
+
 
   -- Root of the hierarchy
   type PrincetonCS (y::Integer) = Directory
@@ -119,6 +120,7 @@ txt         = GL "*.txt"
     , juniors   is <|mkClass (y + 1)|> :: Class <| y + 1 |>
     , graduates :: Grads
     }
+
 |]
 
 
@@ -151,7 +153,7 @@ cd_md md f = f $ snd md  -- should this change the paths?
 cd_rep rep f = f $ rep
 
 {- print graph of students -}
-resultIO =  mdToPDF cs_md "StudentsNew.pdf"
+resultIO =  mdToPDF cs_md "StudentsNew2.pdf"
 
 {- tar the student repostitory -}
 doTar = tar cs_md "Princeton.tar"

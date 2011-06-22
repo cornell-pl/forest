@@ -35,9 +35,11 @@ module Language.Pads.Source where
 import qualified Data.ByteString.Lazy.Char8 as B   -- abstraction for input data
 import qualified Text.Regex.Posix as TRP
 import Language.Pads.RegExp                        -- user-specified regular expressions
+import Text.PrettyPrint.Mainland as PP 
 
 import Data.Int
 import Data.Data
+import Data.Word
 
 
 type RawStream = B.ByteString
@@ -64,7 +66,24 @@ locsToPos :: Loc -> Loc -> Pos
 locsToPos b e = Pos {begin = b, end = Just e}
 
 
+
+instance Pretty Loc where
+ ppr (Loc{lineNumber,byteOffset}) = text "Line:" <+> PP.ppr lineNumber <> text ", Offset:" <+> PP.ppr byteOffset 
+
+instance Pretty Pos where 
+  ppr (Pos{begin,end}) = case end of
+                                Nothing -> PP.ppr begin
+                                Just end_loc ->  text "from:" <+> PP.ppr begin <+> text "to:" <+> PP.ppr end_loc
+
+instance Pretty Source where 
+    ppr (Source{current, rest, ..}) = text "Current:" <+> text (show current)
                                 
+
+chrToWord8 :: Char -> Word8
+chrToWord8 c = toEnum $ fromEnum c
+
+word8ToChr :: Word8 -> Char 
+word8ToChr w = toEnum $ fromEnum w
 
 
 {- Called when current is empty.

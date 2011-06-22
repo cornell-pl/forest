@@ -30,7 +30,7 @@
 -}
 
 module Language.Pads.Quote
-    (pads)
+    (pads, pparse)
     where
 
 import Prelude hiding (exp, init)

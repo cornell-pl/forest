@@ -32,6 +32,7 @@ import System.IO.Unsafe (unsafePerformIO)
 mkPrettyInstance ''Scores_d
 mkPrettyInstance ''Scores_d_md
 
+
 collectTar_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/zipntarSimple/collect1.tar"
 
 doZipSimpleTest' :: IO Manifest
@@ -60,6 +61,15 @@ doZipTest = do
  ; generateManifest pResult
  }
 
+nested_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/collect1"
+doNestedTest :: IO Manifest
+doNestedTest = do 
+ { pResult <- nestedScores_d_load nested_dir
+ ; generateManifest pResult
+ }
+
+nestedScores_d_checkStore = checkStore nestedScores_d_load nestedScores_d_updateManifest
+
 
 doManifest' :: Manifest -> IO ()
 doManifest' manifest = 
@@ -69,3 +79,4 @@ doManifest' manifest =
 doManifest :: Manifest -> IO ()
 doManifest manifest = 
    storeManifestAt "/Users/kfisher/temp" manifest
+
