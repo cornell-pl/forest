@@ -9,7 +9,7 @@
 \textit{Strings}      & u    & \in & \Sigma^{\ast}\\[1ex]
 \textit{Values}       & v    & \bnfdef & u \bnfalt n \bnfalt \True \bnfalt \False \bnfalt r \bnfalt () \bnfalt (v_1,v_2)\\
                       &      & \bnfalt &\Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\tdots,v_n}\\[1ex]
-\textit{Types}        & \tau & \bnfdef & \typ{String} \bnfalt \typ{Int} \bnfalt \typ{Bool} \bnfalt \typ{()} \bnfalt (\tau_1,\tau_2) \\
+\textit{Types}        & \tau & \bnfdef & \typ{String} \bnfalt \typ{Int} \bnfalt \typ{Bool} \bnfalt \typ{Path} \bnfalt \typ{()} \bnfalt (\tau_1,\tau_2) \\
                       &      & \bnfalt & \typ{Maybe}~\tau \bnfalt \List{\tau}\\[1ex]
 \textit{Environments} & \Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v\\[1ex]
 \textit{Expressions}  & e    & \bnfdef & x \bnfalt \lambda x.~e \bnfalt e_1~e_2 \bnfalt \dots \\[2.5ex]
