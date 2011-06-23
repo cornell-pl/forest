@@ -760,7 +760,7 @@ and the inductive proof. \hfill \qed
 \load{\Env}{F'}{r}{s}{v',d'}
 \end{array}
 \]
-then $v' = v$ and $\valid{d} = \valid{d'}$.}
+then $(v',d') = (v,d)$.}
 %
 { We will prove a slightly stronger result which implies the theorem:
   for all environments $\Env$, file systems $F$, $G_1$, $G_2$, and
@@ -775,7 +775,7 @@ then $v' = v$ and $\valid{d} = \valid{d'}$.}
 \end{array}
 \]
 %
-then $v' = v$ and $\valid{d} = \valid{d'}$. 
+then $(v',d') = (v,d)$. 
 
 The proof is by induction on $s$. For every constant $\Sk$, we assume
 that $\loadkname{k}$ and $\storekname{k}$ satisfy the strengthened
@@ -794,8 +794,7 @@ v',d'  &=& \loadk{k}{\Env}{(G_1 \FAppend F' \FAppend G_2)}{rs}\\
 \end{array}
 \]
 By assumptions about the behavior of $\loadkname{k}$ and
-$\storekname{k}$, we have $v' = v$ and $\valid{d} = \valid{d'}$,
-which finishes the case. 
+$\storekname{k}$, we have $(v',d') = (v,d)$, which finishes the case.
 
 %%%
 %%% Path
@@ -813,8 +812,8 @@ r' &=& \eval{\PCons{r}{e}}{\Env}{\mathit{path}}\\
 \end{array}
 \]
 %
-By the induction hypothesis applied to $s_1$ we have $v' = v$ and
-$\valid{d} = \valid{d'}$, which finishes the case.
+By the induction hypothesis applied to $s_1$ we have $(v',d') =
+(v,d)$, which finishes the case.
 
 %%%
 %%% Pair
@@ -825,7 +824,7 @@ By the definition of the load function we have
 \[
 \begin{array}{l}
 \store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}\\
-\store{(\Env, x \mapsto v_1)}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
+\store{(\Env, x \mapsto v_1, x_{\MD} \mapsto d_1)}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
 \end{array}\hspace*{1cm}\begin{array}{rcl}
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
@@ -860,7 +859,7 @@ By the definition of the load function we have
 \[ 
 \begin{array}{rcll}
 \load{\Env}{(G_1 \FAppend F_1 \FAppend (F_2 \FAppend G_2))}{r}{s_1}{v_1',d_1'}\\
-\load{(\Env, x \mapsto v_1)}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}\\
+\load{(\Env, x \mapsto v_1, x_{\MD} \mapsto d_1)}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}\\
 \end{array}\hspace*{1cm}\begin{array}{rcl}
 v' &=& (v_1',v_2')\\
 b' &= & \valid{d_1} \wedge \valid{d_2}\\
@@ -868,18 +867,15 @@ d' &=& (b',(d_1',d_2'))\\
 \end{array}
 \]
 %
-By the induction hypothesis applied to $s_1$ and $s_2$, we have 
+By the induction hypothesis applied to $s_1$, we have $(v_1',d_1') =
+(v_1,d_1)$.  Then, by the induction hypothesis applied to $s_2$, we
+have $(v_2',d_2') = (v_2,d_2)$.  It follows that
+%
 \[
-\begin{array}{l}
-v_1' = v_1\\
-v_2' = v_2\\
-\end{array}\hspace*{1cm}\begin{array}{l}
-\valid{d_1} = \valid{d_1'}\\
-\valid{d_2} = \valid{d_2'}\\
-\end{array}
+((v_1',v_2'), (b',d_1',d_2') = ((v_1,v_2), (b, (d_1,d_2)),
 \]
-It follows that $(v_1,v_2) = (v_1',v_2')$ and $b = b'$, which
-finishes the case.
+%
+which finishes the case. 
 
 %%%
 %%% Comprehension
@@ -932,10 +928,15 @@ d' &=& (b',[d_1',\tdots,d_k'])\\
 \end{array}
 \]
 %
-By the induction hypothesis applied to $s$ ($k$ times), we have $v_i'
-= v_i$ and $\valid{d_i'} = \valid{d_i}$ for = $i$ from $1$ to
-$k$. It follows that $[v_1,\tdots,v_k] = [v_1',\tdots,v_k']$ and $b =
-b'$, which finishes the case.
+By the induction hypothesis applied to $s$ ($k$ times), we have
+$(v_i',d_i') = (v_i,d_i)$ for = $i$ from $1$ to $k$. It follows that
+%
+\[
+([v_1',\tdots,v_k'],(b',[d_1',\dots,d_k']) = 
+([v_1',\tdots,v_k'],(b,[d_1,\dots,d_k]),
+\]
+%
+which finishes the case.
 
 %%%
 %%% Predicate
@@ -956,8 +957,8 @@ b' &=& \eval{e}{\Env}{\mathit{bool}}\\
 \end{array}
 \]
 By $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $b =
-\eval{e}{\Env}{\mathit{bool}}$. It follows that $v = v'$ and $b =
-b'$, which finishes the case.
+\eval{e}{\Env}{\mathit{bool}}$. It follows that $(v',d') = (v,d)$,
+which finishes the case. 
 
 %%%
 %%% Option
@@ -989,8 +990,8 @@ b' &=& \valid{d_1'}\\
 d' &=& (b',\Just{d_1'})\\
 \end{array}
 \]
-By the induction hypothesis applied to $s_1$ we have $v_1' = v_1$ and
-$b' = b$. It follows that $v' = v$.
+By the induction hypothesis applied to $s_1$ we have $(v_1',d_1') =
+(v_1,d_1)$. It follows that $(v',d') = (v,d)$. 
 
 \item[Subcase:] $v = \Nothing$\\[1ex]
 %
@@ -1007,15 +1008,15 @@ d' &=& (b',\Nothing)\\
 \]
 As $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $d
 = \Nothing$ and $b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
-  G_2}$. Thus, we immediately have $v' = v$ and $b' = b$. 
+  G_2}$. Thus, we immediately have $(v',d') = (v,d)$. 
 \item[Subcase:] $v = \Just{v_1}$ and $d = \Nothing$\\[1ex]
 %
 Vacuously holds: by the definition of the store function we have
 $\phi' = \lambda F'.~\False$, which contradicts the assumption that
 $\phi'(G_1 \FAppend F' \FAppend G_2)$.
 \end{description}
-Thus, in each subcase we have $v' = v$ and $\valid{d} = \valid{d'}$,
-which finishes the subcase and the inductive proof. \hfill \qed
+Thus, in each subcase we have $(v',d') = (v,d)$, which finishes the
+subcase and the inductive proof. \hfill \qed
 \end{description}}
 
 \smallskip
@@ -1030,13 +1031,12 @@ fragment of the file system described by the specification. It also
 establishes that the validator is not the trivial predicate on file
 systems that always returns false.
 
-The second theorem states that storing an arbitrary representation 
-and then loading the resulting file system yields the same
-representation and equally valid metadata,
-provided the stored file system satisfies the validator.  
- This theorem ensures that the
-store function reflects all of the information contained in the
-representation in the updated file system.
+The second theorem states that storing an arbitrary representation and
+then loading the resulting file system yields the same representation
+and metadata, provided the stored file system satisfies the validator.
+This theorem ensures that the store function reflects all of the
+information contained in the representation in the updated file
+system.
 
 These properties are based on the general correctness conditions that
 have been proposed for bidirectional transformations in the context of
