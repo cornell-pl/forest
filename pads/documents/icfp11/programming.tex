@@ -234,8 +234,8 @@ Instead, the load functions only read the portions of the file system
 that are needed to compute the result---in this case, only the site
 directories and not the gzipped log files contained within them.
 
-As a final analysis example, consider a program that computes the top-$k$
-requested URLs from all \coral{} nodes by size. The \coral{}
+As a final analysis example, consider a program that computes the
+top-$k$ requested URLs from all \coral{} nodes by size. The \coral{}
 administrators compute this statistic periodically to help monitor and
 tune the performance of the system~\cite{freedman:coral-experience}. 
 We define the analogous function in Haskell using helper
@@ -250,13 +250,15 @@ topk k =
     | (site,sdir) <- get\_sites rep,
       (datetime,ldir) <- get\_dates sdir,
       e <- get\_entries ldir,
-      is\_in e ]
+      is\_incoming e ]
 \end{code}
 % $
 Reading this program inside-out, we see that it first uses a list
 comprehension to iterate through \cd{rep}, collecting the
-individual log entries in the \cd{coralwebsrv.log.gz} file for
-incoming requests and projecting out the URL requested and the total
+individual log entries corresponding to
+%in the \cd{coralwebsrv.log.gz} file for
+incoming requests using the 
+\cd{is\_incoming} predicate.  It then projects  out the URL requested and the total
 size of the request. It then sums the sizes of all requests for the
 same URL using the \cd{fromListWith} function from the \cd{Data.Map}
 module. Next, it sorts the entries in descending order. Finally, it
