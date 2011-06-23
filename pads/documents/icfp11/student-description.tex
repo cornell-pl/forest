@@ -1,7 +1,7 @@
 \begin{code}
 [forest|
  \kw{data} PrincetonCS (y::Integer) = \kw{Directory}
-   \{ notes   \kw{is} "README" :: Text
+   \{ notes   \kw{is} "README" :: TextFile
    , seniors \kw{is} <|mkClass y    |> :: Class y
    , juniors \kw{is} <|mkclass (y+1)|> :: Class <|y+1|>
    , graduates :: Grads \}

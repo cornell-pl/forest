@@ -338,7 +338,7 @@ and \cd{Grads}, a description that specifies the structure of the
 directory holding all graduated classes.   
 \begin{code}
 \kw{type} PrincetonCS_1 = \kw{Directory}
-  \{ notes   \kw{is} "README"    :: Text
+  \{ notes   \kw{is} "README"    :: TextFile
   , seniors \kw{is} "classof11" :: Class 11
   , juniors \kw{is} "classof12" :: Class 12
   , grads   \kw{is} "graduates" :: Grads \}
@@ -355,7 +355,7 @@ When the external name is itself a valid Haskell label, users may omit
 it, in which case \forest{} uses the label as the on-disk name:
 \begin{code}
 \kw{type} PrincetonCS_2 = \kw{Directory}
-  \{ notes \kw{is} "README" :: Text
+  \{ notes \kw{is} "README" :: TextFile
   , classof11 :: Class 11
   , classof12 :: Class 12
   , graduates :: Grads \}
@@ -377,7 +377,7 @@ description, once as a text file and once as a symbolic link:
 \begin{code}
 \kw{type} PrincetonCS_3 = \kw{Directory}
   \{ link  \kw{is} "README" :: SymLink
-  , notes \kw{is} "README" :: Text
+  , notes \kw{is} "README" :: TextFile
   , ... \}
 \end{code}
 
@@ -423,7 +423,7 @@ to \textit{construct} the appropriate file names using Haskell functions:
 > mkClass y = "classof" ++ (toStrN y 2)
 \mbox{}
 \kw{type} PrincetonCS (y::Integer) = \kw{Directory}
-  \{ notes   \kw{is} "README" :: Text
+  \{ notes   \kw{is} "README" :: TextFile
   , seniors \kw{is} <|mkClass y    |> :: Class y
   , juniors \kw{is} <|mkclass (y+1)|> :: Class <|y+1|>
   , graduates :: Grads \}
@@ -574,8 +574,8 @@ allow users to specify required attributes.
 For example, the 
 type \cd{PrivateFile} specifies a text file accessible only by its owner.
 \begin{code}
-\kw{type} PrivateFile = 
- Text \kw{where} <|get_modes this_att == "-rw-------"|>
+\kw{type} PrivateFile = TextFile 
+      \kw{where} <|get_modes this_att == "-rw-------"|>
 \end{code}
 The keyword \kw{where} introduces a constraint on the underlying type.
 The load function for the type \cd{PrivateFile} checks this
@@ -591,18 +591,18 @@ Using attributes, we can write a \textit{universal
 any directory:
 \begin{code}
 \kw{type} Universal = \kw{Directory}
-  \{ asc \kw{is} [ f :: Text 
-           | f <- \kw{matches} (GL "*"), 
+  \{ asc \kw{is} [ f :: TextFile 
+           | f <- \kw{matches} <| GL "*" |>, 
           <| get_kind f_att == AsciiK |> ]
-  , bin \kw{is} [ b :: Binary 
-           | b <- \kw{matches} (GL "*"), 
+  , bin \kw{is} [ b :: BinaryFile 
+           | b <- \kw{matches} <| GL "*" |>, 
           <| get_kind b_att == BinaryK |> ]
   , dir \kw{is} [ d :: Universal  
-           | d <- \kw{matches} (GL "*"),
+           | d <- \kw{matches} <| GL "*" |>,
           <| get_kind d_att == DirectoryK |> ]
   , sym \kw{is} [ s :: SymLink 
-           | s <- \kw{matches} (GL "*"), 
-          <| get_sym s_att == True |> ] \}
+           | s <- \kw{matches} <| GL "*" |>, 
+          <| isJust (get_symLink s_att) |> ] \}
 \end{code}
 When a directory is loaded using the \cd{Universal} description, all
 the ASCII files will end up the in \cd{asc} field, all the binary
@@ -624,8 +624,8 @@ space. The description below flags an error during loading if a binary
 file exists in the directory. 
 \begin{code}
 \kw{type} NoBin =
-  [ b :: Binary | b <- \kw{matches} (GL "*"), 
-                  <| get_kind b_att == BinaryK |> ]
+ [ b :: BinaryFile | b <- \kw{matches} <| GL "*" |>, 
+                 <| get_kind b_att == BinaryK |> ]
   \kw{where} <|length this == 0|>
 \end{code}
 
