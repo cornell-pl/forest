@@ -38,7 +38,7 @@ import Data.Data
 
 data ErrMsg = ForestError String
             | ForestIOException String
-            | PredicateFailure
+            | ForestPredicateFailure
             | MissingFile String
             | MatchFailure String
             | NotADirectory String

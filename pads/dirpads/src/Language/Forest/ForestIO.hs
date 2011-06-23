@@ -362,4 +362,4 @@ concatPath stem new =
 
 
 
---envVar str = fromJust (unsafePerformIO $ (System.Posix.Env.getEnv str))
+envVar str = fromJust (unsafePerformIO $ (System.Posix.Env.getEnv str))

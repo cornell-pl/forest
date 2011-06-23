@@ -53,14 +53,17 @@ Library
                    Language.Forest.Infer,
                    Language.Forest.Graph,
                    Language.Forest.Pretty,
-                   Language.Forest.Shell
+                   Language.Forest.Shell,
+                   Language.Forest.Writing
   
   -- Packages needed in order to build this package.
   Build-depends: base >= 4, containers, pads-haskell,
-                 template-haskell, haskell-src-meta-pads, parsec, syb,
+                 template-haskell, 
+                 haskell-src-meta, 
+                 parsec, syb,
                  regex-compat, directory, process, unix, Glob,
                  filepath, mainland-pretty, derive, time, MissingH,
-                 graphviz, fgl
+                 graphviz, fgl, random
   
   -- Modules not exported by this package.
   Other-modules: Language.Forest.BaseTypes

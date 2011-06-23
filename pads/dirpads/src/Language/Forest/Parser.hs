@@ -183,10 +183,7 @@ fileBodyTy = do { id <- identifier
                 }
 
 forestArgR :: Parser TH.Exp
-forestArgR = do
-   { lit <- PadsP.lit
-   ; return (litToExp lit)
-   }
+forestArgR = PadsP.expression 
 
 forestArg :: Parser TH.Exp
 forestArg = forestArgR <|> parens forestArgR

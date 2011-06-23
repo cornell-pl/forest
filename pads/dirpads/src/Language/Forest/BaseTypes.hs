@@ -37,12 +37,13 @@ import Language.Forest.Generic
 import Language.Forest.MetaData
 import Language.Forest.Quote
 import Language.Forest.Writing
-import Language.Pads.Padsc
+import Language.Pads.Padsc 
+
 
 [forest|
-  type Text = File Ptext
-  type Binary = File Pbinary
-  type Any = File Pbinary
+  type TextFile   = File Text
+  type BinaryFile = File Binary
+  type AnyFile    = File Binary
 |]
 
 

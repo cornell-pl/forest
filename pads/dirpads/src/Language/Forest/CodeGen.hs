@@ -559,38 +559,6 @@ loadComp cinfo pathE = do
    ; return (AppE (AppE (VarE 'checkPathIsDir) pathE) isGoodE)
    }
 
-{- returns function to call to get files that match comprehension -}
-{- let Rec{fields} = re\path comp-rep comp-fmd -> bodyE :: Forest rep md -> FilePath -> Bool-}
-{-
-getFileGeneratorE :: CompField -> Q TH.Exp
-getFileGeneratorE (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, predEOpt}) = do
-   { (pathE, pathP) <- doGenPE "path"
-   ; fmName         <- newName (internalName++"_fm")
-   ; filesName      <- newName (internalName++"_files")
-   ; metadatasName  <- newName (internalName++"_metadatas")
-   ; let (fmE, fmP)       = genPE fmName
-   ; let (filesE, filesP) = genPE filesName
-   ; let (metadatasE, metadatasP) = genPE metadatasName
-   ; let compResultE = TupE[externalE, rhsE]
-   ; let getFilesE regexpE = AppE (AppE (VarE 'getMatchingFiles) pathE) regexpE
-   ; let genStmts = case generatorG of 
-               Explicit expE    -> [LetS [ValD filesP (NormalB expE) []]]
-               Matches  regexpE -> [BindS filesP (getFilesE regexpE)]
-   ; let getRelFMDE = AppE (VarE 'getRelForestMD) pathE
-   ; let (generatorP', generatorE, predStmts, compPredStmts) = case predEOpt of
-                 Nothing ->    (generatorP, filesE, [], [])
-                 Just predE -> (getAttPat explicitName externalE,
-                                fmE, 
-                                [ BindS metadatasP  (AppE (AppE (VarE 'mapM) getRelFMDE) filesE)
-                                , LetS [(ValD fmP (NormalB (AppE (AppE (VarE 'zip) filesE) metadatasE) ) [])]],
-                                [NoBindS predE])
-   ; let compStmts = [BindS generatorP' generatorE]++ compPredStmts ++[NoBindS compResultE]
-   ; let bodyE = CompE (genStmts ++ predStmts ++ compStmts)
-   ; return (LamE [pathP] bodyE)
-   }
-
--}
-
 loadCompound :: CompField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
 loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, predEOpt}) pathE = do
    let repName = mkName internalName
@@ -726,7 +694,7 @@ insertRepMDsGeneric2 inputs = do
 addPredFailureMD :: Forest_md -> Forest_md
 addPredFailureMD (Forest_md{numErrors, errorMsg, fileInfo}) = 
   let errMsg' = case errorMsg of
-                  Nothing -> E.PredicateFailure
+                  Nothing -> E.ForestPredicateFailure
                   Just e ->  e
   in Forest_md{numErrors = numErrors + 1, errorMsg = Just errMsg', fileInfo = fileInfo}
 
@@ -860,3 +828,9 @@ getLoadName pname = mkName ((strToLower pname) ++ "_load")
 getWriteManifestName pname = mkName ((strToLower pname) ++ "_updateManifest")
 getGenManifestName pname = mkName ((strToLower pname) ++ "_generateManifest")
 
+tyListToTupleTy (ty:tys) = foldl AppT (AppT (TupleT (1 + length tys) ) ty) tys
+mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
+    where con = NormalC ty_name [(NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
+          derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data, ''Ord]
+
+mk_TySynD ty_name ty = TySynD ty_name [] ty

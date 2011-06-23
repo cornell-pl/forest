@@ -31,39 +31,41 @@ comma = ','
 
 
 [pads| 
-  type Grade = Pre "[ABCD][+-]?|F|AUD|N|INC|P"
+  type Grade = StringME '[ABCD][+-]?|F|AUD|N|INC|P'
 
-  data Course = 
-    { sort         :: Pre "[dto]",           ws
-    , departmental :: Pre "[.D]",            ws
-    , passfail     :: Pre "[.p]",            ws
-    , level        :: Pre "[1234]",          ws
-    , department   :: Pre "[A-Z][A-Z][A-Z]", ws
-    , number       :: Pint where <| 100 <= number && number < 600 |>, ws
+  data Course = Course
+    { sort         :: StringME '[dto]',      ws
+    , departmental :: StringME '[.D]',       ws
+    , passfail     :: StringME '[.p]',       ws
+    , level        :: StringME '[1234]',          ws
+    , department   :: StringME '[A-Z][A-Z][A-Z]', ws
+    , number       :: Int where <| 100 <= number && number < 600 |>, ws
     , grade        :: Grade,                 junk                               
     } 
 
-  data Middle_name = {space, middle :: Pre "[a-zA-Z]+[.]?" }           
+  data MiddleName = MiddleName {space, middle :: StringME '[a-zA-Z]+[.]?' }           
  
-  data Student_Name(myname::String) = 
-    { lastname   :: Pre "[a-zA-Z]*"  where <| toString lastname ==  myname |>,  comma, ows     
-    , firstname  :: Pre "[a-zA-Z]*" 
-    , middlename :: Maybe Middle_name
+  data FullName(myname::String) = FullName
+    { lastname   :: StringME '[a-zA-Z]*'  where <| lastname ==  myname |>,  comma, ows     
+    , firstname  :: StringME '[a-zA-Z]*' 
+    , middlename :: Maybe MiddleName
     }
 
   data School = AB | BSE
 
-  data Person (myname::String) =
-    { fullname   :: Student_Name myname,    ws
-    , school     :: School,                 ws, quote
-    , year       :: Pre "[0-9][0-9]"
+  data Person (myname::String) = Person
+    { fullname   :: FullName myname,    ws
+    , school     :: School,             ws, quote
+    , year       :: StringME '[0-9][0-9]'
     }
 
-  type Header  = [Line (Pre ".*")] with length 7 
-  type Trailer = [Line (Pre ".*")] with term Eof 
-  data Student (name::String) = 
+  type Junk    = Line (StringME <|RE ".*"|>)
+  type Header  = [Junk] length 7 
+  type Trailer = [Junk] terminator EOF 
+  data Student (name::String) = Student
     { person  :: Line (Person name)
-    , header :: Header  
+--    , header  :: Header  
+    , Header
     , courses :: [Line Course]
     , trailer :: Trailer
     }
@@ -110,12 +112,12 @@ txt         = GL "*.txt"
 
   -- Collection of directories containing graduated students
   type Grads = 
-     Map [ ergnotinscope :: Class <| getYear ergnotinscope |> | ergnotinscope <- matches cRE ] 
+     Map [ c :: Class <| getYear c |> | c <- matches cRE ] 
 
 
   -- Root of the hierarchy
   type PrincetonCS (y::Integer) = Directory
-    { notes is "README" :: Text
+    { notes is "README" :: TextFile
     , seniors   is <|mkClass y      |> :: Class y
     , juniors   is <|mkClass (y + 1)|> :: Class <| y + 1 |>
     , graduates :: Grads

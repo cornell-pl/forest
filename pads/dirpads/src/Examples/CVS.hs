@@ -3,57 +3,54 @@
 module Examples.CVS where
 
 import Language.Pads.Padsc
-import Language.Forest.Forestc
+import Language.Forest.Forestc hiding (Local, Dir, entries)
 import Language.Pads.GenPretty
 
 import System.IO.Unsafe (unsafePerformIO)
 
-[pads| type Repository_f = Line Pstringln
+[pads| data Repository_f = Repository_f (Line StringLn)
 
        data Mode_t = Ext ":ext:" | Local ":local:" | Server ":server:" 
 
-       data Root_t = { cvs_mode :: Maybe Mode_t
-                     , machine  :: Pstring ':', ':'
-                     , path     :: Pstringln            
-                     }                                  
-       type Root_f = Line Root_t
+       data Root_t = Root_t
+             { cvs_mode :: Maybe Mode_t
+             , machine  :: StringC ':', ':'
+             , path     :: StringLn            
+             }                                  
+       data Root_f = Root_f (Line Root_t)
 
-       data Dentry_t = { "D/"
-                       , dirname :: Pstring '/'
-                       , "////"
-                       }
+       data Dentry_t = Dentry_t
+             { "D/"
+             , dirname :: StringC '/'
+             , "////"
+             }
 
-       data Revision_t  = Version (Pint, '.', Pint) | Added '0' | Removed '-'
-       data TimeStamp_t = { ts       :: PstringSE (RE "[/+]")
-                          , conflict :: Maybe ('+', Pstring '/') }
+       data Revision_t  = Version (Int, '.', Int) | Added '0' | Removed '-'
+       data TimeStamp_t = TimeStamp_t
+             { ts       :: StringSE '[/+]'
+             , conflict :: Maybe ('+', StringC '/') }
 
-       type Fentry_t = {                                  "/"  
-                       , filename   :: Pstring '/',       "/"
-                       , revision   :: Revision_t,        "/"
-                       , timestamp  :: TimeStamp_t,       "/"   
-                       , options    :: Pstring '/',       "/"  
-                       , tagdate    :: Pstringln
-                       }
+       data Fentry_t = Fentry_t
+             {                                  "/"  
+             , filename   :: StringC '/',       "/"
+             , revision   :: Revision_t,        "/"
+             , timestamp  :: TimeStamp_t,       "/"   
+             , options    :: StringC '/',       "/"  
+             , tagdate    :: StringLn
+             }
 
        data Entry_t   = Dir Dentry_t | File Fentry_t | NoDir 'D'
      
-       type Entries_f = [Line Entry_t] with term Eof
+       data Entries_f = Entries_f ([Line Entry_t] terminator EOF)
 |]
 
-entries_file = meta_dir ++ "/Entries"
-(entries_rep, entries_pd) = let (Entries_f rep, md) = unsafePerformIO $ parseFile entries_file in (rep,md)
-
-
 getEntries cvs =  let (Entries_f l) = entries cvs  in l
-getDirName  d = let (Pstring s) = dirname  d in s
-getFileName f = let (Pstring s) = filename f in s
 
 isDir entry  = case entry of {Dir _  -> True; otherwise -> False}
 isFile entry = case entry of {File _ -> True; otherwise -> False}
-               
 
-getDirs  cvs = map (\(Dir d)  -> d)   (filter isDir  (getEntries cvs))
-getFiles cvs = map (\(File f) -> f) (filter isFile (getEntries cvs))
+getDirs  cvs = map (\(Dir d)  -> dirname  d) (filter isDir  (getEntries cvs))
+getFiles cvs = map (\(File f) -> filename f) (filter isFile (getEntries cvs))
 
 
 [forest| type CVS_d = Directory 
@@ -64,11 +61,14 @@ getFiles cvs = map (\(File f) -> f) (filter isFile (getEntries cvs))
              
          type CVS_Repository_d = Directory
              { cvs         is "CVS"                 :: CVS_d
-             , dirs        is [ n as <| getDirName  d |> :: CVS_Repository_d | d <- <| getDirs  cvs |> ]
-             , files       is [ <| getFileName f |> :: File Ptext       | f <- <| getFiles cvs |> ]
+             , dirs        is [ d :: CVS_Repository_d | d <- <| getDirs  cvs |> ]
+             , files       is [ f :: TextFile         | f <- <| getFiles cvs |> ]
              } |]
 
 
+
+entries_file = meta_dir ++ "/Entries"
+(entries_rep, entries_pd) = let (Entries_f rep, md) = unsafePerformIO $ parseFile entries_file in (rep,md)
 
 meta_dir = "/Users/kfisher/pads/dirpads/src/Examples/CVS"
 (meta_rep, meta_md) = unsafePerformIO $ cVS_d_load meta_dir

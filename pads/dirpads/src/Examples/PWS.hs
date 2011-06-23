@@ -2,7 +2,7 @@
 
 module Examples.PWS where
 import Language.Pads.Padsc
-import Language.Forest.Forestc
+import Language.Forest.Forestc hiding (sources)
 import System.IO.Unsafe (unsafePerformIO)
 import Language.Pads.GenPretty
 import Language.Forest.Graph
@@ -10,8 +10,8 @@ import Language.Forest.Graph
 
 [pads| 
   {- Configuration file for learning demo web site; contains paths to various web site components. -}
-  data Config_f =  {
-                      header      :: [Pstringln] with length 13,
+  data Config_f =  Config_f {
+                      header      :: [Line StringLn] length 13,
    "$host_name   =",  host_name   :: Config_entry_t,  -- Name of machine hosting web site
    "$static_path =",  static_path :: Config_entry_t,  -- URL prefix for static content
    "$cgi_path    =",  cgi_path    :: Config_entry_t,  -- URL prefix for cgi content
@@ -23,17 +23,17 @@ import Language.Forest.Graph
    "$install_src =",  install_src :: Config_entry_t,  -- Path to directory containing learning demo website source
    "$static_dst  =",  static_dst  :: Config_entry_t,  -- Path to directory for static content in live web site
    "$cgi_dst     =",  cgi_dst     :: Config_entry_t,  -- Path to directory for cgi content in live web site site
-                      trailer     :: [Pstringln]
+                      trailer     :: [Line StringLn]
    }
 
-  type Config_entry_t = Line (" \"",  Pstring '\"',  "\";")   
-  type Header_t = [Pstringln] with length 13
+  type Config_entry_t = Line (" \"",  StringC '\"',  "\";")   
+  newtype Header_t = Header_t ([Line StringLn] length 13)
 
   {- Fle listing data sources for web site -}
-  type SourceNames_f = [Pstringln]
+  newtype SourceNames_f = SourceNames_f [Line StringLn]
 
   {- Information related to a single user's use of the web site -}
-  type UserEntries_f = [Line UserEntry_t] with term Eor
+  newtype UserEntries_f = UserEntries_f ([Line UserEntry_t] terminator EOR)
 
   {- Each visitor gets assigned a userId that is passed as a ? parameter in URL.
      Security considerations preclude using user-modifiable values as part of file paths.
@@ -42,36 +42,36 @@ import Language.Forest.Graph
      A userEntry_t contains a single such mapping.
      A file with type userEntries_t describes a collection of such mappings.
   -}
-  data UserEntry_t =  {
-     "id.",   usrId :: Pint,               
-    ",id.",   dirId :: (Pint, '.', Pint)    where <| usrId == fst dirId |> 
+  data UserEntry_t =  UserEntry_t {
+     "id.",   usrId :: Int,               
+    ",id.",   dirId :: (Int, '.', Int)    where <| usrId == fst dirId |> 
   } 
 
 
   {- Log of requests.  Used to prevent denial of service attacks. -}
-  type LogFile_f = [LogEntry_t]
+  newtype LogFile_f = LogFile_f [Line LogEntry_t]
 
   {- Request entry.  -}
-  data LogEntry_t = {
-    userId :: Pint,        ',',   -- user making request
+  data LogEntry_t = LogEntry_t {
+    userId :: Int,         ',',   -- user making request
     ip     :: IP_t,        ',',   -- IP address of requestor
-    script :: Pstring ' ', ' ',   -- script to be executed
-    userDir:: Pstring ' ', ' ',   -- directory to put results, corresponds to user
-    padsv  :: Pstring ' ', ' ',   -- version of PADS used
-    sml    :: PstringSE(RE " "),  -- version of SML used
-    msg    :: Maybe Pstringln     -- optional message 
+    script :: StringC ' ', ' ',   -- script to be executed
+    userDir:: StringC ' ', ' ',   -- directory to put results, corresponds to user
+    padsv  :: StringC ' ', ' ',   -- version of PADS used
+    sml    :: StringSE '[ ]',     -- version of SML used
+    msg    :: Maybe StringLn      -- optional message 
   }
 
-  type IP_t = (Pint, '.', Pint, '.', Pint, '.', Pint)
+  type IP_t = (Int, '.', Int, '.', Int, '.', Int)
 |]
 
 
 [forest|
   {- Files with various permission settings. -}
-  type BinaryRO    = Binary        where <| get_modes this_att ==  "-rw-r--r--" |>
-  type BinaryRX    = Binary        where <| get_modes this_att ==  "-rwxr-xr-x" |>
-  type TextRX      = Text          where <| get_modes this_att ==  "-rwxr-xr-x" |>
-  type TextRO      = Text          where <| get_modes this_att ==  "-rw-r--r--" |>
+  type BinaryRO    = BinaryFile    where <| get_modes this_att ==  "-rw-r--r--" |>
+  type BinaryRX    = BinaryFile    where <| get_modes this_att ==  "-rwxr-xr-x" |>
+  type TextRX      = TextFile      where <| get_modes this_att ==  "-rwxr-xr-x" |>
+  type TextRO      = TextFile      where <| get_modes this_att ==  "-rw-r--r--" |>
   
   {- Optional binary file with read/execute permission. -}
   type OptBinaryRX = Maybe BinaryRX
@@ -135,14 +135,14 @@ import Language.Forest.Graph
   }                          
 
 {- Collection of files named by sources containing actual data.  -}
- type DataSource_d(sources :: [String]) =  [ s :: Text | s <- sources ]
+ type DataSource_d(sources :: [String]) =  [ s :: TextFile | s <- sources ]
 
 {- Type of a symbolic link with pointing to source-}
  type SymLink_f (path :: FilePath) = SymLink where <| this == path |>
 
 {- Directory of optional links to source data files -}
  type Data_d ((root,sources) :: (FilePath, [String])) = Directory {
-     datareps  is [s :: Maybe Text                            | s <- sources],
+     datareps  is [s :: Maybe TextFile                        | s <- sources],
      datalinks is [s :: Maybe (SymLink_f <| root++"/"++ s |>) | s <- sources]        
  }
 
@@ -164,7 +164,7 @@ import Language.Forest.Graph
    pads_p         is <| source ++ ".p" |>            :: TextRO,         -- PADS/C description of data source
    pads_pml       is <| source ++ ".pml" |>          :: Maybe TextRO,   -- PADS/ML description of data source
    vanilla        is "vanilla.p"                     :: TextRO,         -- input tokenization
-   makefile       is "GNUmakefile"                   :: Text,           -- Makefile
+   makefile       is "GNUmakefile"                   :: TextFile,       -- Makefile
    machine        is <| envVar "AST_ARCH"|>          :: Maybe (MachineDep_d source),   -- Platform dependent files
    accum_c        is <| source ++ "-accum.c" |>      :: Maybe TextRO,   -- Template for accumulator program
    accum_out      is <| source ++ "-accum.out"|>     :: Maybe TextRO,   -- ASCII Accumulator output
@@ -190,7 +190,7 @@ import Language.Forest.Graph
  type Website_d(config::FilePath)  = Directory {
   c               is config               :: Config,             -- Configuration file with locations of other components
   static_content  is <| gstatic_dst c  |> :: Static_d,           -- Static web site content
-  dynamic_content is <| gcgi_path c    |> :: Cgi_d,              -- Dynamic web site content
+  dynamic_content is <| gcgi_dst c     |> :: Cgi_d,              -- Dynamic web site content
   scripts         is <| gscript_path c |> :: Scripts_d,          -- Shell scripts invoked by cgi to run learning system
   admin_info      is <| gstatic_dst c  |> :: Info_d,             -- Administrative information about website
   data_dir        is <| (glearn_home c)++"/examples/data" |>
@@ -207,17 +207,17 @@ isReadOnly md = get_modes md == "-rw-r--r--"
 userNames info = getUserEntries (users info)
 getUserEntries (UserEntries (UserEntries_f users)) = map userEntryToFileName users
 userEntryToFileName userEntry = pairToFileName (dirId userEntry)
-pairToFileName (Pint n1, Pint n2) = "id."++(show n1)++"."++(show n2)
+pairToFileName (n1, n2) = "id."++(show n1)++"."++(show n2)
 
 {- Helper functiosn to convert a Config entry to a FileName -}
-cToS (Config_entry_t (Pstring s)) = s
-ghost_name   (Config c) = cToS $ host_name c
-gstatic_path (Config c) = cToS $ static_path c
-gcgi_path    (Config c) = cToS $ cgi_path c
-gscript_path (Config c) = cToS $ script_path c
-glearn_home  (Config c) = cToS $ learn_home c
-gtmp_root    (Config c) = cToS $ tmp_root c
-gstatic_dst  (Config c) = cToS $ static_dst c
+ghost_name   (Config c) = host_name c
+gstatic_path (Config c) = static_path c
+gcgi_path    (Config c) = cgi_path c
+gscript_path (Config c) = script_path c
+glearn_home  (Config c) = learn_home c
+gtmp_root    (Config c) = tmp_root c
+gstatic_dst  (Config c) = static_dst c
+gcgi_dst     (Config c) = cgi_dst c
 
 
 
@@ -259,8 +259,9 @@ info_dir = "/Users/kfisher/Sites"
 dataSource_dir = "/Users/kfisher/pads/infer/examples/data"
 (datasource_rep, datasource_md) :: (DataSource_d, DataSource_d_md) = unsafePerformIO $ load1 datasources dataSource_dir
 
-getStrings (Pstringln (PstringSE s)) = s
-getSources' (SourceNames (SourceNames_f  pstrlns)) = map getStrings pstrlns
+--getStrings (Pstringln (PstringSE s)) = s
+getStrings s = s
+getSources' (SourceNames (SourceNames_f pstrlns)) = map getStrings pstrlns
 
 getSources :: Info_d -> [String]
 getSources info = getSources' (sources info)
