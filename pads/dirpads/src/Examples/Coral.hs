@@ -124,14 +124,16 @@ get_date w = Prelude.take 10 w
 get_dates :: Site -> [(String,Log)]
 get_dates (Site p) = p
 
-is_in :: Entry -> Bool
-is_in e =
+is_incoming :: Entry -> Bool
+is_incoming e =
   case payload e of 
     In _ -> True
     Out _ -> False
 
+is_in = is_incoming
+
 is_out :: Entry -> Bool
-is_out e = not (is_in e)
+is_out e = not (is_incoming e)
 
 -- MAPS --
 lmap f p tdir = 

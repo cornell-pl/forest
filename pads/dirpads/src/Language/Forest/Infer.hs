@@ -89,8 +89,8 @@ getHaskellId n name  =
 
 getFileTy fmd = ((fullpath . fileInfo) fmd,
                   case (kind . fileInfo) fmd of 
-                       AsciiK    -> File ("Ptext",  Nothing)
-                       otherwise -> File ("Pbinary", Nothing))
+                       AsciiK    -> File ("Text",  Nothing)
+                       otherwise -> File ("Binary", Nothing))
 
 
 mkStrLitM s = LitE (StringL s)
