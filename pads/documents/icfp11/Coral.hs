@@ -3,12 +3,8 @@
 module Examples.Coral where
 
 import Language.Pads.Padsc hiding (take)
-import Language.Forest.Forestc
-<<<<<<< Coral.hs
-import Language.Forest.Graph
-=======
+import Language.Forest.Forestc hiding (Status)
 import Language.Forest.Graph (mdToPDF)
->>>>>>> 1.10
 import Language.Pads.GenPretty
 import Control.Arrow
 
@@ -16,118 +12,108 @@ import Data.Map (fromListWith, fold, toList, toDescList)
 import List (sortBy,length,map)
 import System.IO.Unsafe (unsafePerformIO)
 
-comma_ws = RE ",[ \t]*"
-status_re = RE "[0-9]+"
+comma_ws = REd ",[ \t]*" " "
+status_re = REd "[0-9]+" "0"
 
 [pads|
-  type Time = (Pint, ".", Pint)
+  type Time = (Int, ".", Int)
 
-  type Byte = constrain x :: Pint where <| 0 <= x && x <= 256 |>
+  type Byte = constrain x :: Int where <| 0 <= x && x <= 256 |>
 
-  type IP_Port = 
+  data IP_Port = IP_Port
     { '"', 
-      ip :: (Byte,'.',Byte,'.',Byte,'.', Byte), ":",
-      port :: Pint, '"' }
+      ip   :: (Byte,'.',Byte,'.',Byte,'.', Byte), ":",
+      port :: Int, '"' }
 
-  type Status = PstringME(status_re)
+  type Status = StringME status_re
 
-  type Statistics = 
-    { stats_size       :: Pint,      comma_ws
-    , stats_proxy      :: Pre "[01]",  comma_ws
-    , stats_level      :: Pint,      comma_ws
-    , stats_lookup     :: Pint,      comma_ws
-    , stats_xfer       :: Pint,      comma_ws
-    , stats_total      :: Pint }
+  data Statistics = Statistics
+    { stats_size       :: Int,              comma_ws
+    , stats_proxy      :: StringME '[01]',  comma_ws
+    , stats_level      :: Int,              comma_ws
+    , stats_lookup     :: Int,              comma_ws
+    , stats_xfer       :: Int,              comma_ws
+    , stats_total      :: Int }
 
-  type NoQuote = PstringME (RE "[^\"]*")
+  type NoQuote = StringME '[^\"]*'
 
   type Generic = ('"',NoQuote,'"')
 
   type Url = Generic
 
-  data Header = 
-    { version       :: Maybe (Pre "[12],[ \t]*")
+  data Header = Header
+    { version       :: Maybe (StringME '[12],[ \t]*')
     , time          :: Time     }
 
-  data Request = 
+  data Request = Request
    { src       :: IP_Port, comma_ws
    , dst       :: IP_Port, comma_ws
    , url       :: Url } 
 
-  data InData =
+  data InData = InData
     { "\"IN\"",               comma_ws
     , in_req     :: Request,  comma_ws
     , in_status1 :: Status,   comma_ws
     , in_status2 :: Status,   comma_ws
     , in_stats   :: Statistics }
 
-  data OutData = 
-    { "\"OUT\"",                            comma_ws 
-    , out_remote    :: Pre "\"(REM|LOC)\"", comma_ws
-    , out_req       :: Request,             comma_ws
-    , out_referrer  :: Url,                 comma_ws
-    , out_status    :: Status,              comma_ws
-    , out_stats     :: Statistics,          comma_ws
-    , out_forwarded :: Generic,             comma_ws
+  data OutData = OutData
+    { "\"OUT\"",                                 comma_ws 
+    , out_remote    :: StringME <| RE "\"(REM|LOC)\"" |>,  comma_ws
+    , out_req       :: Request,                  comma_ws
+    , out_referrer  :: Url,                      comma_ws
+    , out_status    :: Status,                   comma_ws
+    , out_stats     :: Statistics,               comma_ws
+    , out_forwarded :: Generic,                  comma_ws
     , out_via       :: Generic  }
 
   data InOut = In InData | Out OutData
 
-  data Entry = 
-    { header :: Header,   comma_ws
+  data Entry = Entry
+    { header  :: Header,   comma_ws
     , payload :: InOut
-    , Eor }
+    , EOR }
 
-  type Entries = [Entry] with term Eor
+  type Entries = [Entry] terminator EOR
   
-  type Coral = (Entries, Eof)
+  data Coral = Coral (Entries, EOF)
 |]
 
 [forest|
   type Log = Directory 
     { web is "coralwebsrv.log.gz" :: Gzip (File Coral),
-      dns is "coraldnssrv.log.gz" :: Maybe (Gzip (File Ptext)),
-      prb is "probed.log.gz"      :: Maybe (Gzip (File Ptext)),
-      dmn is "corald.log.gz"      :: Maybe (Gzip (File Ptext)) }
+      dns is "coraldnssrv.log.gz" :: Maybe (Gzip TextFile),
+      prb is "probed.log.gz"      :: Maybe (Gzip TextFile),
+      dmn is "corald.log.gz"      :: Maybe (Gzip TextFile) }
 
-  type Site = [ d :: Log | d <- matches (RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}") ] 
+  type Site = [ d :: Log  | d <- matches <| RE "[0-9]{4}_[0-9]{2}_[0-9]{2}-[0-9]{2}_[0-9]{2}" |> ] 
 
-  type Top = [ s :: Site | s <- matches (RE "[^.].*") ] 
+  type Top  = [ s :: Site | s <- matches <| RE "[^.].*" |> ] 
 |]
+
 
 go () = unsafePerformIO $ top_load "/home/nate/coraldata"  
 load_logs () = fst(go ())
 load_md () = snd(go())
-<<<<<<< Coral.hs
-
-graph () = mdToPDF (load_md ()) "/Users/nate/coral.pdf"
-
-=======
   
 graph () = mdToPDF (snd $ unsafePerformIO $ top_load "/home/nate/logs") "/home/nate/coral.dot"
 
->>>>>>> 1.10
 get_stats e = 
   case payload e of 
     In i -> in_stats i
     Out o -> out_stats o
 
 get_total::Entry -> Int
-get_total e = 
-  case stats_total $ get_stats e of 
-    Pint n -> n
-
-string_of_url :: Url -> String
-string_of_url (Url (Generic (NoQuote (PstringME s)))) = s
+get_total e = stats_total $ get_stats e
 
 get_url::Entry -> String
 get_url e =                     
   case payload e of 
-    In i -> string_of_url (url $ in_req i)
-    Out o -> string_of_url (url $ out_req o)
+    In i ->  (url $ in_req i)
+    Out o -> (url $ out_req o)
 
 get_entries :: Log -> [Entry]
-get_entries (Log (Coral (Entries es)) _ _ _) = es
+get_entries (Log (Coral es) _ _ _) = es
 
 get_sites :: Top -> [(String,Site)]
 get_sites (Top p) = p
@@ -137,14 +123,16 @@ get_date w = Prelude.take 10 w
 get_dates :: Site -> [(String,Log)]
 get_dates (Site p) = p
 
-is_in :: Entry -> Bool
-is_in e =
+is_incoming :: Entry -> Bool
+is_incoming e =
   case payload e of 
     In _ -> True
     Out _ -> False
 
+is_in = is_incoming
+
 is_out :: Entry -> Bool
-is_out e = not (is_in e)
+is_out e = not (is_incoming e)
 
 -- MAPS --
 lmap f p tdir = 

@@ -3,8 +3,8 @@
 
 [forest| 
   \kw{type} Universal_d = \kw{Directory}
-     \{ ascii_files  \kw{is} [ f :: Text        | f <- \kw{matches} (GL "*"), <| get_kind  f_att == AsciiK     |> ]
-     , binary_files \kw{is} [ b :: Binary      | b <- \kw{matches} (GL "*"), <| get_kind  b_att == BinaryK    |> ]
+     \{ ascii_files  \kw{is} [ f :: TextFile    | f <- \kw{matches} (GL "*"), <| get_kind  f_att == AsciiK     |> ]
+     , binary_files \kw{is} [ b :: BinaryFile  | b <- \kw{matches} (GL "*"), <| get_kind  b_att == BinaryK    |> ]
      , directories  \kw{is} [ d :: Universal_d | d <- \kw{matches} (GL "*"), <| get_kind  d_att == DirectoryK |> ]
      , symLinks     \kw{is} [ s :: SymLink     | s <- \kw{matches} (GL "*"), <| get_isSym s_att == True       |> ]
      \} 

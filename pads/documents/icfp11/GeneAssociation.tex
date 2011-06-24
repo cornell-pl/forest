@@ -1,23 +1,23 @@
 \begin{code}
 \mkred{-- PADS descriptions of data file format.}
 [pads|
-  \kw{type} Pfloat         = (Pint, '.', Pint)
-  \kw{type} Pdate          = \{mon :: Pint, '/', day :: Pint, '/', year :: Pint\}
-  \kw{type} Purl           = ("http://", Pstringln)
+  \kw{type} Pfloat         = (Int, '.', Int)
+  \kw{data} Pdate          = Data \{mon :: Int, '/', day :: Int, '/', year :: Int\}
+  \kw{type} Purl           = ("http://", StringLn)
   \kw{type} Version_t      = ("!CVS Version: Revision: ", Pfloat, ws, '$')
   \kw{type} Valid_date_t   = ("!GOC Validation Date: ", Pdate, ws, '$')
   \kw{type} Sub_date_t     = ("!Submission Date: ", Pdate)
-  \kw{type} Project_name_t = ("!Project_name: ", Pstringln)
+  \kw{type} Project_name_t = ("!Project_name: ", StringLn)
   \kw{type} URL_t          = ("!URL: ", Purl)
-  \kw{type} Email_t        = ("!Contact Email: ", Pstringln)
-  \kw{type} Funding_t      = ("!Funding: ", Pstringln)
+  \kw{type} Email_t        = ("!Contact Email: ", StringLn)
+  \kw{type} Funding_t      = ("!Funding: ", StringLn)
   \kw{type} Gaf_ver_t      = ("!gaf-version: ", Pfloat)
-  \kw{type} Organism_t     = ("!organism:", ws, Pstringln)
+  \kw{type} Organism_t     = ("!organism:", ws, StringLn)
   \kw{type} Date_t         = ("date:", ws, Pdate)
-  \kw{type} Note_t         = ('!', ws, Pstringln)
+  \kw{type} Note_t         = ('!', ws, StringLn)
 \mbox{} 
   \kw{data} Header_line_t = 
-	Version Version_t
+          Version Version_t
 	| Valid_date Valid_date_t
 	| Sub_date Sub_date_t
 	| Project_name Project_name_t
@@ -28,21 +28,19 @@
 	| Organism Organism_t
 	| Date Date_t
 	| Note Note_t
-	| Other ('!', Pstringln)
+	| Other ('!', StringLn)
 \mbox{} 
-  \kw{type} Other_line_t = Pstringln
+  \kw{type} Other_line_t = StringLn
 \mbox{} 
-  \kw{type} GA_f = ([Line Header_line_t], [Line Other_line_t] \kw{with} term Eof)
-|]
+  \kw{data} GA_f = GA_f ([Line Header_line_t], [Line Other_line_t] \kw{terminator} EOF)
+
 \mbox{} 
-[pads|
-  \kw{data} Pair_t = \{key::Pstring '=', '=', val::Pstringln\}
-  \kw{type} Conf_f = [Line Pair_t] \kw{with} term Eof 
-|]
-\mbox{} 
-[pads|
-  \kw{type} Xml_header = ("<?xml ", Pstringln)
-  \kw{type} XML_f = (Line Xml_header, [Line Pstringln])
+
+  \kw{data} Pair_t = Pair_t \{key::StringC '=', '=', val::StringLn\}
+  \kw{data} Conf_f = Conf_f ([Line Pair_t] \kw{terminator} EOF )
+\mbox{}
+  \kw{type} Xml_header = ("<?xml ", StringLn)
+  \kw{data} XML_f = XML_f (Line Xml_header, [Line StringLn])
 |]
 \end{code}
 
@@ -50,18 +48,18 @@
 \mkred{-- Forest description of Gene Ontology \filestore{}}
 [forest|
   \kw{type} Readme_d = \kw{Directory} \{
-    readmes \kw{is} [rm :: Maybe Text | rm <- <|map get_readme_file (comb_source sources)|>]
+    readmes \kw{is} [rm :: Maybe TextFile | rm <- <|map get_readme_file (comb_source sources)|>]
   \}
 \mbox{}
   \kw{type} PTHR_d (name :: String)  = \kw{Directory} \{
-   attr  \kw{is}  <| name ++ ".save.attr"  |> :: Text,
-   gaf   \kw{is}  <| name ++ ".save.gaf"   |> :: Text,
-   msa   \kw{is}  <| name ++ ".save.msa"   |> :: Text,
+   attr  \kw{is}  <| name ++ ".save.attr"  |> :: TextFile,
+   gaf   \kw{is}  <| name ++ ".save.gaf"   |> :: TextFile,
+   msa   \kw{is}  <| name ++ ".save.msa"   |> :: TextFile,
    paint \kw{is}  <| name ++ ".save.paint" |> :: File XML_f,
-   sfan  \kw{is}  <| name ++ ".save.sfan"  |> :: Text,
-   tree  \kw{is}  <| name ++ ".save.tree"  |> :: Text,
-   txt   \kw{is}  <| name ++ ".save.txt"   |> :: Text, 
-   wts   \kw{is}  <| name ++ ".save.txt"   |> :: Text
+   sfan  \kw{is}  <| name ++ ".save.sfan"  |> :: TextFile,
+   tree  \kw{is}  <| name ++ ".save.tree"  |> :: TextFile,
+   txt   \kw{is}  <| name ++ ".save.txt"   |> :: TextFile, 
+   wts   \kw{is}  <| name ++ ".save.txt"   |> :: TextFile
   \}
 \mbox{}
   \kw{type} Pre_sub_d = \kw{Directory} \{
@@ -70,7 +68,7 @@
   \}
 \mbox{}
   \kw{type} Paint_d = \kw{Directory} \{
-    pthr_dirs \kw{is} [dir_name :: PTHR_d (dir_name) | dir_name <- \kw{matches} RE "PTHR[0-9]+"],
+    pthr_dirs \kw{is} [dir_name :: PTHR_d (dir_name) | dir_name <- \kw{matches} <| RE "PTHR[0-9]+" |> ],
     pre_sub   \kw{is} "pre-submission" :: Pre_sub_d
   \}
 \mbox{}

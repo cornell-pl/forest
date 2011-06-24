@@ -20,51 +20,54 @@ import Data.List hiding (sort)
 
 
 
+-- ?? [pads| type REd (r::String, d::String) = transform StringME r <=> Void using (const Void, const d) |]
 
-ws   = RE "[ \t]+"
-ows  = RE "[ \t]*"
-junk = RE ".*"
+ws   = REd "[ \t]+" " "
+ows  = REd "[ \t]*" " "
+junk = REd ".*"     " "
 space = ' '
 quote = '\''
 comma = ','
 
 
 [pads| 
-  type Grade = Pre "[ABCD][+-]?|F|AUD|N|INC|P"
+  type Grade = StringME '[ABCD][+-]?|F|AUD|N|INC|P'
 
-  data Course = 
-    { sort         :: Pre "[dto]",           ws
-    , departmental :: Pre "[.D]",            ws
-    , passfail     :: Pre "[.p]",            ws
-    , level        :: Pre "[1234]",          ws
-    , department   :: Pre "[A-Z][A-Z][A-Z]", ws
-    , number       :: Pint where <| 100 <= number && number < 600 |>, ws
+  data Course = Course
+    { sort         :: StringME '[dto]',      ws
+    , departmental :: StringME '[.D]',       ws
+    , passfail     :: StringME '[.p]',       ws
+    , level        :: StringME '[1234]',          ws
+    , department   :: StringME '[A-Z][A-Z][A-Z]', ws
+    , number       :: Int where <| 100 <= number && number < 600 |>, ws
     , grade        :: Grade,                 junk                               
     } 
 
-  data Middle_name = {space, middle :: Pre "[a-zA-Z]+[.]?" }           
+  data MiddleName = MiddleName {space, middle :: StringME '[a-zA-Z]+[.]?' }           
  
-  data Student_Name(myname::String) = 
-    { lastname   :: Pre "[a-zA-Z]*"  where <| toString lastname ==  myname |>,  comma, ows     
-    , firstname  :: Pre "[a-zA-Z]*" 
-    , middlename :: Maybe Middle_name
+  data FullName(myname::String) = FullName
+    { lastname   :: StringME '[a-zA-Z]*'  where <| lastname ==  myname |>,  comma, ows     
+    , firstname  :: StringME '[a-zA-Z]*' 
+    , middlename :: Maybe MiddleName
     }
 
   data School = AB | BSE
 
-  data Person (myname::String) =
-    { fullname   :: Student_Name myname,    ws
-    , school     :: School,                 ws, quote
-    , year       :: Pre "[0-9][0-9]"
+  data Person (myname::String) = Person
+    { fullname   :: FullName myname,    ws
+    , school     :: School,             ws, quote
+    , year       :: StringME '[0-9][0-9]'
     }
 
-  type Header  = [Line (Pre ".*")] with term length of 7 
-  type Trailer = [Line (Pre ".*")] with term Eof 
-  data Student (name::String) = 
+  type Junk    = Line (StringME <|RE ".*"|>)
+  type Header  = [Junk] length 7 
+  type Trailer = [Junk] terminator EOF 
+  data Student (name::String) = Student
     { person  :: Line (Person name)
-    , Header  
+--    , header  :: Header  
+    , Header
     , courses :: [Line Course]
-    , Trailer
+    , trailer :: Trailer
     }
 |]
 
@@ -111,13 +114,15 @@ txt         = GL "*.txt"
   type Grads = 
      Map [ c :: Class <| getYear c |> | c <- matches cRE ] 
 
+
   -- Root of the hierarchy
   type PrincetonCS (y::Integer) = Directory
-    { notes is "README" :: Text
+    { notes is "README" :: TextFile
     , seniors   is <|mkClass y      |> :: Class y
     , juniors   is <|mkClass (y + 1)|> :: Class <| y + 1 |>
     , graduates :: Grads
     }
+
 |]
 
 
@@ -128,31 +133,29 @@ txt         = GL "*.txt"
 mkPrettyInstance ''PrincetonCS
 mkPrettyInstance ''PrincetonCS_md
 
---cs_dir = "/Users/kfisher/pads/dirpads/src/Examples/data/facadm"
---cs_dir = "Examples/data/facadm"
-cs_dir = "Examples/data/CS"
+cs_dir = "data/CS"
 (cs_rep, cs_md) = unsafePerformIO $ princetonCS_load 11 cs_dir
 
 doit = 
- do  { (cs_rep,cs_md) <- princetonCS_load 11 "Examples/data/facadm"
+ do  { (cs_rep,cs_md) <- princetonCS_load 11 "data/CS"
 --     ; return (findFiles cs_md (\(r::FileInfo) -> (kind r) == DirectoryK))
      ; return  (findFiles cs_md (\(r::FileInfo) -> 
                                 (owner r) /= "dpw"))
      }
 
-permissions = checkAuth cs_md  "Examples/data/facadm/graduates/classof07/BSE07/clark.txt" "kfisher"
-readStatus = canRead cs_md  "Examples/data/facadm/graduates/classof07/BSE07/clark.txt" "kathleenfisher"
--- Right (False,["Examples/data/facadm/graduates","Examples/data/facadm/graduates/classof07/BSE07"])
+permissions = checkAuth cs_md  "data/CS/graduates/classof07/BSE07/clark.txt" "kfisher"
+readStatus = canRead cs_md  "data/CS/graduates/classof07/BSE07/clark.txt" "kathleenfisher"
+-- Right (False,["data/CS/graduates","data/CS/graduates/classof07/BSE07"])
 
 noRead = readProhibited cs_md "kathleenfisher"
 problemPaths = restrictingPaths noRead
--- ["Examples/data/facadm/graduates","Examples/data/facadm/graduates/classof07/BSE07"]
+-- ["data/CS/graduates","data/CS/graduates/classof07/BSE07"]
 
 cd_md md f = f $ snd md  -- should this change the paths?
 cd_rep rep f = f $ rep
 
 {- print graph of students -}
-resultIO =  mdToPDF cs_md "Examples/StudentsNew.pdf"
+resultIO =  mdToPDF cs_md "StudentsNew2.pdf"
 
 {- tar the student repostitory -}
 doTar = tar cs_md "Princeton.tar"

@@ -28,24 +28,24 @@ comma = ','
 \begin{code}
 \textcolor{red}{-- PADS description of Princeton CS Student Record Format}
 [pads| 
-  \kw{type} Grade = Pre "[ABCD][+-]?|F|AUD|N|INC|P"
+  \kw{type} Grade = StringME '[ABCD][+-]?|F|AUD|N|INC|P'
 \mbox{}
-  \kw{data} Course = 
-    \{ sort         :: Pre "[dto]",           ws
-    , departmental :: Pre "[.D]",            ws
-    , passfail     :: Pre "[.p]",            ws
-    , level        :: Pre "[1234]",          ws
-    , department   :: Pre "[A-Z][A-Z][A-Z]", ws
-    , number       :: Pint \kw{where} <| 100 <= number && number < 600 |>, ws
+  \kw{data} Course = Course
+    \{ sort         :: StringME '[dto]',      ws
+    , departmental :: StringME '[.D]',       ws
+    , passfail     :: StringME '[.p]',       ws
+    , level        :: StringME '[1234]',          ws
+    , department   :: StringME '[A-Z][A-Z][A-Z]', ws
+    , number       :: Int \kw{where} <| 100 <= number && number < 600 |>, ws
     , grade        :: Grade,                 junk                               
     \} 
 \mbox{}
-  \kw{data} Middle_name = \{space, middle :: Pre "[a-zA-Z]+[.]?" \}    
+  \kw{data} MiddleName = MiddleName \{space, middle :: StringME '[a-zA-Z]+[.]?' \}           
 \mbox{} 
-  \kw{data} Student_Name(myname::String) = 
-    \{ lastname   :: Pre "[a-zA-Z]*"  \kw{where} <| toString lastname ==  myname |>,  comma, ows     
-    , firstname  :: Pre "[a-zA-Z]*" 
-    , middlename :: Maybe Middle_name
+  \kw{data} FullName(myname::String) = FullName
+    \{ lastname   :: StringME '[a-zA-Z]*'  \kw{where} <| lastname ==  myname |>,  comma, ows     
+    , firstname  :: StringME '[a-zA-Z]*' 
+    , middlename :: Maybe MiddleName
     \}
 \mbox{}
   \kw{data} School = AB | BSE
@@ -53,11 +53,13 @@ comma = ','
   \kw{data} Person (myname::String) =
     \{ fullname   :: Student_Name myname,    ws
     , school     :: School,                 ws, quote
-    , year       :: Pre "[0-9][0-9]"
+    , year       :: StringME '[0-9][0-9]'
     \}
 \mbox{}
-  \kw{type} Header  = [Line (Pre ".*")] \kw{with} term length of 7 
-  \kw{type} Trailer = [Line (Pre ".*")] \kw{with} term Eof 
+  \kw{type} Junk    = Line (StringME <|RE ".*"|>)
+  \kw{type} Header  = [Junk] \kw{length} 7 
+  \kw{type} Trailer = [Junk] \kw{terminator} EOF 
+\mbox{}
   \kw{data} Student (name::String) = 
     \{ person  :: Line (Person name)
     , Header  
@@ -90,7 +92,7 @@ txt         = GL "*.txt"
 [forest|
   \textcolor{red}{-- Root of the hierarchy}
   \kw{type} PrincetonCS (y::Integer) = \kw{Directory}
-    \{ notes \kw{is} "README" :: Text
+    \{ notes     \kw{is} "README" :: Text
     , seniors   \kw{is} <|mkClass y      |> :: Class y
     , juniors   \kw{is} <|mkClass (y + 1)|> :: Class <| y + 1 |>
     , graduates :: Grads
@@ -117,7 +119,7 @@ txt         = GL "*.txt"
 \end{code}
 \vfill{}
 
-\subsection{Generated Description}
+\subsubsection{Generated Description}
 
 Here follows a description generated from a small sample of the
 student directory data using the description inference tool.
@@ -128,26 +130,26 @@ student directory data using the description inference tool.
 \}
 
 \kw{data} wITHDREW = \kw{Directory} \{
-    fingertxt \kw{is} "finger.txt" :: File Ptext
+    fingertxt \kw{is} "finger.txt" :: File Text
 \}
 
 \kw{data} tRANSFER = \kw{Directory} \{
-    bEAUCHEMINtxt \kw{is} "BEAUCHEMIN.txt" :: File Ptext,
-    vERSTEEGtxt \kw{is} "VERSTEEG.txt" :: File Ptext
+    bEAUCHEMINtxt \kw{is} "BEAUCHEMIN.txt" :: File Text,
+    vERSTEEGtxt \kw{is} "VERSTEEG.txt" :: File Text
 \}
 
 \kw{data} bSE11 = \kw{Directory} \{
     transfer \kw{is} "transfer" :: transfer,
-    bOZAKtxt \kw{is} "BOZAK.txt" :: File Ptext,
-    kESSELtxt \kw{is} "KESSEL.txt" :: File Ptext,
-    ssstxt \kw{is} "sss.txt" :: File Ptext
+    bOZAKtxt \kw{is} "BOZAK.txt" :: File Text,
+    kESSELtxt \kw{is} "KESSEL.txt" :: File Text,
+    ssstxt \kw{is} "sss.txt" :: File Text
 \}
 
 \kw{data} aB11 = \kw{Directory} \{
-    kADRItxt \kw{is} "KADRI.txt" :: File Ptext,
-    mACARTHERtxt \kw{is} "MACARTHER.txt" :: File Ptext,
-    oRRtxt \kw{is} "ORR.txt" :: File Ptext,
-    sSSStxt \kw{is} "SSSS.txt" :: File Ptext
+    kADRItxt \kw{is} "KADRI.txt" :: File Text,
+    mACARTHERtxt \kw{is} "MACARTHER.txt" :: File Text,
+    oRRtxt \kw{is} "ORR.txt" :: File Text,
+    sSSStxt \kw{is} "SSSS.txt" :: File Text
 \}
 
 \kw{data} classof11 = Directory \{
@@ -157,8 +159,8 @@ student directory data using the description inference tool.
     wITHDREW \kw{is} "WITHDREW" :: wITHDREW
 \}
 \end{code}
-%\caption{Generated description. Type \texttt{File Ptext} is synonymous
-%  with \texttt{Text}.}
+%\caption{Generated description. Type \texttt{File Text} is synonymous
+%  with \texttt{TextFile}.}
 %\label{fig:generated-description}
 %\end{figure}
 %\vfill

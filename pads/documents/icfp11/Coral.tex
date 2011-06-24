@@ -1,55 +1,55 @@
 
 \begin{code}
 \textcolor{red}{-- Auxiliary Haskell definitions for PADS description}
-comma\_ws = RE ",[ \t]*"
-status\_re = RE "[0-9]+"
+comma\_ws  = REd ",[ \t]*" " "
+status\_re = REd "[0-9]+" "0"
 \mbox{}
 \textcolor{red}{-- PADS description of CoralCDN Webserver Log Format}
 [pads|
-  \kw{type} Time = (Pint, ".", Pint)
+  \kw{type} Time = (Int, ".", Int)
 \mbox{}
-  \kw{type} Byte = constrain x :: Pint \kw{where} <| 0 <= x && x <= 256 |>
+  \kw{type} Byte = \kw{constrain} x :: Int \kw{where} <| 0 <= x && x <= 256 |>
 \mbox{}
-  \kw{type} IP\_Port = 
+  \kw{data} IP\_Port = IP\_Port
     \{ '"', 
       ip :: (Byte,'.',Byte,'.',Byte,'.', Byte), ":",
-      port :: Pint, '"' \}
+      port :: Int, '"' \}
 \mbox{}
-  \kw{type} Status = PstringME(status\_re)
+  \kw{type} Status = StringME status\_re
 \mbox{}
-  \kw{type} Statistics = 
-    \{ stats\_size       :: Pint,      comma\_ws
-    , stats\_proxy      :: Pre "[01]",  comma\_ws
-    , stats\_level      :: Pint,      comma\_ws
-    , stats\_lookup     :: Pint,      comma\_ws
-    , stats\_xfer       :: Pint,      comma\_ws
-    , stats\_total      :: Pint \}
+  \kw{data} Statistics = Statistics
+    \{ stats\_size       :: Int,              comma\_ws
+    , stats\_proxy      :: StringME '[01]',  comma\_ws
+    , stats\_level      :: Int,              comma\_ws
+    , stats\_lookup     :: Int,              comma\_ws
+    , stats\_xfer       :: Int,              comma\_ws
+    , stats\_total      :: Int \}
 \mbox{}
-  \kw{type} NoQuote = PstringME (RE "[^\\"]*")
+  \kw{type} NoQuote = StringME '[^\\"]*'
 \mbox{}
   \kw{type} Generic = ('"',NoQuote,'"')
 \mbox{}
   \kw{type} Url = Generic
 \mbox{}
-  \kw{data} Header = 
-    \{ version       :: Maybe (Pre "[12],[ \\t]*")
+  \kw{data} Header = Header
+    \{ version       :: Maybe (StringME '[12],[ \\t]*')
     , time          :: Time     \}
 \mbox{}
-  \kw{data} Request = 
+  \kw{data} Request = Request
    \{ src       :: IP\_Port, comma\_ws
    , dst       :: IP\_Port, comma\_ws
    , url       :: Url \} 
 \mbox{}
-  \kw{data} InData =
+  \kw{data} InData = InData
     \{ "\\"IN\\"",               comma\_ws
     , in\_req     :: Request,  comma\_ws
     , in\_status1 :: Status,   comma\_ws
     , in\_status2 :: Status,   comma\_ws
     , in\_stats   :: Statistics \}
 \mbox{}
-  \kw{data} OutData = 
+  \kw{data} OutData = OutData
     \{ "\\"OUT\\"",                            comma\_ws 
-    , out\_remote    :: Pre "\\"(REM|LOC)\\"", comma\_ws
+    , out\_remote    :: StringME <| RE "\\"(REM|LOC)\\"" |> , comma\_ws
     , out\_req       :: Request,             comma\_ws
     , out\_referrer  :: Url,                 comma\_ws
     , out\_status    :: Status,              comma\_ws
@@ -59,14 +59,14 @@ status\_re = RE "[0-9]+"
 \mbox{}
   \kw{data} InOut = In InData | Out OutData
 \mbox{}
-  \kw{data} Entry = 
+  \kw{data} Entry = Entry
     \{ header  :: Header,   comma\_ws
     , payload :: InOut
     , Eor \}
 \mbox{}
-  \kw{type} Entries = [Entry] \kw{with} term Eor
+  \kw{type} Entries = [Entry] \kw{terminator} EOR
 \mbox{}  
-  \kw{type} Coral = (Entries, Eof)
+  \kw{data} Coral = Coral (Entries, EOF)
 |]
 \end{code}
 
@@ -76,15 +76,15 @@ status\_re = RE "[0-9]+"
   \textcolor{red}{-- Directory containing log files}
   \kw{type} Log = \kw{Directory}
     \{ web \kw{is} "coralwebsrv.log.gz" :: Gzip (File Coral),          
-      dns \kw{is} "coraldnssrv.log.gz" :: Maybe (Gzip (File Ptext)),
-      prb \kw{is} "probed.log.gz"      :: Maybe (Gzip (File Ptext)),
-      dmn \kw{is} "corald.log.gz"      :: Maybe (Gzip (File Ptext)) \}
+      dns \kw{is} "coraldnssrv.log.gz" :: Maybe (Gzip TextFile),
+      prb \kw{is} "probed.log.gz"      :: Maybe (Gzip TextFile),
+      dmn \kw{is} "corald.log.gz"      :: Maybe (Gzip TextFile) \}
 \mbox{}
   \textcolor{red}{-- Directory containing dates}
-  \kw{type} Site = [ d :: Log | d <- \kw{matches} (RE "[0-9]\{4\}\_[0-9]\{2\}\_[0-9]\{2\}-[0-9]\{2\}\_[0-9]\{2\}") ] 
+  \kw{type} Site = [ d :: Log | d <- \kw{matches} <| RE "[0-9]\{4\}\_[0-9]\{2\}\_[0-9]\{2\}-[0-9]\{2\}\_[0-9]\{2\}" |> ] 
 \mbox{}
   \textcolor{red}{-- Directory containing sites}
-  \kw{type} Top = [ s :: Site | s <- \kw{matches} (RE "[^.].*") ] 
+  \kw{type} Top = [ s :: Site | s <- \kw{matches} <| RE "[^.].*" |> ] 
 |]
 \end{code}
 
@@ -104,7 +104,10 @@ get\_total :: Entry -> Int
 get\_date :: String -> String 
 get\_url::Entry -> String
 string\_of\_url :: Url -> String
-is\_in :: Entry -> Bool
+
+\textcolor{red}{-- Helpers: test if entry is for incoming our outgoing
+  data}
+is\_in  :: Entry -> Bool
 is\_out :: Entry -> Bool
 \mbox{}
 \textcolor{red}{-- Helper: builds an association list }
