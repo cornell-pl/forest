@@ -149,16 +149,16 @@ The automatically generated auxiliary support includes:
 %% not have to start from scratch when writing a specification for their
 %% \filestores{}. 
 
-Overall, the main contribution of this work is
+The main contribution of this work is
 conceptual: We propose the idea of extending a modern programming
 language with tightly integrated linguistic features for
 describing and manipulating \filestores{}.  To demonstrate
-the potential of this idea, the following sections of this paper
-flesh our proposal in greater depth:
+the potential of this idea, the following sections 
+flesh out our proposal in greater depth:
 
 \begin{itemize}
 \item Section~\ref{sec:examples} begins with two concrete motivating 
-examples, drawn from the authors day-to-day experience managing
+examples, drawn from the authors' day-to-day experience managing
 computer systems.  While there are just two central examples in this
 paper, the \forest{} web site~\cite{forest-web-site} contains a number 
 of further examples and case studies.~\dpw{the forest web site citation 
@@ -170,24 +170,26 @@ intuitive and compositional syntax that is tightly integrated with
 Haskell, our host language.  The design is also tightly integrated
 with \padshaskell{}, a domain-specific language for describing 
 individual
-files (as opposed to entire file stores), inspired by past work
+files (as opposed to entire filestores), inspired by past work
 on related data description languages~\cite{fisher+:pads,fisher+:popl06,mandelbaum+:pads-ml,fisher+:toplas}.
-This tight, seemless integration was a crucial design goal as it
-allows programmers to transition effortlessly
+This tight integration was a crucial design goal as it
+allows programmers to transition seamlessly
 between ordinary \haskell{} data structures, file internals and 
 file collections, all in a uniform syntax.
 ~\dpw{I wanted to be positive as opposed to defensive about
 similarities between pads and forest.}
+
 \item Section~\ref{sec:exp} explains how to write Haskell programs
 that operate over filestores described in \forest.  The goal of this
-section is to provide a sense of just how easy it is to write simple
-file system scripts or queries.
+section is to provide a sense of how easy it is to write simple
+filestore scripts or queries.
+
 \item Section~\ref{sec:tools} shows that it is possible to use \forest{}
-to make management
-of filestores even easier by developing general-purpose, generic
-tools capable of operating over any filestore!  We have developed
-several of these tools including a generic query interface, a file
-system visualization tool, an access control permission checker, and a 
+to make the management
+of filestores even easier by developing generic
+tools capable of operating over any filestore.  We have developed
+several such tools including a generic query interface, a file
+system visualization tool, an access-control permission checker, and a 
 series of UNIX-like scripting tools.  We have also built a simple
 description-inference tool to
 help users write a new description for an existing file system.
@@ -199,18 +201,18 @@ our design is effectively integrated into the
 \item Section~\ref{sec:implementation} explains our implementation,
 which is complete and may be downloaded at the \forest{} web 
 site~\cite{forest-web-site}.  In addition to delivering a useful tool,
-our engineering work here 
+our engineering work 
 has the auxiliary benefit of serving
-as a rich case study in domain-specific language implementation. 
+as a case study in domain-specific language implementation. 
 In fact, it has already had significant impact as such:  
 the \haskell{} team modified and extended \haskell{}'s
 quasiquoting mechanism in response to our needs. 
 
 \item Section~\ref{sec:theory} describes the 
 formal semantics for core Forest and states
-theorems demonstrating that the mappings between the file system and
+theorems demonstrating that the mappings between the filestore and
 in-memory structures behave correctly. These theorems are inspired
-by the "round-tripping" laws for well-behaved lenses~\cite{lenses}, but are
+by the ``round-tripping'' laws for well-behaved lenses~\cite{lenses}, but are
 significantly more complicated as the load and store functions have
 to deal with inconsistencies stemming from dependencies,
 duplication, and invalid data.
@@ -223,9 +225,9 @@ Antlr~\cite{antlr}, Parsec~\cite{LeijenMeijer:parsec} and
 Pads~\cite{fisher+:toplas}, to name just a few.  
 However, \forest{} differs
 substantially from any of these systems because it focuses on technology
-for describing {\em entire file systems}.  
+for describing {\em entire filestores}.  
 A key difference is that
-simple file systems are {\em trees} and complex ones with symbolic links are 
+simple filestores are {\em trees} and complex ones with symbolic links are 
 {\em graphs}, whereas files are {\em sequences} (of characters
 or tokens). Consequently,
 the language design, formal systems,

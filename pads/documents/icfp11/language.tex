@@ -8,7 +8,7 @@
 }
 
 Data stored in \filestore{}s shares many characteristics of
-data stored in ordinary, in-memory programmer data structures.
+data stored in ordinary, in-memory data structures.
 %Indeed, \filestore{}s are often merely a durable, readable representation of such
 %data structures.  
 Consequently, \forest{}
@@ -41,7 +41,7 @@ tools that can operate over any \forest{}
 description.  As a bonus, \haskell{}'s quasiquoting 
 mechanism~\cite{Mainland:quasi} proved a
 useful way to implement \forest{}.  It enabled tight integration of
-the two languages, while admitting fine-grained control 
+the two languages while admitting fine-grained control 
 over \forest{} syntax.
   
 %% Given this host context, \forest{} declarations were designed to 
@@ -80,20 +80,20 @@ Each such type declaration has three primary semantic interpretations:
      a Haskell program. 
 \item An interpretation as an ordinary \haskell{} type for the in-memory 
    {\em metadata}
-    that will be generated when the file system fragment loaded.
+    that will be generated when the file system fragment is loaded.
 \end{enumerate}
 All three interpretations are used by the tool that loads data from
-the file system into memory as specified by a \forest{} description.  
+the filestore into memory as specified by a \forest{} description.  
 When supplied with
 a {\em current path}, the loader uses the first interpretation 
-to validate that the file system rooted at that
+to validate that the filestore rooted at that
 path has the correct shape.  
 If the expected shape is complicated,
 possibly involving several nested subshapes (and hence
 traversal through several subdirectories), the semantics of \forest{}
 dictates how the loader should adjust the current path 
 as it goes.  When validation (also called {\em matching}) succeeds, we
-say the file system fragment {\em matches} the description.
+say the filestore fragment {\em matches} the description.
 The second interpretation is used when the loader
 lazily pulls the on-disk data into memory. 
 The in-memory data structure is guaranteed to have the 
@@ -112,7 +112,7 @@ that these three interpretations all arise from a single compact description.
 Moreover, to aid the programmer in navigating between interpretations, we
 align the syntax of \forest{} with the syntax of \haskell{} where possible.
 For example, if the \haskell{} types for the in-memory representation and
-metadata are record types then the \forest{} syntax is designed to look similar
+metadata are record types, then the \forest{} syntax is designed to look similar
 to a \haskell{} record type.  Likewise,  if the \haskell{} types for the in-memory representation and
 metadata are Maybe types then the \forest{} syntax is designed to look similar
 to a \haskell{} Maybe type.  
@@ -120,9 +120,8 @@ to a \haskell{} Maybe type.
 %precise by defining a formal core calculus for \forest{}.
 Many of these high-level design considerations were adopted
 from earlier work on 
-\pads{}~\cite{fisher+:pads,fisher+:toplas,mandelbaum+:pads-ml}, though, 
-as mentioned earlier,
-the semantics of \forest{} (which operates over graph-based file systems)
+\pads{}~\cite{fisher+:pads,fisher+:toplas,mandelbaum+:pads-ml}, although 
+the semantics of \forest{} (which operates over graph-based filestores)
 is substantially different from the semantics
 of \pads{} (which operates over sequence-based strings).
 
@@ -133,10 +132,10 @@ not assume that a given \filestore{} conforms perfectly to its associated
 \forest{} description.  Instead, when loading data, we check that a 
 \filestore{} conforms and mark discrepencies
 in the metadata.  This design allows users to respond in
-application-specific ways to errors.  It also allows us to check
+application-specific ways to errors.  It also allows \forest{} to check
 the arbitrarily complex conditions that may be specified by 
-\forest{}'s dependent types.\footnote{Validation that a file
-system obeys a Forest specification is akin type checking.  However,
+\forest{}'s dependent types.\footnote{Validation that a filestore
+  obeys a Forest specification is akin to type checking.  However, 
 it is akin to type checking closed, zero-order values (trees and graphs)
 as opposed to type checking parameterized, higher-order values (functions).
 Consequently, even though Forest has dependent types, type checking 
@@ -306,8 +305,8 @@ target, such as requiring it to be to a specific file.
 In \forest{}, any file system object may be described in multiple ways.
 Hence, in the case of a symbolic link, it is possible to use one declaration to
 specify that the object is a symbolic link and a second to specify
-the type of the link target.  We will see an example of such a specification in the
-next subsection. 
+the type of the link target.  We will see an example of such a specification in \secref{sec:directories}
+
 
 \subsection{Maybe: Optional File System Objects}
 \label{sec:maybe}
@@ -349,7 +348,7 @@ must be a valid Haskell record label,
 (2) an external name specified as a value of type \cd{String}
 (\eg{}, \cd{"README"} or  \cd{"classof11"}) that gives the name of the
 object on disk, and 
-(3) a \forest{} description of the object (\eg{}, \cd{Text} or \cd{Class 11}).
+(3) a \forest{} description of the object (\eg{}, \cd{TextFile} or \cd{Class 11}).
 
 When the external name is itself a valid Haskell label, users may omit
 it, in which case \forest{} uses the label as the on-disk name:

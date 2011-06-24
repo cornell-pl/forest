@@ -44,7 +44,7 @@ corresponding \haskell{} code had appeared in the input at the
 location of the quasiquote.  Early versions of quasiquoting
 supported quoting only expression and pattern forms.  Simon Peyton
 Jones extended the mechanism to permit declaration and type
-quasi-quoting partly to enable the \forest{} implementation.  We used
+quasiquoting partly to enable the \forest{} implementation.  We used
 this same approach to implement \padshaskell{}, which we built
 concomitantly.  
 
@@ -68,7 +68,7 @@ used the Haskell Source Extension package~\cite{haskell-src-exts} to parse
 these fragments.  The data structure that this library returns is
 unfortunately not the data structure that \template{} requires, so we
 used yet another library, the Haskell Source Meta
-package~\cite{haskell-src-meta}, that provides this translation. 
+package~\cite{haskell-src-meta}, that does this translation. 
 
 
 \paragraph{Type checking.}
@@ -102,10 +102,10 @@ very interesting future work.
 
 \forest{} uses Haskell's \cd{unsafeInterleaveIO} to load each portion
 of a \filestore{} only when needed by an application program.
-We have not measured the performance overhead of using
-\forest{} systematically.  However, we have used our
+We have not systematically measured the performance overhead of using
+\forest{}.  However, we have used our
 mostly-unoptimized implementation to manipulate filestores on the
-order of many gigabytes.  Currently, the performance is acceptable
+order of many gigabytes and found the performance acceptable
 for many applications.  
 
 The running time of storing operations is proportional to the

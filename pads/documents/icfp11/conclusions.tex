@@ -5,7 +5,7 @@
   by users hand-editing the filestore?  Can "invariants" become
   violated as a result of such concurrency?}
 
-In this paper, we proposed the idea of extending a modern, high-level
+In this paper, we propose the idea of extending a modern, high-level
 programming language with tightly integrated features for
 processing coherent file system fragments, which we call
 \filestores{}.  To demonstrate the
@@ -25,18 +25,18 @@ On the practical side,
 we illustrated the utility of our design
 by describing several example \filestores{}, and showing how
 to use these descriptions
-to build simple, lightweight \haskell{} scripts that query,  
+to build simple \haskell{} scripts that query,  
 analyze, and transform the example data in useful ways.
 We also provided evidence that
 \forest{} has effective support for building
 generic, description-directed tools by 
 implementing a number of such 
-tools ourselves, including a filesystem visualizer,
+tools ourselves, including a filestore visualizer,
 a generic query interface, an access control checker, and
 (circularly) a simple description inference engine.
 An ancillary benefit of this 
-engineering work was that it
-served as an extensive case study in domain-specific
+engineering work is that it
+serves as an extensive case study in domain-specific
 language design, and, as such, inspired changes in the design of
 \template{}.  
 

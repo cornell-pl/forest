@@ -6,11 +6,11 @@ symbolic links stored on disk satisfy a variety of precise
 invariants. Moreover, all of these structures must have acceptable
 ownership, permission, and timestamp attributes. Unfortunately,
 current programming languages do not provide support for documenting
-assumptions about filestores, detecting errors, or safely loading from
+assumptions about filestores, detecting errors in them, or safely loading from
 and storing to them.
 
 This paper describes the design, implementation, and semantics of
-\forest{}, a novel domain-specific language for describing
+\forest{}, a new domain-specific language for describing
 filestores. The language uses a type-based metaphor to specify the
 expected structure, attributes, and invariants of filestores.
 \forest{} generates loading and storing functions that make it easy to
@@ -18,9 +18,8 @@ connect data on disk to an isomorphic representation in memory that
 can be manipulated as if it were any other data structure.  \forest{}
 also generates metadata that describes the degree to which the
 structures on the disk conform to the specification, making error
-detection easy. Hence, in a nutshell, \forest{} extends the
-rigorous discipline of typed 
-programming languages, and many of their benefits, to the untyped 
+detection easy. In a nutshell, \forest{} extends the
+rigorous discipline of typed programming languages to the untyped 
 world of file systems.
 
 We have implemented \forest{} as an embedded domain-specific language
