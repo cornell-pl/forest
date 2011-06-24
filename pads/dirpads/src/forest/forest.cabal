@@ -7,16 +7,29 @@ Name:                forest
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             0.1
+Version:             1.0
 
 -- A short (one-line) description of the package.
-Synopsis:            A declarative language for specifying filestores, on-disk collections of files, directories, and symbolic links.
+Synopsis:            A declarative language for specifying filestores.
 
 -- A longer description of the package.
--- Description:         
+Description:  A filestore is a structured collection of data files housed in a
+              conventional hierarchical file system.  Forest is a domain-specific
+              language for describing filestores. The language uses a
+	      type-based metaphor to specify the expected structure,
+	      attributes, and invariants of filestores.  Forest
+              generates loading and storing functions that make it easy to
+              connect data on disk to an isomorphic representation in
+	      memory that can be manipulated as if it were any other
+	      data structure.  Forest also generates metadata that
+	      describes the degree to which the structures on the disk
+	      conform to the specification, making error detection
+	      easy. In a nutshell, Forest extends the rigorous
+	      discipline of typed programming languages to the untyped  
+              world of file systems.
 
 -- URL for the project homepage or repository.
-Homepage:            www.forestproj.com
+Homepage:            forestproj.com
 
 -- The license under which the package is released.
 License:             OtherLicense
@@ -40,7 +53,12 @@ Build-type:          Simple
 
 -- Extra files to be distributed with the package, such as examples or
 -- a README.
--- Extra-source-files:  
+Extra-source-files:  Examples/CVS.hs,
+                     Examples/GeneAssociation.hs,
+                     Examples/PWS.hs,
+                     Examples/Students2.hs,
+                     Examples/Universal.hs,
+                     Examples/Coral.hs 
 
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.2
