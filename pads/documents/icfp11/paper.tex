@@ -1,9 +1,9 @@
 \documentclass[natbib]{sigplanconf}
 % \documentclass[natbib,nocopyrightspace]{sigplanconf} % no space for TR version
 
+\newif\iftr\trfalse              %% set to false in conference version
 \newif\ifdraft\draftfalse        %% set to false in final version
 \newif\ifappendix\appendixtrue   %% set to false in final version
-\newif\ifanon\anonfalse          %% set to false in final version
 
 \usepackage{xspace,pads,amsmath,math-cmds,
             math-envs,times,
@@ -22,19 +22,13 @@
 \begin{document}
 \input{definitions}
 
-\conferenceinfo{ICFP '11}{} 
-\copyrightyear{2011} 
-\copyrightdata{} 
+\conferenceinfo{ICFP'11,} {September 19--21, 2011, Tokyo, Japan.}
+\CopyrightYear{2011}
+\copyrightdata{978-1-4503-0865-6/11/09}
 
 %\titlebanner{}
-\title{Forest: A Language and Toolkit For Programming with \Filestores{}}
+\title{Forest\iftr{} 1.0\fi: A Language and Toolkit For Programming with \Filestores{}}
 
-\ifanon
-%Omitted for blind review
-\authorinfo{\vskip -2in}
- 	   {\vskip -2in}
-           {}
-\else
 \authorinfo{Kathleen Fisher}
 	   {Tufts University}{}
 %           {{kfisher@eecs.tufts.edu}}
@@ -47,7 +41,6 @@
 \authorinfo{Kenny Q. Zhu}
            {Shanghai Jiao Tong University}{}
 %           {{kzhu@cs.sjtu.edu.cn}}
-\fi
 
 \maketitle{}
 
@@ -57,10 +50,10 @@
 
 \category{D.3.m}{Programming languages}{Miscellaneous}
 \terms
-Languages
+Languages, Design, Theory
 \keywords
 Data description languages, file systems, filestores,
-domain specific languages, ad hoc data, Haskell,
+domain-specific languages, ad hoc data, Haskell,
 generic programming
 
 \input{intro}
@@ -74,17 +67,17 @@ generic programming
 \input{conclusions}
 
 \section*{Acknowledgments}
-We would like to thank Simon Peyton Jones for extending Haskell's
-quasiquoting mechanism to support the \forest{}
-design and for help in using quasiquoting in general.  We would like
-to thank John Launchbury for help in designing and implementing
-Pads/Haskell. 
 
-This material is based upon work supported under NSF grant CCF-1016937
-and ONR grant N00014-09-1-0652. Any opinions, findings, and
-recommendations expressed in this material are those of the authors
-and do not necessarily reflect the views of the NSF or the ONR.
-Kenny Q. Zhu was partially supported by NSFC Grant No. 61033002.
+We wish to thank Simon Peyton Jones for extending Haskell's
+quasiquoting mechanism to support the \forest{} design and for
+assisting us in using it.  We also wish to thank John Launchbury for
+help in designing and implementing Pads/Haskell.
+
+This work was supported in part by the NSF under grant CCF-1016937,
+the ONR under grant N00014-09-1-0652, and the NSFC under grant
+6103302. Any opinions, findings, and recommendations expressed in this
+material are those of the authors and do not necessarily reflect the
+views of these agencies.
 
 \bibliographystyle{abbrv}
 \balance
