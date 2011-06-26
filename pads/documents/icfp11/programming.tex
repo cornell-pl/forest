@@ -7,7 +7,7 @@
 %\end{figure}
 %
 %\begin{figure}
-Coral Representation Types:
+Representation Types:
 \begin{code}
 \kw{newtype} Stats = Stats \{last :: Last, topk :: Topk\}
 \kw{newtype} Dat   = Dat   [(String, Site)]
@@ -19,7 +19,7 @@ Coral Representation Types:
 %\end{figure}
 %
 %\begin{figure}
-Coral Metadata Types:
+Metadata Types:
 \begin{code}
 \kw{type} Stats_md = (Forest_md, Stats_inner_md)
 \kw{data} Stats_inner_md = Stats_inner_md 
@@ -63,7 +63,7 @@ log_manifest   :: (Log, Log_md)     -> IO Manifest\smallskip
 storeAt        :: FilePath -> Manifest -> IO ()
 store          ::             Manifest -> IO ()
 \end{code}
-\caption{Coral rep. and metadata types; load and store functions}
+\caption{Artifacts generated from the CoralCND description.}
 \label{fig:coral-aux}
 \end{figure}
 

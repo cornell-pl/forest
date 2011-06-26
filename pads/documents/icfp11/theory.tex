@@ -7,9 +7,9 @@
 \multicolumn{4}{@{}l}{\fbox{\textit{Basic definitions}}}\\[1.5ex]
 \textit{Integers}     & n    & \in & \mathbb{Z}\\[1ex]
 \textit{Strings}      & u    & \in & \Sigma^{\ast}\\[1ex]
-\textit{Values}       & v    & \bnfdef & u \bnfalt n \bnfalt \True \bnfalt \False \bnfalt r \bnfalt () \bnfalt (v_1,v_2)\\
+\textit{Values}       & v    & \bnfdef & n \bnfalt u \bnfalt r \bnfalt \True \bnfalt \False \bnfalt () \bnfalt (v_1,v_2)\\
                       &      & \bnfalt &\Just{v} \bnfalt \Nothing \bnfalt \List{v_1,\tdots,v_n}\\[1ex]
-\textit{Types}        & \tau & \bnfdef & \typ{String} \bnfalt \typ{Int} \bnfalt \typ{Bool} \bnfalt \typ{Path} \bnfalt \typ{()} \bnfalt (\tau_1,\tau_2) \\
+\textit{Types}        & \tau & \bnfdef & \typ{String} \bnfalt \typ{Int} \bnfalt \typ{Path} \bnfalt \typ{Bool} \bnfalt \typ{()} \bnfalt (\tau_1,\tau_2) \\
                       &      & \bnfalt & \typ{Maybe}~\tau \bnfalt \List{\tau}\\[1ex]
 \textit{Environments} & \Env & \bnfdef & \ENil \bnfalt \Env,x\mapsto v\\[1ex]
 \textit{Expressions}  & e    & \bnfdef & x \bnfalt \lambda x.~e \bnfalt e_1~e_2 \bnfalt \dots \\[2.5ex]
@@ -22,7 +22,7 @@
 \textit{Specifications} & s    & \bnfdef & \Sk \bnfalt \SPath{e}{s} \bnfalt \SPair{x}{s_1}{s_2} \bnfalt \SComp{s}{x}{e} \bnfalt \SPred{e} \bnfalt \SOption{s}
 \end{array}
 \]
-\caption{\forest{} calculus syntax}
+\caption{\forest{} calculus syntax.}
 \label{fig:csyntax}
 \end{figure}
 
@@ -51,12 +51,11 @@ system is either a file $\File{u}$, where $u$ is the string contents
 of the file; a symbolic link $\Link{r}$, where $r$ is the path pointed
 to by the link; or a directory $\Dir{\Set{u_1,\tdots,u_n}}$, where
 $u_1$ to $u_n$ are the names of the elements of the file system
-located directly beneath the current path. We write $\dom{F}$ for the
-set of paths $F$ is defined on, $F(r)$ for the contents at $r$, $F(r)
-= \bot$ when $r$ is not in $\dom{F}$, and $\FUpdate{F}{r}{(\att,T)}$
-or $\FDelete{F}{r}$ for the file systems obtained from $F$ by
-overwriting the mapping for $r$ to $(\att,T)$ or deleting the mapping
-for $r$ respectively.
+located below the node. We write $\dom{F}$ for the set of paths $F$ is
+defined on, $F(r)$ for the contents at $r$, $F(r) = \bot$ when $r$ is
+not in $\dom{F}$, and $\FUpdate{F}{r}{(\att,T)}$ or $\FDelete{F}{r}$
+for the file systems obtained from $F$ by overwriting the mapping for
+$r$ to $(\att,T)$ or deleting the mapping for $r$ respectively.
 
 A file system $F$ is {\em well-formed} if it encodes a tree with
 directories at the internal nodes and files and symbolic links at the
@@ -73,7 +72,7 @@ hold:
 %
 Note that although these conditions imply that the structure of a
 well-formed file system $F$ must be tree-shaped, cycles can be
-expressed using symbolic links that point ``upwards'' in the file
+expressed using symbolic links that point ``up'' in the file
 system.
 
 \subsection{Specifications}
@@ -82,35 +81,34 @@ The syntax of specifications $s$ is given in
 Figure~\ref{fig:csyntax}. The calculus models the most important
 features of the full \forest{} language in the simplest possible way,
 using orthogonal, independent constructs. The set of specifications is
-parameterized over a collection of constants $\Sk$, 
-where $\tau_1$ is the type of the generated representation and $\tau_2$ is
-the type of the generated metadata. We omit the type annotations in
-examples.  For the purpose of illustration, we
-will assume that constants for describing files $\pfile$, directories
-$\pdir$, and symbolic links $\plink$ all exist, as well as constants
-$\SAdhoc{p}$ parameterized on \padshaskell{} descriptions $p$ for
-describing the contents of files in more detail. Path specifications
-$\SPath{e}{s}$ are parameterized on an expression $e$, which must
-evaluate to a string (to be appended to the current path), and a
-specification $s$ that describes the fragment of the file system at
-the extended path. We leave the syntax of expressions $e$ abstract but
-assume that it contains the features of a simple functional language
-(of course, in the full \forest{} language, expressions can be
-arbitrary fragments of Haskell code). We will assume a semantic
-function $\eval{e}{\Env}{\tau}$ that evaluates $e$ in environment $\Env$, yielding
-a value $v$ of type $\tau$. Dependent pairs are written
-$\SPair{x}{s_1}{s_2}$ where $s_1$ and $s_2$ are specifications that
-describe possibly overlapping fragments of the file system. When a
-dependent pair is evaluated, the variables $x$ and $x_{\MD}$ are bound
-to the value and metadata computed for $s_1$ and may be used in
-$s_2$. Comprehensions are written $\SComp{s}{x}{e}$, where $e$ is an
-expression that evaluates to a set of values, and $s$ is a
-specification that describes a fragment of the file system for each
-value of $x$.  Predicates $\SPred{e}$ succeed when the expression $e$
-evaluates to \True{} and fail when it evaluates to \False{} under the
-current environment.  Finally, the type $\SOption{s}$ describes
-either (1) a filesystem not containing the current path, or (2)
-a file system containing the current path and satisfying $s$. 
+parameterized over a collection of constants $\Sk$, where $\tau_1$ is
+the type of the generated representation and $\tau_2$ is the type of
+the generated metadata. We omit the type annotations in examples.  For
+the purpose of illustration, we will assume that constants for
+describing files $\pfile$, directories $\pdir$, and symbolic links
+$\plink$ all exist, as well as constants $\SAdhoc{p}$ parameterized on
+\padshaskell{} descriptions $p$ for describing the contents of files
+in more detail. Path specifications $\SPath{e}{s}$ are parameterized
+on an expression $e$, which must evaluate to a string (to be appended
+to the current path), and a specification $s$ that describes the
+fragment of the file system at the extended path. We leave the syntax
+of expressions $e$ abstract but assume that it contains the features
+of a simple functional language (of course, in the full \forest{}
+language, expressions can be arbitrary fragments of Haskell code). We
+assume a semantic function $\eval{e}{\Env}{\tau}$ that evaluates $e$
+in environment $\Env$, yielding a value $v$ of type $\tau$. Dependent
+pairs are written $\SPair{x}{s_1}{s_2}$ where $s_1$ and $s_2$ are
+specifications that describe possibly overlapping fragments of the
+file system. When a dependent pair is evaluated, the variables $x$ and
+$x_{\MD}$ are bound to the value and metadata computed for $s_1$ and
+may be used in $s_2$. Comprehensions are written $\SComp{s}{x}{e}$,
+where $e$ is an expression that evaluates to a set of values, and $s$
+is a specification that describes a fragment of the file system for
+each value of $x$.  Predicates $\SPred{e}$ succeed when the expression
+$e$ evaluates to \True{} and fail when it evaluates to \False{} under
+the current environment.  Finally, the specification $\SOption{s}$
+describes either a filesystem that is undefined at the current path,
+or a file system containing the current path and satisfying $s$.
 
 To develop some intuitions about these constructs, let us encode a few
 of the more complicated features of the full \forest{} language in the
@@ -121,7 +119,7 @@ a single construct:
 \kw{Directory}
   \{ c \kw{is} "c.txt" :: C, 
     d \kw{is} "d.txt" :: D c, 
-    e \kw{is} "e.csv" :: E d \}
+    e \kw{is} "e.bin" :: E d \}
 \end{centercode}
 %
 The calculus, however, only has dependent pairs, not full-blown
@@ -131,7 +129,7 @@ encode the specification above, we use the following specification:
 \[
 \SPair{c\,}{\,(\SPath{\texttt{"}\mathrm{c.txt}\texttt{"}}{\mathrm{C}})\;}
            {\SPair{d\,}{(\SPath{\texttt{"}\mathrm{d.txt}\texttt{"}}{\mathrm{D}\; c})\;}
-                       {(\SPath{\texttt{"}\mathrm{e.csv}\texttt{"}}{\mathrm{E}\; d})}} 
+                       {\SPath{\texttt{"}\mathrm{e.bin}\texttt{"}}{\mathrm{E}\; d}}} 
 \]
 %
 Similarly, a comprehension written as
@@ -154,7 +152,7 @@ constraints are written as
 \cd{s \kw{where} e}
 \end{center}
 %
-but are encoded in the calculus using a dependent pair and a
+but are encoded in the calculus as a dependent pair and 
 predicate:
 %
 \[
@@ -265,7 +263,7 @@ construct to navigate to that path, as in the following specification:
 \SPair{x\,}{\,\plink\;}{(\SPath{x}{\pfile})\;}
 \]
 %
-Alternatively, one could design a different constant for symbolic
+Alternatively, one could design another constant for symbolic
 links that implements a ``deep'' lookup in the file system.
 
 The load function for path specifications $\SPath{e}{s}$ evaluates the
@@ -292,7 +290,7 @@ $\eval{e}{\Env}{\mathit{bool}}$. The final load function, for options,
 $\SOption{s}$ is defined using two inference rules. The first handles
 the case where the current path $r$ exists in the file system. It uses
 $s$'s load function to obtain a representation and metadata and
-injects both into the $\typ{Maybe}$ using the $\mathsf{Just}$
+injects both into the $\typ{Maybe}$ type using the $\mathsf{Just}$
 constructor. The second handles the case where $r$ does not exist in
 the file system. It returns $\Nothing$ for both the representation and
 metadata.
@@ -321,11 +319,11 @@ system, we need a way way to keep track of the intricate constraints
 on the data in the representation, metadata, and file system implied
 by the specification.
 
-The validator $\phi'$ produced by the store function does exactly
-this. It keeps track of the conditions needed to ensure that storing
-the representation and metadata back to $F$ will accurately reflect
-all of the information contained in them. As a simple example to show
-why validators are needed, consider the specification
+The validator $\phi'$ produced by the store function does exactly this
+by tracking the conditions needed to ensure that storing the
+representation and metadata back to $F$ will accurately reflect all of
+the information they contain. As a simple example to show why
+validators are needed, consider the specification
 %
 \[ s = \SPair{x}{\pfile}{\pfile}
 \]
@@ -354,21 +352,21 @@ which is clearly not satisfiable unless $u = u'$.
 
 The store functions also use validators to detect internal
 inconsistencies between the representation and metadata. For example,
-consider the specification $s$ defined as $\SOption{s_1}$, and
-suppose that invoking $s$'s load function with $\Env$, $F$, $r$ where
-$F(r)$ is undefined. The representation and metadata will be
-$\Nothing$ and $(\True,\Nothing)$ respectively. Now suppose that we
-change the representation to $\Just{u'}$, and invoke $s$'s store
-function. Even though the pair $(\Just{u'}, (\True,\Nothing))$ would
-never be produced by $s$'s load function, the store function must
-still do something reasonable with it. One reasonable choice---the one
-used in our semantics---is to update the file system contents to
+consider the specification $s$ defined as $\SOption{s_1}$, and suppose
+that invoking $s$'s load function with $\Env$, $F$, $r$ where $F(r)$
+is undefined. The representation and metadata will be $\Nothing$ and
+$(\True,\Nothing)$ respectively. Now suppose that we change the
+representation to $\Just{u'}$, and invoke $s$'s store function. Even
+though the pair $(\Just{u'}, (\True,\Nothing))$ would never be
+produced by $s$'s load function, the store function must still do
+something reasonable with it. A reasonable choice---the one used in
+our semantics---is to update the file system contents to
 $(\File{u'},\defaultatt)$, but produce a validator $\phi' = \lambda
-F'.~ \False$ that records the internal inconsistency between the
-representation and metadata. Among other things, this informs the
-programmer that if they invoke the load function on the new file
-system, the representation and metadata may not be preserved (\eg,
-loading $u'$ using $s_1$ could result in errors).
+F'.~ \False$ that records the inconsistency between the representation
+and metadata. This informs the programmer that if they invoke the load
+function on the new file system, the representation and metadata may
+not be preserved---\eg, loading this file system using $s_1$ could
+produce an error.
 
 Now let us examine the inference rules in detail. We assume that each
 constant defines a $\storekname{k}$ function. The $\storekname{}$
@@ -379,16 +377,16 @@ function for \pfile{} is defined as follows:
 \storekname{\pfile}~(\Env,F,r,v,d) =\\[1ex]
 \quad 
 \left\{
-\begin{array}{ll}
-  (\FUpdate{F}{r}{(\att,\File{v})},            
+\begin{array}{@{}l@{}}
+  (\FUpdate{F}{r}{(\att,\File{v})},\\            
   \; \lambda F'.~ (F'(r) = (\att,\File{v})))\\
   \hfill\text{if}~d = (\True,\att)\\[1ex]
-  (\FDelete{F}{r},                             
-  \; \lambda F'.~\False) \\
+  (\FDelete{F}{r},\\                             
+  \; \lambda F'.~ (v=\text{``}{\,}\text{''} \wedge a=\defaultatt \wedge F'(r) \neq (\us,\File{\us})))\\
   \hfill\text{if}~d = (\False,\att)~\wedge F(r) = (\us,\File{\us})\\[1ex]
-  (F,              
-  \; \lambda F'.~ (v=\text{``}{\,}\text{''} \wedge a=\defaultatt \wedge F'(r) \neq (\us,\File{\us}))\\
-  \hfill\text{if}~d = (\us,\att)
+  (F,\\              
+  \; \lambda F'.~ (v=\text{``}{\,}\text{''} \wedge a=\defaultatt \wedge F'(r) \neq (\us,\File{\us})))\\
+  \hfill\text{if}~d = (\False,\att)~\wedge F(r) \neq (\us,\File{\us})\\[1ex]
 \end{array}\right.
 \end{array}\]
 %
@@ -397,11 +395,11 @@ $(\att,\File{v})$ if $d$ is valid, deletes the contents of $F$ at $r$
 if $d$ is not valid but $F(r)$ contains a file, and returns $F$
 unchanged otherwise. The validator $\phi'$ also has three cases: in
 the first, it tests whether $F'(r)$ is $(\att,\File{v})$; in the
-second, it is always $\False$; and in the third it tests whether
-$F'(r)$ is not a file and $(v,\att)$ is the pair of default values
-$(\text{``}{\,}\text{''}, \defaultatt)$ generated by the load
-function. These constraints are necessary to prove the round-tripping
-properties described at the end of this section.
+second and third cases it tests whether $F'(r)$ is not a file and
+$(v,\att)$ is the default $(\text{``}{\,}\text{''}, \defaultatt)$
+generated by the $\mathit{load}$ function. These constraints are necessary to
+prove the round-tripping properties described at the end of this
+section.
 
 The rule for path specifications $\SPath{e}{s}$ simply passes off
 control to the store function for $s$ after replacing the current path
@@ -421,8 +419,8 @@ right-biased file system concatenation operator defined as follows:
 (F_1 \FAppend F_2)(r) = \\
 \qquad 
 \begin{cases}
-  (\att_2,\Dir{N_1 \cup N_2}) & \text{if}~F_1(r) = (\att_1,\Dir{N_1}) \; \wedge \\
-                              & \;\;\; F_2(r) = (\att_2,\Dir{N_2})\\
+  (\att_2,\Dir{(U_1 \cup U_2)}) & \text{if}~F_1(r) = (\att_1,\Dir{U_1}) \; \wedge \\
+                              & \;\;\; F_2(r) = (\att_2,\Dir{U_2})\\
   F_1(r) & \text{if}~F_2(r) = \bot\\
   F_2(r) & \text{otherwise}\\
 \end{cases}
@@ -467,7 +465,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 \SOption{s} & \typ{Maybe}~\repty{s} & \md{(\typ{Maybe}~\mdty{s})} 
 \end{array}
 \]
-\caption{\forest{} calculus representation and metadata types}
+\caption{\forest{} calculus representation and metadata types.}
 \label{fig:ctypes}
 \end{figure}
 
@@ -488,7 +486,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 \\[2em]
 \inferrule
 { \load{\Env}{F}{r}{s_1}{ v_1,d_1 } \\\\
-  \load{(\Env,x_{\REP} \mapsto v_1,x_{\MD} \mapsto d_1)}{F}{r}{s_2}{ v_2,d_2 }\\\\
+  \load{(\Env,x \mapsto v_1,x_{\MD} \mapsto d_1)}{F}{r}{s_2}{ v_2,d_2 }\\\\
   b = \valid{d_1} \wedge \valid{d_2} }
 { \load{\Env}{F}{r}{\SPair{x}{s_1}{s_2}}{ (v_1,v_2),(b, (d_1,d_2)) } }
 \\[2em]
@@ -526,7 +524,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 \\[2em]
 \inferrule
 { \store{\Env}{F}{r}{ v_1,d_1 }{s_1}{ F_1',\phi_1' } \\\\
-  \store{(\Env,x_{\REP} \mapsto v_1, x_{\MD} \mapsto d_1)}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2' } \\\\
+  \store{(\Env,x \mapsto v_1, x_{\MD} \mapsto d_1)}{F}{r}{ v_2,d_2 }{s_2}{ F_2',\phi_2' } \\\\
   \phi' = \lambda F'.~ (b = \valid{d_1} \wedge \valid{d_2}) \wedge \phi_1'(F') \wedge \phi_2'(F') }
 { \store{\Env}{F}{r}{ (v_1,v_2),(b,(d_1,d_2)) }{\SPair{x}{s_1}{s_2}}{ F_1' \FAppend F_2',\phi' } }
 \\[2em]
@@ -559,7 +557,7 @@ s & \repty{s} & \mdty{s} \\[.5ex]
 \]
 \end{minipage}
 \centerline{\hfill (a) \hfill\hfill \hspace*{.05\textwidth} (b) \hfill}
-\caption{\forest{} calculus semantics for (a) loading and (b) storing}
+\caption{\forest{} calculus semantics for (a) loading and (b) storing.}
 \label{fig:csemantics}
 \end{figure*}
 
@@ -648,7 +646,7 @@ By the definitions of the load and store functions we have
 \store{\Env'}{F}{r}{v_2,d_2}{s_2}{F_2',\phi_2'}\\
 \end{array} \hspace*{1cm}
 \begin{array}{rcl}
-\Env' &=& \Env,x_{\REP} \mapsto v_1, x_{\MD} \mapsto d_1\\
+\Env' &=& \Env,x \mapsto v_1, x_{\MD} \mapsto d_1\\
 b &= & \valid{d_1} \wedge \valid{d_2}\\
 v &=& (v_1,v_2)\\
 d &=& (b,(d_1,d_2))\\
@@ -659,7 +657,7 @@ F' &=& F_1' \FAppend F_2'\\
 By the induction hypothesis applied to $s_1$, we have $F_1' = F$ and
 $\phi_1'(F_1')$. Likewise, by the induction hypothesis applied to
 $s_2$, we have $F_2' = F$ and $\phi_2'(F_2')$. We immediately have
-$\phi'(F')$ and $F' = F$ as (\FAppend) is idempotent, which finishes
+$\phi'(F')$ and $F' = F$ as $F \FAppend F = F$, which finishes
 the case.
 
 %%%
@@ -683,7 +681,7 @@ F' &=& F_1' \FAppend \tdots \FAppend F_k'\\
 \]
 By the induction hypothesis applied to $s$ ($k$ times), we have $F_i'
 = F$ and $\phi'_i(F_i')$ for $i$ from $1$ to $k$. We immediately have
-$\phi'(F')$ and $F' = F$ as (\FAppend) is idempotent, which finishes
+$\phi'(F')$ and $F' = F$ as $F \FAppend F = F$, which finishes
 the case.
 
 %%%
@@ -784,13 +782,13 @@ property.
 %%%
 %%% Constant
 %%%
-\item[Case]: $s = \Sk$\\[1ex]
+\item[Case:] $s = \Sk$\\[1ex]
 %
 By the definitions of the load and store functions we have 
 \[ 
 \begin{array}{rcll}
-F',\phi &=& \storek{k}{\Env}{F}{r}{v,d}\\
-v',d'  &=& \loadk{k}{\Env}{(G_1 \FAppend F' \FAppend G_2)}{rs}\\
+(F',\phi) &=& \storek{k}{\Env}{F}{r}{v,d}\\
+(v',d')  &=& \loadk{k}{\Env}{(G_1 \FAppend F' \FAppend G_2)}{rs}\\
 \end{array}
 \]
 By assumptions about the behavior of $\loadkname{k}$ and
@@ -820,7 +818,7 @@ By the induction hypothesis applied to $s_1$ we have $(v',d') =
 %%%
 \item[Case:] $s = \SPair{x}{s_1}{s_2}$\\[1ex]
 %
-By the definition of the load function we have
+By the definition of the store function we have
 \[
 \begin{array}{l}
 \store{\Env}{F}{r}{v_1,d_1}{s_1}{F_1',\phi_1'}\\
@@ -859,10 +857,10 @@ By the definition of the load function we have
 \[ 
 \begin{array}{rcll}
 \load{\Env}{(G_1 \FAppend F_1 \FAppend (F_2 \FAppend G_2))}{r}{s_1}{v_1',d_1'}\\
-\load{(\Env, x \mapsto v_1, x_{\MD} \mapsto d_1)}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}\\
+\load{(\Env, x \mapsto v_1', x_{\MD} \mapsto d_1')}{((G_1 \FAppend F_1) \FAppend F_2 \FAppend G_2)}{r}{s_2}{v_2',d_2'}\\
 \end{array}\hspace*{1cm}\begin{array}{rcl}
 v' &=& (v_1',v_2')\\
-b' &= & \valid{d_1} \wedge \valid{d_2}\\
+b' &= & \valid{d_1'} \wedge \valid{d_2'}\\
 d' &=& (b',(d_1',d_2'))\\
 \end{array}
 \]
@@ -888,7 +886,7 @@ By the definition of the store function we have
 \eval{e}{\Env}{\List{tau}} = [w_1,\tdots,w_m ]\\
 \end{array}\hspace*{.75cm}\begin{array}{rcl}
 v &=& [v_1,\tdots,v_j]\\
-d &=& [d_1,\tdots,d_l]\\
+d &=& (b,[d_1,\tdots,d_l])\\
 k &=& \min{(j,l,m)}\\
 F' &=& F_1' \FAppend \tdots \FAppend F_k'\\
 \phi &=& \lambda F'.~(j = k = l) \wedge (b = \bigwedge_i^k \valid{d_i}) \bigwedge_i^k \phi_i(F')\\
@@ -933,7 +931,7 @@ $(v_i',d_i') = (v_i,d_i)$ for = $i$ from $1$ to $k$. It follows that
 %
 \[
 ([v_1',\tdots,v_k'],(b',[d_1',\dots,d_k']) = 
-([v_1',\tdots,v_k'],(b,[d_1,\dots,d_k]),
+([v_1,\tdots,v_k],(b,[d_1,\dots,d_k]),
 \]
 %
 which finishes the case.
@@ -947,7 +945,7 @@ By the definitions of the store and load functions we have
 \[
 \begin{array}{rcl}
 v &=& ()\\
-d &=& ((),b)\\
+d &=& (b,())\\
 F' &=& F\\
 \phi' &=& \lambda F'.~(b = \eval{e}{\Env}{\mathit{bool}})\\
 \end{array}\hspace*{1cm}\begin{array}{rcl}
@@ -995,20 +993,28 @@ By the induction hypothesis applied to $s_1$ we have $(v_1',d_1') =
 
 \item[Subcase:] $v = \Nothing$\\[1ex]
 %
-By the definition of the store and load functions we have
+By the definition of the store function we have
 \[
 \begin{array}{rcl}
+d  &=& (b,d_1)\\
 F' &=& \FDelete{F}{r}\\
-\phi' &=& \lambda F'.~(d = \Nothing) \wedge b \wedge (r \not\in \dom{F'})\\
-\end{array}\hspace*{1cm}\begin{array}{rcl}
-v' &=& \Nothing\\
-b' &=& \True\\
-d' &=& (b',\Nothing)\\
+\phi' &=& \lambda F'.~(d_1 = \Nothing) \wedge b \wedge (r \not\in \dom{F'})\\
 \end{array}
 \]
-As $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $d
-= \Nothing$ and $b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend
-  G_2}$. Thus, we immediately have $(v',d') = (v,d)$. 
+As $\phi'(G_1 \FAppend F' \FAppend G_2)$ we have $d_1 = \Nothing$ and
+$b$ and $r \not\in \dom{G_1 \FAppend F' \FAppend G_2}$. By the
+definition of the load function we also have
+\[
+\begin{array}{rcl}
+v' &=& \Nothing\\
+b' &=& \True\\
+d_1' &=& \Nothing\\
+d' &=& (b',d_1')
+\end{array}
+\]
+%
+Thus, we
+immediately have $(v',d') = (v,d)$.
 \item[Subcase:] $v = \Just{v_1}$ and $d = \Nothing$\\[1ex]
 %
 Vacuously holds: by the definition of the store function we have
