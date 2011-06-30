@@ -322,27 +322,23 @@ by the specification.
 The validator $\phi'$ produced by the store function does exactly this
 by tracking the conditions needed to ensure that storing the
 representation and metadata back to $F$ will accurately reflect all of
-the information they contain. As a simple example to show why
-validators are needed, consider the specification
-%
-\[ s = \SPair{x}{\pfile}{\pfile}
-\]
-% 
-and suppose that we invoke $s$'s load function with $\Env$, $F$, and
-$r$ where $F(r)$ is $(\att,\File{u})$. According to the semantics of
-the load functions described above, the representation $v$ will be a
-pair $(u,u)$ containing two copies of the file contents at $r$ and the
-metadata $d$ will also be a pair $((\True,\att),(\True,\att))$
-containing two copies of the attributes associated to that file. Now
-suppose that we change the representation to $(u,u')$, where $u \neq
-u'$, and store the result back to the file system. Because this new
-representation does not satisfy the dependency between the two
-components of the pair implied by $s$, the store function cannot
-produce a new file system containing the information in both $u$ and
-$u'$. It must store one of the strings and discard the other. The
-validator $\phi'$ detects this inconsistency. In this case, the
-validator will be equivalent to the following predicate on file
-systems:
+the information they contain. As a simple example that shows why
+validators are necessary, consider a specification $s$ defined as
+$\SPair{x}{\pfile}{\pfile}$ and suppose that we invoke $s$'s load
+function with $\Env$, $F$, and $r$ where $F(r)$ is
+$(\att,\File{u})$. According to the semantics of the load functions
+described above, the representation $v$ will be a pair $(u,u)$
+containing two copies of the file contents at $r$ and the metadata $d$
+will also be a pair $((\True,\att),(\True,\att))$ containing two
+copies of the attributes associated to that file. Now suppose that we
+change the representation to $(u,u')$, where $u \neq u'$, and store
+the result back to the file system. Because this new representation
+does not satisfy the dependency between the two components of the pair
+implied by $s$, the store function cannot produce a new file system
+containing the information in both $u$ and $u'$. It must store one of
+the strings and discard the other. The validator $\phi'$ detects this
+inconsistency. In this case, the validator will be equivalent to the
+following predicate on file systems:
 %
 \[
 \lambda F'.~ (F'(r) = (\att,\File{u})) \wedge (F'(r) = (\att,\File{u'}),
