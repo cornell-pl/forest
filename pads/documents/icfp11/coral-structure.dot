@@ -2,7 +2,7 @@ digraph {
 	graph [ordering=out, rankdir=LR];
 	node [label="\N"];
 	graph [bb="0,0,708,468"];
-	0 [label=logs, fontname=Courier, shape=box, pos="27,206", width="0.75", height="0.50"];
+	0 [label="dat", fontname=Courier, shape=box, pos="27,206", width="0.75", height="0.50"];
 	1 [label="planetlab-2.stanford.edu", fontname=Courier, shape=box, pos="199,247", width="3.03", height="0.50"];
 	2 [label="2005_08_14-00_33", fontname=Courier, shape=box, pos="419,369", width="2.08", height="0.50"];
 	3 [label="coralwebsrv.log.gz", fontname=Courier, penwidth=2, pos="619,450", width="2.44", height="0.50"];

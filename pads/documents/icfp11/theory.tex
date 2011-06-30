@@ -297,7 +297,7 @@ metadata.
 
 \paragraph*{Store Functions.}
 %
-Just as they can be used for loading, \forest{} specifications can
+Just as they can be used for loading from the file system, \forest{} specifications can
 also be used to store data back to the file system. The inference
 rules in Figure~\ref{fig:csemantics}~(b) define the judgment
 $\store{\Env}{F}{r}{v,d}{s}{F',\phi'}$, which holds if storing $(v,d)$
@@ -315,12 +315,11 @@ existing information on the file system, or with each other. Even
 worse, storing $v$ and $d$ back to $F$ could involve overwriting the
 same file (or link, or directory) with multiple pieces of data---a
 conflict. Thus, to reliably use store functions to manipulate the file
-system, we need a way way to keep track of the intricate constraints
+system, we need a way way to  track the intricate constraints
 on the data in the representation, metadata, and file system implied
 by the specification.
 
-The validator $\phi'$ produced by the store function does exactly this
-by tracking the conditions needed to ensure that storing the
+The validator $\phi'$ produced by the store function does exactly this---it keeps track of the conditions needed to ensure that storing the
 representation and metadata back to $F$ will accurately reflect all of
 the information they contain. As a simple example that shows why
 validators are necessary, consider a specification $s$ defined as
@@ -356,13 +355,13 @@ representation to $\Just{u'}$, and invoke $s$'s store function. Even
 though the pair $(\Just{u'}, (\True,\Nothing))$ would never be
 produced by $s$'s load function, the store function must still do
 something reasonable with it. A reasonable choice---the one used in
-our semantics---is to update the file system contents to
-$(\File{u'},\defaultatt)$, but produce a validator $\phi' = \lambda
-F'.~ \False$ that records the inconsistency between the representation
-and metadata. This informs the programmer that if they invoke the load
-function on the new file system, the representation and metadata may
-not be preserved---\eg, loading this file system using $s_1$ could
-produce an error.
+our semantics---is to update the file system contents by passing
+$(\File{u'},\defaultatt)$ to $s$'s store function, but produce a
+validator $\phi' = \lambda F'.~ \False$ that records the inconsistency
+between the representation and metadata. This informs the programmer
+that if they invoke the load function on the new file system, the
+representation and metadata may not be preserved---\eg, loading using
+$s_1$ could result in an error.
 
 Now let us examine the inference rules in detail. We assume that each
 constant defines a $\storekname{k}$ function. The $\storekname{}$
@@ -575,7 +574,7 @@ This property demonstrates that our type definitions are properly
 aligned with the semantics of loading.  
 
 To ensure that the semantics of loading is aligned with the semantics
-of storing, we also prove the following two round-tripping properties.
+of storing, we also prove the following pair of round-tripping properties.
 %
 \deferproof{theorem}{loadstore}{LoadStore}{%
   Let $\Env$ be an environment, $F$ a file system, $r$ a path, $s$ a

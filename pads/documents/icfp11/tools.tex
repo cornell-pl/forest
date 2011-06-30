@@ -133,10 +133,10 @@ We have implemented analogs of many shell tools that work
 over a file system fragment defined by a
 \forest{} description:
 \begin{code}
-ls    :: (ForestMD md) => md -> String -> IO String
-grep  :: (ForestMD md) => md -> String -> IO String
-tar   :: (ForestMD md) => md -> FilePath -> IO ()
-cp    :: (ForestMD md) => md -> FilePath -> IO ()
+ls   :: (ForestMD md) => md -> String -> IO String
+grep :: (ForestMD md) => md -> String -> IO String
+tar  :: (ForestMD md) => md -> FilePath -> IO ()
+cp   :: (ForestMD md) => md -> FilePath -> IO ()
 \end{code}
 %rm    :: (ForestMD md) => md -> String -> IO String
 %rmdir :: (ForestMD md) => md -> String -> IO String
@@ -146,15 +146,15 @@ out to a shell tool to do the work.  For \cd{ls}, the second argument
 gives the command-line arguments to pass to the shell version of
 \cd{ls}, and the result is the resulting output. The implementation
 uses \cd{xarg} to lift the restriction on the number of files that can
-be passed to \cd{ls}. For \cd{grep}, the second argument is the 
-search string and result is the output of the shell version of \cd{grep}. For
+be passed to \cd{ls}. For \cd{grep}, the second argument is the search
+string and result is the output of the shell version of \cd{grep}. For
 \cd{tar}, the second argument specifies the location for the resulting
 tarball.  The implementation uses a file manifest to allow \cd{tar} to
 work regardless of the number of files involved.  The \cd{cp} tool
 uses the \cd{tar} tool to move the files mentioned in the metadata to
 the location specified by the second argument \textit{while retaining
-the same directory structure}.   
-The module that implements these tools is~80 lines of Haskell code.
+  the same directory structure}.  The module that implements these
+tools is approximately 80 lines of Haskell code.
 
 \subsection{Description Inference Tool}
 This tool allows the user to generate a \forest{} description from the
