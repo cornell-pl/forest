@@ -1,37 +1,42 @@
-This is pdfeTeXk, Version 3.141592-1.21a-2.2 (Web2C 7.5.4) (format=latex 2010.6.24)  28 FEB 2011 00:36
+This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010/Fink) (format=latex 2011.6.10)  11 AUG 2011 08:28
 entering extended mode
- file:line:error style messages enabled.
+ restricted \write18 enabled.
  %&-line parsing enabled.
-**paper
+**paper.tex
 (./paper.tex
-LaTeX2e <2003/12/01>
-Babel <v3.8d> and hyphenation patterns for american, french, german, ngerman, b
-ahasa, basque, bulgarian, catalan, croatian, czech, danish, dutch, esperanto, e
-stonian, finnish, greek, icelandic, irish, italian, latin, magyar, norsk, polis
-h, portuges, romanian, russian, serbian, slovak, slovene, spanish, swedish, tur
-kish, ukrainian, nohyphenation, loaded.
-(./vldb.cls (/usr/share/texmf/tex/latex/graphics/epsfig.sty
+LaTeX2e <2009/09/24>
+Babel <v3.8l> and hyphenation patterns for english, dumylang, nohyphenation, ge
+rman-x-2009-06-19, ngerman-x-2009-06-19, ancientgreek, ibycus, arabic, armenian
+, basque, bulgarian, catalan, pinyin, coptic, croatian, czech, danish, dutch, u
+kenglish, usenglishmax, esperanto, estonian, farsi, finnish, french, galician, 
+german, ngerman, swissgerman, monogreek, greek, hungarian, icelandic, assamese,
+ bengali, gujarati, hindi, kannada, malayalam, marathi, oriya, panjabi, tamil, 
+telugu, indonesian, interlingua, irish, italian, kurmanji, lao, latin, latvian,
+ lithuanian, mongolian, mongolianlmc, bokmal, nynorsk, polish, portuguese, roma
+nian, russian, sanskrit, serbian, slovak, slovenian, spanish, swedish, turkish,
+ turkmen, ukrainian, uppersorbian, welsh, loaded.
+(./vldb.cls (/sw/share/texmf-dist/tex/latex/graphics/epsfig.sty
 Package: epsfig 1999/02/16 v1.7a (e)psfig emulation (SPQR)
 
-(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+(/sw/share/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
 
-(/usr/share/texmf/tex/latex/graphics/keyval.sty
+(/sw/share/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
 \KV@toks@=\toks14
 )
-(/usr/share/texmf/tex/latex/graphics/graphics.sty
-Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+(/sw/share/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
 
-(/usr/share/texmf/tex/latex/graphics/trig.sty
+(/sw/share/texmf-dist/tex/latex/graphics/trig.sty
 Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
 )
-(/usr/share/texmf/tex/latex/graphics/graphics.cfg
-File: graphics.cfg 2005/02/03 v1.3 graphics configuration of teTeX/TeXLive
+(/sw/share/texmf-dist/tex/latex/latexconfig/graphics.cfg
+File: graphics.cfg 2010/04/23 v1.9 graphics configuration of TeX Live
 )
-Package graphics Info: Driver file: dvips.def on input line 80.
+Package graphics Info: Driver file: dvips.def on input line 91.
 
-(/usr/share/texmf/tex/latex/graphics/dvips.def
+(/sw/share/texmf-dist/tex/latex/graphics/dvips.def
 File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
 ))
 \Gin@req@height=\dimen102
@@ -40,35 +45,35 @@ File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
 \epsfxsize=\dimen104
 \epsfysize=\dimen105
 )
-(/usr/share/texmf/tex/latex/amsfonts/amssymb.sty
-Package: amssymb 2002/01/22 v2.2d
+(/sw/share/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2009/06/22 v3.00
 
-(/usr/share/texmf/tex/latex/amsfonts/amsfonts.sty
-Package: amsfonts 2001/10/25 v2.2f
+(/sw/share/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
 \@emptytoks=\toks15
 \symAMSa=\mathgroup4
 \symAMSb=\mathgroup5
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
-(Font)                  U/euf/m/n --> U/euf/b/n on input line 132.
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
 ))
-(/usr/share/texmf/tex/latex/amsmath/amsmath.sty
+(/sw/share/texmf-dist/tex/latex/amsmath/amsmath.sty
 Package: amsmath 2000/07/18 v2.13 AMS math features
 \@mathmargin=\skip41
 
 For additional information on amsmath, use the `?' option.
-(/usr/share/texmf/tex/latex/amsmath/amstext.sty
+(/sw/share/texmf-dist/tex/latex/amsmath/amstext.sty
 Package: amstext 2000/06/29 v2.01
 
-(/usr/share/texmf/tex/latex/amsmath/amsgen.sty
+(/sw/share/texmf-dist/tex/latex/amsmath/amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0
 \@emptytoks=\toks16
 \ex@=\dimen106
 ))
-(/usr/share/texmf/tex/latex/amsmath/amsbsy.sty
+(/sw/share/texmf-dist/tex/latex/amsmath/amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d
 \pmbraise@=\dimen107
 )
-(/usr/share/texmf/tex/latex/amsmath/amsopn.sty
+(/sw/share/texmf-dist/tex/latex/amsmath/amsopn.sty
 Package: amsopn 1999/12/14 v2.01 operator names
 )
 \inf@bad=\count79
@@ -143,7 +148,7 @@ LaTeX Warning: You have requested document class `vldb',
 
 Document Class: sig-alternate 2005/26/07 - V1.8 - based on acmproc.cls V1.3 <No
 v. 30 '99>
-(/usr/share/texmf/tex/latex/base/latexsym.sty
+(/sw/share/texmf-dist/tex/latex/base/latexsym.sty
 Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
 \symlasy=\mathgroup6
 LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
@@ -174,28 +179,28 @@ Using 'Abbrev' bibliography style
 \acmcopyr=\toks33
 \boilerplate=\toks34
 \copyrightetc=\toks35
-) (/usr/share/texmf/tex/latex/url/url.sty
+) (/sw/share/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip11
-Package: url 2004/03/15  ver 3.1  Verb mode for urls, etc.
+Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
 ) (./code.sty)
-(/usr/share/texmf/tex/latex/tools/xspace.sty
-Package: xspace 1997/10/13 v1.06 Space after command names (DPC)
+(/sw/share/texmf-dist/tex/latex/tools/xspace.sty
+Package: xspace 2006/05/08 v1.12 Space after command names (DPC,MH)
 ) (./math-cmds.sty
 Package: math-cmds 
 )
 (./math-envs.sty
 Package: math-envs 
- (/usr/share/texmf/tex/latex/tools/theorem.sty
+ (/sw/share/texmf-dist/tex/latex/tools/theorem.sty
 Package: theorem 1995/11/23 v2.2c Theorem extension package (FMi)
 \theorem@style=\toks36
 \theorem@bodyfont=\toks37
 \theorempreskipamount=\skip44
 \theorempostskipamount=\skip45
 
-(/usr/share/texmf/tex/latex/tools/thp.sty
+(/sw/share/texmf-dist/tex/latex/tools/thp.sty
 File: thp.sty 1995/11/23 v2.2c Theorem extension package (FMi)
 ))
-(/usr/share/texmf/tex/latex/tools/thb.sty
+(/sw/share/texmf-dist/tex/latex/tools/thb.sty
 File: thb.sty 1995/11/23 v2.2c Theorem extension package (FMi)
 )
 \c@thm=\count108
@@ -203,8 +208,8 @@ File: thb.sty 1995/11/23 v2.2c Theorem extension package (FMi)
 Package: inference-rules 
 \rulenamewidth=\skip46
 )
-(/usr/share/texmf/tex/latex/psnfss/times.sty
-Package: times 2004/09/15 PSNFSS-v9.2 (SPQR) 
+(/sw/share/texmf-dist/tex/latex/psnfss/times.sty
+Package: times 2005/04/12 PSNFSS-v9.2a (SPQR) 
 ) (./proof.sty
 \inferLineSkip=\dimen123
 \inferLabelSkip=\dimen124
@@ -230,20 +235,20 @@ Package: times 2004/09/15 PSNFSS-v9.2 (SPQR)
 \@LabelPart=\box32
 \ResultBox=\box33
 )
-(/usr/share/texmf/tex/latex/tools/verbatim.sty
+(/sw/share/texmf-dist/tex/latex/tools/verbatim.sty
 Package: verbatim 2003/08/22 v1.5q LaTeX2e package for verbatim enhancements
 \every@verbatim=\toks38
 \verbatim@line=\toks39
 \verbatim@in@stream=\read1
 )
-(/usr/share/texmf/tex/latex/base/alltt.sty
+(/sw/share/texmf-dist/tex/latex/base/alltt.sty
 Package: alltt 1997/06/16 v2.0g defines alltt environment
 )
-(/usr/share/texmf/tex/latex/multirow/multirow.sty
+(/sw/share/texmf-dist/tex/latex/multirow/multirow.sty
 \bigstrutjot=\dimen142
 )
-(/usr/share/texmf/tex/latex/tools/multicol.sty
-Package: multicol 2004/02/14 v1.6e multicolumn formatting (FMi)
+(/sw/share/texmf-dist/tex/latex/tools/multicol.sty
+Package: multicol 2008/12/05 v1.6h multicolumn formatting (FMi)
 \c@tracingmulticols=\count109
 \mult@box=\box34
 \multicol@leftmargin=\dimen143
@@ -305,27 +310,27 @@ LaTeX Font Info:    ... okay on input line 13.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 13.
 LaTeX Font Info:    ... okay on input line 13.
 LaTeX Font Info:    Try loading font information for OT1+ptm on input line 13.
- (/usr/share/texmf/tex/latex/psnfss/ot1ptm.fd
+ (/sw/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 LaTeX Font Info:    Try loading font information for U+msa on input line 94.
 
-(/usr/share/texmf/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2002/01/19 v2.2g AMS font definitions
+(/sw/share/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
 LaTeX Font Info:    Try loading font information for U+msb on input line 94.
 
-(/usr/share/texmf/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2002/01/19 v2.2g AMS font definitions
+(/sw/share/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 )
 LaTeX Font Info:    Try loading font information for U+lasy on input line 94.
 
-(/usr/share/texmf/tex/latex/base/ulasy.fd
+(/sw/share/texmf-dist/tex/latex/base/ulasy.fd
 File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
 ) (./abstract.tex) (./intro.tex
 LaTeX Font Info:    Try loading font information for OT1+pcr on input line 6.
 
-(/usr/share/texmf/tex/latex/psnfss/ot1pcr.fd
+(/sw/share/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
@@ -335,13 +340,13 @@ LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
 
 ]) (./algo.tex
 File: overview.eps Graphic file (type eps)
- <overview.eps>
+
+<overview.eps>
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <8> not available
 (Font)              Font shape `OT1/pcr/b/n' tried instead on input line 124.
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <9> not available
 (Font)              Font shape `OT1/pcr/b/n' tried instead on input line 212.
-
-[2]
+ [2]
 Underfull \vbox (badness 4859) has occurred while \output is active []
 
 
@@ -378,7 +383,7 @@ File: scale-uc.eps Graphic file (type eps)
 LaTeX Font Info:    Try loading font information for OMS+ptm on input line 860.
 
 
-(/usr/share/texmf/tex/latex/psnfss/omsptm.fd
+(/sw/share/texmf-dist/tex/latex/psnfss/omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <8> not available
@@ -442,12 +447,12 @@ it-ing rules.
 
 ] [12] (./paper.aux) ) 
 Here is how much of TeX's memory you used:
- 2409 strings out of 94501
- 26763 string characters out of 1176789
- 100928 words of memory out of 1000000
- 5480 multiletter control sequences out of 10000+50000
- 27047 words of font info for 72 fonts, out of 500000 for 2000
- 583 hyphenation exceptions out of 1000
- 39i,10n,26p,480b,352s stack positions out of 1500i,500n,5000p,200000b,5000s
+ 2433 strings out of 493748
+ 27354 string characters out of 3149409
+ 110452 words of memory out of 3000000
+ 5630 multiletter control sequences out of 15000+200000
+ 27029 words of font info for 72 fonts, out of 3000000 for 9000
+ 717 hyphenation exceptions out of 8191
+ 39i,10n,26p,484b,352s stack positions out of 5000i,500n,10000p,200000b,50000s
 
 Output written on paper.dvi (12 pages, 92444 bytes).

@@ -1,0 +1,59 @@
+\documentclass{llncs}
+\usepackage{epsfig,url,graphics,code}
+%\usepackage{xspace,amsmath,math-cmds,
+%            math-envs,inference-rules,times,proof,
+%            verbatim,alltt,multirow,multicol,url}
+
+% correct bad hyphenation here
+\input{definitions}
+
+\begin{document}
+%
+% paper title
+% can use linebreaks \\ within to get better formatting as desired
+\title{{\sc LearnPADS}$^{++}$: Incremental Inference of Ad Hoc Data Formats}
+\author{Kenny Q. Zhu\inst{1} \and Kathleen Fisher\inst{2} \and 
+David Walker\inst{3}} 
+\institute{Shanghai Jiao Tong University \and Princeton University 
+\and Tufts University}
+
+% make the title area
+\maketitle
+
+\input{abstract}
+% creates the second title. It will be ignored for other modes.
+%\IEEEpeerreviewmaketitle
+
+\input{intro}
+
+%\input{review}
+
+\input{algo}
+
+\input{implement}
+
+\input{experiments}
+
+\input{related}
+
+\section{Conclusion}
+\label{sec:conclude}
+Ad hoc data files such as systems logs 
+are extremely difficult to manage because of their large size,
+evolving format, and lack of documentation.
+In this paper, we have presented the design, implementation and
+evaluation of a system for learning the structure of 
+large industrial ad hoc data files.  The system not only
+produces documentation for the files in the form of a \pads{}
+description, but it can also be used to generate end-to-end
+data processing tools such as a statistical analysis or an
+XML translator.  We have shown that the system
+can scale to the point where it can process and learn the
+structure of logs on the order of up to 30GB or more in 
+a few hours.
+
+\bibliographystyle{plain}
+\bibliography{pads}
+\end{document}
+
+
