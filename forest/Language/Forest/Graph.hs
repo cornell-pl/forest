@@ -46,36 +46,6 @@ import Data.List
 import qualified Data.Text.Lazy as Lazy
 import qualified Data.Maybe as Maybe
 
-----   a cluster in the Dot sense or just a sub-graph.
---data GraphvizParams n nl el cl l
---     = Params { -- | @True@ if the graph is directed; @False@
---                --   otherwise.
---                isDirected       :: Bool
---                -- | The top-level global 'Attributes' for the entire
---                --   graph.
---              , globalAttributes :: [GlobalAttributes]
---                -- | A function to specify which cluster a particular
---                --   node is in.
---              , clusterBy        :: ((n,nl) -> NodeCluster cl (n,l))
---                -- | Is this \"cluster\" actually a cluster, or just a
---                --   sub-graph?
---              , isDotCluster     :: (cl -> Bool)
---                -- | The name/identifier for a cluster.
---              , clusterID        :: (cl -> GraphID)
---                -- | Specify which global attributes are applied in
---                --   the given cluster.
---              , fmtCluster       :: (cl -> [GlobalAttributes])
---                -- | The specific @Attributes@ for a node.
---              , fmtNode          :: ((n,l) -> Attributes)
---                -- | The specific @Attributes@ for an edge.
---              , fmtEdge          :: ((n,n,el) -> Attributes)
---              }
-
---data GlobalAttributes = GraphAttrs { attrs :: Attributes }
---                      | NodeAttrs  { attrs :: Attributes }
---                      | EdgeAttrs  { attrs :: Attributes }
---                      deriving (Eq, Ord, Show, Read)
-
 type NodeTy = Forest_md
 type EdgeLabel = ()
 
