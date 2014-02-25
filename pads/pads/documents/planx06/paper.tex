@@ -1,0 +1,79 @@
+\documentclass[nocopyrightspace]{sigplan-proc}
+\usepackage{url}
+\usepackage{stmaryrd}
+\usepackage{epsfig}
+\usepackage{alltt}
+\usepackage{times}
+\usepackage{code}
+\usepackage{xspace}
+
+\renewcommand{\floatpagefraction}{0.9}
+
+\include{defs}
+\newcommand{\dibbler}{Sirius}
+\newcommand{\ningaui}{Altair}
+\newcommand{\darkstar}{Regulus}
+
+\newcommand{\abstractdm}{abstract data model}
+\newcommand{\concretedm}{concrete data model}
+\newcommand{\typeddm}{type-specialized concrete data model}
+% (or just type-specialized data model or type-specific data model)
+
+
+\title{PADX : Querying Large-scale Ad Hoc Data with XQuery}
+%\title{PADX : An XQuery Interface to Ad Hoc Data Sources}
+%\title{PADX : A System for Querying Ad Hoc Data Sources with XQuery}
+
+\numberofauthors{3}
+\author{
+\alignauthor Mary Fern\'andez \\ Kathleen Fisher\\
+\affaddr{AT\&T Labs Research}\\
+\email{\{mff,kfisher\}@research.att.com}
+\alignauthor Robert Gruber\titlenote{Work carried out while at AT\&T Labs Research.}\\
+\affaddr{Google}\\
+\email{gruber@google.com}
+\alignauthor Yitzhak Mandelbaum \\
+\affaddr{Princeton University} \\
+\email{yitzhakm@cs.princeton.edu}
+}
+
+\date{\today}
+
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+\cut{Enormous amounts of data exist in ``well-behaved'' formats
+such as XML and relational databases, which come equipped with
+extensive tool support.  However,  vast amounts of data also exist
+in non-standard or \textit{ad hoc} data formats, which lack standard
+tools. This deficiency forces data analysts to implement their own tools for
+parsing, querying, and analyzing their ad hoc data.  The 
+resulting tools typically interleave parsing, querying, and analysis,
+obscuring the semantics of the data format and making it nearly
+impossible for others to resuse the tools.}
+
+This paper describes our experience designing and implementing
+\padx{}, a system for querying large-scale ad hoc data sources with
+XQuery.  \padx{} is the synthesis and extension of two existing
+systems: \pads{} and \Galax{}. With \padx{}, an analyst writes a
+declarative data description of the physical layout of her ad hoc
+data, and the \pads{} compiler produces customizable libraries for
+parsing the data and for viewing it as XML.  The resulting library is
+linked with an XQuery engine, permitting the analyst to view and query
+her ad hoc data sources using XQuery.
+\end{abstract}
+
+\input{intro}
+\input{pads}
+\input{galax}
+\input{padx}
+\input{evaluation}
+\input{discussion}
+
+\bibliographystyle{abbrv}
+\small
+\bibliography{../pads,../galax} 
+\end{document}
+

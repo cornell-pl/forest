@@ -1,0 +1,13 @@
+\begin{code}
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}init~~~~~~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}setPara~~~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h,P\symbol{95}hist~*d\symbol{95}hist);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reset~~~~~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}cleanup~~~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}add~~~~~~~~~~~(P\symbol{95}t~*pads,entry\symbol{95}t\symbol{95}hist~*h,Pbase\symbol{95}pd~*pd,entry\symbol{95}t~*rep,Puint32~*isFull);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reportFull2io~(P\symbol{95}t~*pads,Sfio\symbol{95}t~*outstr,const~char~*prefix,\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~const~char~*what,~int~nst,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reportAll2io~~(P\symbol{95}t~*pads,Sfio\symbol{95}t~*outstr,const~char~*prefix,\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~const~char~*what,~int~nst,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reportFull~~~~(P\symbol{95}t~*pads,const~char~*prefix,const~char~*what,int~nst,entry\symbol{95}t\symbol{95}hist~*h);\\
+Perror\symbol{95}t~entry\symbol{95}t\symbol{95}hist\symbol{95}reportAll~~~~~(P\symbol{95}t~*pads,const~char~*prefix,const~char~*what,int~nst,entry\symbol{95}t\symbol{95}hist~*h);\\
+\end{code}

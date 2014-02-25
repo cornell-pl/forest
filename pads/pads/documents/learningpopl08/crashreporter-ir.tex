@@ -1,0 +1,61 @@
+\begin{figure}[t]
+\begin{small}
+\begin{verbatim}
+dumpReport =
+  union {
+    struct {
+      "Started writing crash report to: "; 
+      file:Ppath;
+    };
+    ...
+  };
+
+reporterReport =
+  struct {
+    function: Ppath; " reply failed: ");
+    failuremsg: Pstring_('\n'); 
+  };
+
+dateOption = 
+  union {
+    "- ";
+    struct {
+      day:    PDate;  " ";
+      time:   PTime;  " ";
+      year:   Pint32; " ";
+    };
+  };
+
+source =
+  arrayST {
+    struct {
+      date:   dateOption;
+      kind:   enum {"crashdump"; 
+                    "crashreporterd";}; "[";
+      dumpid: Pint32; "]: ";
+      report: 
+        switch kind of {
+          "crashdump"      => dumpReport
+          "crashreporterd" => reporterReport
+    };
+  }['\n',EOF];
+\end{verbatim}
+\end{small}
+\caption{Hand-written \ir{} Crashreporter.log description.} \shrink
+\label{fig:crashreporter:ir}
+\end{figure}
+
+% omitted section of reporter:
+
+%     struct {
+%       "Finished writing crash report to: "; 
+%       file:Ppath;
+%     };
+%     struct {
+%       "Unable to determine task_t for pid: "; 
+%       pid:Pint32; " name: Exited process";
+%     };
+%     struct {
+%       "Failed to re-launch "; 
+%       file:Ppath; " - "; message:Pstring('\n')
+%     };

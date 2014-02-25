@@ -1,0 +1,16 @@
+Source files to process: data/crashreporter.log
+Output directory: gen/
+Output description file: crashreporter.log
+Max depth to explore: 50
+Print line numbers in output contexts: false
+Print ids and output type tokens: true
+Print Entropy: false
+Histogram comparison tolerance (percentage): 0.01
+Struct determination tolerance (percentage): 0.1
+Noise level threshold (percentage): 0.0
+Width threshold for array: 4
+Minimum width threshold for array: 0
+Junk threshold (percentage): 0.1
+Complexity of derived type:
+	{ TC = 2008.360b, ADC = 736.995b, DC = 320845.665b }
+

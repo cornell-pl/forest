@@ -1,0 +1,27 @@
+DATA FILE:  boot.log
+
+Record count =  262
+Byte count =    16241
+
+Unrefined complexity scores
+{ TC = 1226.265b, ADC = 544586.018b, DC = 79310.407b } normalized by 129928 is 0.619856162146
+
+New complexity scores
+{ TC = 2762.927b, ADC = 639.410b, DC = 59683.695b } normalized by 129928 is 0.480624826082
+
+
+Golden complexity =
+{ TC = 346.617b, ADC = 349.092b, DC = 90941.204b } normalized by 129928 is 0.702603146171
+gen/boot.log-accum.out: success rate = 100.00%
+The average time = 0.00
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.110
+First measurement time = 0.009
+First reduction time = 0.768
+Second reduction time = 1.343
+Third reduction time = 0.332
+Second measurement time = 0.008
+Total time = 2.570
+============================================================

@@ -1,0 +1,122 @@
+\chapter{Penums}
+\label{chap:enums}
+\cutname{enums.html}
+\Penum{}s allow a fixed collection of source constants to be converted into
+integers in-memory.
+
+\section{Syntax}
+\begin{tabular}{rcl}
+\nont{p\_enum\_prefix}      & \is{}  & \kw{Pprefix} ( identifier ) \\
+\nont{p\_enum\_base\_ty}    & \is{}  & \kw{Pfrom} ( \nont{p\_ty} ) \\
+\nont{p\_enum\_modifier}    & \is{}  & \nont{p\_enum\_prefix}\ \alt{}\ \nont{p\_enum\_base\_ty}\\
+\nont{p\_raw\_enum\_field}  & \is{}  & \nont{p\_literal} \opt{= expression } \\
+\nont{p\_enum\_field}       & \is{}  & \nont{p\_raw\_enum\_field}, \opt{p\_comment}\\
+\nont{p\_last\_enum\_field} & \is{}  & \nont{p\_raw\_enum\_field} \opt{p\_comment}\\
+\nont{p\_enum\_fields}   & \is{}  & \nont{p\_last\_enum\_field} \\
+                         & \alt{} & \nont{p\_enum\_field} \nont{p\_enum\_fields} \\
+\nont{enum\_ty}    & \is{} & \Penum{} identifier \opt{\nont{p\_formals}} \opt{\nont{p\_enum\_modifier}} \{ \nont{p\_enum\_fields} \} ;\\[4ex]
+\end{tabular}
+
+\subsection{Example}
+If the physical representation consists of the following
+strings:\texttt{S\_init}, \texttt{S\_lec}, 
+\texttt{S\_care}, \texttt{S\_for}, \texttt{S\_if}, and
+\texttt{S\_tpv},
+then we can use the specification: 
+
+\inputCode{code/enum}
+%
+\noindent
+to describe the data. Because this \penum{} does not explicitly list a
+\pads{} type for the physical representation of the constants, the
+system assumes the underlying representation is a string.  In this case,
+the labels in the enumeration correspond to the strings in the
+physical representation.  To support physical string representations that are
+not valid \C{} identifiers, the \Pfrom{} clause allows the user to
+specify the physical string separately from the enumeration label,
+\eg{}, \texttt{my\_for} in place of \texttt{for}.  The argument 
+to the \Pfrom{} clause can be any character, string, or regular expression.
+The optional \Pprefix{} clause indicates that all the
+labels in the enumeration are prefixed by the specified string in the
+physical representation.  \pads{} assigns integer values to the labels
+in the enumeration in the same fashion that \C{} does, so the first
+label is given the value zero, and each successive label is given the
+next higher value.  The user can specify a value for a given label
+using the equal expression syntax.  The compiler does not check that
+all labels are given distinct values. An artifact of the embedding
+into \C{} is that all labels must be globally distinct.  If two
+different enumerations contain the same string, one of them must be
+differentiated using a \Pfrom{} clause.
+
+To support the case where the physical representation of the constant
+is not a string, \pads{} allows users to specify in the 
+\nont{p\_enum\_base\_ty} clause any \pads{} type with an integer
+in-memory representation as the base type of the enumeration.  For
+example, the following code
+
+\inputCode{code/enum-base}
+%
+\noindent
+defines a type \cd{Bool\_t} that is represented on disk as a one-byte,
+unsigned binary number.  A physical value of \cd{0} corresponds to the
+enumeration label \cd{False}, while a value of \cd{1} corresponds to
+\cd{True}. 
+
+\section{Generated library}
+We use the \texttt{orderStates} example to illustrate the data
+structures and functions generated for \Penum{}s.
+\subsection{In-memory representation}
+\label{sec:enums-rep}
+The following \C{} code is the generated in memory representation for
+the \texttt{orderStates} \Penum{}. The associated values are computed
+at \pads{} compile time and so the associated values must be
+compile-time constants, as in \C{}.
+
+\inputCode{code/enumRep}
+
+\subsection{Mask}
+\label{sec:enums-masks}
+The mask for a \Penum{} is simply a base mask:
+
+\inputCode{code/enumMask}
+
+\subsection{Parse descriptor}
+\label{sec:enums-parse-descriptors}
+The parse descriptor for a \Penum{} is simply a base parse descriptor:
+
+\inputCode{code/enumPD}
+
+\subsection{Operations}
+The operations for \Penum{}s are those described in
+\chapref{chap:common-features}, with one addition.
+The \texttt{orderStates2str} function converts the integer
+representation of a \Penum{} into a \C{} string.
+These functions appear in \figref{figure:enum-ops}.
+\begin{figure}
+\inputCode{code/enumOps}
+\caption{Prototypes of operations generated for
+  the \Penum{} \texttt{orderStates}.}
+\label{figure:enum-ops}
+\end{figure}
+
+\subsubsection{Read Function}
+The error codes for \Penum{}s are:
+
+\tskip{}
+\begin{center}
+\begin{tabular}{l|p{4in}}
+Code                           & Meaning \\ \hline
+ \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
+ \cd{P_ENUM_MATCH_ERR} & Indicates that the no branch of the enum matched.\\[1ex]
+\end{tabular}
+\end{center}
+\subsubsection{Accumulator functions}
+Accumulator functions for \Penum{}s are described in \chapref{chap:accumulators}.
+
+\subsubsection{Histogram functions}
+Histogram functions for \Penum{}s are described in
+\chapref{chap:histogram}. 
+
+\subsubsection{Clustering functions}
+Clustering functions for \Penum{}s are described in
+\chapref{chap:cluster}. 

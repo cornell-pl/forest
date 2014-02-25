@@ -1,0 +1,28 @@
+DATA FILE:  1967Transactions.short
+
+Record count =  999
+Byte count =    70929
+
+Unrefined complexity scores
+{ TC = 157.573b, ADC = 177.736b, DC = 167474.179b } normalized by 567432 is 0.295421745362
+
+New complexity scores
+{ TC = 175.174b, ADC = 123.491b, DC = 123367.394b } normalized by 567432 is 0.217722243067
+
+Silver complexity scores
+{ TC = 1290.728b, ADC = 48.173b, DC = 42182.555b }
+Golden complexity =
+{ TC = 111.705b, ADC = 155.261b, DC = 152117.912b } normalized by 567432 is 0.268278168713
+gen/1967Transactions.short-accum.out: success rate = 100.00%
+The average time = 0.00
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.195
+First measurement time = 0.021
+First reduction time = 1.453
+Second reduction time = 0.593
+Third reduction time = 0.260
+Second measurement time = 0.017
+Total time = 2.538
+============================================================

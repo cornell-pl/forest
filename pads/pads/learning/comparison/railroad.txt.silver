@@ -1,0 +1,664 @@
+Starting on files data/railroad.txt
+67 records.
+
+Before reduction:
+Pstruct(Id = BTy_309 67)
+	Punion(Id = BTy_174 67)
+		Pstruct(Id = BTy_0 62)
+			[String] (Id = BTy_1 62);
+			Parray(Id = BTy_2 62)([White] )
+			First:
+				Punion(Id = BTy_8 62)
+					Pstruct(Id = BTy_7 60)
+						Punion(Id = BTy_4 60)
+							[Empty] (Id = BTy_3 59);
+							[Other](:) (Id = BTy_5 1);
+						End Punion;
+						[White] (Id = BTy_6 60);
+					End Pstruct;
+					[Empty] (Id = BTy_9 2);
+				End Punion;
+			Body:
+				Pstruct(Id = BTy_28 188)
+					Punion(Id = BTy_15 188)
+						Pstruct(Id = BTy_14 179)
+							[String] (Id = BTy_10 179);
+							Punion(Id = BTy_12 179)
+								[Empty] (Id = BTy_11 178);
+								[Other](;) (Id = BTy_13 1);
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_16 2)
+							[Pint] (Id = BTy_17 2);
+							Punion(Id = BTy_22 2)
+								Pstruct(Id = BTy_20 1)
+									[Pint] (Id = BTy_18 1);
+									[Other](:) (Id = BTy_19 1);
+								End Pstruct;
+								[Other](;) (Id = BTy_21 1);
+							End Punion;
+						End Pstruct;
+						[Other](-) (Id = BTy_23 3);
+						[Other](/) (Id = BTy_24 1);
+						[Other](=) (Id = BTy_25 3);
+					End Punion;
+					[White] (Id = BTy_27 188);
+				End Pstruct;
+			Tail:
+				Punion(Id = BTy_30 62)
+					[String] (Id = BTy_29 41);
+					[Empty] (Id = BTy_31 19);
+					Pstruct(Id = BTy_36 2)
+						[Other](() (Id = BTy_33 2);
+						[String] (Id = BTy_34 2);
+						[Other]()) (Id = BTy_35 2);
+					End Pstruct;
+				End Punion;
+			End Parray;
+		End Pstruct;
+		Pstruct(Id = BTy_172 4)
+			[Other](\") (Id = BTy_37 4);
+			[String] (Id = BTy_39 4);
+			Punion(Id = BTy_170 4)
+				Pstruct(Id = BTy_111 3)
+					Punion(Id = BTy_71 3)
+						Pstruct(Id = BTy_70 1)
+							[White] (Id = BTy_40 1);
+							[String] (Id = BTy_41 1);
+							[White] (Id = BTy_42 1);
+							[String] (Id = BTy_43 1);
+							[White] (Id = BTy_44 1);
+							[String] (Id = BTy_45 1);
+							[White] (Id = BTy_46 1);
+							[Pint] (Id = BTy_48 1);
+							[White] (Id = BTy_49 1);
+							[String] (Id = BTy_50 1);
+							[White] (Id = BTy_51 1);
+							[String] (Id = BTy_52 1);
+							[White] (Id = BTy_53 1);
+							[String] (Id = BTy_54 1);
+							[White] (Id = BTy_55 1);
+							[String] (Id = BTy_56 1);
+							[White] (Id = BTy_57 1);
+							[String] (Id = BTy_58 1);
+							[White] (Id = BTy_59 1);
+							[String] (Id = BTy_60 1);
+							[Other](.) (Id = BTy_62 1);
+							[White] (Id = BTy_63 1);
+							[String] (Id = BTy_64 1);
+							[White] (Id = BTy_65 1);
+							[String] (Id = BTy_66 1);
+							[White] (Id = BTy_67 1);
+							[Pint] (Id = BTy_69 1);
+						End Pstruct;
+						Pstruct(Id = BTy_72 2)
+							[White] (Id = BTy_73 2);
+							[String] (Id = BTy_75 2);
+							[White] (Id = BTy_77 2);
+							Punion(Id = BTy_84 2)
+								Pstruct(Id = BTy_83 1)
+									[String] (Id = BTy_78 1);
+									[White] (Id = BTy_79 1);
+									[String] (Id = BTy_80 1);
+									[White] (Id = BTy_81 1);
+									[String] (Id = BTy_82 1);
+								End Pstruct;
+								[String] (Id = BTy_85 1);
+							End Punion;
+						End Pstruct;
+					End Punion;
+					[Other](,) (Id = BTy_86 3);
+					[White] (Id = BTy_88 3);
+					[String] (Id = BTy_90 3);
+					Punion(Id = BTy_92 3)
+						[Empty] (Id = BTy_91 2);
+						Pstruct(Id = BTy_105 1)
+							[White] (Id = BTy_93 1);
+							[String] (Id = BTy_94 1);
+							[White] (Id = BTy_95 1);
+							[String] (Id = BTy_96 1);
+							[White] (Id = BTy_97 1);
+							[String] (Id = BTy_98 1);
+							[White] (Id = BTy_99 1);
+							[String] (Id = BTy_100 1);
+							[White] (Id = BTy_101 1);
+							[String] (Id = BTy_102 1);
+							[White] (Id = BTy_103 1);
+							[String] (Id = BTy_104 1);
+						End Pstruct;
+					End Punion;
+					[Other](.) (Id = BTy_106 3);
+					Punion(Id = BTy_108 3)
+						[Empty] (Id = BTy_107 2);
+						[White] (Id = BTy_109 1);
+					End Punion;
+				End Pstruct;
+				Pstruct(Id = BTy_169 1)
+					[Other](.) (Id = BTy_112 1);
+					[String] (Id = BTy_113 1);
+					[Other](.) (Id = BTy_114 1);
+					[White] (Id = BTy_115 1);
+					[String] (Id = BTy_116 1);
+					[White] (Id = BTy_117 1);
+					[String] (Id = BTy_118 1);
+					[White] (Id = BTy_119 1);
+					[String] (Id = BTy_120 1);
+					[Other](,) (Id = BTy_121 1);
+					[White] (Id = BTy_122 1);
+					[String] (Id = BTy_123 1);
+					[White] (Id = BTy_124 1);
+					[String] (Id = BTy_125 1);
+					[White] (Id = BTy_126 1);
+					[String] (Id = BTy_127 1);
+					[Other](,) (Id = BTy_128 1);
+					[White] (Id = BTy_129 1);
+					[String] (Id = BTy_130 1);
+					[White] (Id = BTy_131 1);
+					[String] (Id = BTy_132 1);
+					[White] (Id = BTy_133 1);
+					[String] (Id = BTy_134 1);
+					[White] (Id = BTy_135 1);
+					[Other](() (Id = BTy_136 1);
+					[String] (Id = BTy_137 1);
+					[Other](,) (Id = BTy_138 1);
+					[White] (Id = BTy_139 1);
+					[String] (Id = BTy_140 1);
+					[Other](:) (Id = BTy_141 1);
+					[White] (Id = BTy_142 1);
+					[String] (Id = BTy_143 1);
+					[White] (Id = BTy_144 1);
+					[String] (Id = BTy_145 1);
+					[Other]()) (Id = BTy_146 1);
+					[Other](,) (Id = BTy_148 1);
+					[White] (Id = BTy_149 1);
+					[String] (Id = BTy_150 1);
+					[White] (Id = BTy_151 1);
+					[Pint] (Id = BTy_152 1);
+					[Other](,) (Id = BTy_153 1);
+					[White] (Id = BTy_154 1);
+					[String] (Id = BTy_155 1);
+					[White] (Id = BTy_156 1);
+					[String] (Id = BTy_157 1);
+					[White] (Id = BTy_158 1);
+					[URL] (Id = BTy_159 1);
+					[String] (Id = BTy_160 1);
+					[White] (Id = BTy_161 1);
+					[String] (Id = BTy_162 1);
+					[White] (Id = BTy_163 1);
+					[String] (Id = BTy_164 1);
+					[White] (Id = BTy_165 1);
+					[Date] (Id = BTy_166 1);
+					[Pint] (Id = BTy_167 1);
+					[Other](.) (Id = BTy_168 1);
+				End Pstruct;
+			End Punion;
+			[Other](\") (Id = BTy_171 4);
+		End Pstruct;
+		[Empty] (Id = BTy_173 1);
+	End Punion;
+	[Other](,) (Id = BTy_175 67);
+	Punion(Id = BTy_200 67)
+		Pstruct(Id = BTy_199 56)
+			[Other](\") (Id = BTy_176 56);
+			[String] (Id = BTy_178 56);
+			Punion(Id = BTy_180 56)
+				[Empty] (Id = BTy_179 35);
+				Pstruct(Id = BTy_191 21)
+					Punion(Id = BTy_182 21)
+						[Empty] (Id = BTy_181 20);
+						[Other](.) (Id = BTy_183 1);
+					End Punion;
+					[White] (Id = BTy_184 21);
+					[String] (Id = BTy_185 21);
+					Punion(Id = BTy_187 21)
+						[Empty] (Id = BTy_186 20);
+						Pstruct(Id = BTy_190 1)
+							[White] (Id = BTy_188 1);
+							[String] (Id = BTy_189 1);
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+			End Punion;
+			[Other](,) (Id = BTy_192 56);
+			Punion(Id = BTy_194 56)
+				[White] (Id = BTy_193 55);
+				[Empty] (Id = BTy_195 1);
+			End Punion;
+			[String] (Id = BTy_196 56);
+			[Other](\") (Id = BTy_198 56);
+		End Pstruct;
+		[Empty] (Id = BTy_201 10);
+		Pstruct(Id = BTy_208 1)
+			[String] (Id = BTy_203 1);
+			[White] (Id = BTy_204 1);
+			[String] (Id = BTy_205 1);
+			[White] (Id = BTy_206 1);
+			[String] (Id = BTy_207 1);
+		End Pstruct;
+	End Punion;
+	[Other](,) (Id = BTy_209 67);
+	Punion(Id = BTy_211 67)
+		[Pint] (Id = BTy_210 41);
+		[Empty] (Id = BTy_212 9);
+		[String] (Id = BTy_214 16);
+		Pstruct(Id = BTy_221 1)
+			[String] (Id = BTy_216 1);
+			[White] (Id = BTy_217 1);
+			[String] (Id = BTy_218 1);
+			[White] (Id = BTy_219 1);
+			[String] (Id = BTy_220 1);
+		End Pstruct;
+	End Punion;
+	[Other](,) (Id = BTy_222 67);
+	Punion(Id = BTy_224 67)
+		[Pint] (Id = BTy_223 42);
+		[String] (Id = BTy_225 15);
+		[Empty] (Id = BTy_227 10);
+	End Punion;
+	[Other](,) (Id = BTy_228 67);
+	Punion(Id = BTy_230 67)
+		[Pint] (Id = BTy_229 43);
+		[String] (Id = BTy_231 14);
+		[Empty] (Id = BTy_233 10);
+	End Punion;
+	[Other](,) (Id = BTy_234 67);
+	Punion(Id = BTy_236 67)
+		[Pint] (Id = BTy_235 43);
+		[String] (Id = BTy_237 14);
+		[Empty] (Id = BTy_239 10);
+	End Punion;
+	[Other](,) (Id = BTy_240 67);
+	Punion(Id = BTy_242 67)
+		[Pint] (Id = BTy_241 44);
+		[String] (Id = BTy_243 13);
+		[Empty] (Id = BTy_245 10);
+	End Punion;
+	[Other](,) (Id = BTy_246 67);
+	Punion(Id = BTy_248 67)
+		[Pint] (Id = BTy_247 45);
+		[String] (Id = BTy_249 12);
+		[Empty] (Id = BTy_251 10);
+	End Punion;
+	[Other](,) (Id = BTy_252 67);
+	Punion(Id = BTy_254 67)
+		[Pint] (Id = BTy_253 56);
+		[Empty] (Id = BTy_255 10);
+		[String] (Id = BTy_257 1);
+	End Punion;
+	[Other](,) (Id = BTy_258 67);
+	Punion(Id = BTy_260 67)
+		[Pint] (Id = BTy_259 41);
+		[Empty] (Id = BTy_261 9);
+		[String] (Id = BTy_263 16);
+		Pstruct(Id = BTy_272 1)
+			[String] (Id = BTy_265 1);
+			[White] (Id = BTy_266 1);
+			[String] (Id = BTy_267 1);
+			[White] (Id = BTy_268 1);
+			[String] (Id = BTy_269 1);
+			[White] (Id = BTy_270 1);
+			[String] (Id = BTy_271 1);
+		End Pstruct;
+	End Punion;
+	[Other](,) (Id = BTy_273 67);
+	Punion(Id = BTy_275 67)
+		[Pint] (Id = BTy_274 42);
+		[String] (Id = BTy_276 15);
+		[Empty] (Id = BTy_278 10);
+	End Punion;
+	[Other](,) (Id = BTy_279 67);
+	Punion(Id = BTy_281 67)
+		[Pint] (Id = BTy_280 43);
+		[String] (Id = BTy_282 14);
+		[Empty] (Id = BTy_284 10);
+	End Punion;
+	[Other](,) (Id = BTy_285 67);
+	Punion(Id = BTy_287 67)
+		[Pint] (Id = BTy_286 43);
+		[String] (Id = BTy_288 14);
+		[Empty] (Id = BTy_290 10);
+	End Punion;
+	[Other](,) (Id = BTy_291 67);
+	Punion(Id = BTy_293 67)
+		[Pint] (Id = BTy_292 44);
+		[String] (Id = BTy_294 13);
+		[Empty] (Id = BTy_296 10);
+	End Punion;
+	[Other](,) (Id = BTy_297 67);
+	Punion(Id = BTy_299 67)
+		[Pint] (Id = BTy_298 45);
+		[String] (Id = BTy_300 12);
+		[Empty] (Id = BTy_302 10);
+	End Punion;
+	[Other](,) (Id = BTy_303 67);
+	Punion(Id = BTy_305 67)
+		[Pint] (Id = BTy_304 56);
+		[Empty] (Id = BTy_306 10);
+		[String] (Id = BTy_308 1);
+	End Punion;
+End Pstruct
+
+Refined Ty:
+Pstruct(Id = BTy_309 67)
+	Punion(Id = BTy_174 67)
+		Pstruct(Id = BTy_0 62)
+			[String] (Id = BTy_1 62);
+			Poption(Id = BTy_8 62)
+				Pstruct(Id = BTy_7 60)
+					Poption(Id = BTy_4 60)
+						[Other](:) (Id = BTy_5 1);
+					End Poption;
+					[Enum] {[StringConst] " ", [StringConst] "  ", } (Id = BTy_6 60);
+				End Pstruct;
+			End Poption;
+			RArray(Id = BTy_2 62)
+				Pstruct(Id = BTy_28 188)
+					Punion(Id = BTy_15 188)
+						Pstruct(Id = BTy_14 179)
+							[String] (Id = BTy_10 179);
+							Poption(Id = BTy_12 179)
+								[Other](;) (Id = BTy_13 1);
+							End Poption;
+						End Pstruct;
+						Pstruct(Id = BTy_16 2)
+							[Pint] (Id = BTy_17 2);
+							Switch(BTy_17)(Id = BTy_22 2):
+							case [IntConst] [1]:
+								Pstruct(Id = BTy_20 1)
+									[IntConst] [~9] (Id = BTy_18 1);
+									[Other](:) (Id = BTy_19 1);
+								End Pstruct;
+							case [IntConst] [1992]:
+								[Other](;) (Id = BTy_21 1);
+							End Switch;
+						End Pstruct;
+						[StringConst] "-" (Id = BTy_23 3);
+						[Other](/) (Id = BTy_24 1);
+						[StringConst] "=" (Id = BTy_25 3);
+					End Punion;
+					[Enum] {[StringConst] " ", [StringConst] "  ", } (Id = BTy_27 188);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_30 62)
+				[String] (Id = BTy_29 41);
+				Pstruct(Id = BTy_36 2)
+					[StringConst] "(" (Id = BTy_33 2);
+					[String] (Id = BTy_34 2);
+					[StringConst] ")" (Id = BTy_35 2);
+				End Pstruct;
+				[Empty] (Id = BTy_31 19);
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_172 4)
+			[StringConst] "\"" (Id = BTy_37 4);
+			[String] (Id = BTy_39 4);
+			Punion(Id = BTy_170 4)
+				Pstruct(Id = BTy_111 3)
+					[White] (Id = BTy_40 3);
+					[String] (Id = BTy_41 3);
+					[White] (Id = BTy_42 3);
+					Punion(Id = BTy_71 3)
+						Pstruct(Id = BTy_70 1)
+							[String] (Id = BTy_43 1);
+							[White] (Id = BTy_44 1);
+							[String] (Id = BTy_45 1);
+							[White] (Id = BTy_46 1);
+							[IntConst] [2002] (Id = BTy_48 1);
+							[White] (Id = BTy_49 1);
+							[String] (Id = BTy_50 1);
+							[White] (Id = BTy_51 1);
+							[String] (Id = BTy_52 1);
+							[White] (Id = BTy_53 1);
+							[String] (Id = BTy_54 1);
+							[White] (Id = BTy_55 1);
+							[String] (Id = BTy_56 1);
+							[White] (Id = BTy_57 1);
+							[String] (Id = BTy_58 1);
+							[White] (Id = BTy_59 1);
+							[String] (Id = BTy_60 1);
+							[Other](.) (Id = BTy_62 1);
+							[White] (Id = BTy_63 1);
+							[String] (Id = BTy_64 1);
+							[White] (Id = BTy_65 1);
+							[String] (Id = BTy_66 1);
+							[White] (Id = BTy_67 1);
+							[IntConst] [2002] (Id = BTy_69 1);
+						End Pstruct;
+						Pstruct(Id = BTy_83 1)
+							[String] (Id = BTy_78 1);
+							[White] (Id = BTy_79 1);
+							[String] (Id = BTy_80 1);
+							[White] (Id = BTy_81 1);
+							[String] (Id = BTy_82 1);
+						End Pstruct;
+						[String] (Id = BTy_85 1);
+					End Punion;
+					[StringConst] "," (Id = BTy_86 3);
+					[White] (Id = BTy_88 3);
+					[Enum] {[StringConst] "Inc", [StringConst] "the", } (Id = BTy_90 3);
+					Poption(Id = BTy_92 3)
+						RArray(Id = BTy_105 1)
+							Pstruct(Id = BTy_314 6)
+								[StringConst] " " (Id = BTy_103 6);
+								[String] (Id = BTy_104 6);
+							End Pstruct;
+						End RArray;
+					End Poption;
+					[StringConst] "." (Id = BTy_106 3);
+					Poption(Id = BTy_108 3)
+						[White] (Id = BTy_109 1);
+					End Poption;
+				End Pstruct;
+				Pstruct(Id = BTy_169 1)
+					[Other](.) (Id = BTy_112 1);
+					[String] (Id = BTy_113 1);
+					[Other](.) (Id = BTy_114 1);
+					[White] (Id = BTy_115 1);
+					[String] (Id = BTy_116 1);
+					[White] (Id = BTy_117 1);
+					[String] (Id = BTy_118 1);
+					[White] (Id = BTy_119 1);
+					[String] (Id = BTy_120 1);
+					[Other](,) (Id = BTy_121 1);
+					[White] (Id = BTy_122 1);
+					[String] (Id = BTy_123 1);
+					[White] (Id = BTy_124 1);
+					[String] (Id = BTy_125 1);
+					[White] (Id = BTy_126 1);
+					[String] (Id = BTy_127 1);
+					[Other](,) (Id = BTy_128 1);
+					[White] (Id = BTy_129 1);
+					[String] (Id = BTy_130 1);
+					[White] (Id = BTy_131 1);
+					[String] (Id = BTy_132 1);
+					[White] (Id = BTy_133 1);
+					[String] (Id = BTy_134 1);
+					[White] (Id = BTy_135 1);
+					[Other](() (Id = BTy_136 1);
+					[String] (Id = BTy_137 1);
+					[Other](,) (Id = BTy_138 1);
+					[White] (Id = BTy_139 1);
+					[String] (Id = BTy_140 1);
+					[Other](:) (Id = BTy_141 1);
+					[White] (Id = BTy_142 1);
+					[String] (Id = BTy_143 1);
+					[White] (Id = BTy_144 1);
+					[String] (Id = BTy_145 1);
+					[Other]()) (Id = BTy_146 1);
+					[Other](,) (Id = BTy_148 1);
+					[White] (Id = BTy_149 1);
+					[String] (Id = BTy_150 1);
+					[White] (Id = BTy_151 1);
+					[IntConst] [21] (Id = BTy_152 1);
+					[Other](,) (Id = BTy_153 1);
+					[White] (Id = BTy_154 1);
+					[String] (Id = BTy_155 1);
+					[White] (Id = BTy_156 1);
+					[String] (Id = BTy_157 1);
+					[White] (Id = BTy_158 1);
+					[URL] (Id = BTy_159 1);
+					[String] (Id = BTy_160 1);
+					[White] (Id = BTy_161 1);
+					[String] (Id = BTy_162 1);
+					[White] (Id = BTy_163 1);
+					[String] (Id = BTy_164 1);
+					[White] (Id = BTy_165 1);
+					[Date] (Id = BTy_166 1);
+					[IntConst] [4] (Id = BTy_167 1);
+					[Other](.) (Id = BTy_168 1);
+				End Pstruct;
+			End Punion;
+			[StringConst] "\"" (Id = BTy_171 4);
+		End Pstruct;
+		[Empty] (Id = BTy_173 1);
+	End Punion;
+	[StringConst] "," (Id = BTy_175 67);
+	Punion(Id = BTy_200 67)
+		Pstruct(Id = BTy_199 56)
+			[StringConst] "\"" (Id = BTy_176 56);
+			[String] (Id = BTy_178 56);
+			Poption(Id = BTy_180 56)
+				Pstruct(Id = BTy_191 21)
+					Poption(Id = BTy_182 21)
+						[Other](.) (Id = BTy_183 1);
+					End Poption;
+					[StringConst] " " (Id = BTy_184 21);
+					[Enum] {[StringConst] "Angeles", [StringConst] "Diego", [StringConst] "Francisco", [StringConst] "Haven", [StringConst] "Jose", [StringConst] "Lake", [StringConst] "Louis", [StringConst] "Orleans", [StringConst] "Worth", [StringConst] "York", } (Id = BTy_185 21);
+					Poption(Id = BTy_187 21)
+						Pstruct(Id = BTy_190 1)
+							[White] (Id = BTy_188 1);
+							[String] (Id = BTy_189 1);
+						End Pstruct;
+					End Poption;
+				End Pstruct;
+			End Poption;
+			[StringConst] "," (Id = BTy_192 56);
+			Poption(Id = BTy_194 56)
+				[StringConst] " " (Id = BTy_193 55);
+			End Poption;
+			[String] (Id = BTy_196 56);
+			[StringConst] "\"" (Id = BTy_198 56);
+		End Pstruct;
+		Pstruct(Id = BTy_208 1)
+			[String] (Id = BTy_203 1);
+			[White] (Id = BTy_204 1);
+			[String] (Id = BTy_205 1);
+			[White] (Id = BTy_206 1);
+			[String] (Id = BTy_207 1);
+		End Pstruct;
+		[Empty] (Id = BTy_201 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_209 67);
+	Punion(Id = BTy_211 67)
+		[Pint] (Id = BTy_210 41);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_214 16);
+		Pstruct(Id = BTy_221 1)
+			[String] (Id = BTy_216 1);
+			[White] (Id = BTy_217 1);
+			[String] (Id = BTy_218 1);
+			[White] (Id = BTy_219 1);
+			[String] (Id = BTy_220 1);
+		End Pstruct;
+		[Empty] (Id = BTy_212 9);
+	End Punion;
+	[StringConst] "," (Id = BTy_222 67);
+	Punion(Id = BTy_224 67)
+		[Pint] (Id = BTy_223 42);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_225 15);
+		[Empty] (Id = BTy_227 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_228 67);
+	Punion(Id = BTy_230 67)
+		[Pint] (Id = BTy_229 43);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_231 14);
+		[Empty] (Id = BTy_233 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_234 67);
+	Punion(Id = BTy_236 67)
+		[Pint] (Id = BTy_235 43);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_237 14);
+		[Empty] (Id = BTy_239 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_240 67);
+	Punion(Id = BTy_242 67)
+		[Pint] (Id = BTy_241 44);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_243 13);
+		[Empty] (Id = BTy_245 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_246 67);
+	Punion(Id = BTy_248 67)
+		[Pint] (Id = BTy_247 45);
+		[StringConst] "U" (Id = BTy_249 12);
+		[Empty] (Id = BTy_251 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_252 67);
+	Punion(Id = BTy_254 67)
+		[Pint] (Id = BTy_253 56);
+		[String] (Id = BTy_257 1);
+		[Empty] (Id = BTy_255 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_258 67);
+	Punion(Id = BTy_260 67)
+		[Pint] (Id = BTy_259 41);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_263 16);
+		RArray(Id = BTy_272 1)
+			Separator: [StringConst] " "
+			[String] (Id = BTy_271 4);
+		End RArray;
+		[Empty] (Id = BTy_261 9);
+	End Punion;
+	[StringConst] "," (Id = BTy_273 67);
+	Punion(Id = BTy_275 67)
+		[Pint] (Id = BTy_274 42);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_276 15);
+		[Empty] (Id = BTy_278 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_279 67);
+	Punion(Id = BTy_281 67)
+		[Pint] (Id = BTy_280 43);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_282 14);
+		[Empty] (Id = BTy_284 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_285 67);
+	Punion(Id = BTy_287 67)
+		[Pint] (Id = BTy_286 43);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_288 14);
+		[Empty] (Id = BTy_290 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_291 67);
+	Punion(Id = BTy_293 67)
+		[Pint] (Id = BTy_292 44);
+		[Enum] {[StringConst] "NA", [StringConst] "U", } (Id = BTy_294 13);
+		[Empty] (Id = BTy_296 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_297 67);
+	Punion(Id = BTy_299 67)
+		[Pint] (Id = BTy_298 45);
+		[StringConst] "U" (Id = BTy_300 12);
+		[Empty] (Id = BTy_302 10);
+	End Punion;
+	[StringConst] "," (Id = BTy_303 67);
+	Punion(Id = BTy_305 67)
+		[Pint] (Id = BTy_304 56);
+		[String] (Id = BTy_308 1);
+		[Empty] (Id = BTy_306 10);
+	End Punion;
+End Pstruct
+
+====== Timing information ======
+Tokenization time = 0.057
+Measure1 time = 0.010
+Reduce1 time = 0.423
+Reduce2 time = 12.178
+Reduce3 time = 0.163
+Measure2 time = 0.004
+================================
+
+Outputing partitions to directory: gen/
+Opening: gen/Ty, length 6
+opening: gen/Complexity, length 14
+opening: gen/Timing, length 10
+Excutable directory:/Users/kzhu/pads/learning/golden
+copy command: cp /Users/kzhu/pads/learning/golden/GNUMakefile.output gen/GNUmakefile
+
+Completed data/railroad.txt

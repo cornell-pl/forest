@@ -1,0 +1,249 @@
+\chapter{Histogram}
+\label{chap:histogram}
+\cutname{histogram.html}
+
+A histogram is a piecewise-constant approximation of an observed 
+data distribution. It is used as a small space, approximate
+synopsis of the underlying data distribution which are ofter too
+large to be stored precisely. Histograms are built for each meaningful 
+piece of a \pads{} description. \figref{figure:wsl-hist-report-1}
+is an example report for the length field of a web server log data.     
+%
+\begin{figure*}
+\begin{small}
+\begin{verbatim}
+*** Histogram Result *** 
+From 0 to 397, with height 4016. 
+From 398 to 398, with height 36122. 
+From 399 to 423, with height 5584. 
+From 424 to 424, with height 33250. 
+From 425 to 499, with height 3126. 
+*** Histogram Result *** 
+From 0 to 196, with height 3286. 
+From 197 to 197, with height 30430. 
+From 198 to 313, with height 3233. 
+From 314 to 314, with height 30430. 
+From 315 to 499, with height 3655. 
+*** Histogram Result *** 
+From 0 to 242, with height 3686. 
+From 243 to 243, with height 36122. 
+From 244 to 441, with height 3720. 
+From 442 to 442, with height 26074. 
+From 443 to 499, with height 7035. 
+*** Histogram Result *** 
+From 0 to 93, with height 4204. 
+From 94 to 94, with height 36122. 
+From 95 to 206, with height 3000. 
+From 207 to 210, with height 21496. 
+From 211 to 499, with height 3890. 
+. . . . . . . . . . . . . . . . . . . . . . 
+\end{verbatim}
+\end{small}
+\caption{Portion of histogram report for length field of web server
+log data.}
+\label{figure:wsl-hist-report-1}
+\end{figure*}
+%
+In this particular run, optimal 5-bucket histogram is built for 
+every 500 values seen in the data source.
+
+\section{Operations}
+\figref{figure:histogram} shows the histogram functions declared 
+for a \pads{} type.
+\begin{figure}
+\inputCode{hand_code/hist-declare}
+\caption{Histogram functions generated for the \texttt{entry\_t} type.}
+\label{figure:histogram}
+\end{figure}
+%
+These functions have the following behaviors:
+\begin{description}
+\item[\cd{entry\_t\_hist\_init}] Initializes histogram data
+  structure. This function must be called before any data can be added
+  to the histogram.
+\item[\cd{entry\_t\_hist\_setPara}] Customizes histogram data
+  structure. For the two conversion functions (specified below), user
+  needs to set the corresponding fields in the template program. This
+  function must be called to make any customization effected.  
+\item[\cd{entry\_t\_hist\_reset}] Reinitializes histogram data
+  structure. This function can be used to set any point of the data
+  source as the start point of a new run. But it can't be used to 
+  reset any previous defined parameters.
+\item[\cd{entry\_t\_hist\_cleanup}] Deallocates all memory associated
+  with histogram.
+\item[\cd{entry\_t\_hist\_add}] Inserts a data value. This function 
+  is called once a new record is coming. Any data type with an
+  associated mapping function to \cd{Pfloat64} is considered as a 
+  meaningful type. This function tracks fields with meaningful type
+  and legal values only. The output parameter isFull will be set 
+  nonzero, if the current data is the last one of a portion.
+\item[\cd{entry\_t\_hist\_reportFull2io}] Writes summary report for
+  finished histograms to \cd{*outstr}. In most cases, when this
+  function is called, all stored histograms will be reported and the
+  space will be released, while the current one won't.
+\item[\cd{entry\_t\_hist\_reportAll2io}] Writes summary report for
+  all histograms to \cd{*outstr}. When this function is called, all 
+  histograms will be reported and the space will be released. 
+\item[\cd{entry\_t\_hist\_reportFull}] Writes summary report for
+  finished histograms to screen.
+\item[\cd{entry\_t\_hist\_reportAll}] Writes summary report for
+  all histograms to screen. 
+\end{description}
+\figref{figure:wsl-hist-hand} illustrates a sample use of histogram
+functions for printing a summary of CLF \cd{entry_t}s.  
+\begin{figure}
+\inputCode{hand_code/histogram}
+\caption{Simple use of histogram functions for the
+  \texttt{entry\_t} type from CLF data.}
+\label{figure:wsl-hist-hand}
+\end{figure}
+
+\section{Customization}
+\label{sec:histograms-customization}
+Users are allowed to customize various aspects of histogram by 
+setting the appropriate field in the histogram data structure, 
+which contains: 
+
+\begin{description}
+\item[\cd{INIT\_N}] is a \cd{Puint64} denoting the number of values
+  for histogram to summarize. If the number of values in the data
+  source exceeds \cd{INIT\_N}, histograms will be built on each
+  \cd{INIT\_N} data values respectively, until the end of data
+  source is reached. 
+
+\item[\cd{INIT\_B}] is a \cd{Puint32} denoting the number of buckets
+  in final histogram. As \cd{INIT\_B} increases, accuracy of final
+  histogram approximation is increased, while more time and space is
+  consumed. The default value is 10.
+
+\item[\cd{INIT\_M}] is a \cd{Pint64} denoting an upper bound of data
+  values in data source. Time consumed increases in poly-logrithm of
+  \cd{INIT\_M}, so \cd{INIT\_M} can be set very large if little about
+  data values in data source is known. 
+
+\item[\cd{INIT\_ISE}] is a \cd{Pint8} denoting whether buckets in the final
+  histogram are required to be of the same width. If \cd{INIT\_ISE} is
+  set to be non-zero, all buckets have equal width. In this case,
+  the time needed is in linear-\cd{INIT\_N}, and only constant space will
+  be used. However, the result histogram will have less accuracy. 
+
+\item[\cd{INIT\_ISO}] is a \cd{Pint8} denoting whether final histogram
+  is required to be optimal or not. This parameter is valid only
+  when \cd{INIT\_ISE} is zero. If \cd{INIT\_ISO} is set to be
+  non-zero, the result histogram will be the most accurate one among
+  all \cd{INIT\_B} bucket histograms. However, the time needed is in
+  cubic-\cd{INIT\_N}, which could be extremely slow, and the space
+  needed is in linear-\cd{INIT\_N}, since all data values in each
+  \cd{INIT\_N} section are required to be stored.
+
+\item[\cd{INIT\_n}] is a \cd{Pint8} denoting whether norm 1 or norm 2
+  is used to measure accuracy of final histogram. Currently, norm 1
+  measurement is supported only when all the data values are
+  stored. In other words, it is supported only when \cd{INIT\_ISE} is
+  zero, and \cd{INIT\_ISO} is non-zero. 
+
+\item[\cd{INIT\_e}] is a \cd{Pfloat64} denoting error tolerance of the
+  final histogram. This parameter is valid only when non-optimal
+  result is allowed, namely both \cd{INIT\_ISE} and \cd{INIT\_ISO} are
+  zeroes. The final histogram will be guaranteed to be no worse than
+  poly- (1+\cd{INIT\_e}) times of the optimal one, but the time and
+  space needed increase as the error tolerance decreases.  
+
+\item[\cd{INIT\_scale}] is a \cd{Pint64} denoting scale factor for
+  each data value. This parameter is important for computing, but will
+  not affect the final result. For example, if the data source can
+  take values up to \cd{64} bits, the overall \cd{SSE} could need
+  as many as \cd{128} bits, which exceeds the representation limit of
+  \pads{}. In this case, \cd{INIT\_scale} is needed. 
+
+\item[\cd{INIT\_maxPortion}] is a \cd{Pint8} denoting the maximal
+  number of stored histograms. If user forgets to report a finished
+  histogram, or the inner histogram is finished while the outer one is
+  not in nested cases, the finished histogram will go into a stored
+  histogram list. If a new histogram is required to build, while the
+  number of stored histograms is already \cd{INIT\_maxPortion}, the
+  list will be cleared and a warning will be reported.
+
+\item[\cd{entry\_t\_toFloat}] is a function pointer, taking
+  \cd{entry\_t} as input parameter, and returning corresponding
+  \cd{Pfloat64}. Histograms will handle \cd{Pfloat64} type data value 
+  only. Any type with a well-defined conversion function to
+  \cd{Pfloat64} is considered as a meaningful type, and could be summarized
+  correctly by histograms. By default, all base types other than \cd{Pstring} in \pads{} have
+  conversion functions to \cd{Pfloat64}. Users are allowed to write their
+  own conversion function for each field by defining macro \cd{EXTRA_INIT_CODE}. If zero is assigned to this pointer, those default
+  conversion functions will be used.
+   
+\item[\cd{entry\_t\_fromFloat}] is a function pointer, taking
+  \cd{Pfloat64} as input parameter, and returning corresponding
+  \cd{entry\_t} type. Any type without a well-defined conversion
+  function from \cd{Pfloat64} may not be printed correctly. By
+  default, all base types other than \cd{Pstring} in \pads{} have
+  conversion functions from \cd{Pfloat64}. Users are allowed to write their
+  own conversion function for each field by defining macro \cd{EXTRA_INIT_CODE}. If zero is assigned to this pointer, those default
+  conversion functions will be used.
+
+\end{description}
+
+\section{Template Program}
+Because generating a histogram report from a \pads{} description is a
+very routine task, \pads{} provides a template program to automate the
+task for common data formats. In particular, the template applies to
+data that can be viewed as an optional header followed by a sequence
+of records. Note that any data source that can be read entirely into
+memory fits this pattern by considering the source to have no header
+and a single body record. 
+
+When instantiated, the template program takes an optional command-line
+argument specifying the path to the data source. If no argument is
+given, it uses a default location for the data specified by the
+template user. The template first reads the optional header, then
+reads each record and inserts the value of each meanful field into
+histogram until either the data source is exhuasted or the end of a
+portion is reached, at which point it prints the histogram report to
+standard io. The following list describes the macros used by
+histogram template:
+
+\begin{description}
+
+\item[\cd{DEF\_INPUT\_FILE}] If defined, this macro specifies a string
+  representation of the path to the default data source. If no path to
+  the data is supplied at the command-line, this is the location used
+  for input data. 
+\item[\cd{EXTRA\_BEGIN\_CODE}] If defined, this macro points to a \C{}
+  statement that will be executed after all initialization code is
+  performed, but before the optional header is read.
+\item[\cd{EXTRA\_DECLS}] This optional macro defines additional \C{}
+  declarations that proceed all template code.
+\item[\cd{EXTRA\_DONE\_CODE}] If defined, this macro points to a \C{}
+  statement that will be executed after generating the accumulator report.
+\item[\cd{EXTRA\_INIT\_CODE}] This optional macro defines additional \C{}
+  codes that customize histogram data structure for different fields.
+\item[\cd{EXTRA\_READ\_ARGS}] If the type of the repeated record was
+  parameterized, this macro allows the user to supply corresponding
+  parameters. 
+\item[\cd{IO\_DISC\_MK}] If defined, this macro specifies the
+  interpretation of \Precord{} by indicating which IO discpline the
+  system should install. It specifies the discipline by naming the
+  function to create the discipline. \secref{sec:io-discipline}
+  describes the available IO discipline creation functions.  If the
+  user does not define this macro, the system installs the IO
+  discipline corresponding to  new-line terminated ASCII records.
+\item[\cd{PADS\_HDR\_TY}] Intuitively, this macro defines the type of
+  the header record in the data source. This macro need only be
+  defined if the data source has a header record. It defines a function used by the template program to
+  generate the various function and type names derived from the name
+  of the header record type, $i.e.$, the type of the associated in-memory
+  representation, mask, parse descriptor, read function, etc.
+\item[\cd{PADS\_TY}] Intuitively, this macro defines the type of the repeated
+  record in the data source, $i.e.$, the type of the value to be
+  summarized. This macro must be defined to use the histogram
+  template. It defines a function used by the template program to
+  generate the various function and type names derived from the name
+  of the record type, $i.e.$, the type of the associated in-memory
+  representation, mask, parse descriptor, read function, etc.
+\item[\cd{READ\_MASK}] This macro specifies the mask to use in reading
+  the repeated record. If not defined by the user, the template uses
+  the value \cd{P\_CheckAndSet}.
+
+\end{description}

@@ -1,0 +1,84 @@
+SURFACE SYNTAX
+
+s ::= 
+    k
+  | psource of b 
+  | pdirectory of {n1 is s1; n2 is s2} 
+  | exact pdirectory of {n1 is s1; n2 is s2} 
+  | pcompute e 
+  | { s | x <- e } 
+  | (e :: s) 
+  | s <| e |> 
+  | s @ e 
+  | s @@ e 
+  | s option
+
+We work with binary directory structures for notational simplicity.
+
+TRANSLATION TO DIRCALC
+
+----------------------
+JNF: do we want to Transform the rep into a record here or are we OK
+leaving it as a tuple?
+DPW: let's not transform to a record. 
+DPW: (e1,e2,e3) is short for (e1,(e2,e3))
+     t1*t2*t3   is short for t1*(t2*t3)
+
+[[ pdirectory { n1 is s1, n2 is s2 } ]] =
+f @[t_rep,t_pd pd] (< dir, < n1 : [[ s1 ]], [[ s2 ]] > >)
+where:
+t_rep = s1_{RP} * s2_{RP} * string set 
+t_pd = s1_{PD} * s2_{PD}
+f (r,pd) = (f_rep r, f_pd pd)
+f_rep (r0,(r1,r2)) = {r1, r2, r0}
+f_pd (p0,(p1,p2)) = (valid p0 && valid p1 && valid p2, (p1, p2))
+---------------------
+Aux functions:
+
+// this function takes a rep and computes the set of strings matched by this
+// rep in the current directory.
+contents : for all reptype. reptype -> string set
+ 
+
+DPW: do we want the size constraint below to be a "pred" or a "compute"?
+     since we are doing a transform afterwards, it appears not to matter.  It
+     will work either way.  Am I wrong?
+
+[[ exact pdirectory { n1 is s1, n2 is s2 } ]] =
+f @[t_rep,t_pd pd]
+  < x : dir, 
+  < n1 : [[ s1 ]], 
+  < n2 : [[ s2 ]], 
+    pred(x = contents(n1) U contents(n2)) > > >
+
+t_rep = s1_{RP} * s2_{RP} * string set
+t_pd = s1_{PD} * s2_{PD} * bool
+f (r,pd) = (f_rep r pd, f_pd pd)
+f_rep (r0,(r1,(r2,_))) (_,(_,(_,exact))) 
+  = (r1,r2,r0)
+f_pd (p0,(p1,(p2,exact))) 
+  =  (valid p0 && valid p1 && valid p2 && valid exact, 
+         (p1, p2, valid exact))
+--------------------------
+
+[[ psource b ]] = 
+Adhoc(b)
+
+[[ pcompute e ]] = 
+Compute(e)
+
+[[ { s | x <- e } ]] = 
+{ [[ s ]] | x <- e }
+
+[[ (e :: s) ]] = 
+(e : [[ s ]])
+
+[[ s <| e |> ]] = 
+x:s where e[x.permissions / permissions, x.owner / owner,...]
+(* with x fresh *)
+
+[[ s @ e ]] = 
+< x:^e, (x : [[s]]) >
+
+[[ s option ]] = 
+s | Compute(())

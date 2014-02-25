@@ -1,0 +1,6 @@
+To make the test program, simply type
+
+make 
+
+in this dir. It will build hhl library in the hhld dir
+and then make the testhmm program.

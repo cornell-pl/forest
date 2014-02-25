@@ -1,0 +1,82 @@
+%\documentclass[fleqn]{article}
+\documentclass[tfpsymp,ams,pagenumbers]{tfp07symp}
+\setcounter{paper}{13} 
+\usepackage{xspace,pads,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof}
+
+\usepackage{code} 
+\usepackage{epsfig}
+% \usepackage{natbib}
+
+% to do:
+% 1. related work, including Eelco Visser's work and John Hughes
+% pretty printers. First, mention that printing and pretty printing
+% are different problems. Then, differentiate semantics and implementation.
+% 2. add abstract
+% 3. mention round tripping in future work.
+% 4. Include full figures.
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{A Dual Semantics for the Data Description Calculus\\(Extended Abstract)}
+\author{Kathleen Fisher$^1$ \qquad Yitzhak Mandelbaum$^{1,2}$ \qquad David Walker$^2$}
+\institute{AT\&T Research \and Princeton University}
+
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+  In previous work, we presented \ddc{}, a semantic framework for
+  understanding {\em Data Description Languages}, a class of
+  domain-specific languages for declaratively describing data formats
+  for the purpose of automatically constructing format-specific
+  data-processing tools.  However, our initial work on \ddc{} told
+  only a fraction of the semantic story concerning data description
+  languages.  Many data description languages not only provide
+  parsers, but also other tools.  Amongst the most common auxiliary
+  tools are printers, as reliable communication between programs
+  depends upon both input (parsing) and output (printing).  In this
+  work, we have defined the semantics of printers for \ddc{}, thereby
+  specifying more completely the relationship between raw data and
+  in-memory data, for any given format described in \ddc{}.  We also
+  prove a collection of theorems for the new semantics that serve as
+  duals to our theorems concerning parsing.  This new printing
+  semantics has many of the same practical benefits as our older
+  parsing semantics: We can use it as a check against the correctness
+  of our printer implementations and as a guide for the implementation
+  of future data description languages.
+\end{abstract}
+
+\input{intro}
+
+\input{ddcpoly}
+
+\input{related_work}
+
+\input{conc}
+
+\paragraph*{Acknowledgments:} This material is based upon work supported by the National Science
+   Foundation under Grant Nos. 0615062 and 0612147.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of the NSF.
+
+% \bibliographystyle{abbrv}
+% \bibliographystyle{plainnat}
+\bibliographystyle{alpha}
+
+  \bibliography{pads} 
+%\bibliography{../common/pads-long,../common/pads}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+

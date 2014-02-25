@@ -1,0 +1,79 @@
+PADS: Processing Arbitrary Data Streams
+---------------------------------------
+Joint work with Kathleen Fisher
+
+Currently, each new data analysis project builds its own
+infrastructure.  The grand vision of the PADS project is that we need
+shared tools and infrastructure to simplify data collection (e.g.,
+make it easy to "tap" a new data stream), reliable data transport
+(e.g., construct a proactive reliable stream framework), and
+distributed data processing (e.g., push queries to data sources,
+distribute query processing to free machines, an so on).  Pieces of
+this grand vision exist, such as Howard Katseff's stream monitor and
+the way the GIGASCOPE project pushes filters to NIC cards, but most of
+the vision is still unrealized.
+
+We are attacking this grand vision from the ground up, starting with
+one of the core problems, the need to handle arbitrary data.  The
+shared infrastructure should work not just with databases and XML
+data, but with *arbitrary* data streams.  Many data sources, typified
+by those in the InfoLab, are in legacy formats over which data
+consumers have no control. Currently researchers deal with such data
+in an *ad hoc* fashion, using Perl/shell scripts or hand-coded C
+programs that are hard to maintain, extend, and share.
+
+The PADS project aims to make it easy to manipulate such data, either
+programmatically or through high-level tools.  Central to PADS is a
+declarative data-description language, PADSL, expressive enough to
+describe general data, including ASCII, binary, and mixed data
+formats.  A PADSL compiler (PADSC) then generates a tunable C library
+with functions for parsing, manipulating, and summarizing the data.
+Examples of data currently handled are web log, Netflow, BGP, and
+Dibbler data.  In preliminary testing without a number of planned
+optimizations, PADS programs are roughly twice as fast as comparable
+Perl programs. (Our plan is to be *much* faster than Perl.)
+
+Longer term, we will use the generated libraries to construct
+declarative interfaces to arbitrary data sources. In addition, we plan
+to adapt tools designed for XML, such as XQuery, to work over legacy
+data by making the legacy data ``look'' like XML.  Together with the
+ability to generate C interfaces, this approach allows application
+developers to mix and match data representations as needed to handle
+legacy system requirements while leveraging modern tools.  Ultimately,
+we will grow the tools into the "grand vision" distributed systems
+framework described above.
+
+The project makes good use of both of our skill sets: K. Fisher
+contributing language expertise and an understanding of data stream
+processing requirements from her Hancock work, R. Gruber contributing
+distributed systems building expertise as well as experience in new
+language design and the construction of efficient underlying systems
+support from his work on the Thor OODB project at MIT.
+
+PADS provides a common meeting ground for integrating the tools
+and knowledge of many other researchers.  Some specific examples:
+
+    * We are working with Andrew Hume to generate programs that
+    characterize data files that have COBOL copybooks.  Hume is
+    writing a copybook to PADSL translator.
+  
+    * We are working with Glenn Fowler and David Korn to support
+    command-line (dss) and scripting (ksh) interfaces to PADSL data. 
+
+    * We are exploring with Mary Fernandez the use of XQuery to query
+    PADSL data *without* materializing that data as XML.
+
+    *  We are meeting with Ted Johnson (HB84) to explore incorporating his
+    data summary and correlation work into our summarizers.
+
+    * We plan to work with David Poole to develop scripting tools so
+    that data analysts can express queries and desired plots
+    declaratively and get parsing, filtering, and aggregated input
+    into S+ automatically, without any coding.
+
+Finally, by providing a means to describe all of Research's incoming
+data streams in a common language, we open the possibility of
+correlating and integrating the data from these streams.
+
+K. Fisher gave a cookie talk on 11/19 to get early feedback on the
+design of PADSL and the generated library.

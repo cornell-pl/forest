@@ -1,0 +1,7933 @@
+Iteration 1:
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other]([)[Group Body][Other](])
+StructScore: 0.
+	1:	441	1.0
+
+
+Cluster 1:
+Token: [Pint]
+StructScore: 121.
+	1:	398	0.902494331066
+	2:	4	0.00907029478458
+
+Token: [Date]
+StructScore: 39.
+	1:	402	0.91156462585
+
+Token: [Time]
+StructScore: 39.
+	1:	402	0.91156462585
+
+
+Cluster 2:
+Token: [Path]
+StructScore: 149.
+	1:	292	0.662131519274
+
+
+Cluster 3:
+Token: [String]
+StructScore: 237.
+	3:	145	0.328798185941
+	5:	2	0.00453514739229
+	6:	280	0.634920634921
+	7:	2	0.00453514739229
+	9:	10	0.0226757369615
+	10:	2	0.00453514739229
+
+Token: [Other](:)
+StructScore: 151.
+	1:	145	0.328798185941
+	2:	294	0.666666666667
+	3:	2	0.00453514739229
+
+
+Cluster 4:
+Token: [Other](-)
+StructScore: 400.
+	1:	41	0.092970521542
+
+
+Cluster 5:
+Token: [Other](!)
+StructScore: 439.
+	1:	2	0.00453514739229
+
+Token: [Other](()[Group Body][Other]())
+StructScore: 439.
+	2:	2	0.00453514739229
+
+Token: [Other](.)
+StructScore: 431.
+	2:	10	0.0226757369615
+
+
+Cluster 6:
+Token: [White]
+StructScore: 474.
+	3:	13	0.0294784580499
+	5:	132	0.299319727891
+	7:	24	0.0544217687075
+	8:	2	0.00453514739229
+	9:	256	0.580498866213
+	10:	12	0.0272108843537
+	13:	2	0.00453514739229
+
+------------------------------------------
+
+Iteration 2:
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [String]
+StructScore: 0.
+	1:	441	1.0
+
+
+Cluster 1:
+Token: [White]
+StructScore: 39.
+	1:	39	0.0884353741497
+	3:	402	0.91156462585
+
+
+Cluster 2:
+Token: [Pint]
+StructScore: 39.
+	1:	402	0.91156462585
+
+Token: [Date]
+StructScore: 39.
+	1:	402	0.91156462585
+
+Token: [Time]
+StructScore: 39.
+	1:	402	0.91156462585
+
+
+Cluster 3:
+Token: [Other](-)
+StructScore: 402.
+	1:	39	0.0884353741497
+
+Junk Tolerance Threshold: 45
+Cluster Coverage: 441
+Num Tokens: 1
+Struct
+Coverage:441
+Token count:1
+[String]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Time]
+tokenOrder:
+[Time] 
+Rep token: [Date]
+tokenOrder:
+[Date] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: avg
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: avg
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	0.0	0.0
+	3:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: avg
+	0:	19.5	0.0442176870748
+	1:	402.0	0.91156462585
+	1:	19.5	0.0442176870748
+Relative Entropy: 0.0612987302536
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: avg
+	0:	220.5	0.5
+	1:	220.5	0.5
+Relative Entropy: 0.3942443546
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: avg
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	0.0	0.0
+	3:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: avg
+	0:	19.5	0.0442176870748
+	1:	402.0	0.91156462585
+	1:	19.5	0.0442176870748
+Relative Entropy: 0.0612987302536
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: avg
+	0:	220.5	0.5
+	1:	220.5	0.5
+Relative Entropy: 0.3942443546
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	0.0	0.0
+	3:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: avg
+	0:	19.5	0.0442176870748
+	1:	402.0	0.91156462585
+	1:	19.5	0.0442176870748
+Relative Entropy: 0.0612987302536
+Normalized histogram: h1
+	0:	39.0	0.0884353741497
+	1:	402.0	0.91156462585
+Normalized histogram: h2
+	0:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: avg
+	0:	220.5	0.5
+	1:	220.5	0.5
+Relative Entropy: 0.3942443546
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: h2
+	0:	402.0	0.91156462585
+	1:	39.0	0.0884353741497
+Normalized histogram: avg
+	0:	201.0	0.455782312925
+	3:	220.5	0.5
+	1:	19.5	0.0442176870748
+Relative Entropy: 0.54369576758
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Time], [Date]):	 0.0
+
+Cluster Distances
+([Time], [Date]):	 0.0
+([Time], [Pint]):	 0.0
+([Time], [White]):	 0.0612987302536
+([Time], [Other](-)):	 0.3942443546
+([Date], [Pint]):	 0.0
+([Date], [White]):	 0.0612987302536
+([Date], [Other](-)):	 0.3942443546
+([Pint], [White]):	 0.0612987302536
+([Pint], [Other](-)):	 0.3942443546
+([White], [Other](-)):	 0.54369576758
+End Cluster Distances
+Merging clusters: [Time] [Date]
+old
+Rep token: [Time]
+tokenOrder:
+[Time] 
+Rep token: [Date]
+tokenOrder:
+[Date] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+
+new
+Rep token: [Time]
+tokenOrder:
+[Time] [Date] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+
+Starting to update cluster distances
+Cluster Distances
+([Time], [Pint]):	 0.0
+([Time], [White]):	 0.0612987302536
+([Time], [Other](-)):	 0.3942443546
+([Pint], [White]):	 0.0612987302536
+([Pint], [Other](-)):	 0.3942443546
+([White], [Other](-)):	 0.54369576758
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Time], [Pint]):	 0.0
+
+Cluster Distances
+([Time], [Pint]):	 0.0
+([Time], [White]):	 0.0612987302536
+([Time], [Other](-)):	 0.3942443546
+([Pint], [White]):	 0.0612987302536
+([Pint], [Other](-)):	 0.3942443546
+([White], [Other](-)):	 0.54369576758
+End Cluster Distances
+Merging clusters: [Time] [Pint]
+old
+Rep token: [Time]
+tokenOrder:
+[Time] [Date] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+
+new
+Rep token: [Time]
+tokenOrder:
+[Time] [Date] [Pint] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+
+Starting to update cluster distances
+Cluster Distances
+([Time], [White]):	 0.0612987302536
+([Time], [Other](-)):	 0.3942443546
+([White], [Other](-)):	 0.54369576758
+End Cluster Distances
+Smallest cluster distance is: 0.0612987302536
+Selected tokens:([Time], [White]):	 0.0612987302536
+
+Cluster 0:
+Token: [Other](-)
+Total number of token occurrences: 39.
+Number of records with at least one token occurrence: 39.
+StructScore: 402.
+Minimum number of *occurrences* of token: 1.
+	1:	39	0.0884353741497
+
+
+Cluster 1:
+Token: [White]
+Total number of token occurrences: 1245.
+Number of records with at least one token occurrence: 441.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	39	0.0884353741497
+	3:	402	0.91156462585
+
+
+Cluster 2:
+Token: [Time]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	402	0.91156462585
+
+Token: [Date]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	402	0.91156462585
+
+Token: [Pint]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	402	0.91156462585
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [White]
+Total number of token occurrences: 1245.
+Number of records with at least one token occurrence: 441.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	39	0.0884353741497
+	3:	402	0.91156462585
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	402	0.91156462585
+
+Token: [Date]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	402	0.91156462585
+
+Token: [Time]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 39.
+Minimum number of *occurrences* of token: 1.
+	1:	402	0.91156462585
+
+
+Cluster 2:
+Token: [Other](-)
+Total number of token occurrences: 39.
+Number of records with at least one token occurrence: 39.
+StructScore: 402.
+Minimum number of *occurrences* of token: 1.
+	1:	39	0.0884353741497
+
+
+Junk Tolerance Threshold: 45
+Cluster Coverage: 402
+Num Tokens: 3
+Struct
+Coverage:402
+Token count:3
+[White]	Occurrences:3
+Building histograms...
+Initial clusters: 
+Rep token: [Date]
+tokenOrder:
+[Date] 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Date]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	402	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Date]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	402	1.0
+
+
+Junk Tolerance Threshold: 41
+Cluster Coverage: 402
+Num Tokens: 1
+Struct
+Coverage:402
+Token count:1
+[Date]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Time]
+tokenOrder:
+[Time] 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Time]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	402	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Time]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	402	1.0
+
+
+Junk Tolerance Threshold: 41
+Cluster Coverage: 402
+Num Tokens: 1
+Struct
+Coverage:402
+Token count:1
+[Time]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Pint]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	402	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Pint]
+Total number of token occurrences: 402.
+Number of records with at least one token occurrence: 402.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	402	1.0
+
+
+Junk Tolerance Threshold: 41
+Cluster Coverage: 402
+Num Tokens: 1
+Struct
+Coverage:402
+Token count:1
+[Pint]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	39.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	39.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	39.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([White], [Other](-)):	 0.0
+
+Cluster Distances
+([White], [Other](-)):	 0.0
+End Cluster Distances
+Merging clusters: [White] [Other](-)
+old
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+
+new
+Rep token: [White]
+tokenOrder:
+[White] [Other](-) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [White]
+Total number of token occurrences: 39.
+Number of records with at least one token occurrence: 39.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	39	1.0
+
+Token: [Other](-)
+Total number of token occurrences: 39.
+Number of records with at least one token occurrence: 39.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	39	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](-)
+Total number of token occurrences: 39.
+Number of records with at least one token occurrence: 39.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	39	1.0
+
+Token: [White]
+Total number of token occurrences: 39.
+Number of records with at least one token occurrence: 39.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	39	1.0
+
+
+Junk Tolerance Threshold: 4
+Cluster Coverage: 39
+Num Tokens: 2
+Struct
+Coverage:39
+Token count:2
+[Other](-)	Occurrences:1
+[White]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [Other]([)
+tokenOrder:
+[Other]([) 
+Rep token: [Other](])
+tokenOrder:
+[Other](]) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	441.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	441.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	441.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	441.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	441.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	441.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	441.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	441.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	441.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other]([)):	 0.0
+
+Cluster Distances
+([Pint], [Other]([)):	 0.0
+([Pint], [Other](])):	 0.0
+([Other]([), [Other](])):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other]([)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [Other]([)
+tokenOrder:
+[Other]([) 
+Rep token: [Other](])
+tokenOrder:
+[Other](]) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other]([) 
+Rep token: [Other](])
+tokenOrder:
+[Other](]) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [Other](])):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](])):	 0.0
+
+Cluster Distances
+([Pint], [Other](])):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](])
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other]([) 
+Rep token: [Other](])
+tokenOrder:
+[Other](]) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other]([) [Other](]) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Pint]
+Total number of token occurrences: 441.
+Number of records with at least one token occurrence: 441.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	441	1.0
+
+Token: [Other]([)
+Total number of token occurrences: 441.
+Number of records with at least one token occurrence: 441.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	441	1.0
+
+Token: [Other](])
+Total number of token occurrences: 441.
+Number of records with at least one token occurrence: 441.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	441	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](])
+Total number of token occurrences: 441.
+Number of records with at least one token occurrence: 441.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	441	1.0
+
+Token: [Other]([)
+Total number of token occurrences: 441.
+Number of records with at least one token occurrence: 441.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	441	1.0
+
+Token: [Pint]
+Total number of token occurrences: 441.
+Number of records with at least one token occurrence: 441.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	441	1.0
+
+
+Junk Tolerance Threshold: 45
+Cluster Coverage: 441
+Num Tokens: 3
+Struct
+Coverage:441
+Token count:3
+[Other](])	Occurrences:1
+[Other]([)	Occurrences:1
+[Pint]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: avg
+	0:	293.0	0.664399092971
+	1:	148.0	0.335600907029
+Relative Entropy: 0.292426430421
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	74.5	0.168934240363
+	1:	286.0	0.648526077098
+	2:	72.5	0.164399092971
+	8:	5.0	0.0113378684807
+	9:	1.0	0.00226757369615
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.243765883599
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	294.0	0.666666666667
+	1:	147.0	0.333333333333
+Relative Entropy: 0.302210388709
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	74.5	0.168934240363
+	1:	286.0	0.648526077098
+	2:	72.5	0.164399092971
+	7:	7.0	0.015873015873
+	10:	1.0	0.00226757369615
+Relative Entropy: 0.243765883599
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	294.0	0.666666666667
+	1:	147.0	0.333333333333
+Relative Entropy: 0.302210388709
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	294.0	0.666666666667
+	1:	147.0	0.333333333333
+Relative Entropy: 0.302210388709
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: avg
+	0:	290.0	0.657596371882
+	1:	151.0	0.342403628118
+Relative Entropy: 0.268672450755
+Normalized histogram: h1
+	0:	149.0	0.337868480726
+	1:	292.0	0.662131519274
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	74.5	0.168934240363
+	1:	293.0	0.664399092971
+	1:	72.5	0.164399092971
+	3:	1.0	0.00226757369615
+Relative Entropy: 0.232624692088
+Normalized histogram: h1
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: h2
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	218.5	0.495464852608
+	1:	142.0	0.321995464853
+	2:	72.5	0.164399092971
+	8:	5.0	0.0113378684807
+	9:	1.0	0.00226757369615
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.669312240304
+Normalized histogram: h1
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	438.0	0.993197278912
+	1:	3.0	0.00680272108844
+Relative Entropy: 0.000387847143534
+Normalized histogram: h1
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: h2
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	218.5	0.495464852608
+	1:	142.0	0.321995464853
+	2:	72.5	0.164399092971
+	7:	7.0	0.015873015873
+	10:	1.0	0.00226757369615
+Relative Entropy: 0.669312240304
+Normalized histogram: h1
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	438.0	0.993197278912
+	1:	3.0	0.00680272108844
+Relative Entropy: 0.000387847143534
+Normalized histogram: h1
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	438.0	0.993197278912
+	1:	3.0	0.00680272108844
+Relative Entropy: 0.000387847143534
+Normalized histogram: h1
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: h2
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: avg
+	0:	434.0	0.984126984127
+	1:	7.0	0.015873015873
+Relative Entropy: 0.00152950541948
+Normalized histogram: h1
+	0:	437.0	0.990929705215
+	1:	4.0	0.00907029478458
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	218.5	0.495464852608
+	1:	149.0	0.337868480726
+	1:	72.5	0.164399092971
+	3:	1.0	0.00226757369615
+Relative Entropy: 0.669092498092
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	5:	141.0	0.319727891156
+	2:	72.5	0.164399092971
+	8:	5.0	0.0113378684807
+	9:	1.0	0.00226757369615
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.679665989227
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	12.0	0.0272108843537
+	9:	2.0	0.00453514739229
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.00352322298399
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	5:	141.0	0.319727891156
+	2:	72.5	0.164399092971
+	8:	5.0	0.0113378684807
+	9:	1.0	0.00226757369615
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.679665989227
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	5:	141.0	0.319727891156
+	2:	72.5	0.164399092971
+	8:	5.0	0.0113378684807
+	9:	1.0	0.00226757369615
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.679665989227
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: avg
+	0:	215.5	0.488662131519
+	5:	145.0	0.328798185941
+	2:	72.5	0.164399092971
+	8:	5.0	0.0113378684807
+	9:	1.0	0.00226757369615
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.643829121776
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	8:	10.0	0.0226757369615
+	9:	2.0	0.00453514739229
+	6:	2.0	0.00453514739229
+	4:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	0.0	0.0
+	5:	287.0	0.650793650794
+	2:	145.0	0.328798185941
+	8:	6.0	0.0136054421769
+	9:	1.0	0.00226757369615
+	6:	1.0	0.00226757369615
+	4:	1.0	0.00226757369615
+Relative Entropy: 0.00820936891454
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	2:	141.0	0.319727891156
+	2:	72.5	0.164399092971
+	7:	7.0	0.015873015873
+	10:	1.0	0.00226757369615
+Relative Entropy: 0.679665989227
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: avg
+	0:	435.0	0.986394557823
+	2:	6.0	0.0136054421769
+Relative Entropy: 0.00334219250327
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	2:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	2:	148.0	0.335600907029
+	1:	72.5	0.164399092971
+	3:	1.0	0.00226757369615
+Relative Entropy: 0.679555737792
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	6:	141.0	0.319727891156
+	2:	72.5	0.164399092971
+	7:	7.0	0.015873015873
+	10:	1.0	0.00226757369615
+Relative Entropy: 0.679665989227
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	6:	141.0	0.319727891156
+	2:	72.5	0.164399092971
+	7:	7.0	0.015873015873
+	10:	1.0	0.00226757369615
+Relative Entropy: 0.679665989227
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: avg
+	0:	215.5	0.488662131519
+	6:	145.0	0.328798185941
+	2:	72.5	0.164399092971
+	7:	7.0	0.015873015873
+	10:	1.0	0.00226757369615
+Relative Entropy: 0.643829121776
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	280.0	0.634920634921
+	2:	145.0	0.328798185941
+	7:	14.0	0.031746031746
+	10:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	0.0	0.0
+	6:	287.0	0.650793650794
+	2:	145.0	0.328798185941
+	7:	8.0	0.0181405895692
+	10:	1.0	0.00226757369615
+Relative Entropy: 0.00750462053165
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: avg
+	0:	435.0	0.986394557823
+	1:	6.0	0.0136054421769
+Relative Entropy: 0.00334219250327
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	1:	148.0	0.335600907029
+	1:	72.5	0.164399092971
+	3:	1.0	0.00226757369615
+Relative Entropy: 0.679555737792
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: avg
+	0:	435.0	0.986394557823
+	1:	6.0	0.0136054421769
+Relative Entropy: 0.00334219250327
+Normalized histogram: h1
+	0:	439.0	0.995464852608
+	1:	2.0	0.00453514739229
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	219.5	0.497732426304
+	1:	148.0	0.335600907029
+	1:	72.5	0.164399092971
+	3:	1.0	0.00226757369615
+Relative Entropy: 0.679555737792
+Normalized histogram: h1
+	0:	431.0	0.977324263039
+	2:	10.0	0.0226757369615
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	294.0	0.666666666667
+	1:	145.0	0.328798185941
+	3:	2.0	0.00453514739229
+Normalized histogram: avg
+	0:	215.5	0.488662131519
+	2:	152.0	0.344671201814
+	1:	72.5	0.164399092971
+	3:	1.0	0.00226757369615
+Relative Entropy: 0.643285367975
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Other](()[Group Body][Other]()), [Other](!)):	 0.0
+
+Cluster Distances
+([Path], [Pint]):	 0.292426430421
+([Path], [String]):	 0.243765883599
+([Path], [Other](()[Group Body][Other]())):	 0.302210388709
+([Path], [White]):	 0.243765883599
+([Path], [Other](!)):	 0.302210388709
+([Path], [Other](-)):	 0.302210388709
+([Path], [Other](.)):	 0.268672450755
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.669312240304
+([Pint], [Other](()[Group Body][Other]())):	 0.000387847143534
+([Pint], [White]):	 0.669312240304
+([Pint], [Other](!)):	 0.000387847143534
+([Pint], [Other](-)):	 0.000387847143534
+([Pint], [Other](.)):	 0.00152950541948
+([Pint], [Other](:)):	 0.669092498092
+([String], [Other](()[Group Body][Other]())):	 0.679665989227
+([String], [White]):	 0.00352322298399
+([String], [Other](!)):	 0.679665989227
+([String], [Other](-)):	 0.679665989227
+([String], [Other](.)):	 0.643829121776
+([String], [Other](:)):	 0.00820936891454
+([Other](()[Group Body][Other]()), [White]):	 0.679665989227
+([Other](()[Group Body][Other]()), [Other](!)):	 0.0
+([Other](()[Group Body][Other]()), [Other](-)):	 0.0
+([Other](()[Group Body][Other]()), [Other](.)):	 0.00334219250327
+([Other](()[Group Body][Other]()), [Other](:)):	 0.679555737792
+([White], [Other](!)):	 0.679665989227
+([White], [Other](-)):	 0.679665989227
+([White], [Other](.)):	 0.643829121776
+([White], [Other](:)):	 0.00750462053165
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](.)):	 0.00334219250327
+([Other](!), [Other](:)):	 0.679555737792
+([Other](-), [Other](.)):	 0.00334219250327
+([Other](-), [Other](:)):	 0.679555737792
+([Other](.), [Other](:)):	 0.643285367975
+End Cluster Distances
+Merging clusters: [Other](()[Group Body][Other]()) [Other](!)
+old
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) [Other](!) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Path], [Pint]):	 0.292426430421
+([Path], [String]):	 0.243765883599
+([Path], [Other](()[Group Body][Other]())):	 0.302210388709
+([Path], [White]):	 0.243765883599
+([Path], [Other](-)):	 0.302210388709
+([Path], [Other](.)):	 0.268672450755
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.669312240304
+([Pint], [Other](()[Group Body][Other]())):	 0.000387847143534
+([Pint], [White]):	 0.669312240304
+([Pint], [Other](-)):	 0.000387847143534
+([Pint], [Other](.)):	 0.00152950541948
+([Pint], [Other](:)):	 0.669092498092
+([String], [Other](()[Group Body][Other]())):	 0.679665989227
+([String], [White]):	 0.00352322298399
+([String], [Other](-)):	 0.679665989227
+([String], [Other](.)):	 0.643829121776
+([String], [Other](:)):	 0.00820936891454
+([Other](()[Group Body][Other]()), [White]):	 0.679665989227
+([Other](()[Group Body][Other]()), [Other](-)):	 0.0
+([Other](()[Group Body][Other]()), [Other](.)):	 0.00334219250327
+([Other](()[Group Body][Other]()), [Other](:)):	 0.679555737792
+([White], [Other](-)):	 0.679665989227
+([White], [Other](.)):	 0.643829121776
+([White], [Other](:)):	 0.00750462053165
+([Other](-), [Other](.)):	 0.00334219250327
+([Other](-), [Other](:)):	 0.679555737792
+([Other](.), [Other](:)):	 0.643285367975
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Other](()[Group Body][Other]()), [Other](-)):	 0.0
+
+Cluster Distances
+([Path], [Pint]):	 0.292426430421
+([Path], [String]):	 0.243765883599
+([Path], [Other](()[Group Body][Other]())):	 0.302210388709
+([Path], [White]):	 0.243765883599
+([Path], [Other](-)):	 0.302210388709
+([Path], [Other](.)):	 0.268672450755
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.669312240304
+([Pint], [Other](()[Group Body][Other]())):	 0.000387847143534
+([Pint], [White]):	 0.669312240304
+([Pint], [Other](-)):	 0.000387847143534
+([Pint], [Other](.)):	 0.00152950541948
+([Pint], [Other](:)):	 0.669092498092
+([String], [Other](()[Group Body][Other]())):	 0.679665989227
+([String], [White]):	 0.00352322298399
+([String], [Other](-)):	 0.679665989227
+([String], [Other](.)):	 0.643829121776
+([String], [Other](:)):	 0.00820936891454
+([Other](()[Group Body][Other]()), [White]):	 0.679665989227
+([Other](()[Group Body][Other]()), [Other](-)):	 0.0
+([Other](()[Group Body][Other]()), [Other](.)):	 0.00334219250327
+([Other](()[Group Body][Other]()), [Other](:)):	 0.679555737792
+([White], [Other](-)):	 0.679665989227
+([White], [Other](.)):	 0.643829121776
+([White], [Other](:)):	 0.00750462053165
+([Other](-), [Other](.)):	 0.00334219250327
+([Other](-), [Other](:)):	 0.679555737792
+([Other](.), [Other](:)):	 0.643285367975
+End Cluster Distances
+Merging clusters: [Other](()[Group Body][Other]()) [Other](-)
+old
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) [Other](!) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) [Other](!) [Other](-) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Path], [Pint]):	 0.292426430421
+([Path], [String]):	 0.243765883599
+([Path], [Other](()[Group Body][Other]())):	 0.302210388709
+([Path], [White]):	 0.243765883599
+([Path], [Other](.)):	 0.268672450755
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.669312240304
+([Pint], [Other](()[Group Body][Other]())):	 0.000387847143534
+([Pint], [White]):	 0.669312240304
+([Pint], [Other](.)):	 0.00152950541948
+([Pint], [Other](:)):	 0.669092498092
+([String], [Other](()[Group Body][Other]())):	 0.679665989227
+([String], [White]):	 0.00352322298399
+([String], [Other](.)):	 0.643829121776
+([String], [Other](:)):	 0.00820936891454
+([Other](()[Group Body][Other]()), [White]):	 0.679665989227
+([Other](()[Group Body][Other]()), [Other](.)):	 0.00334219250327
+([Other](()[Group Body][Other]()), [Other](:)):	 0.679555737792
+([White], [Other](.)):	 0.643829121776
+([White], [Other](:)):	 0.00750462053165
+([Other](.), [Other](:)):	 0.643285367975
+End Cluster Distances
+Smallest cluster distance is: 0.000387847143534
+Selected tokens:([Pint], [Other](()[Group Body][Other]())):	 0.000387847143534
+
+Cluster Distances
+([Path], [Pint]):	 0.292426430421
+([Path], [String]):	 0.243765883599
+([Path], [Other](()[Group Body][Other]())):	 0.302210388709
+([Path], [White]):	 0.243765883599
+([Path], [Other](.)):	 0.268672450755
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.669312240304
+([Pint], [Other](()[Group Body][Other]())):	 0.000387847143534
+([Pint], [White]):	 0.669312240304
+([Pint], [Other](.)):	 0.00152950541948
+([Pint], [Other](:)):	 0.669092498092
+([String], [Other](()[Group Body][Other]())):	 0.679665989227
+([String], [White]):	 0.00352322298399
+([String], [Other](.)):	 0.643829121776
+([String], [Other](:)):	 0.00820936891454
+([Other](()[Group Body][Other]()), [White]):	 0.679665989227
+([Other](()[Group Body][Other]()), [Other](.)):	 0.00334219250327
+([Other](()[Group Body][Other]()), [Other](:)):	 0.679555737792
+([White], [Other](.)):	 0.643829121776
+([White], [Other](:)):	 0.00750462053165
+([Other](.), [Other](:)):	 0.643285367975
+End Cluster Distances
+Merging clusters: [Pint] [Other](()[Group Body][Other]())
+old
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) [Other](!) [Other](-) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [Other](!) [Other](-) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Path], [Pint]):	 0.292426430421
+([Path], [String]):	 0.243765883599
+([Path], [White]):	 0.243765883599
+([Path], [Other](.)):	 0.268672450755
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.669312240304
+([Pint], [White]):	 0.669312240304
+([Pint], [Other](.)):	 0.00152950541948
+([Pint], [Other](:)):	 0.669092498092
+([String], [White]):	 0.00352322298399
+([String], [Other](.)):	 0.643829121776
+([String], [Other](:)):	 0.00820936891454
+([White], [Other](.)):	 0.643829121776
+([White], [Other](:)):	 0.00750462053165
+([Other](.), [Other](:)):	 0.643285367975
+End Cluster Distances
+Smallest cluster distance is: 0.00152950541948
+Selected tokens:([Pint], [Other](.)):	 0.00152950541948
+
+Cluster Distances
+([Path], [Pint]):	 0.292426430421
+([Path], [String]):	 0.243765883599
+([Path], [White]):	 0.243765883599
+([Path], [Other](.)):	 0.268672450755
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.669312240304
+([Pint], [White]):	 0.669312240304
+([Pint], [Other](.)):	 0.00152950541948
+([Pint], [Other](:)):	 0.669092498092
+([String], [White]):	 0.00352322298399
+([String], [Other](.)):	 0.643829121776
+([String], [Other](:)):	 0.00820936891454
+([White], [Other](.)):	 0.643829121776
+([White], [Other](:)):	 0.00750462053165
+([Other](.), [Other](:)):	 0.643285367975
+End Cluster Distances
+Merging clusters: [Pint] [Other](.)
+old
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [Other](!) [Other](-) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [Other](!) [Other](-) [Other](.) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Path], [Pint]):	 0.268672450755
+([Path], [String]):	 0.243765883599
+([Path], [White]):	 0.243765883599
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.643829121776
+([Pint], [White]):	 0.643829121776
+([Pint], [Other](:)):	 0.643285367975
+([String], [White]):	 0.00352322298399
+([String], [Other](:)):	 0.00820936891454
+([White], [Other](:)):	 0.00750462053165
+End Cluster Distances
+Smallest cluster distance is: 0.00352322298399
+Selected tokens:([String], [White]):	 0.00352322298399
+
+Cluster Distances
+([Path], [Pint]):	 0.268672450755
+([Path], [String]):	 0.243765883599
+([Path], [White]):	 0.243765883599
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.643829121776
+([Pint], [White]):	 0.643829121776
+([Pint], [Other](:)):	 0.643285367975
+([String], [White]):	 0.00352322298399
+([String], [Other](:)):	 0.00820936891454
+([White], [Other](:)):	 0.00750462053165
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [Other](!) [Other](-) [Other](.) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [Other](!) [Other](-) [Other](.) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Path], [Pint]):	 0.268672450755
+([Path], [String]):	 0.243765883599
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.643829121776
+([Pint], [Other](:)):	 0.643285367975
+([String], [Other](:)):	 0.00750462053165
+End Cluster Distances
+Smallest cluster distance is: 0.00750462053165
+Selected tokens:([String], [Other](:)):	 0.00750462053165
+
+Cluster Distances
+([Path], [Pint]):	 0.268672450755
+([Path], [String]):	 0.243765883599
+([Path], [Other](:)):	 0.232624692088
+([Pint], [String]):	 0.643829121776
+([Pint], [Other](:)):	 0.643285367975
+([String], [Other](:)):	 0.00750462053165
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [Other](!) [Other](-) [Other](.) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Path]
+tokenOrder:
+[Path] 
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [Other](!) [Other](-) [Other](.) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Path], [Pint]):	 0.268672450755
+([Path], [String]):	 0.232624692088
+([Pint], [String]):	 0.643285367975
+End Cluster Distances
+Smallest cluster distance is: 0.232624692088
+Selected tokens:([Path], [String]):	 0.232624692088
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 1808.
+Number of records with at least one token occurrence: 441.
+StructScore: 237.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.328798185941
+	4:	2	0.00453514739229
+	5:	280	0.634920634921
+	6:	2	0.00453514739229
+	8:	10	0.0226757369615
+	9:	2	0.00453514739229
+
+Token: [White]
+Total number of token occurrences: 2088.
+Number of records with at least one token occurrence: 441.
+StructScore: 199.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.328798185941
+	6:	280	0.634920634921
+	7:	14	0.031746031746
+	10:	2	0.00453514739229
+
+Token: [Other](:)
+Total number of token occurrences: 739.
+Number of records with at least one token occurrence: 441.
+StructScore: 151.
+Minimum number of *occurrences* of token: 1.
+	1:	145	0.328798185941
+	2:	294	0.666666666667
+	3:	2	0.00453514739229
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 1.
+	1:	4	0.00907029478458
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 439.
+Minimum number of *occurrences* of token: 2.
+	2:	2	0.00453514739229
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 439.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00453514739229
+
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 439.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00453514739229
+
+Token: [Other](.)
+Total number of token occurrences: 20.
+Number of records with at least one token occurrence: 10.
+StructScore: 431.
+Minimum number of *occurrences* of token: 2.
+	2:	10	0.0226757369615
+
+
+Cluster 2:
+Token: [Path]
+Total number of token occurrences: 292.
+Number of records with at least one token occurrence: 292.
+StructScore: 149.
+Minimum number of *occurrences* of token: 1.
+	1:	292	0.662131519274
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Path]
+Total number of token occurrences: 292.
+Number of records with at least one token occurrence: 292.
+StructScore: 149.
+Minimum number of *occurrences* of token: 1.
+	1:	292	0.662131519274
+
+
+Cluster 1:
+Token: [String]
+Total number of token occurrences: 1808.
+Number of records with at least one token occurrence: 441.
+StructScore: 237.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.328798185941
+	4:	2	0.00453514739229
+	5:	280	0.634920634921
+	6:	2	0.00453514739229
+	8:	10	0.0226757369615
+	9:	2	0.00453514739229
+
+Token: [White]
+Total number of token occurrences: 2088.
+Number of records with at least one token occurrence: 441.
+StructScore: 199.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.328798185941
+	6:	280	0.634920634921
+	7:	14	0.031746031746
+	10:	2	0.00453514739229
+
+Token: [Other](:)
+Total number of token occurrences: 739.
+Number of records with at least one token occurrence: 441.
+StructScore: 151.
+Minimum number of *occurrences* of token: 1.
+	1:	145	0.328798185941
+	2:	294	0.666666666667
+	3:	2	0.00453514739229
+
+
+Cluster 2:
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 439.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00453514739229
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 439.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00453514739229
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 439.
+Minimum number of *occurrences* of token: 2.
+	2:	2	0.00453514739229
+
+Token: [Pint]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 1.
+	1:	4	0.00907029478458
+
+Token: [Other](.)
+Total number of token occurrences: 20.
+Number of records with at least one token occurrence: 10.
+StructScore: 431.
+Minimum number of *occurrences* of token: 2.
+	2:	10	0.0226757369615
+
+
+Junk Tolerance Threshold: 45
+Cluster Coverage: 292
+Num Tokens: 1
+Struct
+Coverage:292
+Token count:1
+[Path]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	290.0	0.993150684932
+	3:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	0.0	0.0
+	6:	290.0	0.993150684932
+	4:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	0.0	0.0
+	5:	290.0	0.993150684932
+	3:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	5:	290.0	0.993150684932
+	3:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	0.0	0.0
+	5:	290.0	0.993150684932
+	3:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	290.0	0.993150684932
+	4:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	0.0	0.0
+	6:	290.0	0.993150684932
+	4:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 1456.
+Number of records with at least one token occurrence: 292.
+StructScore: 2.
+Minimum number of *occurrences* of token: 3.
+	3:	2	0.00684931506849
+	5:	290	0.993150684932
+
+Token: [White]
+Total number of token occurrences: 1748.
+Number of records with at least one token occurrence: 292.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.00684931506849
+	6:	290	0.993150684932
+
+Token: [Other](:)
+Total number of token occurrences: 582.
+Number of records with at least one token occurrence: 292.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+	2:	290	0.993150684932
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 582.
+Number of records with at least one token occurrence: 292.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+	2:	290	0.993150684932
+
+Token: [White]
+Total number of token occurrences: 1748.
+Number of records with at least one token occurrence: 292.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.00684931506849
+	6:	290	0.993150684932
+
+Token: [String]
+Total number of token occurrences: 1456.
+Number of records with at least one token occurrence: 292.
+StructScore: 2.
+Minimum number of *occurrences* of token: 3.
+	3:	2	0.00684931506849
+	5:	290	0.993150684932
+
+
+Junk Tolerance Threshold: 30
+Cluster Coverage: 290
+Num Tokens: 13
+Struct
+Coverage:290
+Token count:13
+[Other](:)	Occurrences:2
+[White]	Occurrences:6
+[String]	Occurrences:5
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	4:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	4:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	4:	2.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 3.
+	3:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 8.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 4.
+	4:	2	1.0
+
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 8.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 4.
+	4:	2	1.0
+
+Token: [String]
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 3.
+	3:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 2
+Num Tokens: 8
+Struct
+Coverage:2
+Token count:8
+[Other](:)	Occurrences:1
+[White]	Occurrences:4
+[String]	Occurrences:3
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	1:	6.0	0.0205479452055
+	1:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	280.0	0.958904109589
+	1:	10.0	0.0342465753425
+	3:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	1:	6.0	0.0205479452055
+	3:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	282.0	0.965753424658
+	2:	10.0	0.0342465753425
+Normalized histogram: avg
+	0:	286.0	0.979452054795
+	1:	6.0	0.0205479452055
+Relative Entropy: 0.00508044099361
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	12.0	0.041095890411
+	1:	280.0	0.958904109589
+Normalized histogram: avg
+	0:	151.0	0.517123287671
+	1:	141.0	0.482876712329
+Relative Entropy: 0.586374881688
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	280.0	0.958904109589
+	1:	10.0	0.0342465753425
+	3:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	3:	6.0	0.0205479452055
+	1:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	3:	6.0	0.0205479452055
+	1:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	282.0	0.965753424658
+	2:	10.0	0.0342465753425
+Normalized histogram: avg
+	0:	281.0	0.962328767123
+	3:	10.0	0.0342465753425
+	1:	1.0	0.00342465753425
+Relative Entropy: 0.00237988542379
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	3:	6.0	0.0205479452055
+	1:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	3:	10.0	0.0342465753425
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	12.0	0.041095890411
+	1:	280.0	0.958904109589
+Normalized histogram: avg
+	0:	146.0	0.5
+	3:	145.0	0.496575342466
+	1:	1.0	0.00342465753425
+Relative Entropy: 0.532957678121
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	1:	10.0	0.0342465753425
+	3:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	1:	6.0	0.0205479452055
+	3:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	1:	10.0	0.0342465753425
+	3:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	1:	6.0	0.0205479452055
+	3:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	1:	10.0	0.0342465753425
+	3:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	282.0	0.965753424658
+	2:	10.0	0.0342465753425
+Normalized histogram: avg
+	0:	281.0	0.962328767123
+	1:	10.0	0.0342465753425
+	3:	1.0	0.00342465753425
+Relative Entropy: 0.00237988542379
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	1:	10.0	0.0342465753425
+	3:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	285.0	0.97602739726
+	1:	6.0	0.0205479452055
+	3:	1.0	0.00342465753425
+Relative Entropy: 0.00750864695215
+Normalized histogram: h1
+	0:	280.0	0.958904109589
+	1:	10.0	0.0342465753425
+	3:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	12.0	0.041095890411
+	1:	280.0	0.958904109589
+Normalized histogram: avg
+	0:	146.0	0.5
+	1:	145.0	0.496575342466
+	3:	1.0	0.00342465753425
+Relative Entropy: 0.532957678121
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	282.0	0.965753424658
+	2:	10.0	0.0342465753425
+Normalized histogram: avg
+	0:	286.0	0.979452054795
+	1:	6.0	0.0205479452055
+Relative Entropy: 0.00508044099361
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	12.0	0.041095890411
+	1:	280.0	0.958904109589
+Normalized histogram: avg
+	0:	151.0	0.517123287671
+	1:	141.0	0.482876712329
+Relative Entropy: 0.586374881688
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	282.0	0.965753424658
+	2:	10.0	0.0342465753425
+Normalized histogram: avg
+	0:	286.0	0.979452054795
+	1:	6.0	0.0205479452055
+Relative Entropy: 0.00508044099361
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	12.0	0.041095890411
+	1:	280.0	0.958904109589
+Normalized histogram: avg
+	0:	151.0	0.517123287671
+	1:	141.0	0.482876712329
+Relative Entropy: 0.586374881688
+Normalized histogram: h1
+	0:	282.0	0.965753424658
+	2:	10.0	0.0342465753425
+Normalized histogram: h2
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: avg
+	0:	286.0	0.979452054795
+	2:	6.0	0.0205479452055
+Relative Entropy: 0.00508044099361
+Normalized histogram: h1
+	0:	282.0	0.965753424658
+	2:	10.0	0.0342465753425
+Normalized histogram: h2
+	0:	12.0	0.041095890411
+	1:	280.0	0.958904109589
+Normalized histogram: avg
+	0:	147.0	0.503424657534
+	2:	145.0	0.496575342466
+Relative Entropy: 0.532814465419
+Normalized histogram: h1
+	0:	290.0	0.993150684932
+	1:	2.0	0.00684931506849
+Normalized histogram: h2
+	0:	12.0	0.041095890411
+	1:	280.0	0.958904109589
+Normalized histogram: avg
+	0:	151.0	0.517123287671
+	1:	141.0	0.482876712329
+Relative Entropy: 0.586374881688
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](!)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [White]):	 0.00750864695215
+([Pint], [Other](!)):	 0.0
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Other](:)):	 0.0
+([Pint], [Empty]):	 0.586374881688
+([String], [White]):	 0.0
+([String], [Other](!)):	 0.00750864695215
+([String], [Other](-)):	 0.00750864695215
+([String], [Other](.)):	 0.00237988542379
+([String], [Other](:)):	 0.00750864695215
+([String], [Empty]):	 0.532957678121
+([White], [Other](!)):	 0.00750864695215
+([White], [Other](-)):	 0.00750864695215
+([White], [Other](.)):	 0.00237988542379
+([White], [Other](:)):	 0.00750864695215
+([White], [Empty]):	 0.532957678121
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](.)):	 0.00508044099361
+([Other](!), [Other](:)):	 0.0
+([Other](!), [Empty]):	 0.586374881688
+([Other](-), [Other](.)):	 0.00508044099361
+([Other](-), [Other](:)):	 0.0
+([Other](-), [Empty]):	 0.586374881688
+([Other](.), [Other](:)):	 0.00508044099361
+([Other](.), [Empty]):	 0.532814465419
+([Other](:), [Empty]):	 0.586374881688
+End Cluster Distances
+Merging clusters: [Pint] [Other](!)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [White]):	 0.00750864695215
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Other](:)):	 0.0
+([Pint], [Empty]):	 0.586374881688
+([String], [White]):	 0.0
+([String], [Other](-)):	 0.00750864695215
+([String], [Other](.)):	 0.00237988542379
+([String], [Other](:)):	 0.00750864695215
+([String], [Empty]):	 0.532957678121
+([White], [Other](-)):	 0.00750864695215
+([White], [Other](.)):	 0.00237988542379
+([White], [Other](:)):	 0.00750864695215
+([White], [Empty]):	 0.532957678121
+([Other](-), [Other](.)):	 0.00508044099361
+([Other](-), [Other](:)):	 0.0
+([Other](-), [Empty]):	 0.586374881688
+([Other](.), [Other](:)):	 0.00508044099361
+([Other](.), [Empty]):	 0.532814465419
+([Other](:), [Empty]):	 0.586374881688
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](-)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [White]):	 0.00750864695215
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Other](:)):	 0.0
+([Pint], [Empty]):	 0.586374881688
+([String], [White]):	 0.0
+([String], [Other](-)):	 0.00750864695215
+([String], [Other](.)):	 0.00237988542379
+([String], [Other](:)):	 0.00750864695215
+([String], [Empty]):	 0.532957678121
+([White], [Other](-)):	 0.00750864695215
+([White], [Other](.)):	 0.00237988542379
+([White], [Other](:)):	 0.00750864695215
+([White], [Empty]):	 0.532957678121
+([Other](-), [Other](.)):	 0.00508044099361
+([Other](-), [Other](:)):	 0.0
+([Other](-), [Empty]):	 0.586374881688
+([Other](.), [Other](:)):	 0.00508044099361
+([Other](.), [Empty]):	 0.532814465419
+([Other](:), [Empty]):	 0.586374881688
+End Cluster Distances
+Merging clusters: [Pint] [Other](-)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [White]):	 0.00750864695215
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Other](:)):	 0.0
+([Pint], [Empty]):	 0.586374881688
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.00237988542379
+([String], [Other](:)):	 0.00750864695215
+([String], [Empty]):	 0.532957678121
+([White], [Other](.)):	 0.00237988542379
+([White], [Other](:)):	 0.00750864695215
+([White], [Empty]):	 0.532957678121
+([Other](.), [Other](:)):	 0.00508044099361
+([Other](.), [Empty]):	 0.532814465419
+([Other](:), [Empty]):	 0.586374881688
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [White]):	 0.00750864695215
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Other](:)):	 0.0
+([Pint], [Empty]):	 0.586374881688
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.00237988542379
+([String], [Other](:)):	 0.00750864695215
+([String], [Empty]):	 0.532957678121
+([White], [Other](.)):	 0.00237988542379
+([White], [Other](:)):	 0.00750864695215
+([White], [Empty]):	 0.532957678121
+([Other](.), [Other](:)):	 0.00508044099361
+([Other](.), [Empty]):	 0.532814465419
+([Other](:), [Empty]):	 0.586374881688
+End Cluster Distances
+Merging clusters: [Pint] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [White]):	 0.00750864695215
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Empty]):	 0.586374881688
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.00237988542379
+([String], [Empty]):	 0.532957678121
+([White], [Other](.)):	 0.00237988542379
+([White], [Empty]):	 0.532957678121
+([Other](.), [Empty]):	 0.532814465419
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [White]):	 0.00750864695215
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Empty]):	 0.586374881688
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.00237988542379
+([String], [Empty]):	 0.532957678121
+([White], [Other](.)):	 0.00237988542379
+([White], [Empty]):	 0.532957678121
+([Other](.), [Empty]):	 0.532814465419
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Empty]):	 0.586374881688
+([String], [Other](.)):	 0.00237988542379
+([String], [Empty]):	 0.532957678121
+([Other](.), [Empty]):	 0.532814465419
+End Cluster Distances
+Smallest cluster distance is: 0.00237988542379
+Selected tokens:([String], [Other](.)):	 0.00237988542379
+
+Cluster Distances
+([Pint], [String]):	 0.00750864695215
+([Pint], [Other](.)):	 0.00508044099361
+([Pint], [Empty]):	 0.586374881688
+([String], [Other](.)):	 0.00237988542379
+([String], [Empty]):	 0.532957678121
+([Other](.), [Empty]):	 0.532814465419
+End Cluster Distances
+Merging clusters: [String] [Other](.)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](.) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00508044099361
+([Pint], [Empty]):	 0.586374881688
+([String], [Empty]):	 0.532814465419
+End Cluster Distances
+Smallest cluster distance is: 0.00508044099361
+Selected tokens:([Pint], [String]):	 0.00508044099361
+
+Cluster Distances
+([Pint], [String]):	 0.00508044099361
+([Pint], [Empty]):	 0.586374881688
+([String], [Empty]):	 0.532814465419
+End Cluster Distances
+Merging clusters: [Pint] [String]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](.) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) [String] [White] [Other](.) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [Empty]):	 0.532814465419
+End Cluster Distances
+Smallest cluster distance is: 0.532814465419
+Selected tokens:([Pint], [Empty]):	 0.532814465419
+
+Cluster 0:
+Token: [Empty]
+Total number of token occurrences: 280.
+Number of records with at least one token occurrence: 280.
+StructScore: 12.
+Minimum number of *occurrences* of token: 1.
+	1:	280	0.958904109589
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [String]
+Total number of token occurrences: 32.
+Number of records with at least one token occurrence: 12.
+StructScore: 842.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+	3:	10	0.0342465753425
+
+Token: [White]
+Total number of token occurrences: 16.
+Number of records with at least one token occurrence: 12.
+StructScore: 842.
+Minimum number of *occurrences* of token: 1.
+	1:	10	0.0342465753425
+	3:	2	0.00684931506849
+
+Token: [Other](.)
+Total number of token occurrences: 20.
+Number of records with at least one token occurrence: 10.
+StructScore: 282.
+Minimum number of *occurrences* of token: 2.
+	2:	10	0.0342465753425
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Empty]
+Total number of token occurrences: 280.
+Number of records with at least one token occurrence: 280.
+StructScore: 12.
+Minimum number of *occurrences* of token: 1.
+	1:	280	0.958904109589
+
+
+Cluster 1:
+Token: [White]
+Total number of token occurrences: 16.
+Number of records with at least one token occurrence: 12.
+StructScore: 842.
+Minimum number of *occurrences* of token: 1.
+	1:	10	0.0342465753425
+	3:	2	0.00684931506849
+
+Token: [String]
+Total number of token occurrences: 32.
+Number of records with at least one token occurrence: 12.
+StructScore: 842.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+	3:	10	0.0342465753425
+
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 290.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.00684931506849
+
+Token: [Other](.)
+Total number of token occurrences: 20.
+Number of records with at least one token occurrence: 10.
+StructScore: 282.
+Minimum number of *occurrences* of token: 2.
+	2:	10	0.0342465753425
+
+
+Junk Tolerance Threshold: 30
+Cluster Coverage: 280
+Num Tokens: 1
+Struct
+Coverage:280
+Token count:1
+[Empty]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	0.0	0.0
+	3:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	1:	6.0	0.5
+	1:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	10.0	0.833333333333
+	3:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	1:	6.0	0.5
+	3:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	2.0	0.166666666667
+	2:	10.0	0.833333333333
+Normalized histogram: avg
+	0:	6.0	0.5
+	1:	6.0	0.5
+Relative Entropy: 0.242585971694
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	10.0	0.833333333333
+	3:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	3:	6.0	0.5
+	1:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	3:	6.0	0.5
+	1:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	2.0	0.166666666667
+	2:	10.0	0.833333333333
+Normalized histogram: avg
+	0:	1.0	0.0833333333333
+	3:	10.0	0.833333333333
+	1:	1.0	0.0833333333333
+Relative Entropy: 0.115524530093
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	3:	6.0	0.5
+	1:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	10.0	0.833333333333
+	3:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	1:	6.0	0.5
+	3:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	10.0	0.833333333333
+	3:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	1:	6.0	0.5
+	3:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	10.0	0.833333333333
+	3:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	2.0	0.166666666667
+	2:	10.0	0.833333333333
+Normalized histogram: avg
+	0:	1.0	0.0833333333333
+	1:	10.0	0.833333333333
+	3:	1.0	0.0833333333333
+Relative Entropy: 0.115524530093
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	10.0	0.833333333333
+	3:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	5.0	0.416666666667
+	1:	6.0	0.5
+	3:	1.0	0.0833333333333
+Relative Entropy: 0.467866576127
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	2.0	0.166666666667
+	2:	10.0	0.833333333333
+Normalized histogram: avg
+	0:	6.0	0.5
+	1:	6.0	0.5
+Relative Entropy: 0.242585971694
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	2.0	0.166666666667
+	2:	10.0	0.833333333333
+Normalized histogram: avg
+	0:	6.0	0.5
+	1:	6.0	0.5
+Relative Entropy: 0.242585971694
+Normalized histogram: h1
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	2.0	0.166666666667
+	2:	10.0	0.833333333333
+Normalized histogram: h2
+	0:	10.0	0.833333333333
+	1:	2.0	0.166666666667
+Normalized histogram: avg
+	0:	6.0	0.5
+	2:	6.0	0.5
+Relative Entropy: 0.242585971694
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](!)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [White]):	 0.467866576127
+([Pint], [Other](!)):	 0.0
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](.)):	 0.242585971694
+([Pint], [Other](:)):	 0.0
+([String], [White]):	 0.0
+([String], [Other](!)):	 0.467866576127
+([String], [Other](-)):	 0.467866576127
+([String], [Other](.)):	 0.115524530093
+([String], [Other](:)):	 0.467866576127
+([White], [Other](!)):	 0.467866576127
+([White], [Other](-)):	 0.467866576127
+([White], [Other](.)):	 0.115524530093
+([White], [Other](:)):	 0.467866576127
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](.)):	 0.242585971694
+([Other](!), [Other](:)):	 0.0
+([Other](-), [Other](.)):	 0.242585971694
+([Other](-), [Other](:)):	 0.0
+([Other](.), [Other](:)):	 0.242585971694
+End Cluster Distances
+Merging clusters: [Pint] [Other](!)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [White]):	 0.467866576127
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](.)):	 0.242585971694
+([Pint], [Other](:)):	 0.0
+([String], [White]):	 0.0
+([String], [Other](-)):	 0.467866576127
+([String], [Other](.)):	 0.115524530093
+([String], [Other](:)):	 0.467866576127
+([White], [Other](-)):	 0.467866576127
+([White], [Other](.)):	 0.115524530093
+([White], [Other](:)):	 0.467866576127
+([Other](-), [Other](.)):	 0.242585971694
+([Other](-), [Other](:)):	 0.0
+([Other](.), [Other](:)):	 0.242585971694
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](-)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [White]):	 0.467866576127
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](.)):	 0.242585971694
+([Pint], [Other](:)):	 0.0
+([String], [White]):	 0.0
+([String], [Other](-)):	 0.467866576127
+([String], [Other](.)):	 0.115524530093
+([String], [Other](:)):	 0.467866576127
+([White], [Other](-)):	 0.467866576127
+([White], [Other](.)):	 0.115524530093
+([White], [Other](:)):	 0.467866576127
+([Other](-), [Other](.)):	 0.242585971694
+([Other](-), [Other](:)):	 0.0
+([Other](.), [Other](:)):	 0.242585971694
+End Cluster Distances
+Merging clusters: [Pint] [Other](-)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [White]):	 0.467866576127
+([Pint], [Other](.)):	 0.242585971694
+([Pint], [Other](:)):	 0.0
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.115524530093
+([String], [Other](:)):	 0.467866576127
+([White], [Other](.)):	 0.115524530093
+([White], [Other](:)):	 0.467866576127
+([Other](.), [Other](:)):	 0.242585971694
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [White]):	 0.467866576127
+([Pint], [Other](.)):	 0.242585971694
+([Pint], [Other](:)):	 0.0
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.115524530093
+([String], [Other](:)):	 0.467866576127
+([White], [Other](.)):	 0.115524530093
+([White], [Other](:)):	 0.467866576127
+([Other](.), [Other](:)):	 0.242585971694
+End Cluster Distances
+Merging clusters: [Pint] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [White]):	 0.467866576127
+([Pint], [Other](.)):	 0.242585971694
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.115524530093
+([White], [Other](.)):	 0.115524530093
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [White]):	 0.467866576127
+([Pint], [Other](.)):	 0.242585971694
+([String], [White]):	 0.0
+([String], [Other](.)):	 0.115524530093
+([White], [Other](.)):	 0.115524530093
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](!) [Other](-) [Other](:) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](.)
+tokenOrder:
+[Other](.) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.467866576127
+([Pint], [Other](.)):	 0.242585971694
+([String], [Other](.)):	 0.115524530093
+End Cluster Distances
+Smallest cluster distance is: 0.115524530093
+Selected tokens:([String], [Other](.)):	 0.115524530093
+
+Cluster 0:
+Token: [Other](.)
+Total number of token occurrences: 20.
+Number of records with at least one token occurrence: 10.
+StructScore: 2.
+Minimum number of *occurrences* of token: 2.
+	2:	10	0.833333333333
+
+
+Cluster 1:
+Token: [String]
+Total number of token occurrences: 32.
+Number of records with at least one token occurrence: 12.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+	3:	10	0.833333333333
+
+Token: [White]
+Total number of token occurrences: 16.
+Number of records with at least one token occurrence: 12.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	10	0.833333333333
+	3:	2	0.166666666667
+
+
+Cluster 2:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](.)
+Total number of token occurrences: 20.
+Number of records with at least one token occurrence: 10.
+StructScore: 2.
+Minimum number of *occurrences* of token: 2.
+	2:	10	0.833333333333
+
+
+Cluster 1:
+Token: [White]
+Total number of token occurrences: 16.
+Number of records with at least one token occurrence: 12.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	10	0.833333333333
+	3:	2	0.166666666667
+
+Token: [String]
+Total number of token occurrences: 32.
+Number of records with at least one token occurrence: 12.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+	3:	10	0.833333333333
+
+
+Cluster 2:
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 10.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.166666666667
+
+
+Junk Tolerance Threshold: 2
+Cluster Coverage: 10
+Num Tokens: 2
+Struct
+Coverage:10
+Token count:2
+[Other](.)	Occurrences:2
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	10.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	10.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	10.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([String], [White]):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+Token: [White]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [White]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+Token: [String]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 10
+Num Tokens: 2
+Struct
+Coverage:10
+Token count:2
+[White]	Occurrences:1
+[String]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 10
+Num Tokens: 1
+Struct
+Coverage:10
+Token count:1
+[String]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 10.
+Number of records with at least one token occurrence: 10.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	10	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 10
+Num Tokens: 1
+Struct
+Coverage:10
+Token count:1
+[String]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [String]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.0
+([Pint], [White]):	 0.0
+([Pint], [Other](!)):	 0.0
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](:)):	 0.0
+([String], [White]):	 0.0
+([String], [Other](!)):	 0.0
+([String], [Other](-)):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](!)):	 0.0
+([White], [Other](-)):	 0.0
+([White], [Other](:)):	 0.0
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](:)):	 0.0
+([Other](-), [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [String]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [White]):	 0.0
+([Pint], [Other](!)):	 0.0
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](:)):	 0.0
+([White], [Other](!)):	 0.0
+([White], [Other](-)):	 0.0
+([White], [Other](:)):	 0.0
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](:)):	 0.0
+([Other](-), [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [White]):	 0.0
+
+Cluster Distances
+([Pint], [White]):	 0.0
+([Pint], [Other](!)):	 0.0
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](:)):	 0.0
+([White], [Other](!)):	 0.0
+([White], [Other](-)):	 0.0
+([White], [Other](:)):	 0.0
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](:)):	 0.0
+([Other](-), [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [Other](!)):	 0.0
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](:)):	 0.0
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](:)):	 0.0
+([Other](-), [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](!)):	 0.0
+
+Cluster Distances
+([Pint], [Other](!)):	 0.0
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](:)):	 0.0
+([Other](!), [Other](-)):	 0.0
+([Other](!), [Other](:)):	 0.0
+([Other](-), [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](!)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] 
+Rep token: [Other](!)
+tokenOrder:
+[Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] [Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](:)):	 0.0
+([Other](-), [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](-)):	 0.0
+
+Cluster Distances
+([Pint], [Other](-)):	 0.0
+([Pint], [Other](:)):	 0.0
+([Other](-), [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](-)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] [Other](!) 
+Rep token: [Other](-)
+tokenOrder:
+[Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] [Other](!) [Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] [Other](!) [Other](-) 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] [Other](!) [Other](-) [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [String]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 3.
+	3:	2	1.0
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other](-)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other](!)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 3.
+	3:	2	1.0
+
+Token: [String]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 2
+Num Tokens: 8
+Struct
+Coverage:2
+Token count:8
+[Other](:)	Occurrences:1
+[Other](-)	Occurrences:1
+[Other](!)	Occurrences:1
+[White]	Occurrences:3
+[String]	Occurrences:1
+[Pint]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	9:	2.0	0.0134228187919
+	6:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	73.5	0.493288590604
+	1:	73.5	0.493288590604
+	9:	1.0	0.00671140939597
+	6:	1.0	0.00671140939597
+Relative Entropy: 0.657640793834
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	147.0	0.986577181208
+	2:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	10:	2.0	0.0134228187919
+	7:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	73.5	0.493288590604
+	1:	73.5	0.493288590604
+	10:	1.0	0.00671140939597
+	7:	1.0	0.00671140939597
+Relative Entropy: 0.657640793834
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	145.0	0.973154362416
+	3:	2.0	0.0134228187919
+	2:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	73.5	0.493288590604
+	1:	73.5	0.493288590604
+	3:	1.0	0.00671140939597
+	2:	1.0	0.00671140939597
+Relative Entropy: 0.657640793834
+Normalized histogram: h1
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	9:	2.0	0.0134228187919
+	6:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	147.0	0.986577181208
+	2:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	73.5	0.493288590604
+	2:	73.5	0.493288590604
+	9:	1.0	0.00671140939597
+	6:	1.0	0.00671140939597
+Relative Entropy: 0.657640793834
+Normalized histogram: h1
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	9:	2.0	0.0134228187919
+	6:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	10:	2.0	0.0134228187919
+	7:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	9:	2.0	0.0134228187919
+	6:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	9:	2.0	0.0134228187919
+	6:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	145.0	0.973154362416
+	3:	2.0	0.0134228187919
+	2:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	9:	2.0	0.0134228187919
+	6:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	2:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	10:	2.0	0.0134228187919
+	7:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	73.5	0.493288590604
+	2:	73.5	0.493288590604
+	10:	1.0	0.00671140939597
+	7:	1.0	0.00671140939597
+Relative Entropy: 0.657640793834
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	2:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	145.0	0.973154362416
+	3:	2.0	0.0134228187919
+	2:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	73.5	0.493288590604
+	2:	73.5	0.493288590604
+	3:	1.0	0.00671140939597
+	2:	1.0	0.00671140939597
+Relative Entropy: 0.657640793834
+Normalized histogram: h1
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	10:	2.0	0.0134228187919
+	7:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	145.0	0.973154362416
+	3:	2.0	0.0134228187919
+	2:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	0.0	0.0
+	2:	145.0	0.973154362416
+	10:	2.0	0.0134228187919
+	7:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](()[Group Body][Other]())):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.657640793834
+([Pint], [Other](()[Group Body][Other]())):	 0.0
+([Pint], [White]):	 0.657640793834
+([Pint], [Other](:)):	 0.657640793834
+([String], [Other](()[Group Body][Other]())):	 0.657640793834
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([Other](()[Group Body][Other]()), [White]):	 0.657640793834
+([Other](()[Group Body][Other]()), [Other](:)):	 0.657640793834
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](()[Group Body][Other]())
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.657640793834
+([Pint], [White]):	 0.657640793834
+([Pint], [Other](:)):	 0.657640793834
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.657640793834
+([Pint], [White]):	 0.657640793834
+([Pint], [Other](:)):	 0.657640793834
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.657640793834
+([Pint], [Other](:)):	 0.657640793834
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.657640793834
+([Pint], [Other](:)):	 0.657640793834
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.657640793834
+End Cluster Distances
+Smallest cluster distance is: 0.657640793834
+Selected tokens:([Pint], [String]):	 0.657640793834
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 320.
+Number of records with at least one token occurrence: 149.
+StructScore: 8.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.973154362416
+	6:	2	0.0134228187919
+	9:	2	0.0134228187919
+
+Token: [White]
+Total number of token occurrences: 324.
+Number of records with at least one token occurrence: 149.
+StructScore: 8.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.973154362416
+	7:	2	0.0134228187919
+	10:	2	0.0134228187919
+
+Token: [Other](:)
+Total number of token occurrences: 155.
+Number of records with at least one token occurrence: 149.
+StructScore: 8.
+Minimum number of *occurrences* of token: 1.
+	1:	145	0.973154362416
+	2:	2	0.0134228187919
+	3:	2	0.0134228187919
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 2.
+	2:	2	0.0134228187919
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 155.
+Number of records with at least one token occurrence: 149.
+StructScore: 8.
+Minimum number of *occurrences* of token: 1.
+	1:	145	0.973154362416
+	2:	2	0.0134228187919
+	3:	2	0.0134228187919
+
+Token: [White]
+Total number of token occurrences: 324.
+Number of records with at least one token occurrence: 149.
+StructScore: 8.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.973154362416
+	7:	2	0.0134228187919
+	10:	2	0.0134228187919
+
+Token: [String]
+Total number of token occurrences: 320.
+Number of records with at least one token occurrence: 149.
+StructScore: 8.
+Minimum number of *occurrences* of token: 2.
+	2:	145	0.973154362416
+	6:	2	0.0134228187919
+	9:	2	0.0134228187919
+
+
+Cluster 1:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 2.
+	2:	2	0.0134228187919
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+
+Junk Tolerance Threshold: 15
+Cluster Coverage: 145
+Num Tokens: 5
+Struct
+Coverage:145
+Token count:5
+[Other](:)	Occurrences:1
+[White]	Occurrences:2
+[String]	Occurrences:2
+Building histograms...
+Initial clusters: 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	2.0	0.0134228187919
+	1:	147.0	0.986577181208
+Normalized histogram: avg
+	0:	74.5	0.5
+	1:	74.5	0.5
+Relative Entropy: 0.621951778088
+Smallest cluster distance is: 0.621951778088
+Smallest cluster distance is: 0.621951778088
+Selected tokens:([Other](()[Group Body][Other]()), [Empty]):	 0.621951778088
+
+Cluster 0:
+Token: [Empty]
+Total number of token occurrences: 147.
+Number of records with at least one token occurrence: 147.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	147	0.986577181208
+
+
+Cluster 1:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Empty]
+Total number of token occurrences: 147.
+Number of records with at least one token occurrence: 147.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	147	0.986577181208
+
+
+Cluster 1:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+
+Junk Tolerance Threshold: 15
+Cluster Coverage: 147
+Num Tokens: 1
+Struct
+Coverage:147
+Token count:1
+[Empty]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 2
+Num Tokens: 1
+Struct
+Coverage:2
+Token count:1
+[Other](()[Group Body][Other]())	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Other](()
+tokenOrder:
+[Other](() 
+Rep token: [Other]())
+tokenOrder:
+[Other]()) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Other]((), [Other]())):	 0.0
+
+Cluster Distances
+([Other]((), [Other]())):	 0.0
+End Cluster Distances
+Merging clusters: [Other](() [Other]())
+old
+Rep token: [Other](()
+tokenOrder:
+[Other](() 
+Rep token: [Other]())
+tokenOrder:
+[Other]()) 
+
+new
+Rep token: [Other](()
+tokenOrder:
+[Other](() [Other]()) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Other](()
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other](()
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 2
+Num Tokens: 2
+Struct
+Coverage:2
+Token count:2
+[Other]())	Occurrences:1
+[Other](()	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	7:	2.0	0.0134228187919
+	4:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	146.0	0.979865771812
+	1:	2.0	0.0134228187919
+	4:	1.0	0.00671140939597
+Relative Entropy: 0.00467497895887
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	8:	2.0	0.0134228187919
+	5:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	146.0	0.979865771812
+	1:	2.0	0.0134228187919
+	5:	1.0	0.00671140939597
+Relative Entropy: 0.00467497895887
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	2:	2.0	0.0134228187919
+	1:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	146.0	0.979865771812
+	1:	2.0	0.0134228187919
+	1:	1.0	0.00671140939597
+Relative Entropy: 0.00467497895887
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	4.0	0.0268456375839
+	1:	145.0	0.973154362416
+Normalized histogram: avg
+	0:	75.5	0.506711409396
+	1:	73.5	0.493288590604
+Relative Entropy: 0.595659291625
+Normalized histogram: h1
+	0:	145.0	0.973154362416
+	7:	2.0	0.0134228187919
+	4:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	146.0	0.979865771812
+	7:	2.0	0.0134228187919
+	4:	1.0	0.00671140939597
+Relative Entropy: 0.00467497895887
+Normalized histogram: h1
+	0:	145.0	0.973154362416
+	7:	2.0	0.0134228187919
+	4:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	8:	2.0	0.0134228187919
+	5:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	145.0	0.973154362416
+	7:	2.0	0.0134228187919
+	4:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	145.0	0.973154362416
+	7:	2.0	0.0134228187919
+	4:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	2:	2.0	0.0134228187919
+	1:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	145.0	0.973154362416
+	7:	2.0	0.0134228187919
+	4:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	145.0	0.973154362416
+	7:	2.0	0.0134228187919
+	4:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	4.0	0.0268456375839
+	1:	145.0	0.973154362416
+Normalized histogram: avg
+	0:	74.5	0.5
+	7:	73.5	0.493288590604
+	4:	1.0	0.00671140939597
+Relative Entropy: 0.595840694873
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	8:	2.0	0.0134228187919
+	5:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	146.0	0.979865771812
+	1:	2.0	0.0134228187919
+	5:	1.0	0.00671140939597
+Relative Entropy: 0.00467497895887
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	2:	2.0	0.0134228187919
+	1:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	146.0	0.979865771812
+	1:	2.0	0.0134228187919
+	1:	1.0	0.00671140939597
+Relative Entropy: 0.00467497895887
+Normalized histogram: h1
+	0:	147.0	0.986577181208
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	4.0	0.0268456375839
+	1:	145.0	0.973154362416
+Normalized histogram: avg
+	0:	75.5	0.506711409396
+	1:	73.5	0.493288590604
+Relative Entropy: 0.595659291625
+Normalized histogram: h1
+	0:	145.0	0.973154362416
+	8:	2.0	0.0134228187919
+	5:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	145.0	0.973154362416
+	2:	2.0	0.0134228187919
+	1:	2.0	0.0134228187919
+Normalized histogram: avg
+	0:	145.0	0.973154362416
+	8:	2.0	0.0134228187919
+	5:	2.0	0.0134228187919
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	145.0	0.973154362416
+	8:	2.0	0.0134228187919
+	5:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	4.0	0.0268456375839
+	1:	145.0	0.973154362416
+Normalized histogram: avg
+	0:	74.5	0.5
+	8:	73.5	0.493288590604
+	5:	1.0	0.00671140939597
+Relative Entropy: 0.595840694873
+Normalized histogram: h1
+	0:	145.0	0.973154362416
+	2:	2.0	0.0134228187919
+	1:	2.0	0.0134228187919
+Normalized histogram: h2
+	0:	4.0	0.0268456375839
+	1:	145.0	0.973154362416
+Normalized histogram: avg
+	0:	74.5	0.5
+	2:	73.5	0.493288590604
+	1:	1.0	0.00671140939597
+Relative Entropy: 0.595840694873
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](()[Group Body][Other]())):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.00467497895887
+([Pint], [Other](()[Group Body][Other]())):	 0.0
+([Pint], [White]):	 0.00467497895887
+([Pint], [Other](:)):	 0.00467497895887
+([Pint], [Empty]):	 0.595659291625
+([String], [Other](()[Group Body][Other]())):	 0.00467497895887
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([String], [Empty]):	 0.595840694873
+([Other](()[Group Body][Other]()), [White]):	 0.00467497895887
+([Other](()[Group Body][Other]()), [Other](:)):	 0.00467497895887
+([Other](()[Group Body][Other]()), [Empty]):	 0.595659291625
+([White], [Other](:)):	 0.0
+([White], [Empty]):	 0.595840694873
+([Other](:), [Empty]):	 0.595840694873
+End Cluster Distances
+Merging clusters: [Pint] [Other](()[Group Body][Other]())
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00467497895887
+([Pint], [White]):	 0.00467497895887
+([Pint], [Other](:)):	 0.00467497895887
+([Pint], [Empty]):	 0.595659291625
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([String], [Empty]):	 0.595840694873
+([White], [Other](:)):	 0.0
+([White], [Empty]):	 0.595840694873
+([Other](:), [Empty]):	 0.595840694873
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.00467497895887
+([Pint], [White]):	 0.00467497895887
+([Pint], [Other](:)):	 0.00467497895887
+([Pint], [Empty]):	 0.595659291625
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([String], [Empty]):	 0.595840694873
+([White], [Other](:)):	 0.0
+([White], [Empty]):	 0.595840694873
+([Other](:), [Empty]):	 0.595840694873
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00467497895887
+([Pint], [Other](:)):	 0.00467497895887
+([Pint], [Empty]):	 0.595659291625
+([String], [Other](:)):	 0.0
+([String], [Empty]):	 0.595840694873
+([Other](:), [Empty]):	 0.595840694873
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.00467497895887
+([Pint], [Other](:)):	 0.00467497895887
+([Pint], [Empty]):	 0.595659291625
+([String], [Other](:)):	 0.0
+([String], [Empty]):	 0.595840694873
+([Other](:), [Empty]):	 0.595840694873
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.00467497895887
+([Pint], [Empty]):	 0.595659291625
+([String], [Empty]):	 0.595840694873
+End Cluster Distances
+Smallest cluster distance is: 0.00467497895887
+Selected tokens:([Pint], [String]):	 0.00467497895887
+
+Cluster Distances
+([Pint], [String]):	 0.00467497895887
+([Pint], [Empty]):	 0.595659291625
+([String], [Empty]):	 0.595840694873
+End Cluster Distances
+Merging clusters: [Pint] [String]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) [String] [White] [Other](:) 
+Rep token: [Empty]
+tokenOrder:
+[Empty] 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [Empty]):	 0.595659291625
+End Cluster Distances
+Smallest cluster distance is: 0.595659291625
+Selected tokens:([Pint], [Empty]):	 0.595659291625
+
+Cluster 0:
+Token: [Empty]
+Total number of token occurrences: 145.
+Number of records with at least one token occurrence: 145.
+StructScore: 4.
+Minimum number of *occurrences* of token: 1.
+	1:	145	0.973154362416
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.0134228187919
+	7:	2	0.0134228187919
+
+Token: [White]
+Total number of token occurrences: 26.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 5.
+	5:	2	0.0134228187919
+	8:	2	0.0134228187919
+
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+	2:	2	0.0134228187919
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Empty]
+Total number of token occurrences: 145.
+Number of records with at least one token occurrence: 145.
+StructScore: 4.
+Minimum number of *occurrences* of token: 1.
+	1:	145	0.973154362416
+
+
+Cluster 1:
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+	2:	2	0.0134228187919
+
+Token: [White]
+Total number of token occurrences: 26.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 5.
+	5:	2	0.0134228187919
+	8:	2	0.0134228187919
+
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 437.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.0134228187919
+	7:	2	0.0134228187919
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 147.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.0134228187919
+
+
+Junk Tolerance Threshold: 15
+Cluster Coverage: 145
+Num Tokens: 1
+Struct
+Coverage:145
+Token count:1
+[Empty]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	2.0	0.5
+	1:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	8:	2.0	0.5
+	5:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	5:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	1:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	7:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	8:	2.0	0.5
+	5:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	8:	2.0	0.5
+	5:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	5:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	1:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	8:	2.0	0.5
+	5:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	8:	2.0	0.5
+	5:	2.0	0.5
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](()[Group Body][Other]())):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](()[Group Body][Other]())):	 0.0
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](()[Group Body][Other]())):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([Other](()[Group Body][Other]()), [White]):	 0.34657359028
+([Other](()[Group Body][Other]()), [Other](:)):	 0.34657359028
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](()[Group Body][Other]())
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+End Cluster Distances
+Smallest cluster distance is: 0.34657359028
+Selected tokens:([Pint], [String]):	 0.34657359028
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 26.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 5.
+	5:	2	0.5
+	8:	2	0.5
+
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 26.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 5.
+	5:	2	0.5
+	8:	2	0.5
+
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+
+Cluster 1:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 4
+Num Tokens: 0
+Clusters sorted by array criteria:
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 26.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 5.
+	5:	2	0.5
+	8:	2	0.5
+
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+Possible array tokens:
+[String]
+Records in possible array context:4
+Total:22
+Coverage:4
+Width:2
+minOccurrences:4
+Possible array tokens:
+[White]
+Records in possible array context:4
+Total:26
+Coverage:4
+Width:2
+minOccurrences:5
+Possible array tokens:
+[Other](:)
+Records in possible array context:4
+Total:6
+Coverage:4
+Width:2
+minOccurrences:1
+Union
+Building histograms...
+Initial clusters: 
+Rep token: [White]
+tokenOrder:
+[White] 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [White]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 4.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	4	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [White]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 4.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	4	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 4
+Num Tokens: 1
+Struct
+Coverage:4
+Token count:1
+[White]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	2.0	0.5
+	1:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	1:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	7:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	1:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](()[Group Body][Other]())):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](()[Group Body][Other]())):	 0.0
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](()[Group Body][Other]())):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([Other](()[Group Body][Other]()), [White]):	 0.34657359028
+([Other](()[Group Body][Other]()), [Other](:)):	 0.34657359028
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](()[Group Body][Other]())
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+End Cluster Distances
+Smallest cluster distance is: 0.34657359028
+Selected tokens:([Pint], [String]):	 0.34657359028
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+
+Cluster 1:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 4
+Num Tokens: 0
+Clusters sorted by array criteria:
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+Possible array tokens:
+[String]
+Records in possible array context:4
+Total:22
+Coverage:4
+Width:2
+minOccurrences:4
+Possible array tokens:
+[White]
+Records in possible array context:4
+Total:22
+Coverage:4
+Width:2
+minOccurrences:4
+Possible array tokens:
+[Other](:)
+Records in possible array context:4
+Total:6
+Coverage:4
+Width:2
+minOccurrences:1
+Union
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+
+Smallest cluster distance is: 1.0
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 4.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	4	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 4.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	4	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 4
+Num Tokens: 1
+Struct
+Coverage:4
+Token count:1
+[String]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	6:	2.0	0.5
+	3:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	3:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	2.0	0.5
+	1:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	1:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	2.0	0.5
+	3:	2.0	0.5
+Normalized histogram: h2
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	6:	2.0	0.5
+	3:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	2.0	0.5
+	3:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	6:	2.0	0.5
+	3:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	2.0	0.5
+	3:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	6:	2.0	0.5
+	3:	2.0	0.5
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	4:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	1.0	0.25
+	1:	2.0	0.5
+	1:	1.0	0.25
+Relative Entropy: 0.34657359028
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	0.5
+	1:	2.0	0.5
+Normalized histogram: avg
+	0:	0.0	0.0
+	7:	2.0	0.5
+	4:	2.0	0.5
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](()[Group Body][Other]())):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](()[Group Body][Other]())):	 0.0
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](()[Group Body][Other]())):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([Other](()[Group Body][Other]()), [White]):	 0.34657359028
+([Other](()[Group Body][Other]()), [Other](:)):	 0.34657359028
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](()[Group Body][Other]())
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [White]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+([Pint], [Other](:)):	 0.34657359028
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [Other](()[Group Body][Other]()) 
+Rep token: [String]
+tokenOrder:
+[String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [String]):	 0.34657359028
+End Cluster Distances
+Smallest cluster distance is: 0.34657359028
+Selected tokens:([Pint], [String]):	 0.34657359028
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 18.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 3.
+	3:	2	0.5
+	6:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [String]
+Total number of token occurrences: 18.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 3.
+	3:	2	0.5
+	6:	2	0.5
+
+
+Cluster 1:
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 4
+Num Tokens: 0
+Clusters sorted by array criteria:
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 18.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 3.
+	3:	2	0.5
+	6:	2	0.5
+
+Token: [White]
+Total number of token occurrences: 22.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 4.
+	4:	2	0.5
+	7:	2	0.5
+
+Token: [Other](:)
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 4.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+	2:	2	0.5
+
+
+Cluster 1:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 2.
+Minimum number of *occurrences* of token: 1.
+	1:	2	0.5
+
+
+Possible array tokens:
+[String]
+Records in possible array context:4
+Total:18
+Coverage:4
+Width:2
+minOccurrences:3
+Possible array tokens:
+[White]
+Records in possible array context:4
+Total:22
+Coverage:4
+Width:2
+minOccurrences:4
+Possible array tokens:
+[Other](:)
+Records in possible array context:4
+Total:6
+Coverage:4
+Width:2
+minOccurrences:1
+Union
+Building histograms...
+Initial clusters: 
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	6:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	7:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	6:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	6:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	6:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	7:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	2:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	7:	2.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [String]):	 0.0
+
+Cluster Distances
+([Pint], [String]):	 0.0
+([Pint], [White]):	 0.0
+([Pint], [Other](:)):	 0.0
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [String]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [White]):	 0.0
+([Pint], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [White]):	 0.0
+
+Cluster Distances
+([Pint], [White]):	 0.0
+([Pint], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [White]
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([Pint], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([Pint], [Other](:)):	 0.0
+
+Cluster Distances
+([Pint], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [Pint] [Other](:)
+old
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [Pint]
+tokenOrder:
+[Pint] [String] [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [String]
+Total number of token occurrences: 12.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 6.
+	6:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 14.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 7.
+	7:	2	1.0
+
+Token: [Other](:)
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 2.
+	2:	2	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 2.
+	2:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 14.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 7.
+	7:	2	1.0
+
+Token: [String]
+Total number of token occurrences: 12.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 6.
+	6:	2	1.0
+
+Token: [Pint]
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 2
+Num Tokens: 16
+Struct
+Coverage:2
+Token count:16
+[Other](:)	Occurrences:2
+[White]	Occurrences:7
+[String]	Occurrences:6
+[Pint]	Occurrences:1
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	4:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	3:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	3:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	4:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	4:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	4:	2.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](()[Group Body][Other]())):	 0.0
+
+Cluster Distances
+([String], [Other](()[Group Body][Other]())):	 0.0
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([Other](()[Group Body][Other]()), [White]):	 0.0
+([Other](()[Group Body][Other]()), [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](()[Group Body][Other]())
+old
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()[Group Body][Other]())
+tokenOrder:
+[Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [White]):	 0.0
+
+Cluster Distances
+([String], [White]):	 0.0
+([String], [Other](:)):	 0.0
+([White], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [White]
+old
+Rep token: [String]
+tokenOrder:
+[String] [Other](()[Group Body][Other]()) 
+Rep token: [White]
+tokenOrder:
+[White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [Other](()[Group Body][Other]()) [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](:)):	 0.0
+
+Cluster Distances
+([String], [Other](:)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](:)
+old
+Rep token: [String]
+tokenOrder:
+[String] [Other](()[Group Body][Other]()) [White] 
+Rep token: [Other](:)
+tokenOrder:
+[Other](:) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [Other](()[Group Body][Other]()) [White] [Other](:) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 3.
+	3:	2	1.0
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 8.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 4.
+	4:	2	1.0
+
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](:)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [White]
+Total number of token occurrences: 8.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 4.
+	4:	2	1.0
+
+Token: [Other](()[Group Body][Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [String]
+Total number of token occurrences: 6.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 3.
+	3:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 2
+Num Tokens: 9
+Struct
+Coverage:2
+Token count:9
+[Other](:)	Occurrences:1
+[White]	Occurrences:4
+[Other](()[Group Body][Other]())	Occurrences:1
+[String]	Occurrences:3
+Building histograms...
+Initial clusters: 
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()
+tokenOrder:
+[Other](() 
+Rep token: [Other]())
+tokenOrder:
+[Other]()) 
+Rep token: [Other](/)
+tokenOrder:
+[Other](/) 
+
+Normalized histogram: h1
+	0:	0.0	0.0
+	2:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	2:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	2:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	2:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	2:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	2:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Normalized histogram: h1
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: h2
+	0:	0.0	0.0
+	1:	2.0	1.0
+Normalized histogram: avg
+	0:	0.0	0.0
+	1:	2.0	1.0
+Relative Entropy: 0.0
+Smallest cluster distance is: 0.0
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](()):	 0.0
+
+Cluster Distances
+([String], [Other](()):	 0.0
+([String], [Other]())):	 0.0
+([String], [Other](/)):	 0.0
+([Other]((), [Other]())):	 0.0
+([Other]((), [Other](/)):	 0.0
+([Other]()), [Other](/)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](()
+old
+Rep token: [String]
+tokenOrder:
+[String] 
+Rep token: [Other](()
+tokenOrder:
+[Other](() 
+Rep token: [Other]())
+tokenOrder:
+[Other]()) 
+Rep token: [Other](/)
+tokenOrder:
+[Other](/) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [Other](() 
+Rep token: [Other]())
+tokenOrder:
+[Other]()) 
+Rep token: [Other](/)
+tokenOrder:
+[Other](/) 
+
+Starting to update cluster distances
+Cluster Distances
+([String], [Other]())):	 0.0
+([String], [Other](/)):	 0.0
+([Other]()), [Other](/)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other]())):	 0.0
+
+Cluster Distances
+([String], [Other]())):	 0.0
+([String], [Other](/)):	 0.0
+([Other]()), [Other](/)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other]())
+old
+Rep token: [String]
+tokenOrder:
+[String] [Other](() 
+Rep token: [Other]())
+tokenOrder:
+[Other]()) 
+Rep token: [Other](/)
+tokenOrder:
+[Other](/) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [Other](() [Other]()) 
+Rep token: [Other](/)
+tokenOrder:
+[Other](/) 
+
+Starting to update cluster distances
+Cluster Distances
+([String], [Other](/)):	 0.0
+End Cluster Distances
+Smallest cluster distance is: 0.0
+Selected tokens:([String], [Other](/)):	 0.0
+
+Cluster Distances
+([String], [Other](/)):	 0.0
+End Cluster Distances
+Merging clusters: [String] [Other](/)
+old
+Rep token: [String]
+tokenOrder:
+[String] [Other](() [Other]()) 
+Rep token: [Other](/)
+tokenOrder:
+[Other](/) 
+
+new
+Rep token: [String]
+tokenOrder:
+[String] [Other](() [Other]()) [Other](/) 
+
+Starting to update cluster distances
+Cluster Distances
+End Cluster Distances
+Smallest cluster distance is: 1.0
+Selected tokens:([Empty],  Error):	 1.0
+
+Cluster 0:
+Token: [String]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 2.
+	2:	2	1.0
+
+Token: [Other](()
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other](/)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+
+In isStruct, printing clusters sorted by struct criteria.
+Cluster 0:
+Token: [Other](/)
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other]())
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [Other](()
+Total number of token occurrences: 2.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 1.
+	1:	2	1.0
+
+Token: [String]
+Total number of token occurrences: 4.
+Number of records with at least one token occurrence: 2.
+StructScore: 0.
+Minimum number of *occurrences* of token: 2.
+	2:	2	1.0
+
+
+Junk Tolerance Threshold: 1
+Cluster Coverage: 2
+Num Tokens: 5
+Struct
+Coverage:2
+Token count:5
+[Other](/)	Occurrences:1
+[Other]())	Occurrences:1
+[Other](()	Occurrences:1
+[String]	Occurrences:2
+
+Before reduction:
+Pstruct(Id = BTy_114 441, raw: 416156.763b)
+	Punion(Id = BTy_7 441, raw: 204984.986b)
+		Pstruct(Id = BTy_6 402, raw: 204589.179b)
+			[Date] (Id = BTy_0 402, raw: 108004.535b);
+			[White] (Id = BTy_1 402, raw: 809.044b);
+			[Time] (Id = BTy_2 402, raw: 88802.177b);
+			[White] (Id = BTy_3 402, raw: 809.044b);
+			[Pint] (Id = BTy_4 402, raw: 5347.705b);
+			[White] (Id = BTy_5 402, raw: 809.044b);
+		End Pstruct;
+		Pstruct(Id = BTy_10 39, raw: 388.762b)
+			[Other](-) (Id = BTy_8 39, raw: 299.673b);
+			[White] (Id = BTy_9 39, raw: 83.044b);
+		End Pstruct;
+	End Punion;
+	[String] (Id = BTy_11 441, raw: 23879.044b);
+	[Other]([) (Id = BTy_13 441, raw: 3336.618b);
+	[Pint] (Id = BTy_14 441, raw: 6899.045b);
+	[Other](]) (Id = BTy_15 441, raw: 3336.618b);
+	Punion(Id = BTy_63 441, raw: 173712.822b)
+		Pstruct(Id = BTy_62 292, raw: 156487.759b)
+			Punion(Id = BTy_31 292, raw: 56076.537b)
+				Pstruct(Id = BTy_30 290, raw: 55785.983b)
+					[Other](:) (Id = BTy_17 290, raw: 2195.875b);
+					[White] (Id = BTy_18 290, raw: 585.044b);
+					[String] (Id = BTy_19 290, raw: 13055.044b);
+					[White] (Id = BTy_20 290, raw: 585.044b);
+					[String] (Id = BTy_21 290, raw: 12185.044b);
+					[White] (Id = BTy_22 290, raw: 585.044b);
+					[String] (Id = BTy_23 290, raw: 8705.044b);
+					[White] (Id = BTy_24 290, raw: 585.044b);
+					[String] (Id = BTy_25 290, raw: 10445.044b);
+					[White] (Id = BTy_26 290, raw: 585.044b);
+					[String] (Id = BTy_27 290, raw: 3485.044b);
+					[Other](:) (Id = BTy_28 290, raw: 2195.875b);
+					[White] (Id = BTy_29 290, raw: 585.044b);
+				End Pstruct;
+				Pstruct(Id = BTy_40 2, raw: 283.509b)
+					[Other](:) (Id = BTy_32 2, raw: 20.154b);
+					[White] (Id = BTy_33 2, raw: 9.044b);
+					[String] (Id = BTy_34 2, raw: 77.044b);
+					[White] (Id = BTy_35 2, raw: 9.044b);
+					[String] (Id = BTy_36 2, raw: 29.044b);
+					[White] (Id = BTy_37 2, raw: 9.044b);
+					[String] (Id = BTy_38 2, raw: 113.044b);
+					[White] (Id = BTy_39 2, raw: 9.044b);
+				End Pstruct;
+			End Punion;
+			[Path] (Id = BTy_41 292, raw: 99017.044b);
+			Punion(Id = BTy_43 292, raw: 1387.549b)
+				[Empty] (Id = BTy_42 280, raw: 5.044b);
+				Pstruct(Id = BTy_51 10, raw: 1144.987b)
+					[White] (Id = BTy_44 10, raw: 25.044b);
+					[String] (Id = BTy_45 10, raw: 461.044b);
+					[Other](.) (Id = BTy_47 10, raw: 80.590b);
+					[String] (Id = BTy_48 10, raw: 305.044b);
+					[Other](.) (Id = BTy_49 10, raw: 80.590b);
+					[String] (Id = BTy_50 10, raw: 185.044b);
+				End Pstruct;
+				Pstruct(Id = BTy_61 2, raw: 229.303b)
+					[White] (Id = BTy_53 2, raw: 9.044b);
+					[Other](-) (Id = BTy_54 2, raw: 20.154b);
+					[White] (Id = BTy_55 2, raw: 9.044b);
+					[String] (Id = BTy_56 2, raw: 101.044b);
+					[Other](:) (Id = BTy_57 2, raw: 20.154b);
+					[White] (Id = BTy_58 2, raw: 9.044b);
+					[Pint] (Id = BTy_59 2, raw: 32.620b);
+					[Other](!) (Id = BTy_60 2, raw: 20.154b);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_113 149, raw: 17218.019b)
+			[Other](:) (Id = BTy_64 149, raw: 1130.678b);
+			[White] (Id = BTy_65 149, raw: 303.044b);
+			[String] (Id = BTy_66 149, raw: 8003.044b);
+			Punion(Id = BTy_68 149, raw: 58.440b)
+				[Empty] (Id = BTy_67 147, raw: 5.044b);
+				Pstruct(Id = BTy_71 2, raw: 46.352b)
+					[Other](() (Id = BTy_69 2, raw: 20.154b);
+					[Other]()) (Id = BTy_70 2, raw: 20.154b);
+				End Pstruct;
+			End Punion;
+			[White] (Id = BTy_72 149, raw: 303.044b);
+			[String] (Id = BTy_73 149, raw: 6179.044b);
+			Punion(Id = BTy_75 149, raw: 1232.871b)
+				[Empty] (Id = BTy_74 145, raw: 5.044b);
+				Pstruct(Id = BTy_76 4, raw: 1220.782b)
+					[White] (Id = BTy_77 4, raw: 13.044b);
+					[String] (Id = BTy_79 4, raw: 185.044b);
+					Punion(Id = BTy_112 4, raw: 1016.064b)
+						Pstruct(Id = BTy_96 2, raw: 510.261b)
+							[White] (Id = BTy_80 2, raw: 9.044b);
+							[String] (Id = BTy_81 2, raw: 77.044b);
+							[White] (Id = BTy_82 2, raw: 9.044b);
+							[String] (Id = BTy_83 2, raw: 41.044b);
+							[White] (Id = BTy_84 2, raw: 9.044b);
+							[String] (Id = BTy_85 2, raw: 41.044b);
+							[Other](:) (Id = BTy_86 2, raw: 20.154b);
+							[White] (Id = BTy_87 2, raw: 9.044b);
+							[Pint] (Id = BTy_88 2, raw: 19.332b);
+							[White] (Id = BTy_89 2, raw: 9.044b);
+							[String] (Id = BTy_90 2, raw: 53.044b);
+							[Other](:) (Id = BTy_91 2, raw: 20.154b);
+							[White] (Id = BTy_92 2, raw: 9.044b);
+							[String] (Id = BTy_93 2, raw: 77.044b);
+							[White] (Id = BTy_94 2, raw: 9.044b);
+							[String] (Id = BTy_95 2, raw: 89.044b);
+						End Pstruct;
+						Pstruct(Id = BTy_111 2, raw: 498.759b)
+							[Other](:) (Id = BTy_97 2, raw: 20.154b);
+							[White] (Id = BTy_98 2, raw: 9.044b);
+							[Other](() (Id = BTy_99 2, raw: 20.154b);
+							[String] (Id = BTy_100 2, raw: 41.044b);
+							[Other](/) (Id = BTy_101 2, raw: 20.154b);
+							[String] (Id = BTy_102 2, raw: 53.044b);
+							[Other]()) (Id = BTy_103 2, raw: 20.154b);
+							[White] (Id = BTy_105 2, raw: 9.044b);
+							[String] (Id = BTy_106 2, raw: 89.044b);
+							[White] (Id = BTy_107 2, raw: 9.044b);
+							[String] (Id = BTy_108 2, raw: 137.044b);
+							[White] (Id = BTy_109 2, raw: 9.044b);
+							[String] (Id = BTy_110 2, raw: 53.044b);
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+	End Punion;
+End Pstruct
+
+Refined Ty:
+Pstruct(Id = BTy_114 441, raw: 304537.853b)
+	Punion(Id = BTy_7 441, raw: 196871.270b)
+		Pstruct(Id = BTy_6 402, raw: 196853.182b)
+			[Date] (Id = BTy_0 402, raw: 108004.535b);
+			[StringConst] " " (Id = BTy_1 402, raw: 11.044b);
+			[Time] (Id = BTy_2 402, raw: 88802.177b);
+			[StringConst] " " (Id = BTy_3 402, raw: 11.044b);
+			[IntConst] [2006] (Id = BTy_4 402, raw: 17.015b);
+		End Pstruct;
+		[StringConst] "-" (Id = BTy_8 39, raw: 11.044b);
+	End Punion;
+	[StringConst] " " (Id = BTy_5 441, raw: 11.044b);
+	[Enum] {[StringConst] "crashreporterd", [StringConst] "crashdump", } (Id = BTy_11 441, raw: 156.133b);
+	[StringConst] "[" (Id = BTy_13 441, raw: 11.044b);
+	[Int] [120...29874] (Id = BTy_14 441, raw: 6580.450b);
+	[StringConst] "]: " (Id = BTy_15 441, raw: 23.044b);
+	[Enum] {[StringConst] "crashdump", [StringConst] "mach_msg", [StringConst] "Finished", [StringConst] "Started", [StringConst] "Unable", [StringConst] "Failed", } (Id = BTy_19 441, raw: 317.405b);
+	Switch(BTy_19)(Id = BTy_63 441, raw: 100559.416b):
+	case [Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", }:
+		Pstruct(Id = BTy_62 292, raw: 99691.235b)
+			[StringConst] " " (Id = BTy_20 292, raw: 11.044b);
+			[Enum] {[StringConst] "writing", [StringConst] "to", } (Id = BTy_21 292, raw: 72.133b);
+			[StringConst] " " (Id = BTy_22 292, raw: 11.044b);
+			[Enum] {[StringConst] "re-launch", [StringConst] "crash", } (Id = BTy_23 292, raw: 102.133b);
+			[StringConst] " " (Id = BTy_24 292, raw: 11.044b);
+			Poption(Id = BTy_31 292, raw: 78.089b)
+				[StringConst] "report to: " (Id = BTy_25 290, raw: 71.044b);
+			End Poption;
+			[Path] (Id = BTy_41 292, raw: 99017.044b);
+			Punion(Id = BTy_43 292, raw: 380.658b)
+				Pstruct(Id = BTy_51 10, raw: 235.236b)
+					[StringConst] " " (Id = BTy_44 10, raw: 11.044b);
+					[Enum] {[StringConst] "PowerPoint", [StringConst] "process", [StringConst] "Word", } (Id = BTy_45 10, raw: 152.517b);
+					[StringConst] ".crash.log" (Id = BTy_47 10, raw: 65.044b);
+				End Pstruct;
+				Pstruct(Id = BTy_61 2, raw: 132.164b)
+					[White] (Id = BTy_53 2, raw: 9.044b);
+					[StringConst] "-" (Id = BTy_54 2, raw: 11.044b);
+					[White] (Id = BTy_55 2, raw: 9.044b);
+					[StringConst] "CGSError:" (Id = BTy_56 2, raw: 59.044b);
+					[White] (Id = BTy_58 2, raw: 9.044b);
+					[IntConst] [1025] (Id = BTy_59 2, raw: 16.046b);
+					[StringConst] "!" (Id = BTy_60 2, raw: 11.044b);
+				End Pstruct;
+				[Empty] (Id = BTy_42 280, raw: 5.044b);
+			End Punion;
+		End Pstruct;
+	case [Enum] {[StringConst] "Unable", [StringConst] "crashdump", [StringConst] "mach_msg", }:
+		Pstruct(Id = BTy_113 149, raw: 862.137b)
+			Poption(Id = BTy_68 149, raw: 24.089b)
+				[StringConst] "()" (Id = BTy_69 2, raw: 17.044b);
+			End Poption;
+			[StringConst] " " (Id = BTy_72 149, raw: 11.044b);
+			[Enum] {[StringConst] "started", [StringConst] "reply", [StringConst] "to", } (Id = BTy_73 149, raw: 110.517b);
+			Poption(Id = BTy_75 149, raw: 709.442b)
+				Pstruct(Id = BTy_76 4, raw: 702.397b)
+					[StringConst] " " (Id = BTy_77 4, raw: 11.044b);
+					[Enum] {[StringConst] "determine", [StringConst] "failed", } (Id = BTy_79 4, raw: 108.133b);
+					Switch(BTy_79)(Id = BTy_112 4, raw: 349.013b):
+					case [StringConst] "determine":
+						Pstruct(Id = BTy_96 2, raw: 194.380b)
+							[White] (Id = BTy_80 2, raw: 9.044b);
+							[StringConst] "task_t" (Id = BTy_81 2, raw: 41.044b);
+							[White] (Id = BTy_82 2, raw: 9.044b);
+							[StringConst] "for" (Id = BTy_83 2, raw: 23.044b);
+							[White] (Id = BTy_84 2, raw: 9.044b);
+							[StringConst] "pid:" (Id = BTy_85 2, raw: 29.044b);
+							[White] (Id = BTy_87 2, raw: 9.044b);
+							[IntConst] [95] (Id = BTy_88 2, raw: 12.614b);
+							[White] (Id = BTy_89 2, raw: 9.044b);
+							[StringConst] "name:" (Id = BTy_90 2, raw: 35.044b);
+						End Pstruct;
+					case [StringConst] "failed":
+						Pstruct(Id = BTy_111 2, raw: 148.588b)
+							[StringConst] ":" (Id = BTy_97 2, raw: 11.044b);
+							[White] (Id = BTy_98 2, raw: 9.044b);
+							[StringConst] "(ipc/send)" (Id = BTy_99 2, raw: 65.044b);
+							[White] (Id = BTy_105 2, raw: 9.044b);
+							[StringConst] "invalid" (Id = BTy_106 2, raw: 47.044b);
+						End Pstruct;
+					End Switch;
+					[StringConst] " " (Id = BTy_92 4, raw: 11.044b);
+					[Enum] {[StringConst] "destination", [StringConst] "Exited", } (Id = BTy_93 4, raw: 120.133b);
+					[StringConst] " " (Id = BTy_94 4, raw: 11.044b);
+					[Enum] {[StringConst] "process", [StringConst] "port", } (Id = BTy_95 4, raw: 84.133b);
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+	End Switch;
+End Pstruct
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.907
+First measurement time = 0.029
+First reduction time = 2.681
+Second reduction time = 6.125
+Third reduction time = 0.640
+Second measurement time = 0.021
+Total time = 10.402
+============================================================
+
+Outputing partitions to directory: gen/
+descName.1 = crashreporter.log.modified
+Printing ty to file: gen/Ty
+opening: gen/Timing, length 10
+Ty name =Struct_114
+Excutable directory:/Users/kzhu/pads/learning/scratch
+descName.2 = crashreporter.log.modified
+
+Completed data/crashreporter.log.modified

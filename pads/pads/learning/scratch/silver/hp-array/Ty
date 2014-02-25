@@ -1,0 +1,4 @@
+RArray(Id = BTy_0 6, 2b, 480b)
+	Separator: [StringConst] "|"
+	[string](Id = BTy_4 29, 1b, 60b);
+End RArray

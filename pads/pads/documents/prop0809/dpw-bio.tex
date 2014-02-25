@@ -1,0 +1,402 @@
+\documentclass[11pt]{article}
+        % Use font 11pt Roman.
+%\documentstyle{article}
+
+\usepackage{url}
+
+%\def\references{\newpage\section*{References}}
+%\newcounter{refcount}
+%\def\lit#1{~[\ref{#1}]}
+%\def\cit#1#2#3#4{#1\quad#2\quad{\it #3}\quad #4\vskip.15in }
+%\def\citb#1#2#3{#1\quad{\it #2}.\quad#3.}
+%\def\citu#1#2{#1\quad#2.}
+
+
+\newcommand{\comment}[1]{}
+
+
+% No header or foot; top 2.0in, left 0.6in, right 0.9in, bottom 0.5in
+
+%\pagestyle{empty}
+%\topmargin=-.5in
+%\textheight=8.8in
+%\leftmargin=-1.0in
+%\oddsidemargin=.25in
+%\oddsidemargin=.25in
+%\textwidth=6.2in
+
+\setlength{\textheight}{22.8true cm}
+%\setlength{\textwidth}{15.4true cm}
+\setlength{\textwidth}{15.9true cm}
+\setlength{\oddsidemargin}{.55true cm}
+\setlength{\evensidemargin}{.55true cm}
+\setlength{\topmargin}{-1.0cm}
+\pagestyle{empty}
+
+\newlength{\oldparindent}
+\setlength{\oldparindent}{\parindent}
+\setlength{\parindent}{0pt}
+
+% No indentation at the beginning of paragraphs.
+
+% Don't hyphenate.
+%\hyphenpenalty=10000
+
+
+% Rsection: a resume section environment.
+\newenvironment{Rsection}[1]{
+  \noindent{\bf #1}
+  \begin{list}{}{\topsep=-\parskip
+                 \leftmargin=-0.0in}
+    \item[]
+}{
+  \end{list}
+%  \vspace \baselineskip
+}
+                           
+% Section: a resume section environment.
+\newenvironment{Section}[1]{
+  \centerline{\bf #1}
+  \begin{list}{}{\topsep=-\parskip
+                 \leftmargin=-0.5in}
+    \item[]
+}{
+  \end{list}
+%  \vspace \baselineskip
+}
+
+% edlist: a resume education list environment.
+\newenvironment{edlist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.25in}
+}{
+  \end{list}
+}
+
+
+% edlist2: a resume education list environment.
+\newenvironment{edlist2}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.25in
+                 \setlength{\rightmargin}{\leftmargin}
+                 \textwidth=4in}
+}{
+  \end{list}
+}
+                           
+
+% honorlist: a resume honor list environment.
+\newenvironment{honor2list}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{list}
+}  
+
+\newenvironment{honor2enum}{
+  \begin{enumerate}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{enumerate}
+}  
+
+\newenvironment{honor3enum}{
+  \begin{enumerate}{}{\topsep=-\parskip
+                 \itemindent=-0in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{enumerate}
+}  
+
+
+
+% honorlist: a resume honor list environment.
+\newenvironment{honorlist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.2\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{list}
+}  
+
+
+% joblist: a resume job list environment.
+\newenvironment{joblist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.5in}
+}{
+  \end{list}
+}
+
+                                      
+% job: a job entry for a joblist environment
+\newcommand{\job}[3]{
+  \item[]
+  \begin{tabbing}
+    \hspace{-0.5in}\=\hspace{1.5in}\=\kill
+    \>    {\it #1:}       \> #2   \\
+    \>                    \> #3   \\
+  \end{tabbing}
+  \vspace{-\baselineskip}
+}
+
+              
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\leftmargin=-1in
+\begin{document}
+
+
+\centerline{\Large \bf {\LARGE \bf D}AVID {\LARGE \bf W}ALKER}
+\vskip .3in
+
+\normalsize
+\it
+\begin{tabular}{@{\hspace{0in}}l@{\hspace{1.4in}}l}
+35 Olden Street   & Phone: (609) 258--7654  \\
+Princeton University   & Email: {\rm dpw@cs.princeton.edu} \\
+Princeton, NJ 08544
+
+\end{tabular}
+\rm
+\vskip.3in
+
+\begin{Rsection}{\Large \bf {Professional Preparation}}
+\vskip.1in
+\begin{edlist}
+
+\item {\bf Queens University, Kingston, Ontario, Canada }
+  \begin{honor2list}
+  \item {Computer Science, B.Sc. Honors, 1995.}  
+
+  \end{honor2list}
+\item {\bf Cornell University}
+\begin{honor2list}
+\item {Computer Science, M.S. 1999.}
+\item {Computer Science, Ph.D. 2001.}
+\end{honor2list}
+\end{edlist}
+\end{Rsection}
+
+
+\vskip.3in
+\begin{Rsection}{\Large \bf {Appointments}}
+\vskip.1in
+\begin{edlist}
+\item {\bf Princeton University}\\
+{\bf  Department of Computer Science} \\
+%\vskip .05in
+\vspace{-1ex}
+\begin{honor2list}
+\item Assistant Professor, Feb. 2002--July 2008.
+\item Associate Professor with Tenure, July 2008--Present.
+\end{honor2list}
+
+\item {\bf Carnegie Mellon University}\\
+{\bf  Department of Computer Science} \\ 
+%\vskip .05in
+\vspace{-1ex}
+\begin{honor2list}
+\item Postdoctoral Fellow, Oct. 2000--Oct. 2001
+\end{honor2list}
+
+
+%\newpage
+\end{edlist}
+\end{Rsection}
+
+
+\vskip.3in
+\begin{Rsection}{{\Large \bf {Selected Publications}} 
+}
+\vskip.1in
+\begin{edlist}
+
+\item {\bf Selected papers of greatest relevance (in chronological order)}
+\begin{honor2enum}
+\vskip .1in
+
+\item LearnPADS: Fully Automatic Tool Generation From Ad Hoc
+Data. Kathleen Fisher, David Walker and Kenny Q. Zhu.  ACM SIGMOD Demo
+Session.  June 2008.
+
+\item From Dirt to Shovels: Fully Automatic Tool Generation From Ad
+Hoc Data. Kathleen Fisher, David Walker, Kenny Q. Zhu and Peter White.
+ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages.
+January 2008. (POPL 08)
+
+\item PADS/ML: A Functional Data Description Language.  Yitzhak
+Mandelbaum, Kathleen Fisher, David Walker, Mary Fernandez, and Artem
+Gleyzer.  ACM SIGPLAN-SIGACT Symposium on Principles of Programming
+languages.  January 2007.  (POPL 07)
+
+\item PADS: An End-to-end System for Processing Ad Hoc Data.  Mark Daly, Mary Fernandez, Kathleen Fisher, Robert Gruber, Yitzhak Mandelbaum, David Walker and Xuan Zheng.  ACM SIGMOD Demo Session.  June 2006. 
+
+\item The Next 700 Data Description Languages. Kathleen Fisher, 
+Yitzhak Mandelbaum and David Walker.  ACM SIGPLAN-SIGACT Symposium 
+on Principles of Programming languages.  January 2006. (POPL 06)
+%
+
+\end{honor2enum}
+
+\newpage
+\item {\bf Selected other publications (in chronological order):}
+\begin{honor2enum}
+
+\item Composing Expressive Run-time Security Policies.  Lujo Bauer,
+Jay Ligatti, and David Walker.  ACM Transactions on Software
+Engineering and Methodology, Volume 18, Issue 3, pp 9:1-9:43, May
+2009.
+
+\item Run-time Enforcement of Nonsafety Policies. Jay Ligatti, Lujo Bauer, and David Walker. ACM Transactions on Information and System Security, Volume 12, Issue 3, pp 1-41, January 2009.
+
+\item Fault-tolerant Typed Assembly Language. Frances Perry, Lester
+Mackey, George A. Reis, Jay Ligatti, David I. August, and David
+Walker.  ACM SIGPLAN Conference on Programming Language Design and
+Implementation. June 2007.  Winner of the PLDI 2007 Best Paper Award.
+
+\item Substructural Type Systems.  David Walker.
+Chapter 1 of Benjamin Pierce, ed.,
+Advanced Topics in Type Systems for Programming Languages.  
+MIT Press, January 2005.
+
+\item
+From System F to Typed Assembly Language.  Greg Morrisett, David
+Walker, Karl Crary, and Neal Glew. Twenty-Fifth ACM SIGPLAN Symposium
+on Principles of Programming Languages. pages 85-97, San Diego,
+January 1998.  Winner of the Most Influential 1998 POPL Paper Award
+(awarded after 10 years reflection at POPL 2008).
+
+\end{honor2enum}
+
+\end{edlist}
+\end{Rsection}
+
+
+
+\vskip.3in
+\begin{Rsection}{\Large \bf {Synergistic Activities}}
+\begin{honor2list}
+\vskip .1in
+\begin{itemize}
+\item Core member of the Computing Community Consurtium (CCC) 
+Visioning Study on cross-layer reliability: System-level, Cross-layer 
+Cooperation to Achieve Predictable Systems from Unpredictable Components.
+\item Summer School on Programming Languages and Security.  
+Steering Committee.
+\item Program committee member for ACM SIGPLAN International Conference on
+Programming Language Design and Implementation, 2010. (PLDI 2010),   
+ACM SIGPLAN International Conference on Object-Oriented Programming,
+Systems,  Languages, and Applications, 2009. (OOPSLA 2009) and the
+21st Symposium on Implementation and Application of Functional 
+Languages (IFL 2009).
+%\item 
+%Program Chair for FOAL 2005, SPACE 2006.  Program committee
+%for ICFP 2004, TLDI 2005, FOAL 2006, ICALP 2006, POPL 2007.  
+%Periodic program chair and host for
+%the New Jersey Programming Languages Seminar, 2002-now.
+%\item Publicity chair for ACM SIGPLAN-SIGACT Symposium on
+%Principles of Programming Languages, 2003--2006.
+\end{itemize}
+
+
+
+\end{honor2list}
+\end{Rsection}
+\vskip.3in
+\begin{Rsection}{\Large \bf {Collaborators and Other Affiliations}}
+\begin{itemize}
+\vskip .1in
+\item Non-Princeton Collaborators: 
+Amal Ahmed (Indiana U),
+%Andrew Appel (Princeton),
+Zena Ariola (U of Oregon),
+Lujo Bauer (Carnegie Mellon),
+%Iliano Cervesato (Tulane),
+Luis Ceze (U of Washington),
+%Karl Crary (Carnegie Mellon University),
+%Daniel Dantas (Princeton University),
+%Ed Felten (Princeton University),
+Mary Fernandez (AT\&T),
+Kathleen Fisher (AT\&T),
+Neal Glew (Intel),
+Daniel Grossman (U of Washington),
+Robert Harper (Carnegie Mellon),
+Limin Jia (Carnegie Mellon),
+Trevor Jim (AT\&T),
+Jarred Ligatti (U of South Florida),
+Boon Thau Loo (U of Pennsylvania),
+Yitzhak Mandelbaum (AT\&T),
+Greg Morrisett (Harvard),
+Benjamin Pierce (U of Pennsylvania),
+Frank Pfenning (Carnegie Mellon),
+Jonathan Smith (U of Pennsylvania),
+%Fred Smith (MathWorks),
+%Frances Spalding (Princeton),
+%Daniel Wang (Princeton),
+%Geoffrey Washburn (U of Pennsylvania),
+%Kevin Watkins (Carnegie Mellon),
+Stephanie Weirich (U of Pennsylvania),
+Matt Welsh (Harvard),
+Steve Zdancewic (U of Pennsylvania)
+
+\item Graduate (Ph.D.) Advisor: 
+Greg Morrisett (Cornell University, now Harvard University)
+\item Thesis Advisees (graduated): Dan Dantas, Limin Jia, Jarred Ligatti, 
+Yitzhak Mandelbaum, Frances Spalding 
+\item Thesis Advisees (current):  Christian Bell, Matthew Meola, Qian Xi
+\item Postdoctoral Advisees (current):  Kenny Q. Zhu
+\end{itemize}
+\end{Rsection}
+
+
+
+% \iffalse
+% \vskip.3in
+% \begin{Rsection}{\Large \bf {Selected Awards and Fellowships}}
+% \begin{itemize}
+% \vskip .1in
+% \end{itemize}
+% \end{Rsection}
+% \fi
+
+
+
+
+%\newpage
+
+%\newpage
+
+
+
+
+
+%%%%%$$^{\ref{fn:second}}$
+
+
+
+
+
+
+
+%\vskip.3in
+
+
+
+
+\end{document}
+

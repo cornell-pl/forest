@@ -1,0 +1,193 @@
+Dan Sheleheda
+3/9/07
+--------------------------
+Sample data files in data/Extract/*
+Several years ago wrote a document to provide a data dictionary or system architecture cartoon version.  what it looked like in raw form, in our internal form, and in database form.  hoping our analyst team would maintain it, but they didn't.
+
+How to show me what to do with data today, to be used as a comparator. 
+Mixture of new data and old.  some sort of traction on what they do. 
+
+ACTION: Dan will send me parsers
+ACTION: Get Dan an account on smaug so he can deliver data there...
+
+how much space?
+ taken files in a series of zipped files, high level zip files that includes all other zip files looks to be about 75M, to extract would be roughly 500M. Ask 1 GB.
+
+Going forward work out something more efficient so I can get direct accss
+
+* what would be useful?
+table schema in word doc with version one of events
+pretty concise schema: 26 fields
+in process of updating schema to a much more richer schema with more verbose shema
+so one practical use, we may have to revisit thse parsers
+in current schema, we only indicate interface with one field
+we don't acknowledge interface in/interface out
+which is a problem.  if we see an address on the outside that is an inside address, that is spoof.  they may be parsing, but they only use one. 
+
+* implicit generated documentation
+* we do not do any cross validation of records, either across a single record or multiple records.  it just drops bad records. 
+
+
+Dragon: network intrusion detection sensors.  from a data collection point of view, they report to a centralized manager in an envrypted form.  dragon manager decrypts, write out log file records. these records are not raw from a manager, but the output form.
+
+record form:
+
+date
+time
+?
+source ip
+dest ip
+event name
+number is protocol number
+destination port, source port
+sensor name
+
+IFW-Today
+>large data feeds
+internet facing firewall
+date
+time (event took place)
+ip: syslog sender
+time = firewall manager time
+fw= firewall that sent the data
+pri= priority, but not sure
+rule= firewall rule that managed the traffice
+src is ip that supplied data that the firewall triggered on
+dst is destination , firewall triggered on
+protocol is not normalized... what is really the protocol of 
+source port
+desg port
+indev?
+inport?
+rc?
+msg: what firewall did
+
+backhauled to a firewall manager, a big syslog server 
+info is then sent out over syslog to us
+if it is a check point environemtn, use a LEA (log extracting agent)
+would probably go against a syslog version of file
+but depend on customer
+
+alph-http-pxy-extract
+web proxy data
+#'s are header record
+this is the one that everybody likes to look at.
+you can get lost in here.
+fiduciary responsibility: don't track back to individuals
+we definitely cut down a lot of these records: we chop urls down
+we also aggregate the data feeds
+syslog feeds back from 
+
+alpa-wem
+windows event manager
+backup domain controller sends data
+from windows security log
+agent is a proxy for us
+so collecting data from windows is more difficult
+it doesn't support syslog
+either we put an agent on actual windows box that they don't normally run
+or a system in the domain with permissions that has the data sent to the controller.  so difficult to get
+presented in key value form
+this is not typical for windows in a government agency.
+this already parsed data
+this is the earliest form that you can get the data
+we could get a different form in a lab, but then hard to get a lot of data
+if we can get to windows data from another environment, might be better
+this is what it might look like downstream
+
+honey.log
+snort data
+come to us over syslog
+syslog date
+time
+sender
+snort record...
+snort is something that is pretty common to find in most environments
+we use it on some honeyputs: hope attackers will come and look
+only protected to a certain level. may or may not be patched
+we have two types: one out on internet used for research purposes
+inside: if anybody triggers that is an issue , an attack or misconfiguration
+don't have a lot of detail on format
+will send parser
+will rip the data up and map to key value
+
+sccs-tap
+research tap tool
+karsten lund
+ * they can supply header record
+? 
+smart sample netflow
+through a periodic scp
+rother
+index of router
+source ip
+target ip
+we'll be opening up logs with no idea of how they were delivered
+
+Ruby
+ from physical security
+ not fully implemented in our enviroment
+ rules you build yourself
+ for physical door access in central offices
+ ruby platform gets those alarms
+ want to have forward information
+ sending across in xml
+ lot of organizations do a lot of physical to cyber correlations
+ we're not there today
+
+alpa-netscreen
+a type of firewall
+a lot of these things become multifunctional, but working as firewalls
+date
+time
+origin of alarm
+netscreen device identifier
+firewall around vpn logins
+policy id
+service that it was supporting
+protocol
+can send parser for
+ - 
+
+alpa-vpn 
+ complex parser
+this parser is the authentication & authorization
+talks to radius server
+we have to marry access attempt with another record, authorization record
+multi-record parser
+probably most complex parser we've written
+obvious problems: roll over of logs
+if i start to establish session identifier and i'm given a pointer number and log rolls, have a hard time mergers.
+most complex internal parser that we run on a day to day basis
+
+pip.log
+commercial vendor that sts on top
+like tap, sits on top of netflow
+from arbor vendor
+set of products that look at netflow data
+done some really intersting things with it
+kind of like FLOOD
+look for signs of worms or viruses crossing the internet
+large scale appliances
+we offer a service where we ues th samplicator a research developed tool takes netflow from routers and sends it out raw, a data duplicator for netflow. use it in tap?
+copy of netflow is sent to arbor
+internet backbone send a copy of netflow to arbor
+develops baselines
+if sees denial of service attacks, if a customer pays, they'll do a bgp redicrect to send it into a scrubbing complex to get rid of synflooods we scrub data back to customers  (service provider level)
+this use of arbor is a little more focused
+more localized:
+communications between bedminster and middletown
+that netflow is sent to an abror box and basically run those netflows against netflow signatures and produce event information or alarm information so this is what we are looking at
+personal internet protect 9pip
+delivered over syslog
+controller is abror source
+following is a descripion of message 
+url is abcklink to data
+severity is abror rule severity
+not sure if he has arbor parser: will have to get it
+actively working on to integrate into threat managment
+
+it is going to be a very important feed for att going forward
+not this particular one, a little too low scale
+but the service-provider arbor is a future
+

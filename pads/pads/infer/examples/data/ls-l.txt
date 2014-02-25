@@ -1,0 +1,35 @@
+total 275528
+drwxr-xr-x   3 dpw fac      4096 Jan 21  2005 as9
+drwxr-xr-x   4 dpw fac      4096 Jan 21  2005 assignment 8
+drwxr-xr-x   4 dpw fac      4096 Feb 28  2002 assistant
+-rw-r--r--   1 dpw fac     15878 Jan 23  2002 asynchronous.txt
+-rw-r--r--   1 dpw fac 274595840 Oct 25  2004 backup.pst
+drwxr-xr-x   5 dpw fac      4096 Sep 28  2004 backups
+drwxr-xr-x   2 dpw fac      4096 Feb  3  2006 candidates06
+-rw-r-----   1 dpw fac   3438534 Feb  3  2006 candidates06.zip
+drwxr-xr-x   3 dpw fac      4096 Feb 28  2002 cmu
+drwxr-xr-x   2 dpw fac      4096 Jan 19  2004 committees
+drwxr-xr-x   8 dpw fac      4096 Mar  4  2005 courses
+drwxr-xr-x   2 dpw fac      4096 Jan  2 13:44 cv
+-rw-r--r--   1 dpw fac    367374 Jan 10  2004 dave-chp.pdf
+-rw-r--r--   1 dpw fac         0 Jan 14 16:50 davehome.txt
+-rw-r--r--   1 dpw fac    132324 Jan 10  2004 dave-sol.pdf
+-rw-r--r--   1 dpw fac    145920 Feb  8  2002 e-DARPA60.doc
+-rw-r--r--   1 dpw fac    363517 Jul 14  2004 EMSltl_2002.ps.gz
+-rw-r--r--   1 dpw fac    464884 Jan  9  2004 GMZ00.pdf
+drwxr-xr-x  21 dpw fac      4096 Nov 15 11:11 grants
+drwxr-xr-x   2 dpw fac      4096 Apr 14  2003 images
+-rw-r--r--   1 dpw fac     30079 Jan 19  2004 linmod.txt
+-rw-r--r--   1 dpw fac    217815 Mar 20  2002 mechanical-reasoning.pdf
+drwx------   4 dpw fac      4096 Jul 25 15:22 other
+-rw-r--r--   1 dpw fac    119343 Dec 15  2005 proposal.pdf
+-rw-r--r--   1 dpw fac    137573 Dec 15  2005 proposal.ps
+-rw-r--r--   1 dpw fac      1222 Jan 27  2002 publications.txt
+drwx------   3 dpw fac      4096 Jan  5 12:45 recommendations
+drwxr-xr-x   8 dpw fac      4096 Dec 16  2004 research
+drwx------  15 dpw fac      4096 Jan  2 17:37 reviews
+-rw-r--r--   1 dpw fac     16860 Jan 28  2002 synchronous.txt
+-rw-r--r--   1 dpw fac     16430 Jan 25  2002 synchronous.txt~
+-rw-r--r--   1 dpw fac    514797 Jan  9  2004 syntactic-type
+drwxr-xr-x   5 dpw fac      4096 Sep 11 16:53 talks
+-rw-r--r--   1 dpw fac    875279 Jan 10  2004 uniqueness-types

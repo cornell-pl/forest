@@ -1,0 +1,224 @@
+Punion(Id = BTy_281 67, 159.944b, 3951.568b)
+	Pstruct(Id = BTy_280 66, 157.944b, 3943.735b)
+		Punion(Id = BTy_168 66, 57.755b, 3149.198b)
+			Pstruct(Id = BTy_0 61, 28.585b, 2961.336b)
+				[string](Id = BTy_1 61, 1b, 96b);
+				Punion(Id = BTy_8 61, 6b, 2b)
+					Pstruct(Id = BTy_7 59, 4b, 1b)
+						Punion(Id = BTy_4 59, 3b, 1b)
+							[StringConst] ""(Id = BTy_3 58, 1b, 0b);
+							[StringConst] ":"(Id = BTy_5 1, 1b, 0b);
+						End Punion;
+						[StringConst] " "(Id = BTy_6 59, 1b, 0b);
+					End Pstruct;
+					[StringConst] ""(Id = BTy_9 2, 1b, 0b);
+				End Punion;
+				RArray(Id = BTy_2 61, 15b, 2773.429b)
+					Pstruct(Id = BTy_27 184, 15b, 145.970b)
+						Punion(Id = BTy_15 184, 14b, 144.970b)
+							Pstruct(Id = BTy_14 176, 4b, 85b)
+								[string](Id = BTy_10 176, 1b, 84b);
+								Punion(Id = BTy_12 176, 3b, 1b)
+									[StringConst] ""(Id = BTy_11 175, 1b, 0b);
+									[StringConst] ";"(Id = BTy_13 1, 1b, 0b);
+								End Punion;
+							End Pstruct;
+							Pstruct(Id = BTy_16 2, 6b, 57.970b)
+								[Int] [1...1992](Id = BTy_17 2, 1b, 43.840b);
+								Switch(BTy_17)(Id = BTy_22 2, 5b, 14.130b):
+								case [IntConst] [1]:
+									Pstruct(Id = BTy_20 1, 2b, 3.170b)
+										[IntConst] [~9](Id = BTy_18 1, 1b, 3.170b);
+										[StringConst] ":"(Id = BTy_19 1, 1b, 0b);
+									End Pstruct;
+								case [IntConst] [1992]:
+									[StringConst] ";"(Id = BTy_21 1, 1b, 0b);
+								End Switch;
+							End Pstruct;
+							[StringConst] "-"(Id = BTy_23 3, 1b, 0b);
+							[StringConst] "="(Id = BTy_24 3, 1b, 0b);
+						End Punion;
+						[StringConst] "  "(Id = BTy_26 184, 1b, 1b);
+					End Pstruct;
+				End RArray;
+				Punion(Id = BTy_29 61, 6.585b, 89.907b)
+					[string](Id = BTy_28 40, 1b, 84b);
+					[StringConst] ""(Id = BTy_30 19, 1b, 0b);
+					Pstruct(Id = BTy_35 2, 3b, 4.322b)
+						[StringConst] "("(Id = BTy_32 2, 1b, 0b);
+						[Enum] {[StringConst] "PATCO", [StringConst] "PATH", }(Id = BTy_33 2, 1b, 4.322b);
+						[StringConst] ")"(Id = BTy_34 2, 1b, 0b);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
+			Pstruct(Id = BTy_166 4, 26.585b, 186.277b)
+				[StringConst] "\""(Id = BTy_36 4, 1b, 1b);
+				Switch(BTy_72)(Id = BTy_51 4, 9b, 53.001b):
+				case [StringConst] "Inc":
+					Pstruct(Id = BTy_50 2, 4b, 27.610b)
+						RArray(Id = BTy_38 2, 3b, 26.610b)
+							Separator: [StringConst] " "
+							Terminator: [StringConst] ","
+							[Enum] {[StringConst] "Diego", [StringConst] "Frontier", }(Id = BTy_42 8, 1b, 5.322b);
+						End RArray;
+						[StringConst] ", "(Id = BTy_46 2, 1b, 1b);
+					End Pstruct;
+				case [StringConst] "purchased":
+					Pstruct(Id = BTy_73 1, 3b, 20.636b)
+						[StringConst] "Rail transit data for "(Id = BTy_52 1, 1b, 4.459b);
+						[IntConst] [2002](Id = BTy_60 1, 1b, 10.967b);
+						[StringConst] " includes both directly operated and "(Id = BTy_61 1, 1b, 5.209b);
+					End Pstruct;
+				End Switch;
+				[Enum] {[StringConst] "Inc", [StringConst] "U", [StringConst] "purchased", }(Id = BTy_72 4, 1b, 4.755b);
+				[StringConst] "."(Id = BTy_76 4, 1b, 0b);
+				RArray(Id = BTy_37 4, 10.585b, 124.522b)
+					Pstruct(Id = BTy_161 3, 10.585b, 41.507b)
+						Punion(Id = BTy_135 3, 9.585b, 41.507b)
+							Pstruct(Id = BTy_134 1, 4b, 19.852b)
+								[StringConst] " Department of Transportation, Federal Transit Administration, National Transit Database (Washington, DC: Annual Issues), table "(Id = BTy_78 1, 1b, 7b);
+								[IntConst] [21](Id = BTy_116 1, 1b, 4.392b);
+								[StringConst] ", Internet site http://www.ntdprogram.com/NTD/ntdhome.nsf?OpenDatabase as of February 20"(Id = BTy_117 1, 1b, 6.459b);
+								[IntConst] [4](Id = BTy_133 1, 1b, 2b);
+							End Pstruct;
+							Pstruct(Id = BTy_157 1, 3b, 20.071b)
+								[StringConst] "  Prior to "(Id = BTy_136 1, 1b, 3.459b);
+								[IntConst] [2002](Id = BTy_141 1, 1b, 10.967b);
+								[StringConst] ",  the data include directly operated service only"(Id = BTy_142 1, 1b, 5.644b);
+							End Pstruct;
+							[StringConst] "S"(Id = BTy_159 1, 1b, 0b);
+						End Punion;
+						[StringConst] "."(Id = BTy_160 3, 1b, 0b);
+					End Pstruct;
+				End RArray;
+				Punion(Id = BTy_163 4, 3b, 2b)
+					[StringConst] ""(Id = BTy_162 3, 1b, 0b);
+					[StringConst] "  "(Id = BTy_164 1, 1b, 1b);
+				End Punion;
+				[StringConst] "\""(Id = BTy_165 4, 1b, 1b);
+			End Pstruct;
+			[StringConst] ""(Id = BTy_167 1, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_169 66, 1b, 0b);
+		Punion(Id = BTy_194 66, 21b, 148.322b)
+			Pstruct(Id = BTy_193 56, 19b, 147.322b)
+				[StringConst] "\""(Id = BTy_170 56, 1b, 1b);
+				[string](Id = BTy_172 56, 1b, 72b);
+				Punion(Id = BTy_174 56, 10b, 59.322b)
+					[StringConst] ""(Id = BTy_173 35, 1b, 0b);
+					Pstruct(Id = BTy_185 21, 8b, 58.322b)
+						Punion(Id = BTy_176 21, 3b, 1b)
+							[StringConst] ""(Id = BTy_175 20, 1b, 0b);
+							[StringConst] "."(Id = BTy_177 1, 1b, 0b);
+						End Punion;
+						[StringConst] " "(Id = BTy_178 21, 1b, 0b);
+						[string](Id = BTy_179 21, 1b, 54b);
+						Punion(Id = BTy_181 21, 3b, 3.322b)
+							[StringConst] ""(Id = BTy_180 20, 1b, 0b);
+							Pstruct(Id = BTy_184 1, 1b, 2.322b)
+								[StringConst] " City"(Id = BTy_182 1, 1b, 2.322b);
+							End Pstruct;
+						End Punion;
+					End Pstruct;
+				End Punion;
+				[StringConst] ","(Id = BTy_186 56, 1b, 0b);
+				Switch(BTy_172)(Id = BTy_188 56, 4b, 2b):
+				case [StringConst] "*":
+					[StringConst] " "(Id = BTy_187 55, 1b, 0b);
+				case [StringConst] "Fort":
+					[StringConst] ""(Id = BTy_189 1, 1b, 0b);
+				End Switch;
+				[string](Id = BTy_190 56, 1b, 12b);
+				[StringConst] "\""(Id = BTy_192 56, 1b, 1b);
+			End Pstruct;
+			[StringConst] ""(Id = BTy_195 10, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_196 66, 1b, 0b);
+		Punion(Id = BTy_198 66, 4.585b, 46.434b)
+			[Int] [2...1996](Id = BTy_197 41, 1b, 43.849b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_199 16, 1b, 1b);
+			[StringConst] ""(Id = BTy_201 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_202 66, 1b, 0b);
+		Punion(Id = BTy_204 66, 4.585b, 46.434b)
+			[Int] [3...1997](Id = BTy_203 42, 1b, 43.849b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_205 15, 1b, 1b);
+			[StringConst] ""(Id = BTy_207 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_208 66, 1b, 0b);
+		Punion(Id = BTy_210 66, 4.585b, 46.437b)
+			[Int] [3...1998](Id = BTy_209 43, 1b, 43.852b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_211 14, 1b, 1b);
+			[StringConst] ""(Id = BTy_213 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_214 66, 1b, 0b);
+		Punion(Id = BTy_216 66, 4.585b, 46.422b)
+			[Int] [9...1999](Id = BTy_215 43, 1b, 43.837b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_217 14, 1b, 1b);
+			[StringConst] ""(Id = BTy_219 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_220 66, 1b, 0b);
+		Punion(Id = BTy_222 66, 4.585b, 46.448b)
+			[Int] [1...2000](Id = BTy_221 44, 1b, 43.863b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_223 13, 1b, 1b);
+			[StringConst] ""(Id = BTy_225 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_226 66, 1b, 0b);
+		Punion(Id = BTy_228 66, 4.585b, 45.451b)
+			[Int] [1...2001](Id = BTy_227 45, 1b, 43.866b);
+			[StringConst] "U"(Id = BTy_229 12, 1b, 0b);
+			[StringConst] ""(Id = BTy_231 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_232 66, 1b, 0b);
+		Punion(Id = BTy_234 66, 4.585b, 45.454b)
+			[Int] [1...2002](Id = BTy_233 56, 1b, 43.869b);
+			[StringConst] ""(Id = BTy_235 9, 1b, 0b);
+			[StringConst] "U"(Id = BTy_237 1, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_238 66, 1b, 0b);
+		Punion(Id = BTy_240 66, 4.585b, 46.439b)
+			[Int] [0...1996](Id = BTy_239 41, 1b, 43.854b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_241 16, 1b, 1b);
+			[StringConst] ""(Id = BTy_243 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_244 66, 1b, 0b);
+		Punion(Id = BTy_246 66, 4.585b, 46.442b)
+			[Int] [0...1997](Id = BTy_245 42, 1b, 43.857b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_247 15, 1b, 1b);
+			[StringConst] ""(Id = BTy_249 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_250 66, 1b, 0b);
+		Punion(Id = BTy_252 66, 4.585b, 46.445b)
+			[Int] [0...1998](Id = BTy_251 43, 1b, 43.860b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_253 14, 1b, 1b);
+			[StringConst] ""(Id = BTy_255 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_256 66, 1b, 0b);
+		Punion(Id = BTy_258 66, 4.585b, 46.448b)
+			[Int] [0...1999](Id = BTy_257 43, 1b, 43.863b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_259 14, 1b, 1b);
+			[StringConst] ""(Id = BTy_261 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_262 66, 1b, 0b);
+		Punion(Id = BTy_264 66, 4.585b, 46.451b)
+			[Int] [0...2000](Id = BTy_263 44, 1b, 43.866b);
+			[Enum] {[StringConst] "NA", [StringConst] "U", }(Id = BTy_265 13, 1b, 1b);
+			[StringConst] ""(Id = BTy_267 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_268 66, 1b, 0b);
+		Punion(Id = BTy_270 66, 4.585b, 45.454b)
+			[Int] [0...2001](Id = BTy_269 45, 1b, 43.869b);
+			[StringConst] "U"(Id = BTy_271 12, 1b, 0b);
+			[StringConst] ""(Id = BTy_273 9, 1b, 0b);
+		End Punion;
+		[StringConst] ","(Id = BTy_274 66, 1b, 0b);
+		Punion(Id = BTy_276 66, 4.585b, 45.457b)
+			[Int] [0...2002](Id = BTy_275 56, 1b, 43.872b);
+			[StringConst] ""(Id = BTy_277 9, 1b, 0b);
+			[StringConst] "U"(Id = BTy_279 1, 1b, 0b);
+		End Punion;
+	End Pstruct;
+	Pstruct(Id = BTy_291 1, 1b, 6.833b)
+		[StringConst] "Type of rail transit / agency,Primary city served,Number of stations,,,,,,,Number of ADA-accessible stations,,,,,,"(Id = BTy_282 1, 1b, 6.833b);
+	End Pstruct;
+End Punion

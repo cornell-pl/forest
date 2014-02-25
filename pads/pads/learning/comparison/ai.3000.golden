@@ -1,0 +1,43 @@
+Pstruct(3000, tc: 554.071b, ac: 929.817b, dc: 1070.662b, raw: 1624.732b)
+        Punion(3000, tc: 16.133b, ac: 83.000b, dc: 165b, raw: 181.133b)
+                [IP] (3000, tc: 5.044b, ac: 128.000b, dc: 128b, raw: 133.044b);
+                [Host] (3000, tc: 5.044b, ac: 36.000b, dc: 36b, raw: 41.044b);
+        End Punion;
+        [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        Punion(3000, tc: 22.133b, ac: 22.000b, dc: 43b, raw: 65.133b)
+                [StringConst] "-" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [String] (3000, tc: 5.044b, ac: 42.000b, dc: 42b, raw: 47.044b);
+        End Punion;
+        [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        Punion(3000, tc: 22.133b, ac: 22.000b, dc: 43b, raw: 65.133b)
+                [StringConst] "-" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [String] (3000, tc: 5.044b, ac: 42.000b, dc: 42b, raw: 47.044b);
+        End Punion;
+        [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        Pstruct(3000, tc: 50.588b, ac: 682.076b, dc: 682.076b, raw: 732.664b)
+                [StringConst] "[" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [Date] (3000, tc: 5.044b, ac: 295.521b, dc: 295.521b, raw: 300.565b);
+                [StringConst] ":" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [Time] (3000, tc: 5.044b, ac: 386.555b, dc: 386.555b, raw: 391.599b);
+                [StringConst] "]" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        End Pstruct;
+        [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        Pstruct(3000, tc: 342.110b, ac: 107.451b, dc: 124.295b, raw: 466.406b)
+                [StringConst] ":" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [Enum] {[StringConst] "GET", [StringConst] "PUT", [StringConst] "POST", [StringConst] "HEAD", [StringConst] "DELETE", [StringConst] "LINK", [StringConst] "UNLINK", } (3000, tc: 223.163b, ac: 2.807b, dc: 19.651b, raw: 242.814b);
+                [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [Path] (3000, tc: 5.044b, ac: 96.000b, dc: 96b, raw: 101.044b);
+                [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [StringConst] "HTTP" (3000, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b);
+                [StringConst] "/" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [Pint] (3000, tc: 5.044b, ac: 4.322b, dc: 4.322b, raw: 9.366b);
+                [StringConst] "." (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                [Pint] (3000, tc: 5.044b, ac: 4.322b, dc: 4.322b, raw: 9.366b);
+                [StringConst] ":" (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        End Pstruct;
+        [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        [Int] [100...600] (3000, tc: 20.917b, ac: 8.969b, dc: 8.969b, raw: 29.886b);
+        [StringConst] " " (3000, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        [Pint] (3000, tc: 5.044b, ac: 4.322b, dc: 4.322b, raw: 9.366b);
+End Pstruct
+

@@ -1,0 +1,624 @@
+The goal of the structure-refinement phase is to improve
+the structure produced by the structure-discovery phase. We
+formulate the structure-refinement problem as a generalized search
+through the description space starting with the candidate produced by
+structure discovery. The
+objective of the search is to find the description that minimizes
+the information-theoretic scoring function.
+
+\paragraph*{Rewriting rules.}
+To move around in the description space, we define a number of 
+rewriting rules, the general form of which is
+\[T \goto T', ~~ {\rm if~ some~ constraint~} p(T)~ {\rm is~ satisfied,}\]
+where $T$ is a type in the candidate description and $T'$ is its
+replacement after the
+rewriting.  Some rules are unconditional and thus free of constraints.
+There are two kinds of rewriting rules: (1) data-independent rules which
+transform a type based exclusively on the syntax of the description; 
+and (2) data-dependent
+rules which transform a type based both on the syntax of the description
+and on properties of the training data parsed by type $T$.  In general, 
+the data-independent rules try to rearrange and merge portions
+of the description while the data dependent rules seek to identify 
+constant fields and enumerations, and to establish data dependencies
+between different parts of the description.
+
+\figref{fig:rules} presents a selection of the rewriting rules used in
+the refinement phase. We have omitted many rules and have simplified
+others for succinctness.
+%In these rules,
+%let $T_{punc}$ be any type that describes punctuation or white space character%s.
+When $T\setof{X}$ appears in a pattern on the left-hand side of a rewriting
+rule, $X$ is bound to the set of data representations resulting
+from using $T$ to parse the appropriate part of each chunk from the training
+set. Furthermore, let $card(X)$ be the cardinality of the set $X$, 
+and let $X(i)$ be the data representation resulting
+from parsing the $i^{th}$ chunk in the training set. Finally, given a union
+value $\mathtt{in}_j(v)$, we define $tag(\mathtt{in}_j(v))$ to be $j$.
+
+\begin{figure*}
+\begin{center}
+{\small
+\framebox{
+\noindent
+\begin{minipage}[t]{\columnwidth}
+\paragraph*{Data independent rules}
+\begin{enumerate}
+\item Singleton structs and unions \\
+$
+\irstruct{T} \goto T  \qquad\qquad\quad \irunion{T} \goto T
+$\\ \\
+$
+\irstruct{} \goto \Pempty  \qquad\quad\quad \irunion{} \goto \Pvoid 
+$
+\item Struct and union clean-up\\
+$
+\irstruct{pre\_types; \Pvoid; post\_types} \goto \Pvoid
+$\\ \\ 
+$
+\irstruct{pre\_types; \Pempty; post\_types} \goto \\
+\sskip \irstruct{pre\_types; post\_types}
+$\\ \\ 
+$
+\irunion{pre\_types; \Pvoid; post\_types} \goto \\
+\sskip \irunion{pre\_types; post\_types} 
+$
+%$
+%\irunion{pre\_types; \Pempty; post\_types} \goto \\
+%\sskip \irunion{pre\_types; post\_types; \Pempty} 
+%$
+% \item Union to option\\
+% $
+% \irunion{T; \Pempty} \goto \iroption{T}
+% $\\ \\
+% $
+% \irunion{\Pempty; T} \goto \iroption{T}
+% $
+% \item Unnest structs and unions\\
+% $
+% \irstruct{pre\_types; \irstruct{mid\_types}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; mid\_types; post\_types}
+% $\\ \\
+% $
+% \irunion{pre\_types; \irunion{mid\_types}; post\_types} \goto \\
+% \sskip \irunion{pre\_types; mid\_types; post\_types}
+% $
+\item Uniform struct to fixed-length array\\
+$
+\irstruct{T_1; \ldots; T_n} \goto \irarrayFW{T_1}{n}
+$\\ 
+\noindent if $n \ge 3$ and $\forall i \in [1,~ n],~ j \in [1,~ n]:~ T_i = T_j$.
+
+\item Common postfix in union branches \\
+% $
+% \irunion{\irstruct{T; post\_types_1}; \\
+% \sskip \irstruct{T, post\_types_2}} \goto \\
+% \sskip \irstruct{T; \irunion{\irstruct{post\_types_1}; \\
+% \sskip \irstruct{post\_types_2}}}
+% $\\ \\
+% $
+% \irunion{\irstruct{T; post\_types}; T} \goto\\
+% \sskip \irstruct{T; \iroption{\irstruct{post\_types}}}
+% $\\ \\
+$
+\irunion{\irstruct{pre\_types_1; T}; \\
+    \sskip \sskip \irstruct{pre\_types_2; T}} \goto \\
+\sskip \irstruct{\irunion{\irstruct{pre\_types_1}; \\
+\sskip \sskip\sskip \sskip \sskip \hspace*{1.5mm} \irstruct{pre\_types_2}}; T}
+$\\ \\
+$
+\irunion{\irstruct{pre\_types; T}; T} \goto \\
+\sskip \irstruct{\iroption{\irstruct{pre\_types}}; T}
+$
+
+\item Combine adjacent constant strings \\
+$
+\irstruct{pre\_types; {\tt PstringConst (c_1)}; \\
+\sskip {\tt PstringConst(c_2)}; post\_types} \goto \\
+\sskip \irstruct{pre\_types; {\tt PstringConst (c_1 {\makeatletter \tt @} c_2)}; post\_types} 
+$
+
+% \item {Get floating number number}\\
+% $
+% \irunion{{\tt Pint}; {\tt Pfloat}} \goto {\tt Pfloat}
+% $ 
+
+\end{enumerate}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{\columnwidth}
+\paragraph*{Data dependent rules}
+\begin{enumerate}
+% \item Get floating point number \\
+% $
+% \irstruct{pre\_types; {\tt Pint}\setof{X}; {\tt PstringConst ('.')};  \\
+% \sskip {\tt Pint}\setof{Y}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
+% $\\ 
+% \noindent if $\forall y \in Y:~ y \ge 0$. \\
+% \\
+% $
+% \irstruct{pre\_types; {\tt Pint}\setof{X}; \\
+% \sskip \iroption{\irstruct{{\tt PstringConst ('.')};  \\
+% \sskip {\tt Pint}\setof{Y}}}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; {\tt Pfloat}; post\_types}
+% $ \\
+% \noindent if $\forall y \in Y:~ y \ge 0$. 
+
+% \item Discover negative numbers\\
+% $
+% \irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-');\\
+% \sskip {\tt Pint} \setof{X}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; T_{punc}; {\tt Pint}; post\_types}
+% $\\ 
+% \noindent if $\forall x \in X:~ x \ge 0$. \\
+% \\
+% $
+%  \irstruct{pre\_types; T_{punc}; {\tt PstringConst}('-'); \\
+% \sskip {\tt Pfloat}\setof{X}; post\_types} \goto \\
+% \sskip \irstruct{pre\_types; T_{punc}; {\tt Pfloat}; post\_types}
+% $\\ 
+% \noindent if $\forall x \in X:~ x \ge 0$.\\
+% \\
+% $
+%  \irstruct{pre\_types; T_{punc}; \iroption{{\tt PstringConst}('-')}; \\
+% \sskip {\tt Pint}(x); post\_types} \goto \\
+% \sskip \irstruct{pre\_types; T_{punc}; {\tt Pnat}; post\_types}
+% $\\
+% \noindent if $\forall x \in X:~ x \ge 0$.\\
+% \\
+% $
+% \irstruct{pre\_types; T_{punc}; {\tt \iroption{PstringConst}('-')}; \\
+% \sskip {\tt Pfloat}(x); post\_types} \goto \\
+% \sskip  \irstruct{pre\_types; T_{punc}; {\tt Preal}; post\_types}
+% $\\
+% \noindent if $\forall x \in X:~ x \ge 0$.
+
+\item Base type with unique values to constant \\
+$
+{\tt Pint}\setof{X} \goto {\tt PintConst(c)} \\
+$
+{\rm if} $\forall x \in X:~ x = c$. 
+\\ \\
+$
+{\tt Palpha}\setof{X} \goto {\tt PstringConst(c)} \\
+$
+{\rm if} $\forall x \in X:~ x = c$.
+\\ \\
+$
+{\tt Pstring}\setof{X} \goto {\tt PstringConst(c)} \\
+$
+{\rm if} $\forall x \in X:~ x = c$.
+\\ \\
+$
+{\tt Pother}\setof{X} \goto {\tt PstringConst(c)} \\ 
+$
+{\rm if} $\forall x \in X:~ x = c$.
+
+\item Refine enums and ranges \\
+$
+{\tt Pstring}\setof{X} \goto \irenum{s_1; \ldots; s_k} \\
+$
+{\rm if}~ $\forall x \in X:~ x~ \in \{s_1, \ldots, s_k\}$.
+\\ \\
+$
+{\tt Pint}\setof{X} \goto {\tt Pint32} \\
+$
+{\rm if} $\forall x \in X:~ 0 \le x~ < 2^{32}$.
+% $
+% {\tt Pint}\setof{X} \goto {\tt Pint64} \\
+% $
+% {\rm if} $\forall x \in X:~ 2^{32} \le x~ < 2^{64}$.
+% \\ \\
+% $
+% {\tt Pint}\setof{X} \goto {\tt PintRanged}(min,~ max) \\
+% $
+% {\rm if}~ $\forall x \in X:~ min \le x~ \le max$.
+
+\item Union to switch \\
+$
+\irstruct{pre\_types; \irenum{c_1; \ldots; c_n}\setof{X}; mid\_types; \\
+\sskip \irunion{T_1; \ldots; T_n}\setof{Y}; post\_types}\\
+\goto \\
+\irstruct{pre\_types, z:\irenum{c_1; \ldots; c_n}; mid\_types; \\
+\sskip \irswitch{z}{c_1 \goto T_{\Pi(1)}; \ldots; c_n \goto T_{\Pi(n)}}; post\_types}
+$\\ 
+\noindent where $z$ is a fresh variable, and there exists a permutation $\Pi$, s.t.  $\forall i \in [1,~ card(X)]$, $\Pi(tag(X(i)))=tag(Y(i))$.
+\end{enumerate}
+\end{minipage}
+}
+}
+\end{center}
+\caption{Selected and simplified rewriting rules} \label{fig:rules} \vskip 1ex
+%\shrink 
+\end{figure*}
+
+\begin{figure}[bht]
+{\small 
+\begin{verbatim}
+(* rewriting rules *)
+type rule : description -> description  
+val rules : rule list 
+
+(* measure the score for a type *)
+fun score : description -> float
+
+(* find the type with best score from a list *)
+fun best: description list -> description
+
+(* improve the given type by one rewriting rule *)
+fun oneStep (T:description) : description =
+ let all = map (fn rule => rule T) rules in
+ let top = best all                      in
+ if (score top) < (score T) then oneStep top
+ else T
+
+(* main function to refine an IR description *) 
+fun refine (T:description) : description =
+  let T' = case T of
+      base b => b
+    | struct { Ts } => struct { map refine Ts }
+    | union { Ts } => union { map refine Ts }
+    | switch x of { vTs } => 
+       switch x of 
+         { map (fn (v, t) => (v, refine t)) vTs }
+    | array { T } => 
+              array { refine T }
+    | option { T } => option { refine T } in
+  oneStep T'
+\end{verbatim}
+}
+\caption{Generic local optimization algorithm in Pseudo-ML} \shrink
+\label{fig:refinement}
+\end{figure}
+
+\paragraph*{The Search.}
+The core of the rewriting system is 
+a recursive, depth-first, greedy search procedure. 
+By ``depth-first,'' we mean the algorithm considers the 
+children of each structured type before considering
+the structure itself. When refining a type, the algorithm selects the rule that 
+would {\em minimize} the information-theoretic score of the resulting
+type and applies this rule.  This process repeats  until
+no further reduction in the score is possible, at
+which point we say the resulting type $T$ is {\em stable}.
+
+The rewriting phase applies the
+algorithm given in \figref{fig:refinement} three
+times in succession. 
+The first time, the algorithm quickly simplifies the initial candidate
+description using {\em only} data-independent rules. The second time,
+it uses the data-dependent 
+rules to refine base types to constant values and enumerations, \etc{},
+and to introduce dependencies such as switched unions. This stage
+requires the value-space analysis described next.
+The third time, the algorithm re-applies the data-independent rules
+because some stage two rewritings (such as converting a base type to a
+constant) enable further data-independent rewritings.
+
+\paragraph*{Value-space analysis.}
+We perform a value-space analysis prior
+to applying the data-dependent rules.
+This analysis first generates a set of relational tables from the input data.
+Each row in a table corresponds to an input chunk and each column
+corresponds to either a particular base type from the inferred description,
+or to a piece of meta-data from the description.  Examples of meta-data
+include the tag number from union branches and the length of arrays.
+We generate a {\em set} of relational tables as opposed to a single table
+as the elements of each array occupy their own separate table (a description 
+with no arrays will have only one associated table).
+% Here, a number of data dependency tables are generated from the 
+% input structure, where each
+% column of the tables represent the data values associated with a particular base type 
+% in the structure, with some extra columns representing auxiliary information such as
+% array sizes and union branching decisions.
+
+We analyze every column of every table to determine properties of the
+data in that column such as constancy and value range. 
+To find inter-column properties, we have implemented a simplified
+variant of the TANE algorithm \cite{TANE-HKPT99},
+which identifies functional dependencies between columns in 
+relational data.  Because full TANE is too expensive
+(possibly exponential in the number of columns), 
+and produces many false positives when invoked with insufficient data,
+our simplified algorithm computes only binary dependencies. We use the 
+result of this dependency analysis to identify switched unions and
+fixed-size arrays. 
+%In addition, we also discover all the unary constraints on the base types by
+%analysizing every single column in the data tables. We store these unary and
+%binary constraint in a constraint map.  A rule can be applied 
+%only if the conditions are validated successfully
+%against the constraint map. 
+
+\paragraph*{Running example.}
+To illustrate the refinement process, we walk through a few of the
+steps taken to rewrite the 
+Crashreporter.log description.  The first part of the
+candidate description generated by the structure-discovery algorithm
+appears below.
+% as the system refines the initial structure of the crashreporter.log example.
+% Let us zoom into the beginning portion of the IR and omit some of the details as follows. 
+% We annotate each type with two pieces of auxiliary information: id of the node which
+% can be used as the variable name and the complexity score at this node, 
+% enclosed in a pair of parentheses. In addition, for Pother base types,
+% we append the character it binds to in parentheses after the type name.
+% The initial IR structure of crash reporter looks like this:
+
+{\small
+\begin{verbatim}
+struct {
+  union {
+    struct {
+      Pdate; Pwhite; Ptime; Pwhite; Pint;  
+      Pwhite;          (*)
+    };
+    struct { 
+      "-"; 
+      Pwhite;          (*)
+    };
+  }
+  Palpha; "["; Pint; "]";
+  union { ... };
+};
+\end{verbatim}
+}
+
+
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 416156.763b) {
+%   union(BTy_7, 204984.986b) {
+%     struct(BTy_6, 204589.179b) {
+%       Pdate (BTy_0, 108004.535b);
+%       Pwhite (BTy_1, 809.044b);
+%       Ptime (BTy_2, 88802.177b);
+%       Pwhite (BTy_3, 809.044b);
+%       Pint (BTy_4, 5347.705b);
+%       Pwhite (BTy_5, 809.044b);
+%     };
+%     struct(BTy_10, 388.762b) {
+%       Pother (-) (BTy_8, 299.673b);
+%       Pwhite (BTy_9, 83.044b);
+%     };
+%   }
+%   Palpha (BTy_11, 23879.044b);
+%   Pother ([) (BTy_13, 3336.618b);
+%   Pint (BTy_14, 6899.045b);
+%   Pother (]) (BTy_15, 3336.618b);
+%   union(BTy_63, 173712.822b) {
+%     struct(BTy_62, 156487.759b) {
+%       ...
+%     };
+%     struct(BTy_113, 17218.019b) {
+%       ...
+%     };
+%   };
+% };
+% \end{verbatim}
+% }
+
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 416156.509b) {
+%   struct(BTy_115, 204984.732b) {
+%     union(BTy_7, 204091.634b) {
+%       struct(BTy_6, 203779.872b) {
+%         Pdate (BTy_0, 108004.535b);
+%         Pwhite (BTy_1, 809.044b);
+%         Ptime (BTy_2, 88802.177b);
+%         Pwhite (BTy_3, 809.044b);
+%         Pint (BTy_4, 5347.705b);
+%       };
+%       struct(BTy_10, 304.718b) {
+%         Pother (-) (BTy_8, 299.673b);
+%       };
+%     }
+%     Pwhite (BTy_5, 887.044b);
+%   }
+%   ...
+% };
+% \end{verbatim}
+% }
+
+% Note that we end up with an undesirable situation in BTy\_10 where a struct 
+% contains just one element. That will be fixed in Phase three as we shall see.
+% Next, the "unnest struct and union" rule kicks in to flatten struct BTy\_114 to
+% the following.
+
+\noindent
+In the first data-independent stage of rewriting, 
+the common trailing white space marked {\tt (*)} is
+pulled out of the union branches into the surrounding
+struct using the ``common postfix in union'' rule.  
+This transformation leaves behind the single-element struct marked
+{\tt (**)} in the result below; rewriting 
+rules in stage 
+three will transform this verbose form into the more compact constant 
+string {\tt "-"}.  This first rewriting
+stage also pulls colon and whitespace characters out of the 
+trailing union (not shown in the candidate description).
+
+{\small
+\begin{verbatim}
+struct {
+  union {
+    struct { Pdate; Pwhite; Ptime; Pwhite; Pint; };
+    struct { "-" };                    (**)
+  }
+  Pwhite;                              (*)
+  Palpha; "["; Pint; "]"; ":"; Pwhite; 
+  union { ... };
+};
+\end{verbatim}
+}
+
+
+% struct(BTy_114, 416056.899b) {
+%     union(BTy_7, 204091.634b) {
+%       struct(BTy_6, 203779.872b) {
+%         Pdate (BTy_0, 108004.535b);
+%         Pwhite (BTy_1, 809.044b);
+%         Ptime (BTy_2, 88802.177b);
+%         Pwhite (BTy_3, 809.044b);
+%         Pint (BTy_4, 5347.705b);
+%       };
+%       struct(BTy_10, 304.718b) {
+%         Pother (-) (BTy_8, 299.673b);
+%       };
+%     Pwhite (BTy_5, 887.044b);
+%     ...
+%   }
+%   ...
+% };
+
+In the second rewriting stage, 
+data-dependent rules~1 and~2 convert appropriate base types into 
+constants and enums.
+Moreover, TANE discovers a data dependency between the
+newly introduced enumeration involving {\tt "crashdump"} and
+{\tt "mach\_msg"}, and the structure of the following message.
+Hence, we introduce a switched union.
+Notice that the switched union branches on a different enum 
+than the hand-written IR in Figure \ref{fig:crashreporter:ir}
+because the inference algorithm found a different way of structuring
+the data. Nonetheless, both of these descriptions are accurate.
+
+
+{\small
+\begin{verbatim}
+struct {
+  union {
+    struct { Pdate; " "; Ptime; " "; 2006; };
+    struct { "-" };
+  };
+  " "; enum {"crashreporterd", "crashdump"};
+  "["; PintRanged [120...29874]; "]"; ":"; " ";
+  x19:enum {"crashdump", "mach_msg", "Finished", 
+            "Started", "Unable", "Failed"};
+  switch x19 of { ... };
+};
+\end{verbatim}
+}
+
+% struct(BTy_114, 304553.986b) {
+%   union(BTy_7, 196876.315b) {
+%     struct(BTy_6, 196853.182b) {
+%       Pdate (BTy_0, 108004.535b);
+%       " " (BTy_1, 11.044b);
+%       Ptime (BTy_2, 88802.177b);
+%       " " (BTy_3, 11.044b);
+%       2006 (BTy_4, 17.015b);
+%     };
+%     struct(BTy_10 39, 16.089b) {
+%       "-" (BTy_8 39, 11.044b);
+%     };
+%   };
+%   " " (BTy_5, 11.044b);
+%   enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
+%   "[" (BTy_13, 11.044b);
+%   Pint [120...29874] (BTy_14, 6580.450b);
+%   "]" (BTy_10, 11.044b);
+%   ":" (BTy_12, 11.044b);
+%   " " (BTy_13, 11.044b);
+%   enum {"crashdump", "mach_msg", "Finished", "Started", 
+%         "Unable", "Failed"} (BTy_19, 317.405b);
+%   union(BTy_63, 100570.505b) {
+%     ...
+%   };
+% };
+
+
+% Further, data dependency is discovered between type BTy\_19
+% and the union BTy\_63, and thus the latter is converted to
+% a switched union as follows.
+
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 304552.986b) {
+%   ...
+%   enum {"crashdump", "mach_msg", "Finished", "Started", 
+%         "Unable", "Failed"} (BTy_19, 317.405b);
+%   switch BTy_14 of (BTy_63, 100569.505b) {
+%     enum {"Failed", "Finished", "Started"}   => 
+%       struct(BTy_57, 99696.280b) {
+%        ...
+%       };
+%     enum {"Unable", "crashdump", "mach_msg"} =>
+%       struct(BTy_108, 867.181b) {
+%        ...
+%       };
+%   };
+% };
+% \end{verbatim}
+% }
+
+In the third and final stage, 
+data independent rule~5 combines constants 
+and rule~1 flattens the singleton struct, resulting in the final IR
+description:
+
+{\small
+\begin{verbatim}
+struct {
+  union {
+    struct { Pdate; " "; Ptime; " "; 2006; };
+    "-";
+  };
+  " "; enum {"crashreporterd", "crashdump"};
+  "["; Pint32; "]: ";
+  x19:enum {"crashdump", "mach_msg", "Finished", 
+        "Started", "Unable", "Failed"};
+  switch x19 of { ... };
+  };
+};
+\end{verbatim}
+}
+
+The information-theoretic complexity of the final description 
+relative to the data in our training set is 304538 bits. 
+The candidate description produced by the structure-discovery phase
+had a complexity of 416156 bits.  The absolute values of these quantities
+are relatively unimportant, but the fact that the final complexity
+is substantially smaller than the original suggests that our search
+procedure optimized the description effectively.
+
+
+% {\small
+% \begin{verbatim}
+% struct(BTy_114, 304537.855b) {
+%   union(BTy_7, 196876.315b) {
+%     struct(BTy_6, 196853.182b) {
+%       Pdate (BTy_0, 108004.535b);
+%       " " (BTy_1, 11.044b);
+%       Ptime (BTy_2, 88802.177b);
+%       " " (BTy_3, 11.044b);
+%       2006 (BTy_4, 17.015b);
+%     };
+%     "-" (BTy_8 39, 11.044b);
+%   };
+%   " " (BTy_5, 11.044b);
+%   enum {"crashreporterd", "crashdump"}(BTy_11, 156.133b);
+%   "[" (BTy_13, 11.044b);
+%   Pint [120...29874] (BTy_14, 6580.450b);
+%   "]: " (BTy_10, 23.044b);
+%   enum {"crashdump", "mach_msg", "Finished", "Started", 
+%         "Unable", "Failed"} (BTy_19, 317.405b);
+%   switch BTy_14 of (BTy_63, 100569.505b) {
+%     enum {"Failed", "Finished", "Started"}   => 
+%       struct(BTy_57, 99696.280b) {
+%        ...
+%       };
+%     enum {"Unable", "crashdump", "mach_msg"} =>
+%       struct(BTy_108, 867.181b) {
+%        ...
+%       };
+%   };
+% };
+% \end{verbatim}
+% }
+
+% Comparing this final result with the initial description, one can see that
+% the structure refinement significantly simplified the IR and improved the
+% complexity score; and with
+% the explicit constants and enums, the description is a lot more
+% informative than before.

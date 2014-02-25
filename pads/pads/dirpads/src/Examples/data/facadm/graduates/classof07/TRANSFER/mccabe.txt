@@ -1,0 +1,26 @@
+MCCABE, BRIAN M.	BSE '07
+- - - - - - - - - - - - - - - - - - -
+Type    Yr  Course     Grade
+         1             A+ to F
+d        2             P  (  Pass )
+t  D  p  3             INC
+o  .  .  4  Dept  xxx  N  (Not Avail)
+- - - - - - - - - - - - - - - - - - -
+t . . 1 COS 138 B-
+t . . 1 ORF 425 N
+t . . 1 COS 253 P
+o . . 1 PHY 103 A
+d . . 1 COS 353 C-
+t . . 1 MAT 444 A-
+o . . 1 CHM 350 B
+t . . 1 PHY 120 A-
+o . . 1 ORF 412 A+
+o . . 2 COS 317 N
+o . . 2 PHY 246 C+
+d . . 2 MAT 258 AUD
+t D . 2 ORF 498 A+
+o . . 2 ORF 478 C
+o . . 2 CHM 317 C+
+d . . 2 HST 349 N
+d D . 2 ORF 486 A
+

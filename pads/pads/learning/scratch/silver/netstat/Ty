@@ -1,0 +1,145 @@
+Punion(Id = BTy_139 193, 91.755b, 2168.329b)
+	Pstruct(Id = BTy_70 47, 46.170b, 751.608b)
+		[string](Id = BTy_0 47, 1b, 42b);
+		[StringConst] "      "(Id = BTy_1 47, 1b, 2.585b);
+		Switch(BTy_0)(Id = BTy_3 47, 4b, 42.492b):
+		case [Enum] {[StringConst] "icm6", [StringConst] "tcp4", [StringConst] "udp4", [StringConst] "udp6", }:
+			[Int] [0...951](Id = BTy_2 46, 1b, 29.684b);
+		case [StringConst] "Address":
+			[StringConst] "Type"(Id = BTy_4 1, 1b, 2b);
+		End Switch;
+		[StringConst] "      "(Id = BTy_5 47, 1b, 2.585b);
+		Switch(BTy_0)(Id = BTy_7 47, 4b, 13.392b):
+		case [Enum] {[StringConst] "icm6", [StringConst] "tcp4", [StringConst] "udp4", [StringConst] "udp6", }:
+			[IntConst] [0](Id = BTy_6 46, 1b, 0b);
+		case [StringConst] "Address":
+			[StringConst] "Recv-Q"(Id = BTy_8 1, 1b, 2.585b);
+		End Switch;
+		[StringConst] "  "(Id = BTy_9 47, 1b, 1b);
+		Switch(BTy_0)(Id = BTy_22 47, 13.170b, 183.067b):
+		case [Enum] {[StringConst] "icm6", [StringConst] "tcp4", [StringConst] "udp4", [StringConst] "udp6", }:
+			Pstruct(Id = BTy_21 46, 10.170b, 169.674b)
+				Punion(Id = BTy_11 46, 4.585b, 16.177b)
+					[Enum] {[StringConst] "135.207.33.115", [StringConst] "192.168.15.100", [StringConst] "192.168.15.107", }(Id = BTy_10 19, 1b, 11.422b);
+					[StringConst] "localhost"(Id = BTy_12 15, 1b, 3.170b);
+					[StringConst] "*"(Id = BTy_14 12, 1b, 0b);
+				End Punion;
+				[StringConst] "."(Id = BTy_15 46, 1b, 0b);
+				Punion(Id = BTy_17 46, 4.585b, 153.497b)
+					[Int] [651...65394](Id = BTy_16 31, 1b, 79.912b);
+					[string](Id = BTy_18 11, 1b, 72b);
+					[StringConst] "*"(Id = BTy_20 4, 1b, 0b);
+				End Punion;
+			End Pstruct;
+		case [StringConst] "Address":
+			[StringConst] "Send-Q"(Id = BTy_23 1, 1b, 2.585b);
+		End Switch;
+		[StringConst] "   "(Id = BTy_24 47, 1b, 1.585b);
+		Punion(Id = BTy_29 47, 13b, 446.598b)
+			Pstruct(Id = BTy_28 19, 1b, 1.585b)
+				[StringConst] "*.*"(Id = BTy_25 19, 1b, 1.585b);
+			End Pstruct;
+			Pstruct(Id = BTy_39 9, 3b, 96.013b)
+				RArray(Id = BTy_30 9, 2b, 17.265b)
+					Pstruct(Id = BTy_36 11, 2b, 5.755b)
+						[Enum] {[StringConst] "localhost", [StringConst] "netlab", }(Id = BTy_34 11, 1b, 5.755b);
+						[StringConst] "."(Id = BTy_35 11, 1b, 0b);
+					End Pstruct;
+				End RArray;
+				[Int] [651...55744](Id = BTy_38 9, 1b, 78.748b);
+			End Pstruct;
+			Pstruct(Id = BTy_44 1, 1b, 4b)
+				[StringConst] "205.188.8.45.aol"(Id = BTy_41 1, 1b, 4b);
+			End Pstruct;
+			Pstruct(Id = BTy_140 18, 6b, 343b)
+				Punion(Id = BTy_49 18, 4b, 55b)
+					Pstruct(Id = BTy_48 17, 2b, 54b)
+						[string](Id = BTy_46 17, 1b, 54b);
+						[StringConst] "."(Id = BTy_47 17, 1b, 0b);
+					End Pstruct;
+					[StringConst] ""(Id = BTy_50 1, 1b, 0b);
+				End Punion;
+				RArray(Id = BTy_45 18, 2b, 288b)
+					Separator: [StringConst] "."
+					[string](Id = BTy_51 39, 1b, 72b);
+				End RArray;
+			End Pstruct;
+		End Punion;
+		[StringConst] "  "(Id = BTy_56 47, 1b, 1b);
+		Punion(Id = BTy_58 47, 6b, 15.305b)
+			[StringConst] ""(Id = BTy_57 23, 1b, 0b);
+			Pstruct(Id = BTy_69 24, 4b, 14.305b)
+				[Enum] {[StringConst] "CLOSE_WAIT", [StringConst] "Conn", [StringConst] "ESTABLISHED", }(Id = BTy_59 24, 1b, 8.781b);
+				Punion(Id = BTy_61 24, 3b, 5.524b)
+					[StringConst] ""(Id = BTy_60 23, 1b, 0b);
+					Pstruct(Id = BTy_68 1, 1b, 4.524b)
+						[StringConst] "     Refs  Nextref Addr"(Id = BTy_62 1, 1b, 4.524b);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+	Pstruct(Id = BTy_91 2, 9b, 43.577b)
+		RArray(Id = BTy_72 2, 3b, 34.348b)
+			Terminator: [StringConst] "("
+			Pstruct(Id = BTy_78 9, 2b, 4.907b)
+				[Enum] {[StringConst] "LOCAL", [StringConst] "Recv-Q", }(Id = BTy_76 9, 1b, 4.907b);
+				[StringConst] " "(Id = BTy_77 9, 1b, 0b);
+			End Pstruct;
+		End RArray;
+		[StringConst] "("(Id = BTy_80 2, 1b, 0b);
+		[Enum] {[StringConst] "UNIX", [StringConst] "state", }(Id = BTy_81 2, 1b, 4.322b);
+		[StringConst] ")"(Id = BTy_82 2, 1b, 0b);
+		Punion(Id = BTy_90 2, 3b, 4.907b)
+			Pstruct(Id = BTy_88 1, 1b, 3.907b)
+				[StringConst] " domain sockets"(Id = BTy_84 1, 1b, 3.907b);
+			End Pstruct;
+			[StringConst] ""(Id = BTy_89 1, 1b, 0b);
+		End Punion;
+	End Pstruct;
+	Pstruct(Id = BTy_98 1, 1b, 4.755b)
+		[StringConst] "Active Internet connections"(Id = BTy_93 1, 1b, 4.755b);
+	End Pstruct;
+	Pstruct(Id = BTy_138 143, 33.585b, 1366.389b)
+		[StringConst] " "(Id = BTy_99 143, 1b, 0b);
+		[Int] [2...3701990](Id = BTy_100 143, 1b, 152.739b);
+		Punion(Id = BTy_102 143, 3b, 37b)
+			[string](Id = BTy_101 131, 1b, 36b);
+			[StringConst] ""(Id = BTy_103 12, 1b, 0b);
+		End Punion;
+		[StringConst] " "(Id = BTy_104 143, 1b, 0b);
+		[Enum] {[StringConst] "dgram", [StringConst] "stream", }(Id = BTy_105 143, 1b, 4.907b);
+		[StringConst] "      "(Id = BTy_106 143, 1b, 2.585b);
+		[Int] [0...64](Id = BTy_108 143, 1b, 12.045b);
+		[StringConst] "      "(Id = BTy_109 143, 1b, 2.585b);
+		[IntConst] [0](Id = BTy_110 143, 1b, 0b);
+		[StringConst] "        "(Id = BTy_111 143, 1b, 3b);
+		[Int] [0...4082318](Id = BTy_112 143, 1b, 153.727b);
+		Punion(Id = BTy_114 143, 3b, 37b)
+			[StringConst] ""(Id = BTy_113 134, 1b, 0b);
+			[string](Id = BTy_115 9, 1b, 36b);
+		End Punion;
+		[StringConst] "  "(Id = BTy_116 143, 1b, 1b);
+		[Int] [0...3701990](Id = BTy_118 143, 1b, 152.739b);
+		Punion(Id = BTy_120 143, 3b, 37b)
+			[string](Id = BTy_119 122, 1b, 36b);
+			[StringConst] ""(Id = BTy_121 21, 1b, 0b);
+		End Punion;
+		[StringConst] "        "(Id = BTy_122 143, 1b, 3b);
+		[Int] [0...3701990](Id = BTy_124 143, 1b, 152.739b);
+		Punion(Id = BTy_126 143, 3b, 37b)
+			[StringConst] ""(Id = BTy_125 110, 1b, 0b);
+			[string](Id = BTy_127 33, 1b, 36b);
+		End Punion;
+		[StringConst] "        "(Id = BTy_128 143, 1b, 3b);
+		[Int] [0...3701908](Id = BTy_130 143, 1b, 152.739b);
+		Punion(Id = BTy_132 143, 5.585b, 421.585b)
+			[StringConst] ""(Id = BTy_131 67, 1b, 0b);
+			[string](Id = BTy_133 47, 1b, 36b);
+			Pstruct(Id = BTy_137 29, 2b, 384b)
+				[StringConst] " "(Id = BTy_135 29, 1b, 0b);
+				[Path](Id = BTy_136 29, 1b, 384b);
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+End Punion

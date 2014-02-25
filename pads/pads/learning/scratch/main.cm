@@ -1,0 +1,59 @@
+Library
+  structure Main
+is
+
+  $/basis.cm
+  $/smlnj-lib.cm
+  $/pp-lib.cm
+  $smlnj/compiler/compiler.cm
+  $/regexp-lib.cm
+
+  tokens.lex.sml (* to regenerate: lexgen --ml-lex-mode tokens.lex *)
+  vanilla.lex.sml (* to regenerate: lexgen --ml-lex-mode vanilla.lex  *)
+  config.sml
+  utils.sml
+  times.sml
+  complexity.sml
+  distribution.sml
+  hosts.sml
+  tokens.sml
+  options.sml
+  types.sml
+  ast.sml
+  padsc_printer.sml
+  padsml_printer.sml
+  gold/1967Transactions.short.sml
+  gold/ai.3000.sml
+  gold/boot.txt.sml
+  gold/crashreporter.log.sml
+  gold/crashreporter.log.mod.sml
+  gold/dibbler.1000.sml
+  gold/ls-l.txt.sml
+  gold/quarterlypersonalincome.sml
+  gold/railroad.txt.sml
+  gold/rpmpkgs.sml
+  gold/yum.txt.sml
+  gold/asl.log.sml
+  gold/page_log.sml
+  gold/windowserver_last.log.sml
+  gold/MER_T01_01.csv.sml
+  gold/netstat-an.sml
+  gold/scrollkeeper.log.sml
+  model.sml
+  parseCmdLine-sig.sml
+  parseCmdLine.sml
+  structure.sml
+  print.sml
+  populate.sml
+  gold.sml
+  main.sml
+  rat.sml
+  matrix.sml
+  RatMatrix.sml
+  common.sml
+  partition.sml
+  rewrite.sml
+  table.sml
+  constraints.sml
+  functionaldep.sml
+  reduce.sml

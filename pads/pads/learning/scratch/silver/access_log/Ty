@@ -1,0 +1,25 @@
+Pstruct(Id = BTy_46 8188, tc: 834.508b, ac: 401.125b, dc: 3246871.869b, raw: 3247706.377b)
+	[StringConst] "localhost - - [" (Id = BTy_0 8188, tc: 95.044b, ac: 0b, dc: 0b, raw: 95.044b) (avg: 15.00, tot: 122820);
+	[Enum] {[StringConst] "25/Nov/2006", [StringConst] "26/Nov/2006", [StringConst] "27/Nov/2006", } (Id = BTy_7 8188, tc: 219.763b, ac: 1.585b, dc: 4.755b, raw: 224.517b) (avg: 11.00, tot: 90068);
+	[StringConst] ":" (Id = BTy_8 8188, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 8188);
+	[Time] (Id = BTy_9 8188, tc: 5.044b, ac: 386.555b, dc: 3165109.731b, raw: 3165114.775b) (avg: 14.00, tot: 114632);
+	[StringConst] "] \"" (Id = BTy_10 8188, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b) (avg: 4.00, tot: 32752);
+	[Enum] {[StringConst] "GET", [StringConst] "POST", } (Id = BTy_14 8188, tc: 58.133b, ac: 1b, dc: 2b, raw: 60.133b) (avg: 4.00, tot: 32748);
+	[StringConst] " /" (Id = BTy_15 8188, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b) (avg: 2.00, tot: 16376);
+	Poption(Id = BTy_18 8188, tc: 283.985b, ac: 1.015b, dc: 118b, raw: 401.985b)
+		Pstruct(Id = BTy_33 4, tc: 277.940b, ac: 30.500b, dc: 117b, raw: 394.940b)
+			[StringConst] "ppd/" (Id = BTy_19 4, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b) (avg: 4.00, tot: 16);
+			Punion(Id = BTy_29 4, tc: 202.133b, ac: 29.500b, dc: 115b, raw: 317.133b)
+				[StringConst] "officejet_7100_series(Printer)." (Id = BTy_21 3, tc: 191.044b, ac: 0b, dc: 0b, raw: 191.044b) (avg: 31.00, tot: 93);
+				[URL] (Id = BTy_30 1, tc: 5.044b, ac: 114.000b, dc: 114b, raw: 119.044b) (avg: 19.00, tot: 19);
+			End Punion;
+			[Enum] {[StringConst] "d", [StringConst] "ppd", } (Id = BTy_27 4, tc: 40.133b, ac: 1b, dc: 2b, raw: 42.133b) (avg: 2.50, tot: 10);
+		End Pstruct;
+	End Poption;
+	[StringConst] " HTTP/" (Id = BTy_34 8188, tc: 41.044b, ac: 0b, dc: 0b, raw: 41.044b) (avg: 6.00, tot: 49128);
+	[FloatConst] [1.1] (Id = BTy_37 8188, tc: 12.688b, ac: 0b, dc: 0b, raw: 12.688b) (avg: 2.00, tot: 16376);
+	[StringConst] "\" " (Id = BTy_40 8188, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b) (avg: 3.00, tot: 24564);
+	[IntConst] [200] (Id = BTy_43 8188, tc: 13.688b, ac: 0b, dc: 0b, raw: 13.688b) (avg: 3.00, tot: 24564);
+	[StringConst] " " (Id = BTy_44 8188, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 8188);
+	[Pint] (Id = BTy_45 8188, tc: 5.044b, ac: 10.970b, dc: 81637.383b, raw: 81642.427b) (avg: 3.00, tot: 24575);
+End Pstruct

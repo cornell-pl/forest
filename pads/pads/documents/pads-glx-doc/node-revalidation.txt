@@ -1,0 +1,220 @@
+Hi Mary,
+
+First, yes - the inputs to path_walk must always be non-null.
+
+Second, here's a (lengthy) stab at the path documentation that I never 
+wrote. :)
+
+
+I hope this helps. As always, feel free to send me any other questions 
+you may have.
+
+Cheers,
+Yitzie
+
+
+Node Revalidation
+-------------------
+  A smart node (currently, only smart arrays) is conceptually divided 
+into elements, which serve as the level of granularity at which data is 
+brought into and out of memory. Every descendant of a smart node is 
+grouped according to the element from which it descends. Each descendant 
+node remembers to which group it belongs, and the system uses this 
+information when revalidating the node. However, knowing the ancestor 
+element of a given node is not enough to revalidate it. In addition, we 
+need to know exactly which portion of the element is represented by the 
+given node. In order to record this second piece of information, we 
+introduce the notion of paths.
+ In essence, a path is a set of directions leading from (the pointers 
+to) an element's representation, mask and parse descriptor (henceforth: 
+data) to the particular node's data. For a given element, a path 
+uniquely determines a child of that element.
+  Node revalidation, then, consists of two key steps. First we ensure 
+that the data of the node's ancestor element is available in memory. 
+Then, we retrieve the node's path, and, using it and the pointers to the 
+element data, we locate the node's data in memory. In the current 
+system, node revalidation occurs in the PDCI_sndNode_make_valid 
+function, located in libpglx/smart.c. In order to better understand node 
+revalidation, we walk through the function, below:
+
+Perror_t PDCI_sndNode_make_valid(PDCI_node_t *node){
+  Pread_res_t res;
+  Perror_t result;
+
+The first step is to determine the node's ancestor. This step is 
+accomplished via a function call, as a pointer to the ancestor is not 
+stored directly in the node.
+
+  PDCI_smart_elt_info_t  *ancestor = PDCI_get_ancestor(node);
+  PDCI_smart_node_t      *sn       = ancestor->parent->snExt; // Alias 
+the smart node.
+  PDCI_path_t             path;
+
+Next, we check the status of the ancestor's data. The if-statement below 
+ensures that the data is in memory. We will not go into the details here.
+
+  if (ancestor->rep == NULL) {
+    /* must read from IO stream first */
+    res = sn->elt_read(ancestor->parent, node->pads, ancestor);
+    if (res != P_READ_OK_DATA) {
+      /*
+       * the read failed when we
+       * were expecting it to succeed.
+       */
+      return P_ERR;
+    }
+  }
+
+At this point, we know that the ancestor's data is available in memory. 
+Now, we need to retrieve the pointers to our node's data. First, we 
+calculate the path from the ancestor to the node (the details of this 
+calculation are discussed below).
+
+  path = PDCI_node_getPath(node,0);
+
+Now, using this path and the ancestor's data pointers, we ask the smart 
+node to walk the path, which returns the node's data pointers in the 
+last three arguments of the path walk function. The function called is 
+virtual, but there is currently only one macro implementing this 
+function, located in pglx-codegen-macros.h. We will discuss this macro 
+below.
+
+  /* update pointers and generation */
+  result = sn->elt_path_walk(node->pads,ancestor->m, ancestor->pd, 
+ancestor->rep, path,
+              &(node->m), &(node->pd), &(node->rep));
+
+  PDCI_PATH_FREE(path);
+
+At this point, the node should have valid data pointers. However, in 
+case there was a problem with the path, we do a sanity check here on the 
+result of the path walk function.
+  if (result == P_ERR) {
+    // Something's wrong:
+    //sn->handle_failure(node->pads,sn,ancestor,ERROR_WARNING,"failed to 
+find element in path walk");
+    return P_ERR;
+  }
+Now, everything should be ok and the node has been successfully 
+revalidated. As a final step, we update the node's ptr_gen indicating 
+that its data pointers are in sync with its ancestors data pointers.
+
+  node->ptr_gen = ancestor->gen;
+
+  return P_OK;
+}
+
+  In order to better understand the make_valid function, we'll now 
+discuss a few of the functions that it depends on. First, though, we'll 
+describe the current implementation of paths. As we said above, a path 
+needs to be a set of directions that uniquely identify a node within an 
+element. Our solution records a list of the child indexes that, passed 
+in succession to get_kth_child - starting with the element node - would 
+return the desired node. Since, for a given node, a single index 
+uniquely determines a child of that node, a list of such indexes 
+uniquely determines a descendant of that node.
+  The PDCI_node_getPath function, therefore, constructs (a copy of) a 
+given node's path. Once again, for efficiency, the path is not stored 
+directly in the node and hence the function call is needed to recreate 
+the path. Once constructed, the path contains a reverse-ordered list of 
+the sequence of indexes from the element to the node and a value 
+indicating the length of the path. See include/path_walk.h for details 
+of the data structure implementing a path.
+  With this list, we call the smart-node path walk function. Here is the 
+current (macro) implementation:
+#define 
+SN_ELT_PATH_WALK_BODY(ty,eltTy,eltPdTy,eltMaskTy,padsIN,mIN,pdIN,repIN,pathIN,m_outIN,pd_outIN,rep_outIN)
+  eltTy    *c_rep = (eltTy *)(repIN);
+  eltPdTy  *c_pd  = (eltPdTy *)(pdIN);
+  eltMaskTy  *c_m   = (eltMaskTy *)(mIN);
+/* END_MACRO */
+
+#define SN_ELT_PATH_WALK_RET(eltTy,padsIN,pathIN,m_outIN,pd_outIN,rep_outIN)
+eltTy ## 
+_node_pathWalk((padsIN),c_m,c_pd,c_rep,(pathIN),(m_outIN),(pd_outIN),(rep_outIN))
+/* END_MACRO */
+
+This function simply calls the path_walk function specific to the type 
+of the smart node's element, inserting the appropriate casts. This 
+simplicity is due to the fact that for smart arrays, all elements have a 
+common type, and, hence, a common path walk function.
+  While the exact implemention of the path_walk function depends on the 
+type for which it is generated, its basic structure depends on the pads 
+type (e.g. struct, array, union, etc.). The differences in structure 
+reflect the structural differences of the kth_child functions, so 
+discussing the path_walk function for one pads type should be enough to 
+explain it for all pads types. Below we show the Pstruct path_walk 
+macro, from pglx-codegen-macros.h:
+#define STR_NODE_PATH_WALK_BODY_BEGIN()
+  Perror_t res = P_ERR;
+  PDCI_childIndex_t idx;
+ 
+  if (path.length > 0){
+If the path length is non-zero then we have not yet arrived at the 
+destination node.  Therefore, this branch will require that we 
+(recursively) call another path_walk function.
+First, we remove the first index from the path's index list.
+    /* modifies path */
+    idx = PDCI_PATH_GET(path);
+
+Now, we use the index to determine which child to visit next.
+    switch(idx){
+    case 0:
+If we're visiting the pd, then we know that there is no mask. So, we can 
+already set *m_out to NULL.
+      *m_out = NULL;
+As we're in the Pstruct macro, the pd is a structure pd. For an array, 
+it would be a sequenced pd. Etc. Notice that as the path variable was 
+already modified, we pass it directly to the child path_walk call - no 
+further modification is required.
+      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd 
+*)pd,path,pd_out,rep_out);
+      break
+/* END_MACRO */
+
+Now, what happens if the path length is zero? Then, there are no more 
+children to visit and we have arrived at our destination. Let's take a look:
+#define STR_NODE_PATH_WALK_BODY_END()
+    }
+  }else{
+We set all the out variables to the corresponding values from the node 
+we are visiting.
+    *rep_out = rep;
+    *pd_out = pd;
+    *m_out = m;
+
+Then, we indicate that the walk was successful, and we're done.
+    res = P_OK;
+  }
+/* END MACRO */
+
+  An additional note: for each child other than the pd, a corresponding 
+case statement is inserted into the path_walk function, via a call to 
+the NODE_PW_CASE macro, in the switch statement of the if-branch:
+#define NODE_PW_CASE(fieldNumIN,fieldTy,fieldNameIN)
+    case fieldNumIN:
+      res = fieldTy ## 
+_node_pathWalk(pads,&(m->fieldNameIN),&(pd->fieldNameIN),&(rep->fieldNameIN),path,m_out,pd_out,rep_out);      
+
+      break
+/* END_MACRO */
+The field cases are quite similar to the pd case. The only thing to note 
+is that a field (may) have a mask, and so the m_out variable is passed 
+on to the field's path_walk function.
+  In addition to the path walk macros, there are concrete path_walk 
+functions in libpglx/path_walk.c for all base types, pd types, Ploc, 
+Ppos, and PDCI_cstr. Their structure is essentially the same, so I will 
+not discuss them in detail. The only thing to note is that some of them 
+contain only terminating cases, with no recursive call to child 
+path_walk functions. This structure occurs in node types that cannot 
+contain children.
+  The final function of interest is PDCI_node_getPath(PDCI_node_t *node, 
+int curLength). While a path could be stored in its entirety for each 
+node, doing so can consume a fair amount of space. As the only 
+difference between a node's path and its parent's path is the node's 
+index with respect to its parent, that index is the only thing we store 
+in each node. Then, when we need the path, the PDCI_node_getPath 
+function recursively climbs up from the node to its ancestor, recording 
+the length of the path as it climbs. Upon reaching the ancestor it 
+allocates a path of the correct length, and then returns down the path 
+(via function call return), filling in the path as it does.

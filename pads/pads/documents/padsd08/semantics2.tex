@@ -1,0 +1,162 @@
+
+\newcommand{\rb}[1]{\raisebox{6ex}[0pt]{#1}}
+
+\begin{figure*}[t]
+\[
+\begin{array}{lcl}
+
+    {\cal C}\lsem\mathtt{\{ src=} e_{src}; 
+ &=& \{( \mathtt{meta} (\atime,\loc), \mathtt{payload} (\atime,\loc))
+          \setalt \loc \in  L
+          \;\mbox{and}\; \atime \in S
+     \}
+\\
+ \quad\ \   \mathtt{sched=} e_{sched};
+&&\quad\mbox{where} \\
+ \quad\ \  \mathtt{win=} e_{win};
+&& \qquad L = \esemantics{e_{src}}{\environment}\\
+ \quad\ \  \mathtt{pp=} e_{pp};
+&& \qquad S = \esemantics{e_{sched}}{\environment} \\
+ \quad\ \  \mathtt{format=} e_{f}; \}\rsem_{{\environment} \,
+   {\universe}}
+&& \qquad W = \esemantics{e_{win}}{\environment}\\
+&& \qquad \mathtt{timeout} =  
+     \lambda (x_t,(x_{at},x_s)).
+        \mathtt{if}\, x_{at} \leq x_t + W \,
+        \mathtt{then}\,  x_s \, \mathtt{else} \, \mathtt{None} 
+\\
+&& 
+\qquad \mathtt{arrival} =  
+     \lambda (x_t,(x_{at},x_s)).
+        \mathtt{if}\, x_{at} \leq x_t + W \,
+        \mathtt{then}\,  \mathtt{Some}\, x_{at} \, \mathtt{else} \, \mathtt{None} 
+ \\
+&& 
+\qquad \mathtt{meta} =  
+      \lambda (\atime,\loc).
+       (\atime,\{(\atime,\loc)\}, (\atime,\loc,\mathtt{arrival}(\atime,\universe(\atime,\loc))))
+\\
+&& \qquad \universe' =
+     \lambda (\atime, \loc). 
+           \esemantics{e_{pp}}{\environment}\, 
+                 (\mathtt{timeout}\, (\atime,\universe (\atime,\loc))) 
+ \\
+ && \qquad \mathtt{payload} =
+      \lambda (\atime, \loc).
+             \esemantics{e_f}{\environment}\; (\universe'(\atime, \loc))
+
+\\
+
+
+
+\\\\
+
+\semantics{\mathtt{all}\ \corefeed}{\environment}{\universe} 
+&=& 
+\csemantics{C}{\environment}{\universe}
+\\\\
+
+
+%New version: any rule
+\semantics{\mathtt{any}\ \corefeed}{\environment}{\universe}
+& = & \{ ((\atime, DS_\atime, {nest}_\atime), v_\atime)\ |\ \atime \in S\}\\
+&&
+\begin{array}{l}
+ \begin{array}{ll@{\hspace{1ex}}c@{\hspace{1ex}}l}
+ \mbox{where} & A        & = &\csemantics{C}{\environment}{\universe}\\
+              & S        & = & \{\mytime{\meta}\ |\ (\meta, v) \in A\}\\
+              & A_\atime & = & \{(\meta,v)\ | \ (\meta, v) \in A\ \mbox{and} \ \mytime{\meta} = \atime\}\\
+              & DS_\atime & = & \bigcup_{(\meta,v) \in A_\atime} \myds{\meta} \\
+              & G_\atime & = & \{(\meta,\some{v})\ | \ (\meta, \some{v}) \in A_\atime\}\\
+              & ({nest}_\atime,v_\atime) & = & \left\{ \begin{array}{lll}
+                                           (\myval{\meta},v)\; \mbox{where} \; (\meta,v) = \mbox{\selectOne}(G_\atime)  & \mbox{if} & |G_\atime| > 0\\
+                                           ((\atime,\generatedloc,\none), \none) & \mbox{if} & |G_\atime| = 0 \\
+                                           \end{array} \right.
+ \end{array}
+\end{array} 
+%%End New version: any rule
+\\\\
+
+\semantics{\emptyfeed}{\environment}{\universe} 
+ &=& \{\;\}
+\\\\
+\semantics{\onefeed{e_v}{e_t}}{\environment}{\universe} 
+ &=& \{
+   ((\esemantics{e_t}{\environment},
+    \{\;\}, 
+       (\esemantics{e_t}{\environment},\generatedloc,
+         \mathtt{Some}\;\esemantics{e_t}{\environment})),
+    \esemantics{e_v}{\environment})\}
+\\\\
+\semantics{\sfeed{e}}{\environment}{\universe} 
+ &=& \{((\atime,\{\;\},(\atime,\generatedloc,\mathtt{Some}\; \atime)), \atime) 
+          \setalt \atime \in  \esemantics{e}{\environment} 
+     \}
+\\\\
+%% \semantics{\lfeed{e}}{\environment}{\universe} 
+%%  &=& \{((\atime,\{\},\generatedloc), \atime) 
+%%           \setalt \atime \in  \esemantics{e}{\environment} 
+%%      \}
+%% \\\\
+\semantics{\feed_1 \unionfeed \feed_2}{\environment}{\universe} 
+ &=& \semantics{\feed_1}{\environment}{\universe} 
+     \bigcup
+     \semantics{\feed_2}{\environment}{\universe} 
+\\\\
+\semantics{\feed_1 \sumfeed \feed_2}{\environment}{\universe} 
+ &=& \{
+      ((\mytime{\meta},\myds{\meta},\inl{\myval{\meta}}),\inl{v}) \setalt 
+        (\meta,v) \in \semantics{\feed_1}{\environment}{\universe} 
+     \} \bigcup
+ \\
+&&
+     \{
+      ((\mytime{\meta},\myds{\meta},\inr{\myval{\meta}}),\inr{v}) \setalt 
+        (\meta,v) \in \semantics{\feed_2}{\environment}{\universe}
+     \}
+\\\\
+\semantics{(\feed_1, \feed_2)}{\environment}{\universe} 
+ &=&
+ \{((\mytime{\meta_1},\myds{\meta_1}\cup\myds{\meta_2}, (\myval{\meta_1},\myval{\meta_2})),(v_1,v_2)) 
+  \setalt 
+\\
+&& \quad
+     (\meta_1,v_1) \in \semantics{\feed_1}{\environment}{\universe} 
+     \; \mbox{and} \; 
+     (\meta_2,v_2) \in \semantics{\feed_2}{\environment}{\universe}
+     \; \mbox{and} \; 
+     \mytime{\meta_1} = \mytime{\meta_2}
+  \}
+\\\\
+\semantics{[\feed \bnfalt x \leftarrow e]}{\environment}{\universe} 
+ &=&
+ \{((\atime,\bigcup_{i=1\ldots{}k} \myds{\meta_i}, [\myval{\meta_1},\ldots,\myval{\meta_k}]),[v_1,\ldots,v_k]) \setalt 
+\\ && \quad
+    \forall i:1\ldots k.
+     (\meta_i,v_i) \in \semantics{\feed}{(\environment,x\mapsto z_i)}{\universe} 
+     \; \mbox{and} \; 
+     \mytime{\meta_i} =\atime
+  \} \\
+&&\quad\mbox{where} \quad\mbox{$[z_1,\ldots,z_k] = \esemantics{e}{\environment}$}
+\\\\
+\semantics{\comprehensionfeed{\feed_2}{x}{\feed_1}}{\environment}{\universe} 
+ &=& \{((\mytime{\meta_2},\myds{\meta_1} \cup \myds{\meta_2}, \myval{\meta_2}),v_2) 
+          \setalt (\meta_1, v_1) \in  \semantics{\feed_1}{\environment}{\universe} \; \mbox{and} \;
+          (\meta_2,v_2) \in \semantics{\feed_2}{(\environment,x\mapsto(\meta_1,v_1))}{\universe}  
+     \} 
+\\\\
+\semantics{\filterfeed{\feed}{e}}{\environment}{\universe} 
+ &=&
+\{(\meta,v) \setalt (\meta,v) \in \semantics{\feed}{\environment}{\universe} \; \mbox{and} \;
+            \esemantics{e \; (\meta,v)}{\environment} = \mathtt{true}
+\}
+\\\\
+\semantics{\letfeed{x}{e}{\feed}}{\environment}{\universe} 
+ &=& \semantics{\feed}{(\environment,x\mapsto\esemantics{e}{\environment})}{\universe} 
+\\
+\end{array}
+\]
+\caption{Feed Language Semantics.}
+\label{fig:semantics}
+\shrink
+\end{figure*}

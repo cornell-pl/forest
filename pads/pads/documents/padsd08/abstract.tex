@@ -1,0 +1,58 @@
+%The term {\em ad hoc data} refers to the billions of bytes of
+%non-standard and continuously evolving data spread across all computer
+%systems.  Such data includes server logs, distributed system
+%performance and debugging data, telephone call records, financial data
+%and online repositories of scientific data.
+% including genetic information, cosmology data and
+%global weather systems.
+
+This paper presents the design, theory and implementation of
+\padsd{}\footnote{We call the system \padsd{} because it helps users
+get their hands on things that are difficult to handle.
+}, a  domain-specific language that allows users to
+specify the provenance (the derivation history starting from the origins), 
+syntax and semantic properties of 
+collections of distributed data sources. In particular, \padsd{}
+specifications indicate 
+{\em where} to locate desired data, {\em how} to obtain it, {\em
+when} to get it or to give up trying, and {\em what}
+format it will be in on arrival.  The \padsd{} system compiles such
+specification into a suite of data-processing tools including 
+an archiver, a provenance tracking system, a database loading tool, 
+an alert system, an RSS feed generator and a
+debugging tool.  In addition, the system generates description-specific
+libraries so that developers can create their
+own applications. \padsd{} also provides a generic infrastructure
+so that advanced users can build new tools applicable to any 
+data source with a \padsd{} description.
+We show how \padsd{} may be used to specify data sources from two domains:
+CoMon, a monitoring system for PlanetLab's 800+ nodes, and Arrakis, a monitoring
+system for an AT\&T web hosting service.  
+We show experimentally that our system can scale to distributed
+systems the size of CoMon.  
+Finally, we provide a
+denotational semantics for \padsd{} and use this semantics to prove two important
+theorems.  The first shows that our denotational semantics respects the
+typing rules for the language, while the second demonstrates that our 
+system correctly maintains the provenance.
+
+
+
+
+% CoMon 
+% the Safari web
+% cache to SDSS star charts {\em [dpw: correct me ... cites]} to
+% PlanetLab's CoMon network monitoring system to the log files for the
+% Coral content distribution network.  We also provide a denotational
+% semantics for the language, which is helpful in understanding the
+% language's many features.
+
+% Descriptions written in \padsd{} are compiled into O'Caml libraries
+% with clean interfaces that support both polymorphic and monomorphic
+% programming.  We illustrate how to use the polymorphic interfaces to
+% program description-independent applications, including a selector
+% tool that can extract key elements of a data source as well as an
+% accumulator tool that collects simple statistical information about
+% the data.  The monomorphic interfaces allow users to develop
+% ``one-of'' data source-specific applications.
+

@@ -1,0 +1,23 @@
+1. 1st paragraph.  Not clear what "mined very profitably" means here. 
+Could you give a few examples of the kinds
+of applications(/information) that might mine(/be mined from) stream
+data?
+
+2. awkward sentence:
+"Such conditions might require that two fields of a pstruct
+are related via a particular function or that the elements
+of a sequence are in increasing order."
+Instead, how about:
+"Such conditions might require that two fields of a pstruct
+are related or that the elements
+of a sequence are in increasing order.  Conditions may
+be specified by a user-defined function or PADSL expression."
+
+3. "web server" =>? "Web server"
+
+4. In Section 3, might want to mention that records that
+do contain errors can still be accessed by the application.
+E.g., knowing how much of the data is erroneous and why
+can be as important as processing the error-free data.
+Also might want to mention what errors PADS cannot 
+recover from. 

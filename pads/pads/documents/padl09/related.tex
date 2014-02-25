@@ -1,0 +1,187 @@
+\section{Related Work}\label{sec:related}
+
+In the last two decades, there has been extensive work on 
+classic grammar induction problems
+\cite{vidal:gisurvey,gold:inference,bex+:dtd-inference,angluin:revesible-language-inference,Chen95bayesiangrammar},
+XML schema inference \cite{bex+:dtd-inference,garofalakis+:xtract}, 
+information extraction \cite{kushmerick-phd1997,hong:thesis,arasu+:sigmod03},
+and other related areas such as natural language processing 
+\cite{borkar+:text-segmentation,Heeman99:speech} and bioinformatics 
+\cite{kulp96generalized}. Machine learning techniques have played a
+very important role in these areas. 
+Our earlier paper \cite{fisher+:dirttoshovels}
+contains an extensive comparison of our basic format inference
+algorithm to others that have appeared in the literature.
+
+%
+%
+%
+%\cite{kushmerick-phd1997,arasu+:sigmod03,hong:thesis}, semi-structured data
+%\cite{soderland:whisk,Pinto+:texttables}, free-text 
+%\cite{borkar+:text-segmentation,Heeman99:speech,Chen95bayesiangrammar}, and
+%bioinformatics \cite{kulp96generalized}. In particular, compared to classic 
+%grammar induction techniques
+%\cite{angluin:revesible-language-inference},
+%machine learning methods have become an attractive option for handling
+%heterogeneous and complex data. Our earlier paper \cite{fisher+:dirttoshovels}
+%contains an extensive comparison of our basic format inference
+%algorithm to others that have appeared in the literature.
+%
+
+One of the most closely related pieces of work to this paper is Soderland's WHISK
+system \cite{soderland:whisk}, which extracts useful information from
+semi-structured text such as stylized advertisements from an online community
+service called Craig's List \cite{craigslist}.
+%Information extraction (IE) is a research field that is closely related to
+%our work in this paper. 
+In the WHISK system, the user is presented with a few online ads as training data 
+and is asked to label which bits of information to extract. Then the system learns
+extraction rules from labeled data and uses them to retrieve more wanted
+information from a much larger collection of data. 
+The WHISK system differs from our system in several ways. 
+First, WHISK, as well as other information extraction systems,
+have a clear and fixed token set, defined by words, numbers, punctuations, 
+HTML tags and user pre-specified semantic classes, etc. 
+Second, WHISK only focuses on certain bits of
+information, namely, single or multiple fields in records, 
+whereas we not only identify useful fields, but also obtain the 
+organization and relations of these fields by generating the complete 
+description of the entire data file. 
+Last, in WHISK, the extraction rules learned from a particular domain can only
+be used on data from the same domain. For example, rules learned from
+sample on-line rental
+ads are only relevant to other rental ads, and cannot be applied to
+software job postings. But the statistical token models we learned in our system can be
+applied to many different types of data, as shown in the experiments we
+have done in Section \ref{sec:eval}.  
+
+%Last, there is significantly less labeling efforts to use our system than 
+%the WHISK system. Our system exploits an automatic labeling 
+%infrastructure using \pads{} to generate
+%labels for hundreds of records from only a single hand-written description.
+%This is in contrast with having users hand label all training samples
+%in WHISK.
+
+Also closely related is the work on text table extraction by
+Pinto and others \cite{Pinto+:texttables}. Text tables can
+be viewed as special ad hoc data with a tabular layout. There are
+often clear delimiters between columns in the table, and table rows
+are well defined with new line characters as their boundaries.
+Because of its tabular nature, the data studied has less variation in general. 
+The goal of their work  
+is to identify tables embedded in free text and the types of table rows 
+such as header, sub-header and data row, etc, whereas we are learning the entire
+structure of the data. 
+To this end, Pinto et al. use Conditional Random Fields (CRFs) 
+\cite{LaffertyMP01:CRF},
+a statistical model that is useful in learning from sequence data with 
+overlapping features.
+Their system extracts features from white space characters,
+text between white spaces and punctuations. Although not explicitly
+stated, words, numbers and punctuations are used as fixed set of tokens. 
+ 
+%Anotherdifference with their work is that, the
+%learning task there only deals with dozens of lines in one table while 
+%we deal with thousands of tokens in one data file. 
+%Therefore, computational complexity is an important factor in 
+%the selection of machine learning algorithms. 
+
+To summarize, problems studied by previous efforts 
+in grammar induction and information extraction do not 
+typically suffer from token ambiguities that 
+we see in ad hoc data, because tags cleanly divide \xml{} and web-based data, 
+while spaces and known punctuation symbols separate natural language text.
+In contrast, the separators and token types found in ad hoc data sources such as
+web logs and financial records are far more variable and ambiguous.  
+
+%Format inference of ad hoc data is related to three main areas: 
+%{\em classic grammar induction}, {\em XML schema inference},
+%and {\em information extraction}. Classic grammar induction aims at
+%discovering a grammar for a language using both positive and
+%negative examples or positive examples only \cite{vidal:gisurvey}. 
+%Since there is no negative examples in our application, only the latter
+%is relevant to this paper. However, because learning a perfect
+%grammar using positive examples only is impossible for any superfinite class 
+%of languages \cite{gold:inference}
+%which includes regular expressions and context-free grammar (and also
+%\pads), previous research has focused on (1) limiting the class of
+%languages to non-superfinite class 
+%\cite{angluin:revesible-language-inference,bex+:dtd-inference}, or 
+%(2) learning an approximation using heuristics or 
+%probabilistic models \cite{hong:thesis,Chen95bayesiangrammar}.
+%XML schema inference involves learning a schema such as DTD or XSD
+%from a collection of XML documents \cite{bex+:dtd-inference,garofalakis+:xtract}.
+%In information extraction, the goal is to find interesting and relevant
+%bits of information from large amount of data such as 
+%web pages \cite{kushmerick-phd1997,arasu+:sigmod03} and 
+%free text \cite{soderland:whisk,Pinto+:texttables,borkar+:text-segmentation}.
+%These areas do not typically suffer from the token ambiguity problem that 
+%we see in ad hoc data, because tags cleanly divide \xml{} and web-based data, 
+%while spaces and known punctuation symbols separate natural language text.
+%In contrast, the separators and token types found in ad hoc data sources such as
+%web logs and financial records are far more variable and ambiguous.  
+
+%Classic grammar induction and structure discovery problems have been
+%studied for decades. \xml{}-documents are a typical source of
+%text-based data that possibly adheres to some structures represented by a
+%schema. ~\cite{garofalakis+:xtract} and ~\cite{bex+:inferring-xml-schema}
+%infers two \xml{} schema formalisms respectively -
+%\em{Document Type Definitions} (DTDs) and \em{XML Schema Definitions}
+%(XSDs). ~\cite{bex+:dtd-inference} is focused on inferring
+%concise DTDs by considering two class of DTDs with special
+%properties. In recent researches, statistical methods have been widely
+%used in grammar induction. ~\cite{kushmerick-phd1997} automatically learns the procedure
+%for extracting content from the web in the context of inductive
+%learning and accesses its learnability by
+%fitting the problem into PAC learning model. ~\cite{hong:thesis}
+%resolves a similar problem by explicit domain rules and a
+%hill-climbing inference algorithm. ~\cite{soderland:whisk} tackles
+%both semi-structured and free-text data, and uses covering algorithms.
+%It also shares a methodology with inductive learning. For free-text,
+%some syntactic and semantic pre-processing analysis is conducted in
+%addition to text extraction rules. ~\cite{Chen95bayesiangrammar}
+%employs a greedy heuristic search algorithm within a Bayesian
+%framework for probabilistic context-free grammar induction. 
+%
+
+%In addition to applying statistical models such as HMMs and Conditional
+%Random Fields (CRFs) to grammar induction problems 
+%\cite{borkar+:text-segmentation,Pinto+:texttables}, researchers have also
+%used these models extensively in other areas such as bioinformatics 
+%\cite{kulp96generalized} and natural language processing \cite{Heeman99:speech}.  
+%In this paper, we contribute to the literature on statistical
+%data processing by analyzing the effectiveness of statistical models
+%in a new application area, that of ad hoc data, which contains
+%markedly different characteristics from the most frequently studied
+%data processing domains.
+
+%The algorithm presented in this paper is a variant of the algorithm described
+%in our earlier paper~\cite{fisher+:dirttoshovels}.  We have made
+%substantial modifications, however, to incorporate probabilistic
+%parsing information into the tokenization and structure discovery
+%phases.  We have also added a new phase to the algorithm that
+%simplifies overly complex descriptions. Our earlier paper contains an
+%extensive comparison of our basic grammar induction
+%algorithm to others that have appeared in the literature.
+
+%
+%Besides grammar induction, researchers have also witnessed successes of
+%statistical and machine learning methods in a variety of other areas.
+%~\cite{borkar+:text-segmentation} extracts certain fields in records
+%from text using nested HMMs. ~\cite{Pinto+:texttables} utilizes
+%Conditional Random Fields (CRFs) to dig rich and overlapping features
+%with the purpose of identifying row positions and types in text-based
+%tables. Computational biology and natural language processing are also
+%two areas in which statistical methods play an important
+%role. ~\cite{kulp96generalized} predicts exons and introns in DNA
+%sequences by generalized HMMs. An early step of natural language
+%understanding is to assign part-of-speech (POS) tags to segments of
+%speech sentences and ~\cite{Heeman99:speech} employs decision tree
+%algorithms to address this task. These problems typically deal with
+%sequencial data, extract features from parts of the data and apply
+%machine learning methods to predict certain properties of these
+%parts. The data in our token ambiguity problem is different from these
+%data, and the learning methods in our system must achieve high
+%precision, while still only costs tolerable execution time for large
+%amount of data.
+

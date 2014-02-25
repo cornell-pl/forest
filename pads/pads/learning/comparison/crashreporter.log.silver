@@ -1,0 +1,239 @@
+Starting on files data/crashreporter.log
+440 records.
+
+Before reduction:
+Pstruct(Id = BTy_108 440)
+	[Date] (Id = BTy_0 440);
+	[White] (Id = BTy_1 440);
+	[Time] (Id = BTy_2 440);
+	[White] (Id = BTy_3 440);
+	[Pint] (Id = BTy_4 440);
+	[White] (Id = BTy_5 440);
+	[String] (Id = BTy_6 440);
+	[Other]([) (Id = BTy_8 440);
+	[Pint] (Id = BTy_9 440);
+	[Other](]) (Id = BTy_10 440);
+	Punion(Id = BTy_57 440)
+		Pstruct(Id = BTy_56 291)
+			Punion(Id = BTy_26 291)
+				Pstruct(Id = BTy_25 290)
+					[Other](:) (Id = BTy_12 290);
+					[White] (Id = BTy_13 290);
+					[String] (Id = BTy_14 290);
+					[White] (Id = BTy_15 290);
+					[String] (Id = BTy_16 290);
+					[White] (Id = BTy_17 290);
+					[String] (Id = BTy_18 290);
+					[White] (Id = BTy_19 290);
+					[String] (Id = BTy_20 290);
+					[White] (Id = BTy_21 290);
+					[String] (Id = BTy_22 290);
+					[Other](:) (Id = BTy_23 290);
+					[White] (Id = BTy_24 290);
+				End Pstruct;
+				Pstruct(Id = BTy_35 1)
+					[Other](:) (Id = BTy_27 1);
+					[White] (Id = BTy_28 1);
+					[String] (Id = BTy_29 1);
+					[White] (Id = BTy_30 1);
+					[String] (Id = BTy_31 1);
+					[White] (Id = BTy_32 1);
+					[String] (Id = BTy_33 1);
+					[White] (Id = BTy_34 1);
+				End Pstruct;
+			End Punion;
+			[Path] (Id = BTy_36 291);
+			Punion(Id = BTy_38 291)
+				[Empty] (Id = BTy_37 280);
+				Pstruct(Id = BTy_55 11)
+					Punion(Id = BTy_42 11)
+						Pstruct(Id = BTy_41 10)
+							[White] (Id = BTy_39 10);
+							[Host] (Id = BTy_40 10);
+						End Pstruct;
+						Pstruct(Id = BTy_46 1)
+							[White] (Id = BTy_43 1);
+							[Other](-) (Id = BTy_44 1);
+							[White] (Id = BTy_45 1);
+						End Pstruct;
+					End Punion;
+					[String] (Id = BTy_47 11);
+					Punion(Id = BTy_49 11)
+						[Empty] (Id = BTy_48 10);
+						Pstruct(Id = BTy_54 1)
+							[Other](:) (Id = BTy_50 1);
+							[White] (Id = BTy_51 1);
+							[Pint] (Id = BTy_52 1);
+							[Other](!) (Id = BTy_53 1);
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_107 149)
+			[Other](:) (Id = BTy_58 149);
+			[White] (Id = BTy_59 149);
+			[String] (Id = BTy_60 149);
+			Punion(Id = BTy_62 149)
+				[Empty] (Id = BTy_61 147);
+				Pstruct(Id = BTy_65 2)
+					[Other](() (Id = BTy_63 2);
+					[Other]()) (Id = BTy_64 2);
+				End Pstruct;
+			End Punion;
+			[White] (Id = BTy_66 149);
+			[String] (Id = BTy_67 149);
+			Punion(Id = BTy_69 149)
+				[Empty] (Id = BTy_68 145);
+				Pstruct(Id = BTy_70 4)
+					[White] (Id = BTy_71 4);
+					[String] (Id = BTy_73 4);
+					Punion(Id = BTy_106 4)
+						Pstruct(Id = BTy_90 2)
+							[White] (Id = BTy_74 2);
+							[String] (Id = BTy_75 2);
+							[White] (Id = BTy_76 2);
+							[String] (Id = BTy_77 2);
+							[White] (Id = BTy_78 2);
+							[String] (Id = BTy_79 2);
+							[Other](:) (Id = BTy_80 2);
+							[White] (Id = BTy_81 2);
+							[Pint] (Id = BTy_82 2);
+							[White] (Id = BTy_83 2);
+							[String] (Id = BTy_84 2);
+							[Other](:) (Id = BTy_85 2);
+							[White] (Id = BTy_86 2);
+							[String] (Id = BTy_87 2);
+							[White] (Id = BTy_88 2);
+							[String] (Id = BTy_89 2);
+						End Pstruct;
+						Pstruct(Id = BTy_105 2)
+							[Other](:) (Id = BTy_91 2);
+							[White] (Id = BTy_92 2);
+							[Other](() (Id = BTy_93 2);
+							[String] (Id = BTy_94 2);
+							[Other](/) (Id = BTy_95 2);
+							[String] (Id = BTy_96 2);
+							[Other]()) (Id = BTy_97 2);
+							[White] (Id = BTy_99 2);
+							[String] (Id = BTy_100 2);
+							[White] (Id = BTy_101 2);
+							[String] (Id = BTy_102 2);
+							[White] (Id = BTy_103 2);
+							[String] (Id = BTy_104 2);
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+	End Punion;
+End Pstruct
+
+Refined Ty:
+Pstruct(Id = BTy_108 440)
+	[Date] (Id = BTy_0 440);
+	[StringConst] " " (Id = BTy_1 440);
+	[Time] (Id = BTy_2 440);
+	[StringConst] " " (Id = BTy_3 440);
+	[IntConst] [2006] (Id = BTy_4 440);
+	[StringConst] " " (Id = BTy_5 440);
+	[Enum] {[StringConst] "crashdump", [StringConst] "crashreporterd", } (Id = BTy_6 440);
+	[StringConst] "[" (Id = BTy_8 440);
+	[Int] [120...29874] (Id = BTy_9 440);
+	[StringConst] "]: " (Id = BTy_10 440);
+	[Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", [StringConst] "Unable", [StringConst] "crashdump", [StringConst] "mach_msg", } (Id = BTy_14 440);
+	Switch(BTy_14)(Id = BTy_57 440):
+	case [Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", }:
+		Pstruct(Id = BTy_56 291)
+			[StringConst] " " (Id = BTy_15 291);
+			[Enum] {[StringConst] "to", [StringConst] "writing", } (Id = BTy_16 291);
+			[StringConst] " " (Id = BTy_17 291);
+			[Enum] {[StringConst] "crash", [StringConst] "re-launch", } (Id = BTy_18 291);
+			[StringConst] " " (Id = BTy_19 291);
+			Poption(Id = BTy_26 291)
+				[StringConst] "report to: " (Id = BTy_20 290);
+			End Poption;
+			[Path] (Id = BTy_36 291);
+			Poption(Id = BTy_38 291)
+				Pstruct(Id = BTy_55 11)
+					[StringConst] " " (Id = BTy_39 11);
+					Punion(Id = BTy_42 11)
+						[Host] (Id = BTy_40 10);
+						Pstruct(Id = BTy_46 1)
+							[Other](-) (Id = BTy_44 1);
+							[White] (Id = BTy_45 1);
+						End Pstruct;
+					End Punion;
+					[Enum] {[StringConst] "CGSError", [StringConst] "g", } (Id = BTy_47 11);
+					Poption(Id = BTy_49 11)
+						Pstruct(Id = BTy_54 1)
+							[Other](:) (Id = BTy_50 1);
+							[White] (Id = BTy_51 1);
+							[IntConst] [1025] (Id = BTy_52 1);
+							[Other](!) (Id = BTy_53 1);
+						End Pstruct;
+					End Poption;
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+	case [Enum] {[StringConst] "Unable", [StringConst] "crashdump", [StringConst] "mach_msg", }:
+		Pstruct(Id = BTy_107 149)
+			Poption(Id = BTy_62 149)
+				[StringConst] "()" (Id = BTy_63 2);
+			End Poption;
+			[StringConst] " " (Id = BTy_66 149);
+			[Enum] {[StringConst] "reply", [StringConst] "started", [StringConst] "to", } (Id = BTy_67 149);
+			Poption(Id = BTy_69 149)
+				Pstruct(Id = BTy_70 4)
+					[StringConst] " " (Id = BTy_71 4);
+					[Enum] {[StringConst] "determine", [StringConst] "failed", } (Id = BTy_73 4);
+					Switch(BTy_73)(Id = BTy_106 4):
+					case [StringConst] "determine":
+						Pstruct(Id = BTy_90 2)
+							[White] (Id = BTy_74 2);
+							[StringConst] "task_t" (Id = BTy_75 2);
+							[White] (Id = BTy_76 2);
+							[StringConst] "for" (Id = BTy_77 2);
+							[White] (Id = BTy_78 2);
+							[StringConst] "pid:" (Id = BTy_79 2);
+							[White] (Id = BTy_81 2);
+							[IntConst] [95] (Id = BTy_82 2);
+							[White] (Id = BTy_83 2);
+							[StringConst] "name:" (Id = BTy_84 2);
+						End Pstruct;
+					case [StringConst] "failed":
+						Pstruct(Id = BTy_105 2)
+							[StringConst] ":" (Id = BTy_91 2);
+							[White] (Id = BTy_92 2);
+							[StringConst] "(ipc/send)" (Id = BTy_93 2);
+							[White] (Id = BTy_99 2);
+							[StringConst] "invalid" (Id = BTy_100 2);
+						End Pstruct;
+					End Switch;
+					[StringConst] " " (Id = BTy_86 4);
+					[Enum] {[StringConst] "Exited", [StringConst] "destination", } (Id = BTy_87 4);
+					[StringConst] " " (Id = BTy_88 4);
+					[Enum] {[StringConst] "port", [StringConst] "process", } (Id = BTy_89 4);
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+	End Switch;
+End Pstruct
+
+====== Timing information ======
+Tokenization time = 0.142
+Measure1 time = 0.012
+Reduce1 time = 1.276
+Reduce2 time = 2.268
+Reduce3 time = 0.277
+Measure2 time = 0.012
+================================
+
+Outputing partitions to directory: gen/
+Opening: gen/Ty, length 6
+opening: gen/Complexity, length 14
+opening: gen/Timing, length 10
+Excutable directory:/Users/kzhu/pads/learning/golden
+copy command: cp /Users/kzhu/pads/learning/golden/GNUMakefile.output gen/GNUmakefile
+
+Completed data/crashreporter.log

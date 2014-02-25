@@ -1,0 +1,346 @@
+\chapter{Pstructs}
+\label{chap:structs}
+\cutname{structs.html}
+\Pstruct{}s are used to describe sequences of values with
+potentially unrelated types.  Intuitively, they correspond to
+record-like structures \external ly and \C{}-\cd{structs} in memory.
+\section{Syntax}
+\label{sec:structs-syntax}
+The syntax for \Pstruct{}s is given by the following BNF grammar fragment:
+\tskip{}
+\begin{tabular}{rcl}
+\nont{qualifier}  & \is{} & \Pomit{} \alt{} \Pendian{}\\[1ex]
+\nont{qualifiers}  & \is{} & \nont{qualifier} \alt{} \nont{qualifier} \nont{qualifiers}\\[1ex]
+\nont{constraint} & \is{} & : \nont{predicate}\\[1ex]
+\nont{ty}   & \is{} & \nont{c\_ty} \alt{} \nont{p\_ty}\\[1ex]
+\nont{full\_field} & \is{} & \opt{\nont{qualifiers}}
+     \nont{p\_ty}  identifier \opt{\nont{constraint}}; \opt{\nont{p\_comment}} \\[1ex]
+\nont{comp\_field} & \is{} & \Pcompute{} \opt{\Pomit{}} \nont{ty} identifier \cd{=} \nont{expression} \opt{\nont{constraint}};\\[1ex]
+\nont{literal\_field} & \is{} & \nont{p\_coreliteral};\\[1ex]
+\nont{array\_field} & \is{} & \opt{\nont{qualifiers}} \nont{p\_ty} `['\nont{p\_size\_spec}`]' identifier 
+                             \opt{: \nont{p\_array\_constraints}} ; \opt{\nont{p\_comment}} \\[1ex] 
+\nont{opt\_field} & \is{} & \opt{\nont{qualifiers}} \Popt{} \nont{p\_ty} identifier 
+                          \opt{: \nont{opt\_predicates}}; \opt{\nont{p\_comment}}\\[1ex]
+\nont{field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field} 
+                       \alt{} \nont{array\_field} \alt{} \nont{opt\_field} \\[1ex]
+\nont{fields} & \is{} & \nont{field} \alt{} \nont{field} \ \nont{fields}\\[1ex]
+\nont{struct\_ty} & \is{} &  \Pstruct{} identifier \opt{\nont{p\_formals}} \{\\
+&& \quad \nont{fields}\\
+&& \}\ \opt{ \Pwhere{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
+\end{tabular}
+
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment are defined elsewhere.
+Predicates (\nont{predicate}) are described in \secref{sec:common-predicates}.
+\padsl{} types (\nont{p\_ty}) and formal parameters (\nont{p\_formals})
+are described in \secref{sec:common-parameterization}.
+\PADS{} comments (\nont{p\_comment}) are described in \secref{sec:common-comments}.
+Core literals (\nont{p\_coreliteral})  are described in
+\secref{sec:common-literals}.
+For in-line arrays, size specifications (\nont{p\_size\_spec}) and array constraints 
+appear in \chapref{chap:arrays}.
+Option constraints (\nont{opt\_predicates}) are defined in \secref{opts-syntax}.
+Expressions (\nont{expression}) represent any \C{} expression, 
+while \nont{c\_ty} denotes any \C{} type.
+
+
+\subsection{Example}
+The following \Pstruct{} describes the request portion of a
+common-log format web-server log, an example of which is:
+\begin{center}
+\begin{verbatim}
+GET /research.att.com/projects/PADS/index.html HTTP/1.0
+\end{verbatim}
+\end{center}
+\inputCode{code/httpRequest}
+%
+\noindent
+The \Pstruct{} \cd{http_request_t} has full fields \cd{meth},
+\cd{req_uri}, and \cd{version} that use the (omitted) auxiliary types
+\cd{http_method_t},
+\cd{Pstring}, and
+\cd{http_v_t} to describe
+the HTTP method, URI, and  version formats, respectively.  
+It has literal fields \literal{\cd{'\escdquote'}} and
+\literal{\cd{' '}} to describe the quotations and spaces in the external
+representation. 
+The \cd{version} field uses the \C{}
+function \cd{checkVersion}:
+
+\inputCode{code/checkVersion}
+%
+\noindent
+to ensure that the obsolete HTTP methods
+\cd{LINK} and \cd{UNLINK} are only used with HTTP version \cd{1.0}.
+
+
+\subsection{Full fields}
+\label{sec:structs-full-fields}
+Each full field in a \Pstruct{} must include the name of the field
+and its type.  
+The name serves to document the data and to permit later reference.  
+The type determines how that piece of the \Pstruct{} will be
+processed.  
+\cut{If the field type is parameterized 
+(\cf{} \secref{sec:common-parameterization}), the field type must be
+followed by appropriate actual parameters, as in the \cd{Pstring} type
+of the \cd{req_uri} field in the \cd{http_request_t} example.}
+Optionally, each full field may be preceeded by a qualifier sequence
+\cf{} \secref{sec:structs-qualifiers}.  
+
+Each full field may be followed by a constraint (\cf{}
+\secref{sec:common-predicates}).  Such a constraint is used to express
+the conditions under which a properly parsed value of the field type
+is a legal value for the field.  The field itself and all earlier
+fields in the \Pstruct{} are in scope in the constraint, as are any
+parameters to the \Pstruct{}.  In the example, the \cd{checkVersion}
+predicate on the \cd{version} field uses the values of the \cd{meth}
+and \cd{version} fields to determine if the \cd{version} value is
+legal. 
+If the constraint associated with a field evaluates to false
+(\ie{}, zero) after parsing, then the parse descriptor returned with
+the in-memory representation will indicate a user-constraint violation
+has occurred for the field.
+
+Each full field in a \Pstruct{} may optionally be followed by a \PADSL{}
+comment. Such comments are reflected by the \PADS{} compiler into the
+output library as comments. 
+
+\subsection{Computed fields}
+\label{sec:structs-computed-fields}
+Instead of being read from an external source, the value of a
+computed field is set from an initializing expression.  Such fields
+are marked by the \Pcompute{} keyword.  Each such field gives its name
+and the type to be included in the in-memory representation.  
+If the given type is a \pads{} type, the field will behave exactly as
+if it were read from the external source.  With a \C{} type, some
+services may not be available in the generated library, such as
+automatic accumulation and printing.
+Each computed field
+also gives a \C{} expression to initialize the field.  This expression
+must have the type declared for the field.  
+Previously read fields in the \Pstruct{} and any parameters
+to the \Pstruct{} are in scope in this expression.
+Like full fields, computed fields admit the \Pomit{} qualifier and may
+have an associated constraint.
+
+The \cd{computeExample} \Pstruct{} sets the value of its computed
+field \cd{index} from the full field \cd{base} and the \cd{offset}
+parameter. 
+
+\inputCode{code/struct.computedfield}
+
+\subsection{Literal fields}
+\label{sec:structs-literal-fields}
+Literal fields can be character, string, or regular expression literals.  They are 
+written using the notation described in \secref{sec:common-literals}.  
+
+In addition to specifying literals to consume from the external
+representation, literal fields also play a role in error recovery.  If
+the generated parser encounters a syntactic error while parsing a full
+field, causing it to enter panic mode (\cf{}
+\secref{sec:common-error-model}), the parser will scan to find the next
+literal, marking all intervening fields as errors in the
+associated parse descriptor.  The library discipline has parameters
+that allow the library user to tune the extent of such scanning
+(\cf{} \secref{sec:library-customization-scanning-extent}).
+
+\subsection{In-line declarations}
+\label{sec:structs-inline}
+For conciseness, \pads{} allows anonymous option and array types to be
+declared within \Pstruct{} field declarations. 
+
+\subsubsection{Array declarations}
+\label{sec:structs-arrays-inline}
+In-line array declarations include a size specification after the type
+of the field. For example, the following \Pstruct{} matches a resolved
+IP address (of the form \cd{135.27.24.12}) and an integer recording a
+number of bytes, separted by a vertical bar:
+
+\inputCode{code/array-inplace}
+%
+\noindent
+After the field name, \pads{} permits an optional colon followed by
+array constraints.  Details about size specifications, array
+constraints, and the in-memory representation of arrays may be found
+in \chapref{chap:arrays}. 
+
+\subsubsection{Option declarations}
+\label{sec:structs-options-inline}
+In-line options are marked by the keyword \Popt{}.  For example, the
+following \Pstruct{} matches two optional integers separated by a
+vertical bar and terminated by a newline.
+
+\inputCode{code/simple-inline-opt}
+%
+\noindent
+This declaration is equivalent to the \cd{entry1} type defined in
+\secref{sec:opt-examples}.
+Fields with in-line option declarations admit the option form of
+constraints, which are described in \secref{sec:opt-constraints}.
+As an example, the \Pstruct{} \cd{entry4} 
+
+\inputCode{code/constraint-inline-opt}
+%
+\noindent
+uses option constraints to specify when the option should match.
+Type \cd{entry4} is equivalent to the type \cd{entry3} defined in
+\secref{sec:opt-examples} .
+
+Details about the in-memory representation of options appear in
+\secref{sec:opts-rep}.
+
+
+\subsection{Qualifiers}
+\label{sec:structs-qualifiers}
+Non-literal fields can take one or more qualifiers.
+\begin{description}
+\item[\Pomit{}] This qualifier indicates that the field
+  should not be included in the in-memory representation of the
+  \Pstruct{}.  Because they are not included in-memory, omitted fields
+  cannot be accumulated or printed.
+\item[\Pendian{}] During initialization, the \PADS{} library
+  determines the endian-ness of the underlying machine and stores the
+  result in the library handle.  Each library handle discipline stores
+  the endian-ness of the data being parsed, initially assuming the
+  endian-ness of the data matches that of the machine.  The \Pendian{}
+  qualifier directs the generated parser to check the endian-ness of
+  the data; it can only be used in the presence of a user constraint.
+  The qualifier causes the parser to read the field and check the
+  associated constraint.  If the constraint is violated, the bytes
+  associated with the field are swapped, and the constraint is
+  re-tested.  If this second attempt succeeds, the endian-ness of the
+  data is toggled in the library discipline.  The value of the data
+  endian-ness flag can also be set programmatically (\cf
+  \secref{sec:library-customization-endian}).
+\end{description}
+
+
+\subsection{Optional \texttt{Pwhere} clause}
+If given, a \Pwhere{} clause expresses constraints over the entirety
+of a \Pstruct{} value.  The values of all previous fields and any
+parameters to the \Pstruct{} are in scope.  Within the context of a 
+\Pparsecheck{} clause, constants \cd{begin} and \cd{end}, each of type 
+\Ppost{} are available.  Constant \cd{begin} is bound to the input
+position of the beginning of the \pstruct{}; \cd{end} is bound to its end.
+If the predicate given in
+the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
+in the associated parse descriptor will indicate a user-constraint
+error has occurred.  
+
+The \Pwhere{} clause in the \cd{whereExample} \Pstruct{} ensures
+that the sum of the first two fields is less than the given limit.
+
+\inputCode{code/struct.whereclause}
+
+\section{Generated library}
+\subsection{In-memory representation}
+\label{sec:structs-rep}
+The in-memory representation of a \Pstruct{} is a \C{} struct of the
+same name.  Each field of the \C{} struct corresponds to a full or
+computed field of the \Pstruct{}.  The type of each full field in
+the \C{} struct is the in-memory representation of the \PADSL{} type
+associated with the field.  The type of each computed field is 
+the given \C{} type. 
+
+The \C{} type \cd{http_request_t} is the in-memory representation of
+the \PADSL{} type of the same name.
+
+\inputCode{code/ai.httpRequestRep}
+%
+\noindent
+The type \cd{Pstring} is the in-memory representation of the base
+type \cd{Pstring} (\cf{} \chapref{chap:base-types}).  Note that literal fields
+do not appear in the in-memory representation. 
+
+\subsection{Mask}
+\label{sec:structs-masks}
+The mask of a \Pstruct{} with name \cd{myStruct} is a \C{} struct 
+with name \csmSuf{\cd myStruct}.  For each full field in
+\cd{myStruct}, there is a corresponding field in the mask struct, the
+type of which is the mask type for
+the field.  In addition, there is a 
+\cd{structLevel} field, which has the base mask type.  This field allows
+library users to toggle operations at the level of the structure as a
+whole. 
+
+For example, the mask type \csmSuf{http\_request\_t} has the
+following structure:
+
+\inputCode{code/ai.httpRequestCSM}
+
+\subsection{Parse descriptor}
+\label{sec:structs-parse-descriptors}
+The parse descriptor of a \Pstruct{} with name \cd{myStruct} is a \C{}
+struct with name \pdSuf{myStruct}.  This struct has the fields
+described in \secref{sec:common-parse-descriptor}. In addition, for
+each full field in \cd{myStruct}, there is a corresponding field in
+the parse descriptor struct, the type of which is the parse descriptor
+type for the field.
+
+For example, the parse descriptor type \pdSuf{http\_request\_t} has
+the following structure:
+
+\inputCode{code/ai.httpRequestPD}
+
+\subsection{Operations}
+The operations generated by the \pads{} compiler for a \Pstruct{} are
+those described in \chapref{chap:common-features}.  For the \Pstruct{}
+\cd{http_request_t}, the prototypes of the generated functions appear
+in\figref{figure:pstruct-ops}
+\begin{figure}
+\inputCode{code/ai.httpRequestOps}
+\caption{Prototypes of operations generated for
+  the \Pstruct{} \texttt{httpRequest}.}
+\label{figure:pstruct-ops}
+\end{figure}
+
+\subsubsection{Read function}
+The error codes for \Pstruct{}s are:
+
+\tskip{}
+\begin{center}
+\begin{tabular}{l|p{3in}}
+ Code                          & Meaning \\ \hline
+ \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
+ \cd{P_STRUCT_FIELD_ERR}        & Indicates
+                                    that an error occurred during
+                                    parsing one of the fields of
+                                    the \Pstruct{}. The parse
+                                    descriptor for each full field with an
+                                    error will contain more
+                                    information describing the precise
+                                    nature of the error.\\[1ex]
+ \cd{P_STRUCT_EXTRA_BEFORE_SEP} & Indicates that there were
+                                    unexpected data before a 
+                                    literal field in the \Pstruct{}.\\[1ex]
+\cd{P_MISSING_LITERAL}          & Indicates that the read function
+                                    failed to find a literal field\\[1ex]
+
+\end{tabular}
+\end{center}
+
+\noindent
+If multiple errors occur during the parsing of a \Pstruct{}, the
+\cd{errCode} field will reflect the first detected error.  The parse
+descriptors for nested pieces will describe any errors detected while
+reading those pieces.
+
+\mywarning{At the moment, read functions do not check that all
+referenced data in constraint expressions are meaningful before
+checking the constraint.  Referenced data might be meaningless either
+because there was an error parsing earlier data or because the
+supplied mask directed the read function to skip the field.}
+
+\subsubsection{Accumulator functions}
+Accumulator functions for \Pstruct{}s are described in
+\chapref{chap:accumulators}. 
+
+\subsubsection{Histogram functions}
+Histogram functions for \Pstruct{}s are described in
+\chapref{chap:histogram}. 
+
+\subsubsection{Clustering functions}
+Clustering functions for \Pstruct{}s are described in
+\chapref{chap:cluster}. 

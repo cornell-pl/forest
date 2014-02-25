@@ -1,0 +1,112 @@
+%\documentclass[fleqn]{article}
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix,endnotes,xspace,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+\usepackage{epsfig}
+\usepackage{code}
+
+% These packages are included to support automatic conversion of .eps to .pdf
+% by TexShop. Added by yhm.
+\usepackage{graphicx}
+\usepackage{epstopdf} 
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+\begin{document}
+\title{\Large \bf Functional Specifications for Archiving Distributed Data}
+
+\author{
+{\rm Kenny Q. Zhu} \\
+Princeton University 
+\and
+{\rm Daniel S. Dantas}\\
+Princeton University 
+\and
+{\rm Kathleen Fisher} \\
+AT\&T Labs Research
+\and
+{\rm Limin Jia}\\
+University of Pennsylvania
+\and
+{\rm Yitzhak Mandelbaum} \\
+AT\&T Labs Research
+\and
+{\rm Vivek Pai} \\
+Princeton University 
+\and
+{\rm David Walker} \\
+Princeton University 
+}
+
+%% \authorinfo{Kathleen Fisher}{
+%% 	   AT\&T Labs Research}
+%%        {\mono{kfisher@research.att.com}}
+%% \authorinfo{Yitzhak Mandelbaum}{
+%% 	   AT\&T Labs Research}
+%%        {\mono{yitzhakm@research.att.com}}
+%% \authorinfo{David Walker}{
+%% 	   Princeton University}
+%%        {\mono{dpw@CS.Princeton.EDU}}
+%% \authorinfo{Kenny Q. Zhu}{
+%%            Princeton University}
+%%        {\mono{kzhu@CS.Princeton.EDU}}
+
+\input{definitions}
+
+\maketitle{}
+
+%\begin{abstract}  
+%\input{abstract}
+%\end{abstract}
+
+\section {Introduction}
+\label{sec:intro}
+\input{intro}
+
+%\section{Running Examples}
+%\label{sec:examples}
+%\input{examples.tex}
+
+\section{\padsd{}: Introduction by Example}
+\label{sec:informal}
+\input{informal.tex}
+
+\section{\padsd{}: Tool Generation}
+\label{sec:programming}
+\input{tools}
+%\input{programming}
+
+%\section{\padsd{} Semantics}
+%\label{sec:semantics}
+%\input{language}
+
+%\section{\padsd{} Implementation and Evaluation}
+%\label{sec:implementation}
+%\input{implementation}
+
+%\section{Related Work}
+%\label{sec:related}
+%\input{related}
+
+\section{Conclusions}
+\label{sec:conclusions}
+\input{conclusion}
+
+{\em Acknowledgments.}
+This material is based upon work 
+supported by the NSF under grants 0612147 and 0615062.
+Any opinions, findings, and conclusions or recommendations expressed in 
+this material are those of the authors and do not necessarily reflect 
+the views of the NSF.
+
+\bibliographystyle{abbrv}
+\bibliography{pads,vivek}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+

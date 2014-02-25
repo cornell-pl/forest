@@ -1,0 +1,49 @@
+GNUmakefile
+  makefile describing process of making application.
+
+config.sml
+  contains parameters to algorithm and default values
+
+data
+  directory with sample data files
+
+learn 
+  script that invokes learning program.
+
+lib
+  directory with platform-dependent heap images; referenced in learn script
+
+main.cm
+  Compilation manager file listing the files involved in this project.
+
+main.sml
+  Driver program for learning program.
+
+parseCmdLin{-sig).sml
+  Signature and Structure with support for command-line processing
+
+print.sml
+  Routines related to dumping data structures to file.
+
+structure.sml
+  Functions related to the structure discovery portion of format
+  inference.
+
+tokens.lex
+vanilla.lex
+  Lexer file with regular expressions to describe tokens.
+
+tokens.lex.sml
+vanilla.lex.sml
+  Generated file for doing tokenization of raw input file.
+
+tokens.sml
+  obsolete file
+
+types.sml
+  Data structure for types.
+
+utils.sml
+  Generic utility functions.
+
+

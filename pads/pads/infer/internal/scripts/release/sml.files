@@ -1,0 +1,4 @@
+src/*.sml
+src/*.cm
+examples/gold/ir/*.sml
+examples/gold/ir/*.cm

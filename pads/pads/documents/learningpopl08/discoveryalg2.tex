@@ -1,0 +1,40 @@
+\begin{figure}
+{\small
+\begin{verbatim}
+type description (* an IR description *)
+type chunk       (* a tokenized chunk *)
+type chunks = chunk list
+
+(* A top-level description guess *)
+datatype prophecy =
+   BaseProphecy   of description
+ | StructProphecy of chunks list 
+ | ArrayProphecy  of chunks * chunks * chunks
+ | UnionProphecy  of chunks list
+
+(* Guesses the best top-level description *)
+fun oracle : chunks -> prophecy
+
+(* Implements a generic inference algorithm *)
+fun discover (cs:chunks) : description =
+ case (oracle cs) of
+   BaseProphecy b => b
+
+ | StructProphecy css => 
+     let Ts = map discover css in
+     struct { Ts }
+
+ | ArrayProphecy (csfirst,csbody,cslast) => 
+     let Tfirst = discover csfirst in
+     let Tbody  = discover csbody  in
+     let Tlast  = discover cslast  in
+     struct { Tfirst; array { Tbody }; Tlast; }
+
+ | UnionProphecy css => 
+     let Ts = map discover css in
+     union { Ts }
+\end{verbatim}
+}
+\caption{A generic structure-discovery algorithm in Pseudo-ML.} \shrink
+\label{fig:structure-discovery}
+\end{figure}

@@ -1,0 +1,78 @@
+Outline for paper:
+
+Intro
+ - A description of the kinds of systems we are trying to facilitate
+    - Table of sample applications/uses
+    - what are our assumptions about the domain: errors, latency, missing values, etc.
+ - Why is this kind of task difficult?
+ - Review of other solutions to same task
+    state of practice, existing solutions
+ - What is our solution?
+ - Why is it effective?
+    - short declarative code so easy to see what is being done
+    - boilerplate code managed by the system
+    - lowers level of expertise required to write such code
+    - multiple artifacts
+
+Related Work
+ - xml-based and other monitoring systems (eg: Ganglia, CoMon)
+ - web mashups
+ - map/reduce
+
+Running Examples
+  - Introduce running examples (CoMon + Ningaui)
+  - Explain data sources, properties and needed applications
+
+Language Design
+  - Explain language constructs by how they appear in running examples
+  - Use other examples as necessary to convey other constructs 
+    (need to make sure we have examples for all constructs)
+  - Summarize section with syntax chart for surface language
+
+System Architecture & Applications
+  - subsection: overall system architecture with picture
+      - what pieces get generated per pml description (parser, printer, 
+          traversal) and what parts per fml description (driver for fetching
+          engine)
+      - how generated pieces interact with stub code 
+  - subsection: generic applications
+      - describe each application
+      - show interface to application and how to invoke
+      - show results in pictures/figures for running examples
+  - subsection: programming interface
+      - explain basic interface for feeds -- show functions map, iter, fold
+      - explain more advanced interface feeds with errors & meta-deta
+      - explain even more advanced generic programming interface briefly?
+      - explain how these interfaces were used in connection with running
+          examples
+  - subsection: experimental evaluation
+      - graph of scaling properties of fetching engine? Compare with CoMon.
+      - measure & graph scaling of ping description?
+      - measure performance of several tools (accumulator, RSS feed generator,
+        RRD tool generator, ad hoc program translator, printer?) 
+        and report numbers.
+      - is there a way to illustrate that our code is much shorter, easier to
+            read than other code?  eg: can we compare with CoMon Code
+
+Optional/Questionable?:  Semantics section
+  [meta-question does having this section improve the paper for OSDI?]
+  - transition:  in order to use the programming infrastructure above, we need
+      to know how the described data is translated into data structures 
+      programmers can use.  We have created a "type system" to explain
+      this process.  
+  - explain judgement form for typing rules and how to read the notation
+      (also perhaps explain *why* pl people use this sort of notation and
+       what it's high level advantages are -- eg: it's an "industry standard",
+       it's good for verification,
+       can be translated directly into logical frameworks, proof techniques
+       are well understood and constantly improved by the community.)
+  - should we include the set-based semantics as well?  will we have space?
+
+Future Work:
+  - generating fetching engines to execute concurrently on multiple machines
+  - adding CoMon's visualization engine on as a tool
+  - adding support for BigTable and/or AT&T's HomeDepot
+  - support for lazy CoMon-style tool gen
+
+Conclusion:
+  - we rock.

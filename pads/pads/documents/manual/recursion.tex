@@ -1,0 +1,238 @@
+\chapter{Precurs}
+\label{chap:recursion}
+\cutname{recursion.html}
+
+\Precur{} supports the description of recursive (\ie{},
+tree-structured) data.
+
+\section{Syntax}
+\label{sec:recur-syntax}
+The syntax for \Precur{} is given by the following BNF grammar fragment:
+
+\begin{tabular}{rcl}
+\nont{recur\_ty} & \is{} & \Precur{} \opt{(\nont{p\_ty})} identifier  \opt{\nont{p\_formals}};\\
+                 & \alt{} & \Precur{} \nont{struct\_ty} \\
+                 & \alt{} & \Precur{} \nont{union\_ty}\\[4ex]
+\end{tabular}
+
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment were
+defined previously:
+\padsl{} types (\nont{p\_ty}) and parameter lists (\nont{p\_formals})
+in \secref{sec:common-parameterization}, \nont{struct\_ty} in
+\secref{sec:structs-syntax}, and \nont{union\_ty} in \secref{sec:unions-syntax}. 
+
+\subsection{Examples}
+The \Precur{} construct has two components: a (forward) declaration
+and a definition. The forward declaration allows later types to refer
+to the recursive type before its definition, just as in \C{}. The
+definition specifies the structure of the recursive data structure.
+Currently, the definition can be either a \Pstruct{} or \Punion{}.
+
+We begin this example with a simple data fragment encoding a sorted
+binary tree containing the numbers 3,4,7,9, and 10.
+\begin{center}
+\begin{verbatim}
+(3,((4,(7,9)),10))
+\end{verbatim}
+\end{center}
+In this encoding (based on the Newick format~\cite{newick}), a leaf is
+an integer while a full tree is a matched pair of parentheses enclosing two
+child trees separated by a comma. This encoding is naturally described
+recursively, as shown in the simple format below:
+\inputCode{code/binarytree}
+
+In this example, types \cd{tree} and \cd{fullTree} are mutually
+recursive. As recursive types are treated differently than other
+types, we must explicitly designate at least one of them as a
+recursive type.  In this example, we choose \cd{tree} to be the
+recursive type and so begin with a forward declaration of \cd{tree} so
+that it may be referenced in \cd{fullTree}.
+
+\section{Generated library}
+
+\Precur{}s are different than other types in two important ways.
+First, in \C{}, mutual recursion (of both functions and types) is handled
+through forward declarations. Therefore, for every recursive type, the
+compiler generates type and function forward declarations in addition
+to the standard type and function definitions.
+
+Second, in general, we can't know the size of a data source described
+with recursive types. Therefore, the data structures corresponding to
+recursive types must be dynamically allocated. To accomplish this, the
+compiler generates two types for each of the generated data
+structures. One is an anonymous~\footnote{For technical reasons, we do
+  not actually generate an anonymous type, but rather generate for the
+  type a fresh name that is not chosen by the user.} type that is
+generated from the recursive type's definition. The other is a named
+type (where the name corresponds to the name of the recursive type)
+that is a pointer to the anonymous type. 
+
+We will use the \cd{tree} examples to illustrate the data structures
+and functions generated for recursive types.
+
+\subsection{In-memory representation}
+\label{sec:recur-rep}
+
+The in-memory representation of a recursive type has two parts: the
+representation of the underlying type and a pointer to that
+representation. The name of the underlying type is derived from the
+name of the type by prefixing the name with an underscore ('\_'). In
+our example, type \cd{tree} is defined as follows:
+\inputCode{code/binarytree.BinarytreeRep}
+The definition of \cd{struct \_tree\_s} is just the representation of
+the underlying \Punion{}.
+
+\subsection{Mask}
+\label{sec:recur-masks}
+The mask of a recursive type has two parts: the
+mask of the underlying type and a pointer to that
+mask. The name of the underlying type is derived from the
+name of the type by prefixing the name with an underscore ('\_'). In
+our example, type \cd{tree\_m} is defined as follows:
+\inputCode{code/binarytree.BinarytreeCSM}
+
+The definition of \cd{struct \_tree\_m\_s} is just the mask of the
+underlying \Punion{}.  Note the difference from \ptypedef{}s, which
+provide a new mask type for the new type.
+
+\subsection{Parse descriptor}
+\label{sec:recur-parse-descriptors}
+The parse descriptor of a \Precur{} with name \cd{myRecur} is a \C{}
+struct with name \pdSuf{myRecur}.  This struct has the fields
+described in \secref{sec:common-parse-descriptor}. In addition, it
+contains a field \cd{val}, the type of which is a pointer to the parse
+descriptor for the underlying type.
+
+For example, the parse descriptor type \pdSuf{tree} has
+the following structure:
+\inputCode{code/binarytree.BinarytreePD}
+
+The definition of \cd{struct \_tree\_pd\_s} is just the parse
+descriptor of the underlying \Punion{}.
+
+\subsection{Operations}
+The operations generated by the \pads{} compiler for a recursive type
+are those described in \chapref{chap:common-features}. However, the
+compiler generates two sets of functions for every recursive type. One
+is the standard set of functions for the underlying type. Note that
+these are not intended for use by the user.  The other set of
+functions are those for operating on the type itself. These functions
+essentially wrap the operations of the underlying type and handle the
+dynamic allocation and deallocation of the representation and parse
+descriptor.
+
+The operations appear in \figref{figure:recur-ops}.
+
+Note that the mask is handled differently from the parse descriptor
+and representation. As the mask is an input to the parsing process, it
+must be fully allocated and initialized before parsing begins.
+However, due to the fact the size of the data is not known before
+parsing it, the mask must able to guide the parsing process for data
+of arbitrary size. The simplest way to accomplish this is to set the
+(recursive) pointers in the mask to point back to the root of the
+mask. In this way, we make the mask a cyclic data structure thereby
+simulating an infinitely large data structure. However, as traversal
+of the mask is driven by the data itself, this structure does not
+introduce a danger of infinite loops.
+
+In the current release there is no support for automatically
+initializing masks to be cyclic. Instead, users must initialize the
+pointers correctly themselves. To assist, we provide a macro that
+bundles the various steps in initializing the mask. It allocates the
+mask, initializes it and then sets the specified pointer field to
+point back the root of the mask. It has the following signature:
+
+\begin{code}
+P_DynamicMaskInit(m, maskTy, baseMaskTy, maskVal, PATH_TO_MASK)
+\end{code}
+
+The argument \cd{m} is the (pointer) variable for the root of
+the mask. Argument \cd{maskTy} is the type of the mask itself, and
+\cd{baseMaskTy} is the underlying mask type. Argument \cd{maskVal}
+specifies the default setting for all of the mask's fields. Finally,
+\cd{PATH\_TO\_MASK}, specifies the path from the root of the mask to
+the pointer field in the mask. Note that this assumes that there is
+only one pointer field. In the case of more, the user must initialize
+those herself. Here is an example use of this macro for our \cd{tree}
+format:
+\begin{code}
+P_DynamicMaskInit(m, tree_m, _tree_m, READ_MASK, m->nested.left);
+m->nested.right = m;
+\end{code}
+Note the need to initialize the second pointer separately. 
+
+Code such as this can be specified for some of the template programs
+with the macro \cd{CUSTOM\_MASK\_CODE}.
+
+\begin{figure}
+\inputCode{code/binarytree.BinarytreeOps}
+% \begin{code}
+% Perror_t tree_init (P_t *pads,tree *rep);
+
+% Perror_t tree_pd_init (P_t *pads,tree_pd *pd);
+
+% Perror_t tree_cleanup (P_t *pads,tree *rep);
+
+% Perror_t tree_pd_cleanup (P_t *pads,tree_pd *pd);
+
+% Perror_t tree_copy (P_t *pads,tree *rep_dst,tree *rep_src);
+
+% Perror_t tree_pd_copy (P_t *pads,tree_pd *pd_dst,tree_pd *pd_src);
+
+% void tree_m_init (P_t *pads,tree_m *mask,Pbase_m baseMask);
+
+% Perror_t tree_read (P_t *pads,tree_m *m,tree_pd *pd,tree *rep);
+
+% int tree_verify (tree *rep);
+
+% int tree_genPD (P_t *,tree *,tree_pd *);
+
+% ssize_t tree_write2buf (P_t *pads,Pbyte *buf,size_t buf_len,
+%                         int *buf_full,tree_pd *pd,tree *rep);
+
+% ssize_t tree_write2io (P_t *pads,Sfio_t *io,tree_pd *pd,tree *rep);
+
+% ssize_t tree_write_xml_2buf (P_t *pads,Pbyte *buf,size_t buf_len,
+%                              int *buf_full,tree_pd *pd,tree *rep,
+%                              char const *tag,int indent);
+
+% ssize_t tree_write_xml_2io (P_t *pads,Sfio_t *io, tree_pd *pd,tree *rep, 
+% char const *tag,int indent);
+
+% ssize_t tree_fmt2buf_final (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
+
+% ssize_t tree_fmt2buf (P_t *pads,Pbyte *buf,size_t buf_len,int *buf_full,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
+
+% ssize_t tree_fmt2io (P_t *pads,Sfio_t *io,int *requestedOut,char const *delims,tree_m *m,tree_pd *pd,tree *rep);
+% \end{code}
+\caption{Prototypes of operations generated for
+  the \Precur{} \texttt{tree}.}
+\label{figure:recur-ops}
+\end{figure}
+
+
+\subsubsection{Read function}
+The error codes for \Precur{}s are:
+
+\tskip{}
+\begin{center}
+\begin{tabular}{l|p{4in}}
+Code                           & Meaning \\ \hline
+ \cd{P_OK}                 & Indicates no error occurred\\[1ex]
+ \cd{P_ERR}                & Indicates an unspecified error occured.\\[1ex]
+\end{tabular}
+\end{center}
+
+\noindent
+
+\subsubsection{Accumulator functions}
+Accumulator functions for recursive types are not yet supported. 
+
+\subsubsection{Histogram functions}
+Histogram functions for recursive types are not yet supported.
+
+
+\subsubsection{Clustering functions}
+Clustering functions for recursive types are not yet supported.

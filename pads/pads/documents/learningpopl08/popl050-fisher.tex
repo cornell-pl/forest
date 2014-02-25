@@ -1,0 +1,350 @@
+\documentclass[natbib]{sigplanconf}
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+\usepackage{epsfig}
+\usepackage{code} 
+
+\begin{document}
+
+\conferenceinfo{POPL'08,}{January 7-12,2008, San Francisco, California, USA.} 
+\copyrightyear{2008} 
+\copyrightdata{978-1-59593-689-9/08/0001} 
+
+\title{From Dirt to Shovels}
+\subtitle{Fully Automatic Tool Generation from Ad Hoc Data}
+
+\authorinfo{Kathleen Fisher}{
+	   AT\&T Labs Research}
+       {\mono{kfisher@research.att.com}}
+\authorinfo{David Walker \qquad Kenny Q. Zhu}{
+	   Princeton University}
+       {\mono{{dpw,kzhu}@CS.Princeton.EDU}}
+\authorinfo{Peter White}{
+	   Galois, Inc.}
+       {\mono{peter@galois.com}}
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+An {\em ad hoc data source} is any semistructured data source for
+which useful data analysis and transformation tools are not 
+readily available.  Such data must be queried, transformed and displayed by
+systems administrators, computational biologists, financial analysts
+and hosts of others on a regular basis.  
+In this paper, we demonstrate that it is possible to generate a suite
+of useful data processing tools, including a semi-structured query
+engine, several format converters, a statistical analyzer and data
+visualization routines directly from the ad hoc data itself, 
+without any human intervention.  
+The key technical contribution of the work is a multi-phase algorithm
+that automatically infers the structure of an ad hoc data source and
+produces a format specification in the \pads{} data description
+language.  
+Programmers wishing to implement custom data analysis tools
+can use such descriptions to generate printing and parsing libraries
+for the data.  Alternatively,  our software infrastructure will
+push these descriptions through the \pads{} compiler, creating
+format-dependent modules that, when linked with format-independent
+algorithms for analysis and transformation, result in
+fully functional tools.  We evaluate the performance of
+our inference algorithm, showing it scales linearly
+in the size of the training data --- completing in seconds, as opposed
+to the hours or days it takes to write a description by hand.
+We also evaluate the correctness of the algorithm, demonstrating that 
+generating accurate descriptions often requires less than 5\% of the
+available data.
+\end{abstract}
+
+\category{D.3.m}{Programming languages}{Miscellaneous}
+
+\terms
+Languages, Algorithms
+
+\keywords
+Data description languages, grammar induction, tool generation, ad hoc data
+
+
+\section {Introduction}
+\label{sec:intro}
+\input{intro}
+
+\section{The Internal Format Description Language}
+\label{sec:review}
+\input{review}
+
+\section{The Inference Algorithm}
+\label{sec:inference}
+\input{algorithm}
+
+\section{Experimental Evaluation}
+\label{sec:exp}
+\input{eval}
+
+\section{Discussion}
+\label{sec:discussion}
+\input{discussion}
+
+\section{Related Work}
+\label{sec:related}
+\input{related}
+
+
+\section{Conclusions}
+\label{sec:conclusion}
+\input{conclusion}
+
+\section*{Acknowledgments}
+
+Our work benefited greatly from thoughts and comments from
+Alex Aiken, David Blei, David Burke, Vikas Kedia, John Launchbury, Chris Ramming, 
+Rob Schapire
+and the organizers and attendees of the CAGI 2007 Workshop on Grammar
+Induction.
+
+This material is based upon work 
+supported by DARPA under grant FA8750-07-C-0014
+and the NSF
+   under grants 0612147 and 0615062.
+Any opinions, findings, and conclusions or recommendations
+   expressed in this material are those of the authors and do not
+   necessarily reflect the views of DARPA or the NSF.
+
+
+\bibliographystyle{plainnat}
+\begin{thebibliography}{37}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Angluin(1982)]{angluin:revesible-language-inference}
+Dana Angluin.
+\newblock Inference of reversible languages.
+\newblock \emph{Journal of the ACM}, 29\penalty0 (3):\penalty0 741--765, 1982.
+
+\bibitem[Arasu and Garcia-Molina(2003)]{arasu+:sigmod03}
+Arvind Arasu and Hector Garcia-Molina.
+\newblock Extracting structured data from web pages.
+\newblock In \emph{{SIGMOD}}, pages 337--348, 2003.
+
+\bibitem[Bex et~al.(2006)Bex, Neven, Schwentick, and Tuyls]{bex+:dtd-inference}
+Geert~Jan Bex, Frank Neven, Thomas Schwentick, and Karl Tuyls.
+\newblock Inference of concise {DTDs} from {XML} data.
+\newblock In \emph{{VLDB}}, pages 115--126, 2006.
+
+\bibitem[Bex et~al.(2007)Bex, Neven, and
+  Vansummeren]{bex+:inferring-xml-schema}
+Geert~Jan Bex, Frank Neven, and Stijn Vansummeren.
+\newblock Inferring {XML} schema definitions from {XML} data.
+\newblock In \emph{{VLDB}}, pages 998--1009, 2007.
+
+\bibitem[Borkar et~al.(2001)Borkar, Deshmukh, and
+  Sarawagi]{borkar+:text-segmentation}
+Vinayak Borkar, Kaustubh Deshmukh, and Sunita Sarawagi.
+\newblock Automatic segmentation of text into structured records.
+\newblock In \emph{{SIGMOD}}, pages 175--186, New York, NY, USA, 2001.
+
+\bibitem[Burke et~al.(2007)Burke, Fisher, Walker, White, and
+  Zhu]{burke+:cagi07}
+David Burke, Kathleen Fisher, David Walker, Peter White, and Kenny~Q. Zhu.
+\newblock Towards 1-click tool generation with {PADS}.
+\newblock In \emph{{CAGI}}, Corvallis, OR, June 2007.
+
+\bibitem[Chawathe et~al.(1994)Chawathe, Garcia-Molina, Hammer, Ireland,
+  Papakonstantinou, Ullman, and Widom]{chawathe+:tsimmis}
+Sudarshan Chawathe, Hector Garcia-Molina, Joachim Hammer, Kelly Ireland, Yannis
+  Papakonstantinou, Jeffrey~D. Ullman, and Jennifer Widom.
+\newblock The {TSIMMIS} project: Integration of heterogeneous information
+  sources.
+\newblock In \emph{16th Meeting of the Information Processing Society of
+  Japan}, pages 7--18, Tokyo, Japan, 1994.
+
+\bibitem[Crescenzi et~al.(2001)Crescenzi, Mecca, and
+  Merialdo]{Cresenzi+:roadrunner}
+Valter Crescenzi, Giansalvatore Mecca, and Paolo Merialdo.
+\newblock Roadrunner: Towards automatic data extraction from large web sites.
+\newblock In \emph{{VLDB}}, pages 109--118, San Francisco, CA, USA, 2001.
+
+\bibitem[Denis et~al.(2004)Denis, Lemay, and
+  Terlutte]{denis:learning-regular-languages}
+Fran\c{c}ois Denis, Aur{\'e}lien Lemay, and Alain Terlutte.
+\newblock Learning regular languages using {RFSAs}.
+\newblock \emph{Theoretical Computer Science}, 313\penalty0 (2):\penalty0
+  267--294, 2004.
+
+\bibitem[Fern\'andez et~al.(2006)Fern\'andez, Fisher, Gruber, and
+  Mandelbaum.]{fernandez+:padx}
+Mary~F. Fern\'andez, Kathleen Fisher, Robert Gruber, and Yitzhak Mandelbaum.
+\newblock {PADX}: Querying large-scale ad hoc data with {XQuery}.
+\newblock In \emph{{PLAN-X}}, January 2006.
+
+\bibitem[Fernau(2001)]{fernau:learning-xml}
+Henning Fernau.
+\newblock Learning {XML} grammars.
+\newblock In \emph{{MLDM}}, pages 73--87, 2001.
+
+\bibitem[Fisher and Gruber(2005)]{fisher+:pads}
+Kathleen Fisher and Robert Gruber.
+\newblock {PADS}: A domain specific language for processing ad hoc data.
+\newblock In \emph{{PLDI}}, pages 295--304, June 2005.
+
+\bibitem[Fisher et~al.(2006)Fisher, Mandelbaum, and Walker]{fisher+:popl06}
+Kathleen Fisher, Yitzhak Mandelbaum, and David Walker.
+\newblock The next 700 data description languages.
+\newblock In \emph{{POPL}}, January 2006.
+
+\bibitem[Garofalakis et~al.(2000)Garofalakis, Gionis, Rastogi, Seshadri, and
+  Shim]{garofalakis+:xtract}
+Minos~N. Garofalakis, Aristides Gionis, Rajeev Rastogi, S.~Seshadri, and
+  Kyuseok Shim.
+\newblock {XTRACT}: A system for extracting document type descriptors from
+  {XML} documents.
+\newblock In \emph{{SIGMOD}}, pages 165--176, 2000.
+
+\bibitem[Gold(1967)]{gold:inference}
+E.~M. Gold.
+\newblock Language identification in the limit.
+\newblock \emph{Information and Control}, 10\penalty0 (5):\penalty0 447--474,
+  1967.
+
+\bibitem[Gr\"{u}nwald(2007)]{mdlbook}
+Peter~D. Gr\"{u}nwald.
+\newblock \emph{The Minimum Description Length Principle}.
+\newblock {MIT Press}, May 2007.
+
+\bibitem[Hong(2002)]{hong:thesis}
+Theodore~W. Hong.
+\newblock \emph{Grammatical Inference for Information Extraction and
+  Visualisation on the Web}.
+\newblock Ph.D. Thesis, Imperial College London, 2002.
+
+\bibitem[Huhtala et~al.(1999)Huhtala, K{\"a}rkk{\"a}inen, Porkka, and
+  Toivonen]{TANE-HKPT99}
+Yk{\"a} Huhtala, Juha K{\"a}rkk{\"a}inen, Pasi Porkka, and Hannu Toivonen.
+\newblock {TANE}: An efficient algorithm for discovering functional and
+  approximate dependencies.
+\newblock \emph{The Computer Journal}, 42\penalty0 (2):\penalty0 100--111,
+  1999.
+
+\bibitem[Hutchens and Alder(1998)]{hutchens98finding}
+Jason~L. Hutchens and Michael~D. Alder.
+\newblock Finding structure via compression.
+\newblock In David M.~W. Powers, editor, \emph{Proceedings of the Joint
+  Conference on New Methods in Language Processing and Computational Natural
+  Language Learning}, pages 79--82. 1998.
+
+\bibitem[Kushmerick(1997)]{kushmerick-phd1997}
+N.~Kushmerick.
+\newblock \emph{Wrapper induction for information extraction}.
+\newblock PhD thesis, University of Washington, 1997.
+\newblock Department of Computer Science and Engineering.
+
+\bibitem[Kushmerick et~al.(1997)Kushmerick, Weld, and
+  Doorenbos]{KushmerickWD97:Wrapper}
+Nicholas Kushmerick, Daniel~S. Weld, and Robert~B. Doorenbos.
+\newblock Wrapper induction for information extraction.
+\newblock In \emph{{IJCAI}}, pages 729--737, 1997.
+
+\bibitem[Lerman et~al.(2004)Lerman, Getoor, Minton, and
+  Knoblock]{Lerman+:webtables}
+Kristina Lerman, Lise Getoor, Steven Minton, and Craig Knoblock.
+\newblock Using the structure of web sites for automatic segmentation of
+  tables.
+\newblock In \emph{{SIGMOD}}, pages 119--130, New York, NY, USA, 2004.
+
+\bibitem[Lin(1991)]{Lin91:divergence}
+J.~Lin.
+\newblock Divergence measures based on the {Shannon} entropy.
+\newblock \emph{IEEE Transactions on Information Theory}, 37\penalty0
+  (1):\penalty0 145--151, 1991.
+
+\bibitem[Mandelbaum et~al.(2007)Mandelbaum, Fisher, Walker, Fernandez, and
+  Gleyzer]{mandelbaum+:pads-ml}
+Yitzhak Mandelbaum, Kathleen Fisher, David Walker, Mary Fernandez, and Artem
+  Gleyzer.
+\newblock {PADS/ML}: {A} functional data description language.
+\newblock In \emph{{POPL}}, January 2007.
+
+\bibitem[Martens et~al.(2006)Martens, Neven, Schwentick, and
+  Bex]{martens+:expressiveness-xml-schema}
+Wim Martens, Frank Neven, Thomas Schwentick, and Geert~Jan Bex.
+\newblock Expressiveness and complexity of {XML} schema.
+\newblock \emph{ACM Transactions on Database Systems}, 31\penalty0
+  (3):\penalty0 770--813, 2006.
+
+\bibitem[Muslea et~al.(2003)Muslea, Minton, and
+  Knoblock]{muslea+:active-learning}
+Ion Muslea, Steve Minton, and Craig Knoblock.
+\newblock Active learning with strong and weak views: a case study on wrapper
+  induction.
+\newblock In \emph{{IJCAI}}, pages 415--420, 2003.
+
+\bibitem[Ng et~al.(1999)Ng, Lim, and Koo]{Ng+:texttables}
+Hwee~Tou Ng, Chung~Yong Lim, and Jessica Li~Teng Koo.
+\newblock Learning to recognize tables in free text.
+\newblock In \emph{{ACL}}, pages 443--450, Morristown, NJ, USA, 1999.
+
+\bibitem[Oncina and Garcia(1992)]{rpni}
+J.~Oncina and P.~Garcia.
+\newblock Inferring regular languages in polynomial updated time.
+\newblock \emph{Machine Perception and Artificial Intelligence}, 1:\penalty0
+  29--61, 1992.
+
+\bibitem[PADS Project()]{padsweb}
+PADS Project.
+\newblock {PADS} project.
+\newblock {\url{http://www.padsproj.org/}}, 2007.
+
+\bibitem[Pinto et~al.(2003)Pinto, McCallum, Wei, and Croft]{Pinto+:texttables}
+David Pinto, Andrew McCallum, Xing Wei, and W.~Bruce Croft.
+\newblock Table extraction using conditional random fields.
+\newblock In \emph{SIGIR}, pages 235--242, New York, NY, USA, 2003.
+
+\bibitem[Raeymaekers et~al.(2005)Raeymaekers, Bruynooghe, and den
+  Bussche]{raeymaekers+:learning-tree-languages}
+Stefan Raeymaekers, Maurice Bruynooghe, and Jan~Van den Bussche.
+\newblock Learning (k, l)-contextual tree languages for information extraction.
+\newblock In \emph{{ECML}}, pages 305--316, 2005.
+
+\bibitem[Raman and Hellerstein(2001)]{raman+:potterwheel}
+Vijayshankar Raman and Joseph~M. Hellerstein.
+\newblock Potter's wheel: An interactive data cleaning system.
+\newblock In \emph{{VLDB}}, pages 381 -- 390, 2001.
+
+\bibitem[Shoens et~al.(1993)Shoens, Luniewski, Schwarz, Stamos, and
+  Joachim~Thomas]{shoens+:rufus}
+Kurt~A. Shoens, Allen Luniewski, Peter~M. Schwarz, James~W. Stamos, and
+  II~Joachim~Thomas.
+\newblock The {Rufus} system: Information organization for semi-structured
+  data.
+\newblock In \emph{{VLDB}}, pages 97--107, San Francisco, CA, USA, 1993.
+
+\bibitem[Soderland(1999)]{soderland:whisk}
+Stephen Soderland.
+\newblock Learning information extraction rules for semi-structured and free
+  text.
+\newblock \emph{Machine Learning}, 34\penalty0 (1-3):\penalty0 233--272, 1999.
+
+\bibitem[Stolcke and Omohundro(1994)]{stolcke94inducing}
+Andreas Stolcke and Stephen Omohundro.
+\newblock Inducing probabilistic grammars by bayesian model merging.
+\newblock In \emph{{ICGI}}, pages 106--118, 1994.
+
+\bibitem[Vidal(1994)]{vidal:gisurvey}
+Enrique Vidal.
+\newblock Grammatical inference: An introduction survey.
+\newblock In \emph{{ICGI}}, pages 1--4, 1994.
+
+\bibitem[Wharton(1974)]{wharton:approximate-language-identification}
+R.~M. Wharton.
+\newblock Approximate language identification.
+\newblock \emph{Information and Control}, 26\penalty0 (3):\penalty0 236--255,
+  1974.
+
+\end{thebibliography}
+\end{document}
+
+

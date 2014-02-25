@@ -1,0 +1,74 @@
+Syntax: overlay pty @ p with pty
+  where pty's are iPads types and p is a path.
+
+Note: - I ignore issues regarding a context.  - An implicit
+restriction is that no references are made to the replaced fields if
+they depend on the field's type. As the type of the field is changed,
+all such references will be to the wrong type of data.
+
+
+Boilerplate semantics:
+
+			       pty => t
+			--------------------- 		        (FieldNoMatch)
+			x;pty_o || pty y => t
+
+			 p;pty_o || pty => t
+		       ----------------------- 			    (FieldSub)
+		       x.p;pty_o || pty x => t
+
+			       pty => t
+		       ----------------------- 			  (FieldNoSub)
+		       x.p;pty_o || pty y => t
+
+	      p;pty_o || pty_i x_i => t_i (for i=1...n)
+	      ----------------------------------------- 	     (Pstruct)
+		 p;pty_o || Pstruct{\vec pty x} => t
+
+	      p;pty_o || pty_i x_i => t_i (for i=1...n)
+	      ----------------------------------------- 	      (Punion)
+		  p;pty_o || Punion{\vec pty x} => t
+
+	 p;pty_o || pty => t   x:([t]rep * [t]pd) |- e : bool
+	 ---------------------------------------------------- 	      (Pwhere)
+		p;pty_o || pty Pwhere x.e => {x:t|...}
+
+
+Next, choose one of the following three options for rules FieldMatch
+and Overlay.
+
+Replacement semantics (no intersection):
+
+			     pty_o => t_o
+		       ----------------------- 			  (FieldMatch)
+		       x;pty_o || pty x => t_o
+
+			 p;pty_o || pty => t
+		   ------------------------------- 		     (Overlay)
+		   overlay pty @ p with pty_o => t
+
+
+Leaf intersection semantics:
+
+
+		       pty => t   pty_o => t_o
+		     --------------------------- 		  (FieldMatch)
+		     x;pty_o || pty x => absorb(t) & t_o
+
+			 p;pty_o || pty => t
+		   ------------------------------- 		     (Overlay)
+		   overlay pty @ p with pty_o => t
+
+
+ 
+Root intersection semantics:
+
+			     pty_o => t_o
+		       ----------------------- 			  (FieldMatch)
+		       x;pty_o || pty x => t_o
+
+		   pty => t   p;pty_o || pty => t_o
+		------------------------------------- 		     (Overlay)
+		overlay pty @ p with pty_o => t & t_o
+
+

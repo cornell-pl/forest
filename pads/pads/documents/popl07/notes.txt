@@ -1,0 +1,214 @@
+I.
+consider two base types:
+
+Pint: one to one
+Pfoo: parser: many to one. maps "1" and "one" to 1. 
+      printer: one-to-one: maps 1 -> "1".
+
+What is Pint * Pfoo? Consider following string:
+
+s = 123one
+
+f = [Pint * Pfoo]_p
+g = [Pint * Pfoo]_pp
+
+g o f s = "1231"
+f o g o f s = (1231, err)
+f s = (123, 1)
+
+So, even just these two base types and * already break things.
+
+Challenges:
+parsing: many to one.
+printing: context-sensitive.( is there a better description?)
+
+Could place draconian restriction on base types that given a fixed
+size prefix, they themselves are fixed size. In other words, their
+context is irrelevant. Or, more formally:
+
+forall base types B, strings s,s',s'', and results r: B(s s') = r,s' => B(s s'')
+= r,s''
+
+I guess put another way, forall B, s, s' and s'', B(s) /\ B(s') =>
+!prefix(s,s')
+
+But, this rules out all "greedy" base types. Alternatively, we can
+place the restriction on tuples and sequences.
+tuples: 
+
+  forall s,s1,s2. t(s) /\ t'(s1 s2) => !t(s s1)
+
+or, more restrictively:
+
+  forall s,s',c in first(t'). !t(s c s')
+
+This latter formulation says that c is always a stop character for t.
+
+We can generalize this to a string of length k.
+
+  forall s,s',sk in first_k(t'). !t(s s_k s')
+
+This is more restrictive as s_k s' might not actually be in
+first(t'). We are saying that *any* appearance of s_k is forbidden.
+
+We could probably relax this restriction somewhat by defining the
+"first" set not over the parser of t' but over the pretty printer of
+t'. However, I think there's a good argument that any description
+that has this property even just for parsing alone is
+problematic. True, its not ambiguous, but it is, perhaps, bad style.
+Pint * Pint is "bad", but Pint * Pstring, might be
+acceptable. However, the latter still implicitly relies on the
+behaviour of Pint, which is not the best for clarity, even if it is
+perfectly well defined.
+
+Going back to the original condition, we can generalize it so its more symetric:
+
+  forall s1,s2,s3,s4. t(s1 s2) /\ t'(s3 s4) => s2 != s3
+
+Now, we can restrict to strings of length k focusing on either the
+first type (as above) or the second type:
+
+  forall s,s',sk in last_k(t). !t'(s s_k s')
+
+  (e.g. k = 1, t = Pstring_ME(a1+), t' = Pstring. So, if v' =
+  1a1a1..., that is, starts with s_1 = "1", its no problem, but if v'
+  starts with "a1" it is a problem.)
+
+We can satisfy the this second restriction in a way that is consistent
+with the semantics of tuples as they are. For example, Pint *
+Pstring. Here, we know that the Pint must consume all of the digits so
+none can be consumed by the Pstring. Can we find an elaboration that loses
+nothing from the users's intuition, but satisfies the above
+restriction?
+
+Or even, can we prove that all well-formed tuples satisfy the
+restriction, and then bake in a check into the canonical forms
+definition?
+
+So, in summary:
+
+1) We formulate a sufficient condition on reps so that parse o print
+is the identity function. This condition will be type directed. We
+will call it the "canonical forms lemma":
+  canon v => parse o print v = v
+
+2) We show that parse (or some elaboration thereof) produces reps that
+  satisfy this condition.  canon (parse s)
+
+3) It follows that parse o print o parse = parse
+
+4) It would be nice if we could have a decidable/implementable
+   function for canon. But not necessary.
+
+We probably can't avoid following restriction on base types for the
+canonical forms lemma:
+
+  parse (print r,p) = r,p
+
+But, 
+ 
+   print(parse s) = s 
+
+does not need to hold.
+
+In other words, print is the right-inverse of parse.
+
+What about printing when there were errors in the parsing?
+I think the answer is that t(s) does not mean "recognizes without
+errors", but "consumes".
+
+Note that this approach (in particular 2) means that some types will
+never be valid unless they are an error. For example, Pstring_ME(/*/) *
+Pint. As anything in a Pint rep would be consumed by Pstring_ME(/*/), the only
+valid rep would be (for any s,n):
+
+  r = (s,n)  and p = (err,(_,err))
+
+Notice that this is consistent with the parsing, as 
+Pstring_ME(/*/) * Pint will always return an error for the Pint.
+
+Instead of the elaboration idea, for starters let's aim for an
+algorithm to check a ddc type for satisfaction of this property
+(assuming all base types satisfy this, or some related, property),
+based on just the parsers. 
+
+Also, would be nice if you could write reference implementations of
+base types that could provably meet their requirements.
+
+*** Insert email to RM here.  Note change of notation, eg. first(t)
+    becomes Prefix(t).
+
+We ended our discussion in your noting that print o parse o print =
+print.  However, this property isn't enough as we noted that the
+original value gets distorted in the process. I think this raises an
+important point, namely, that what we really care about are the
+"internal" values (i.e. those used by programs after parsing/before
+printing) and not the "external" values - ie.  the strings. The latter
+are merely representations of the former.
+
+So, the property we really want is -- as you mentioned -- that print
+have a right-inverse - i.e. parse o print = id (the identity
+function).  I thought that perhaps this property was too strong and we
+could "get by" with parse o print o parse = parse, but, as we
+discussed, there are simple examples that show that even this won't
+work.
+
+I think that we can rephrase the problem, then, as follows. Even if we
+are guaranteed that our base type printers are one-to-one, we cannot
+be guaranteed that our tuple printers will be one-to-one. So, the
+challenge is to find a way to distinguish between types that induce
+one-to-one printers and those that do not.
+
+I think that a promising way to approach the problem is through the
+CFG notion of ambiguity that we discussed. I suspect that a type is
+good iff it is "unambiguous" in the CFG-sense, where by that I mean
+that no too sequential elements of the type have any overlap. Or, more
+formally, for a tuple type t x t':
+
+  forall s1,s2,s3,s4. t(s1 s2) /\ t'(s3 s4) => s2 != s3
+
+Unfortunately, I believe that this is a difficult property to check
+for. We can simplify it, therefore, by talking about k-suffixes and
+k-prefixes. For example, a comma is length-1 prefix. Then, the
+constraint is:
+
+  forall s,s' in String,sk in Prefix_k(t'). !t(s s_k s')
+  forall s,s' in String,sk in Suffix_k(t). !t'(s s_k s')
+
+  (String is the set of all strings, Prefix_k(t) is the set of all
+  1...k-prefixes recognized by t, and similarly for Suffix_k(t)).
+ 
+Note, I believe that both of the above conditions are sufficient to
+guarantee our desired constraint, i.e. they are stricter constraints.
+The first one says that any string of length k or less that can serve
+as a prefix in t', cannot appear at all in t. The second says that any
+string of length k or less that can serve as a suffix in t, cannot
+appear at all in t'.
+
+Now, I think that I can derive an algorithm for checking this.  The
+challenge, though, is proving that this condition is sufficient to
+guarantee the right-inverse property that we are seeking.
+
+**** End insert ****
+
+Now, let's reword above constraint in terms of DDC meta-theory.
+First, lets define a function 'sub' that extracts a substring from a
+bit string (includes bit at starting offset, excludes bit at ending
+offset):
+
+  sub: B * Offset * Offset -> B
+
+and a function 'contains' that checks whether one string is contained
+in another:
+
+  contains: B * B -> boolean
+
+Then,
+
+  forall w,w' in Offset; B,s in Bits; s_k in Suffix_k(t). 
+     [[t']]_p (B,w) = (w',r,p) 
+     /\ sub(B,w,w') = s 
+     => not contains(s,s_k)
+
+
+

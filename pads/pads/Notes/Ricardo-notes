@@ -1,0 +1,175 @@
+
+file: rmedel/README
+date: 8/25/03
+author: Ricardo Medel
+
+-----------------------------------------------------------------------------
+Code added for the generation of C functions to manipulate representation 
+of PADS types:
+-----------------------------------------------------------------------------
+File: pads/padsc/comp/ckit/src/ast/extensions/pads/cnv-ext.sml
+
+If padsc is called with a '-x' flag, a C function 's_children' is generated 
+for each 's' PADS type and included in the obtained .c (and the header will 
+be in the .h) file.
+
+Functions added to cnv-ext.sml:
+
+* Auxiliary functions:
+ 
+  apply [f1,..,fN] x = [f1 x,..,fN x]	// applies a list of functions to an
+					   element.
+
+  inc x = x+1	// it returns the succesor of the argument (an integer).
+
+  listOf n = [1,..,n]  // it returns the list of the first n natural numbers.
+	
+  enumerate [x1,..,xN] = [(1,x1),..,(N,xN)] // it returns a list of pairs 
+			  where each original element is paired with its 
+			  position.
+
+
+* Common functions to all the types:
+ 
+  headerGalaxChildrenFun Type ---> it generates the initial variable 
+			declarations of the _children function.
+
+  ifGalaxChildren (return, number, error) ---> it generates the if-then-else
+			sentence that calls the macro PDCI_NEW_NODE_PTR_LIST
+			or fails with an allocation error.
+
+  macroTNode (return, struct, str, id, name) ---> it uses the next function 
+			to generate the macro PDCI_MK_TNODE call. It is 
+			invoked by all the structured types.
+  
+  macroTNodeCall (return, index, struct, str, id, name) ---> it generates the
+			macro PDCI_MK_TNODE call. It is used by the previous 
+			function and directly by the base type of Parrays.
+
+  macroNodeCall (return, n, type, name, get1, get2, get3, struct) ---> it 
+			generates the macro PDCI_MK_NODE call. It is used for
+			each field in Pstructs and Punions, for the base type
+			in Ptypedef, and for each element in a Parray.
+ 
+  genGalaxVtable name ---> it generates the external declaration for the 
+			structure _vtable type.
+
+
+* Functions and values (val) for Pstruct: 
+
+  genFieldFull f ---> it returns the name and type of the 'full' field f, 
+		      only if is not virtual (i.e., doesn't have the Pomit 
+		      modifier).
+
+  genFieldBrief e ---> [] (needed for mungeFields)
+
+  genFieldMan m ---> it returns the name and type of the 'computed' field m.
+
+  val localFields = it uses mungeFields to create a list of pairs (name,type)
+		    of each 'full' field.
+
+  countFieldFull f ---> it returns [1] (used to count 'full' fields) only if 
+			f is not virtual (i.e., it doesn't have the Pomit 
+			modifier).
+
+  countFieldMan m ---> it returns [1] (used to count 'computed' fields)
+
+  countFieldBrief e ---> [] ('brief' fields don't count) 
+
+  val countFields = it uses mungeFields to count 'full' and 'brief' fields.
+
+  genGalaxStructChildrenFun (name, fields) ---> it generates the function 
+						_children.
+
+  val galaxEDs = it contains the generated code for the function _children 
+		 and the external declaration of the _vtable type.
+
+  
+* Functions for Punion:
+
+  lookupBranch Type ---> returns a string with the name of the Type.
+			 Used in the generation of the 'switch' sentence.
+
+  tagbranch (index,(name,type,isP)) ---> it generates the body of the 'name'
+			 field branch in the switch sentence of the _children
+			 function. isP is true iff the field is computed 
+			 (Pcompute = Manifest).
+
+  tagbranches [fields] ---> it maps the function tagbranch over the list of 
+			    fields.
+
+  genCaseBranch (name, type, don't_care) ---> it returns a similar 3-uple but
+			    changing the type for the name of the type.
+
+  genBranchFull f ---> it applies genCaseBranch to full fields.
+
+  genBranchBrief e ---> []
+
+  genBranchMan m ---> it applies genCaseBranch to manifest (Pcompute) fields.
+
+  val nameBranchSs = it uses mungeVariants to obtain the (name,type,isP) for 			  each field.
+
+  val addBranchSs = it creates a indexed list of fields and it applies 
+		    tagbranches.
+
+  val errBranchSs = it generates the case sentence (break) for _err field.
+
+  val switchTag = it generates the 'switch' sentence.
+
+  genGalaxUnionChildrenFun (name, variants) ---> it generates the function 
+						 _children.
+		
+  
+* Functions for Ptypedef:
+ 
+  genGalaxTyChildrenFun (name) ---> it generates the function _children.
+
+
+* Functions for PArray:
+
+  genGalaxArrayChildrenFun (name) ---> it generates the function _children.
+
+
+* Functions for Penum:
+
+  genGalaxEnumChildrenFun (name) ---> it generates the function _children.
+
+
+* In all the cases above:
+
+  val galaxEDs = it contains the generated code for the function _children 
+		 and the external declaration of the _vtable type.
+
+
+-----------------------------------------------------------------------------
+Added information to the Parse Tree about Precord and Pfile labels:
+-----------------------------------------------------------------------------
+File: pads/padsc/comp/ckit/src/ast/extensions/pads/cnv-ext.sml
+
+Information was added to the parse tree nodes to keep track of the 
+Precord-labeled fields and the Pfile-labeled types. Some functions were 
+modified to manage such information, and two functions were added to check 
+the new fields.
+
+* Fields added to each node: 
+
+  isRecord = true iff the type is labeled as Precord.
+
+  containsRecord = true iff some field is labeled as Precord.
+
+  largeHeuristic = true iff is a Parray that contains a Precord, or a type 
+		    that contains such Parray.
+
+  isFile = true iff is labeled as Pfile.
+
+
+* Functions added:
+
+  lookupContainsRecord Name ---> true iff the parse tree node with that Name 
+				contains a 'Precord' field in some branch.
+
+  lookupHeuristic Name ---> true iff the parse tree node with that Name is a 
+			   Parray that contains a 'Precord' field in some 
+			   branch, or contains such Parray.
+
+END README

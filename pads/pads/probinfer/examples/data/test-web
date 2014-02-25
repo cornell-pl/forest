@@ -1,0 +1,6 @@
+207.136.97.49 - - [15/Oct/1997:18:46:51 -0700] "GET /turkey/amnty1.gif HTTP/1.0" 200 3013
+128.200.68.71 - - [15/Oct/1997:18:49:20 -0700] "GET /amnesty/images/legalbut.gif HTTP/1.0" 200 1097
+128.200.68.71 - - [15/Oct/1997:18:49:20 -0700] "GET /amnesty/images/refbut.gif HTTP/1.0" 200 1182
+128.200.68.71 - - [15/Oct/1997:18:49:21 -0700] "POST /amnesty/images/deathbut.gif HTTP/1.0" 200 1310
+128.200.68.71 - - [15/Oct/1997:18:49:21 -0700] "POST /amnesty/images/educbut.gif HTTP/1.0" 200 1246
+148.4.61.168 - - [15/Oct/1997:18:51:48 -0700] "POST /scripts/mailform/aimember@aiusa.org/confirm HTTP/1.0" 200 553

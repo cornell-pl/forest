@@ -1,0 +1,32 @@
+(* sources.cm
+ *
+ * COPYRIGHT (c) 2002 Bell Labs, Lucent Technologies.
+ *)
+
+Library
+  structure Main
+is
+
+#if defined(NEW_CM)
+  $/basis.cm
+  $/smlnj-lib.cm
+#else
+  smlnj-lib.cm
+#endif
+
+pads-keywords.sml
+pads-lexer : MLLex
+
+sml-keywords.sml
+sml-lexer : MLLex
+
+output-reps.sml
+output-fn.sml
+hevea-output.sml
+tex-output.sml
+
+tokens.sml
+scanner-fn.sml
+languages.sml
+main.sml
+

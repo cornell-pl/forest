@@ -1,0 +1,36 @@
+\begin{code}
+\kw{typedef} \kw{struct} \{
+  Pbase\_m compoundLevel;   // Struct-level controls, eg., check Pwhere clause
+  order\_header\_t\_m h;
+  eventSeq\_t\_m events;
+\} entry\_t\_m;
+\mbox{}
+\kw{typedef} \kw{struct} \{
+  Pflags\_t pstate;         // Normal, Partial, or Panicking 
+  Puint32 nerr;            // Number of detected errors.
+  PerrCode\_t errCode;      // Error code of first detected error
+  Ploc\_t loc;              // Location of first error
+  order\_header\_t\_pd h;     // Nested header information
+  eventSeq\_t\_pd events;    // Nested event sequence information
+\} entry\_t\_pd;
+\mbox{}
+\kw{typedef} \kw{struct} \{
+  order\_header\_t h;
+  eventSeq\_t events;
+\} entry\_t;
+\mbox{}
+/* Selected utility functions */
+\kw{void} entry\_t\_m\_init (P\_t *pads,entry\_t\_m *mask,Pbase\_m baseMask);
+\kw{int} entry\_t\_verify (entry\_t *rep);
+/* Core parsing library */
+Perror\_t entry\_t\_read (P\_t *pads,entry\_t\_m *m,entry\_t\_pd *pd,entry\_t *rep);
+/* Selected accumulator functions */
+Perror\_t entry\_t\_acc\_init (P\_t *pads,entry\_t\_acc *acc);
+Perror\_t entry\_t\_acc\_add (P\_t *pads,entry\_t\_acc *acc,entry\_t\_pd *pd,entry\_t *rep);
+Perror\_t entry\_t\_acc\_report (P\_t *pads,\kw{char} \kw{const} *prefix,\kw{char} \kw{const} *what,
+                             \kw{int} nst,entry\_t\_acc *acc);
+ssize\_t entry\_t\_write2io (P\_t *pads,Sfio\_t *io,entry\_t\_pd *pd,entry\_t *rep);
+/* Formatting */
+ssize\_t entry\_t\_fmt2io (P\_t *pads,Sfio\_t *io,\kw{int} *requestedOut,
+                        \kw{char} \kw{const} *delims,entry\_t\_m *m,entry\_t\_pd *pd,entry\_t *rep);
+\end{code}

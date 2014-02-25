@@ -1,0 +1,14 @@
+Source files to process: data/access_log
+Output directory: output/access_log/
+Output description file: generatedDescription
+Max depth to explore: 50
+Print line numbers in output contexts: false
+Print ids and output type tokens: true
+Print Entropy: false
+Histogram comparison tolerance (percentage): 0.01
+Struct determination tolerance (percentage): 0.1
+Noise level threshold (percentage): 0.0
+Minimum width threshold for array: 2
+Junk threshold (percentage): 0.1
+Complexity of derived type:
+	{ TC = 834.508b, ADC = 401.125b, DC = 3246871.869b }

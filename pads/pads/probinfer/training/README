@@ -1,0 +1,66 @@
+$PADS_HOME/probinfer/training directory contains files obtained after
+a training run.
+
+1. 3 matrices for ocaml HMM library
+
+1.1 InitProb
+InitProb is a 1-dimentional matrix. InitProb[i] is the probability of
+token i being the beginning of a line.
+
+1.2 EndProb
+EndProb is a 1-dimentional matrix. EndProb[i] is the probability of
+token i being the end of a line.
+
+1.3 EmitProb
+TransProb is a 2-dimentional matrix. EmitProb[i][j] is the
+probability of character feature vector i given token j: P(char_i|token_j)
+
+Each bit in the character feature vector represents if this character
+is a/an:
+upper-case? 
+lower-case? 
+digit? 
+punc? 
+whitespace? 
+"."? 
+","? 
+"?"?
+"""? 
+
+1.4 TransProb
+TransProb is a 2-dimentional matrix. TransProb[i][j] is the probability
+of token j given token i: P(token_j|token_i)
+
+1.5 TokenName
+a list of all tokens
+
+2. These 3 matrices are computed based on the information in the
+following 3 files:
+
+2.1 TokenCount
+format:
+{token name}={number}
+TokenCount is the number of occurrences of each token in terms
+of characters.
+example:
+data: 13, token: int => int=2
+
+2.2 CharTokenCount
+format:
+{character vector} {token name}={number}
+CharTokenCount is the number of occurrences of one character matching a
+specific character feature vector and one token. 
+example:
+data: 13, token: int => 001000000 int=2
+
+2.3 TokenPairCount
+format:
+{token name} {token name}={number}
+TokenPairCount is the number of occurrences of one token following
+another token.
+example:
+data: march11:59, token: date time => 
+date date=4
+date time=1
+time time=4
+

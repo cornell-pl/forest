@@ -1,0 +1,518 @@
+<xs:schema targetNamespace="http://www.padsproj.org/pads-xml.xsd"
+	   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:p="http://www.padsproj.org/pads-xml.xsd"
+           elementFormDefault="qualified"
+           attributeFormDefault="qualified">
+
+<xs:import namespace = "http://www.padsproj.org/pads.xsd"
+           schemaLocation="file:/home/mff/pads/padsc/schemata/pads.xsd"/>
+
+  <!-- Names, variables, and identifiers -->
+  <xs:element name="name" type="xs:string"/>
+  <xs:element name="var" type="xs:string"/>
+  <xs:element name="id" type="xs:string"/>
+
+  <xs:element name="comment" type="xs:string"/>
+
+  <!-- Host language -->
+  <xs:attribute name="language" type="xs:string"/>
+
+  <!-- Expression in the host language -->
+  <xs:complexType name="Expr" mixed="true">
+    <xs:attribute ref="p:language" use="optional"/>
+  </xs:complexType>
+
+  <xs:element name="regexp" type="p:Expr"/>
+  <xs:element name="string" type="xs:string"/>
+  <xs:element name="char" type="xs:string"/>   <!-- This is really a character -->
+
+  <xs:group name="literals">
+    <xs:choice>
+      <xs:element ref="p:char"/>
+      <xs:element ref="p:string"/>
+      <xs:element ref="p:regexp"/>
+      <xs:element ref="p:id"/>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="LiteralExpr">
+    <xs:sequence> 
+      <xs:group  ref="p:literals"/>
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:element name="literal" type="p:LiteralExpr"/> <!-- A literal expression -->
+  <xs:element name="native" type="p:Expr"/>        <!-- An expression in native C -->
+
+  <xs:element name="expr">                        <!-- A literal or native expression -->
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="p:literal"/>
+        <xs:element ref="p:native"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="function" type="p:expr"/>        <!-- An expression denoting a function-->
+
+  <xs:element name="parsecheck" type="p:Expr"/>     <!-- pPC -->
+
+  <xs:element name="type" type="xs:string"/> 
+  <xs:element name="typeexpr" type="p:Expr"/> 
+
+  <xs:complexType name="Constraints">            <!-- pConstraintsWComma -->
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element ref="p:expr"/>
+      <xs:element ref="p:parsecheck"/>
+    </xs:choice>
+  </xs:complexType>            <!-- pConstraintsWComma -->
+  };
+  <xs:element name="constraints" type="p:Constraints"/>
+  <xs:element name="postConstraints" type="p:Constraints"/>
+
+  <!-- Function declaration in host language -->
+  <xs:element name="function"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:expr"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Formal type parameter -->
+  <xs:element name="param">          <!-- pTyParamDeclaration, parameterDeclaration -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>         <!-- Parameter name -->
+        <xs:choice>
+          <xs:element ref="p:type"/>  <!-- A PADS type name or a native type expression  -->
+          <xs:element ref="p:typeexpr"/>                
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Actual type parameter -->        <!-- pActParamList -->
+  <xs:element name="argument" type="p:Expr"/>
+
+<!-- TYPE MODIFIERS -->
+
+  <xs:element name="source" nillable="true" type="xs:string"/>  <!-- pIsSource -->
+  <xs:element name="record" nillable="true" type="xs:string"/>  <!-- pIsRecord -->
+  <xs:element name="longest" nillable="true" type="xs:string"/> <!-- pIsLongestMatch -->
+
+  <xs:group name="modifiers">
+    <xs:all>
+      <xs:element ref="p:source"  minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="p:record"  minOccurs="0" maxOccurs="1"/>
+      <xs:element ref="p:longest" minOccurs="0" maxOccurs="1"/>
+    </xs:all>
+  </xs:group>
+
+  <!-- Type declaration -->
+  <xs:element name="decl">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:param" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+
+  <!-- Type expression -->
+  <xs:element name="ptype"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:argument" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<!-- PARRAY DECLARATION -->
+
+  <xs:element name="min" type="p:Expr"/>
+  <xs:element name="max" type="p:Expr"/>
+
+  <!-- Global constraints for all items in an array -->
+  <xs:element name="forAll">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:var"/>
+        <xs:element ref="p:min"/>
+        <xs:element ref="p:max"/>
+        <xs:element ref="p:constraints"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="arrayConstraints">     <!-- pArrayPCorForList -->
+    <xs:complexType>
+      <xs:choice  minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="p:forAll"/>
+        <xs:element ref="p:parsecheck"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="nosep" nillable="true" type="xs:string"/>
+  <xs:element name="sep"   type="p:LiteralExpr"/> 
+  <xs:element name="term"  type="p:TermExpr"   />                 
+  <xs:element name="last"  type="p:Constraints"/>
+  <xs:element name="ended" type="p:Constraints"/>
+  <xs:element name="omit"  type="p:Constraints"/>
+
+  <xs:complexType name="TermExpr">                      <!-- pTermExp -->
+    <xs:choice>      
+      <xs:element ref="p:nosep"/>
+      <xs:group ref="p:literals"/>
+    </xs:choice>
+  </xs:complexType>
+  
+  <!-- Constraints on delimiters/terminators -->
+  <xs:element name="delimiterConstraints">               <!-- pArrayContraint -->
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="p:sep"   minOccurs="0" maxOccurs="1"/> 
+        <xs:element ref="p:term"  minOccurs="0" maxOccurs="1"/>                 
+        <xs:element ref="p:last"  minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:ended" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:omit"  minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:longest" minOccurs="0" maxOccurs="1"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="sizeConstraints">      <!-- pSizeSpec -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:min" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:max" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="array">           <!-- pArray -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:ptype"/>
+        <xs:element ref="p:delimiterConstraints" minOccurs="0" maxOccurs="1"/>   <!-- pArrayConstraintOpt -->
+        <xs:element ref="p:sizeConstraints" minOccurs="0"  maxOccurs="1"/>       <!-- pArrayPostConds -->
+        <xs:element ref="p:arrayConstraints" minOccurs="0" maxOccurs="1"/>       <!-- pArrayPostConds -->
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<!-- POPT Modifier -->
+  <xs:element name="some">           <!-- pSome -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:var"/>
+        <xs:element ref="p:constraints"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+	
+  <xs:element name="none">           <!-- pNone -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:constraints"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  	
+  <xs:element name="opt">            <!-- pOpt is a type modifier -->
+    <xs:complexType>
+      <xs:sequence>
+      <xs:element ref="p:decl"/>
+      <xs:element ref="p:ptype"/>
+      <xs:choice>
+        <xs:element ref="p:postConstraints"/>  <!-- pConstraintsWComma -->
+        <xs:sequence>
+          <xs:element ref="p:some" minOccurs="0" maxOccurs="1"/>
+          <xs:element ref="p:none" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+      </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+<!-- FIELDS in Palternates, Pstruct, Punion -->
+
+<!--  <xs:element name="omit"  nillable="true" type="xs:string"/>    pStructQualifier -->
+  <xs:element name="endian" nillable="true" type="xs:string"/>   <!-- pStructQualifier -->
+  <xs:element name="compute" type="p:Expr"/> <!-- pManifestField -->
+
+  <xs:element name="definition" type="p:Expr"/>
+  <xs:element name="computed"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:definition"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:group name="structModifiers">
+    <xs:all>
+<!--       <xs:element ref="p:omit" minOccurs="0" maxOccurs="1"/> -->
+       <xs:element ref="p:endian" minOccurs="0" maxOccurs="1"/>
+       <xs:element ref="p:opt" minOccurs="0" maxOccurs="1"/>
+       <xs:element ref="p:compute" minOccurs="0" maxOccurs="1"/>
+    </xs:all>
+  </xs:group>
+  
+  <xs:element name="field">    <!-- pStructfield : all variants bundled together -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:structModifiers"/>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:ptype"/>
+        <xs:element ref="p:from" minOccurs="0" maxOccurs="1"/>"
+        <xs:element ref="p:comment" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:postConstraints" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+<!-- PALTERNATES Declaration -->
+  <xs:element name="alternates">      <!-- pAlternates -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element ref="p:field"/>                  <!-- pStructFieldList -->
+          <xs:element ref="p:literal"/>
+          <xs:element ref="p:computed"/>
+        </xs:choice>
+        <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>   <!-- pPostCondOpt -->
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+<!-- PCHARCLASS Declaration -->
+  <xs:element name="charclass">     <!-- pCharClass -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:expr"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+<!-- PENUM Declaration -->          <!-- pEnum -->
+  
+  <xs:element name="from" type="p:LiteralExpr"/>
+
+  <xs:element name="enumField"> 
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="p:name"/>
+       <xs:element ref="p:from" minOccurs="0" maxOccurs="1"/>
+       <xs:element ref="p:expr" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="prefix" type="xs:string"/>
+
+  <xs:element name="enum">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:prefix" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:enumField" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+<!-- PRECURSIVE Declaration -->       <!-- pRecursive -->
+  <xs:element name="recursive"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+<!-- PSELECT Declaration -->
+  <xs:element name="select">          <!-- pSelect -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:name"/>
+        <xs:element ref="p:type"/>
+        <xs:element ref="p:var"/>
+        <xs:element ref="p:expr"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<!-- PSTRUCT Declaration -->    
+  <xs:element name="struct">  <!-- pStruct -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element ref="p:field"/>          <!-- pStructFieldList -->
+          <xs:element ref="p:literal"/>
+        </xs:choice>
+       <xs:element ref="p:postConstraints" minOccurs="0" maxOccurs="1"/>      <!-- pPostCondOpt -->
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+<!-- PTYPEDEF Declaration -->         <!-- pTypedef -->
+  <xs:element name="typedef"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:ptype"/>
+        <xs:element ref="p:var" minOccurs="0" maxOccurs="1"/>
+        <xs:element ref="p:constraints" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<!-- PTRY Declaration -->         <!-- pTry -->
+  <xs:element name="try"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:ptype"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="partial">    <!-- partial application of C function  -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:function"/>
+        <xs:element ref="p:argument" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+
+  <xs:element name="physical">    <!-- info related to physical rep of transform    -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:ptype"/>
+        <xs:element ref="p:partial"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="logical">    <!-- info related to logical rep of transform    -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:ptype"/>
+        <xs:element ref="p:partial"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<!-- PTRANS Declaration -->         <!-- pTrans -->
+  <xs:element name="trans"> 
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:element ref="p:physical"/>
+        <xs:element ref="p:logical"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  
+<!-- PUNION DECLARATION --> 
+  
+  <xs:element name="case">       <!-- pBranch -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:expr"/>
+        <xs:element ref="p:field"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="default">  
+    <xs:complexType>
+      <xs:sequence>
+      <xs:element ref="p:field" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="branch">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:case" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="p:default"/>  
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="switched">    <!-- pVariants -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="p:expr"/>
+        <xs:element ref="p:branch" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="inplace">    <!-- pVariants -->
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element ref="p:field"/>            <!-- pStructFieldList -->
+        <xs:element ref="p:literal"/>
+        <xs:element ref="p:computed"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="union">     <!-- pUnion -->
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="p:modifiers"/>
+        <xs:element ref="p:decl"/>
+        <xs:choice>
+          <xs:element ref="p:switched"/>         <!-- pVariants ::= Pswitch | pStructFieldList -->
+          <xs:element ref="p:inplace"/> 
+        </xs:choice>
+        <xs:element ref="p:postConstraints" minOccurs="0" maxOccurs="1"/>       <!-- pPostCondOpt -->
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PadsC"> 
+    <xs:complexType>
+      <xs:choice  minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="p:alternates"/>
+        <xs:element ref="p:array"/>
+        <xs:element ref="p:charclass"/>
+        <xs:element ref="p:enum"/>
+        <xs:element ref="p:function"/>
+        <xs:element ref="p:recursive"/>
+        <xs:element ref="p:select"/>
+        <xs:element ref="p:struct"/> 
+        <xs:element ref="p:typedef"/>
+        <xs:element ref="p:opt"/>
+        <xs:element ref="p:union"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+
+<

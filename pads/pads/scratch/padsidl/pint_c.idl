@@ -1,0 +1,13 @@
+import "padsc.idl";
+
+Perror_t iPint32_read    ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pint32 *res_out);
+Perror_t iPuint32_read   ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Puint32 *res_out);
+
+Perror_t iPint32_FW_read ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pint32 *res_out, [in] size_t width);
+Perror_t iPuint32_FW_read ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Puint32 *res_out, [in] size_t width);
+
+int iPint32_write2io([in,ptr] P_t *pads,[in] SfioPtr io,[in,ref] Pbase_pd *pd,[in,ref] Pint32 *val);
+int iPuint32_write2io([in,ptr] P_t *pads,[in] SfioPtr io,[in,ref] Pbase_pd *pd,[in,ref] Puint32 *val);
+
+int iPint32_FW_write2io([in,ptr] P_t *pads,[in] SfioPtr io,[in,ref] Pbase_pd *pd,[in,ref] Pint32 *val, [in] size_t width);
+int iPuint32_FW_write2io([in,ptr] P_t *pads,[in] SfioPtr io,[in,ref] Pbase_pd *pd,[in,ref] Puint32 *val, [in] size_t width);

@@ -1,0 +1,1214 @@
+\documentclass{article}
+
+%% \usepackage{latin-abbrevs,math-cmds,math-envs,code,latexsym,amsmath,amstext,amssymb,verbatim}
+\usepackage{xspace}
+\input{definitions}
+
+\setlength{\topmargin}{-0.25in}
+\setlength{\oddsidemargin}{0.25in}
+\setlength{\textheight}{8.5in}
+\setlength{\textwidth}{6in}
+
+\title{PADS/Galax: Enabling XQuery with Ad-hoc Data Sources}
+\author{
+  Yitzhak Mandelbaum \\ 
+  AT\&T Research
+}
+\date{August 2004}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+  XQuery is a language for querying data stored in an XML format.
+  While there are many implementations of XQuery for traditional
+  database systems, there are none that support ad-hoc, or arbitrary,
+  data sources. PADS is a language for describing ad-hoc data sources,
+  automatically generating a C library to process the data based on
+  the description. However, the actual processing programs must be
+  written in C.
+  
+  The PADS/Galax project is designed to bring to users the benefits of
+  both languages, by integrating the PADS implementation with Galax -
+  an open-source XQuery implementation. With the resulting system,
+  users can combine declarative, functional data queries written in
+  XQuery with a declarative data description to achieve results
+  usually achieved with a difficult-to-maintain, imperative program
+  written in C.  Furthermore, PADS/Galax supports data sources ranging
+  in size from bytes to Gigabytes.
+  
+  The design of PADS/Galax involved addressing three major problems:1)
+  how to represent PADS-described data as XML, 2) how to bring data
+  elements into memory, or discard them, as needed by Galax, and 3)
+  how to provide these features with little or no user involvement. In
+  this talk, I will describe my work here this summer, which focused
+  on the latter two problems, while touching on the first. I will
+  explain the goals of my work and describe the extent to which we
+  have achieved those goals, including descriptions of our solutions
+  to the problems described above.
+
+  We describe the continued integration of the \pads and \galax
+  systems. Previous work focused on exporting non-XML data sources,
+  described by a \pads specification, as XML to the \galax XQuery
+  engine. We have improved upon this work with a new interface between
+  the \galax \pads driver and the \pads backend, and extended the work
+  with support for very large data sources (those that cannot fit in
+  main memory). We explain the goals of our work and describe the
+  extent to which we have achieved those goals. We conclude with
+  observations on the project and a list of potential future tasks.
+\end{abstract}
+
+\section{Introduction}
+Introduction to PADS and Galax. ...  
+
+Explanation of the idea of connecting PADS and Galax. description of
+benefits.
+
+However, we cannot always assume that the PADS data source will fit
+into memory in its entirety, whether due to restrictions on available
+memory, the size of the data source, or both. Furthermore, we cannot
+rely upon the virtual memory system to manage our memory for us, as
+the data source might in fact be larger than even the size of the swap
+space allotted to virtual memory.  Rather, we need a mechanism for
+examining data in parts, never requiring that that the whole data
+source be present in memory at one time.
+
+% Roadmap for rest of paper. Don't just list contents of
+% sections. Description should tell reader what they should expect out
+% of the rest of the paper, and why they should keep reading.
+
+\begin{itemize}
+\item Smart arrays
+  \begin{itemize}
+  \item Arrays vs. other datatypes. Choice of arrays.
+  \item Expected use.
+  \item Details - tmap, mem managemenet, read management - see text below.
+  \item References into smart array. Validation design.
+  \end{itemize}
+\item PADS/Galax description.
+  \begin{itemize}
+  \item interface
+  \item node architecture
+  \item relationship to smart arrays.
+  \end{itemize}
+\item Polymorphism
+  \begin{itemize}
+  \item void * polymorphism vs. compiler
+  \item overview of division (what's in the libraries vs. what's in
+  the compiler)
+  \end{itemize}
+\item Technical Details
+\item Applications ??
+\item Future Work
+\item Appendix: File Directory Structure
+\end{itemize}
+
+\section{Smart Arrays}
+\label{sec:smart-arrays}
+
+The key motivating examples for our work are data sources
+which consist of a long sequence of records, possibly preceded by a
+header. Such data sources are most logically mapped into an array.
+There are surely examples of very large data sources containing a
+complex structure, and, therefore, most appropriately mapped to
+structures, or even other datatypes. However, we have seen few, if
+any, such examples, and have therefore chosen not to focus on them.
+
+In a standard PADS application, the programmer would handle such data
+sources by manually looping over the data source, one record at a
+time. For PADS/Galax, however, we don't have this option as the user
+interacts with Galax, via XQuery, and should not be burdened with
+designing and implementing PADS applications. Furthermore, this
+approach does not address the need to reaccess previously viewed
+elements of the array that are longer available in memory. Similarly,
+even for PADS itself, such an approach makes it impossible for the
+programmer to use any of the advanced array features, such as complex
+termination conditions and error checking and handling.
+
+Therefore, we designed an infrastructure that can automatically ensure
+that array elements are available when they are needed - no matter the
+order in which they are requested - and supports (nearly) all of the
+advanced features supported by standard arrays {\em Once we've
+  implemented the ADT for use predicates, we can remove the nearly
+  --ed.}.
+Arrays with the element management infrastructure enabled are termed
+{\em smart arrays}.
+
+
+\subsection{Core Operations}
+\label{subsec:core-features}
+
+We can conceptually break down the implementation of smart arrays into
+three components.: element management, memory management
+and read management, with the first depending on the second two.
+
+\paragraph{Element Management}
+
+Each smart node contains one \emd, which stores meta-data for the elements of
+the array. The most important meta-data are the offset of the element
+in the data source and pointers to the in-memory representation of the
+data and its parse-descriptor, called the \rep and \pd, respectively.
+When a particular element is requested from the smart node, the smart
+node uses the \emd to find the element and then performs one of two
+actions. If the element is available (that is, in memory), then the
+smart node immediately returns the element's representation and
+parse-descriptor. If the element is unavailable, then the smart node
+finds the element in the data source based on the offset in the
+meta-data, and rereads/reparses it from the stream.
+
+However, element management does not operate alone. It depends on
+support for reading and rereading array elements as well as support
+for allocating space for element data and effectively choosing
+which node to evict when no space is available for allocation.
+
+\paragraph{Read Management}
+
+Reading and rereading data from the stream can be complicated due to
+the nature of \pads arrays. Therefore, we need support for reading any
+arbitrary element in the array data stream from the \pads compiler and
+library.
+
+The generated code for reading a pads array can be potentially quite
+complicated. The complexity arises do to a multiplicity of possible
+error conditions that can arise combined with a wide variety of
+methods for determining the termination of an array. Given this
+complexity, reading or rereading elements is rarely a simple matter of
+calling the element type's read function. For this reason, we have
+(re)designed the array reading functionality so that at its core is a
+read\_one function designed to read at most one element (possibly
+none). in addition, we provide a reread function which will recreate a
+given element and its parse-descriptor exactly as they were originally
+created when first read from the stream.
+
+With incremental reading, smart reading becomes almost
+straightforward. All reading is done through the read and reread
+functions. Before an element is read for the first time, the offset in
+the io stream is recorded in that element's meta-data.{\em when do we
+  introduce the tmap? It definitely belongs in this section.}  Then,
+upon any future request for the element, the smart array rewinds the
+stream to the recorded offset for that element. The key difficulties
+left in read management are distinguishing between first-time reads
+and rereads and ensuring that we never lose track of the head of the
+stream. These problems are addressed by saving both the furthest known
+position in the stream as well as the index of the furthest read
+element.
+
+\paragraph{Memory Management}
+
+When the element manager needs space to read an element from the data
+source, it requests the space from the memory manager. The memory
+manager will first check if there is memory available for
+allocation. If sufficient memory is available, then the manager will
+allocate space for the element and return it to the element
+manager. If sufficient memory is unavailable, then the manager will
+choose an element to eject from memory, update its meta-data
+appropriately, and return the memory to the element manager for reuse.
+
+An important part of the memory manager is the policy it uses to
+decided which element to replace. While the current implementation
+uses a simple FIFO policy, the system is designed so that the policy
+can be changed without significantly affecting the rest of the system.
+
+\subsection{Element References}
+\label{subsec:elt-refs}
+
+Due to the ephemeral nature of elements, references to their
+representations and parse-descriptors (and their children) present a
+serious difficulty. On the one hand, we'd like to avoid dangling
+references to nodes that are no longer in memory. On the other hand,
+we cannot afford to leave all referenced elements in
+memory. Therefore, the smart array cannot simply provide clients with
+direct references to elements. Instead, some form of weak reference
+must be used, whereby the validity of the reference is ensured before
+every access.
+
+The simplest approach would be to provide the client with the index of
+the requested element as the weak reference. Then, validition of the
+reference would reduce to rerequesting the element from the smart node
+based on its index. While this approach works well if the client only
+stores references to the element itself, it becomes terribly
+inefficient if the client wishes to maintain references to
+substructures within the element. To support such internal references,
+the weak reference would additionally need to include some form of
+path indicating how to reach the substructure starting from the
+element pointer itself. More importantly, this path would need to be
+traversed with every validation of the reference, a potentially
+expensive operation.
+
+To address this problem, that is, to support efficient weak references
+to element substructures, we introduce the concept of {\em data
+  generations}. Each time an element is read into memory, its data
+will (potentially) reside in a different place in memory. Therefore,
+despite the equivalence of the data itself, we can consider each
+instantiation of the data to be different version, or {\em
+  generation}, of the element due to its (potentially) different
+location. 
+
+Now, for each element, we can explicitly record in its meta-data the
+generation of its data. Then, we can use this generation as a simple
+guard for direct references to the data.  A weak reference can record
+a direct reference to the data as well as the generation of its direct
+reference. Then, as long as the generation recorded by the client is
+the same as that listed for the element, the client knows that its
+direct reference is valid. Notice that as data in a smart array in
+inserted and ejected a whole-element at a time, references to element
+substructures can be validated with the same generation counter as
+references to the element itself.
+
+The final aspect of weak references that we must address is what
+happens when the reference is broken, that is, an element's data is
+ejected from memory. As we have written, any direct references to the
+object will be invalidated, based on the generation. How does the
+client revalidate those references? More specifically, how does the
+client get from references to the element representation and
+parse-descriptor to references to the substructure's representation
+and parse-descriptor? One solution, and the one we adopt, is to
+encode, in some form, the path from the element to the substructure to
+which the weak reference refers. Then, once an element has been
+returned to memory, we use this path to traverse the data until we
+find the new pointers to the substructure's representation and
+parse-descriptor.
+
+To summarize the structures described, the meta-data for an element
+consists of an offset, a generation, a \mask reference, a \rep
+reference, and a \pd reference.  The weak reference held by clients of
+the array consists of \mask, \rep and \pd references, a generation, an
+index of or pointer to the corresponding element's meta-data, and some
+recording of the path from the element root to the substructure. Note
+that masks are not brought in and out of memory, as all elements of a
+smart array share the same mask. Therefore, the mask pointer is always
+valid.
+
+\section{\pglx}
+\label{sec:pads-galax}
+
+We have described the design of smart arrays on the conceptual
+level. However, no {\pads}-only implementation smart arrays
+exist. Instead, smart arrays have been implemented in the context of the \pglx node
+interface, which is the interface between \galax and \pads. In this
+section we describe this interface in detail and the of smart arrays,
+or, more generally, {\em smart nodes}, within it.
+
+\subsection{XML and the data model interface}
+\label{subsec:xml-dm}
+
+In order for \galax to query a \pads data source, that source must be
+presented to \galax as XML. The most obvious way to do so would be to
+simply convert the data source to an XML document, and then run \galax
+on this document. However, this conversion is rarely desireable.
+First, \galax may only examine a small portion of the data source, in
+which case converting the whole thing is wasteful.  Second, there
+might not be sufficient space for the converted document. Therefore, a
+more desireable alternative is to join \pads and \galax at the
+application level, through an API that allows \pads to export its data
+in datastructures that represent XML data.
+
+A simple XML node should have a name, a kind and a (possibly empty)
+list of children, which are themselves nodes. Some nodes should
+additionally support requests for a string representation of their value
+as well as requests for a typed representation of their value.  The
+essential challenge, then, is to find an appropriate name and kind for
+each \pads datatype and to appropriately map the datatypes
+substructures (if any) to children nodes.
+
+\subsection{The Node Architecture}
+\label{subsec:node-arch}
+
+In order to export \pads data as XML, we wrap data in {\em node}
+datastructures containing all the information relevant to XML. Handles
+to these nodes are then passed to \galax which can invoke very simple
+queries on the node, such as ``what is your name? give me a list of
+your children, etc.''  Within \galax, the interface with pads is
+wrapped in a module that exports the \galax Data Model interface to
+the \galax query engine.
+
+While opaque to \galax, in \pads each node contains the XML name of
+the data, its XML kind, and references to its mask, parse-descriptor
+and representation.  The representations and parse-descriptors are
+used to create children nodes in a type-specific manner.  For example,
+for structures, the children are the parse-descriptor and the fields
+of the structure.  For arrays, the children are the parse-descriptor,
+the array length, and a list of nodes with name ``elt,'' corresponding
+to the elements of the array. Other datatypes are analagous.
+
+It is important to note that the XML representations of \pads data
+integrate each datastructure's parse-descriptor with the data,
+exporting it as a child of the datastructure itself. This design
+allows queries to select (or ignore) nodes based on the contents of
+their parse-descriptors in an easy and efficient manner.
+
+
+\subsection{Smart Nodes}
+\label{subsec:smart-nodes}
+
+One of the key assumptions underlying the management of \pads nodes is
+that the references to the node's parse-descriptor and representation
+are always valid, and that the contents are complete. However, smart
+arrays clearly violate the second of these assumptions, and
+substructures of smart arrays violate the first. Therefore, these
+cannot be mapped into the standard implementation for nodes. Instead,
+we need to add support for nodes that manage their own memory and
+parsing in the manner of smart arrays and for nodes that reference the
+substructures smart arrays. We call such nodes {\em smart nodes} and
+{\em snd (smart-node-descendant) nodes}, respectively.
+
+The implemenation of smart nodes integrates the design of smart
+arrays, discussed in Section~\ref{sec:smart-arrays}, with the design
+of nodes, discussed above. A smart node appears to \galax as would any
+other node. It has a name, a kind, and children, as well as other
+relevant information. The only significant difference - with regard to
+XML - between a smart
+array and a normal one is that the ``parse-descriptor'' and ``length''
+children come after the elements of the array, rather than before
+them. Internally, however, the smart node extends the standard node
+structure with the information used to manage the smart array, including
+the \emd. Also, the smart node ensures that its element children are
+all initialized as smart node descendants.
+
+Similary, smart node descendants appear to XML as any other node.
+Internally, though, they extend the standard node structure with the
+information needed to maintain a weak reference to their
+parse-descriptor's and representations.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Purpose: give reader necessary technical background to understand
+% later discussion of projects. This should include only as much detail
+% as is absolutely necessary for later sections.
+
+% intro blah, blah,...
+% software can be broken into the following major portions:
+% \begin{itemize}
+% \item Pads 
+%   \begin{itemize}
+%   \item compiler - standard and pads/galax
+%   \item libraries
+%   \end{itemize}
+% \item Pads-Galax libraries
+% \item Galax Data Model
+% \item pads\_pglx.c,etc.: glue code
+% \item assorted driver programs, tests, data, etc.
+% \end{itemize}
+
+% Between these portions we have these interfaces:
+% \begin{itemize}
+% \item pads\_dm.mli: OCaml interface between galax and pads\_dm, based on the
+%   DM (data model) interface.
+% \item Pads\_c: IDL interface between pads\_dm.ml OCaml code and
+%   pads\_pglx.c glue code.
+% \item pglx.h: C interface between pads\_pglx.c glue code and Pads-Galax libraries.
+% \end{itemize}
+
+\section{Technical Details}
+\begin{itemize}
+\item Pads library
+\item Pglx library
+  \begin{itemize}
+  \item node architecture
+    \begin{itemize}
+    \item interface 
+      + Note: in kthChild functions, passing k > num-children is not an
+      error. The correct semantics is to return NULL in such a
+      situation, just as the children function used to return a
+      null-terminated list.
+    \item (Why is the parse-descriptor tree integrated into the node
+      tree?  (Given the integration of the trees, we don't need array
+      pds to be smart, because you can never get to the element pds
+      via a given pd. A given pd node only contains the children
+      directly relevant to itself.))
+    \item virtual tables
+    \item node structure
+    \item node memory management
+      \begin{itemize}
+      \item reference counting
+      \item free list
+      \item interaction with ocaml
+      \end{itemize}
+    \end{itemize}
+  \item extensions
+    \begin{itemize}
+    \item review design decision of one-size-fits-all.
+    \item cached nodes
+      \begin{itemize}
+      \item use static constructors for each type
+      \item use dynamic destructors for each type.
+      \item initialize the cache in static constructor, which will know
+        the cache size.
+      \item Cached children can never be freed based on reference
+        counting, because the parent/child\_cache pointers form a
+        cycle. So, cached nodes won't use reference counting and 
+        their free function will be a noop.
+      \item Mention PDCI\_error\_cachedNode\_init
+      \item duplicate kth-child functions to support caching.
+      \end{itemize}
+    \end{itemize}
+  \item smart node data structures, including compiler-generated smart\_array\_info.
+  \item read semantics for smart node
+    \begin{itemize}
+    \item forward, backward, etc.
+    \item pd and length fields force entire array to be read.
+    \end{itemize}
+  \item node validation - where, when, how.  
+    For PDCI\_sequenced\_pd and PDCI\_structured\_pd, the presence of
+    child "loc" depends on field errCode >= 100. To know the value of
+    errCode, we need to force the elt into memory (in
+    sndNode\_kthChild). Is there a better approach?  Also for base type
+    kthChild functions. The presence of the val node depends on there
+    having been no serious errors.
+  \item paths and path walking
+  \item node ids
+  \item MOVE TO: section of incremental reading.
+    offsets - taken before seperator.
+  \item error handling
+  \item cstr's. see ToDo list.
+  \item structure of pglx.c
+  \end{itemize}
+\item Compiler
+  \begin{itemize}
+  \item Use P\_PARTIAL flag to indicate that array is done.
+  \end{itemize}
+\item Macros
+\item Tests
+\end{itemize}
+
+intro ....
+
+
+\subsection{The PGLX Interface}
+\label{sec:pglx-interface}
+
+The \pglx interface defines the functions that are available to the
+\pads \dm implementation for use on nodes. The relevant portions of
+this interface are shown below.
+\begin{verbatim}
+nodeRep      PGLX_generic_parent      (nodeRep n)
+
+const char*  PGLX_generic_name        (nodeRep n)
+const char*  PGLX_generic_kind        (nodeRep n)
+item         PGLX_generic_typed_value (nodeRep n)
+const char*  PGLX_generic_string_value(nodeRep n)
+
+nodeRep      PGLX_generic_kth_child         (nodeRep n, childIndex idx)
+nodeRep      PGLX_generic_kth_child_named   (nodeRep n, childIndex idx, 
+                                             const char *name)
+\end{verbatim}
+
+The {\tt kth-child} function returns the kth child of the node
+starting from zero. The {\tt kth-child-named} function returns the node's kth
+child with the specified name. This function is most relevant to
+arrays, where all of the elements are given the same name ``elt.''
+For both functions, {\tt NULL} is a valid result, indicating that the
+requested child does not exist.
+
+\subsection{The PGLX Library}
+\label{sec:pglx-lib}
+
+At the core of the \pglx library are the node data structures. These
+structures contain all the information \galax needs to manipulate a
+given portion of \pads data as a node in an XML document.
+
+The node architecture is designed for limited extensibility in two
+dimensions. One dimension is the type of the data represented. \pads
+nodes can represent all possible generated \pads types as well as all
+of the \pads base types. The second dimension is the type of the nodes
+themselves. Different node types can display different behaviours, and
+the architecture supports adding new node types to an extent.
+
+In order to support the full range of \pads datatypes (dimension one),
+the node data structure is designed using ``{\tt void *}
+polymorphism.'' That is, anywhere that the node architecture is not
+specific to a particular type, we use a {\tt void *} type. In this
+way, we can write type-neutral code to manipulate data nodes.
+
+However, the \pads functions generated by the compiler are type
+specific. As the type-neutral and type-specific code must interact, we
+need a convenient interface between them. 
+%% One choice would be to
+%% include tags in each node indicating the type and allow each
+%% type-neutral function to switch on the tag when needing to perform a
+%% type-specific action. However, this can potentially 
+We have chosen to define a {\em virtual table} containing a set of
+functions that are typically implemented in a type-specific manner.
+For each type, the compiler generates a virtual table for nodes of
+that type. We include a virtual table pointer in each node, and
+initialize it to point to the correct virtual table when the node is
+created. Below we show the types of the virtual table and the
+functions it contains.
+\begin{verbatim}
+PDCI_node_t * (* PDCI_cachedNode_init_fn) (PDCI_node_t *node) 
+PDCI_node_t * (* PDCI_kth_child_fn)       (PDCI_node_t *node, 
+                                           PDCI_childIndex_t idx) 
+PDCI_node_t * (* PDCI_kth_child_named_fn) (PDCI_node_t *node, 
+                                           PDCI_childIndex_t idx, 
+                                           const char *name) 
+void          (* PDCI_free_fn)            (PDCI_node_t *node)
+PDCI_id_t     (* PDCI_get_id_fn)          (PDCI_node_t *node)
+item          (* PDCI_typed_value_fn)     (PDCI_node_t *node) 
+const char *  (* PDCI_string_value_fn)    (PDCI_node_t *node)
+
+struct PDCI_vtable_s {
+  PDCI_cachedNode_init_fn   cachedNode_init;
+  PDCI_kth_child_fn         kth_child;
+  PDCI_kth_child_named_fn   kth_child_named;
+  PDCI_free_fn              free;
+  PDCI_get_id_fn            get_id;
+  PDCI_typed_value_fn       typed_value;
+  PDCI_string_value_fn      string_value;
+}
+\end{verbatim}
+
+The {\tt kth\_child, kth\_child\_named, typed\_value}, and {\tt
+  string\_value} functions correspond to those functions with
+corresponding names in the \pglx interface. The others will be
+discussed later.
+
+While the virtual-table approach complicates adding new type-specific
+functions, it makes using them quite simple.  The type-neutral code
+merely looks up the desired function in the virtual table and calls
+it. As long as the node was initialized correctly, the appropriate
+function for that type will be called. Within such a function, the
+node's data fields will be downcast to the required type, and then
+manipulated in a type-specific manner.
+
+%% Of course, this approach is a poor-man's polymorphism, opening many
+%% opportunities for error. Therefore, one must be very careful when
+%% manipulating data typed as {\tt void *}.
+
+The basic contents of the node data structure are shown below:
+\begin{verbatim}
+struct PDCI_node_s {
+  const char              *name;
+  const char              *kind;
+  PDCI_node_t             *parent;
+
+  void                    *m;
+  void                    *pd;
+  void                    *rep;
+
+  const PDCI_vtable_t     *vt;
+  P_t                     *pads;
+  ...
+}
+\end{verbatim}
+
+All nodes have a name and a kind, stored as C-strings. Additionally,
+all nodes but the document node have a parent in the document, hence
+the parent field that points to another node. Next we have the mask,
+representation and parse-descriptor fields. As these elements of the
+node are type-specific, they are all typed as \vptr. 
+
+Next we have the pointer to the node's virtual table, {\tt vt}. The
+virtual functions will often need a valid \pads handle to execute
+correctly. Therefore, we also include a pads handle field in each
+node.
+
+\paragraph{Node Memory Management}
+
+Node's are dynamically allocated and freely exchanged between
+\pads and \galax, and, so, we must take care to avoid dangling
+pointers and leaked memory. We have implemented a simple memory
+management scheme that both allows us to free nodes no longer needed
+and allocate new nodes with reasonable efficiency. 
+
+The key difficulty in freeing nodes is that \galax is not guaranteed
+to hold a unique pointer a node that it uses, as aliases to the node
+can exist within \pads. The main source of this aliasing is that each
+node (except for the root, document node) maintains a reference to its
+parent node. Therefore, any node with live children cannot be freed,
+even if \galax no longer needs it. To address this problem, we
+reference-count each node, storing the counter in the {\tt rc} field
+of the node itself, show below. 
+\begin{verbatim}
+  unsigned long            rc
+\end{verbatim}
+The memory manager ensures that nodes are freed if and only if their
+reference count is zero.
+
+While reference counting protects against dangling pointers, it does
+not initiate node deallocation.  The initiative must come from outside
+of \pads, as \pads has no knowledge of how \galax uses the node
+references provided it. For this reason, we have included a node
+deallocation function in the \pglx interface:
+\begin{verbatim}
+void        PGLX_node_free           (nodeRep n)
+\end{verbatim}
+When the \galax garbage collector finds an unreachable a node reference,
+it calls this function to inform \pads, which proceeds as appropriate
+based on the reference count of the particular node.
+
+While reference counting helps ensure the safety of the system, we
+also desire that node allocation and deallocation be as efficient as
+possible.  Nodes can be relatively short-lived, as \galax does not
+retain nodes that it is not actively querying. For this reason, we
+decided to create a node free-list for recycling nodes. As each node
+is of the same size, no matter its type, node allocation is simple
+matter of removing the first node on the list, merely involving the
+adjustment of one free list pointer, rather than a potentially
+expensive search by the C memory manager for an appropriately sized
+block of memory. The disadvantage of this approach is that it ties-up
+memory that might be needed by other portions of the program.
+Therefore, in order to provide control over memory consumption, the
+node memory manager is parameterized by the maximum size of the free
+list.
+
+\subsection{Extensions}
+\label{sec:node-ext}
+
+We can extend the basic nodes described above in an object-oriented
+manner to create new node types.  First, we extend the node datatype
+itself, adding new fields as appropriate.  Then, we override old
+virtual table functions with new ones, as necessary. In our current
+implementation, we have three extensions to the basic node. For
+simplicity, though, we have not defined new structures for each type,
+instead placing all of the extended fields in the same {\tt
+  PDCI\_node\_s} structure. The difference between the types lies
+instead in the implementation of their virtual tables.
+
+For example, we have extended basic nodes with caching nodes. Each
+time a child is requested of a basic node, a new node is created to
+represent that child. However, the information in that node never
+changes. Future requests for that child could safely reuse the
+allocated node. Therefore, we've designed the caching node to cache
+pointers to children nodes that it creates.  To do so, we first added
+a cache to the node structure:
+\begin{verbatim}
+  PDCI_node_t           **child_cache 
+\end{verbatim}
+
+At this point, however, we ran into two problems. First, how can we
+initialize the child cache? The standard node allocation and
+initialization is unaware of the cache. We need a special
+initialization function. However, each type has a different number of
+children. To solve this, we need to either add the number of children
+to the virtual table, or add a function that has hard-coded the number
+of children for the type. We choose the later option for consistency,
+naming it the {\tt cachedNode\_init} function. Each type defines its
+own initialization function to convert a regular node into a cached
+nodes. For node types that cannot be converted, including cached nodes
+themselves, we set this slot in the table to {\tt
+PDCI\_error\_cachedNode\_init}.
+
+Our second problem relates to freeing nodes. Cached nodes should never
+be freed. So, we can't use the same deallocation function for all node
+types. We need to make the free function virtual as well, hence the
+{\tt free} field in the virtual table. These two new function types
+appear above with the rest of the virtual table function types.
+
+The next step in extending the basic node is to define a new {\tt
+  kth\_child} function for caching nodes that checks whether the child
+node is in the cache before allocating a new node, and saves it in the
+cache in the event of allocation. However, the cached node \kcfun is
+signifcantly simpler than the original, as it is implemented using the
+original function. For all uncached children, \cnkc calls the node's
+\kcfun and then initializes the returned node using that node's
+\cninitfun.  The \kcnfun, however, does not need to be overriden, as
+it is implemented using the virtual \kcfun.
+
+
+\subsection{Smart Node Implementation}
+\label{sec:sn-details}
+
+
+\paragraph{Meta-Data Structures}
+
+Smart nodes and smart-node-descendants are also implemented as
+extensions of the basic node type. Smart nodes extend the node type
+itself with a single field:
+\begin{verbatim}
+  PDCI_smart_node_t       *snExt    
+\end{verbatim}
+pointing to additional data needed by the smart node. We chose not to
+implement that data directly into the node type as we foresee there being at
+most one smart node in any given pads program. It did not, therefore,
+seem space-efficient for every node to carry those fields. At the same
+time, the added cost of allocating the extension seperately is
+trivial, due to its infrequency.
+
+Here is the \verb|PDCI_smart_node_t| type:
+\begin{verbatim}
+struct PDCI_smart_node_s {
+  PDCI_smart_elt_read_fn     elt_read;
+  PDCI_smart_elt_alloc_fn    elt_alloc;
+  PDCI_smart_elt_free_fn     elt_free;
+  PDCI_path_walk_fn          elt_path_walk;
+  PDCI_smart_failure_fn      handle_failure;
+
+  void                      *elt_state;  // for arrays, this is PDCI_smart_array_t 
+}
+\end{verbatim}
+
+The structure contains five functions, four for manipulating elements
+and one for failure reporting. This last one is deprecated, so we
+will not discuss it. We present the types of the other four functions
+below:
+
+\begin{verbatim}
+Pread_res_t (*PDCI_smart_elt_read_fn)(PDCI_node_t *smartNode, P_t *pads, 
+                                      PDCI_smart_elt_info_t *info)
+
+
+Perror_t (*PDCI_smart_elt_alloc_fn)(PDCI_node_t *smartNode, P_t *pads,
+                                    void **elt_pd, void **elt_rep)
+
+Perror_t (*PDCI_smart_elt_free_fn)(P_t *pads, PDCI_smart_elt_info_t *info)
+
+
+Perror_t (* PDCI_path_walk_fn) (P_t *pads, void *m, void *pd, void *rep, 
+                                PDCI_path_t path,
+                                void **m_out, void **pd_out, void **rep_out)
+\end{verbatim}
+
+
+The function \verb|elt_read| tells the smart node to bring an element
+into memory, based on the element meta-data referenced by parameter
+\verb|info|. Next, \verb|elt_alloc| attempts to allocate new memory.
+This function is virtual so that different smart arrays can use
+different allocation schemes. This call is guaranteed to fail if the
+maximum number of elements are already in-memory. Function
+\verb|elt_free| is currently unused, as element memory is never freed,
+only recycled. However, a future element management system might take
+advantage of free in order to dynamically adjust the amount of memory
+consumed by the smart array. Also, free will be necessary for
+implementing a function to cleanup a smart array once it is no longer
+needed. Finally, \verb|elt_path_walk| walks the element representation
+(rep), parse-descriptor (pd), and mask (m) according to the provided
+path, in order to find the desired subcomponent of the element.
+Pointers to the substructure's representation, parse-descriptor, and
+mask are returned in the corresponding out-pointers. We will discuss
+path walking in more detail below.
+
+The last field of the smart node is a pointer to type-specific smart
+node state (the field name \verb|elt_state| is outdated). As we only
+support smart arrays at this point, all structures referenced by
+\verb|elt_state| are variants of the structure shown below.
+\begin{verbatim}
+struct PDCI_smart_array_info_s {
+  PDCI_smart_elt_info_t     *tmap;
+  unsigned int               max_elts;
+
+  PDCI_childIndex_t          next_idx_read;    
+  PDCI_childIndex_t          next_idx_create;  
+
+  // parse state
+  Sfoff_t                    first_offset;
+  Sfoff_t                    next_offset;
+
+  ...  
+}
+\end{verbatim}
+As discussed above, the \emd is an array of element meta-data. Field
+\verb|max_elts| is the maximum number of allocated elements. This
+field is set at initialization time, based on a parameter provided by
+the smart node client.
+
+If the smart array has not yet been fully read, the two
+\verb|next_idx| fields track the next index of the \emd in need of
+reading or initialization. Otherwise, these fields indicate the length
+of the smart array. In the current implementation, they are kept
+equal. However, we keep track of them independently so that an
+implementation could jump ahead in the stream, upon request, and read
+an element, without initializing the unrequested elements that were
+skipped. 
+
+Field \verb|first_offset| is the starting offset of the array. Field
+\verb|next_offset| is used to save current the location in the data
+source in the event that the smart array needs to reread an element
+from earlier in the stream. Therefore, \verb|next_offset| contains the
+offset of the next unread byte in the stream if the smart array last's
+read was of a previously read element. If the last read was at the
+head of the stream (i.e. a new element), then the contents of
+\verb|next_offset| are irrelevant.
+
+The aforementioned fields are common to all smart arrays. However,
+some smart arrays have additional state requirements, as the
+parameters passed to the smart array's \verb|read_one_init|,
+\verb|read_one| and \verb|reread_one| function are all stored here. Those
+parameters can include the location of the beginning of the array, any
+user-specified parameters to the type and storage for any regular
+expressions. For each smart array, the compiler generates an extended
+version of the above structure with all the additional fields
+necessary for the that type.
+
+In order to ensure that all of the generated structures can be safely
+cast to a \verb|PDCI_smart_array_info_s|, we have the compiler
+generate the structure in two steps. First, it generates a seperate
+strucuture containing only the additional parameters. This structure
+is named \verb|ty_ro_params_s|, where \verb|ty| is the name of the
+smart array type. Then, the extended array meta-data structure always
+looks like this:
+\begin{verbatim}
+struct ty_array_info_t_s {
+  PDCI_smart_array_info_t base;
+  ty_ro_params_t params;
+}
+\end{verbatim}
+In addition, this approach guarantees that any changes made to the
+\verb|PDCI_smart_array_info_t| type will be reflected in the generated
+types.
+
+
+\paragraph{Reading Semantics}
+Clients of a smart array can request any index at any point and the
+array will attempt to provide that index. The core functions
+supporting such requests are \kc and \verb|elt_read|. When a request
+comes through \kc, the smart array first checks whether space has been
+allocated in the \emd for that element. Under the current
+implementation, this check is equivalent to a check of whether the
+element has been previously read and its meta-data initialized. If the
+element meta-data has been initialized, then a new node is created
+based on that meta-data. If no space has been allocated, then an
+allocation is attempted for all elements between the last element seen
+and the requested one, followed by a call to \verb|elt_read|. If both
+the allocation and read are successful, then a new node is created
+based on the newly-created meta-data. Otherwise, we return 0,
+indicating that the element does not exist. Note that if the element
+access fails for reasons other than the element's non-existence (such
+as some form of IO error), than the error responsible should be
+reported through the appropriate channels.
+
+For previously unseen elements, the \kc function requests
+the \verb|elt_read| function to read the desired element. However, the
+\verb|elt_read| function can also be called for an existing element
+that needs to be brought back into memory. Therefore, one of the first
+steps taken is to distinguish between the two cases. If a reread is
+desired, then we save the current position in the stream (if
+necessary), seek to the desired position and reread the element. If a
+new read is desired, then move to the head of the stream (if we're not
+their already) and read until the desired element is found, an error
+occurs, or we reach the end of the array. Note that for new reads,
+the process described above will read through all unseen elements
+until the desired one is found without keeping those nodes in
+memory. However, it will initialize the meta-data - including offsets
+- of all such intermediate nodes.
+
+As mentioned in Section~\ref{subsec:smart-nodes}, the {\em pd} and
+{\em length} children of a smart array are returned as the last two
+children of the array. This feature requires them to be treated
+specially by \kc and \verb|elt_read|, as they do not have a fixed
+index. Instead, once the array has terminated, we compare the
+requested index to the length of the array. If equal, then the child
+returned is {\em pd}. If the index is one greater than the length,
+then the child returned is {\em length}.
+
+Another function provided for accessing a smart array is the \kcnfun.
+While this function usually simply translates an index and name into
+simple child index, it behaves differently for the smart array. As the
+indeces of the {\em pd} and {\em length} children are unknown before
+the array has been seen in its entirety, this \kcnfun forces the array
+to be read to completion in the case that either of these fields are
+requested. Once the array has read to completion, the length of the
+array is known, and the indeces of these fields can be calculated
+simply, as described above.
+
+\paragraph{Node Validation}
+One of the important design decisions for node validation, is where to
+place the validations. We could eagerly validate nodes upon entry to
+the \pglx library, however that might cause unnecessary validations if
+a nodes data is never examined. However, lazy validation can cause
+unnecessary work as well. For a given node, if its element's data will
+be accessed through descendant nodes, then it would be more efficient
+to validate the node itself and then give all children valid data pointers,
+then to pass null pointers to the children, forcing each descendant to
+update its pointers independently.  We have chosen a compromise
+between lazy and eager. In the case of new elements, we validate
+eagerly, becuase we do not know whether the element in fact
+exists. Therefore, it is necessary to force a read of the element to
+find out. Otherwise, we only force the data into memory if we actually
+need it.
+
+However, identifying when data is needed is a little subtle. While
+functions such as \tv obviously touch the data, many \kc functions do
+as well. For example. for PDCI\_sequenced\_pd and
+PDCI\_structured\_pd, the existence of the child {\em loc} depends on
+the value of the child {\em errCode}. Therefore, despite the fact that
+we are not accessing the {\em value} of the {\em loc} child, we need
+to bring the element into memory to check the value of child {\em
+  errCode}.  Similarly, for base-type \kc functions, the existence of
+the {\em val} child, which represents the actual value of the node,
+depends on there having been no serious parsing errors, as indicated
+in the parse-descriptor. Once again, we must force the element into
+memory in order to access the contents of its parse-descriptor.
+
+\paragraph{Paths}
+
+
+\paragraph{Node Identifiers}
+
+
+\paragraph{C-strings}
+
+
+\subsection{Error Handling}
+\label{sec:error-handling}
+
+\subsection{Node Revalidation}
+
+  A smart node (currently, only smart arrays) is conceptually divided 
+into elements, which serve as the level of granularity at which data is 
+brought into and out of memory. Every descendant of a smart node is 
+grouped according to the element from which it descends. Each descendant 
+node remembers to which group it belongs, and the system uses this 
+information when revalidating the node. However, knowing the ancestor 
+element of a given node is not enough to revalidate it. In addition, we 
+need to know exactly which portion of the element is represented by the 
+given node. In order to record this second piece of information, we 
+introduce the notion of paths.
+
+ In essence, a path is a set of directions leading from (the pointers 
+to) an element's representation, mask and parse descriptor (henceforth: 
+data) to the particular node's data. For a given element, a path 
+uniquely determines a child of that element.
+
+  Node revalidation, then, consists of two key steps. First we ensure 
+that the data of the node's ancestor element is available in memory. 
+Then, we retrieve the node's path, and, using it and the pointers to the 
+element data, we locate the node's data in memory. In the current 
+system, node revalidation occurs in the \verb+PDCI_sndNode_make_valid+
+function, located in libpglx/smart.c. In order to better understand node 
+revalidation, we walk through the function, below:
+
+\begin{verbatim}
+Perror_t PDCI_sndNode_make_valid(PDCI_node_t *node){
+  Pread_res_t res;
+  Perror_t result;
+\end{verbatim}
+
+The first step is to determine the node's ancestor. This step is 
+accomplished via a function call, as a pointer to the ancestor is not 
+stored directly in the node.
+
+\begin{verbatim}
+  PDCI_smart_elt_info_t  *ancestor = PDCI_get_ancestor(node);
+  PDCI_smart_node_t      *sn       = ancestor->parent->snExt; // Alias 
+the smart node.
+  PDCI_path_t             path;
+\end{verbatim}
+
+Next, we check the status of the ancestor's data. The if-statement below 
+ensures that the data is in memory. We will not go into the details here.
+
+\begin{verbatim}
+  if (ancestor->rep == NULL) {
+    /* must read from IO stream first */
+    res = sn->elt_read(ancestor->parent, node->pads, ancestor);
+    if (res != P_READ_OK_DATA) {
+      /*
+       * the read failed when we
+       * were expecting it to succeed.
+       */
+      return P_ERR;
+    }
+  }
+\end{verbatim}
+
+At this point, we know that the ancestor's data is available in memory. 
+Now, we need to retrieve the pointers to our node's data. First, we 
+calculate the path from the ancestor to the node (the details of this 
+calculation are discussed below).
+
+\begin{verbatim}
+  path = PDCI_node_getPath(node,0);
+\end{verbatim}
+
+Now, using this path and the ancestor's data pointers, we ask the smart 
+node to walk the path, which returns the node's data pointers in the 
+last three arguments of the path walk function. The function called is 
+virtual, but there is currently only one macro implementing this 
+function, located in pglx-codegen-macros.h. We will discuss this macro 
+below.
+
+\begin{verbatim}
+  /* update pointers and generation */
+  result = sn->elt_path_walk(node->pads,ancestor->m, ancestor->pd, 
+ancestor->rep, path,
+              &(node->m), &(node->pd), &(node->rep));
+
+  PDCI_PATH_FREE(path);
+\end{verbatim}
+
+At this point, the node should have valid data pointers. However, in 
+case there was a problem with the path, we do a sanity check here on the 
+result of the path walk function.
+
+\begin{verbatim}
+  if (result == P_ERR) {
+    // Something's wrong:
+    //sn->handle_failure(node->pads,sn,ancestor,ERROR_WARNING,"failed to 
+find element in path walk");
+    return P_ERR;
+  }
+\end{verbatim}
+
+Now, everything should be ok and the node has been successfully 
+revalidated. As a final step, we update the node's \verb+ptr_gen+ indicating 
+that its data pointers are in sync with its ancestors data pointers.
+
+\begin{verbatim}
+  node->ptr_gen = ancestor->gen;
+
+  return P_OK;
+}
+\end{verbatim}
+
+In order to better understand the \verb+make_valid+ function, we'll now
+discuss a few of the functions that it depends on. First, though,
+we'll describe the current implementation of paths. As we said above,
+a path needs to be a set of directions that uniquely identify a node
+within an element. Our solution records a list of the child indexes
+that, passed in succession to \verb+get_kth_child+ - starting with the
+element node - would return the desired node. Since, for a given node,
+a single index uniquely determines a child of that node, a list of
+such indexes uniquely determines a descendant of that node.
+
+  The \verb+PDCI_node_getPath+ function, therefore, constructs (a copy of) a 
+given node's path. Once again, for efficiency, the path is not stored 
+directly in the node and hence the function call is needed to recreate 
+the path. Once constructed, the path contains a reverse-ordered list of 
+the sequence of indexes from the element to the node and a value 
+indicating the length of the path. See include/path\_walk.h for details 
+of the data structure implementing a path.
+
+  With this list, we call the smart-node path walk function. Here is the 
+current (macro) implementation:
+
+\begin{verbatim}
+#define 
+SN_ELT_PATH_WALK_BODY(ty,eltTy,eltPdTy,eltMaskTy,padsIN,mIN,pdIN,repIN,pathIN,m_outIN,pd_outIN,rep_outIN)
+  eltTy    *c_rep = (eltTy *)(repIN);
+  eltPdTy  *c_pd  = (eltPdTy *)(pdIN);
+  eltMaskTy  *c_m   = (eltMaskTy *)(mIN);
+/* END_MACRO */
+
+#define SN_ELT_PATH_WALK_RET(eltTy,padsIN,pathIN,m_outIN,pd_outIN,rep_outIN)
+eltTy ## 
+_node_pathWalk((padsIN),c_m,c_pd,c_rep,(pathIN),(m_outIN),(pd_outIN),(rep_outIN))
+/* END_MACRO */
+\end{verbatim}
+
+This function simply calls the \verb+path_walk+ function specific to the type 
+of the smart node's element, inserting the appropriate casts. This 
+simplicity is due to the fact that for smart arrays, all elements have a 
+common type, and, hence, a common path walk function.
+
+  While the exact implemention of the \verb+path_walk+ function depends on the 
+type for which it is generated, its basic structure depends on the pads 
+type (e.g. struct, array, union, etc.). The differences in structure 
+reflect the structural differences of the \verb+kth_child+ functions, so 
+discussing the \verb+path_walk+ function for one pads type should be enough to 
+explain it for all pads types. Below we show the Pstruct \verb+path_walk+ 
+macro, from pglx-codegen-macros.h:
+
+\begin{verbatim}
+#define STR_NODE_PATH_WALK_BODY_BEGIN()
+  Perror_t res = P_ERR;
+  PDCI_childIndex_t idx;
+ 
+  if (path.length > 0){
+\end{verbatim}
+
+If the path length is non-zero then we have not yet arrived at the 
+destination node.  Therefore, this branch will require that we 
+(recursively) call another \verb+path_walk+ function.
+First, we remove the first index from the path's index list.
+
+\begin{verbatim}
+    /* modifies path */
+    idx = PDCI_PATH_GET(path);
+\end{verbatim}
+
+Now, we use the index to determine which child to visit next.
+
+\begin{verbatim}
+    switch(idx){
+    case 0:
+\end{verbatim}
+
+If we're visiting the pd, then we know that there is no mask. So, we can 
+already set \verb+*m_out+ to NULL.
+
+\begin{verbatim}
+      *m_out = NULL;
+\end{verbatim}
+
+As we're in the Pstruct macro, the pd is a structure pd. For an array, 
+it would be a sequenced pd. Etc. Notice that as the path variable was 
+already modified, we pass it directly to the child \verb+path_walk+ call - no 
+further modification is required.
+
+\begin{verbatim}
+      res = PDCI_structured_pd_node_pathWalk(pads,(PDCI_structured_pd 
+*)pd,path,pd_out,rep_out);
+      break
+/* END_MACRO */
+\end{verbatim}
+
+Now, what happens if the path length is zero? Then, there are no more 
+children to visit and we have arrived at our destination. Let's take a look:
+
+\begin{verbatim}
+#define STR_NODE_PATH_WALK_BODY_END()
+    }
+  }else{
+\end{verbatim}
+
+We set all the out variables to the corresponding values from the node 
+we are visiting.
+
+\begin{verbatim}
+    *rep_out = rep;
+    *pd_out = pd;
+    *m_out = m;
+\end{verbatim}
+
+Then, we indicate that the walk was successful, and we're done.
+\begin{verbatim}
+    res = P_OK;
+  }
+/* END MACRO */
+\end{verbatim}
+
+  An additional note: for each child other than the pd, a corresponding 
+case statement is inserted into the \verb+path_walk+ function, via a call to 
+the \verb+NODE_PW_CASE+ macro, in the switch statement of the if-branch:
+
+\begin{verbatim}
+#define NODE_PW_CASE(fieldNumIN,fieldTy,fieldNameIN)
+    case fieldNumIN:
+      res = fieldTy ## 
+_node_pathWalk(pads,&(m->fieldNameIN),&(pd->fieldNameIN),&(rep->fieldNameIN),path,m_out,pd_out,rep_out);      
+
+      break
+/* END_MACRO */
+\end{verbatim}
+
+The field cases are quite similar to the pd case. The only thing to note 
+is that a field (may) have a mask, and so the \verb+m_out+ variable is passed 
+on to the field's \verb+path_walk+ function.
+
+In addition to the path walk macros, there are concrete
+\verb+path_walk+ functions in libpglx/path\_walk.c for all base types,
+pd types, \verb+Ploc+, \verb+Ppos+, and \verb+PDCI_cstr+. Their
+structure is essentially the same, so I will not discuss them in
+detail. The only thing to note is that some of them contain only
+terminating cases, with no recursive call to child \verb+path_walk+
+functions. This structure occurs in node types that cannot contain
+children.
+
+The final function of interest is 
+\begin{verbatim}
+PDCI_node_getPath(PDCI_node_t *node, int curLength). 
+\end{verbatim}
+While a path could be stored in its entirety for each 
+node, doing so can consume a fair amount of space. As the only 
+difference between a node's path and its parent's path is the node's 
+index with respect to its parent, that index is the only thing we store 
+in each node. Then, when we need the path, the \verb+PDCI_node_getPath+
+function recursively climbs up from the node to its ancestor, recording 
+the length of the path as it climbs. Upon reaching the ancestor it 
+allocates a path of the correct length, and then returns down the path 
+(via function call return), filling in the path as it does.
+
+\appendix
+
+
+\section{Directory Structure}
+\end{document}

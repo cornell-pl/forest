@@ -1,0 +1,42 @@
+\begin{code}
+[forest|
+ \kw{data} PrincetonCS (y::Integer) = \kw{Directory}
+   \{ notes   \kw{is} "README" :: Text
+   , seniors \kw{is} <|mkClass y    |> :: Class y
+   , juniors \kw{is} <|mkclass (y+1)|> :: Class <|y+1|>
+   , graduates :: Grads
+   \}
+\mbox{}
+ \kw{data} Class (y::Integer) = \kw{Directory}
+   \{ bse \kw{is} <|"BSE" ++ (toString y)|> :: Major
+   , ab  \kw{is} <|"AB"  ++ (toString y)|> :: Major   
+   , trans \kw{matches} transRE :: Maybe Major      
+   , withd \kw{matches} wdRE    :: Maybe Major
+   , leave \kw{matches} leaveRE :: Maybe Major 
+   \}
+\mbox{}
+ \kw{type} Grads = 
+   [c :: Class <|getYear c|> | c <- \kw{matches} cRE]
+\mbox{}
+ \kw{type} Major = Map
+    [ s :: File (Student <|dropExtension s|>) 
+    | s <- \kw{matches} txt, <|not (template s)|>]
+|]
+\end{code}
+% \mbox{}
+% [pads|
+%   \kw{data} Student (name::String) = ...
+% |]
+% \mbox{}
+% toStrN i n = (replicate(n - length(show i)) '0') 
+%              ++ (show i)
+% mkClass y = "classof" ++ (toStrN y 2)
+% getYear s = 
+%   toInteger (reverse (take 2 (reverse s)))
+% template s = s `elem` ["sss.txt", "sxx.txt"]
+
+% transRE = RE "TRANSFER|Transfer"
+% leaveRE = RE "LEAVE|Leave"
+% wdRE    = RE "WITHDRAWN|WITHDRAWAL|Withdrawn"
+% cRE     = RE "classof[0-9][0-9]"
+% txt     = GL "*.txt"

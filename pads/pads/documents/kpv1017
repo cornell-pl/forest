@@ -1,0 +1,54 @@
+Bob Gruber and I have started working on a project we call PADS, for
+Processing Arbitrary Data Streams.  
+
+AT&T in general and research in particular generates and receives many
+high-volume data streams on a regular basis.  These streams contain
+data that can be mined very profitably.  Unfortunately, these streams
+typically come in legacy formats over which we have no control.  It
+often requires weeks to understand a new data feed and write a parser
+to process the data, a process that is both tedious and error-prone.
+Often, this hard-won understanding of the data ends up embedded in the
+parsing code, making long-term maintenance difficult for the original
+writer and sharing the knowledge with others still more difficult.
+
+The goal of the PADS project is to enable data analysts to extract
+information from these streams as quickly as possible.  We would like
+to support eventually both a library interface and a declarative
+query interface to the data, but at the moment we are focusing on the
+first of these goals.  
+
+We have a preliminary design of a declarative data-description
+language (PADSL) expressive enough to describe the data feeds we see
+in practice, including both ascii and binary data.  From this
+description, we generate a C library for manipulating the data.
+This library contains an in-memory representation for the data,
+parsing functions, and accumulator functions (which serve to summarize
+the data). Each piece of the data description generates a parsing
+function, so the library user can choose to read the whole file at
+once or (more likely) one record at a time.  Each parsing function
+returns both the in-memory representation of the associated data and
+an error descriptor.  When the parser encounters a bug in the
+values in the data, it simply sets the appropriate error descriptor
+and continues processing.  This ability to continue is crucial when
+processing massive data files that contain some small percentage of
+errors. 
+
+We are currently working with Andrew Hume to convert Cobol copy-books
+into PADSL descriptions.  With this conversion, PADS library
+generation would then enable data analysts to go from a copy book to a
+program to summarize the fields in a given feed very quickly.
+
+Possible future directions include:
+ - Generating DSS modules (Glenn Fowler) from PADSL descriptions.
+   Such a module would enable some declarative querying of the data
+   source with no programming required on the part of the data analyst.
+ - Exploring on-the-fly translation of input records to XML data
+   to enable use of XML query tools over arbitrary input data formats.
+ - Generating Hancock stream descriptions and event functions from PADSL
+   descriptions and auxiliary information to enable new signature
+   applications over many different kinds of data feeds.
+ - Exploring implementations of the library functions that avoid
+   copying, making the functions suitable for IP packet
+   processing. Trevor Jim has expressed interest in this usage. 
+
+

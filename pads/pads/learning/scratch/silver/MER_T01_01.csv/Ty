@@ -1,0 +1,39 @@
+Pstruct(Id = BTy_49 491, tc: 612.557b, ac: 41.193b, dc: 18972.046b, raw: 19584.603b)
+	[StringConst] "\"" (Id = BTy_0 491, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b) (avg: 1.00, tot: 491);
+	[Enum] {[StringConst] "MSN", [StringConst] "TEAJBUS", [StringConst] "TEEXBUS", [StringConst] "TEIMBUS", [StringConst] "TEPRBUS", [StringConst] "TETCBUS", } (Id = BTy_1 491, tc: 265.896b, ac: 2.585b, dc: 15.510b, raw: 281.405b) (avg: 6.99, tot: 3433);
+	[StringConst] "\"," (Id = BTy_2 491, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b) (avg: 3.00, tot: 1473);
+	Switch(BTy_1)(Id = BTy_17 491, tc: 299.528b, ac: 38.608b, dc: 18956.536b, raw: 19256.064b):
+	case [Enum] {[StringConst] "TEAJBUS", [StringConst] "TEEXBUS", [StringConst] "TEIMBUS", [StringConst] "TEPRBUS", [StringConst] "TETCBUS", }:
+		Pstruct(Id = BTy_16 490, tc: 178.114b, ac: 37.952b, dc: 18596.536b, raw: 18774.651b)
+			[Int] [197313...200605] (Id = BTy_5 490, tc: 40.249b, ac: 11.685b, dc: 5725.742b, raw: 5765.990b) (avg: 6.00, tot: 2940);
+			[StringConst] "," (Id = BTy_6 490, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b) (avg: 1.00, tot: 490);
+			[Pfloat] (Id = BTy_7 490, tc: 5.044b, ac: 23.945b, dc: 11733.050b, raw: 11738.094b) (avg: 7.21, tot: 3532);
+			[StringConst] ",Quadrillion Btu," (Id = BTy_10 490, tc: 107.044b, ac: 0b, dc: 0b, raw: 107.044b) (avg: 17.00, tot: 8330);
+			[Int] [1...5] (Id = BTy_15 490, tc: 7.366b, ac: 2.322b, dc: 1137.745b, raw: 1145.111b) (avg: 1.00, tot: 490);
+		End Pstruct;
+	case [StringConst] "MSN":
+		Pstruct(Id = BTy_48 1, tc: 115.369b, ac: 360.000b, dc: 360b, raw: 475.369b)
+			[Other](\") (Id = BTy_23 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[String] (Id = BTy_24 1, tc: 5.044b, ac: 36.000b, dc: 36b, raw: 41.044b) (avg: 6.00, tot: 6);
+			[Other](\") (Id = BTy_25 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[Other](,) (Id = BTy_27 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[Other](\") (Id = BTy_28 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[String] (Id = BTy_29 1, tc: 5.044b, ac: 66.000b, dc: 66b, raw: 71.044b) (avg: 11.00, tot: 11);
+			[White] (Id = BTy_30 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b) (avg: 1.00, tot: 1);
+			[String] (Id = BTy_31 1, tc: 5.044b, ac: 30.000b, dc: 30b, raw: 35.044b) (avg: 5.00, tot: 5);
+			[Other](\") (Id = BTy_32 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[Other](,) (Id = BTy_34 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[Other](\") (Id = BTy_35 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[String] (Id = BTy_36 1, tc: 5.044b, ac: 66.000b, dc: 66b, raw: 71.044b) (avg: 11.00, tot: 11);
+			[White] (Id = BTy_37 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b) (avg: 1.00, tot: 1);
+			[String] (Id = BTy_38 1, tc: 5.044b, ac: 24.000b, dc: 24b, raw: 29.044b) (avg: 4.00, tot: 4);
+			[Other](\") (Id = BTy_39 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[Other](,) (Id = BTy_41 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[Other](\") (Id = BTy_42 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+			[String] (Id = BTy_43 1, tc: 5.044b, ac: 36.000b, dc: 36b, raw: 41.044b) (avg: 6.00, tot: 6);
+			[White] (Id = BTy_44 1, tc: 5.044b, ac: 2.000b, dc: 2b, raw: 7.044b) (avg: 1.00, tot: 1);
+			[String] (Id = BTy_45 1, tc: 5.044b, ac: 30.000b, dc: 30b, raw: 35.044b) (avg: 5.00, tot: 5);
+			[Other](\") (Id = BTy_46 1, tc: 5.044b, ac: 6.000b, dc: 6b, raw: 11.044b) (avg: 1.00, tot: 1);
+		End Pstruct;
+	End Switch;
+End Pstruct

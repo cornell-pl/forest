@@ -1,0 +1,124 @@
+@params = @ARGV;
+%labels;
+%cols;
+open GRAPH, "<$desc.graph" or die "Can't open graph file";
+while (<GRAPH>)
+{
+ if (/Sep: (.)/) {$sep = $1;}
+ if (/(BTy_\d*) Col #(\d+)\s*(\[\w+\])/)
+ {
+  $labels{$2} = $1;
+  $cols{$2} = $3;
+ }
+}
+close GRAPH;
+$wheregnu = `which gnuplot`;
+if (!$wheregnu) {
+  print "GNUplot is not installed!\nGet it from http://www.gnuplot.info before running the grapher.\n";
+  exit;
+}
+if (!$params[0]) 
+{
+ $sample = `tail -n 1 $datapath/$desc`;
+ print "This is a graphing tool generated from a description of $desc.
+Usage: $desc-graph -d Datafile -x Col# -y Col# -s Style [-o eps|jpeg|gif|png] [-t TimeFormat]\n\n"; 
+ print "Possible styles are: points (default), lines, linepoints, impulses, boxes.\n";
+ print "Time format is only needed when one of the columns contains time or date
+Only one of the two columns may be time/date\n";
+ print "Valid formats are:
+       Format       Explanation
+       \%d           day of the month, 1--31
+       \%m           month of the year, 1--12
+       \%y           year, 0--99
+       \%Y           year, 4-digit
+       \%j           day of the year, 1--365
+       \%H           hour, 0--24
+       \%M           minute, 0--60
+       \%s           seconds since the Unix epoch (1970-01-01, 00:00 UTC)
+       \%S           second, 0--60
+       \%b           three-character abbreviation of the name of the month
+       \%B           name of the month\n
+";
+ print "Available fields for plotting are:\n";
+ foreach $key (sort(keys %cols)) {
+   print "Col #".$key."\t".$cols{$key}."\n";
+ }
+ print "\nA sample line from original data at $datapath/$desc:\n\n$sample\n";
+ exit;
+}
+for ($i=0; $i<$#params; $i=$i+2)
+{
+ if ($params[$i] eq "-d")
+ {
+  $path = $params[$i+1];
+ }
+ elsif ($params[$i] eq "-x")
+ {
+  $xcol = $params[$i+1];
+ }
+ elsif ($params[$i] eq "-y")
+ {
+  $ycol = $params[$i+1];
+ }
+ elsif ($params[$i] eq "-s")
+ {
+  $style = $params[$i+1];
+ }
+ elsif ($params[$i] eq "-o")
+ {
+  $format = $params[$i+1];
+ }
+ elsif ($params[$i] eq "-t")
+ {
+  $timefmt = $params[$i+1];
+ }
+}
+
+if (! -e $path) {
+ print "Datafile path incorrect!\n"; 
+ exit;
+}
+
+if (!$style) {$style = "points";}
+if (!$format) {$format = "eps";}
+if ($format eq "eps") { 
+ $informat = "postscript eps color";
+}
+else {$informat=$format;}
+
+#if ($path =~ /.*\/([^/]*)/)
+#{
+# $datafile = $1;
+#}
+#elsif ($path =~ /.*\\([^\\]*)/)
+#{
+# $datafile = $1;
+#}
+#else {$datafile = $path;}
+
+$padshome= $ENV{'PADS_HOME'};
+$arch = `$padshome/ast-ast/bin/package.cvs`;
+chomp $arch;
+system ("$arch/$desc-fmt $path $desc.fmt");
+$gnufile = $desc.".gnu";
+open GNU, ">$gnufile" or die "Can't open gnu file for output";
+print GNU "set datafile separator \"$sep\"\n";
+print GNU "set term $informat\n";
+print GNU "set output \"$desc.$format\"\n";
+print GNU "set style data $style\n";
+print GNU "set style fill solid\n";
+print GNU "set xlabel \'$labels{$xcol}\'\n";
+print GNU "set ylabel \'$labels{$ycol}\'\n";
+if ($cols{$xcol} eq "[Date]" or $cols{$xcol} eq "[Time]")
+{
+ print GNU "set xdata time\nset timefmt \"$timefmt\"\nset format x \"$timefmt\"\n";
+}
+elsif ($cols{$ycol} eq "[Date]" or $cols{$ycol} eq "[Time]")
+{
+ print GNU "set ydata time\nset timefmt \"$timefmt\"\nset format y \"$timefmt\"\n";
+}
+print GNU "plot \'$desc.fmt\' using $xcol:$ycol title \'$desc\'\n";
+close GNU;
+
+system "gnuplot $gnufile";
+print "Plot output to $desc.$format\n";

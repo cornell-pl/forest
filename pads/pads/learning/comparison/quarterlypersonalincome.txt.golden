@@ -1,0 +1,28 @@
+Punion(35, tc: 1059.424b, ac: 32.551b, dc: 94.482b, raw: 1153.906b)
+        Pstruct(35, tc: 295.766b, ac: 18.610b, dc: 18.610b, raw: 314.376b)
+                [StringConst] ""Personal income","FIPS","AreaName"," (35, tc: 221.044b, ac: 0b, dc: 0b, raw: 221.044b);
+                RArray(35, tc: 68.677b, ac: 18.610b, dc: 18.610b, raw: 87.287b)
+                        Separator: [StringConst] ","
+                        Pstruct(35, tc: 50.588b, ac: 18.610b, dc: 18.610b, raw: 69.198b)
+                                [StringConst] ":" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                                [Pint] (35, tc: 5.044b, ac: 14.288b, dc: 14.288b, raw: 19.332b);
+                                [StringConst] "." (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                                [Pint] (35, tc: 5.044b, ac: 4.322b, dc: 4.322b, raw: 9.366b);
+                                [StringConst] ":" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        End Pstruct;
+                End RArray;
+        End Pstruct;
+        Pstruct(35, tc: 127.985b, ac: 74.288b, dc: 74.288b, raw: 202.272b)
+                [StringConst] ""010","" (35, tc: 47.044b, ac: 0b, dc: 0b, raw: 47.044b);
+                [StringME] "/\d\d/" (35, tc: 5.044b, ac: 12.000b, dc: 12b, raw: 17.044b);
+                [StringConst] "","" (35, tc: 23.044b, ac: 0b, dc: 0b, raw: 23.044b);
+                [String] (35, tc: 5.044b, ac: 48.000b, dc: 48b, raw: 53.044b);
+                [StringConst] ""," (35, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b);
+                RArray(35, tc: 23.133b, ac: 14.288b, dc: 14.288b, raw: 37.421b)
+                        Separator: [StringConst] ","
+                        [Pint] (35, tc: 5.044b, ac: 14.288b, dc: 14.288b, raw: 19.332b);
+                End RArray;
+        End Pstruct;
+        [StringConst] ""Source: Regional Economic Information System, Bureau of Economic Analysis, U.S. Department of Commerce"" (35, tc: 629.044b, ac: 0b, dc: 0b, raw: 629.044b);
+End Punion
+

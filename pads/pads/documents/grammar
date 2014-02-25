@@ -1,0 +1,283 @@
+_[]_ denotes optional element
+Capitalized words are non-terminals; non-capitalized are terminals
+| denote choice
+/* */ is comment form
+all other symbols are literals
+************************************************************************
+PadsDecl  ::= PStruct | PUnion | PEnum | PTypedef | PArray 
+
+
+PStruct   ::= pstruct TyName _[(C-parameter-declaration-list)]_ {
+               FieldList
+              };
+FieldList ::= Field | Field FieldList
+Field     ::= _[endian]_ _[pvirtual]_ TyName _[(: C-comma-separated-expression-list :)]_
+	                   FieldName _[: Expr ]_; _[/- comment ]_
+          | Expr 
+          | EOR
+
+
+PUnion   ::= punion TyName _[(C-parameter-declaration-list)]_{
+              FieldList
+             };
+
+
+PEnum    ::= penum TyName {
+               /* comma separated list of */ PAnnotatedEnumFields
+             };
+PAnnotatedEnumFields ::= EnumField _[/- comment ]_
+EnumField ::= Name | Name = Expr
+
+
+PTypedef  ::= ptypedef OldTyName _[(: C-comma-separated-expression-list :)]_   
+              NewTyName _[(C-parameter-declaration-list)]_ 
+                 :: NewTyName Name => Expr
+
+
+PArray   ::= parray TyName _[(C-parameter-declaration-list)]_{
+              BaseTyName SizeSpec ArrayConstraintOpt;
+             };
+SizeSpec ::= [] | [Expr] | [Expr: ] | [:Expr] | [Expr : Expr]
+ArrayConstraintOpt ::=  /* Nothing */ | : ArrayConstraints
+ArrayConstraints   ::= ArrayConstraint | ArrayConstraint && ArrayConstraints
+ArrayConstraint    ::= sep = Expr | term = Expr | 
+		       forall Name in [Expr .. Expr] {Expr} |
+		       forall Name in ArrayTyName {Expr} 
+
+
+Expr ::= C expression 
+TyName,Name,NewTyName,OldTyName,ArrayTyName,BaseTyName ::= C
+identifier
+
+=============================================================================
+
+The following rules map a PADS PDL to an XML Schema.  Each PADS type
+in the source PDL is mapped to a list of global schema declarations (a
+complex type, a simple type, or an element):
+
+   [[ PADS type decl ]] == XML Schema Declaration
+
+A complete PADS PDL is mapped by simply concatenating the global
+declarations:
+
+   [[ pads_decl pads_decl_list ]] 
+      == 
+   [[ pads_decl ]] @ [[ pads_decl_list ]]
+
+The [[ ]]_local mapping rule maps a field in a PADS type to a local schema element.
+
+Section 4. Base Types
+
+   The default mappings for all base types are in pads.xsd.  Each base
+   type is mapped to two global declarations: a simple type that
+   corresponds to the value space of the PADS type, and a complex type
+   that contains either an instance of the value or the default
+   parse-descriptor for base types.  For example, 
+
+       [[ Pchar ]]
+           == 
+       [
+        <xs:simpleType name="Pchar">
+          <xs:restriction base="xs:string">
+            <xs:maxLength value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+       ;
+        <xs:complexType name="val_Pchar">
+          <xs:choice>
+           <xs:element name="val" type="p:Pchar"/>
+           <xs:element name="pd" type="p:Pbase_pd"/>
+          </xs:choice>
+        </xs:complexType>
+       ]
+
+   References to base types are mapped to references to the
+   corresponding complex type in the pads.xsd namespace:
+
+       [[ base_ty ]]_typeref 
+            ==
+       "p:val_base_ty"
+
+   References to user-defined types are mapped to references to the
+   corresponding complex type in the local namespace (i.e., the target schema):
+
+       [[ ty ]]_typeref 
+     ty not a base type
+            ==
+           "ty"
+
+
+Section 5. Pstructs
+
+qualifier 	 ::=  	Pomit | Pendian
+qualifiers 	 ::=  	qualifier | qualifier qualifiers
+
+   Any field that is qualified by Pomit maps to the empty declaration,
+   because there is no realization of the data in the main memory rep
+   of the type and therefore no realization in the XML view of the type.
+
+    [[ [qualifiers] ... any field declaration ... ]]_local
+                where Pomit \in qualifiers
+                        == 
+                        [] 
+
+constraint 	 ::=  	: predicate
+       ty 	 ::=  	c_ty | p_ty
+
+    NB!!!: There is no mapping for native C types!!! 
+
+full_field 	 ::=  	[qualifiers] p_ty identifier [constraint] ; [p_comment]
+
+    A full field maps to a local element declaration in XML Schema.
+
+    [[ [qualifiers] p_ty identifier [constraint] ; [p_comment] ]]_local
+                where Pomit \not\in qualifiers
+                        == 
+         [ <element name=[[identifier]] type=[[p_ty]]_typeref/> ]
+
+comp_field 	 ::=  	Pcompute [Pomit] ty identifier = expression [constraint] ;
+
+       [[ Pcompute ty identifier = expression [constraint]  ]]_local
+                        == 
+         [ <element name=[[identifier]] type=[[ty]]_typeref/> ]
+
+literal_field 	 ::=  	p_coreliteral;
+
+   Literals have no realization in XML Schema: 
+
+   [[ p_coreliteral ]]_local == []
+
+array_field 	 ::=  	[qualifiers] p_ty `['p_size_spec`]' identifier[: p_array_constraints] ; [p_comment]
+
+  [[ [qualifiers] p_ty `['p_size_spec`]' identifier [: p_array_constraints] ; [p_comment] ]]_local
+                where Pomit \not\in qualifiers
+                        == 
+  [ <element name=[[identifier]] type=[[p_ty]]_typeref minOccurs="0" maxOccurs="unbounded"/> ]
+
+opt_field 	 ::=  	[qualifiers] Popt p_ty identifier [: opt_predicates] ; [p_comment]
+
+  [[ [qualifiers] Popt p_ty identifier [: opt_predicates] ; [p_comment] ]]_local
+                where Pomit \not\in qualifiers
+                        == 
+  [ <element name=[[identifier]] type=[[p_ty]]_typeref minOccurs="0"  maxOccurs="1"/> ]
+
+field 	 ::=  	full_field | comp_field | literal_field | array_field | opt_field
+
+fields 	 ::=  	field | field fields
+
+    A field is mapped to a local schema element or attribute, which
+    are simply concatenated together:
+
+      [[ field fields  ]]_local
+           == 
+    [[ field ]]_local @ [[ fields ]]_local
+
+struct_ty 	 ::=  	Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] ; 
+
+    A Pstruct yields two global complex types: one for the type itself
+    and one for its parse descriptor:
+
+    [[  Pstruct identifier [p_formals] { fields } [ Pwhere { predicate }] ]]
+                              == 
+    [ 
+      <complexType name=[[identifier]]> 
+        [[ fields ]]_local @ 
+        [ <element name="pd" type=[[identifier]]_pd minOccurs="0" maxOccurs="1"> ]
+      </complexType>
+    ; 
+      <complexType name=[[identifier]]_pd>
+        <sequence>
+          <element name="pstate" type="p:Pflags_t"/>
+          <element name="nerr" type="p:Puint32"/>
+          <element name="errCode" type="p:PerrCode_t"/>
+          <element name="loc" type="p:Ploc_t"/>
+        </sequence>
+      </complexType>
+    ]
+     
+Section 6. Punions
+
+union_field 	 ::=  	full_field | comp_field | literal_field  | array_field | opt_field
+branch 	         ::=  	Pcase expression : union_field | Pdefault: union_field
+branches 	 ::=  	branch | branch branches
+switched 	 ::=  	Pswitch (expression){ branches }
+in_place 	 ::=  	union_field | union_field in_place
+union_bdy 	 ::=  	switched | in_place
+
+union_ty 	 ::=  	[Plongest] Punion identifier [p_formals] { union_bdy } [ Pwhere { predicate }] ;
+
+
+Section 7. Parrays
+
+The syntax for Parrays is given by the following BNF grammar fragment:
+p_size_spec 	 ::=  [expresssion] | [expression] : [expression]
+ 
+p_term_expression ::=  	Pnosep | p_expression
+p_array_constraint ::=  	Psep(p_expression) | Pterm(p_term_expression)
+  	| 	Plast(predicate) | Pended(predicate)
+  	| 	Plongest | Pomit(predicate)
+p_array_constraints ::=  	p_array_constraint | p_array_constraint && p_array_constraints
+ 
+p_range 	 ::=  `[' expression .. expression`]' | identifier
+p_forall 	 ::=  Pforall ( identifier Pin p_range : expression )
+p_array_post 	 ::=  predicate | p_forall
+p_array_posts 	 ::=  p_array_post | p_array_post && p_array_posts
+ 
+array_ty 	 ::=  Parray identifier [p_formals] { 
+                        p_ty `['p_size_spec`]' [: p_array_constraints]
+                        
+                      } [ Pwhere { p_array_posts }] ;
+
+   [[ Parray identifier [p_formals] { 
+        p_ty `['p_size_spec`]' [: p_array_constraints]
+      } [ Pwhere { p_array_posts }] 
+   ]]  ==
+
+   [ <xs:complexType name=[[identifier]]>
+       <xs:sequence>
+         <xs:element name="elt" type=[[identifier]] minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="length" type="p:Puint32"/>
+         <xs:element name="pd" type=[[identifier]]_pd minOccurs="0" maxOccurs="1"/>
+       </xs:sequence>
+     </xs:complexType>
+   ;     
+     <xs:complexType name="[[identifier]]_pd">
+       <xs:sequence>
+         <xs:element name="pstate" type="p:Pflags_t"/>
+         <xs:element name="nerr" type="p:Puint32"/>
+         <xs:element name="errCode" type="p:PerrCode_t"/>
+         <xs:element name="loc" type="p:Ploc_t"/>
+         <xs:element name="neerr" type="p:Puint32"/>
+         <xs:element name="firstError" type="p:Puint32"/>
+       </xs:sequence>
+     </xs:complexType>
+   ]     
+      
+Section 8. Penums
+
+p_enum_prefix 	 ::=  	Pprefix ( identifier )
+p_raw_enum_field 	 ::=  	p_literal [= expression ]
+p_enum_field 	 ::=  	p_raw_enum_field, [p_comment]
+p_last_enum_field 	 ::=  	p_raw_enum_field [p_comment]
+p_enum_fields 	 ::=  	p_last_enum_field
+  	| 	p_enum_field p_enum_fields
+enum_ty 	 ::=  	Penum identifier [p_formals] [p_enum_prefix] {
+p_enum_fields } ; 
+
+Section 9. Popts
+
+p_opt_some 	 ::=  	Psome identifier => { predicate }
+p_opt_none 	 ::=  	Pnone => { predicate }
+opt_predicates 	 ::=  	p_opt_some `|' p_opt_none
+  	| 	p_opt_none `|' p_opt_some
+  	| 	p_opt_none
+  	| 	p_opt_some
+opt_ty 	 ::=  	Popt p_ty identifier [p_formals] [: opt_predicates] ;
+ 
+
+Section 10. Ptypedefs
+
+typedef_predicates ::= 	identifier identifier => { predicate }
+typedef_ty 	   ::= 	Ptypedef p_ty identifier [p_formals] [:typedef_predicates] ; 
+
+

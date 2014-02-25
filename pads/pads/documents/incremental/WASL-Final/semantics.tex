@@ -1,0 +1,254 @@
+\documentclass[11pt]{article}
+
+\usepackage{xspace,amsmath,math-cmds,
+            math-envs,times,
+            verbatim,multicol,proof,url}
+\usepackage{code} 
+\usepackage{epsfig}
+\renewcommand{\bar}[1]{\overline #1}
+\newcommand{\base}{{\tt Base}}
+\newcommand{\sync}{{\tt Sync}}
+\newcommand{\mystruct}{{\tt Struct}}
+\newcommand{\myunion}{{\tt Union}}
+\newcommand{\myarray}{{\tt Array}}
+\newcommand{\D}{{\mathbb D}}
+\newcommand{\pa}{{\mapsto^*}}
+\newcommand{\gam}{{\rm gamma}}
+\input{definitions}
+\begin{document}
+
+\section{Preliminary Definitions}
+
+\noindent
+$s$: a character string \\
+$s_1 s_2$: concatenation of strings $s_1$ and $s_2$\\
+$s_1 - s_2$: $(s_1 - s_2) s_2 = s_1$ \\
+$\D$: an annotated description \\
+$e$: error code \\
+$d$: (error code, string) pair\\
+$ne$: number of errors \\
+$nt$: number of tokens parsed\\
+$\gamma$: ($ne$, $nt$) pair\\
+$\bar x$: a list of $x$ \\
+$L(B)$: language accepted by $B$\\
+$\oplus$: binary operator on two error codes\\
+$l_1 @ l_2$: concatenation of two lists\\
+gamma($\D$): return the $\gamma$ of $\D$ \\
+append\_data($\D$, $d$): append $d$ to the data list of $\D$
+
+\begin{eqnarray*}
+e &::=& G \bnfalt F \bnfalt P(s) ~~~ {\rm (Good,~ Fail~ or~ Partial)}\\
+\D &::=& \base~ \gamma~ \bar{d} \bnfalt \sync~ \gamma~ \bar{d} \bnfalt 
+\mystruct~ \gamma~ \bar{d}~ \bar{\D} 
+\bnfalt \myunion~ \gamma~ \bar{d}~ \bar{\D} \bnfalt \myarray~ \gamma~ \bar{d}~ (\D_e, \D_s, \D_t)
+\end{eqnarray*}
+
+\begin{eqnarray*}
+(ne_1,~ nt_2) + (ne_2,~ nt_2) &=& (ne_1 + ne_2,~ nt_1 + nt_2)\\
+(ne_1,~ nt_2) - (ne_2,~ nt_2) &=& (ne_1 - ne_2,~ nt_1 - nt_2) \\
+G \oplus G &=& G\\
+G \oplus F &=& P(``'')\\
+G \oplus P(s) &=& P(s)\\
+F \oplus F &=& F\\
+F \oplus P(s) &=& P(s)\\
+P(s_1) \oplus P(s_2) &=& P(s_1 s_2)
+\end{eqnarray*}
+
+\section{Operational Semantics}
+Main judgement (consumption of string data):
+
+\[s,~ \D \leadsto s',~ \D',~ e'
+\]
+\noindent
+where $e'$ is the is the error code of the last data item in $\D'$.
+
+\noindent
+Secondary judgement (consumption of multiple array elements):
+
+\[
+s, ~\D_e,~ \D_s,~ \D_t~ \pa s',~ \D_e',~ \D_s',~ \D_t',~ e', ~\gamma'
+\]
+
+\[
+\infer[\rm{(Base-G)}]{s_1 s_2,~ \base~ (ne,~ nt)~ \bar{d} \leadsto s_2,~ \base~ (ne,~ nt+1)~ \bar{d}@[(G,~ s_1)],~ G} 
+{s_1 \in L(\base)} 
+\]
+
+\[
+\infer[\rm{(Base-F)}]{s,~ \base~ (ne,~ nt)~ \bar{d} \leadsto s,~ \base~ (ne + 1,~ nt + 1)~ \bar{d} @ [(F,~ ``'')],~ F} 
+{{\rm prefix}(s) \cap L(\base) = \emptyset} 
+\]
+
+\[
+\infer[\rm{(Sync-G)}]{s_1 s_2,~ \sync~ (ne~, nt)~ \bar{d} \leadsto s_2,~ \sync~ (ne,~ nt+1)~ \bar{d}@[(G,~ s_1)],~ G 
+}
+{s_1 \in L(\sync)} 
+\]
+
+\[
+\infer[\rm{(Sync-F)}]{s,~ \sync~ (ne~, nt)~ \bar{d} \leadsto s,~ \sync~ (ne + 1,~ nt+1)~ \bar{d} @ [(F,~ ``'')],~ F} 
+{{\rm substring}(s) \cap L(\sync) = \emptyset
+}
+\]
+
+\[
+\infer[\rm{(Sync-P)}]{s_1 s_2 s_3,~ \sync~ (ne,~ nt)~ \bar{d} \leadsto 
+s_3,~ \sync~ (ne + 1,~ nt+1)~ \bar{d} @ [(P(s_1),~ s_1 s_2)],~ P(s_1)} 
+{
+{\rm substring}(s_1) \cap L(\sync) = \emptyset & s_2 \in L(\sync) 
+}
+\]
+
+\[
+\infer[\rm{(Struct)}]{
+\begin{array}{c}
+s_1,~ \mystruct~ \gamma~ \bar{d}~ [\D_1, \ldots, \D_n] \leadsto \\
+s_{n+1},~ \mystruct~ \gamma'~ \bar{d} @ [(e',~ s_1 - s_{n+1})]~ [\D_1', \ldots, \D_n'],~ e'
+\end{array}}
+{
+\begin{array}{c}
+\forall i \in [1,~ n]:~ s_i,~ \D_i \leadsto
+s_{i+1},~ \D_i',~ e_i \land \gamma_i = \gam(\D_i') \\
+e' = e_1 \oplus \ldots \oplus e_n ~~~~~~  \gamma' = \Sigma_{i=1}^n \gamma_i 
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Union-G)}]
+{
+\begin{array}{c}
+s,~ \myunion~ \gamma~ \bar{d}~ [\D_1, \ldots, \D_{i-1}, \D_i, \D_{i+1}, \ldots, \D_n] \leadsto \\
+s_i',~ \myunion~ \gamma'~ \bar{d} @ [(G, s - s_i')]~ , [\D_1, \ldots, \D_{i-1}, \D_i', \D_{i+1},\ldots, \D_n], G
+\end{array}}
+{
+\begin{array}{c}
+\exists i \in [1, n]:~ s, \D_i \leadsto s_i', \D_i',~ G \\
+\land \gamma_i = \gam(D_i) \land \gamma_i' ={\rm gamma}(\D_i') \land
+\gamma' = \gamma - \gamma_i + \gamma_i' 
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Union-P)}]
+{
+\begin{array}{c}
+s,~ \myunion~ \gamma~ \bar{d}~ [\D_1, \ldots, \D_{j-1}, \D_j, \D_{j+1}, \dots, \D_n] \leadsto \\ 
+s_j',~ \myunion~ \gamma'~ \bar{d} @ [(e_j', s - s_j')]~ [\D_1, \ldots, \D_{j-1}, \D_j', 
+\D_{j+1}, \ldots, \D_n], e_j 
+\end{array}}
+{
+\begin{array}{c}
+\forall i \in [1, n]:~ s, \D_i \leadsto s_i',~ \D_i',~ e_i \land e_i \in \{F,~ P(\_)\} \\
+\land (ne_i,~ nt_i) = \gam(\D_i) 
+\land (ne_i',~ nt_i') = \gam(\D_i') \\
+\exists j \in [1, n]: (ne_j'-ne_j)/(nt_j'-nt_j) \le (ne_i'-ne_i)/(nt_i'-nt_i) \\ 
+\gamma' = \gamma - (ne_j, nt_j) + (ne_j', nt_j')
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Array)}]
+{
+s, \myarray~ \gamma~ \bar{d}~ (\D_e,~ \D_s,~ \D_t~) \leadsto
+s', \myarray~ \gamma'~ \bar{d} @ [(e,~ s - s')]~ (\D_e',~ \D_s', ~ \D_t'),~ e
+}
+{
+\begin{array}{c}
+s,~ \D_e,~ \D_s,~ \D_t \pa s',~ \D_e',~ \D_s',~ \D_t',~ e \\
+\gamma' = \gam(\D_e') + {\rm gamma}(\D_s') + {\rm gamma}(\D_t')
+\end{array}
+}
+\]
+
+%
+%\[
+%\infer[\rm{(Elem-Id)}]
+%{
+%s,~ \D_e,~ \D_s,~ \D_t \pa s,~ \D_e,~ \D_s,~ \D_t,~ G 
+%}
+%{
+%}
+%\]
+
+\[
+\infer[\rm{(Elem-Sep)}]
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa 
+s'',~ \D_e'',~ \D_s'',~ \D_t',~ e \oplus e' \oplus e'' 
+}
+{
+\begin{array}{c}
+s,~ \D_e \leadsto s',~ \D_e',~ e ~~~~ s',~ \D_s \leadsto s'',~ \D_s',~ e' \\
+e' \in \{G,~ P(\_)\} ~~~~
+{\rm substring}(s' - s'') \cap L(D_t) = \emptyset \\ 
+s'',~ \D_e',~ \D_s',~ \D_t \pa s''',~ \D_e'',~ \D_s'',~ \D_t',~ e''
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Elem-Term)}]
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa s'',~ \D_e'',~ \D_s',~ \D_t'',~ e \oplus e'
+}
+{
+\begin{array}{c}
+s,~ \D_e \leadsto s',~ \D_e',~ e ~~~~ s',~ \D_t \leadsto s'',~ \D_t',~ e' \\
+e' \in \{G,~ P(\_)\} ~~~~
+{\rm substring}(s' - s'') \cap L(D_s) = \emptyset 
+\end{array}
+}
+\]
+
+\[
+\infer[\rm{(Elem-NonTerm)}]
+{
+s,~ \D_e,~ \D_s,~ \D_t \pa~ ``'',~ \D_e',~ \D_s,~ {\rm append\_data}(\D_t, (P(s'), s')),~ 
+e \oplus P(s')
+}
+{
+\begin{array}{c}
+s,~ \D_e \leadsto s',~ \D_e',~ e ~~~~ s',~ \D_s \leadsto s',~ \D_s',~ F ~~~~ 
+s',~ \D_t \leadsto s',~ \D_t',~ F  
+\end{array}
+}
+\]
+
+%
+%\[
+%\infer[\rm{(Array-1)}]{
+%\begin{array}{c}
+%s_1 \cdots s_{n+2},~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
+%s_{n+2},~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_n, s_1 \cdots s_{n+1})]~ 
+%(\D_{n+1},~ \D_{s, n+1},~ \D_t'),~ e_1 \oplus \ldots \oplus e_n
+%\end{array}}
+%{
+%\begin{array}{c}
+%\forall i \in [1,~ n-1]: s_i \cdots s_{n+2},~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
+%s_{i+1} \cdots s_{n+1},~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
+%s_n s_{n+1} s_{n+2}, \D_n \leadsto s_{n+1} s_{n+2}, \D_{n+1}, e_n ~~~~ e_n  \in \{G,~ P\} \\
+%s_{n+1} s_{n+2}, \D_t \leadsto s_{n+2}, \D_t', G
+%\end{array}
+%}
+%\]
+%
+%\[
+%\infer[\rm{(Array-2)}]{
+%\begin{array}{c}
+%s_1 \cdots s_n,~  \myarray~ \bar{d}~ (\D_1,~ \D_{s,1},~ \D_t) \leadsto \\
+%s_n,~ \myarray~ \bar{d} @ [(e_1 \oplus \ldots \oplus e_{n-1}, s_1 \cdots s_{n-1})]~ 
+%(\D_n,~ \D_{s, n},~ \D_t),~ e_1 \oplus \ldots \oplus e_{n-1}
+%\end{array}}
+%{
+%\begin{array}{c}
+%\forall i \in [1,~ n-1]: s_i \cdots s_n,~ \mystruct~ nil~ [\D_i,~ \D_{s,i}] \leadsto \\
+%s_{i+1} \cdots s_n,~ \mystruct~ [(e_i, s_i)] [\D_{i+1},~ \D_{s,i+1}],~ e_i ~~~~ e_i \in \{G,~ P\}\\ 
+%s_n,~ \mystruct~ nil~ [\D_n,~ \D_{s,n}] \leadsto s_n,~ \mystruct~ d_n~ [\D_n',~ \D_{s,n}'],~ F \\ 
+%\end{array}
+%}
+%\]
+%
+\end{document}

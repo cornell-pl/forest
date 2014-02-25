@@ -1,0 +1,65 @@
+Annotations provided by The Institute for Genomic Research (TIGR)
+(see note at bottom of README on current status of TIGR)
+9712 Medical Center Dr., Rockville, MD
+
+Methods of GO Annotation
+
+Most of our GO annotations are derived from sequence similarity
+evidence.  There are several resources we use for this: HMMs, BER
+pairwise matches (BER is a tool that employs both BLAST and
+Smith-Waterman algorithms), TMHMM transmembrane predictions, SignalP
+signal peptide predictions, PROSITE matches, and COGs.  The HMM
+dataset we use consists of Pfams and TIGRFAMS.  We have manually
+assigned GO terms to both TIGRFAMS (available as a mapping file on the
+GO site) and Pfams.  HMMs from these two sources exist at many levels
+of functional specificity.  For example: some represent domains, some
+superfamilies, and some exact molecular functions.  GO terms are
+assigned to these HMMs with the appropriate granularity.  The BER
+pairwise results are available to us as a file of alignments generated
+by the open source program BLAST_extend_repraze (BER,
+ber.sourceforge.net) that utilizes both BLAST and Smith Waterman
+algorithms.  We also use our Genome Properties system to predict the
+presence or absence of many biological systems (pathways, protein
+complexes, etc.) for each genome as well as storing important traits
+and characteristics of the genome or organism in question.
+
+In our annotation process, an annotator looks at all available
+evidence and then decides what they think the protein is doing in the
+cell.  At this point they look for GO terms to annotate to the protein
+making sure to only assign GO terms at the specificity that the
+evidence supports.  In general annotators look first for the strongest
+types of evidence: HMMs specific for one function (TIGR equivalog
+HMMs) and high quality matches to experimentally characterized
+proteins.  The only pairwise alignment evidence that can be used for
+annotation is when the match protein is itself experimentally
+characterized. If such strong pieces of evidence for specific function
+are found then specific annotations can be made.  If not, then more
+general forms of evidence may be used and will result in more general
+GO annotations.  For example HMM matches to subfamily, superfamily, or
+domain level HMMs give support to annotations of general functions or
+family memberships which would lead to more general GO term choices.
+
+Manatee, our open source manual annotation tool
+(manatee.sourceforge.net), provides suggestions for GO terms from
+several different sources: from the HMMs that match the protein, from
+other proteins that are very similar to this one, from EC numbers, and
+from the Genome Properties system. Often the GO terms which the
+annotator needs are available from the pool of suggested terms and the
+annotator does not then need to search the ontologies, but if not,
+then the annotator will search the ontologies to find the terms they
+need.  Manatee has a built in GO browser.  We also use the GO AmiGO
+tool.
+
+When one of our proteins has itself been experimentally characterized,
+we read the relevant literature and assign GO terms accordingly.
+However, the vast majority of the proteins in our genomes have not
+been experimentally characterized, thus our reliance on sequence
+similarity methods.
+
+Current status of TIGR: In the Fall of 2006 TIGR merged with other
+institutes under the umbrella of the Venter Foundation and became a
+division of the J. Craig Venter Institute (JCVI).  In the Winter of
+2007 the TIGR division was dissolved.  There no longer is any place
+called TIGR.  However, the GO annotations from the TIGR genomes live
+on and are being maintained (in a limited degree) by the former TIGR
+annotation team that is now a part of the JCVI.

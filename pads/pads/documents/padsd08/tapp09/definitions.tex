@@ -1,0 +1,229 @@
+\newcommand{\cut}[1]{}
+\newcommand{\reminder}[1]{{\it #1 }}
+\newcommand{\edcom}[1]{\textbf{{#1}}}
+\newcommand{\poplversion}[1]{#1}
+\newcommand{\trversion}[1]{}
+
+\newcommand{\appref}[1]{Appendix~\ref{#1}}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\tblref}[1]{Table~\ref{#1}}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\listingref}[1]{Listing~\ref{#1}}
+%\newcommand{\pref}[1]{{page~\pageref{#1}}}
+
+\newcommand{\eg}{{\em e.g.}}
+\newcommand{\cf}{{\em cf.}}
+\newcommand{\ie}{{\em i.e.}}
+\newcommand{\etc}{{\em etc.\/}}
+\newcommand{\naive}{na\"{\i}ve}
+\newcommand{\role}{r\^{o}le}
+\newcommand{\forte}{{fort\'{e}\/}}
+\newcommand{\appr}{\~{}}
+
+\newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
+\newcommand{\kw}[1]{\bftt{#1}}
+\newcommand{\pads}{\textsc{pads}}
+\newcommand{\padx}{\textsc{padx}}
+\newcommand{\ipads}{\textsc{ipads}}
+\newcommand{\ir}{\textsc{IR}}
+\newcommand{\padsl}{\textsc{padsl}}
+\newcommand{\padsml}{\textsc{pads/ml}}
+\newcommand{\padsd}{\textsc{pads/d}}
+\newcommand{\blt}{\textsc{blt}}
+\newcommand{\ddc}{\textsc{ddc}}
+\newcommand{\ddl}{\textsc{ddl}}
+\newcommand{\C}{\textsc{C}}
+\newcommand{\perl}{\textsc{Perl}}
+\newcommand{\ml}{\textsc{ml}}
+\newcommand{\smlnj}{\textsc{sml/nj}}
+\newcommand{\ocaml}{\textsc{OCaml}\xspace}
+\newcommand{\haskell}{\textsc{haskell}\xspace}
+\newcommand{\ocamlbig}{\textsc{OCAML}\xspace}
+\newcommand{\java}{\textsc{java}}
+\newcommand{\xml}{\textsc{xml}}
+\newcommand{\html}{\textsc{html}}
+\newcommand{\xpath}{\textsc{xpath}}
+\newcommand{\xquery}{\textsc{xquery}}
+\newcommand{\datascript}{\textsc{datascript}}
+\newcommand{\packettypes}{\textsc{packettypes}}
+\newcommand{\erlang}{\textsc{Erlang}}
+\newcommand{\camlp}{\cd{Camlp4}}
+\newcommand{\ocamlnet}{\cd{Ocamlnet} \cd{2}}
+
+\newcommand{\totalcost}[2]{\textsc{Cost}(#1,#2)}
+\newcommand{\costdescription}[1]{\textsc{CT}(#1)}
+\newcommand{\normcostdescription}{\textsc{NCT}}
+\newcommand{\costdata}[2]{\textsc{CD}(#2 \; | \; #1)}
+\newcommand{\adc}[2]{\textsc{CD'}(#2 \; | \; #1)}
+\newcommand{\cardt}{\textsc{Card}}
+\newcommand{\costvar}[1]{\textsc{CV}(#1)}
+\newcommand{\costchar}[1]{\textsc{CA}(#1)}
+\newcommand{\coststring}[1]{\textsc{CS}(#1)}
+\newcommand{\costint}[1]{\textsc{CI}(#1)}
+\newcommand{\costparam}[1]{\textsc{CP}(#1)}
+\newcommand{\costconst}[1]{\textsc{CC}(#1)}
+
+\newcommand{\dibbler}{Sirius}
+\newcommand{\ningaui}{Altair}
+\newcommand{\darkstar}{Regulus}
+
+\newcommand{\vizGems}{Arrakis}
+
+\newcommand{\comon}{CoMon\xspace}
+\newcommand{\planetlab}{PlanetLab\xspace}
+\newcommand{\monall}{Monall\xspace}
+%% \newcommand{}{}
+
+
+%% \newcommand{\IParray}[4]{{\tt Parray} \; #1 \; \[#2, #3, #4\]}
+
+\newcommand{\figHeight}[4]{\begin{figure}[tb]
+	\centerline{
+	            \epsfig{file=#1,height=#4}}
+	\caption{#2}
+	\label{#3}
+	\end{figure}}
+
+\newcommand{\myalt}{\ensuremath{\; | \;}}
+\newcommand{\normal}[1]{\ensuremath{\bar{#1}}}
+\newcommand{\relativee}[2]{\ensuremath{{\cal R}(#1 \; || \; #2)}}
+\newcommand{\srelativee}[2]{\ensuremath{{\cal S}(#1 \; || \; #2)}}
+\newcommand{\addh}[2]{\ensuremath{#1 \oplus #2}}
+
+\newcommand{\irstruct}[1]{{\tt struct}\{#1\}}
+\newcommand{\irunion}[1]{{\tt union}\{#1\}}
+\newcommand{\irenum}[1]{{\tt enum}\{#1\}}
+\newcommand{\irarray}[1]{{\tt array}\{#1\}}
+\newcommand{\irarrayFW}[2]{{\tt arrayFW}\{#1\}[#2]}
+\newcommand{\irswitch}[2]{{\tt switch}(#1)\{#2\}}
+\newcommand{\iroption}[1]{{\tt option}\{#1\}}
+\newcommand{\setof}[1]{\lsem #1 \rsem}
+\newcommand{\goto}{\Rightarrow}
+\newcommand{\Pvoid}{{\tt Pvoid}}
+\newcommand{\Pempty}{{\tt Pempty}}
+\newcommand{\sskip}{\hspace*{5mm}}
+\newcommand{\shrink}{\vskip -3ex}
+
+% Semantics
+\newcommand{\setalt}{{\; | \;}}
+\newcommand{\denote}[1]{\lsem #1 \rsem}
+\newcommand{\lsem}{{[\![}}
+\newcommand{\rsem}{{]\!]}}
+\newcommand{\turn}{\vdash}
+\newcommand{\meta}{m}
+\newcommand{\mytime}[1]{#1.t}
+\newcommand{\generatedloc}{\ensuremath{\mathsf{nowhere}}}
+\newcommand{\environment}{E}
+\newcommand{\universe}{U}
+\newcommand{\selectOne}{\ensuremath{\mathsf{select\_one}}}
+% core feed semantics
+\newcommand{\csemantics}[3]{{\cal C}\lsem #1 \rsem_{{#2} \, {#3}}}
+% feed semantics
+\newcommand{\semantics}[3]{{\cal F}\lsem #1 \rsem_{{#2} \, {#3}}}
+% expression semantics
+\newcommand{\esemantics}[2]{{\cal E}\lsem #1 \rsem_{{#2}}}
+%\newcommand{\esemantics}[2]{#2(#1)}
+
+% Host language types
+\newcommand{\ty}{\ensuremath{\tau}}
+\newcommand{\basety}{\ensuremath{b}}
+\newcommand{\arrow}{\rightarrow}
+\newcommand{\optionty}[1]{\ensuremath{#1 \; \mathtt{option}}}
+\newcommand{\listty}[1]{\ensuremath{#1 \; \mathtt{list}}}
+\newcommand{\feedty}[1]{\ensuremath{#1 \; \mathtt{feed}}}
+\newcommand{\schedulety}{\ensuremath{\mathtt{sched}}}
+\newcommand{\timety}{\ensuremath{\mathtt{time}}}
+\newcommand{\locty}{\ensuremath{\mathtt{loc}}}
+\newcommand{\boolty}{\ensuremath{\mathtt{bool}}}
+\newcommand{\stringty}{\ensuremath{\mathtt{string}}}
+\newcommand{\metatype}[1]{\ensuremath{\mathsf{meta}(#1)}}
+
+\newcommand{\dom}{\ensuremath{\mathsf{dom}}}
+
+% Expressions
+\newcommand{\expression}{e}
+\newcommand{\constant}{c}
+\newcommand{\boolf}{\ensuremath{\mathtt{false}}}
+\newcommand{\boolt}{\ensuremath{\mathtt{true}}}
+\newcommand{\loc}{\ensuremath{\ell}}
+\newcommand{\feed}{\ensuremath{F}}
+\newcommand{\corefeed}{\ensuremath{C}}
+\newcommand{\generalvar}{\ensuremath{x}}
+\newcommand{\feedvar}{\ensuremath{x}}
+\newcommand{\itemvar}{\ensuremath{x}}
+\newcommand{\data}{\ensuremath{v}}
+\newcommand{\atime}{\ensuremath{t}}
+\newcommand{\astring}{\ensuremath{w}}
+\newcommand{\schedule}{\ensuremath{s}}
+\newcommand{\parser}{\ensuremath{p}}
+\newcommand{\none}{\ensuremath{\mathtt{None}}}
+\newcommand{\some}[1]{\ensuremath{\mathtt{Some}\; #1}}
+\newcommand{\inl}[1]{\ensuremath{\mathtt{inl}\; #1}}
+\newcommand{\inr}[1]{\ensuremath{\mathtt{inr}\; #1}}
+\newcommand{\casedata}[2]{{\tt switch}(#1)\{#2\}}
+%\newcommand{\nillist}{\ensuremath{\mathtt{nil}}}
+\newcommand{\nillist}{\ensuremath{[\,]}}
+%\newcommand{\conslist}[2]{\ensuremath{\mathtt{cons} (#1,#2)}}
+\newcommand{\conslist}[2]{\ensuremath{[#1,\ldots,#2]}}
+\newcommand{\nilstream}{\ensuremath{\mathtt{done}}}
+\newcommand{\consstream}[2]{\ensuremath{\mathtt{next} (#1,#2)}}
+
+
+% Feeds
+\newcommand{\comprehensionfeed}[3]{\ensuremath{\mathtt{\{|} #1 \; \mathtt{|}\; #2 \leftarrow #3 \mathtt{|\}}}}
+\newcommand{\computed}[3]{\ensuremath{\mathtt{[} #1 \; \mathtt{|}\; #2 \in #3 \mathtt{]}}}
+\newcommand{\letfeed}[3]{\ensuremath{\mathtt{let}\; #1 \; \mathtt{=}\; #2 \; \mathtt{in} \; #3}}
+\newcommand{\allfeed}[5]{
+  \ensuremath{
+    \mathtt{all \{ format=} #1; 
+    \mathtt{src=} #2;
+    \mathtt{sched=} #3;
+    \mathtt{pp=} #4;
+    \mathtt{win=} #5;
+  \mathtt{\}}}}
+\newcommand{\existsfeed}[5]{
+  \ensuremath{
+    \mathtt{any \{ format=} #1; 
+    \mathtt{src=} #2;
+    \mathtt{sched=} #3;
+    \mathtt{pp=} #4;
+    \mathtt{win=} #5;
+  \mathtt{\}}}}
+\newcommand{\filterfeed}[2]{
+  \ensuremath{
+    \mathtt{filter} \; #1 \; \mathtt{with}\; #2}}
+\newcommand{\remapfeed}[2]{
+  \ensuremath{
+    \mathtt{redirect} \; #1 \; \mathtt{with}\; #2}}
+\newcommand{\ppfeed}[2]{
+  \ensuremath{
+    \mathtt{pp} \; #1 \; \mathtt{with}\; #2}}
+\newcommand{\foreachupdate}[3]{
+  \ensuremath{
+    \mathtt{foreach{*}{*}}\; #1 \;
+    \mathtt{in}\; #2 \;
+    \mathtt{update}\; #3}}
+\newcommand{\foreachcreate}[3]{
+  \ensuremath{
+    \mathtt{foreach*}\; #1 \;
+    \mathtt{in}\; #2 \;
+    \mathtt{create}\; #3}}
+\newcommand{\remap}[2]{\ensuremath{\mathtt{redirect}\; #1 \; \mathtt{with} \; #2}}
+\newcommand{\stutterfeed}[2]{\ensuremath{\mathtt{stutter}\; #1 \; \mathtt{on} \; #2}}
+\newcommand{\refeed}[2]{\ensuremath{\mathtt{reschedule}\; #1 \; \mathtt{to} \; #2}}
+\newcommand{\emptyfeed}{\ensuremath{\emptyset}}
+\newcommand{\unionfeed}{\ensuremath{\cup}}
+\newcommand{\sumfeed}{\ensuremath{+}}
+\newcommand{\spairfeed}{\; \ensuremath{\mathtt{\&} \; }}
+\newcommand{\allpairfeed}{\; \ensuremath{{*}{*}} \; }
+
+\newcommand{\Time}{\ensuremath{\mathtt{Time}}}
+\newcommand{\Set}{\ensuremath{\mathtt{Set}}}
+
+% this is used for the translations equal
+\newcommand{\transeq}{\stackrel{def}{=} }
+
+
+
+% BNF
+%\newcommand{\bnfalt}{\ |\ }

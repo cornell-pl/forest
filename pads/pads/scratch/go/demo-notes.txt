@@ -1,0 +1,39 @@
+0. increase emacs font size
+
+1. go over data source
+
+2. show pads description;
+   mention files to be used in demo: go, go_200.txt, go_20000.txt, gene-ontology.obo.txt
+
+3. go-xml
+  a. make go-xml
+  b. ./go-xml data/go
+
+4. go-query
+  a. intro. xquery
+  b. make go-query
+  c. show query file "find-mit.xq"
+  d. ./go-query data/go_200.txt find-mit.xq -output-xml /dev/stdout
+  e. show query file "find-obsolete.xq"
+  f. ./go-query data/go_200.txt find-obsolete.xq -output-xml /dev/stdout
+
+5. go-accum
+  a. intro accum.
+  b. make go-accum
+  c. run on go_20000.txt
+     ./go-accum data/go_20000.txt
+  d. show that all are terms.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<top>.s_type : enum OBO_stanza_type
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+1991 enum OBO_stanza_type values, 100 pcnt good, 100 pcnt identical: Term (    0)
+
+  e. show the top tags:
+-----------------------------------------------------------------------------------------------------
+<top>.tvpairs.arrayDetail[6].tag : string
+-----------------------------------------------------------------------------------------------------
+
+  f. explain bad data. run on bad data.
+    ./go-accum data/bad_go_20000.txt 
+
+6. describe process of getting to this demo.

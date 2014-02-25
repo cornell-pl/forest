@@ -1,0 +1,203 @@
+\section{Metatheory}
+\label{sec:ddc-meta-theory}
+
+One of the most difficult challenges of our
+work on \ddc{} was to determine the
+meta-theoretic properties that should hold of the language. What are the ``correct''
+invariants of data description languages?  While the languages
+community has a good understanding of the
+desirable invariants for conventional programming languages, the
+corresponding properties of data description languages have not been
+studied.
+
+We present the following two properties as critical invariants of
+our theory.  Just like the classic Progress and Preservation theorems
+should hold for any conventional typed programming language,
+we feel that the following properties should hold, in some form, for any data
+description language.
+\begin{itemize}
+\item {\bf Parser Type Correctness}: For a \ddc{} type $\ty$, the
+  representation and PD output by the parsing function of $\ty$ will
+  have the types specified by $\itsem[\ty]$ and
+  $\itpdsem[\ty]$, respectively.
+  
+\item {\bf Canonical Forms of Parsed Data}: We precisely
+  characterize the results of \ddc{} parsers by defining the {\em
+    canonical form} of the representation, parse descriptor pairs
+  associated with a dependent \ddc{} type. We show that the errors
+  reported in the parse descriptor accurately reflect the errors present in the
+  representation.
+\end{itemize}
+\noindent
+This section states these critical properties formally. 
+\appref{app:ddc-meta-theory} expands on this section, including
+a sketch of the proofs.
+Mandelbaum's thesis~\cite{mandelbaum:thesis} contains the complete meta-theory.
+
+Before proceeding to the main elements of our meta-theory, 
+we state a few simple requirements
+of \ddc{} base types. Note that the interface $\Iopty$ specifies the types of base-type parsers.
+
+\begin{condition}[Conditions on Base Types]
+\label{cond:s-base-types}
+  \begin{enumerate}
+  \item $\dom {\Ikind} = \dom {\Iimp}$.
+  \item If $\Ikind(C) = {\ity \iarrowi \kty}$ then $\Iopty(C) =
+    \iarrow \ity {\kTrans[\kty,\pbase e]}$ (for any $e$ of type $\ity$).
+  \item $\stsem[\Iimp(C),,\Iopty(C)]$.
+    \label{cond:s-closed-op}
+  \end{enumerate}
+\end{condition}
+\noindent
+Note that by
+condition~\ref{cond:s-closed-op}, base type parsers must be closed.
+
+\subsection{Type Correctness}
+Our first key theorem is that the various semantic
+functions we have defined are coherent.  In particular, we show that
+for any well-kinded \ddca{} type $\tau$, the corresponding parser is
+well typed, returning a pair of the corresponding representation and
+parse descriptor.
+
+
+\begin{theorem}[Type Correctness of Closed Types]
+\label{thm:s-type-correctness}
+  If $\;\ddck[\ty,,\gk,\con]$ then
+  $\stsem[{\trans[\ty,,]},,\kTrans[\kind,\ty]]$.
+\end{theorem}
+
+A practical implication of this theorem is that it is sufficient to
+check data descriptions (\ie{}, \ddca{} types) for well-formedness to
+ensure that the generated types and functions are well formed. This
+property is sorely lacking in many parser generators, for which users
+must examine generated code to debug compile-time errors in
+specifications. 
+
+\subsection{Canonical Forms}
+
+\ddc{} parsers generate pairs of representations and parse descriptors
+that satisfy a number of invariants.  Most importantly, 
+when the parse descriptor reports that there are no errors in a
+particular substructure, the programmer is guaranteed that the corresponding
+representation satisfies all of the syntactic and semantic
+constraints expressed by the dependent \ddc{} type description.  When
+the pair of a parse descriptor and a representation satisfy these invariants, we say
+the pair is {\em canonical} or in {\em canonical form}.
+
+The canonical form for each \ddc{} type is defined via the relation $\corr \ty r p$, which
+defines the canonical form of a representation $r$ and a parse
+descriptor $p$ at type $\ty$.  This relation is defined for all closed types $\ty$ with base kind $\kty$.  The definition excludes
+types with higher kind, such as abstractions, because such types
+cannot directly produce representations and PDs.
+\cut{
+% The second definition, $\corrkl \ty r p$, defines the canonical form
+% at an arbitrary type $\ty$ by first normalizing $\ty$ to eliminate the
+% outermost type and value applications and then
+% applying the relation $\corr \tyval r p$ at the resulting normal type
+% $\tyval$.
+}
+
+For brevity in the definitions, we write $p.h.{nerr}$ as $p.{nerr}$ and use $\mathtt{pos}$ to
+denote the function that returns zero when passed zero and one when
+passed another natural number.
+
+\begin{definition}[Canonical Forms]
+$\corr \ty r p$ holds if and only if exactly one of the following is true:
+  \begin{itemize}
+  \item $\,\ty = \ptrue$ and $r = \iuval$ and $p.{nerr} = 0$.
+  \item $\,\ty = \pfalse$ and $r = \ierr$ and $p.{nerr} = 1$.
+  \item $\,\ty = \pbase{e}$ and $r = \iinld \ity \const$ and $p.{nerr} = 0$.
+  \item $\,\ty = \pbase{e}$ and $r = \iinrd \ity \ierr$ and $p.{nerr} = 1$.
+  \item $\,\ty = \psig x {\ty_1} {\ty_2}$ and $r =\ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1} {p_2}}$ 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, $\corrkl
+    {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2[(r_1,p_1)/x]} {r_2} {p_2}$.
+  \item $\,\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinld {\ity}{r'}$
+    and $p = \ipair h {\iinld {\ity}{p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_1} {r'} {p'}$.
+  \item $\,\ty = \psum {\ty_1} e {\ty_2}$ and $r =\iinr {r'}$
+    and $p = \ipair h {\iinr {p'}}$
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$ and $\corrkl
+    {\ty_2} {r'} {p'}$.
+  \item $\,\ty = \pand {\ty_1} {\ty_2}$, $r = \ipair {r_1} {r_2}$ and $p =
+    \ipair h {\ipair {p_1}{p_2}}$, 
+    and $h.{nerr} = \mathtt{pos}(p_1.{nerr}) + \mathtt{pos}(p_2.{nerr})$, 
+    $\corrkl {\ty_1} {r_1} {p_1}$ and $\corrkl {\ty_2} {r_2} {p_2}$.
+  \item $\,\ty = \pset x {\ty'} e$, $r = \iinld \ity {r'}$ and $p =
+    \ipair h {p'}$, 
+    and $h.{nerr} = \mathtt{pos}(p'.{nerr})$, $\corrkl {\ty'}{r'}{p'}$
+    and $e[(r',p')/x] \kstepsto\itrue$.
+  \item $\,\ty = \pset x {\ty'} e$, $r = \iinrd \ity {r'}$
+    and $p = \ipair h {p'}$,
+    and $h.{nerr} = 1 + \mathtt{pos}(p'.{nerr})$,
+    $\corrkl {\ty'}{r'}{p'}$ and $e[(r',p')/x] \kstepsto \ifalse$.
+  \item $\,\ty = \pseq {\ty_e}{\ty_s}{\pterm e {\ty_t}}$, \
+    $r = \ipair {len} {\iarr{\vec {r_i}}}$, \
+    $p = \itup{h,\itup{{neerr},{len},\iarr {\vec {p_i}}}}$,\\
+    ${neerr} = \sum_{i=1}^{len} \mathtt{pos}(p_i.{nerr})$, 
+    $\corrkl {\ty_e}
+    {r_i} {p_i}$ (for $i=1 \ldots {len}$), and
+    $h.{nerr} \geq \mathtt{pos}({neerr})$.
+  \item $\,\ty = \pmu \ptyvar {} {\ty'}$, 
+    $r = \iroll{r'}{\itsem[\pmu \ptyvar {} {\ty'}]}$, $p =
+    \ipair h {\iroll{p'}{
+                \itpdsem[\pmu \ptyvar {} {\ty'}]}}$, 
+        $p.{nerr} = p'.{nerr}$ 
+    and 
+    $\corrkl {\ty'[\pmu \ptyvar {} {\ty'}/\ptyvar]} {r'} {p'}$.
+  \item $\,\ty = \pcompute e \ity$ and $p.{nerr} = 0$.
+  \item $\,\ty = \pabsorb {\ty'}$, $r = \iinl \iuval$, and $p.nerr = 0$.
+  \item $\,\ty = \pabsorb {\ty'}$, $r = \iinr \ierr$, and $p.nerr > 0$.
+  \item $\,\ty = \pscan {\ty'}$, $r =\iinl {r'}$,
+      $p = \ipair h {\iinl {\ipair i {p'}}}$,
+      $h.nerr = \mathtt{pos}(i) + \mathtt{pos}(p'.nerr)$, and \linebreak
+      $\, \corrkl {\ty'}{r'}{p'}$.
+  \item $\,\ty = \pscan {\ty'}$,
+      $r =\iinr \ierr$,
+      $p = \ipair h {\iinr \iuval}$, and
+      $h.{nerr} = 1$.
+  \item $\,\ty \not = \tyval$, $\ty \kstepsto \tyval$, and $\corr \tyval r p$.
+  \end{itemize}
+\end{definition}
+
+Theorem~\ref{thm:err-corr-at-T} establishes that our generated parsers
+yield Canonical Forms under the assumption that all base type
+parsers produce values in canonical form, a condition stated formally
+in Condition~\ref{condition:bt-canon}.
+
+
+%that the parsers for
+%well-formed types (of base kind) will produce a canonical pair of
+%representation and parse descriptor, if they produce anything at all.
+%First, we note that base-type parsers must produce values in canonical form:
+
+\begin{condition}[Base Type Parsers Produce Values in Canonical Form]
+\label{condition:bt-canon}
+  If $\;\stsem[v,,\ity]$, $\Ikind(C) = \iarrow \ity \kty$ and $\Iimp(C)
+  \sapp v \sapp \spair<\data,\off> \kstepsto \spair<\off',r,p>$ then
+  $\corr {\pbase v} r p $.
+\end{condition}
+
+\begin{theorem}[Parsing to Canonical Forms]
+\label{thm:err-corr-at-T}
+If $\; \ddck[\ty,,\kty,]$ and $\trans[\ty,,] \sapp \spair<B,\off> \kstepsto
+  \spair<\off',r,p>$ then $\corrkl \ty r p$.
+\end{theorem}
+
+Theorem~\ref{thm:err-corr-at-T} has the following useful corollary,
+which ensures that a single check of the top-level parse descriptor 
+is sufficient to verify the validity of an entire data 
+representation in canonical form. 
+%Only if the data structure is not valid will further 
+%checking of substructures be required.
+
+\begin{corollary}
+  If $\corrkl \ty r p$ and $p.h.nerr = 0$ then there are no syntactic
+  or semantic errors in the representation data structure $r$.
+\end{corollary}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../paper.tex"
+%%% End: 

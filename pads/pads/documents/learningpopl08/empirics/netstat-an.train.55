@@ -1,0 +1,8 @@
+gen/netstat-an.chunk0.out: time = 0.32
+gen/netstat-an.chunk0.out: success rate = 98.02%
+gen/netstat-an.chunk1.out: time = 0.56
+gen/netstat-an.chunk1.out: success rate = 98.02%
+gen/netstat-an.chunk2.out: time = 0.52
+gen/netstat-an.chunk2.out: success rate = 99.01%
+The average time = 0.47
+The average success rate = 98.35%

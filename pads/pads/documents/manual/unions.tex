@@ -1,0 +1,366 @@
+\chapter{Punions}
+\label{chap:unions}
+\cutname{unions.html}
+\Punion{}s are used to express variations in data.  \pads{}
+supports two forms of union: switched and in-place.  The first form
+supports data sources where there is an indication (\ie, a switch) in
+the data prior to the union indicating which alternative should be
+chosen.  The second form supports data sources where no such switch is
+present.  The default for this case is to try the branches in order
+until one parses without any errors.  There is also a qualifier
+(\Plongest{}) that indicates the parser should take the branch that
+consumes the most input. 
+\section{Syntax}
+\label{sec:unions-syntax}
+\begin{tabular}{rcl}
+\nont{union\_field} & \is{} & \nont{full\_field} \alt{} \nont{comp\_field} \alt{} \nont{literal\_field}
+			     \alt{} \nont{array\_field} \alt{}
+                             \nont{opt\_field} \alt{} \Pempty{} \\[1ex]
+\nont{branch}     & \is{} & \Pcase{} \nont{expression} : \nont{union\_field}
+                    \alt{}  \Pdefault : \nont{union\_field}\\[1ex]
+\nont{branches}   & \is{} & \nont{branch} \alt{} \nont{branch} \nont{branches} \\[1ex]
+\nont{switched}   & \is{} & \Pswitch{} (\nont{expression})\{ \nont{branches} \}\\[1ex]
+\nont{in\_place}  & \is{} & \nont{union\_field} \alt{} \nont{union\_field} \nont{in\_place}\\[1ex]
+\nont{union\_bdy} & \is{} & \nont{switched} \alt{} \nont{in\_place}\\[1ex]
+\nont{union\_ty}  & \is{} & \opt{\Plongest{}} \Punion{} identifier \opt{\nont{p\_formals}} \{ \\
+&& \quad \nont{union\_bdy} \\
+&& \}\ \opt{ \Pwhere{} \ \{\ \nont{predicate}\ \}}; \\[4ex]
+
+\end{tabular}
+
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment were
+defined previously, as follows.
+Full fields (\nont{full\_field}), in-line array declarations
+(\nont{array\_field}), and in-line option declarations (\nont{option\_field})
+appear in \secref{sec:structs-full-fields}, 
+computed fields (\nont{comp\_field}) in
+\secref{sec:structs-computed-fields}, 
+literals (\nont{literal\_fields}) in \secref{sec:common-literals}
+and
+\padsl{} parameter lists (\nont{p\_formals}) in \secref{sec:common-parameterization}.
+Expressions (\nont{expression}) represent any \C{} expression. 
+
+
+\subsection{Example: Switched \Punion{}s}
+The \pads{} declarations in \figref{fig:switched-union} describe data
+which uses an integer tag to determine the format of the rest of the
+data. 
+The \Pstruct{} \cd{choice} specifies that the integer field \cd{which}
+should be passed to the switched \Punion{} \cd{branches}.   
+The \cd{branches} declaration describes three alternatives, depending
+upon the value of the tag \cd{which}.  
+%
+\begin{figure}
+\inputCode{code/union.switch}
+\caption{Switched \Punion{} for describing data variations determined
+  by tags earlier in the data source.}
+\label{fig:switched-union}
+\end{figure}
+%
+A tag value of \cd{1} indicates an unsigned integer will follow:
+\begin{verbatim}
+ 1 4
+\end{verbatim}
+while a tag
+value of \cd{2} indicates a string terminated by an end-of-record
+mark:  
+\begin{verbatim}
+ 2 hello
+\end{verbatim}
+Any other value for the tag will fall into the default clause of the
+union, which indicates that no further data
+exists:
+\begin{verbatim}
+ 3
+\end{verbatim}
+
+\subsection{Example: Switched \Punion{}s with \Pempty}
+The \pads{} declarations in \figref{fig:switched-union-default} 
+are similar to those in \figref{fig:switched-union} except that
+instead of computing a default value for the default case, this
+declaration uses the special type \Pempty{}, which indicates that
+there is nothing on disk for this case.  
+%
+\begin{figure}
+\inputCode{code/union.switch.default}
+\caption{Switched \Punion{} with \Pempty{} default.}
+\label{fig:switched-union-default}
+\end{figure}
+%
+
+
+\subsection{Example: In-place \Punion{}s}
+The following in-place \Punion{} describes a data fragment that is
+either a resolved or a symbolic IP address:
+
+\inputCode{code/host_t}
+%
+\noindent
+The (omitted) types \cd{nIP} and \cd{sIP} describe named and symbolic
+IP addresses, respectively.
+The comments embedded in the description give an example of each of the two
+forms.   With in-place \Punion{}s, the parser tries each of the branches
+in turn until it finds one that matches the data without any errors.
+
+\subsection{Example: In-place \Punion{}s with \Pempty{}}
+The following in-place \Punion{} describes a data fragment that is
+either an integer or nothing using the special type \Pempty{}.
+
+\inputCode{code/union.default}
+%
+\noindent
+
+\subsection{Switched \Punion{}s}
+\subsubsection{\Pswitch{}}
+The expression on which a switched \Punion{} branches can be any \C{}
+expression of integer type (as in a \kw{switch} statement in \C{}).
+Typically, this expression is computed from a parameter to the
+switched \Punion{}.
+
+\subsubsection{Branches}
+The body of a switched \Punion{} is a non-empty sequence of branches.
+Each branch in a switched \Punion{} can have one of two forms: a
+\Pcase{} statement, or a \Pdefault{} statement.  The \Pcase{} form
+specifies an integer value.  During parsing, the first \Pcase{}
+expression whose value equals the \Pswitch{} expression is selected as
+the active description. If no \Pcase{} expression
+matches, the \Pdefault{} expression (if present) matches instead.
+
+\subsection{Union fields}
+The body of each branch in a switched \Punion{} is a \nont{union\_field},
+while the body of each in-place \Punion{} is a non-empty sequence of
+such fields. 
+There are six varieties of union fields, five borrowed from \Pstruct{}s: 
+full fields (\secref{sec:structs-full-fields}),
+computed fields (\secref{sec:structs-computed-fields}), 
+in-place array declarations (\secref{sec:structs-arrays-inline}),
+in-place option declarations (\secref{sec:structs-options-inline}),
+and literal fields, and \Pempty{}, which is special to \Punion{}s.
+The only semantic change from \Pstruct{}s  is
+that in \Punion{}s, earlier fields are not in scope for later fields
+because only one branch of a union can be active at a time.  A
+\Pempty{} branch corresponds to nothing in the physical representation.
+
+The name of a branch in either kind of union is the name of the
+declared identifier for full and computed fields.  For literal fields,
+it is the literal itself, unless the programmer specifies a different
+name using the \Pfrom{} form.  The \Pfrom{} form must be used when the
+literal is not a valid \C{} identifier.  For example, the following
+in-place union uses the \Pfrom{} form to provide names for the
+string literal \literal{\cd{"*"}} and the regular expression literal \cd{\Pre{}
+  \literal{"/a+/"}}.  
+
+\inputCode{code/union.literal}
+
+Within a \punion{}, the type \pvoid{} describes no physical data.
+There is no corresponding field in the in-memory representation of the
+union, but the union tag is set to indicate which branch of the union
+was used during the parse.
+This type is useful with switched unions where the value of the tag
+indicates that there is no data associated with the tag.  For example,
+the following \punion{} \cd{branches} 
+
+\inputCode{code/union-void}
+
+indicates that when the value of
+the tag \cd{which} is \cd{0}, there is no more data associated with
+the type \cd{branches} in the input source, while the tag value \cd{1}
+indicates there is a \cd{Pint32} following.  
+
+
+\cut{
+Optional fields in data sources can be described using an in-place
+\Punion{} with a computed field.  For example, suppose a data source
+contains a sequence of fields separated by vertical bars, where each
+field is either an unsigned 32-bit integer or is omitted.  The
+description in \figref{fig:union-option} 
+uses the \Punion{} \cd{intOpt} to specify such a data source.
+The \cd{intOpt} \Punion{} relies on the parameter \cd{defVal} to set
+a default value for the omitted field.
+
+\begin{figure}
+\inputCode{code/union.option}
+\caption{A \Punion{} with a computed field describes an optional field.}
+\label{fig:union-option}
+\end{figure}
+}
+
+
+
+\subsection{In-line declarations}
+\label{sec:unions-inline}
+In-line declarations in \Punion{}s have the same form as in
+\Pstruct{}s \cf{} \secref{sec:structs-inline}.
+
+\subsection{\Plongest{}}
+By default, in-place \Punion{}s commit to the first branch that parses
+without any errors. Adding the \Plongest{} qualifier to the
+\Punion{} declaration, however, indicates that the parser should
+instead select the \textit{longest} match, \ie{}, the match that
+consumes the most input. 
+
+\subsection{Optional \texttt{Pwhere} clause}
+If given, a \Pwhere{} clause expresses constraints over the entirety
+of a \Punion{} value.  Special constants \cd{tag} and \cd{val} are
+in scope, of the tag and value types for the union, respectively
+(\cf{} \secref{sec:unions-tags}).  The
+first indicates which branch of the union matched, while the second
+contains the representation of the matched branch. 
+Within the context of a 
+\Pparsecheck{} clause, constants \cd{begin} and \cd{end}, each of type 
+\Ppost{} are available.  Constant \cd{begin} is bound to the input
+position of the beginning of the \punion{}; \cd{end} is bound to its end.
+If the predicate given in
+the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
+in the associated parse descriptor will indicate a user-constraint
+error has occurred.  
+
+\section{Generated library}
+\subsection{Tags}
+\label{sec:unions-tags}
+In addition to the types generated for every \pads{} specification,
+the \pads{} compiler generates an extra type 
+declaration for every \Punion{}: a enumerated type with one component
+for each branch in the union, plus an extra component corresponding to
+a match failure.  The names of the tags correspond to the names of the
+branches in the union, unless that name
+has already been defined 
+elsewhere.  In this case, the name of the tag is 
+\texttt{unionName\_branchName}.  
+The name of the tag enumeration is the name of
+the \pads{} specification with the \cd{_tag} suffix.
+For example, the generated enumeration type
+for the \Punion{} \cd{branches} is the following:
+
+\inputCode{code/union-impl-branches-tag}
+%
+
+
+\subsection{In-memory representation}
+\label{sec:unions-rep}
+The in-memory representation of both forms of \Punion{} is 
+a \C{} struct containing a \cd{tag} field to indicate which branch of the
+union has been populated followed by a \cd{val} field storing the union
+itself.  We represent unions as \C{} unions, with one component per
+non-literal branch of the union.  
+The representation-related type declarations for
+the \Punion{} \cd{branches} appear in \figref{fig:punion-rep}.
+
+\begin{figure}
+\inputCode{code/union-impl-branches-rep}
+\caption{Type declarations related to the in-memory representation of
+  the \Punion{} \texttt{branches}.}
+\label{fig:punion-rep}
+\end{figure}
+
+\subsection{Mask}
+\label{sec:unions-masks}
+The mask of a \Punion{} is a \C{} struct.  
+For each full and computed field in the union,
+there is a corresponding field in the mask, the type of which is the
+type of the mask type for that field.   For example, the mask type
+\csmSuf{branches} has the following structure:
+
+\inputCode{code/union-impl-branches-mask}
+%
+\noindent
+Union masks have one additional field \cd{unionLevel} that allows the
+programmer to toggle behavior at the level of the union as a whole.
+
+\subsection{Parse descriptor}
+\label{sec:unions-parse-descriptors}
+The parse descriptor of a \Punion{} is a \C{} struct, with all
+the fields described in \secref{sec:common-parse-descriptor}. In
+addition,  there is a \cd{tag} field indicating which branch of the
+union was populated during parsing and a \cd{val} field which stores
+the parse descriptor of the populated branch, represented as a \C{}
+union.  The parse descriptor declarations corresponding to the
+\pads{} type \cd{branches}
+appear in \figref{fig:punion-pd}.
+
+\begin{figure}
+\inputCode{code/union-impl-branches-pd}
+\caption{Type declarations related to the parse descriptor for
+  the \Punion{} \texttt{branches}.}
+\label{fig:punion-pd}
+\end{figure}
+
+\subsection{Operations}
+The operations generated by the \pads{} compiler for a \Punion{} are
+those described in \chapref{chap:common-features}.  In addition, there
+is an extra function that converts a value of the tagtype for the
+union to a string.  For a \Punion{} named \cd{myUnion}, this function
+has the name \cd{myUnion_tag2str}.  
+For the \Punion{}
+\cd{branches}, the prototypes for all the generated functions appear in
+\figref{fig:punion-ops}.
+\begin{figure}
+\inputCode{code/union-impl-branches-ops}
+\caption{Prototypes of operations generated for
+  the \Punion{} \texttt{branches}.}
+\label{fig:punion-ops}
+\end{figure}
+
+
+
+\subsubsection{Read function}
+The read function for a switched \Punion{} evaluates the \Pswitch{}
+expression and uses a \C{} \cd{switch} statement to jump to the
+appropriate branch.  If there is no \Pdefault{} branch and none of the
+\Pcase{} branches match,  the read function will return the error code
+\cd{P_UNION_MATCH_ERR} and set the \cd{tag} fields of the parse
+descriptor and in-memory representation to the error tag. 
+
+For an in-place \Punion{} without the \Plongest{} qualifier, the read
+function speculatively reads each 
+branch in turn until it finds one that parses without errors.  Before
+reading a branch, the read function marks the 
+current location in the input.  It then tries to read the data
+described by the type of the branch.  If the nested read function
+succeeds and any user-level constraint on the branch also succeeds,
+the read function commits to the parse, sets the \cd{tag} fields to
+the name of the successful branch, and returns
+\cd{P_NO_ERR}. If an error occurs, the read function aborts the
+read, rolling back the input to the marked location, and tries the next
+branch.  If the last branch in an in-place \Punion{} fails, the read
+function returns the error code
+\cd{P_UNION_MATCH_ERR} and sets the \cd{tag} fields of the parse
+descriptor and in-memory representation to the error tag. 
+Errors that occur duing parsing branches of an in-line \Punion{} are
+surpressed because of the speculative nature of the parsing.
+
+For in-place \Punion{}s with the \Plongest{} qualifier, the read
+function parses each branch, preserving in the in-memory representation the
+non-erroneous branch that occupied the most space in the physical source.
+Ties are resolved in favor of the earliest branch.  Non-erroneious branches
+that occupy zero space in the physical representation, such as
+\Pcompute{} fields or non-matching options, are considered matches;
+the first such branch will be preserved in the in-memory
+representation if no longer non-erroneous branch is found.   The read
+function reports an error if no branch matches without an error.
+
+The error codes for \Punion{}s are:
+
+\tskip{}
+\begin{center}
+\begin{tabular}{l|p{3in}}
+Code                           & Meaning \\ \hline
+ \cd{P_NO_ERR}                 & Indicates no error occurred\\[1ex]
+ \cd{P_UNION_MATCH_ERR}         & Indicates that no branch of the
+                                    union parsed without error.\\[1ex]
+\end{tabular}
+\end{center}
+\noindent
+
+\subsubsection{Accumulator functions}
+Accumulator functions for \Punion{}s are described in \chapref{chap:accumulators}. 
+
+\subsubsection{Histogram functions}
+Histogram functions for \Punion{}s are described in
+\chapref{chap:histogram}. 
+
+\subsubsection{Clustering functions}
+Clustering functions for \Punion{}s are described in
+\chapref{chap:cluster}. 

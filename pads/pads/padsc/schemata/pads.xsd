@@ -1,0 +1,352 @@
+<xs:schema targetNamespace="http://www.padsproj.org/pads.xsd"
+	   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:p="http://www.padsproj.org/pads.xsd">
+
+<xs:simpleType name="Pchar">
+  <xs:restriction base="xs:string">
+    <xs:maxLength value="1"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<!-- Both a val and pd can be present when a user-constraint is
+     violated by the value is otherwise valid -->
+<xs:complexType name="val_Pchar">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pchar"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Pstring">
+  <xs:restriction base="xs:string"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Pstring">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pstring"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint8">
+  <xs:restriction base="xs:byte"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Pint8">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint8"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint16">
+  <xs:restriction base="xs:short"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Pint16">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint16"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint32">
+  <xs:restriction base="xs:int"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Pint32">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint32"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pint64">
+  <xs:restriction base="xs:long"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Pint64">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pint64"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Puint8">
+  <xs:restriction base="xs:unsignedByte"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Puint8">
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint8"  minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Puint16">
+  <xs:restriction base="xs:unsignedShort"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Puint16">
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint16" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Puint32">
+  <xs:restriction base="xs:unsignedInt"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Puint32">
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Puint64">
+  <xs:restriction base="xs:unsignedLong"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Puint64">
+  <xs:sequence>
+   <xs:element name="val" type="p:Puint64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Pfloat32">
+  <xs:restriction base="xs:float">
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfloat32">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfloat32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfloat64">
+  <xs:restriction base="xs:double">
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfloat64">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfloat64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfpoint8">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="-128"/>
+    <xs:maxInclusive value="127"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfpoint8">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint8" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"  minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfpoint16">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="-32768"/>
+    <xs:maxInclusive value="32767"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfpoint16">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint16" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfpoint32">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="-2147483647"/>
+    <xs:maxInclusive value="2147483647"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfpoint32">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pfpoint64">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="-9223372036854775807"/>
+    <xs:maxInclusive value="9223372036854775807"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pfpoint64">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pfpoint64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pufpoint8">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="0"/>
+    <xs:maxInclusive value="255"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pufpoint8">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint8" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"   minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pufpoint16">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="0"/>
+    <xs:maxInclusive value="65535"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pufpoint16">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint16" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+
+<xs:simpleType name="Pufpoint32">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="0"/>
+    <xs:maxInclusive value="4294967295"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pufpoint32">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint32" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Pufpoint64">
+  <xs:restriction base="xs:float">
+    <xs:minInclusive value="0"/>
+    <xs:maxInclusive value="18446744073709551615"/> 
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="val_Pufpoint64">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pufpoint64" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="size_t">
+ <xs:restriction base="xs:integer"/>
+</xs:simpleType>
+
+<!-- Pflags is probably an enumeration, so we could come up with a
+     better type --> 
+<xs:simpleType name="Pflags_t">
+ <xs:restriction base="xs:string"/>
+<!-- <xs:restriction base="p:Puint32"/> -->
+</xs:simpleType>
+
+<xs:complexType name="Ppos_t"> 
+ <xs:sequence>
+   <xs:element name="num" type="p:size_t"/>    <!-- I/O unit number -->
+   <xs:element name="byte" type="p:size_t"/>   <!-- Byte or block position within I/O unit -->
+ </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Ploc_t"> 
+ <xs:sequence>
+   <xs:element name="b" type="p:Ppos_t"/>
+   <xs:element name="e" type="p:Ppos_t"/>
+ </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="PerrCode_t">
+  <xs:restriction base="xs:string"/>  
+</xs:simpleType>
+
+<xs:complexType name="Pbase_pd">
+ <xs:sequence>
+   <xs:element name="pstate" type="p:Pflags_t"/>
+   <!-- nerr is always 1 for Pbase types, so why include it? -->
+   <xs:element name="nerr" type="p:Puint32"  minOccurs="0" maxOccurs="1"/> 
+   <xs:element name="errCode" type="p:PerrCode_t"/>
+   <xs:element name="loc" type="p:Ploc_t" minOccurs="0" maxOccurs="1"/>
+ </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Pip">
+  <xs:restriction base="xs:string"/>  
+</xs:simpleType>
+
+<xs:complexType name="val_Pip">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pip"     minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Pdate">
+  <xs:restriction base="xs:date"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Pdate">
+  <xs:sequence>
+   <xs:element name="val" type="p:Pdate"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Ptime">
+  <xs:restriction base="xs:time"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Ptime">
+  <xs:sequence>
+   <xs:element name="val" type="p:Ptime"   minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="Ptimestamp">
+  <xs:restriction base="xs:dateTime"/>
+</xs:simpleType>
+
+<xs:complexType name="val_Ptimestamp">
+  <xs:sequence>
+   <xs:element name="val" type="p:Ptimestamp" minOccurs="0" maxOccurs="1"/>
+   <xs:element name="pd" type="p:Pbase_pd"    minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+</xs:schema>

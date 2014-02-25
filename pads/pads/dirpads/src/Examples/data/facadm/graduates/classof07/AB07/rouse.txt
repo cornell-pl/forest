@@ -1,0 +1,46 @@
+ROUSE, BOB	AB '07
+- - - - - - - - - - - - - - - - - - -
+Type    Yr  Course     Grade
+         1             A+ to F
+d        2             P  (  Pass )
+t  D  p  3             INC
+o  .  .  4  Dept  xxx  N  (Not Avail)
+- - - - - - - - - - - - - - - - - - -
+t . . 1 MAT 191 B+
+t . . 1 JPN 454 F
+t . . 1 MAT 240 INC
+o . . 1 JPN 350 AUD
+d . . 1 PHY 307 B+
+o . . 1 MAT 116 A+
+o . . 1 ORF 444 A+
+d . . 2 JPN 445 C+
+o . . 2 CHM 442 N
+t . . 2 ORF 385 B+
+o . . 2 HST 268 A
+o . . 2 HST 130 A-
+d D . 2 COS 111 AUD
+t D . 2 PHY 443 INC
+t . . 2 HST 254 F
+o . . 3 ORF 316 AUD
+d . . 3 PHY 491 C
+d D . 3 CHM 498 C+
+d D . 3 PHY 125 P
+d  D  p  3  COS   JIW  B	bwk
+
+d D . 3 JPN 271 N
+d D . 3 MAT 392 A-
+d D . 3 ORF 486 A-
+t D . 3 COS 162 AUD
+o . . 3 COS 350 C+
+o . . 3 MAT 127 N
+o . . 4 PHY 141 B
+d D . 4 ORF 427 AUD
+o . . 4 PHY 277 C-
+o . . 4 PHY 299 N
+d D . 4 ORF 381 F
+o  .  .  4  LAT   108
+d  d  .  4  COS   424
+d . . 4 MAT 173 C+
+d . . 4 ORF 192 B-
+t . . 4 PHY 406 N
+

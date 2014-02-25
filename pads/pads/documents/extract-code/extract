@@ -1,0 +1,10 @@
+#!/bin/sh
+#will be filled in by install script
+
+if [ "$PADS_SML"x = x ]; then
+  PADS_SML=sml
+fi
+
+IMAGE=$PADS_HOME/documents/extract-code/extract-code
+ 
+exec $PADS_SML @SMLload=$IMAGE $* < /dev/null

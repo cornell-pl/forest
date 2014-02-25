@@ -1,0 +1,158 @@
+We use an information theoretic scoring function to assess the quality of 
+our inferred descriptions and to decide whether to apply
+rewriting rules to refine candidate descriptions.
+Intuitively, a good description is one that is both {\em compact} and
+{\em precise}.  There are trivial descriptions of any data source
+that are highly compact (\eg{}, the description that says
+the data source is a string terminated by end of file) or
+perfectly precise (\eg{}, the data itself abstracts nothing and
+therefore serves as its own description).  A good scoring function
+balances these opposing goals.  As is common
+in machine learning, we have defined a scoring function based on the
+{\em Minimum Description Length Principle} (MDL), which states that
+a good description is one that minimizes the cost (in bits) of transmitting
+the data~\cite{mdlbook}.  Mathematically,
+if $T$ is a description and $d_1,\ldots,d_k$ are representations of
+the $k$ chunks in our training set, parsed according to $T$, then the 
+total cost in bits is:
+\[
+\totalcost{T}{d_1,\ldots,d_k} = \costdescription{T} + \costdata{T}{d_1,\ldots,d_k}
+\]
+where $\costdescription{T}$ is the number of bits to transmit the
+description and $\costdata{T}{d_1,\ldots,d_k}$ is the number of bits
+to transmit the data {\em given the description}.
+
+%\paragraph*{The cost of transmitting a type.}
+Intuitively, the cost in bits of transmitting a description
+is the cost of transmitting the sort of description (\ie{}, \cd{struct},
+\cd{union}, \cd{enum}, \etc{}) plus the cost of transmitting all of its
+subcomponents.  
+%Figure~\ref{fig:cost-type} defines this cost function.
+For example, the cost of transmitting a struct type
+$\costdescription{\mathtt{struct \{} T_1;\ldots ;T_k; \mathtt{\}}}$ is 
+$\cardt + \sum_{i=1}^{k} \costdescription{T_i}$
+%$b(p_1,\ldots,p_k)$ is $ \cardt + \sum_{i=1}^{k} \costparam{p_i}$,
+where $\cardt$ is the log of the number of different sorts of type 
+constructors (24 of them in the \ir{} presented in this paper).
+%and $\costparam{p}$ is the cost of encoding the parameter $p$.
+%% \figref{fig:cost-type} does not show the
+%% cost of encoding variables, constants and parameters, but it is
+%% straightforward.  For example, the cost of 
+%% encoding an ASCII character is 8 bits.  The cost of encoding a string
+%% is the cost of encoding its length (assumed to be a 32-bit quantity)
+%% plus the cost of encoding each character in turn.
+We have defined the recursive cost function mathematically in full,
+but space limitations preclude giving that definition here.
+
+The cost of encoding data relative to selected types is shown in 
+Figure~\ref{fig:cost-data}.  The top of the figure defines
+the cost of encoding all data chunks relative to the type $T$; it is
+simply the sum of encoding each individual chunk relative to $T$.  
+
+In the middle of the figure,
+we define the cost of encoding a chunk relative to one of the integer base 
+types; other base types are handled similarly.  Notice that the cost of 
+encoding an integer relative to the constant type \cd{PintConst} is
+zero because the type itself contains all information
+necessary to reconstruct the integer-- no data need be transmitted.
+The cost of encoding data relative to \cd{Pint32} or \cd{Pint64} types 
+is simply 32 or 64 bits, respectively.  Finally, we artificially set the cost of
+ranged types \cd{PintRanged}$(p_{min},p_{max})$ to be infinity because
+our experiments reveal that attempting to define integer types with
+minimum and maximum values usually leads to overfitting of the data.\footnote{
+We nevertheless retain \cd{PintRanged} types in our \ir{} to encode
+the range of values found during the value-space analysis.  During the
+rewriting phase, we use this range information to rewrite \cd{PintRanged}
+into other integer types.  Since the
+cost of encoding \cd{PintRanged} is so high, the appropriate rewriting 
+is guaranteed to be applied.  In the future, we may emit this range information
+as comments in the generated descriptions.}
+
+The last section of Figure~\ref{fig:cost-data} presents the cost of
+encoding data relative to selected type constructors.  
+The cost of encoding a \cd{struct} is the sum of the costs of encoding
+its component parts.  The cost of encoding a \cd{union} is the cost
+of encoding the branch number ($log(k)$ if the union has $k$ branches)
+plus the cost of encoding the branch itself.  The cost of encoding
+an \cd{enum} is the cost of encoding its tag only -- given the tag,
+the underlying data is determined by the type.  The cost of encoding
+a \cd{switch} is the cost of encoding the branch only -- the tag need not
+be encoded because it is determined by the type and earlier data.
+
+%% \begin{figure}
+%% Miscellaneous definitions:
+%% \[
+%% \begin{array}{@{\,}l@{\,}c@{\,}l}
+%% \cardt &=& \mbox{log of the number of type constructors in the \ir{}}
+%% \end{array}
+%% \]
+%% Cost of transmitting constants and parameters:
+%% \[
+%% \begin {array} {@{}l@{\,}c@{\,}l}
+%% \costchar{a}  &=& \mbox{Cost of transmitting character } a \\
+%% \coststring{s}  &=& \mbox{Cost of transmitting string } s \\
+%% \costint{i}  &=& \mbox{Cost of transmitting integer } i \\
+%% \costconst{c}  &=& \mbox{Cost of transmitting constant } c \\
+%% \costvar{x} &=& \mbox{Cost of transmitting variable } \\
+%% \costparam{p}  &=& \mbox{Cost of transmitting parameter } p \\
+%% \end{array}
+%% \]
+%% Cost of transmitting a type:
+%% \[
+%% \begin{array}{@{}l@{\,}c@{\,}l}
+%% \costdescription{b(p_1,\ldots,p_k)} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costparam{p_i} \\
+%% \costdescription{x{:}b(p_1,\ldots,p_k)} &=& 
+%%   \cardt + \costvar{x} + \sum_{i=1}^{k} \costparam{p_i} \\
+%% \costdescription{\mathtt{struct \{} T_1;\ldots ;T_k; \mathtt{\}}} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costdescription{T_i} \\
+%% \costdescription{\mathtt{union \{} T_1; \ldots ;T_k; \mathtt{\}}} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costdescription{T_i} \\
+%% \costdescription{\mathtt{enum \{} c_1,\ldots,c_k \mathtt{\}}} &=& 
+%%   \cardt + \sum_{i=1}^{k} \costconst{c_i} \\
+%% \end{array}
+%% \]
+%% \caption {Cost of transmitting a type, selected rules}
+%% \label{fig:cost-type}
+%% \end{figure}
+
+\begin{figure}
+{\small
+Cost of encoding all training data relative to a type:
+\[
+\begin{array}{@{}lcl}
+\costdata{T}{d_1,\ldots,d_k} &=& \sum_{i=1}^{k} \adc{T}{d_i} \\
+\end{array}
+\]
+Cost of encoding a single chunk relative to selected base types:
+\[
+\begin{array}{@{}lcl}
+\adc{\mathtt{PintConst}(p)}{i}      &=& 0 \\
+\adc{\mathtt{Pint32}}{i}            &=& 32 \\
+\adc{\mathtt{Pint64}}{i}            &=& 64 \\
+\adc{\mathtt{PintRanged}(p_{min},p_{max})}{i} &=& \infty \\
+\end{array}
+\]
+Cost of encoding a single chunk relative to selected types:
+
+\begin{tabbing}
+XXXX\=XXXX\=\+\kill
+$\adc{\mathtt{struct \{} T_1;\ldots T_k; \mathtt{\}}}{(d_1,\ldots,d_k)}$ \\
+  \> $= \sum_{i=1}^{k} \adc{T_i}{d_i}$ \\[1.5ex] 
+$\adc{\mathtt{union \{} T_1;\ldots T_k; \mathtt{\}}}{in_i(d)}$ \\            
+  \> $= \mathtt{log}(k) + \adc{T_i}{d}$ \\[1.5ex]
+$\adc{\mathtt{enum \{} c_1;\ldots c_k; \mathtt{\}}}{in_i(c)}$ \\            
+  \> $= \mathtt{log}(k)$ \vspace{3pt} \\[1.5ex]
+$\adc{
+\mathtt{switch}\; x \; 
+  \mathtt{of \{} 
+    c_1 \mathtt{=>} T_1; \ldots  
+    c_k \mathtt{=>} T_k; 
+  \mathtt{\}}
+}{in_i(d)}$ \\ 
+  \> $= \adc{T_i}{d}$ 
+\end{tabbing}
+}
+\caption {Cost of transmitting data relative to a type, selected rules} \shrink
+\label{fig:cost-data}
+\end{figure}

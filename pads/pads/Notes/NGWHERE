@@ -1,0 +1,268 @@
+ningd0 is the development machine and runs freebsd.
+
+bsr
+
+	From gruber@research.att.com  Thu Nov 20 08:51:00 2003
+	From: "Robert E. Gruber" <gruber@research.att.com>
+	To: "'Bethany Robinson'" <bsr@research.att.com>
+	Cc: <andrew@research.att.com>, <gtv@research.att.com>,
+	   "Robert E. Gruber" <gruber@research.att.com>, <kfisher@research.att.com>
+	Subject: RE: Ningaui journal files
+	Date: Thu, 20 Nov 2003 08:53:32 -0500
+
+	What is the best Ningaui machine to do dev/test on?
+	For example, I need to start by building PADS on a FreeBSD box.
+
+	-- Bob
+
+
+	-----Original Message-----
+	From: Bethany Robinson [mailto:bsr@research.att.com] 
+	Sent: Thursday, November 20, 2003 4:54 AM
+	To: gruber@research.att.com; kfisher@research.att.com
+	Cc: andrew@research.att.com; gtv@research.att.com
+	Subject: Ningaui journal files
+
+	Andrew and I discussed which feeds would be the most useful for PADS to
+	tackle, and we settled on the journal feeds.
+
+	The journal feeds are the last step we have in the billing process.  They 
+	contain revenue, payments (cash), and adjustment values that get put in the 
+	corporate ledgers.  We suspect that records in the journal feeds are per 
+	account or per invoice, rather than per call.  All of our other feeds are 
+	call detail based (with originating number, call time, and call duration).  
+
+	1) We need to find a way of correlating the journal feeds with the call detail 
+	feeds for the Revenue Assurance project and hope that PADS can provide insight
+	into how to do this.  
+
+	2) If the journal feeds contain enough information, PADS could be used to
+	build a customer database that could tell us who our big customers are, 
+	what services they use, and whether they pay their bills.
+
+	Below are details to get you started on some journal feeds.  If you have
+	questions, feel free to call me at 908-236-6245.
+
+	Beth
+
+	/***************************************************************************/
+
+	You should be able to find example files on the ningbing cluster
+	(ning17.research.att.com).  
+	Look for files using the data set name (dsn) in the structures below.  For example, to
+	find
+	onenet journal files, run:
+		ning17> ng_rm_where -n -p PPBS00.OX006550.RPSDTL.DATA
+
+
+	You can take a look at the fields we pulled by looking at the parser code (although 
+	I suspect you want PADS to figure out which fields are useful).  The parsers and copybooks
+
+	are on ningd0.research.att.com. 
+
+		ONENETCBS1, SDNCBS1:  	~ningaui/src/parsers/sdn/sdn5.c
+			  copybooks			     sdn/copybooks/rps.cpy 	 (Detail)
+
+		WEFOS3, SBS9:  		~ningaui/src/parsers/tif/tif.c
+			  copybooks			     tif/copybooks/ijnltifh.cpy  (Header)
+								  	   ijnltif.cpy	 (Detail)
+									   ijnltift.cpy  (Trailer)
+
+	/************************************/
+	define Feed ONENETCBS1 {
+	        desc="RPS Journal file"
+	        parser=sdn5 	
+	        structure="fr-450"	# fixed length records of 450 bytes
+	        frequency="m18"		# files arrive around the 18th of the month
+	        classify=ht_none_ok	# no header/trailer
+	        { dsn=PPBS00.OX006550.RPSDTL.DATA       stream=onet801 }
+	}
+
+	/************************************/
+	define Feed SDNCBS1 {   
+	        desc="RPS Journal file"
+	        parser=sdn5 		
+	        structure="fr-450"	# fixed length records of 450 bytes
+	        frequency="m18"		# files arrive around the 18th of the month
+	        classify=ht_none_ok	# no header/trailer
+	        { dsn=PPBSF.PL.RPSDTL.MTHLY.DATA        stream=sdn601 } 
+	}
+
+	/************************************/
+	define Feed WEFOS3 {
+	        desc="Summary Usage TIF"
+	        parser=tif 		
+	        structure=vlbvlr	# variable length records
+	        frequency="m1" 		# files arrive the 1st of the month
+	        classify=tif_ht		# header/trailer info 
+	        { dsn=IHEDPXBD.MSIXXXX.IHE10.USAGEFLE   stream=wefos301 }
+	        { dsn=IHEDPXBI.MSIXXXX.IHE10.USAGEFLE   stream=wefos302 }
+	        { dsn=IHEDPXCP.SSIXXXX.IHE10.USAGEFLE   stream=wefos303 }
+	        { dsn=IHEDPXIE.FHIXXXX.IHE10.USAGEFLE   stream=wefos304 }
+	        { dsn=IHEDPXIL.KAIXXXX.IHE10.USAGEFLE   stream=wefos305 }
+	        { dsn=IHEDPXIW.MSIXXXX.IHE10.USAGEFLE   stream=wefos306 }
+	        { dsn=IHEDPXMS.MSIXXXX.IHE10.USAGEFLE   stream=wefos307 }
+	        { dsn=IHEDPXNA.MSIXXXX.IHE10.USAGEFLE   stream=wefos308 }
+	        { dsn=IHEDPXNS.MSIXXXX.IHE10.USAGEFLE   stream=wefos309 }
+	        { dsn=IHEDPXNY.FHIXXXX.IHE10.USAGEFLE   stream=wefos310 }
+	        { dsn=IHEDPXOH.KAIXXXX.IHE10.USAGEFLE   stream=wefos311 }
+	        { dsn=IHEDPXPT.MSIXXXX.IHE10.USAGEFLE   stream=wefos312 }
+	        { dsn=IHEDPXSB.ALIXXXX.IHE10.USAGEFLE   stream=wefos313 }
+	        { dsn=IHEDPXSN.FHIXXXX.IHE10.USAGEFLE   stream=wefos314 }
+	        { dsn=IHEDPXSW.ALIXXXX.IHE10.USAGEFLE   stream=wefos315 }
+	        { dsn=IHEDPXRP.MSIXXXX.IHE10.USAGEFLE   stream=wefos316 }
+	        { dsn=IHEDPXBS.MSIXXXX.IHE10.USAGEFLE   stream=wefos317 }
+	        { dsn=IHEDPXBA.MSIXXXX.IHE10.USAGEFLE   stream=wefos318 }
+	        { dsn=IHEDPXRC.MSIXXXX.IHE10.USAGEFLE   stream=wefos319 }
+	        { dsn=IHEDPXRE.MSIXXXX.IHE10.USAGEFLE   stream=wefos320 }
+	        { dsn=IHEDPXRS.MSIXXXX.IHE10.USAGEFLE   stream=wefos321 }
+	        { dsn=IHEDPXRW.MSIXXXX.IHE10.USAGEFLE   stream=wefos322 }
+	        { dsn=IHEDPXBQ.MSIXXXX.IHE10.USAGEFLE   stream=wefos323 }
+	        { dsn=IHEDPXBC.MSIXXXX.IHE10.USAGEFLE   stream=wefos324 }
+	        { dsn=IHEDPXBT.MSIXXXX.IHE10.USAGEFLE   stream=wefos325 }
+	        { dsn=IHEDPXRA.MSIXXXX.IHE10.USAGEFLE   stream=wefos326 }
+	        { dsn=IHEDPXRU.MSIXXXX.IHE10.USAGEFLE   stream=wefos327 }
+	        { dsn=IHEDPXRX.MSIXXXX.IHE10.USAGEFLE   stream=wefos328 }
+	}
+
+	/************************************/
+	define Feed SBS9 {
+	        desc="TIF records to Tailored Journals"
+		parser=tif		
+	        structure=vlbvlr	# variable length records
+	        frequency="D2-6"	# files arrive daily Monday - Saturday
+	        classify=tif_ht		# header/trailer info	
+	        { dsn=IASOPT06.MSIXXXX.IBT49.JOURTIF    stream=sbs901 }
+	        { dsn=IASOPT07.MSIXXXX.IBT49.JOURTIF    stream=sbs902 }
+	        { dsn=IASOPT08.MSIXXXX.IBT49.JOURTIF    stream=sbs903 }
+	        { dsn=IASOPT09.MSIXXXX.IBT49.JOURTIF    stream=sbs904 }
+	        { dsn=IASOPT10.ALIXXXX.IBT49.JOURTIF    stream=sbs905 }
+	        { dsn=IASOPT10.FHIXXXX.IBT49.JOURTIF    stream=sbs906 }
+	        { dsn=IASOPT10.MSIXXXX.IBT49.JOURTIF    stream=sbs907 }
+	        { dsn=IASOPT10.SSIXXXX.IBT49.JOURTIF    stream=sbs908 }
+	        { dsn=IASOPT11.FHIXXXX.IBT49.JOURTIF    stream=sbs909 }
+	        { dsn=IASOPT11.MSIXXXX.IBT49.JOURTIF    stream=sbs910 }
+	        { dsn=IASOPT11.SSIXXXX.IBT49.JOURTIF    stream=sbs911 }
+	        { dsn=IASOPT12.FHIXXXX.IBT49.JOURTIF    stream=sbs912 }
+	        { dsn=IASOPT12.KAIXXXX.IBT49.JOURTIF    stream=sbs913 }
+	        { dsn=IASOPT12.MSIXXXX.IBT49.JOURTIF    stream=sbs914 }
+	        { dsn=IASOPT12.SSIXXXX.IBT49.JOURTIF    stream=sbs915 }
+	        { dsn=IASOPT13.ALIXXXX.IBT49.JOURTIF    stream=sbs916 }
+	        { dsn=IASOPT13.FHIXXXX.IBT49.JOURTIF    stream=sbs917 }
+	        { dsn=IASOPT13.KAIXXXX.IBT49.JOURTIF    stream=sbs918 }
+	        { dsn=IASOPT13.MSIXXXX.IBT49.JOURTIF    stream=sbs919 }
+	        { dsn=IASOPT13.SSIXXXX.IBT49.JOURTIF    stream=sbs920 }
+	        { dsn=IASOPT14.ALIXXXX.IBT49.JOURTIF    stream=sbs921 }
+	        { dsn=IASOPT14.FHIXXXX.IBT49.JOURTIF    stream=sbs922 }
+	        { dsn=IASOPT15.ALIXXXX.IBT49.JOURTIF    stream=sbs923 }
+	        { dsn=IASOPT15.KAIXXXX.IBT49.JOURTIF    stream=sbs924 }
+	        { dsn=IASOPT15.SSIXXXX.IBT49.JOURTIF    stream=sbs925 }
+	        { dsn=IASOPT16.ALIXXXX.IBT49.JOURTIF    stream=sbs926 }
+	        { dsn=IASOPT16.KAIXXXX.IBT49.JOURTIF    stream=sbs927 }
+	        { dsn=IASOPT16.SSIXXXX.IBT49.JOURTIF    stream=sbs928 }
+	        { dsn=IASOPT17.KAIXXXX.IBT49.JOURTIF    stream=sbs929 }
+	        { dsn=IASOPT17.SSIXXXX.IBT49.JOURTIF    stream=sbs930 }
+	        { dsn=IASOPT30.ALIXXXX.IBT49.JOURTIF    stream=sbs931 }
+	        { dsn=IASOPT30.FHIXXXX.IBT49.JOURTIF    stream=sbs932 }
+	        { dsn=IASOPT30.MSIXXXX.IBT49.JOURTIF    stream=sbs933 }
+	        { dsn=IASOPT35.ALIXXXX.IBT49.JOURTIF    stream=sbs934 }
+	        { dsn=IASOPT35.FHIXXXX.IBT49.JOURTIF    stream=sbs935 }
+	        { dsn=IASOPT35.KAIXXXX.IBT49.JOURTIF    stream=sbs936 }
+	        { dsn=IASOPT35.MSIXXXX.IBT49.JOURTIF    stream=sbs937 }
+	        { dsn=IASOPT35.SSIXXXX.IBT49.JOURTIF    stream=sbs938 }
+	        { dsn=IASOPT36.FHIXXXX.IBT49.JOURTIF    stream=sbs939 }
+	        { dsn=IASOPT39.ALIXXXX.IBT49.JOURTIF    stream=sbs940 }
+	}
+
+
+
+ning17:~ [1]-> ng_rm_where -n -p PPBS00.OX006550.RPSDTL.DATA
+ning19 /ningaui/fs04/01/04/PPBS00.OX006550.RPSDTL.DATA.G0067V00.12806.20030121091558.pz
+ning18 /ningaui/fs07/03/24/PPBS00.OX006550.RPSDTL.DATA.G0067V00.12806.20030121091558.pz
+ning20 /ningaui/fs02/01/26/PPBS00.OX006550.RPSDTL.DATA.G0066V00.20033.20021221084519.pz
+ning14 /ningaui/fs05/21/16/PPBS00.OX006550.RPSDTL.DATA.G0066V00.20033.20021221084519.pz
+ning21 /ningaui/fs06/15/14/PPBS00.OX006550.RPSDTL.DATA.G0072V00.22945.20030621140206.pz
+ning18 /ningaui/fs05/11/22/PPBS00.OX006550.RPSDTL.DATA.G0072V00.22945.20030621140206.pz
+ning10 /ningaui/fs04/14/22/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804.pz
+ning04 /ningaui/fs05/18/26/PPBS00.OX006550.RPSDTL.DATA.G0075V00.15465.20030921135804.pz
+ning14 /ningaui/fs05/10/20/PPBS00.OX006550.RPSDTL.DATA.G0068V00.16769.20030222071245.pz
+ning06 /ningaui/fs01/01/19/PPBS00.OX006550.RPSDTL.DATA.G0068V00.16769.20030222071245.pz
+ning04 /ningaui/fs01/05/08/PPBS00.OX006550.RPSDTL.DATA.G0076V00.15185.20031025104311.pz
+ning01 /ningaui/fs03/08/19/PPBS00.OX006550.RPSDTL.DATA.G0076V00.15185.20031025104311.pz
+ning02 /ningaui/fs03/05/07/PPBS00.OX006550.RPSDTL.DATA.G0074V00.5459.20030821083233.pz
+ning00 /ningaui/fs03/15/24/PPBS00.OX006550.RPSDTL.DATA.G0074V00.5459.20030821083233.pz
+ning19 /ningaui/fs02/02/24/PPBS00.OX006550.RPSDTL.DATA.G0070V00.23039.20030424191916.pz
+ning09 /ningaui/fs06/30/04/PPBS00.OX006550.RPSDTL.DATA.G0070V00.23039.20030424191916.pz
+ning04 /ningaui/fs03/22/05/PPBS00.OX006550.RPSDTL.DATA.G0065V00.493.20021210145904.pz
+ning01 /ningaui/fs01/05/02/PPBS00.OX006550.RPSDTL.DATA.G0065V00.493.20021210145904.pz
+ning02 /ningaui/fs04/13/01/PPBS00.OX006550.RPSDTL.DATA.G0073V00.10947.20030722062922.pz
+ning00 /ningaui/fs05/00/19/PPBS00.OX006550.RPSDTL.DATA.G0073V00.10947.20030722062922.pz
+ning05 /ningaui/fs06/06/12/PPBS00.OX006550.RPSDTL.DATA.G0069V00.14089.20030321042032.pz
+ning04 /ningaui/fs03/07/25/PPBS00.OX006550.RPSDTL.DATA.G0069V00.14089.20030321042032.pz
+
+ning04:~ [3]-> ng_rm_where -n -p IHEDPXBD.MSIXXXX.IHE10.USAGEFLE
+ning05 /ningaui/fs00/02/04/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0111V00.3482.20031004111019.pz
+ning04 /ningaui/fs02/34/00/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0111V00.3482.20031004111019.pz
+ning18 /ningaui/fs07/17/20/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0096V00.25057.20020704102937.pz
+ning06 /ningaui/fs00/02/06/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0096V00.25057.20020704102937.pz
+ning16 /ningaui/fs04/05/29/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0109V00.20085.20030804102601.pz
+ning11 /ningaui/fs01/14/09/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0109V00.20085.20030804102601.pz
+ning18 /ningaui/fs06/18/24/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0092V00.13325.20020304100735.pz
+ning09 /ningaui/fs06/04/24/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0092V00.13325.20020304100735.pz
+ning18 /ningaui/fs04/08/10/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0101V00.13080.20021205115153.pz
+ning14 /ningaui/fs05/06/28/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0101V00.13080.20021205115153.pz
+ning20 /ningaui/fs04/13/13/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0102V00.2110.20030104101027.pz
+ning01 /ningaui/fs02/08/02/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0102V00.2110.20030104101027.pz
+ning18 /ningaui/fs01/00/06/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0104V00.26369.20030305172146.pz
+ning04 /ningaui/fs02/06/25/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0104V00.26369.20030305172146.pz
+ning05 /ningaui/fs04/11/21/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0105V00.29000.20030405231323.pz
+ning01 /ningaui/fs05/11/02/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0105V00.29000.20030405231323.pz
+ning21 /ningaui/fs00/06/28/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0107V00.25222.20030605100438.pz
+ning07 /ningaui/fs00/03/27/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0107V00.25222.20030605100438.pz
+ning16 /ningaui/fs07/01/27/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0110V00.20753.20030904103346.pz
+ning11 /ningaui/fs03/10/10/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0110V00.20753.20030904103346.pz
+ning19 /ningaui/fs05/04/26/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0093V00.2165.20020404134459.pz
+ning04 /ningaui/fs03/01/29/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0093V00.2165.20020404134459.pz
+ning17 /ningaui/fs05/00/08/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0097V00.15972.20020804101410.pz
+ning07 /ningaui/fs06/15/12/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0097V00.15972.20020804101410.pz
+ning09 /ningaui/fs04/03/01/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0095V00.15705.20020604101455.pz
+ning03 /ningaui/fs04/08/02/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0095V00.15705.20020604101455.pz
+ning17 /ningaui/fs05/07/16/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0112V00.7748.20031104101003.pz
+ning00 /ningaui/fs05/14/25/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0112V00.7748.20031104101003.pz
+ning13 /ningaui/fs02/02/28/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0108V00.27103.20030704105504.pz
+ning00 /ningaui/fs05/00/22/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0108V00.27103.20030704105504.pz
+ning18 /ningaui/fs07/12/02/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0103V00.18296.20030204112600.pz
+ning09 /ningaui/fs06/00/29/IHEDPXBD.MSIXXXX.IHE10.USAGEFLE.G0103V00.18296.20030204112600.pz
+
+ning04:~ [4]-> ning17:~ [3]-> ng_rm_where -n -p  IHEDPXRX.MSIXXXX.IHE10.USAGEFLE
+ning18 /ningaui/fs03/00/28/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0108V00.7427.20021223012356.pz
+ning16 /ningaui/fs06/05/26/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0108V00.7427.20021223012356.pz
+ning19 /ningaui/fs02/04/26/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0102V00.11203.20020622101019.pz
+ning05 /ningaui/fs06/15/25/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0102V00.11203.20020622101019.pz
+ning08 /ningaui/fs05/23/02/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0112V00.11249.20030423101008.pz
+ning05 /ningaui/fs06/04/00/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0112V00.11249.20030423101008.pz
+ning14 /ningaui/fs05/23/03/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0115V00.14290.20030723105455.pz
+ning06 /ningaui/fs02/00/25/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0115V00.14290.20030723105455.pz
+ning21 /ningaui/fs02/14/04/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0114V00.5063.20030622100652.pz
+ning05 /ningaui/fs03/12/17/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0114V00.5063.20030622100652.pz
+ning21 /ningaui/fs06/08/07/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0109V00.3094.20030122100838.pz
+ning19 /ningaui/fs07/02/06/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0109V00.3094.20030122100838.pz
+ning11 /ningaui/fs04/07/16/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0107V00.18615.20021122101640.pz
+ning03 /ningaui/fs02/02/24/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0107V00.18615.20021122101640.pz
+ning06 /ningaui/fs05/06/04/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0118V00.29497.20031022101013.pz
+ning04 /ningaui/fs04/11/20/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0118V00.29497.20031022101013.pz
+ning20 /ningaui/fs06/10/26/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0100V00.16071.20020422111424.pz
+ning06 /ningaui/fs02/04/29/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0100V00.16071.20020422111424.pz
+ning20 /ningaui/fs02/05/28/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0110V00.3687.20030221101922.pz
+ning07 /ningaui/fs06/02/16/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0110V00.3687.20030221101922.pz
+ning20 /ningaui/fs00/17/12/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0117V00.14645.20030922100953.pz
+ning14 /ningaui/fs05/08/11/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0117V00.14645.20030922100953.pz
+ning21 /ningaui/fs07/19/26/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0116V00.12048.20030822101338.pz
+ning12 /ningaui/fs06/08/26/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0116V00.12048.20030822101338.pz
+ning19 /ningaui/fs00/20/28/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0099V00.8152.20020322101321.pz
+ning03 /ningaui/fs02/11/06/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0099V00.8152.20020322101321.pz
+ning19 /ningaui/fs05/04/26/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0111V00.28979.20030322100737.pz
+ning06 /ningaui/fs03/12/18/IHEDPXRX.MSIXXXX.IHE10.USAGEFLE.G0111V00.28979.20030322100737.pz
+
+
+

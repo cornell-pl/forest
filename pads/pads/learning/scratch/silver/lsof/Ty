@@ -1,0 +1,127 @@
+Punion(Id = BTy_53 2521, 576.322b, 81621.429b)
+	Pstruct(Id = BTy_52 2155, 40b, 2353.251b)
+		[string](Id = BTy_0 2155, 1b, 54b);
+		Punion(Id = BTy_2 2155, 3b, 1b)
+			[StringConst] ""(Id = BTy_1 2148, 1b, 0b);
+			[StringConst] "."(Id = BTy_3 7, 1b, 0b);
+		End Punion;
+		[StringConst] "    "(Id = BTy_4 2155, 1b, 2b);
+		[Int] [78...25518](Id = BTy_5 2155, 1b, 73.174b);
+		[StringConst] " kfisher  "(Id = BTy_6 2155, 1b, 3.322b);
+		Punion(Id = BTy_10 2155, 3b, 12.955b)
+			[StringConst] ""(Id = BTy_9 1756, 1b, 0b);
+			[Int] [0...62](Id = BTy_11 399, 1b, 11.955b);
+		End Punion;
+		[string](Id = BTy_12 2155, 1b, 18b);
+		[StringConst] "     "(Id = BTy_13 2155, 1b, 2.322b);
+		[string](Id = BTy_14 2155, 1b, 36b);
+		[StringConst] "       "(Id = BTy_15 2155, 1b, 2.807b);
+		[Int] [0...14](Id = BTy_16 2155, 1b, 7.814b);
+		Punion(Id = BTy_18 2155, 5b, 59.755b)
+			[StringConst] ""(Id = BTy_17 2148, 1b, 0b);
+			Pstruct(Id = BTy_24 7, 3b, 58.755b)
+				[string](Id = BTy_19 7, 1b, 54b);
+				[StringConst] "                     count="(Id = BTy_20 7, 1b, 4.755b);
+				[IntConst] [0](Id = BTy_23 7, 1b, 0b);
+			End Pstruct;
+		End Punion;
+		[StringConst] ","(Id = BTy_27 2155, 1b, 0b);
+		Punion(Id = BTy_45 2155, 19b, 2080.102b)
+			Pstruct(Id = BTy_44 2148, 15b, 2075.295b)
+				[Int] [0...4](Id = BTy_28 2148, 1b, 2.322b);
+				[StringConst] "       "(Id = BTy_29 2148, 1b, 2.807b);
+				[Int] [0...79085358](Id = BTy_30 2148, 1b, 209.895b);
+				Punion(Id = BTy_32 2148, 3b, 55b)
+					[StringConst] ""(Id = BTy_31 1985, 1b, 0b);
+					[string](Id = BTy_33 163, 1b, 54b);
+				End Punion;
+				[StringConst] "        "(Id = BTy_34 2148, 1b, 3b);
+				[Int] [2...42721156](Id = BTy_35 2148, 1b, 202.788b);
+				[StringConst] " "(Id = BTy_36 2148, 1b, 0b);
+				Punion(Id = BTy_42 2148, 6b, 1599.483b)
+					Pstruct(Id = BTy_41 2114, 4b, 1598.483b)
+						[Path](Id = BTy_37 2114, 1b, 1584b);
+						Punion(Id = BTy_39 2114, 3b, 14.483b)
+							[StringConst] ""(Id = BTy_38 2112, 1b, 0b);
+							[Enum] {[StringConst] "\xe3\x83\x92\xe3\x83\xa9\xe3\x82\xad\xe3\x82\x99\xe3\x83\x8e\xe8\xa7\x92\xe3\x82\xb3\xe3\x82\x99 Pro W3.otf", [StringConst] "\xe3\x83\x92\xe3\x83\xa9\xe3\x82\xad\xe3\x82\x99\xe3\x83\x8e\xe8\xa7\x92\xe3\x82\xb3\xe3\x82\x99 Pro W6.otf", }(Id = BTy_40 2, 1b, 13.483b);
+						End Punion;
+					End Pstruct;
+					[StringConst] "/"(Id = BTy_43 34, 1b, 0b);
+				End Punion;
+			End Pstruct;
+			Pstruct(Id = BTy_51 7, 3b, 3.807b)
+				[StringConst] " state="(Id = BTy_46 7, 1b, 2.807b);
+				[IntConst] [0](Id = BTy_49 7, 1b, 0b);
+				[StringConst] "x2"(Id = BTy_50 7, 1b, 1b);
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+	Pstruct(Id = BTy_79 135, 17b, 225.809b)
+		[string](Id = BTy_54 135, 1b, 54b);
+		Switch(BTy_69)(Id = BTy_56 135, 4b, 3.170b):
+		case [StringConst] "*":
+			[StringConst] ""(Id = BTy_55 134, 1b, 0b);
+		case [StringConst] "x02a297c4":
+			[StringConst] "."(Id = BTy_57 1, 1b, 0b);
+		End Switch;
+		[StringConst] "    "(Id = BTy_58 135, 1b, 2b);
+		[Int] [78...25479](Id = BTy_59 135, 1b, 73.163b);
+		[StringConst] " kfisher    "(Id = BTy_60 135, 1b, 3.585b);
+		[Int] [0...13](Id = BTy_63 135, 1b, 7.615b);
+		[StringConst] "r  PSXSHM "(Id = BTy_64 135, 1b, 3.322b);
+		[IntConst] [0](Id = BTy_68 135, 1b, 0b);
+		[string](Id = BTy_69 135, 1b, 54b);
+		[StringConst] "       "(Id = BTy_70 135, 1b, 2.807b);
+		[IntConst] [4096](Id = BTy_71 135, 1b, 12b);
+		[StringConst] "          obj="(Id = BTy_72 135, 1b, 3.807b);
+		[IntConst] [0](Id = BTy_76 135, 1b, 0b);
+		[Enum] {[StringConst] "x02c4ac70", [StringConst] "x02cfd7b8", }(Id = BTy_77 135, 1b, 6.340b);
+	End Pstruct;
+	Pstruct(Id = BTy_97 98, 243b, 6722.276b)
+		Punion(Id = BTy_84 98, 184b, 5482.585b)
+			Pstruct(Id = BTy_83 90, 181b, 4935b)
+				TBD_0(Id = BTy_0 90, 90b, 3972b);
+				TBD_1(Id = BTy_1 90, 90b, 963b);
+				[StringConst] "-"(Id = BTy_82 90, 1b, 0b);
+			End Pstruct;
+			Pstruct(Id = BTy_87 8, 2b, 546.585b)
+				[Enum] {[StringConst] "HP", [StringConst] "SEC", }(Id = BTy_85 8, 1b, 2.585b);
+				[Path](Id = BTy_86 8, 1b, 544b);
+			End Pstruct;
+		End Punion;
+		[StringConst] ">"(Id = BTy_88 98, 1b, 0b);
+		Punion(Id = BTy_95 98, 58b, 1239.691b)
+			Pstruct(Id = BTy_94 76, 13b, 336.691b)
+				Punion(Id = BTy_90 76, 6b, 199b)
+					[StringConst] ""(Id = BTy_89 72, 1b, 0b);
+					TBD_2(Id = BTy_2 4, 4b, 198b);
+				End Punion;
+				[Int] [0...54656](Id = BTy_91 76, 1b, 78.691b);
+				Punion(Id = BTy_93 76, 6b, 59b)
+					[string](Id = BTy_92 72, 1b, 54b);
+					TBD_3(Id = BTy_3 4, 4b, 4b);
+				End Punion;
+			End Pstruct;
+			Pstruct(Id = BTy_96 22, 44b, 902b)
+				TBD_4(Id = BTy_4 22, 22b, 726b);
+				TBD_5(Id = BTy_5 22, 22b, 176b);
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+	Pstruct(Id = BTy_99 130, 260b, 72219b)
+		TBD_6(Id = BTy_6 130, 130b, 2874b);
+		TBD_7(Id = BTy_7 130, 130b, 69345b);
+	End Pstruct;
+	Pstruct(Id = BTy_123 3, 14b, 98.771b)
+		[StringConst] "("(Id = BTy_100 3, 1b, 0b);
+		[Enum] {[StringConst] "/private/tmp/.webdavcache.21059.gtZadm/webdav.c3Jcj9)", [StringConst] "/private/tmp/hsperfdata_kfisher/626)", [StringConst] "/private/var/tmp/sqlite_ukf4lc7wDTEXv92)", }(Id = BTy_101 3, 1b, 16.220b);
+		[StringConst] ": No such file or directory"(Id = BTy_102 3, 1b, 4.755b);
+		[Enum] {[StringConst] "Mail", [StringConst] "firefox-b", [StringConst] "mount_web", }(Id = BTy_113 3, 1b, 8.340b);
+		[StringConst] "   "(Id = BTy_114 3, 1b, 1.585b);
+		TBD_8(Id = BTy_8 3, 3b, 43.185b);
+		[StringConst] " kfisher  "(Id = BTy_115 3, 1b, 3.322b);
+		TBD_9(Id = BTy_9 3, 3b, 14.288b);
+		[Enum] {[StringConst] "txt", [StringConst] "u", }(Id = BTy_118 3, 1b, 1.585b);
+		[StringConst] "     VREG                                stat"(Id = BTy_119 3, 1b, 5.492b);
+	End Pstruct;
+End Punion

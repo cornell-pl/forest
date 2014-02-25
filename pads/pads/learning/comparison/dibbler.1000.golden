@@ -1,0 +1,56 @@
+Punion(35, tc: 346.239b, ac: 169.158b, dc: 337.316b, raw: 683.554b)
+        Pstruct(35, tc: 28.133b, ac: 20.932b, dc: 20.932b, raw: 49.065b)
+                [StringConst] "0|" (35, tc: 17.044b, ac: 0b, dc: 0b, raw: 17.044b);
+                [Pint] (35, tc: 5.044b, ac: 20.932b, dc: 20.932b, raw: 25.976b);
+        End Pstruct;
+        Pstruct(35, tc: 312.061b, ac: 315.384b, dc: 315.384b, raw: 627.445b)
+                Pstruct(35, tc: 249.121b, ac: 267.774b, dc: 267.774b, raw: 516.896b)
+                        [Pint] (35, tc: 5.044b, ac: 20.932b, dc: 20.932b, raw: 25.976b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [Pint] (35, tc: 5.044b, ac: 20.932b, dc: 20.932b, raw: 25.976b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [Pint] (35, tc: 5.044b, ac: 20.932b, dc: 20.932b, raw: 25.976b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        Poption(35, tc: 11.089b, ac: 15.288b, dc: 15.288b, raw: 26.377b)
+                                [Pint] (35, tc: 5.044b, ac: 14.288b, dc: 14.288b, raw: 19.332b);
+                        End Poption;
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        Poption(35, tc: 11.089b, ac: 15.288b, dc: 15.288b, raw: 26.377b)
+                                [Pint] (35, tc: 5.044b, ac: 14.288b, dc: 14.288b, raw: 19.332b);
+                        End Poption;
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        Poption(35, tc: 11.089b, ac: 15.288b, dc: 15.288b, raw: 26.377b)
+                                [Pint] (35, tc: 5.044b, ac: 14.288b, dc: 14.288b, raw: 19.332b);
+                        End Poption;
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        Poption(35, tc: 11.089b, ac: 15.288b, dc: 15.288b, raw: 26.377b)
+                                [Pint] (35, tc: 5.044b, ac: 14.288b, dc: 14.288b, raw: 19.332b);
+                        End Poption;
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        Poption(35, tc: 11.089b, ac: 15.288b, dc: 15.288b, raw: 26.377b)
+                                [Pint] (35, tc: 5.044b, ac: 14.288b, dc: 14.288b, raw: 19.332b);
+                        End Poption;
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [Pint] (35, tc: 5.044b, ac: 20.932b, dc: 20.932b, raw: 25.976b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [String] (35, tc: 5.044b, ac: 30.000b, dc: 30b, raw: 35.044b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [Pint] (35, tc: 5.044b, ac: 17.610b, dc: 17.610b, raw: 22.654b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [String] (35, tc: 5.044b, ac: 30.000b, dc: 30b, raw: 35.044b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                        [String] (35, tc: 5.044b, ac: 30.000b, dc: 30b, raw: 35.044b);
+                        [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                End Pstruct;
+                RArray(35, tc: 56.896b, ac: 47.610b, dc: 47.610b, raw: 104.505b)
+                        Separator: [StringConst] "|"
+                        Terminator: [StringConst] "\n"
+                        Pstruct(35, tc: 27.763b, ac: 47.610b, dc: 47.610b, raw: 75.372b)
+                                [String] (35, tc: 5.044b, ac: 30.000b, dc: 30b, raw: 35.044b);
+                                [StringConst] "|" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+                                [Pint] (35, tc: 5.044b, ac: 17.610b, dc: 17.610b, raw: 22.654b);
+                        End Pstruct;
+                End RArray;
+        End Pstruct;
+End Punion
+

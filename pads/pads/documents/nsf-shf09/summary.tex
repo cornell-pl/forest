@@ -1,0 +1,94 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \centerline{
+% \begin{tabular}{cc}
+%           \\[-1ex]
+% \multicolumn{2}{c}{Automatic Tool Generation for Ad Hoc Scientific Data} \\
+%           & \\[-1ex]
+% David Walker (PI)\\
+% Princeton University\\[2ex]
+% \end{tabular}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph*{Intellectual Merits:} 
+In every scientific discipline, researchers are digitizing their knowledge and
+beginning to use computational methods to categorize,
+query, filter, search, diagnose, and visualize their data.  
+While this effort is leading to remarkable advances,
+it is also generating enormous amounts of {\em ad hoc data}.
+Ad hoc data is any data for which standard data processing tools
+such as query engines, statistical packages, graphing tools, parsers, printers,
+transformers or programming libraries are not readily available.
+This data, which is often unpredictable, poorly documented,
+filled with errors, high volume and unwieldy,
+poses tremendous challenges to its users and the software
+that manipulates it.  We cannot maximize the productivity of top 
+computational scientists or industrial engineers
+unless we can maximize the efficiency and 
+accuracy with which they deal with this data.  Hence, the overall goal of
+our research is to alleviate the burden, risk and confusion
+associated with ad hoc data.  
+%Our overall strategy is (1) to develop a
+%specification language capable of precisely describing any ad hoc data
+%format at an easy-to-understand, high level of abstraction and (2) to
+%automatically generate useful data processing tools including
+%programming libraries, a query engine, format converters and others.
+We will accomplish our goal by building upon past research
+on on the \pads{} data description and processing system, created by the 
+PI, Senior Personnel Kathleen Fisher, their collaborators and students. 
+More specifically, this team will pursue the following
+new research agenda:
+
+\begin{enumerate}
+\item {\bf Language support for multi-level directory systems.}
+Many ad hoc data sets are physically represented as collections of 
+data files, organized in a multi-level directory system.
+The PI will develop powerful, new extensions to PADS that allow programmers
+to specify the structure of these multi-level directory systems
+and generate libraries for programming against them.
+\item {\bf Semi-automatic data description generation.}
+While using the PADS data description language speeds the generation
+and maintainance of data processing tools, a user must invest some effort
+to learn the language syntax and semantics.  The PI will simplify
+and improve the process of writing descriptions by developing 
+an entirely new kind of {\em text mark-up language} that 
+allows users to add simple
+labels to raw data sources, and from such labels, generate full descriptions.
+Such descriptions can, in turn, serve as lasting documentation or be 
+used %processed by the pads compiler
+to generate useful programming tools.
+\item {\bf Grammatical foundations and efficient implementation.}  
+Many complex, modern text and binary data formats require a very rich collection
+of features in order to describe them declaratively:  
+{\em full context-free grammars}, the ability to bind 
+parts of a data source to {\em variables} for later use in
+{\em constraints}, {\em parameters} on non-terminals and the
+ability to include pre-defined libraries as {\em black boxes} 
+within a description.  The PI will develop a new grammatical 
+theory that explains how to implement this rich collection of features
+efficiently.  
+\item {\bf Automatic generation of new data processing tools.} 
+The PI will use the newly developed theory and implementation techniques 
+to build important new tools including description-directed 
+data generators for use in testing data processing infrastructure
+and a multi-source, ad hoc data query engine.
+\end{enumerate}
+
+\paragraph*{Broader Impacts:}  We are collaborating with Kathleen Fisher
+(Senior Personnel for this proposal and Senior Researcher at AT\&T)
+who will be able to use our tools to address real problems at AT\&T such
+as network log monitoring and 
+telephone fraud detection.  
+%We will use such key industrial problems
+%to drive our research agenda throughout the course of the grant.
+In addition to working on technology transfer to industry, 
+our tools will be freely
+available to researchers and scientists over the web.  Moreover, part
+of our mission will be to work with computational biologists and
+physicists at Princeton and the broader community to help them with
+their data processing needs.  One way that we plan to do so is to
+develop interdisciplinary research projects for Princeton's 
+undergraduates.  As independent research co-ordinator for the Princeton
+Computer Science Department
+for the last two years, PI Walker has the experience and track record
+to develop a highly effective undergraduate research program in this area.
+

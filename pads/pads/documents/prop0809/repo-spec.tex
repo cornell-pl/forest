@@ -1,0 +1,133 @@
+\subsection{Repository Specifications}
+\label{ssec:repo-spec}
+
+Our prototype \pads{} language can describe the syntax and semantic properties
+of individual files.  However, diagnosing problems or simply monitoring
+the health of applications in networked systems
+will usually involve navigating and analyzing {\em sets of files},
+not just individual logs.  After all, even individual
+applications can generate complex sets of log files.  
+
+As an example, consider the Coral content
+distribution system~\cite{coral}, a typical distributed application.
+Coral is currently running on PlanetLab system~\cite{planetlab}, a
+testbed with 800+ machines distributed world-wide with presence in the
+US, Canada, Europe and Asia.  The Coral system periodically collects
+four different log files from all machines in its global network.
+Coral implementers use this information to understand and debug
+it's performance and identify security threats.  They regularly probe the
+logs to answer specific questions such as:
+\begin{itemize}
+\item ``What are 10 the most popular domains and how many requests per 
+  domain?'' or
+\item ``How many requests were sent by the ten most busy client IPs? (An important signal of misuse)'' or
+\item ``How does load look between different nodes?''
+\end{itemize}
+
+In order to answer these questions, they have written custom tools
+to walk over their repository of log files.  This is a time-consuming and 
+error-prone process and their software tools cannot be reused for new 
+applications. Moreover, whenever they have new questions to ask, they may
+need to write new tools from scratch.
+
+In order to save time, effort, and hence money, we propose to
+extend the \pads{} language so that it can describe entire
+repositories of application data in a compact, modular fashion.  We
+also propose to extend the \pads{} compiler so that it can generate
+reuseable interfaces for parsing, traversal, error detection,
+transformation and querying of this application data.
+To understand how we might extend \pads{} to enable analysis of
+entire repositories, let us return to the example of the Coral application, 
+mentioned above.  Coral stores it's information in a collection of
+log files organized as follows.
+
+\begin{itemize}
+\item {\bf Machine Names:}  At the top-level, there is a single directory for
+each machine on which a Coral end-point is running.  Hence there are 800+ 
+top-level directories.  Each directory
+is named using the name of the relevant machine.  
+\item {\bf Date-Time:}  Underneith each machine-level directory there is
+a set of subdirectories -- one subdirectory for each date (and time) that
+monitoring data was acquired.  
+\item {\bf Application data:}  Underneith each date-time directory there
+are four different kinds of log files:
+\begin{itemize}
+\item {\bf\tt coralwebsrv.log:}  A log file similar in structure to the log
+file fragment presented in Figure~\ref{figure:clf-records} and described in 
+Figure~\ref{figure:clf}.
+\item {\bf\tt corald.log:}  Logs that describe to which "cluster" of the 
+three-level coral hierarchy a node currently belongs, as well as some 
+statistics about that nodes' view of the cluster.
+\item {\bf\tt coraldnssrv.log:}  Logs of information related to the type of 
+DNS query (A, NS, AAAA), the domain being queried, as well as record of 
+which A and NS records were returned to that query.
+\item {\bf\tt probed.log:}  Logs of traceroutes to clients.
+\end{itemize}
+\end{itemize}
+
+Figure~\ref{figure:coral-repo} illustrates how we might specify the structure
+of the entire repository in an extension of the \pads{} language.  First,
+we include a series of single-document descriptions ({\tt corald.pads},
+{\tt coraldns.pads}, {\tt coralweb.pads} and {\tt probe.pads}).  These 
+included descriptions will be similar to the description shown in
+Figure~\ref{figure:clf}.  Next, we begin description of the repository
+structure from the bottom up.  The directory specification
+called {\tt  host\_info} takes two parameters, {\tt h} and {\tt t}
+where {\tt h} is intended to be the associated host and {\tt t} the
+associated time the data was collected.  The first two lines of 
+{\tt  host\_info} declare {\em logical fields} named {\tt host} and
+{\tt time}.  These logical fields are useful for associating meta-data with
+specific log files.  The generated interface will provide support for querying
+against such generated meta-data.  The following four lines all have the structure:
+
+\begin{code}
+<lname> is <filename> as <description> <| <constraints> |>;
+\end{code}
+
+The {\tt <lname>} is the logical name of the field.  This logical name
+will show up in the generated programmatic interface and may also
+serve as a name against which queries may be written.  The 
+ {\tt <filename>} component describes the name of the file in the file
+system.  Inside {\tt  host\_info} declaration the {\tt <filename>} components
+are simple constant strings.  However, they may also be expressed as regular expressions,
+or more generally using \pads{} types.  The {\tt <description>} component
+provides the name of another description that specifies the structure of the file(s) in question.
+Finally, {\tt <constraints>} are used specify any additional information about the
+file(s) -- ownership, permissions, creation time, {\em etc.}
+
+The declarations of the {\tt times} directory and the {\tt repository} directory
+have a similar structure to the {\tt host\_info} directory.  One difference is that
+the {\tt <filename>} component is more sophisticated.  For example, the fragment
+{\tt (t:Ptime)} from the {\tt times} directory specification indicates that the
+set of file names that match this part of the specification must have a structure
+specified by \pads{} type {\tt Ptime}.  Moreover, if a filename does have that structure,
+the name will be bound to the variable {\tt t}, which can then be passed as a parameter
+to other parts of the description or used in constraints (not shown).
+
+\begin{figure}
+\begin{code}
+\#include corald.pads     /- imported pads description 
+\#include coraldns.pads   /- imported pads description 
+\#include coralweb.pads   /- imported pads description 
+\#include probe.pads      /- imported pads description 
+{\ }
+Pdirectory host\_info (h,t) \{
+  host = h;
+  time = t;
+  corald   is  "corald.log"       as corald\_source   <| (perm = "-rwx------") |>;
+  coraldns is  "coraldnssrv.log"  as coraldns\_source <| (perm = "-rwx------") |>;
+  coralweb is  "coralwebsrv.log"  as coralweb\_source <| (perm = "-rwx------") |>; 
+  probe    is  "probed.log"       as probe\_source    <| (perm = "-rwx------") |>;
+ \}
+{\ }
+Pdirectory times (h) \{
+  time     is (t:Ptime)           as host_info(h,t)
+\}
+{\ }
+Pdirectory repository \{
+   hosts   is (h:Phostname)       as times(h);
+\}
+\end{code}
+\caption{Coral Repository Description}
+\label{figure:coral-repo}
+\end{figure}

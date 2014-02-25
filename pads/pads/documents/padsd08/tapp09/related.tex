@@ -1,0 +1,116 @@
+%{\em Note: the following was taken from a grant proposal written with Vivek
+%Pai....  }
+
+\padsd{} was primarily inspired by the past research in 
+data description languages such as Demeter~\cite{lieberherr:demeter}, 
+DataScript~\cite{gpce02} or
+\pads{}~\cite{fisher+:pads,mandelbaum+:pads-ml} and the work on functional reactive 
+programming~\cite{elliot+:frp}.  In contrast to the work on previous
+data description languages, \padsd{} treats the problem of bringing together
+collections of {\em distributed} source made available over time.  In
+contrast to the work on functional {\em reactive} programming, \padsd{}
+provides mechanisms for {\em proactive} aquisition of data, which gives
+reactive programs a link to the outside world.
+
+\padsd{} also has goals in common with 
+web mashup languages such as MashMaker~\cite{ennals+:mashmaker} 
+and Yahoo Pipes~\cite{yahoopipes}.  These languages allow naive web 
+programmers to extract data from web sites and RSS feeds and recombine them,
+often using conventional functional programming paradigms such as
+map and filter.  The focus is on end-user programming with relatively
+small amounts of data that can be displayed to a user in a web
+browser. Errors and facilities for long term archiving, analysis and monitoring
+are largely ignored as are facilities for processing data that arrives
+in non-standard formats. Readers are referred to our technical report~\cite{zhu+:padsdtr}
+for more comprehensive coverage of related work.
+%
+%completeness or absolute 
+%correctness of information is not critical in the domains of interest.
+%Unlike \padsd{}, which allows users to write rich descriptions
+%expressing the location, format, schedule and access mode of the data, 
+%Yahoo Pipes, for instance, acquires data through a fixed collection of 
+%black boxes.  For this reason, \padsd{} and mashup languages have the 
+%potential to be complementary technologies, with \padsd{} descriptions
+%serving to define new ad hoc data sources for mashups.  In fact, this
+%idea motivated the design and implementation of the \padsd{} ad
+%hoc-to-RSS conversion tool. 
+%One can only hope Yahoo decides to add \padsd{} as an auxiliary interface
+%to their system.
+%and \padsd{} generic programming
+%tools serving to define generic programs over entire classes of mashups.
+
+
+%\paragraph*{Systems monitoring.}
+\cut{%%%%%%%%%
+There are a number of tools availale for system monitoring such
+as SNMP~\cite{snmprfc1157}, HP's OpenView~\cite{openview}
+and MRTG~\cite{mrtg}. These tools are typically focused on systems-oriented
+data and packet processing.  
+For Grid or cluster environments, two popular monitoring tools are
+Ganglia~\cite{ganglia} and Nagios~\cite{nagios}.  Ganglia focuses more
+on continuous monitoring of usage information and consolidates
+information provided by OS tools like vmstat, iostat, and uptime.
+Nagios focuses more on availability information, and logs (or
+delivers) failure and recovery events. 
+What distinguishes \padsd{} from systems like SNMP or Ganglia is the
+ability to automatically parse and monitor virtually any kind of
+ad hoc data, from node-level information like that collected by
+Ganglia or SNMP, all the way down to application-level or even
+protocol-level data. These areas are the ones that are not well served
+by today's general-purpose monitoring systems. 
+}%%%%%%%%%%
+
+% With the growth of distributed systems, research interest in building
+% scalable monitoring systems has followed, with tools such as
+% AVMON~\cite{avmon} and PSePR~\cite{psepr}. Both of these tools can
+% distribute the monitoring function itself, eliminating the need for a
+% centralized monitoring location. \padsd{} can interoperate with these
+% systems in two ways -- either by serving as the mechanism to manage
+% their ad-hoc data formats, or by providing late-binding to allow users
+% to query multiple locations in these monitoring systems.
+
+%Another monitoring system of interest is PsEPR~\cite{psepr} (formerly
+%known as Trumpet), which focuses on finding problems via several tests
+%to gauge node health. What makes PsEPR interesting to consider is that
+%its design is completely decentralized, and all information is pushed
+%to all participating nodes via a publish/subscribe mechanism in the
+%Jabber protocol~\cite{jabber}. While this approach can be more
+%scalable in theory, it currently appears to be hitting the limits of
+%Jabber messaging servers. In the event that we decide to support
+%fully distributed monitoring (as opposed to replicated monitoring at
+%several sites), we will examine the lessons of PsEPR when deciding how
+%to proceed.
+
+
+% These differ in
+% from our work in that they focus on the task of computing with web
+% data as opposed to the task of locating and fetching such data. As a
+% consequence, they have limited mechanisms for specifying schedules for
+% fetching data or locations other than those accessible from web
+% browsers.  Their focus is on end-user programming with relatively
+% small amounts of data: data that can be displayed to a user in a web
+% browser.  Thus the performance considerations are quite different.
+% Archiving the data is not an important consideration.  From the web
+% mash up paper:
+
+% ``MashMaker is not intended to be used for `mission critical'
+% applications where data integrity is essential.  Instead, its focus is
+% on applications where it is more important to be able to produce
+% interesting data than to be certain that the data is correct.''
+
+% I think these tools are somewhat complimentary to our approach, in
+% that they focus on how to merge data, while we focus on how to get raw
+% data.  MashMaker does not have a good way of describing the raw data
+% it gets, treating it as a black box or hand writing scraping code, so
+% \padsd{} could serve as a data feed for MashMaker.
+% The MashMaker paper contains a nice survey of work in this area that
+% we can reference.
+
+In this paper, we describe \padsd{}, a specification
+language for archiving distributed ad hoc data sources.  Our language
+allows users to specify where, when and how their data sources are
+to be acquired.  From these specifications,
+a wide-variety of tools to archive data and provenance metadata.  
+Overall, we hope the system will substantially improve the productivity of
+the modern data analyst.
+

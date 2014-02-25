@@ -1,0 +1,47 @@
+
+PADS under CYGWIN
+-----------------
+
+The good news is that PADS seems to work just fine under cygwin. 
+
+So far we have only had time to play with static linking.  We believe
+that dynamic linking can be made to work, we just haven't had time to
+set it up properly.
+
+Right now we force static building using this clause in rules.mk:
+
+ifeq ($(AST_ARCH),cygwin.i386)
+# Until we have time to figure out dynamic linking rules for cygwin,
+# we need to force static linking.
+FORCE_STATIC = 1
+endif
+
+Once we get dynamic linking working, we need to remember to
+remove this clause!!
+
+
+HELPFUL HINTS
+-------------
+
+(1) Make sure your cygwin mount points are not
+    set up to do textmode (\n -> \n\r translation).
+    This may show up as strange errors complaining about,
+    e.g., "/bin/cp^M not found" when you try to build
+    ast_lib -- the extra ^M is the giveaway.
+
+    You can look at your mount points using
+
+    > mount -m
+
+    I have had a problem before with my /tmp mount
+    point having the textmode (-t) option set.
+    To fix this, take the mount command listed
+    by mount -m and simply re-issue it without the -t
+    option.
+
+
+
+
+
+
+

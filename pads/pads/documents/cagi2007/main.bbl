@@ -1,0 +1,14 @@
+\begin{thebibliography}{}
+
+\bibitem[Arasu \& Garcia-Molina, 2003][Arasu and
+  Garcia-Molina][2003]{arasu+:sigmod03}
+Arasu, A., \& Garcia-Molina, H. (2003).
+\newblock Extracting structured data from web pages.
+\newblock {\em SIGMOD 2003}. 
+%(pp.\/ 337--348).
+
+\bibitem[PADS Project, 2007][PADS Project][2007]{padsweb}
+PADS Project (2007).
+\newblock {\url{http://www.padsproj.org/}}.
+
+\end{thebibliography}

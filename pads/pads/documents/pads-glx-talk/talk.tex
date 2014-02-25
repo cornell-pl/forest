@@ -1,0 +1,219 @@
+\documentclass[landscape]{slides}
+
+\usepackage{amssymb}
+\usepackage{alltt}
+\usepackage{color}
+\usepackage{code}
+\usepackage{epsfig}
+\usepackage{latexsym}
+\usepackage{graphics}
+\input{slidemacros}
+\newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
+\newcommand{\kw}[1]{{\bftt{#1}}}
+
+\newcommand{\scream}[1]{\textbf{#1}}
+
+\newcommand{\notes}[1]{{\tiny #1}}
+%\newcommand{\notes}[1]{}
+
+\newcounter{chap}
+\stepcounter{chap}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Title slide
+\begin{slide}
+\begin{center}\Large\color{blue}
+PADX\\Enabling XQuery over Ad-hoc Data Sources
+
+\large\color{black}
+\begin{center}
+Mary Fern\'andez, AT\&T Labs Research\\
+Kathleen Fisher, AT\&T Labs Research\\
+Bob Gruber, Google Inc.\\
+Yitzhak Mandelbaum, Princeton University
+\end{center}
+\end{center}
+\end{slide}
+
+\begin{Slide}{The Marriage of PADS and Galax}
+  
+  \vspace*{1cm}
+  \bb PADS\\
+  \bbb Declarative data-stream description language\\
+  \bbb Syntax \& semantics of \emph{\blue{semi-structured}}, ad hoc data sources \\
+  \bbb From description, compiler generates\\
+  \bbbb Parsing library with error detection \& recovery\\
+  \bbbb In-memory representation of data
+
+  \bb XQuery\\
+  \bbb Functional, strongly typed XML query language \\
+  \bbb Well-suited to querying \emph{\blue{semi-structured}} sources
+
+  \bb Galax\\
+  \bbb Complete, extensible, efficient implementation of XQuery
+
+\end{Slide}
+
+\begin{Slide}{Describing HTTP Common Log Format}
+
+  \bb Example HTTP CLF Data
+
+{\small
+\begin{alltt}
+\blue{100.222.33.44 - - [15/Oct/1997:18:46:51 -0700] "GET /foo/bar.txt HTTP/1.0" 200 30}
+\end{alltt}
+}
+  \bb PADS Description
+
+{\small
+\begin{alltt}
+\kw{Pstruct} http_clf_t \{
+        \darkgreen{clihost_t} \blue{host};              /- IP address of client requesting service
+   ' '; \darkgreen{auth_id_t} \blue{remoteID};          /- Remote identity; '-' means not obtained
+   ' '; \darkgreen{auth_id_t} \blue{auth};              /- Name of authenticated user
+   " [";
+   \darkgreen{Pdate(:']':)} \blue{my_date};             /- Timestamp of request
+   "] ";
+   \darkgreen{http_request_t} \blue{request};           /- Request
+   ' ';  \darkgreen{Puint16_FW(:3:)} \blue{response};   /- 3-digit response code
+   ' ';  \darkgreen{contentOpt_t} \blue{contentLength}; /- Number of bytes in request response
+\};
+\end{alltt}}
+
+\bb Parsing library \\
+\bbb Called from host C application
+
+{\small
+\begin{alltt}
+  http_clf_t http_clf;        /* In-memory representation */
+  Perror_t http_clf_t_read(..., &http_clf, ...); /* Read procedures */
+\end{alltt}}
+
+
+\end{Slide}
+
+\begin{Slide}{Viewing \& Querying HTTP CLF}
+
+  \bb Virtual XML view 
+{\small
+\begin{alltt}
+\blue{<http-clf>
+  <\textbf{host}>100.222.33.44</host>
+  <\textbf{remoteID}><unauthorized/></remoteID>
+  <auth><unauthorized/></auth>
+  <mydate>15/Oct/1997:18:46:51 -0700</mydate>
+  <request>
+    <meth>GET</meth>
+    <req_uri>/foo/bar.txt</req_uri>
+    <version><major>1</major><minor>0</minor></version>
+  <response>200</response>
+  <contentLength>30</contentLength>
+<http-clf>}
+\end{alltt}
+}
+
+\bb Using XQuery to explore data\\
+\bbb Hosts of records with content length greater than 2K
+
+{\small
+\begin{alltt}
+\blue{./PSource/http-clf[contentLength > 2048]/host}
+\end{alltt}}
+
+\bbb Locations of records with error in content-length field
+
+{\small
+\begin{alltt}
+\blue{./PSource/http-clf[contentLength/pd/errCode]/pd/loc}
+\end{alltt}}
+\end{Slide}
+
+\begin{Slide}{PADX Architecture} 
+
+\vspace{2cm}
+\centerline{{\psfig{file=padx-overview.pdf}}}
+
+\end{Slide}
+
+\begin{Slide}{Technical Challenges}
+
+  \bb Natural mapping from PADS description to XML Schema 
+
+  \bb Access PADS data as virtual XML \\
+  \bbb Implement Galax's abstract tree data model on top of PADS 
+
+  \bb Memory management of PADS records \\
+  \bbb Data exceeding memory limits requires clever MM\\
+  \bbb PADS program typically reads records sequentially \\
+  \bbb Galax may not access records sequentially \\
+  \bbb Harkens back to MM in object-oriented databases
+
+  \bb User-friendly interface\\
+  \bbb Describe PADS data, compile library, write \& execute queries
+\end{Slide}
+
+\begin{Slide}{Status}
+
+  \bb PADS (URL TBA)\\
+  \bbb Open-source implementation \\
+  \bbb Binaries on numerous Unix platforms\\
+
+  \bb Galax (\texttt{http://www.galaxquery.org})\\
+  \bbb Open-source implementation \\
+  \bbb Version 0.5.0 binaries for Linux, Mac OS, MinGW\\
+  \bbb On-line documentation and demo
+
+  \bb PADX\\
+  \bbb Currently proprietary\\
+  \bbb Needs everything: testing, documentation, users
+
+  \bb Research problems\\
+  \bbb Extending Galax's data model to leverage streams access\\
+  \bbb More efficient meta-data structures in PADS 
+\end{Slide}
+
+\begin{Slide}{Abstract Tree Data Model}
+
+\vspace*{1cm}
+\bb Fragment of Galax's abstract tree data model\\
+\bbb Full navigation of XML tree\\
+\bbb Access to atomic values
+
+{\small
+\begin{alltt}
+  method virtual \blue{node_name}    : unit -> atomicQName option
+
+  method virtual \blue{typed_value}  : unit -> atomicValue cursor
+
+  method virtual \blue{parent}       : unit -> node option
+  method virtual \blue{children}     : unit -> \green{node cursor}
+
+  method virtual \blue{docorder}  : unit -> Nodeid.docorder
+\end{alltt}}
+
+\bb Cursor : lazy iterator access to node sequence\\
+\bb Node identity \& document order : canonical order 
+
+\end{Slide}
+
+\begin{Slide}{Accessing Record Sequences}
+
+  \bb Access to record (node) sequence \\
+  \bbb Read all items in sequence \\
+  \bbb Produce items on demand
+
+  \bb Each record field materialized strictly as needed
+
+  \bb Solution: \\
+  \bbb Choose record as read granularity \\
+  \bbb Read record on demand \\
+  \bbb Maintain meta-data for fast re-retrieval
+\end{Slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

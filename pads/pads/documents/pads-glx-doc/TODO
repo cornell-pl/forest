@@ -1,0 +1,278 @@
+21 Sept 2004 - Yitzhak
+
+PGLX Library:
+=============
++ Currently, path walking works as follows: first, we trace our way
+  back to the root, element node using parent pointers. As we do so,
+  we construct the path back to the current element. Then, based on
+  that path, we traverse the rep and pd of the root element to find
+  the rep and pd of the current node.
+
+  However, we need not always go back to the element node.  If any
+  parent node along the way has valid pointers into element rep and
+  pd, we can start path walking from that node. We can check for valid
+  nodes quickly by passing the current gen in the
+  getPath function. Any node with the same gen, and non-NULL pointers,
+  is valid.
+
++ The smart node elt_read function is really two functions: read and
+  reread. Furthermore, it is never called ambiguously - i.e. the caller
+  always knows how it is being used. The validate function will always
+  be rereading, while kthChild will always be reading. Therefore, it
+  might make sense to split it up into functions.
+
++ Consider removing next_idx_create field from smart_array_info_t.
+
++ Restructure tmap:
+  - Create new structure offsetTable, mapping from element indexes to
+    stream offsets. The elements of this map are permanent. The
+    members of this structure should be kept as small as possible.
+  - Create new structure eltInfoTable, mapping from offsets
+    to element info and data. This information is evicted along
+    with the element.
+  - Add a master gen which is >= largest gen of any evicted
+    elt. When an element is evicted, masterGen is set to 
+    elt->gen +1. When an element is read in, its gen is set to the
+    master gen.	
+  - Optional: change nodes to store the offset of their ancestor, 
+    rather than the index. Avoids extra lookup.
+  Change validation:
+  - As elt. info is evicted along with element, must change
+    validation scheme. Now, we lookup the offset in the
+    eltInfoTable. If lookup is non null, then we proceed as before.
+
++ Improve efficiency of kthChildNamed, in case where it needs to
+  force a read to end of array. It currently calls kthChild in a loop
+  until the end of the array is reached. It would be better to somehow
+  tell kthChild to read to the end of the array. KthChild would in
+  turn ask elt_read to read until the end of the array. Doing so
+  inside elt_read is most efficient.
+
++ The current node replacement policy is FIFO. In order to support a
+  LRU policy, we need to track element usage by placing profiling
+  calls in functions that touch the elements.  Then, replacement
+  policies can use the information collected however it wants.
+
++ Nodeid architecture needs to be thought through more. We
+  currently assume that there is nothing after the smart node,
+  hence the gid of everything before is 0, and of smart node
+  elements is based on the element index. But what about trailer?
+
++ Consider how to compact the node datatype by using a union of the
+  different extensions.
+
++ Adjust the compiler and code so that the amount that id_gen is
+  increment depends on type, rather than relying on worst case. Each
+  type has a different number of associated children (e.g. the pd)
+  aside from its actual children. The worst-case number is what is
+  used now, but this wastes id numbers.
+
++ Change node_new function parameter declarations to specify the type
+  of the rep and pd instead of just void *.
+
++ Find a better place for liveList management. It doesn't belong in
+  the smartNode alloc functions.
+
++ Integrate the node memory manager with the rest of pads. Including,
+  provide a good way of initializing the size of the free list. In
+  general, node MM initialization has to be considered.
+
++ Update naming scheme for typed_value and string_value functions to
+  use the node-type prefix for the base "node" functions. The other
+  functions include the prefix correctly.
+
++ Change code that uses "return result" in case of errors to "return
+  0" (or whatever the error indicator is).As it is now, we depend on
+  the default setting of result to be an error. If the default is
+  changed, the function can break.
+
++ Idea: we could add a mask to tell pads how to deal with pd's in
+  pads-galax code. E.g. if no error, don't return pd as a child.
+
++ Move "free-list-imp.h" to padsc/include/templates? It is currently in padsc/include.
+
++ Design issue for reference counting: Who should be responsible for
+  following pointers in to-be-freed nodes, the NodeMM or the nodes
+  themselves? Currently, the NodeMM is responsible. This
+  responsibility means that any time new node pointers are added to
+  the node datatype, the NodeMM free function must be updated to check
+  that pointer on free.
+
++ QUE: can we combine idx and ancestor_idx fields in PDCI_node_t? I
+  believe that they will always contain the same value do to our
+  moving pds and length of arrays to the end.
+
++ QUE: Is anonymous union OK? CKIT complains, but gcc doesn't.
+
+  ANS: Yes, and we can use this to further compact PDCI_node_t.
+
+PADSC:
+======
+
++ BUG: In array reading, when we scan for the terminator (alone) in
+  panic recovery code, we consume it. It should not be consumed
+
++ Move allocation of rep->elts and pd->elts from read_one_init to
+  read_one call.
+
++ Remove array pd and rep parameters from reread_one call. They are
+  never used.
+
++ Implement ADT mapping of array references in user
+  predicates. Currently, predicates can access pd->elts even in
+  read_one code.
+
+  Remove all references to pd->elts,rep->elts in generated functions
+  where they won't be safe. Document which generated functions are "safe" to use on a
+  smart array.
+
++ Change read_one functions to always refer to ro_params structure,
+  which would (optionally) contain the sep/term, loc, and
+  cparams. Currently, these are all passed seperately as parameters.
+
++ Minor optimization: in read_one, instead of using variables
+  Pomitresult and endedSet,etc., return immediately based on the
+  information. For example, if Pomitresult then do the omit stuff
+  and the return P_READ_OMIT_ONGOING.
+
++ Many of the functions shared by the original read function and the
+  read_one driver have hard coded the readName string into calls to
+  lower level functions. These functions should be parameterized by
+  the name of the calling function.
+
++ BUG: max is not rechecked in the case of Pomit.
+
++ In VTable generation, we should put in a better "fake" string_value
+  function. Currently, have 0.
+
+PADS Library:
+=============
+
++ Idea: Put all PCGEN macros in one file, and only expand those macros to
+  produce the readable code.
+
++ Remove panic check from init function. We can assume that the
+  array is not in panic mode on entrance to the read call or, if it
+  is in panic mode, then PARTIAL is set.
+
+Pads_dm:
+========
++ Add parent function to pads_dm.ml
+
+Misc.:
+======
++ QUE: how do we determine "correct" memory usage for the process?
+
+
+17 June 2004 -Yitzhak
+   o Add POption handling to -x generation.
+   o Check handling of nested options, arrays, etc.
+
+10 June 2004 - Yitzhak
+   o Remove #ifdef GALAXCOMPILE from galax/galapi/c_api/itemlist.h and
+     corresponding file in Galax.
+  
+8 June 2004 - Mary
+
+   Note from meeting with Bob and Yitzhak
+
+   PADS 
+   ====
+   o Remove recursive PD (parse descriptors) because they are always
+     accessible in sub-fields.
+
+   o Make PD element optional in PADS-generated XML Schema
+     Should only exist if a parse error occurs
+
+   o Fix code generation for *_children: Pcompute fields are missing
+     from list of children
+
+   Regression Tests
+   ================
+   o Add regression tests to pads/padsc/examples/xml that load a PADS
+     source, serialize it in XML, and validate against PADS-generated
+     XML Schema
+
+   PADS-GLX
+   ========
+   o Memory management : implement Caml garbage collection functions
+     for all IDL functions in PADS-GLX interface
+
+   Identity Issues
+   ===============
+   o Current approach to Identity test in Galax will not work with
+     on-demand parsing.  See ON_DEMAND file for details.
+
+   New PADS functions
+   ==================
+
+   o Agreed with Bob's suggestion that Cursor semantics should be
+     entirely implemented in Pads_dm module in Caml, where we 
+     store (nodeRep, idx) in the Cursor closure. 
+
+     The Cursor.next function calls
+        get_kth_child(nodeRep, idx++) OR
+        get_kth_named_child(nodeRep, name, idx++)
+
+     Caml signatures look like
+        get_kth_child(nodeRep, k) returns nodeRep
+        get_kth_named_child(nodeRep, name, k) returns nodeRep
+
+   o PADS C library : nodeRep nodes (really PDCI_node_t) no
+     longer implement a children function that returns an array of nodes.
+     Instead, they implement the get functions above, i.e.,
+     any node knows how to construct and return its Kth child /
+     Kth child named "foo".  There are some interesting details about
+     how to support on-demand parsing as these Kth-child requests
+     occur.   See the ON_DEMAND file for some notes on this issue.
+
+   o Open question how to determine which Parrays are accessed lazily.
+     
+     1. Add an annotation to PADS description, or
+
+     2. Use heuristic, e.g., walk PADS description from Psource and
+        find first occurrence of Parray on every path from Psource --
+        these are most likely to be the long sequences of Precords
+
+
+21 Nov 2003
+
+PADS:
+
+  o The offset field of the Ppos_t/s type is currently not exposed in
+    the XML representation.  It size depends on the architecture, so
+    we probably need a vtable for it.  See Ppos_t_children in pglx.c.
+    Could always use Puint64 to make life easier.
+
+2 Oct 2003
+
+PADS-GLX
+
+  o Produce one stand-alone directory containing all include files and
+    libraries 
+
+  o Create regression tests in pads/padsc/examples/xml that test
+    round-tripping of documents. 
+
+  o Garbage collection -- in IDL, specifiy function to free a node.
+
+  o Node IDs should be single ints and correlated with loc field in
+    nodeRep. 
+
+Galax:
+
+  o In glx.h change atomicInteger(int, ...) to 
+    atomicInteger(long long, ...)
+
+  o In export_dm.ml, check that typed_value() is not being called on
+    text node. 
+
+  o In itemlist.h, remove GALAXCOMPILE
+
+PADS:
+
+  o In PADS schema generation, change <val> from required to optional
+  element (it will be missing when there is a parse error)
+
+  o Change vtable for document to never contain a NULL value -- should
+  always default to an error function. 

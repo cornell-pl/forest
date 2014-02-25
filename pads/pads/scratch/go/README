@@ -1,0 +1,16 @@
+go.p: preliminary Pads description of GO OBO format. Uses records correctly.
+go1.p, go2.p, go3.p: earlier versions of go.p
+go_record_version.p: version based on using Precord. Never worked. I'd like to find out why.
+
+data/
+  gene_ontology.obo.txt: OBO format version of gene ontology. See www.geneontology.org
+  go.txt : small excerpt of gene ontology
+  go_200.txt: 200 line excerpt of gene ontology
+  go_20000.txt: 20000 line excerpt of gene ontology
+  mkerror.sh: introduce errors into a go file by switching x% of "[Term]" with "[Form]"
+  myhead.sh: like head command, but doesn't freeze for large files. Used to derive go_200.txt and go_20000.txt.
+
+queries/
+  dot.xq:           The dot query
+  find-mit.xq:      What are the definitions of all terms whose name is mitochondrion inheritance?
+  find-obsolete.xq: Show me all terms that are marked obsolete.

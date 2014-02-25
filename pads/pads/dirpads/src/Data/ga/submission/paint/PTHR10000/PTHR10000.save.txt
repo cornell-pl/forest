@@ -1,0 +1,49 @@
+Annotation inferences using phylogenetic trees
+
+The goal of the GO Reference Genome Project, described in PMID 19578431, is to provide accurate, complete and consistent GO annotations for all genes in twelve model organism genomes.To this end, GO curators are annotating evolutionary trees from the PANTHER database with GO terms describing molecular function, biological process and cellular component. GO terms based on experimental data from the scientific literature are used to annotate ancestral genes in the phylogenetic tree by sequence similarity (ISS), and unannotated descendants of these ancestral genes are inferred to have inherited these same GO annotations by descent. The annotations are done using a tool called PAINT (Phylogenetic Annotation and INference Tool).
+
+Description of phylogeny
+
+This family consists of one clade of ~45 phosphoserine phosphatases (AN1) ranging from E. coli serB to human PSPH.  There are 3 bacterial and fungal clades off the root that appear to be distantly related and have only 1 annotation among them.  This analysis will focus on the AN1 clade only.
+
+Time to write phylogeny: 6 minutes.
+
+
+MF
+
+-Propagate GO:0004647 "phosphoserine phosphatase activity" to AN1 and GO:0016791 "phosphatase activity" to AN0.
+-Also propagate GO:0000287 "magnesium ion binding" to AN1 since many phosphatases require magnesium as a cofactor.  Do not propagate to AN0 because "phosphatase activity" is too general to tell if it really binds magnesium.
+
+Time to write MF: 6 minutes
+
+
+CC
+
+-Propagate "cytoplasm" to AN1 based on 3 annotations.
+-Do not propagate "synaptosome" since it is a biochemical fraction.
+-DO not propagate "nucleus" since the paper is HTP.
+-Propagate "chloroplast" to plants/chlamy.
+
+Time to write CC: 6 minutes.
+
+
+BP
+
+-Propagate GO:0006564 "L-serine biosynthetic process" to AN1 based on 2 annotations.  This should be inferred from a MF-BP relationship of 4647.
+-Do not propagate GO:0009612 "response to mechanical stimulus" because it comes from a microarray paper and is probably a "responds to," not "response to."
+-Do not propagate GO:0031667 "response to nutrient levels" because the paper just shows induction of Psph after feeding.  Similarly, do not propagate GO:0033574 "response to testosterone stimulus."
+-Do not propagate the HTP GO:0007411 "axon guidance" annotation.
+
+Time to write BP: 9 minutes
+
+
+
+
+
+
+
+
+
+
+
+

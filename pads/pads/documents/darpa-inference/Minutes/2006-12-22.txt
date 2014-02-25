@@ -1,0 +1,263 @@
+Next meeting: 1/3 10 pacific, 1 eastern, 888 380 9638, pc 517211
+
+Active action items:
+ Administrative
+  - ACTION DW: account for Kenny email at Princeton.
+  - ACTION DB: check on itar provisions for follow on proposal. (in negotiation) at meeting
+  - ACTION DB: send NDA and Teaming agreement to KF for follow-on. (by when?)
+
+ Kick off slides (in order of tokens...)
+  - ACTION DW: Format refinement 
+  - ACTION KF: Integrate slides re network forensic architecture
+  - ACTION DB: Underlying theory (finished slides sent 1/2)
+
+ Related work/market research
+  - ACTION DW: investigate splunk
+  - ACTION DB: fill out expert questionnaire for PSU folks (Jan 2 or 3)
+  - ACTION DB: explore how R/S might fit into architecture
+  - ACTION DB: explore www.predict.org web site
+  - ACTION DB+KF: domain expert interviews
+
+ Technical
+  - ACTION DB: work on evaluation metric (week of 12/18)
+  - ACTION KF: update type data structure.
+  - ACTION DW: supervise Zack over break.
+
+
+Minutes for 12/22 meeting
+****************************************
+Status of hiring Kenny Zhu
+  paperwork is done, processing visa. 
+
+CVS access for David Burke
+  - outside Galois firewall?
+  - move repository to princeton?
+  - january 2nd work with paul
+
+Kick off meeting 1/4, 10-2 in Florham Park, NJ
+  - dial in: PARTICIPANTS CALL:  1 888-895-4286  ENTER CODE: 569707
+
+
+Review kick-off slide deck
+  - ACTION DB: add kenny's name to org chart
+  - ACTION DB: recent accomplishments,
+	       list specific experts we have already talked to
+  - ACTION DB: move risk on complexity up to risk slide
+  - ACTION KF: nfwa picture, add exit arrow to "problem solved"
+
+
+Review domain expert interview status
+Review active action items
+
+Status updates
+ Kathleen: type structure redesign in progress.
+ David Walker: 
+    talked to david blei
+    learned about R
+      downloaded onto work computer
+      really just an untyped, functional programming language
+      lists, closures, association lists
+      bunch of libraries for doing interesting statistical stuff
+      library for derscholet distributions
+      creating plots and charts of various functions
+      in workbench, create a pads description, generate programs to read and write data into R
+      read/eval print loop
+      read table to input data
+      mainly deals with lists and tables
+      using PADS/C and PADX or some other selection mechanism, select portions of data to load R
+      open source license? (freely downloadable)  GNU license?
+      commercial version is S
+    learned about learning theory
+      he started to go too fast, and couldn't keep up
+      had to go back and read more chapters of ai book
+      on hidden markov models and definitions
+ David Burke: 
+      middle or late week be in town to check email once
+
+send slides to andy
+
+Timeline sanity check
+Schedule next meeting
+  Jan 3 at 10/1 next meeting
+
+
+Active action items:
+ Administrative
+  - ACTION KF: send akhelp mail to get Kenny set up for cvs access, in pads group (DONE)
+  - ACTION DW: account for Kenny email at Princeton.
+  - ACTION DB: check on itar provisions for follow on proposal. (in negotiation) at meeting
+  - ACTION DB: send mail to Gang cc'ing KF re cvs troubles. (DONE)
+  - ACTION DB: send NDA and Teaming agreement to KF for follow-on. (by when?)
+  - ACTION DW: contact Kenny re move to NJ, activities for January.
+  - ACTION DB: kick-off slides (for 12/15)
+               - schedule and task ownership
+               - financial expenditure 
+               - replace slide 17 with picture version
+               - underlying theory
+
+ Related work/market research
+  - ACTION DW: investigate splunk
+  - ACTION DB: fill out expert questionnaire for PSU folks (Jan 2 or 3)
+  - ACTION DW: meet with David Blei re R and metric (DONE)
+  - ACTION DB: explore how R/S might fit into architecture
+  - ACTION DB: explore www.predict.org web site
+  - ACTION KB: give Vikas instructions related to market research. (DONE)
+  - ACTION DB+KF: domain expert interviews
+
+ Technical
+  - ACTION DB: work on evaluation metric (week of 12/18)
+  - ACTION KF: update type data structure.
+  - ACTION DW: supervise Zack over break.
+
+
+*****************************************
+Minutes for 12/15.
+
+Other items? No
+
+Kenny Zhu hiring update?
+  - DW sent official offer.
+  - Start date: january 15th to accommodate visa process
+  - ACTION K: send akhelp mail to get kenny set up for cvs access, in pads group?
+  - ACTION DW: account for kenny email at Princeton.
+  - ACTION DB: check on itar provisions for follow on proposal.
+
+cvs access for David Burke?
+ - haven't heard back from Gang
+ - ACTION: DB send mail to Gang cc'ing KF.
+
+Galois Teaming Agreement and NDA for AT&T
+ - ACTION: DB check on
+
+Review Action Items (included below)
+Review Domain expert contact status (included below)
+
+Status reports
+ Kathleen
+   - fixed bug in inference related to DOS records.
+   - pinged Gary Klein
+   - making arrangements for 1/4 kick off meeting in NJ
+ Dave Walker
+   - did interview with Princeton sys admin
+   - started final report
+   - done all action items from last week
+   - ACTION: liason with kenny
+   - ACTION: splunk tool investigation
+   - ACTION: supervise zack, finish up over break
+ David Burke 
+   - ACTION: work on kick-off slides this afternoon
+   - ACTION: work on evaluation metric next week
+   - ACTION: explore predict web site.
+
+What needs to be done for kick-off meeting?
+  - draft slides by 12/22, discuss then
+
+Timeline sanity check
+ technical work might slide a bit because of Kenny's delayed start.
+
+Vikas offer to do market research
+  ACTION: KF to follow up
+
+Status meeting next week?
+ 12/22 at 10am pacific/1pm eastern, confirmed
+
+******************************************************************
+ACTION items from 12/8:
+ - Various: update kick off slides, individual sections by Dec 15
+    ACTION: DB work on today, complete draft by 12/22.
+ - Kathleen: convert interview template into usable form
+      include questions on nfw architecture (DONE)
+ - Various: domain expert interviews, assigned below in notes
+ - Dave: draft slide on architecture to include in interview template (DONE)
+         replace slide in kick off 17 (DB)
+ - David Burke: understand how S/R might fit in architecture.  
+    rolls over
+ - Dave: ask David Blei re R. 
+     briefly about bayesian inference paper, not enough time
+     sketch of how to compute P(X|M).
+       - instead of P(X|M) compute ln P(X|M) because then you can add w/precision
+       - P(sequence|M) = sum P(paths) * P(path)
+     use dynamic programming algorithm to compute
+     rolls over to next week.
+ - Dave: convert experimental eval. notes into slides for kick off meeting. (DONE)
+ - David Burke: convert schedule and task ownership to slides for kick-off
+    DB this afternoon
+ - David Burke: fix financial expenditure kick off slide
+    DB this afternoon
+ - Davids: check with afrl on visa for kenny & david
+    in progress.     
+ - David Burke: rewrite underlying theory slides
+    DB this afternoon
+ - Kathleen: send mail to Gary Klein to ping (DONE)
+    a lot of people at mitre who will be good interview candidates.
+ - Kathleen: implement ideas in types.sml file for modifying data structure for types to be directly input into format refinement stage.
+    rolls over.
+
+********************************************************************
+Gary Klein
+contact: eDavid
+status: Kathleen sent email on 12/15.
+
+Col Hunt
+contact: eDavid
+status: Chris believes Col Hunt has retired, will find another contact person
+ping Chris after 12/22 if no progress
+
+PSU: Wu-Chang Feng
+status: sent email, need to meet
+contact: eDavid 
+efficient collection of audit data, recons of captured activity.  kernal audit for single machine. cover distributed event logs. 
+12/14 DB met with them 
+www.predict.org
+data repository, to get an account you have to fill out a form, not allowed to bring data out of country
+DB will investigate
+contract on forensics is over now
+they would be interested in participating
+DARPA likes to work with companies more than universities.
+want to build workbench
+tough problem: discriminating between script kiddies and real attacks.
+ACTION: DB fill out questionnaire
+PNNL: another suggestion for data experts
+
+Princeton Computer Science Administrator
+status: informal conversations already
+contact: Dave
+by end of next week, fill out form.
+domain: sys admin for princeton cs, people break in, and security for department.
+DONE for know
+
+AT&T
+status: phone conv yesterday, follow on 1st in jan.
+contact: Kathleen
+domain:  network analysis
+status: meetings scheduled for 1/2
+in progress.
+
+Booz Allen Hamilton
+status: sent us NDA to set up phone conf. 
+either in house or outside folks
+can we afford it? help us now, get more money later?
+contact: David Burke
+sign NDA, phone call 12/11
+12/15: trying to see availability of their experts, call in few days.
+
+Raytheon
+status: black hole? not returning emails.
+contact person: Larry Snider (ISSO)
+contact: David Burke, Andy Adams Moran
+commercial tools lousy: verity?  
+plan: recontact second week in january
+look into Verity (David Burke)
+
+Jurinnov
+status: 
+contact: Andy Adams-Moran
+domain: investigation side, selling product and services. 
+plan: explore web site, see if Andy has other ideas.
+
+related projects.
+verity
+splunk
+  viewer/search for log files. not super useful.
+  ACTION: DW look over. 
+

@@ -1,0 +1,829 @@
+\chapter{Common features}
+\label{chap:common-features}
+\cutname{common.html}
+In this chapter, we describe the \PADSL{} features shared by all types. 
+Subsequent chapters describe features particular to individual \PADSL{}
+types. 
+
+\section{\pads{} types}
+\label{sec:common-overall}
+Each \padsl{} type specifies the external representation of a
+particular kind of data.  \padsl{} base types describe the
+representations of atomic pieces of data, while structured types
+specify how compound representations are built from more basic ones. 
+\padsl{} provides a large and extensible collection of base types
+and a family of type constructors for building structured types: 
+\pstruct{}s for record-like sequences, 
+\punion{}s for alternatives, 
+\parray{}s for sequences, 
+\penum{}s for fixed collections of strings, and
+\ptypedef{}s for refinements of existing types.
+
+Syntactically, a \padsl{} type declaration (\nont{p\_ty\_decl}) must
+have the following form: 
+
+\myvskip{1ex}
+\begin{tabular}{rcll}
+\nont{p\_ty\_decl} & \is{} & \nont{base\_ty} & (* \chapref{chap:base-types} *) \\[1ex]
+& \alt{} & \nont{struct\_ty}           & (* \chapref{chap:structs} *)\\[1ex]
+& \alt{} & \nont{union\_ty}            & (* \chapref{chap:unions} *)\\[1ex]
+& \alt{} & \nont{array\_ty}            & (* \chapref{chap:arrays}*)\\[1ex]
+& \alt{} & \nont{enum\_ty}             & (* \chapref{chap:enums} *)\\[1ex]
+& \alt{} & \nont{opt\_ty}              & (* \chapref{chap:opts} *)\\[1ex]
+& \alt{} & \nont{typedef\_ty}          & (* \chapref{chap:typedefs} *)\\[1ex]
+& \alt{} & \nont{trans\_ty}            & (* \chapref{chap:trans} *)\\[1ex]
+& \alt{} & \nont{try\_ty}              & (* \chapref{chap:trys} *)\\[1ex]
+& \alt{} & \nont{charclass\_ty}        & (* \secref{sec:charclass} *)\\[1ex]
+\end{tabular}
+
+We use the terminal \term{p\_ty\_name} for an identifier bound to one
+of the above types.  
+
+\noindent
+The grammar for each of the above non-terminals is given in the
+associated chapter.
+
+\section{Comments}
+\label{sec:common-comments}
+In addition to \C{} and \Cplusplus{} style comments of the form 
+\cd{/* ... */} and \cd{//...}, which may appear anywhere in a \pads{}
+description, \padsl{} also supports \nont{p\_comment}s, which may
+appear only in particular locations in the grammar.  Syntactically,
+
+\myvskip{1ex}
+\begin{tabular}{rcll}
+\nont{p\_comment} & \is{} & \cd{/-} \term{text}  \\[1ex]
+\end{tabular}
+
+\noindent
+where \term{text} is a new-line terminated sequence of characters.
+\pads{} comments are reflected to the generated \texttt{.h} file as
+documentation. We indicate where such comments may appear in the
+source as the locations arise in the descriptions of the various
+\padsl{} features. 
+
+
+
+\section{Predicates}
+\label{sec:common-predicates}
+\pads{} descriptions permit the user to supply \term{predicates}
+for validating semantic properties of syntactically correct data. 
+Syntactically, such predicates are arbitrary \C{} expressions of
+integer type.  Predicates that evaluate to \cd{false} (\ie{}, \cd{0})
+imply the data is invalid, while all other values imply the data is
+valid.  Predicates are assumed to be side-effect free.
+
+To allow users to express constraints involving the size and position
+of physical data, \padsl{} supports \nont{p\_parsecheck} expressions within
+predicates.  Syntactically,
+
+\myvskip{1ex}
+\begin{tabular}{rcl}
+\nont{p\_parsecheck} & \is{} & \pparsecheck{}(\nont{aug\_expression})\\
+\end{tabular}
+\myvskip{1ex}
+
+\noindent
+In the production, \nont{aug\_expression} is an integer-valued \C{}
+expression that is allowed to refer 
+to special constants providing location information.  The precise constants
+depend upon the context of the \pparsecheck{} clause in the \pads{}
+description, but always include the constant \cd{position} of type 
+\Ppost{}, bound to the current position in the physical
+source.  
+
+For integration with general predicates, \pparsecheck{} expressions
+are treated as \C{} expressions with type \texttt{int}.
+
+\section{Literals}
+\label{sec:common-literals}
+\PADSL{} supports \C{}-style character and string
+literals, referred to in the \pads{} grammar as \term{char\_lit} and
+\term{str\_lit}, respectively.  
+These literals may contain \C{} character escapes such as \literal{\cd{\escdquote{}}} and
+\literal{\cd{\escquote{}}}.  \PADSL{} also supports regular expression literals,
+described in more detail in \secref{sec:regular-expressions}, and the
+special literal \Peor{}, which denotes the end of a record.  We use
+the non-terminal \term{regexp\_lit} to refer to regular expressions.
+Syntactically, 
+
+\myvskip{1ex}
+\begin{tabular}{rcl}
+\nont{p\_coreliteral}& \is{} & \term{char\_lit} \alt{} \nont{str\_lit} 
+                            \alt{} \Pre{} \nont{regexp\_lit} 
+			    \alt{} \Peor{} \\[1ex]
+\nont{p\_literal}    & \is{} & \nont{p\_coreliteral} 
+                            \alt{} \term{C\_identifer} \Pfrom{} (\nont{p\_coreliteral})\\[1ex]
+\end{tabular}
+
+\noindent
+Literals (as opposed to core literals) also support a renaming form.
+The supplied \C{} identifier gives the programmatic name for the
+literal, while the core literal supplied in the \Pfrom{} clause
+describes the on-disk representation.  Renaming can useful when the
+literal is not a valid \C{} identifier.
+
+\cut{
+One use of character and string literals are used to read external
+characters without storing any corresponding data in the resulting in-memory
+representation, \ie, they ``skip over'' some expected character(s) in
+the external representation.
+They are typically used in \Pstruct{}s (\cf{}
+\secref{sec:structs-literal-fields}). 
+
+The above use in only one use of literals.  They are also used in
+arrays to describe separators and terminators and in enums to describe
+the branches.  In addition, they may be used as arguments to
+parameterized functions.}
+
+\section{Character Sets}
+\label{sec:common-character-sets}
+
+The library discipline contains a field \cd{def_charset} that
+indicates the expected character set of the external representation of
+character and string literals, as well as the external representation
+of all character and string 
+base types that do not explicitly name a character set.  Supported
+character sets include ASCII (\cd{Pcharset_ASCII}) and EBCDIC
+(\cd{Pcharset_EBCDIC}), where ASCII is the default character set.
+\secref{sec:library-customization-character-encodings} describes how
+to set \cd{def_charset}.
+
+
+\section{Parameterization}
+\label{sec:common-parameterization}
+To reduce the number of necessary type declarations and to permit the
+format of later portions of the data to depend upon earlier portions, 
+\PADSL{} types can be parameterized by values.  A common example of
+the latter use is a data source which first specifies the length of a
+sequence and then gives the sequence itself.  The length is read,
+stored in the in-memory representation, and then passed to the type
+that describes the sequence to specify the termination condition for
+the sequence. Syntactically, 
+\myvskip{1ex}
+\begin{tabular}{rcl}
+\nont{p\_actual\_list} & \is{} & \nont{expression} \alt{} \nont{expression}, \nont{p\_actual\_list} \\[1ex]
+\nont{p\_actuals} & \is{} & (: \nont{p\_actual\_list} :)\\[1ex]
+\nont{p\_ty} & \is{} & p\_ty\_name \opt{\nont{p\_actuals}}\\[2ex]
+\end{tabular}
+
+\noindent
+where \nont{expression} is any \C{} expression. Formal parameter lists
+are similar to \C{}'s, except they are deliminated differently:
+\myvskip{1ex}
+\begin{tabular}{rcl}
+\nont{p\_formals} & \is{} & (: \nont{c\_formal\_list} :)\\[1ex]
+\end{tabular}
+
+\subsection{Example}
+The \cd{formalParamExample} type declaration in the following \padsl{}
+fragment illustrates declaring parameters to \pads{} types, while
+the \cd{actualParamExample} illustrates passing parameters.
+
+\inputCode{code/struct.parameters}
+%
+\noindent
+Type \cd{formalParamExample} expects its single field \cd{data} to be
+less than a supplied value \cd{limit}, while the type \cd{actualParamExample}
+describes an external representation with two pieces: an integer
+\cd{limit} and then an instance of \cd{formalParamExample}.  The value
+of \cd{limit} is passed as the actual parameter to the \cd{formalParamExample}
+\pstruct{}. 
+
+\section{\Precord{} modifier}
+\label{sec:common-precord}
+The \Precord{} modifier may be used as an annotation on any \pads{}
+type, indicating that the type describes a \textit{record} in the
+external representation of the data.  \pads{} supports a number of
+different interpretations of what constitutes a record:
+
+\begin{center}
+\begin{tabular}{l|l}
+Record type         & Description\\ \hline
+New-line terminated & End of record marked by new-line character\\
+Fixed-width record  & Records contain a specified number of bytes\\
+IBM-style record    & Record header indicates size\\
+\end{tabular}
+\end{center}
+
+\noindent
+\secref{sec:io-discipline} describes how
+to set the appropriate record discipline for a data source. 
+
+
+\section{\Psource{} modifier}
+\label{sec:common-pfile}
+The \Psource{} modifier may be used as an annotation on any \pads{}
+type, indicating that the type in question describes the entirety of
+the external representation of the data.
+
+
+\section{\Pinclude{}}
+The \Pinclude{} statement within a \texttt{.p} file causes the supplied
+argument to be mirrored to the generated \texttt{.h} file, but not the
+generated \texttt{.c} file.  It is useful for including necessary
+header files for \C{} code referenced in the \pads{} description.  For
+example, the following use causes the generated \texttt{.h} file to
+include the directive \cd{#include <rpc/rpc.h>}. 
+
+\inputCode{code/pinclude}
+
+
+
+\section{Error model}
+\label{sec:common-error-model}
+During parsing, \pads{} read functions detect when the data does not
+conform to the given specification.  Detected violations fall into two
+classes, which differ in their severity.  The less severe of these,
+\textit{semantic} errors are those in which the parser detects a
+violation of the specified format but does not ``lose its place.''  A
+typical example of this kind of error is a violation of a
+user-specified constraint, such as a requirement that a given field be
+greater than a threshold value.  The more severe type of error,
+\textit{syntactic} errors, involve the parser finding raw data that
+cannot be reconciled with the physical aspects of the description.
+Typical examples include failing to find literals required by
+\Pstruct{} declarations or separators from \Parray{} declarations. We
+say that a read function enters \textit{panic} mode when it detects
+such an error. Read functions set the \cd{P_Panic} flag in the
+\cd{pstate} field of the appropriate parse descriptor when entering
+panic mode (\secref{sec:common-parse-descriptor} describes the general
+role and structure of parse descriptors).
+
+\pads{} read functions attempt to recover from panic mode by scanning
+for possible synchronization points in the data source.
+For example, if the read function for a \pads{} type \cd{foo} annotated with
+the \Precord{} qualifier enters panic mode, it tries to
+recover by scanning to the end of the record.  If it succeeds in
+finding the record boundary, it lowers the panic flag in the \cd{foo}
+parse descriptor, although the nested parse descriptor for the portion
+of the data description that caused the panic will still be set.  The parse
+descriptions for all portions of the data description that were
+skipped during the scanning process will also have the panic flag set.
+Type-specific information regarding error-recovery appears in the
+corresponding chapter.
+
+
+
+\section{In-memory representations}
+\label{sec:common-rep}
+Each \PADS{} type \cd{foo} has an associated in-memory representation
+type of the same name.  The structure of this representation depends
+upon the particular \PADS{} type.  
+In general, these representations fall into two broad categories:
+\textit{static} representations, whose size can be computed at
+library-generation time, and \textit{dynamic} representations, whose size 
+depends on the data being parsed. 
+Details appear in 
+\secref{sec:base-types-rep}, \secref{sec:structs-rep},
+\secref{sec:unions-rep}, \secref{sec:arrays-rep}, 
+\secref{sec:enums-rep}, \secref{sec:typedefs-rep}, 
+and \secref{sec:trans-rep}.
+
+\section{Masks}
+\label{sec:common-masks}
+Each \PADS{} type \cd{foo} has an associated mask type, \csmSuf{foo}.
+Masks allow the library user to customize operations on portions of
+the associated data.  The structure of the mask for a given \PADS{}
+type mirrors the structure of the representation type.  Details about
+the structure for various types
+appear in \secref{sec:base-type-mask}, \secref{sec:structs-masks},
+\secref{sec:unions-masks}, \secref{sec:arrays-masks}, 
+\secref{sec:enums-masks}, \secref{sec:typedefs-masks}, and \secref{sec:trans-masks}.
+Different operations in the generated library interpret masks
+differently.  Details about how a given operation treats its mask
+argument appear in the sections describing the operations.
+
+\section{Parse descriptors}
+\label{sec:common-parse-descriptor}
+Each \PADS{} type \cd{foo} has an associated parse descriptor type, 
+\pdSuf{foo}, coded as a \C{} struct with at least the following four
+fields:
+
+\myvskip{1ex}
+\begin{tabular}{l|p{4in}}
+ Field & Description \\ \hline
+ \cd{Puint32 pstate} & Flags that describe the state after parsing the
+                           associated value.\\[1ex]
+ \cd{PerrCode_t errCode} & A code indicating the nature of the 
+                               first detected error. 
+                               \appref{app:error-codes} contains a 
+                               list of all error codes and 
+			       describes their meanings. \\[1ex]
+ \cd{Ploc_t loc}  & The location in the data source of the first 
+                         error.\\[1ex]
+ \cd{Puint32 nerr} & The number of errors detected during parsing
+                        of the associated value.\\[1ex]
+\end{tabular}
+
+\noindent
+Field \cd{pstate} contains the following flags:
+\myvskip{1ex}
+\begin{tabular}{lp{3.5in}}
+ \cd{PPanic} & Set if the parser was in panic mode during the
+                  parsing of the associated data.  See
+                  \secref{sec:common-error-model} for more information.\\[1ex]
+\end{tabular}
+
+\noindent
+The \pads{} library provides a collection of functions (macros
+actually) for manipulating the parse state field:
+
+\inputCode{code/parse-state}
+
+The \cd{loc} field record the location of the related data in the source file.  
+A \cd{Ppos\_t} (IO position) has a \cd{byte} position within the \cd{num}'th read unit,
+where the read unit is determined by the IO discipline.  A description
+of the read unit (\eg{}, \cd{\literal{"record"}}, \cd{\literal{"1K Block"}}, \etc{}) can be obtained
+using the function \cd{P\_io\_read\_unit} described in
+\chapref{chap:library-use}  There is also an \cd{offset} field which gives
+the  absolute offset of the location within the currently installed IO stream.
+
+\inputCode{code/pos}
+%
+
+A \cd{Ploc\_t} (IO location) has two positions, \cd{b} and \cd{e}, marking the
+first byte and the last byte where something interesting
+happened, \eg{}, a field with an invalid format.
+
+\input{code/loc}
+%
+\noindent
+In cases where clearcut boundaries for an error are not known, the
+parse position where the error was 'found' is used for both the
+begin and end positions.  In this case, and in some other cases,
+the end byte is set to one less than the start byte, indicating an
+error that occurred just before the start byte (as opposed to an
+error that spans the start byte). 
+
+The beginning location for a data item is always filled in.  The
+ending location is only filled in if there is an error.
+
+
+Details about how parse descriptors are customized for various \PADS{}
+types appear in
+\secref{sec:base-type-parse-descriptors}, \secref{sec:structs-parse-descriptors},
+\secref{sec:unions-parse-descriptors}, \secref{sec:arrays-parse-descriptors}, 
+\secref{sec:enums-parse-descriptors},
+\secref{sec:typedefs-parse-descriptors} and 
+\secref{sec:trans-parse-descriptors}.
+
+\section{Regular Expressions}
+\label{sec:regular-expressions}
+\begin{tabular}{rcl}
+\nont{p\_regexp\_lit} & \is{} &  "/ \texttt{regexp} /" \\[1ex]
+\nont{p\_regexp\_expression} & \is{} & \Pre{} \nont{expression} \\[1ex]
+\end{tabular}
+
+\pads{} regular expressions support the full posix regex specification
+\myurl{www.opengroup.org/onlinepubs/009695399/},
+and also support many of the Perl extensions.  If you have Perl
+installed, you can use 
+
+\begin{centercode}
+    > man perlre
+\end{centercode}
+%
+\noindent
+to see Perl's regular expression man page.
+
+A regular expression is specified in a \pads{} description
+as a string (a \cd{\kw{const} \kw{char}*}).  The first character in
+the string is the expression delimiter: the next (non-escaped) occurrence of
+this delimiter marks the end of the regular expression.
+We typically write our examples using slash (\cd{/}) as the
+delimiter, but any delimiter can be used.  After the closing
+delimiter, one can add one or more single-character
+modifiers which change the normal matching behavior.  The
+modifiers are based on those supported by Perl, and
+currently include:
+\begin{tabular}{c|p{5in}}
+Modifier & Meaning\\\hline
+\quad l \quad & Treat the pattern as a literal.  All characters in the pattern are
+                literal characters to be found in the input.  There are no operators
+                or special characters.\\
+\quad i \quad & Do case-insensitve pattern matching.\\
+\quad x \quad & Extend your pattern's legibility by permitting whitespace
+                and comments.
+
+                Tells the regular expression parser to ignore
+                whitespace that is neither backslashed nor within a
+                character class You can use this to break up your
+                regular expression into (slightly) more readable
+                parts.  The \cd{\literal{"#"}} character is also
+                treated as a metacharacter introducing a comment.
+                This also means that if you want real whitespace or
+                \cd{\literal{"#"}} characters in the pattern (outside
+                a character class, where they are unaffected by the
+                \cd{x} modifier), you'll either have to escape them or
+                encode them using octal or hex escapes.  Be careful
+                not to include the pattern delimiter in the comment --
+                there is no way of knowing you did not intend to close
+                the pattern early. \\ 
+\quad ? \quad & Minimal match.  Change from the normal maximal left-most match
+                semantics to a minimal left-most match semantics.\\
+
+\quad f \quad & First match.  Change from the normal maximal left-most
+                match semantics to accepting the first match found.
+                This may be useful for terminating regular expressions
+                where any match is sufficient to trigger termination.
+                For termination, the matched characters are not
+                included in the resulting value, so getting the best
+                set of matching characters may not be necessary.
+\end{tabular}
+
+It is important to note that in normal POSIX regexps, the
+\cd{\literal{'\$'}} and \cd{\literal{'^'}}
+special characters match ``beginning of line'' and ``end of line'' respectively,
+where newline is the line separator character.  In contrast, in
+\pads{} regular expressions, 
+the \cd{\literal{'\$'}} and \cd{\literal{'^'}} special characters
+match ``beginning of record'' and ``end of record'' 
+respectively (and thus they only have meaning with the record-based IO 
+disciplines).  For this reason, newlines that occur within records or within
+input data for non-record-based input are treated as normal characters
+with no special semantics. This means, for example, that the
+\cd{\literal{'.'}} special character will match newlines.  (In Perl
+one would use the \cd{\literal{"/s"}} modifier to get similar 
+behavior.)
+
+If newlines in your input data mark record boundaries, you
+should be using one of the \cd{nlrec} IO disciplines described in
+\secref{sec:io-discipline}, in which case the newlines 
+do not appear in your normal input, so there is no issue of \cd{\literal{'.'}}
+matching newlines, and \cd{\literal{'\$'}} and \cd{\literal{'^'}} will
+have their normal POSIX behavior.
+
+
+A regular expression that uses \textit{both} \cd{\literal{'^'}} and
+\cd{\literal{'\$'}} may have problems matching arbitrarily large
+strings because the implementation divides the input into chunks of a
+particular size for processing. If the records in a data source are
+larger than this size, the regular expression will not have access to
+the entire record for matching.  In more detail, the matching code
+finds a region [\cd{begin}, \cd{end}] to match over and determines
+whether \cd{begin} is actually the beginning of the record and whether
+\cd{end} is actually the end of the record.  If \cd{begin} is not
+really the beginning of the record, then it disables \cd{\literal{'^'}},
+and if \cd{end} is not really the end of the record, then it disables
+\cd{\literal{'\$'}}.  This implementation choice will effectively
+prevent a successful match if the regular expression uses
+\cd{\literal{'^'}} or \cd{\literal{'\$'}} unless the regular
+expression has alternation with a clause that does not use the
+disabled \cd{\literal{'^'}} or \cd{\literal{'\$'}}.  The scope of
+matching is controlled by the \pads{} discipline, as described in
+\secref{sec:library-customization-scanning-extent}.
+
+
+
+
+Regular expressions are used for two purposes in \pads{},
+and the matching semantics with respect the current IO position
+are different for these two cases, as follows.
+
+\begin{itemize}
+
+\item A regular expression can be used as the inclusive scope of a data field,
+      \ie{}, it defines the set of characters that will be included
+      in a resulting value (see \cd{Pstring\_ME} / \cd{Pstring\_CME}).
+
+       In this case, the regular expression is implicitly left-bounded at the
+       current IO position: if a match cannot be found that includes
+       the character at the current IO position, then matching fails.
+
+       The default is that the longest such match will be used
+       that is within the scope determined by
+       \cd{pads->disc->match\_max}, described in 
+       \secref{sec:library-customization-scanning-extent}
+  
+\item  A regular expression can be used to terminate a data field
+      (see \cd{Pstring\_SE} / \cd{Pstring\_CSE}).
+
+      In this case, the regular expression is not ``left bounded'': the
+      matcher finds the longest match whose first->last characters
+      occur anywhere in the scope determined by \cd{pads->disc->scan\_max}.
+ 
+      The resulting value consists of all characters from the current
+      IO position up to (but not including) the left-most character
+      in the match,  \ie{}., none of the characters in the match are
+      included in the value; the match simply \textit{terminates} the value.
+
+      \textbf{Example}: suppose a string is either terminated by a comma
+       or by end-of-record.  This would by specified in a \padsl{} description as:
+
+      \inputCode{code/reg-exp-ex}
+\end{itemize}
+
+Within regular expressions, one can write in brackets \cd{[]} a set of
+characters to be matched against, or the inverse of such a set:
+
+\begin{tabular}{ll}
+\quad   \cd{[abc]} \quad    &      matches an \cd{\literal{'a'}}, \cd{\literal{'b'}}, or \cd{\literal{'c'}}\\
+\quad   \cd{[^abc]} \quad   &      matches any character EXCEPT an \cd{\literal{'a'}}, \cd{\literal{'b'}}, or \cd{\literal{'c'}}\\
+\end{tabular}
+
+INSIDE of one of these bracket expressions one can include a character
+class using the syntax \cd{[:<classname>:]}.  For example, the following
+matches either a letter (\cd{\literal{'A'}} through \cd{\literal{'Z'}}
+or \cd{\literal{'a'}} through \cd{\literal{'z'}}) or a
+\cd{\literal{'0'}} or \cd{\literal{'1'}}: 
+
+\begin{centercode}
+         [0[:alpha:]1]
+\end{centercode}
+%
+
+Using character classes is preferable to writing something like this:
+
+\begin{centercode}
+         [0A-Za-z1]
+\end{centercode}
+%
+\noindent
+because the letters \cd{\literal{A-Z}} may not occur contiguosly in all character set
+encodings.  Note that when you just specify a character class within 
+brackets, you end up with a double set of brackets, as in this
+pattern representing one more alpha characters:
+
+\begin{centercode}
+        /[[:alpha:]]+/ 
+\end{centercode}
+%
+    
+The following are all built-in character classes:
+
+\begin{tabular}{lp{4in}}
+\quad \cd{[:alnum:]} \quad    &  alpha or digit\\
+\quad \cd{[:alpha:]} \quad    &  upper or lower alphabet character\\
+\quad \cd{[:blank:]} \quad    &  space (' ') or tab \\
+\quad \cd{[:cntrl:]} \quad    &  control character\\
+\quad \cd{[:digit:]} \quad    &  digit (0 through 9)\\
+\quad \cd{[:graph:]} \quad    &  any printable character except space\\
+\quad \cd{[:lower:]} \quad    &  lower-case letter\\
+\quad \cd{[:print:]} \quad    &  any printable character including space\\
+\quad \cd{[:punct:]} \quad    &  any printable character which is not
+                                 a space or an alphanumeric character\\
+\quad \cd{[:space:]} \quad    &  a white-space character. Normally this
+                                includes: space, form-feed
+				(\cd{\literal{'\myff{}'}}),
+                                newline (\cd{\literal{'\newl{}'}}),
+				carriage return
+				(\cd{\literal{'\mycr{}'}}),
+                                horizontal tab
+				(\cd{\literal{'\mytab{}'}}), and
+				vertical tab (\cd{\literal{'\myvtab{}'}})\\
+\quad \cd{[:upper:]} \quad    &  an upper-case letter\\
+\quad \cd{[:word:]}           & an alphanumeric character or an underscore (\cd{\literal{'_'}}) \\
+\quad \cd{[:xdigit:]} \quad   & a hexadecimal digit (normal digits and \cd{\literal{A}} through \cd{\literal{F}})
+\end{tabular}
+
+
+\subsection{Defining your own character classes}
+\label{sec:charclass}
+It is possible to define your own character class in a \padsl{} file and then
+use that class in regular expressions that occur later in the file. 
+
+\subsubsection{Syntax}
+\begin{tabular}{rcl}
+\nont{charclass\_ty}    & \is{} & \Pcharclass{} identifier \{ identifier\};\\[4ex]
+\end{tabular}
+%
+\noindent
+In this grammar, the first identifier names the character class, while
+the second names a predicate function which takes a \cd{\kw{char}} as
+an argument and returns an \cd{\kw{int}} as a result.  Intuitively,
+this function returns a non-zero value to indicate that the argument
+character belongs to the class and a zero to indicate it does not.
+
+For example, the following code defines the \cd{foo} character class:
+
+\inputCode{code/foo_charclass}
+%
+
+\secref{sec:library-use-compiled-regular-expressions} describes
+compiling regular expressions.
+
+\section{Expressions}
+Expression forms include \C{} expressions, regular expressions, and
+the special symbol \Peor{}.
+
+\label{sec:expressions}
+\begin{tabular}{rcl}
+\nont{p\_expression} & \is{} & \nont{expression} \alt{}  \Pre{} \nont{expression} \alt{} \Peor{} \\[1ex]
+\end{tabular}
+
+
+\section{Operations}
+\label{common-operations}
+For each \pads{} type, the generated library contains a collection of
+functions for manipulating the associated data.  For structured types,
+the \pads{} compiler generates the functions;  for base types, the
+\pads{} library provides them.  This section describes the common
+features of such functions.  Type-specific information may be found in
+the appropriate chapter.
+
+All operations take a pointer to an
+initialized \pads{} handle as their first parameter.  Information
+about how to manage \pads{} library handles appears in
+\chapref{chap:library-use}. 
+
+Many of the operations that can fail return a value of type
+\cd{Perror_t} to indicate success or failure.  This type has two
+values: \cd{P_OK} and \cd{P_ERR}. 
+
+
+\subsection{Initialization and cleanup functions}
+For each type \cd{foo}, the generated library contains
+initialization and cleanup functions for the associated representation
+\cd{foo} and parse descriptor \pdSuf{foo} types.  Each initialization
+function take a pointer to allocated space and initializes the space
+appropriately.  Each cleanup function takes a pointer to allocated and
+initialized space and deallocates any memory allocated by \pads{} functions.
+It does not deallocate the space pointed to by the parameter.  
+
+\inputCode{code/init}
+
+Because all masks have statically-known size, the library does not
+contain initialization and cleanup functions for masks.  
+Instead, it contains a function for setting all nested base masks 
+to a specified value:  
+
+\inputCode{code/init-mask}
+
+The function takes two parameters (in
+addition to the \pads{} handle): a pointer to allocated space for the
+mask and a base mask value.  Because mask initialization
+functions cannot fail, the return type is \cd{void} instead of
+\cd{Perror_t}. 
+
+\subsection{Utilty functions}
+Each type \cd{foo} comes equipped with copy functions for both the
+in-memory representation and the parse descriptor.  Both the source
+and destination pointers are assumed to point to allocated space.  In
+addition, the source pointers are assumed to point to initialized
+space.
+
+\inputCode{code/utility}
+
+\noindent
+Each type \cd{foo} also has a predicate function that returns true if
+the supplied in-memory representation satisfies all of the
+non-\pparsecheck{} constraints.
+
+\inputCode{code/verify}
+
+\noindent
+In addition, each structured type \cd{foo} has a function \cd{foo_genPD} that
+takes as an argument an in-memory representation and calculates a
+corresponding parse descriptor.  
+
+\inputCode{code/genPD}
+
+\noindent
+The function assumes that the out parameter \cd{pd} has already been
+allocated and initialized to zero.  It sets the error codes and counts
+based on the semantic predicates found in the description of \cd{foo}.
+The location information in the argument \cd{pd} will not be
+touched. Future versions of the parse descriptor generation function
+may compute on-disk sizes. The function returns true if the
+representation contains no errors and false otherwise. The function
+takes the \cd{pads} handle as an argument because it must allocate
+space for array parse descriptors. 
+
+
+ 
+\subsection{Read function}
+\label{sec:common-features-read-function}
+The read function for a \pads{} type \cd{foo} takes as an input parameter a
+pointer to a mask \cd{m} and returns as output parameters a pointer to
+a parse descriptor \cd{pd} and a pointer to an in-memory
+reprsentation \cd{rep}.  If any errors occur during the parsing,
+the function will return \cd{P_ERR}.  Otherwise, it
+will return \cd{P_OK}.  
+
+\inputCode{code/read}
+
+The mask argument allows the library user to specify independently
+which constraints the parser should check and which portions of the
+in-memory representation it should fill in.  Conceptually, there are
+three different ``knobs'' associated with each atomic element of a
+\pads{} type:
+
+\myvskip{1ex}
+\begin{center}
+\begin{tabular}{l|p{4in}}
+Flag name       & Definition    \\ \hline
+\cd{P_SynCheck} & Check syntactic constraints\\
+\cd{P_SymCheck} & Check semantic constraints\\
+\cd{P_Set}      & Set the in-memory representation\\
+\end{tabular}
+\end{center}
+
+\noindent
+At the base-type level, the mask consists of one or more of the
+above flags.
+For structured types, the mask consists of a combination of base masks
+and the masks associated with nested types, the exact combination of
+which depends upon the kind of structured type.  Note that for a
+structured type \cd{foo}, the mask initialization function
+\cd{foo_m_init} can be used to initialize all nested masks to the
+supplied value.
+
+Details about the read functions for particular types may be found in
+the appropriate chapters.
+
+Flags can be combined using the bit-wise OR operator (vertical bar, or '\cd{|}').  For example,
+one can write \cd{P_Set|P_SynCheck|P_SemCheck} to combine the first three flags.  
+For convenience, {\tt pads.h} provides the following abbreviations:
+
+\myvskip{1ex}
+\begin{center}
+\begin{tabular}{l@{ }l}
+\cd{\#define P_CheckAndSet} & \cd{P_Set|P_SynCheck|P_SemCheck}\\
+\cd{\#define P_BothCheck}   & \cd{P_SynCheck|P_SemCheck} \\
+\cd{\#define P_Ignore}      & no flags set (do as little work as possible to process this field) \\
+\end{tabular}
+\end{center}
+
+\noindent
+The library also provides macros for testing and modifying base
+read-function flags, which are listed in \figref{figure:read-flags}.
+
+\begin{figure*}
+{\small
+\begin{tabular}{l@{ }l}
+\cd{\#define P_Test_Set(m)}            & \cd{(m \& P_Set)} \\
+\cd{\#define P_Test_SynCheck(m)}       & \cd{(m \& P_SynCheck)}\\
+\cd{\#define P_Test_SemCheck(m)}       & \cd{(m \& P_SemCheck)}\\
+\\
+\cd{\#define P_Test_NotSet(m)}         & \cd{(!P_Test_Set(m))}\\
+\cd{\#define P_Test_NotSynCheck(m)}    & \cd{(!P_Test_SynCheck(m))}\\
+\cd{\#define P_Test_NotSemCheck(m)}    & \cd{(!P_Test_SemCheck(m))}\\
+\\
+\cd{\#define P_Test_CheckAndSet(m)}    & \cd{((m \& P_CheckAndSet) == P_CheckAndSet)}\\
+\cd{\#define P_Test_BothCheck(m)}      & \cd{((m \& P_CheckAndSet) == P_BothCheck)}\\
+\cd{\#define P_Test_Ignore(m)}         & \cd{((m \& P_CheckAndSet) == P_Ignore)}\\
+\\
+\cd{\#define P_Test_NotCheckAndSet(m)} & \cd{((m \& P_CheckAndSet) != P_CheckAndSet)}\\
+\cd{\#define P_Test_NotBothCheck(m)}   & \cd{((m \& P_CheckAndSet) != P_BothCheck)}\\
+\cd{\#define P_Test_NotIgnore(m)}      & \cd{((m \& P_CheckAndSet) != P_Ignore)}\\
+\\
+\cd{\#define P_Do_Set(m)}              & \cd{(m |= P_Set)}\\
+\cd{\#define P_Do_SynCheck(m)}         & \cd{(m |= P_SynCheck)}\\
+\cd{\#define P_Do_SemCheck(m)}         & \cd{(m |= P_SemCheck)}\\
+\\
+\cd{\#define P_Dont_Set(m)}            & \cd{(m \&= (\textasciitilde P_Set))}\\
+\cd{\#define P_Dont_SynCheck(m)}       & \cd{(m \&= (~P_SynCheck))}\\
+\cd{\#define P_Dont_SemCheck(m)}       & \cd{(m \&= (~P_SemCheck))}\\[1ex]
+\end{tabular}
+}
+\caption{Provided macros for setting and testing base read-function flags.}
+\label{figure:read-flags}
+\end{figure*}
+
+\subsection{Write functions}
+For each \pads{} type, the generated library provides 
+two functions for writing out the in-memory representation of the type
+in a format as close as possible to its original form.
+
+\inputCode{code/write}
+
+\noindent
+The first of these functions emits its output to an SFIO file;
+the second to an in-memory buffer.  Information about SFIO may be
+found from \myurl{www.research.att.com/sw/tools/sfio}.  For the buffer
+version, the parameter \cd{buf} points to an allocated sequence of
+bytes and \cd{buf_len} indicates the size of the buffer.  Out
+parameter \cd{buf_full} is a boolean which is set if the requested
+write would have overflowed the buffer. The return value
+for both of the functions is the number of bytes written, with \cd{-1}
+indicating an error occurred.  
+
+Issues that may cause the written data to differ from the original
+data include skipping white space
+(\secref{sec:library-customization-white-space}) and omitting fields in
+\Pstruct{}s (\secref{sec:structs-qualifiers}). 
+
+Passing the \texttt{-wnone} flag to the \pads{} compiler suppresses
+the generation of write functions for structured types.
+
+
+\subsection{Additional functions}
+In addition to the basic functionality described in the preceeding
+sections, \pads{} provides more advanced features described in later
+chapters. 
+
+\begin{tabular}{lp{4in}}
+Accumulators (\chapref{chap:accumulators})  & Provide structures and
+functions for automatically summarizing data.\\
+Histograms (\chapref{chap:histogram})  & Provide structures and
+functions for computing histograms.\\
+Clustering (\chapref{chap:cluster})  & Provide structures and
+functions for clustering data.\\
+Formatting (\chapref{chap:formatting}) & Provide functions for
+               formatting data in forms suitable for inclusion in relational
+               databases.\\
+\xml{} (\chapref{chap:xml}) & Provide functions for converting data
+into canonical \xml{} form as well as generating a corresponding \sc{XSchema}.\\
+
+\end{tabular}

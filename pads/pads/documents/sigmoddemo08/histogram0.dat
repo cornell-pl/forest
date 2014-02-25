@@ -1,0 +1,8 @@
+#hp-struct2
+#iteration 0
+#Tokens		0	1	2
+[white]		0	100	0
+[,]		0	100	0
+[:]		0	0	100
+[string]	33.3	66.7	0
+[int]		0	66.7	33.3

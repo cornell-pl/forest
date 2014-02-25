@@ -1,0 +1,24 @@
+RArray(Id = BTy_0 999, 11.585b, 19961.043b)
+	Separator: [StringConst] "|"
+	Punion(Id = BTy_11 20996, 10.585b, 316.842b)
+		Pstruct(Id = BTy_10 11714, 4b, 235.257b)
+			Punion(Id = BTy_5 11714, 3b, 4b)
+				[StringConst] ""(Id = BTy_4 11713, 1b, 0b);
+				Pstruct(Id = BTy_8 1, 1b, 3b)
+					[StringConst] "MELISSA "(Id = BTy_6 1, 1b, 3b);
+				End Pstruct;
+			End Punion;
+			[Int] [0...9152272](Id = BTy_9 13712, 1b, 231.257b);
+		End Pstruct;
+		Pstruct(Id = BTy_18 6286, 4b, 80b)
+			[string](Id = BTy_12 6286, 1b, 78b);
+			Punion(Id = BTy_14 6286, 3b, 2b)
+				[StringConst] ""(Id = BTy_13 6285, 1b, 0b);
+				Pstruct(Id = BTy_17 1, 1b, 1b)
+					[StringConst] " c"(Id = BTy_15 1, 1b, 1b);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		[StringConst] ""(Id = BTy_20 998, 1b, 0b);
+	End Punion;
+End RArray

@@ -1,0 +1,45 @@
+\begin{bnf}
+\name{Constants} \meta{k} \::= \mcd{true} \| \mcd{false} \| \mcd{()} \| ...
+\\
+\name{Type Variables} \meta{\alpha}
+\\
+\name{Type Names} \meta{t}
+\\
+\name{\Core{} Types} \meta{T} \::= 
+  \alpha 
+\| {Pbase} 
+\| M 
+\nlalt \ppair x {T_1} {T_2} 
+\| \precord {\nont{ffts}} 
+\| \nont{tas}\;t(M) 
+\nlalt \pset x T M 
+\nlalt \parray T {M_{sep}} {M_{term}} 
+\\
+\name{\Core{} Datatypes} \meta{D} \::= 
+  \mcd{datatype}\; \nont{tps}\; t(x{:}F) = \nont{b} \nlalt
+  \mcd{type}\; \nont{tps}\; t(x{:}F) = T
+\\
+\name{Type Parameters} \meta{tps} \::= \cdot \| \alpha \| (\nont{tvs})
+\\
+\name{} \meta{tvs} \::= \alpha \| \alpha,\, \nont{tvs}
+\\
+\name{Type Arguments} \meta{tas} \::= \cdot \| T \| (\nont{ts})
+\\
+\name{} \meta{ts} \::= T \| T,\, \nont{tss}
+\\
+\name{} \meta{b} \::= \nont{cs} \| \mcd{case}\; M\; \mcd{of}\; \nont{ccs}
+\\
+\name{} \meta{cs} \::= c\;\mcd{of}\;T \| c\;\mcd{of}\;T \cvb \nont{cs}
+\\
+\name{} \meta{ccs} \::= 
+  \nont{pat} \Rightarrow c\;\mcd{of}\;T \nlalt
+  \nont{pat} \Rightarrow c\;\mcd{of}\;T \cvb \nont{ccs}
+\\
+\name{\Core{} Field Types} \meta{ffts} \::= \nont{fft} \| \nont{fft};\;\nont{ffts}
+\\
+\name{\Core{} Field Type} \meta{fft} \::= T \| x = T
+\end{bnf}
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End: 

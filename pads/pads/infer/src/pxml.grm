@@ -1,0 +1,34 @@
+%name Pxml;
+
+%defs (
+  open Pxml
+);
+
+%tokens
+  : BeginTag of string | EndTag of string
+  | DTag of string
+  | CData of string
+  | Data of string 
+;
+
+xml 
+  : CData => ( Comment CData )
+  | Data => ( PCData Data )
+  | DTag => ( Element (DTag, nil) )
+  | BeginTag (xml+) EndTag %where ( BeginTag = EndTag ) => 
+	(
+	case (hd SR) of
+	  Comment _ => 
+	   let val lit = foldl (fn (Comment x, Comment s) => Comment (s ^ x)) 
+				(Comment "") SR
+	   in Element (BeginTag, [lit])
+	   end
+	| PCData _ =>
+	   let val lit = foldl (fn (PCData x, PCData s) => PCData (s ^ x)) 
+				(PCData "") SR
+	   in Element (BeginTag, [lit])
+	   end
+	| _ =>  
+	( Element (BeginTag, SR) )
+        )
+;

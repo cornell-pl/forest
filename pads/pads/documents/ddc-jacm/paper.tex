@@ -1,0 +1,85 @@
+\documentclass[acmjacm]{acmtrans2m}
+
+% Turn off running feet as they mess up when using enlarge page
+%\expandafter\def\csname@oddfoot\endcsname{}
+%\expandafter\def\csname@evenfoot\endcsname{}
+
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+\markboth{K. Fisher, Y. Mandelbaum and D. Walker}{The Next 700 Data Description Languages}
+\title{The Next 700 Data Description Languages}
+\author{ 
+KATHLEEN FISHER \\ AT\&T Labs Research \\ \texttt{kfisher@research.att.com}
+\and 
+YITZHAK MANDELBAUM \\ AT\&T Labs Research \\ \texttt{yitzhak@research.att.com}
+\and 
+DAVID WALKER \\ Princeton University \\  \texttt{dpw@CS.Princeton.EDU}
+}
+
+
+\begin{document}
+
+\input{definitions}
+
+\begin{abstract}
+\input{abstract}
+\end{abstract}
+
+\category{D.3.1}{Programming languages}{Formal Definitions and Theory---Semantics}
+\category{F.4.2}{Mathematical Logic and Formal Languages}{Grammars and Other Rewriting Systems---Grammar Types, Parsing}
+
+\terms{Design, Languages, Theory}
+
+\keywords{Parsing, data-dependent grammars, context-sensitive grammars, ad hoc data formats, data processing, dependent types, data description languages,
+domain-specific languages, PADS}
+
+\begin{bottomstuff}
+This research was supported in part by 
+National Science Foundation grants 0238328,
+0612147 and 0615062.  This work
+does not necessarily reflect the opinions or policy of the federal
+government or NSF and no official endorsement should
+be inferred.  
+\vskip1ex
+\end{bottomstuff}
+
+\maketitle
+
+\input{intro}
+
+\input{ipads}
+
+\input{ddc_syntax}
+
+\input{ddc_sem}
+
+\input{meta_theory}
+
+\input{encoding}
+
+\input{applications}
+
+\input{related_work}
+
+\input{conclusion}
+
+\section*{Acknowledgments}
+
+We appreciate the insights and thoughtful reviews of the program committee for the 33$^{\mathrm{rd}}$ ACM Symposium on Principles of Programming Languages, who commented on an earlier version of this work.  We would also like to thank Robert Gruber, Mary Fern\'{a}ndez, Mark Daly, and Kenny Zhu for all their work on the PADS project over the years. Finally, thanks to Andrew Appel for suggesting we refer to Landin's seminal paper on the next 700 programming languages. 
+
+\bibliographystyle{acmtrans} \bibliography{pads}
+
+\input{appendix-metatheory}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+

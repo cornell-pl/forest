@@ -1,0 +1,55 @@
+-------------------------------------------------------------------
+Some notes on advancing/restoring the global id counter and setting
+pd->_id_ correctly for various tricky cases.
+-------------------------------------------------------------------
+
+1. In general, we do not want to advance the global id counter
+   across a checkpoint/restore (where the IO cursor is not
+   advanced) -- there is no reason to use up ID space for
+   values that are discarded from memory.  (Failed
+   union arms, elements 'put back' by Pended, etc.)
+
+   (Note that we assign pd->_id_ and advance the counter before
+    taking any checkpoints for a union, so the union's pd
+    has been given a unique id that is never taken back.
+    What is taken back is any unique ids assigned during
+    failed attempts to read the fields of the union.)
+
+   ACTION: I moved the id_gen field to type
+   PDCI_stkElt_t and changed the stack manipulators
+   to checkpoint/restore/commit this field.
+
+2. However, for the special case of Palternates, where each arm
+   is read into memory using checkpoint/restore to
+   move the cursor back each time, we do want the global
+   id counter to advance across the restore, since we are
+   keeping the result of each read (each arm of the alternate
+   must have its own IDs).
+
+   ACTION: I added macro PDCI_IO_RESTORE_KEEP_ID_GEN
+   to enable keeping the current id_gen on restore.
+   The _ALT_ pcgen macros were modified to use this macro.
+
+3. For union reads, pd_init can be called prior to a field read,
+   zero-ing out the pd->_id_ field.  We want to keep the
+   pd->_id_ that is chosen at the very start of the union
+   read function (via PD_COMMON_READ_INIT).
+
+   ACTION: I added code to save/restore pd->_id_
+   around the pd inits.
+
+4. For LONGEST punion reads, it is the temporary pd (tpd_PCGEN_)
+   that can be initialized prior to a field read.  If this
+   read turns out to be the longest so far, the temporary pd
+   is copied into the normal pd; this will overwrite a value
+   of 0 into pd->_id_.
+
+   ACTION: I added code to save/restore pd->_id_
+   around the code that copies tpd_PCGEN_ to pd.
+
+
+---------------
+TODO
+
+can remove the max macros I thought I needed for _ALT_ case...
+

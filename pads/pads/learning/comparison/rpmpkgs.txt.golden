@@ -1,0 +1,11 @@
+Pstruct(35, tc: 437.347b, ac: 111.459b, dc: 146.054b, raw: 583.401b)
+        [StringME] "/[0-9a-zA-Z]+/" (35, tc: 5.044b, ac: 36.000b, dc: 36b, raw: 41.044b);
+        [StringConst] "-" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        [StringME] "/[0-9a-zA-Z.]+/" (35, tc: 5.044b, ac: 36.000b, dc: 36b, raw: 41.044b);
+        [StringConst] "-" (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        [StringME] "/[0-9a-zA-Z.]+/" (35, tc: 5.044b, ac: 36.000b, dc: 36b, raw: 41.044b);
+        [StringConst] "." (35, tc: 11.044b, ac: 0b, dc: 0b, raw: 11.044b);
+        [Enum] {[StringConst] "noarch", [StringConst] "i386", [StringConst] "i586", [StringConst] "i686", [StringConst] "alpha", [StringConst] "sparc", [StringConst] "mips", [StringConst] "ppc", [StringConst] "m68k", [StringConst] "SGI", [StringConst] "(none)", } (35, tc: 351.992b, ac: 3.459b, dc: 38.054b, raw: 390.046b);
+        [StringConst] ".rpm" (35, tc: 29.044b, ac: 0b, dc: 0b, raw: 29.044b);
+End Pstruct
+

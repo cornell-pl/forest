@@ -1,0 +1,67 @@
+Pstruct(Id = BTy_78 671, 37b, 1168.816b)
+	[StringConst] "Oct 26 "(Id = BTy_0 671, 1b, 2.807b);
+	[Time](Id = BTy_2 671, 1b, 180.386b);
+	[StringConst] " "(Id = BTy_43 671, 1b, 0b);
+	[Enum] {[StringConst] "Installing", [StringConst] "scrollkeeper-rebuilddb", [StringConst] "scrollkeeper-update", }(Id = BTy_44 671, 1b, 12.029b);
+	Switch(BTy_44)(Id = BTy_42 671, 33b, 973.593b):
+	case [StringConst] "scrollkeeper-update":
+		Pstruct(Id = BTy_41 668, 14b, 921.170b)
+			[StringConst] ": "(Id = BTy_16 668, 1b, 1b);
+			Punion(Id = BTy_13 668, 6b, 15.415b)
+				Pstruct(Id = BTy_12 660, 6b, 15.415b)
+					[Enum] {[StringConst] "Registering", [StringConst] "scrollkeeper-update", }(Id = BTy_7 660, 1b, 7.707b);
+					Switch(BTy_7)(Id = BTy_9 660, 4b, 7.707b):
+					case [StringConst] "Registering":
+						[StringConst] ""(Id = BTy_8 596, 1b, 0b);
+					case [StringConst] "scrollkeeper-update":
+						[StringConst] ":"(Id = BTy_10 64, 1b, 0b);
+					End Switch;
+					[StringConst] " "(Id = BTy_11 660, 1b, 0b);
+				End Pstruct;
+			End Punion;
+			[Path](Id = BTy_19 668, 1b, 512b);
+			Punion(Id = BTy_21 668, 6b, 392.755b)
+				[StringConst] ""(Id = BTy_20 596, 1b, 0b);
+				Pstruct(Id = BTy_40 72, 4b, 391.755b)
+					RArray(Id = BTy_22 72, 3b, 387b)
+						Terminator: [StringConst] "No"
+						Pstruct(Id = BTy_29 8, 2b, 193b)
+							[Path](Id = BTy_26 8, 1b, 192b);
+							[StringConst] ": "(Id = BTy_27 8, 1b, 1b);
+						End Pstruct;
+					End RArray;
+					[StringConst] "No such file or directory :"(Id = BTy_31 72, 1b, 4.755b);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+	case [StringConst] "scrollkeeper-rebuilddb":
+		Pstruct(Id = BTy_62 2, 9b, 29.610b)
+			[StringConst] ":"(Id = BTy_46 2, 1b, 0b);
+			RArray(Id = BTy_48 2, 3b, 26.610b)
+				Separator: [StringConst] " "
+				Terminator: [StringConst] "."
+				[Enum] {[StringConst] "Done", [StringConst] "Rebuilding", }(Id = BTy_50 7, 1b, 5.322b);
+			End RArray;
+			[StringConst] ". "(Id = BTy_54 2, 1b, 1b);
+			RArray(Id = BTy_47 2, 1b, 0b)
+				[StringConst] ""(Id = BTy_56 0, 1b, 0b);
+			End RArray;
+			Punion(Id = BTy_61 2, 3b, 2b)
+				Pstruct(Id = BTy_59 1, 1b, 1b)
+					[StringConst] ".."(Id = BTy_57 1, 1b, 1b);
+				End Pstruct;
+				[StringConst] ""(Id = BTy_60 1, 1b, 0b);
+			End Punion;
+		End Pstruct;
+	case [StringConst] "Installing":
+		Pstruct(Id = BTy_77 1, 7b, 10.785b)
+			[StringConst] " ScrollKeeper "(Id = BTy_66 1, 1b, 3.807b);
+			[IntConst] [0](Id = BTy_69 1, 1b, 0b);
+			[StringConst] "."(Id = BTy_70 1, 1b, 0b);
+			[IntConst] [3](Id = BTy_71 1, 1b, 1.585b);
+			[StringConst] "."(Id = BTy_72 1, 1b, 0b);
+			[IntConst] [14](Id = BTy_73 1, 1b, 3.807b);
+			[StringConst] "..."(Id = BTy_74 1, 1b, 1.585b);
+		End Pstruct;
+	End Switch;
+End Pstruct

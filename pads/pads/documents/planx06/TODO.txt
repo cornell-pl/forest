@@ -1,0 +1,37 @@
+
+Some of what we learned by writing this paper: 
+
+1. Idealized version of PADX 
+
+   o Prolog not generated or linked automatically 
+
+   o Queries not statically typed
+
+2. Additional features 
+
+   o XML Schema (subset + annotations) for describing PADS types
+
+   o XQuery constructors implemented in PADS
+
+3. Code review of memory management modules
+
+   o Expansion of RBufs is *VERY* slow.  
+
+   o Hints to RBuf allocation functions are critical to performance.
+     We need to understand this better.
+
+4. Experiments
+   
+   o More complete experiments on sources with:
+       different ambient codings, 
+       recursive types, 
+       more than one kind of record,
+       structure other than the header,record array,trailer idiom 
+
+5. Engineering
+
+   o Have ONE template for PADX programs and parameterize it in a sane
+     way to create a bulk/linear/smart executable. 
+
+   o Review expulsion policy for smart nodes/records. 
+

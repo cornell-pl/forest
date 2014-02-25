@@ -1,0 +1,11 @@
+#!/bin/bash
+CAML="let version_number = "
+if [ ! -f .version ]
+then
+VERS=1
+else
+OLD=`cat .version`
+VERS=`expr 0$OLD + 1`
+fi
+echo $VERS > .version
+echo $CAML $VERS > version.ml

@@ -1,0 +1,86 @@
+Pstruct(Id = BTy_108 440)
+	[Date] (Id = BTy_0 440);
+	[StringConst] " " (Id = BTy_1 440);
+	[Time] (Id = BTy_2 440);
+	[StringConst] " " (Id = BTy_3 440);
+	[IntConst] [2006] (Id = BTy_4 440);
+	[StringConst] " " (Id = BTy_5 440);
+	[Enum] {[StringConst] "crashdump", [StringConst] "crashreporterd", } (Id = BTy_6 440);
+	[StringConst] "[" (Id = BTy_8 440);
+	[Int] [120...29874] (Id = BTy_9 440);
+	[StringConst] "]: " (Id = BTy_10 440);
+	[Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", [StringConst] "Unable", [StringConst] "crashdump", [StringConst] "mach_msg", } (Id = BTy_14 440);
+	Switch(BTy_14)(Id = BTy_57 440):
+	case [Enum] {[StringConst] "Failed", [StringConst] "Finished", [StringConst] "Started", }:
+		Pstruct(Id = BTy_56 291)
+			[StringConst] " " (Id = BTy_15 291);
+			[Enum] {[StringConst] "to", [StringConst] "writing", } (Id = BTy_16 291);
+			[StringConst] " " (Id = BTy_17 291);
+			[Enum] {[StringConst] "crash", [StringConst] "re-launch", } (Id = BTy_18 291);
+			[StringConst] " " (Id = BTy_19 291);
+			Poption(Id = BTy_26 291)
+				[StringConst] "report to: " (Id = BTy_20 290);
+			End Poption;
+			[Path] (Id = BTy_36 291);
+			Punion(Id = BTy_38 291)
+				Pstruct(Id = BTy_45 10)
+					[StringConst] " " (Id = BTy_39 10);
+					[Enum] {[StringConst] "PowerPoint", [StringConst] "Word", [StringConst] "process", } (Id = BTy_40 10);
+					[StringConst] ".crash.log" (Id = BTy_41 10);
+				End Pstruct;
+				Pstruct(Id = BTy_55 1)
+					[White] (Id = BTy_47 1);
+					[Other](-) (Id = BTy_48 1);
+					[White] (Id = BTy_49 1);
+					[String] (Id = BTy_50 1);
+					[Other](:) (Id = BTy_51 1);
+					[White] (Id = BTy_52 1);
+					[IntConst] [1025] (Id = BTy_53 1);
+					[Other](!) (Id = BTy_54 1);
+				End Pstruct;
+				[Empty] (Id = BTy_37 280);
+			End Punion;
+		End Pstruct;
+	case [Enum] {[StringConst] "Unable", [StringConst] "crashdump", [StringConst] "mach_msg", }:
+		Pstruct(Id = BTy_107 149)
+			Poption(Id = BTy_62 149)
+				[StringConst] "()" (Id = BTy_63 2);
+			End Poption;
+			[StringConst] " " (Id = BTy_66 149);
+			[Enum] {[StringConst] "reply", [StringConst] "started", [StringConst] "to", } (Id = BTy_67 149);
+			Poption(Id = BTy_69 149)
+				Pstruct(Id = BTy_70 4)
+					[StringConst] " " (Id = BTy_71 4);
+					[Enum] {[StringConst] "determine", [StringConst] "failed", } (Id = BTy_73 4);
+					Switch(BTy_73)(Id = BTy_106 4):
+					case [StringConst] "determine":
+						Pstruct(Id = BTy_90 2)
+							[White] (Id = BTy_74 2);
+							[StringConst] "task_t" (Id = BTy_75 2);
+							[White] (Id = BTy_76 2);
+							[StringConst] "for" (Id = BTy_77 2);
+							[White] (Id = BTy_78 2);
+							[StringConst] "pid:" (Id = BTy_79 2);
+							[White] (Id = BTy_81 2);
+							[IntConst] [95] (Id = BTy_82 2);
+							[White] (Id = BTy_83 2);
+							[StringConst] "name:" (Id = BTy_84 2);
+						End Pstruct;
+					case [StringConst] "failed":
+						Pstruct(Id = BTy_105 2)
+							[StringConst] ":" (Id = BTy_91 2);
+							[White] (Id = BTy_92 2);
+							[StringConst] "(ipc/send)" (Id = BTy_93 2);
+							[White] (Id = BTy_99 2);
+							[StringConst] "invalid" (Id = BTy_100 2);
+						End Pstruct;
+					End Switch;
+					[StringConst] " " (Id = BTy_86 4);
+					[Enum] {[StringConst] "Exited", [StringConst] "destination", } (Id = BTy_87 4);
+					[StringConst] " " (Id = BTy_88 4);
+					[Enum] {[StringConst] "port", [StringConst] "process", } (Id = BTy_89 4);
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+	End Switch;
+End Pstruct

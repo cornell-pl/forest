@@ -1,0 +1,715 @@
+
+% Reviewer's Scores
+% -----------------------------------
+
+% Evaluation: A
+% Confidence: X
+% Innovation: Q
+
+
+% ------------------------------------------------------------------------ 
+% ---
+% Detailed Comments
+% ------------------------------------------------------------------------ 
+% ---
+
+% A FIRST REVIEWER WROTE (BXQ)
+
+...
+
+% Detailed comments:
+
+% Section 1:
+%  Further, since
+% there doesn't seem to be much (if any) core technical content in the 
+% paper
+% that is really specific to binary-oriented data description languages, 
+% the
+% paper really needs to be framed and presented in terms of the overall
+% existing body of literature on parsing and parsing theory, rather than 
+% just
+% primarily with respect to the recent "ad hoc data"-oriented parsers
+% (DATASCRIPT, PACKETTYPES, etc.) that the authors refer to throughout.
+
+-- did not really address this point as it requires rewriting the whole 
+paper.
+
+% Section 1.1 - the "remarkable insight" the second paragraph talks about 
+% is
+% indeed important to this paper and should be pointed out, but it is by 
+% no
+% means as new as the wording seems to imply. Besides classic parser
+% generators in the Yacc vein, whose parser definitions at least loosely
+% amount to data type definitions, IDLs such as Sun RPC and CORBA, for
+% example, have for many years been using specialized type declarations to
+% produce both external and internal forms simultaneously (and there are
+% probably much earlier examples). Type-based declarative languages 
+% flexible
+% enough to describe binary data representations that weren't designed for
+% automatic parsing in the first place might be relatively new, however.
+
+-- did not address
+
+% Section 1.2, paragraph 4 - "...we require that all errors in the parsed
+% data be accurately recorded..." The authors should probably say "all
+% _detected_ errors" or something like that instead of just "all errors", 
+% in
+% this and other places the phrase "all errors" appears in the paper. The
+% current wording seems to suggests some idealized definition of an
+% individual "(human) error" along with some perfect error recovery 
+% process
+% that can detect "each individual (human) error" in an input stream and
+% enumerate them all correctly and individually in the parser's output. 
+% It
+% is well-known that error detection and recovery is never perfect, in 
+% that
+% parsers often inevitably mis-place the location of an error, or generate
+% multiple error reports from only one actual (human) error, etc. 
+% Slightly
+% re-wording the text that talks about error detection would avoid giving 
+% the
+% reader the (incorrect) first impression that the authors are 
+% overambitious
+% or naive to this fact.
+
+the reviewer slightly misunderstands, though I admit the point is quite 
+subtle and not made totally clear by us.
+In the internal data structures, there are definitely no error-filled fields
+unless the parse descriptor says so.
+I rewrote (could not think of a more elegant way to say it):
+
+``In a nutshell, rather than requiring input data be error-free, we require
+that the internal data structures produced by parsing 
+satisfy their specification whereever the parse descriptor says they
+will.  Our invariant allows
+data consumers to rely on the integrity of the internal data structures
+marked as error-free.''
+
+% Section 2:
+
+% The IPADS examples presented here seem reasonable, but a few of
+% the details raise red flags. For example, dates (Pdate) and IP 
+% addresses
+% (Pip) are given as "base types", although these types seem anything but
+% fundamental or necessary "primitives" for a general-purpose parsing
+% language. There may be good pragmatic reasons for including these as 
+% "base
+% types" in PADS, but their seemingly non-essential inclusion here in the
+% description of IPADS gives the reader the false impression that there 
+% might
+% be something so horribly wrong with the data description language that 
+% it
+% is unable to describe something as structurally trivial as an IP 
+% address in
+% dotted-decimal ASCII notation.
+
+-- we need these base types for the examples.  If the reader keeps reading,
+they will realize the data description language is not ``horribly wrong''...
+did not change.
+
+% The examples and primitive type names used in this section also add 
+% further
+% confusion to the whole "text/binary" issue, which as discussed already 
+% is
+% much more than an issue than it should be in this paper. The name 
+% Puint32,
+% for example, suggests an integer having a 32-bit _binary_ 
+% representation in
+% its externalized form, although more careful reading of the examples 
+% reveals
+% that Puint32 is actually just a ASCII-based (decimal? C-style 
+% multi-base?)
+% representation for an integer, the "32" presumably only having 
+% significance
+% for the internalized C-language type the resulting parser will generate.
+
+-- clarified
+
+% Similarly, the name "Peor", which obviously stands for "end of record",
+% seems to suggest either that the data description language depends on 
+% some
+% "primitive" lower-level mechanism to determine record boundaries in a 
+% data
+% file (e.g., record-based files in VMS), or upon noticing that "Peor" 
+% really
+% means "newline", that this data description language somehow only 
+% supports
+% data whose "records" are delimited by newlines. If "Peor" means 
+% "newline",
+% then just name it "Pnl" or something like that to avoid such confusion.
+
+-- changed \Peor macro to Pnl -- no need to explain Peor and its real
+semantics...
+
+% The Pwhere clause seems to correspond exactly to the semantic predicates
+% that ANTLR, JavaCC, and other existing parser generators already 
+% support;
+% this relationship should be acknowledged.
+
+-- cited antlr when introduced.
+
+% IPADS' recursive declaration notation appears at least on the surface to
+% support only singly-recursive definitions, which seems like a serious 
+% step
+% backward from the mutual recursion that practically all other practical
+% and formal grammar/parser specification languages support. I assume it 
+% is
+% probably the case that mutually recursive constructs can be represented 
+% in
+% terms of the singly-recursive Prec construct, but (a) this seems rather
+% clumsy in a data description language that is supposed to be for 
+% practical
+% use (IPADS), and (b) the reducibility of mutual recursion to single
+% recursion in the context of parser description languages is at least 
+% not a
+% well-known fact, as it is in the context of general programming 
+% languages.
+% The authors at least need to discuss this issue. The ideal would seem 
+% to
+% be for IPADS to have mutual recursion, for DDC _not_ to have it, and to
+% describe an explicit multual recursion elimination procedure as part of 
+% the
+% reduction from IPADS to DDC.
+
+-- if this was a journal article, I would respond to this seriously.  
+In this conference paper, there is no time or space to respond.  
+it seems useless to say ``we have not done it'' and leave it at that.
+We should think about this for a Journal article though.
+
+% Section 3:
+
+% This is where the paper's really useful and interesting content begins.
+% This is good stuff; it seems quite well thought-out for the most part, 
+% and
+% it takes an excellent first cut at integrating formal parsing theory 
+% with
+% modern formal programming language type theory. Unlike the previous
+% sections, I don't have major criticisms here, only a couple minor nits.
+
+-- good!
+
+% In the second paragraph, the sentence "Sum-type parsers are 
+% deterministic..."
+% makes it clear, though only implicitly, that DDC adopts a
+% "recognition-oriented" grammar paradigm similar to that of TDPL or PEGs
+% (referenced later in the Related Work section) rather than the 
+% conventional
+% "generative" grammar paradigm embodied by CFGs and the like. It would 
+% help
+% avoid confusion if the paper mentioned this fact explicitly, either at 
+% this
+% point or even earlier, since most people are likely to assume that a
+% parsing system is CFG-based unless they are told otherwise.
+
+-- I said:
+
+Unlike regular expressions or
+context-free grammars, which allow nondeterministic choice,
+sum-type parsers
+are deterministic, transforming the data according to $\ty_1$
+when possible and {\it only} attempting to
+use $\ty_2$ if there is an error in $\ty_1$.
+
+% The "seq" type, first described in the third paragraph of section 3.1,
+% seems far too hairy and complex to be really suitable as a "primitive" 
+% in
+% DDC. I suspect that this construct could easily be left out entirely 
+% and
+% expressed in terms of the other facilities for basic pairing (dependent
+% products), recursion, and syntactic and/or semantic predicates. Pure
+% "syntax-only" parsing formalisms such as PEGs already have no trouble
+% expressing sequences involving separators or terminators in terms of
+% simpler primitive constructs; I see no reason why that should be a 
+% problem
+% for DDC, in which semantic predicates are available as well. There may 
+% be
+% good reasons to have such a primitive in a pragmatic parser generator 
+% for
+% performance or convenience reasons, but it seems out of place in a 
+% formal
+% work.
+
+-- this is a good point.  I think/hope that the reviewer is correct,
+but I do not know how to fix this right now.  Leave it for the
+journal version.
+
+% Section 4:
+
+% The second paragraph, on "contractiveness", does not seem to get the
+% attention it needs in the paper. This property seems to correspond
+% more-or-less exactly to the "illegal left recursion check" that a 
+% PEG-based
+% parser generator would typically perform before accepting a grammar, 
+% which
+% in turn corresponds a bit more loosely to the left recursion elimination
+% that a CFG-based parser generator might perform. The "contractiveness"
+% property and its relationship to left recursion in traditional parsing
+% theory should be discussed in a bit more detail.
+
+-- it actually does not correspond to the "illegal left recursion check",
+though this is something I think we should add at some point, at
+least in the implementation...
+-- to clarify the purpose of contractiveness, I wrote:
+
+``To ensure that recursive types have properly-shaped parse descriptors
+with a valid PD header (a condition necessary for the type safety of
+generated parsers), we disallow types such as $\pmu \ptyvar
+\ptyvar$. More generally, we ensure that
+recursive type variables are separated from their binder by at least
+one basic primitive, such as a product or sum, a condition called {\it contractiveness}.''
+
+% Second-to-last paragraph: "Sequences have the most complicated
+% semantics..." A good sign that they shouldn't really be formal 
+% primitives.
+
+-- agreed but not dealt with.
+
+% Section 5:
+
+% One thing that would be very nice to see in this section, or in future
+% work, is a concrete condition under which a generated parser is 
+% guaranteed
+% to terminate. This condition would presumably depend on the
+% contractiveness property discussed earlier, since the basic purpose of
+% contractiveness seems to be to rule out parsers that trivially loop 
+% forever
+% without making progress. Since DDC grammars can contain arbitrary 
+% semantic
+% predicates and such, the condition would presumably also have to depend 
+% on
+% some assumption to the effect that each individual semantic expression
+% appearing in the grammar is guaranteed to terminate. A parser generator
+% obviously cannot be expected to check this second assumption 
+% automatically
+% - it's the ol' Halting Problem - but even a conditional termination 
+% proof
+% would at least nicely guarantee that if a parser fails to terminate, 
+% it's
+% not the fault of the basic grammar structure or parser generator.
+
+-- I agree.
+
+% Taking this idea further, since the pure "syntax-only" part of DDC's
+% parsing model appears basically equivalent to that of TDPL and PEGs, 
+% which
+% can be parsed in linear time, it seems that it should similarly be 
+% possible
+% to establish formal performance guarantees for DDC-based grammars, given
+% some suitable assumption on the runtimes of individual semantic
+% expressions. A likely rule that comes to mind is that if all of the
+% semantic actions in a DDC grammar are O(n^k), then it should be 
+% possible to
+% construct a parser that runs in O(n^(k+1)).
+
+-- this is a great idea but I see no smooth and sufficiently
+concise (!) way to extend the paper with comments on future work
+such as this.
+
+% >
+% --------------------------------------------
+% >
+
+% A SECOND REVIEWER WROTE (AXQ)
+
+% I really liked this paper, and I heartily recommend it for acceptance. 
+% I hope
+% that
+% this work will inspire designers of other domain-specific 
+% languages---and not
+% just in
+% the domain of data description---to consider analyzing their proposals 
+% from the
+
+% perspective of a "family" of related languages, rather than a one off 
+% design.
+
+% Here are my comments for the authors:
+
+% 1. I am not convinced that the primary criterion for the "goodness" of 
+% the
+% language
+% should be in terms of exactness of error correlation (Section 1.2, third
+% paragraph).
+% Sure, capturing a description of errors in data is an important and 
+% desirable
+% property
+% of a language's interpretation. But how about criteria on the language 
+% itself?
+% For
+% example, can you claim that *any* data description that can be parsed 
+% without
+% requiring a backtracking search can indeed be described in the language?
+
+-- I changed it from ``good'' and ``bad'' to ``reasonable'' and
+``unreasonable''...
+
+-- our condition is quite analogous to type safety in the sense that it is a
+baseline requirement that any language should have before even considering
+its other merits.
+
+% 2. The construct Popt in Figure 5 is not described in the text.
+
+-- fixed
+
+% 3. Section 3.1. Why use set types? It gives an impression of a 
+% collection,
+% whereas
+% all you can ever have is either a null or a singleton (if condition is
+% satisfied).
+
+-- I think we should use the language ``constrained type.''  I attempted
+to change all occurrences anywhere in the paper.  In the formal rules, 
+I changed names of rules from ``Set'' to ``Con''.
+-- we wind up saying ``the constraint in the constrained 
+type'' a couple of places but I could not do better...
+
+% 4. Section 3.1. "For sequences without terminators, we use bottom ...". 
+% This is
+% confusing, as bottom seems to carry a meaning of always failing. Why 
+% would you
+% not
+% use unit instead, because for termination you do not rely on parse 
+% failure of
+% anything, but instead on the expression "e"? Or am I missing something?
+
+-- reworded:
+
+ The type 
+$\ty_t$ is used when characters following the array will signal termination.
+For example, if a semi-colon signals the end of the array, then $\ty_t$ 
+should be $\pset{x}{\Pchar}{x = ';'}$. If no particular character or 
+string of characters
+signals the end of the array, $\ty_t$ can always be $\pfalse$.
+
+% 5. Section 3.1. Some discussion on why these primitives are sufficient 
+% (under
+% some
+% definition of 'sufficient') would be nice.
+
+-- I argue that all of sections 6 addresses this point.
+I do not think we need to make a further argument here.
+
+% 6. Section 4.3. I think that your algorithm for parsing sequences is 
+% certainly
+% one
+% reasonable way to do it, but it may not be sufficiently general. For 
+% instance,
+% you
+% could have an array for which the total number of bits in the array is 
+% known,
+% but not
+% the number of elements beforehand. Does the expression "e" take care 
+% of this?
+% At
+% least it is not clear from the paper. Another commonly-used idiom is 
+% that you
+% union
+% an untyped byte array of certain size with an array of some type but of
+% unspecified
+% number of elements. How would your parsing strategy for unions and 
+% sequences
+% deal with
+% this? Similarly (and as you note as well), the strategy for parsing 
+% unions may
+% not be
+% sufficiently general, because of the difficulty in telling apart an 
+% accidental
+% exact
+% parse of an unintended branch, versus an erroneous match of an intended 
+% branch
+% because
+% of error in the data.
+
+-- no response as my previous comment above.  Really, we are setting
+   up a framework -- a Landin ``family of languages'' in which one can
+   understand slight variations and study such questions in depth.
+
+% 7. Would it be possible to not "hard code" the traversal strategies for 
+% unions
+% and
+% sequences in the DDC semantics?
+
+-- no response.  I do not know what this means...
+
+% 8. It would be great if somehow you could extend the calculus to allow 
+% stateful
+% parsing. Several protocols, e.g. ASN.1 encodings, subtantially alter the
+% "grammar" of
+% later data based on seeing certain values earlier on. Essentially, the 
+% parser
+% needs
+% to have a notion of modes, and certain data values switch parser modes.
+
+-- simple modes can be implemented simply but parameterizing all types.
+IDEA:  Use monadic types as descriptions to hide the parameter passing??
+
+% 9. For such a well-written paper, it is needlessly sloppy at places. 
+
+-- I hate it when referees make comments like this.  We did a lot of
+proofreading.  We tried our best.  So we're not perfect!  Just tell us
+where the errors are. We will fix them.
+
+% The
+% authors
+% should take care to fix all typos and nits. Is it J.P.Landin (Section 
+% 1.2) or
+% P.J.
+% Landin (Section 7.3)? 
+
+P.J. -- fixed where I noticed.
+
+% You may want to add a reference to his article in 
+% the
+% biblio-
+% graphy. There are several spelling mistakes, both in the main text and 
+% in the
+% bibliography, e.g. "Packrat" parsing.
+
+
+% PC MEMBER COMMENTS:
+
+% I have just a couple of comments to add to the reviewers' ones.
+% The use of dependent types, while justified in the text does not
+% look justified in the example. In section 3.3 the dependent 
+% product types
+% are not "dependent". Could you give a practical example in of \Sigma 
+% x:s.t
+% with x occurring in t?
+
+-- weblog already does this...but I made it *even clearer* in the text
+
+% The other point is that you often use sigleton types, i.e. { x:t | x=v 
+% }.
+% Wouldn't it be convinient to add singleton types (e.g. v) to your types?
+% It is not just a matter of syntactic sugar but the fact that usually the
+% match of singleton types can be much more effciently compiled and easily
+% optimized w.r.t. your set definition (which BTW recall me a lot the list
+% comprehensions.
+
+-- efficiency is irrelevant here
+
+-- singleton types are clearly a trivial extension. 
+
+-- no comment
+
+% ======================================================================== 
+% ====
+% REVIEWER #2
+% ======================================================================== 
+% ====
+
+
+% Reviewer's Scores
+% -----------------------------------
+
+% Evaluation: A
+% Confidence: X
+% Innovation: Q
+
+
+% ------------------------------------------------------------------------ 
+% ---
+% Detailed Comments
+% ------------------------------------------------------------------------ 
+% ---
+
+% If I were allowed one complaint, albeit a small one, I would say that
+% the use of dependent types does not come out so clear as the other
+% parts of the paper. In particular, it is true that some dependent
+% types are needed, but it is not clear how _much_ dependent type power
+% you actually need in practice.
+
+-- ... these people do not realize that every expression 
+that appears in any of our examples gives rise to
+a dependent type... Dell with a four
+
+% ANOTHER REVIEWER WRITES:
+
+% I find this work quite exciting as it provides a theoretical
+% foundation not only for the PADS language developed by the authors,
+% but a foundation that is reusable for anyone who is interested in
+% creating a language for data description based on types; in particular
+% if one wants to embed such a language in a typed functional language.
+
+% The types described in the paper are such that they describe three
+% different things: the set of valid bit strings in the external data
+% format and two data structures in the host language. One that
+% represents the data and one, a parse descriptor which keeps track of
+% the errors found in the external data.
+
+% I think that having all these three aspects be a part of the type
+% complicates the description. It makes Section 4 harder to understand
+% than it needs to be. Particularly Figure 13 would be more easily
+% understandable if the parse descriptor were separated from the type.
+
+% The upside is that this allows the authors to show that there will be
+% no syntactic or semantic errors in the host type representing the
+% data when the parse descriptor does not contain any errors.
+
+% The authors note in Section 1 that this means that the data consumers
+% can rely on the integrity of data marked as error free. And indeed
+% this data will be type correct, but false positives can still happen.
+% Suppose for example that a type contains a zero terminated string and
+% that in the buggy input data the zero termination for a string is
+% missing. If zeros only appear as string terminators and there is only
+% one string in the type then the data will probably be considered
+% correct.
+
+% example type:
+
+
+% person_t = Pstruct {
+% number = Puint32; " ";
+% name = PString("0");"0";
+% } ;
+
+% person_t = Parray(Peor, Peof)
+
+
+% example file:
+
+
+% 123456 Joe Smith0
+% 234567 Eric Smith
+% 345678 John Smith0EOF
+
+
+% Two more points in the paper need further clarification:
+
+% 1. What is the unit of offsets? In figure 13 the scan(t) updates the
+% offset with 1. What unit is that 1? Is it bits, bytes, words or
+% something else? You should mention this.
+
+-- fixed
+
+% 2. Is it necessary to convert the data into a canonical in memory
+% representation and instead use the type to operate on the data as
+% it is represented as raw data? This could be useful when one is
+% only interested in a small fragment of the information contained in
+% the file.
+
+-- beyond the scope of this paper... not dealt with.
+
+% SOME DETAILS NOTED BY THE PC MEMBER:
+
+% - Page 2, middle and Page 3, first bullet: BLT probably refers to
+% "Bit-Level Types" but this has not been introduced.
+
+-- done
+
+% - Sect 1.2: It is "P.J." not "J.P." !!
+% (Also, you probably owe the guy a citation...)
+
+-- done
+
+% - Sect 2: I find the references to [11] and [12] a bit unnecessary.
+
+-- I disagree. they are retained (harper's minml and Pierce et al.'s featherweight java are the cites)
+
+% - Fig 5: Couldn't find the "Popt" explanation anywhere...
+
+-- done.
+
+% COMBINED COMMENTS FROM THE PC MEMBER AND THE SUB-REVIEWER:
+
+% We think the paper is a clear accept. Besides being well-written, the
+% paper makes an important contribution: It offers a solid theoretical
+% basis on which to formalize a set of data description languages that
+% so far have been developed in a rather ad hoc way. In comparison with
+% the PLDI'05 paper on the PADS system, we think this paper describes
+% these types of languages far more consistently. In fact, after reading
+% the IPADS language given in this paper, we now understand PADS and the
+% PLDI paper much better! (We hope that the first author will not read
+% this as a criticism, but as a sincere compliment for the current
+% paper.) Showing how the data description calculus can be used to
+% encode features not found in PADS, but in other data description
+% languages was also very helpful.
+
+% To sum up by paraphrasing the paper's title, we think this paper is
+% indeed useful not only for the PADS language of the authors, but for
+% anyone wishing to construct any of the other 699 data description
+% languages.
+
+% ======================================================================== 
+% ====
+% REVIEWER #3
+% ======================================================================== 
+% ====
+
+
+% Reviewer's Scores
+% -----------------------------------
+
+% Evaluation: A
+% Confidence: X
+% Innovation: Q
+
+
+% ------------------------------------------------------------------------ 
+% ---
+% Detailed Comments
+% ------------------------------------------------------------------------ 
+% ---
+
+% This paper is outstanding in a number of ways. Firstly, it is
+% practical. It addresses the problem of ad hoc data by proposing a new
+% class of languages, data description languages (DDLs), that can be
+% used to give a high level specification of the structure of a given
+% format, and simultaneously, a parser for that format. Given the
+% multitude of ad hoc data sources this work fulfils a real need.
+
+% The paper is also novel in that it comprehensively tackles the problem
+% of erroneous data. (Unlike more formal data such as
+% well-defined file formats and protocols, errors do not necessarily mean
+% that a data source is unusable.) Another novel feature of the paper is
+% the identification of the dual role types play in DDLs: they describe
+% both the external (on-disk) and internal (programmatic) format of ad
+% hoc data.
+
+% The paper is admirably complete. First we are presented with an
+% idealised DDL called IPADS and an informal description. A calculus for
+% describing DDLs is then described: the Data Description Calculus
+% (DDC). We are then shown how each of IPADS' features is 
+% described in
+% DDC. Owing to the nature of DDLs standard notions of correctness
+% (such as "well typed programs do not go wrong") do not apply. A new
+% correctness criterion is defined: all errors in an ad hoc data source
+% must be accurately recorded in the parse descriptor. We are then
+% presented with a denotational semantics for DDC via a translation to
+% an modest extension to the simply typed polymorphic lambda calculus.
+% Finally, the new correctness criterion is proven to be true for parse
+% descriptors generated from DDC specifications. The techniques have
+% also been applied to DDLs not created by the authors. They show how
+% key features of PACKETTYPES and DATASCRIPT can be adequately described
+% in DDC.
+
+% The overall goal of the paper is to follow Landin's prescription for
+% language design: to map out a formal space of language features so
+% that language design becomes a principled exercise of choosing a
+% well-defined point in that space. It has succeeded in this goal. In
+% the process valuable insights have been gained, perhaps the most
+% notable being the orthogonalisation of the "absorb" and "compute"
+% features of PADS. Originally these were restricted to structure and
+% union declarations but become first class citizens in DDC. The
+% creation of DDC also highlighted language features worthy of deeper
+% thought, such as the behaviour of the IPADS' Punion construct. (It
+% represents a parser that applies one of a number of other parsers by
+% searching for the first parser which succeeds on a given input.) At
+% present, if a parser fails, the next one is applied. It may however
+% make more sense to record the error and continue parsing with the
+% first parser. The design of a new semantics is left as future work.
+
+% The paper is also highly polished. The paper flowed well and the
+% topics were presented in an order which facilitated the reader's
+% understanding. Also, the use of the available space was
+% economic. This reviewer was surprised at how much the authors managed
+% to fit into a single paper.
+
+% This reviewer was a little surprised that no mention of the similarity
+% between the semantics of DDC and parser combinators was made. Graham
+% Hutton's paper "Higher-Order Functions for Parsing" defines primitive
+% parsers such as "fail" and "succeed" and parser combinators such as
+% "alt" and "then" which struck me immediately as being analogous to the
+% unit, bottom, sum and dependent product types of DDC.
+
+-- still needs to be addressed.

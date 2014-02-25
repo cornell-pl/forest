@@ -1,0 +1,166 @@
+The following is the initial portion of a student record, shown here
+to illustrate the format.
+\begin{code}
+KESSEL, PHIL	   BSE   '11
+- - - - - - - - - - - - - - - - - - -
+Type    Yr  Course     Grade
+         1             A+ to F
+d        2             P  (  Pass )
+t  D  p  3             INC
+o  .  .  4  Dept  xxx  N  (Not Avail)
+- - - - - - - - - - - - - - - - - - -
+d  .  .  1  COS   101  C
+o  .  .  1  HOC   101  A
+o  .  .  1  GOL   599  A+
+...
+\end{code}
+
+\begin{code}
+\textcolor{red}{-- Auxiliary Haskell functions for PADS description}
+ws   = RE "[ \t]+"
+ows  = RE "[ \t]*"
+junk = RE ".*"
+space = ' '
+quote = '\''
+comma = ','
+\end{code}
+
+\begin{code}
+\textcolor{red}{-- PADS description of Princeton CS Student Record Format}
+[pads| 
+  \kw{type} Grade = StringME '[ABCD][+-]?|F|AUD|N|INC|P'
+\mbox{}
+  \kw{data} Course = Course
+    \{ sort         :: StringME '[dto]',      ws
+    , departmental :: StringME '[.D]',       ws
+    , passfail     :: StringME '[.p]',       ws
+    , level        :: StringME '[1234]',          ws
+    , department   :: StringME '[A-Z][A-Z][A-Z]', ws
+    , number       :: Int \kw{where} <| 100 <= number && number < 600 |>, ws
+    , grade        :: Grade,                 junk                               
+    \} 
+\mbox{}
+  \kw{data} MiddleName = MiddleName \{space, middle :: StringME '[a-zA-Z]+[.]?' \}           
+\mbox{} 
+  \kw{data} FullName(myname::String) = FullName
+    \{ lastname   :: StringME '[a-zA-Z]*'  \kw{where} <| lastname ==  myname |>,  comma, ows     
+    , firstname  :: StringME '[a-zA-Z]*' 
+    , middlename :: Maybe MiddleName
+    \}
+\mbox{}
+  \kw{data} School = AB | BSE
+\mbox{}
+  \kw{data} Person (myname::String) =
+    \{ fullname   :: Student_Name myname,    ws
+    , school     :: School,                 ws, quote
+    , year       :: StringME '[0-9][0-9]'
+    \}
+\mbox{}
+  \kw{type} Junk    = Line (StringME <|RE ".*"|>)
+  \kw{type} Header  = [Junk] \kw{length} 7 
+  \kw{type} Trailer = [Junk] \kw{terminator} EOF 
+\mbox{}
+  \kw{data} Student (name::String) = 
+    \{ person  :: Line (Person name)
+    , Header  
+    , courses :: [Line Course]
+    , Trailer
+    \}
+|]
+\end{code}
+
+\begin{code}
+\textcolor{red}{-- Auxiliary Haskell functions for Forest description}
+template s = s `elem` ["SSSS.txt", "SSS.txt", "sxx.txt", "sss.txt", "ssss.txt"]
+not_template = not . template
+\mbox{}
+getYear :: String -> Integer
+getYear s = read (reverse (take 2 (reverse s)))
+toStrN i n = (replicate  (n - length (show i)) '0') ++ (show i)
+mkClass y = "classof" ++ (toStrN y 2)
+\mbox{}
+transferRE  = RE "TRANSFER|Transfer"
+leaveRE     = RE "LEAVE|Leave"
+withdrawnRE = RE "WITHDRAWN|WITHDRAWAL|Withdrawn|Withdrawal|WITHDREW"
+cRE         = RE "classof[0-9][0-9]" 
+txt         = GL "*.txt"
+\end{code}
+
+
+\begin{code}
+\textcolor{red}{-- FOREST description of Princeton CS Department Database}
+[forest|
+  \textcolor{red}{-- Root of the hierarchy}
+  \kw{type} PrincetonCS (y::Integer) = \kw{Directory}
+    \{ notes     \kw{is} "README" :: Text
+    , seniors   \kw{is} <|mkClass y      |> :: Class y
+    , juniors   \kw{is} <|mkClass (y + 1)|> :: Class <| y + 1 |>
+    , graduates :: Grads
+    \}
+\mbox{}
+  \textcolor{red}{-- Collection of directories containing graduated students}
+  \kw{type} Grads = 
+     Map [ c :: Class <| getYear c |> | c <- matches cRE ] 
+\mbox{}
+  \textcolor{red}{-- Directory containing all students in a particular year}
+  \kw{type} Class (y :: Integer) = \kw{Directory}
+    \{ bse \kw{is} <|"BSE" ++ (toStrN y 2)|> :: Major
+    , ab  \kw{is} <|"AB"  ++ (toStrN y 2)|> :: Major   
+    , transfer  \kw{matches} transferRE  :: Maybe Major 
+    , withdrawn \kw{matches} withdrawnRE :: Maybe Major 
+    , leave     \kw{matches} leaveRE     :: Maybe Major 
+    \}
+\mbox{}
+  \textcolor{red}{-- Collection of files containing all students in a particular major.}
+  \kw{type} Major = Map 
+    [ s :: File (Student <| dropExtension s |>) 
+    | s <- \kw{matches} txt,  <| (not . template) s |>  ]  
+|]
+\end{code}
+\vfill{}
+
+\subsubsection{Generated Description}
+
+Here follows a description generated from a small sample of the
+student directory data using the description inference tool.
+
+%\begin{figure}
+\begin{code}
+\kw{data} transfer = \kw{Directory} \{
+\}
+
+\kw{data} wITHDREW = \kw{Directory} \{
+    fingertxt \kw{is} "finger.txt" :: File Text
+\}
+
+\kw{data} tRANSFER = \kw{Directory} \{
+    bEAUCHEMINtxt \kw{is} "BEAUCHEMIN.txt" :: File Text,
+    vERSTEEGtxt \kw{is} "VERSTEEG.txt" :: File Text
+\}
+
+\kw{data} bSE11 = \kw{Directory} \{
+    transfer \kw{is} "transfer" :: transfer,
+    bOZAKtxt \kw{is} "BOZAK.txt" :: File Text,
+    kESSELtxt \kw{is} "KESSEL.txt" :: File Text,
+    ssstxt \kw{is} "sss.txt" :: File Text
+\}
+
+\kw{data} aB11 = \kw{Directory} \{
+    kADRItxt \kw{is} "KADRI.txt" :: File Text,
+    mACARTHERtxt \kw{is} "MACARTHER.txt" :: File Text,
+    oRRtxt \kw{is} "ORR.txt" :: File Text,
+    sSSStxt \kw{is} "SSSS.txt" :: File Text
+\}
+
+\kw{data} classof11 = Directory \{
+    aB11 \kw{is} "AB11" :: aB11,
+    bSE11 \kw{is} "BSE11" :: bSE11,
+    tRANSFER \kw{is} "TRANSFER" :: tRANSFER,
+    wITHDREW \kw{is} "WITHDREW" :: wITHDREW
+\}
+\end{code}
+%\caption{Generated description. Type \texttt{File Text} is synonymous
+%  with \texttt{TextFile}.}
+%\label{fig:generated-description}
+%\end{figure}
+%\vfill

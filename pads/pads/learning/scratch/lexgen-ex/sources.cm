@@ -1,0 +1,8 @@
+Library
+  structure Main
+is
+  $/basis.cm
+  $smlnj/compiler/compiler.cm
+  
+  main.sml
+  tokens.lex.sml   (* to regenerate: lexgen --ml-lex-mode tokens.lex *)

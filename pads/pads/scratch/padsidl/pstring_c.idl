@@ -1,0 +1,34 @@
+import "padsc.idl";
+
+/* Prefix function name with i (for idl) b/c Pstring_read is an existing macro. 
+   Same for other functions.
+*/
+Perror_t iPstring_FW_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in] size_t width)
+     quote(call,
+	   "Pstring_init(pads,s_out);
+            _res = iPstring_FW_read(pads, pd, s_out, width);")
+     quote(dealloc,"Pstring_cleanup(pads,s_out);");
+
+Perror_t iPstring_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in] Pchar stopChar)
+     quote(call,
+	   "Pstring_init(pads,s_out);
+            _res = iPstring_read(pads, pd, s_out, stopChar);")
+     quote(dealloc,"Pstring_cleanup(pads,s_out);");
+
+Perror_t iPstring_ME_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in,string] const char *matchRegexp)
+     quote(call,
+	   "Pstring_init(pads,s_out);
+            _res = iPstring_ME_read(pads, pd, s_out, matchRegexp);")
+     quote(dealloc,"Pstring_cleanup(pads,s_out);");
+
+Perror_t iPstring_SE_read([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pstring *s_out,
+                    [in,string] const char *stopRegexp)
+     quote(call,
+	   "Pstring_init(pads,s_out);
+            _res = iPstring_SE_read(pads, pd, s_out, stopRegexp);")
+     quote(dealloc,"Pstring_cleanup(pads,s_out);");
+
+

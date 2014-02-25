@@ -1,0 +1,71 @@
+#
+# File:		Makefile for samples
+# Author:	Robert Roebling
+# modified by Mark Daly
+# Created:	1999
+# Updated:	
+# Copyright:	(c) 1998 Robert Roebling
+#
+# This makefile requires a Unix version of wxWindows
+# to be installed on your system. This is most often
+# done typing "make install" when using the complete
+# sources of wxWindows or by installing the two
+# RPM packages wxGTK.XXX.rpm and wxGTK-devel.XXX.rpm
+# under Linux.
+
+# this makefile may also be used as a template for simple makefiles for your
+# own programs, the comments explain which parts of it you may have to modify
+# to use it for your own programs
+
+
+# you may change WX_CONFIG value to use a specific wx-config and to pass it
+# some options, for example "--inplace" to use an uninstalled wxWindows
+# version
+#
+# by default, wx-config from the PATH is used
+WX_VERSION = 2.6.2
+WX_CONFIG := ${HOME}/wxGTK-${WX_VERSION}/build_gtk/wx-config
+
+# set XERCESCHOME to the path where the Xerces library lives
+XERCES_DIR = ${XERCESCHOME}
+XERCES_INC = ${XERCES_DIR}/include/
+XERCES_LIB = xerces-c
+
+# set this to the name of the main executable file
+PROGRAM = LaunchPADS
+
+XMLPATH = ${HOME}/tinyxml
+
+XMLSOURCES = ${XMLPATH}/tinyxml.cpp ${XMLPATH}/tinyxmlerror.cpp ${XMLPATH}/tinyxmlparser.cpp ${XMLPATH}/tinystr.cpp
+
+PATHS = -I ${HOME}/wxGTK-${WX_VERSION}/art/ -I ${XMLPATH} -I ${XERCES_INC}
+
+# if your program has more than one source file, add more .o files to the line
+# below
+XERCES_FLAGS= -l${XERCES_LIB} 
+PADSLANG_DIR = ./padslang
+INSPECTOR_DIR = ./inspector
+PADSLANG_OBJECTS = ${PADSLANG_DIR}/PADS_lang.o ${PADSLANG_DIR}/PADS_lang_factory.o ${PADSLANG_DIR}/PADS_lang_helper_classes.o \
+ ${PADSLANG_DIR}/PADS_lang_simple_tree.o ${PADSLANG_DIR}/PADS_lang_pnode_tree.o ${PADSLANG_DIR}/PADS_lang_xerces_parser.o
+INSPECTOR_OBJECTS = ${INSPECTOR_DIR}/PADS_inspector.o
+MINIMAL_OBJECTS = bottom.o lp_PADS.o mid.o right.o tool_proc.o left.o lp_XML.o shell_d.o tool_proc_event.o \
+lp_CodeGen.o main_event.o prefs.o state_seq.o top.o padx_d.o LaunchPADS.o \
+tinyxml.o tinystr.o tinyxmlerror.o tinyxmlparser.o lp_PNode_Container.o left_new_additions.o \
+${PADSLANG_OBJECTS} ${INSPECTOR_OBJECTS}
+
+# you shouldn't have to edit anything below this line
+CXX = $(shell $(WX_CONFIG) --cxx)
+
+.SUFFIXES:	.o .cpp
+
+.cpp.o :
+	$(CXX) -c  $(PATHS) `$(WX_CONFIG) --cxxflags` -o $@ $<
+
+all:    $(PROGRAM)
+
+$(PROGRAM):	$(OBJECTS)
+	$(CXX) -o $(PROGRAM) $(PATHS) $(OBJECTS) ${XERCES_FLAGS} $(XMLSOURCES) \
+`$(WX_CONFIG) --libs`
+
+clean: 
+	rm -f *.o $(PROGRAM)

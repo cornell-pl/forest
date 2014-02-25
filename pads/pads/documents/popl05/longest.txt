@@ -1,0 +1,72 @@
+Greedy arrays:
+
+  not t = {x: opt t | case x.rep of inl _ => false | _ => true}
+
+  Can talk about importance of correct abstractions.
+
+pty PLarray(pty_sep) = 
+t seq(t_sep, \x.false, t_term)
+where
+  pty_sep ==> t_sep
+  t_term = not (t_sep * t)
+
+Note that Plongest looks for perfect entries, as opposed to non-panic
+ones. I think this is another example of an interesting bit of
+research - using case studies to move from perfection-based
+speculation to fuzzy speculation, where fuzzy means there's some
+logic, perhaps parameterized behind it.
+
+============================
+
+Indexed parameters:
+
+G,index:int |- pty => t
+G |-  pty_sep ==> t_sep
+G |-  pty_term ==> t_term
+---------------------------
+G |- pty Iarray(pty_sep, pty_term) ==>
+t seq(t_sep, \x.false, t_term)
+
+Need change in ddc semantics to support access of array rep/pd in [t]
+parser. Not hard.
+
+===========================
+
+Non-overlapping Labels:
+
+A:
+
+  Introduce new operator: currentOff: unit -> off.
+
+  skipTo(off) = absorb(byte seq(ptrue,isLength (off - currentOff()),pfalse))
+
+B:
+  Introduce new base type skip(off):
+
+C:
+
+D:
+
+  Abrreviation:
+  skip(distance) = absorb(Pbyte seq(ptrue,isLength distance,pfalse))
+
+  Pstruct{
+  foo::
+    x: pty_x;
+  bar::
+    y: pty_y;
+  baz::
+    z:  pty_z;
+  }
+
+  ===>
+
+  _w_: ptrue.
+  skip(foo-_w_.sp.end) *
+  x : t_x.
+  skip(bar-x.sp.end) *
+  y : t_y.
+  skip(baz-y.sp.end) *
+  z : t_z
+  
+

@@ -1,0 +1,478 @@
+The \padsd{} language allows users to describe streams of data and
+meta-data that we refer to as {\em feeds}.  
+To introduce the central features of the language,
+we work through a series of examples 
+drawn from the CoMon and \vizGems{} monitoring systems.
+
+\begin{figure}[t]
+\begin{code}
+\kw{let} sites = 
+  [
+    "http://pl1.csl.utoronto.ca:3121";
+    "http://plab1-c703.uibk.ac.at:3121";
+    "http://planet-lab1.cs.princeton.edu:3121"
+  ] 
+\kw{feed} simple_comon =
+  \kw{base} \{|
+    \kw{sources}  = \kw{all} sites;
+    \kw{schedule} = every 5 min, starting now, 
+               timeout 60.0 sec; 
+    \kw{format}   = Comon_format.Source;  
+  |\}
+\end{code}
+\vskip -1.5ex
+\caption{Simple CoMon feed (\texttt{simple\_comon.fml}).}
+\label{fig:simplecomon}
+\end{figure}
+
+\begin{figure}[t]
+\begin{code}
+\kw{feed} comon_1 =
+  \kw{base} \{|
+    \kw{sources}  = \kw{any} sites;
+    \kw{schedule} = every 5 min, lasting 2 hours;
+    \kw{format}   = Comon_format.Source;
+  |\}
+\end{code}
+\vskip -2ex
+\caption{Description fragment for data from one of many sites (\texttt{sites.fml}).}
+\label{fig:comon_1}
+\end{figure}
+
+
+\subsection{CoMon Feeds}
+\figref{fig:simplecomon} presents a simple CoMon statistics feed.
+This description 
+specifies the \cd{simple\_comon} feed
+using the \kw{base} feed constructor.  The \kw{sources} field
+indicates that data for the feed comes from \kw{all} of the locations
+listed in \cd{sites}.  The \kw{schedule} field specifies that relevant
+data is available from each source every five minutes, starting immediately.
+When trying to fetch such data, the system may occasionally fail,
+either because a remote machine is down or because of network
+problems. To manage such errors, the schedule specifies that the
+system should try to collect the data from each source for 60 seconds.
+If the data does not arrive within that window, the system should give
+up. 
+
+The last field in a base feed constructor is the \kw{format} field,
+which specifies the syntax of the fetched data by supplying a parser
+for it.  In this case, \cd{Comon_format.Source} is  
+actually a parser generated from a
+\padsml{}~\cite{mandelbaum+:pads-ml} specification file  
+(\cd{comon_format.pml}), which we have omitted because of space
+constraints.  While it is not strictly necessary for
+\padsd{} programmers to use \padsml{} specifications in their descriptions,
+and the key ideas in this paper can be understood without a deep knowledge
+of \padsml{}, the two languages have been designed to fit together elegantly.
+Moreover, several of our generated tools exploit the common underlying 
+infrastructure to enable useful data analyses and transformations over
+feeds whose formats are specified by \padsml{} descriptions.
+
+% \padsml{}~\cite{mandelbaum+:pads-ml} description named
+% \cd{Source} defined in the file \cd{comon_format}.
+
+A simple variation of our first description appears in \figref{fig:comon_1}.
+In contrast to \cd{simple\_comon}, which returns data from
+{\em all} sites per time slice, \cd{comon\_1} returns data from just 
+{\em one} site per time slice. 
+This difference between the two is
+specified using the \kw{any} constructor instead of the \kw{all}.
+%
+%
+This feature is particularly useful when monitoring the
+behavior of replicated systems, such as those using
+state machine replication, consensus protocols, or even
+loosely-coupled ones such as Distributed Hash Tables (DHTs) 
+\cite{Balakrishnan+03:dht}.
+In these systems, the same data will be available from any
+of the functioning nodes, so receiving results from the first
+available node is sufficient. 
+%These kinds of monitoring systems
+%are useful in the face of partial network unreachability or
+%machine failure. Specifying this behavior at the language level
+%provides a simpler implementation than network-centric approaches such
+%as anycast \cite{anycast}. 
+%
+The schedule for \cd{comon\_1} indicates the system should fetch data
+every five minutes for two hours, using the \cd{lasting} field to indicate
+the duration of the feed.  It omits the \cd{starting} and
+\cd{timeout} specifications, causing the system to use default
+%settings of \cd{now} for the start time and 30 seconds for the
+%timeout.  
+settings for the start time and the timeout window.  
+
+
+\begin{figure}
+\begin{code}
+(* Ocaml helper values and functions *)
+\kw{let} config_locations = 
+  ["http://summer.cs.princeton.edu/status/ \\
+    tabulator.cgi?table=slices/ \\
+    table_princeton_comon&format=nameonly"]
+
+(* Feed of nodes to query *)
+\kw{feed} nodes =  
+  \kw{base} \{|
+    \kw{sources}  = \kw{all} config_locations;
+    \kw{schedule} = every 5 min;
+    \kw{format}   = Nodelist.Source;
+  |\}
+
+\kw{let} makeURL (Nodelist.Data x) = 
+     "http://" ^ x ^ ":3121"
+
+\kw{let} old_locs = ref []
+\kw{let} current list_opt =
+  \kw{match} list_opt \kw{with}
+    Some l ->  old_locs := l; l
+  | None   -> !old_locs
+
+(* Dependent CoMon feed of node statistics *)
+\kw{feed} comon =
+  \kw{foreach} nodelist \kw{in} nodes 
+  \kw{create}
+    \kw{base} \{|
+      \kw{sources}  = \kw{all} (List.map makeURL 
+                     (List.filter Nodelist.is_node 
+                     (current (value nodelist))));
+      \kw{schedule} = once, timeout 60.0 sec; 
+      \kw{format}   = Comon_format.Source;
+    |\}
+\end{code}
+\vskip -2ex
+\caption{Node location feed drives
+  data collection (\texttt{comon.fml}).}
+\label{fig:feedcomon}
+\shrink
+\end{figure}
+
+
+
+\begin{figure}
+\begin{code}
+\kw{ptype} nodeitem =
+  Comment of '#' * pstring_SE(peor)
+| Data of pstring_SE(peor)
+
+\kw{let} is_node item = 
+  \kw{match} item \kw{with}
+  Data _ -> true
+  | _ -> false
+
+\kw{ptype} source = 
+    nodeitem precord plist (No_sep, No_term)
+\end{code}
+\vskip -2ex
+\caption{\padsml{} description (\texttt{nodelist.pml}) for CoMon configs, 
+with one host name per uncommented line.}
+\label{fig:nodepml}
+\shrink
+\end{figure}
+
+
+So far, our examples have hard-coded the set of locations from
+which to gather data.  In reality, however, the CoMon system has an
+Internet-addressable configuration file that contains a list of hosts
+to be queried, one per non-comment line. This list is periodically
+updated to reflect the set of active nodes in PlanetLab. 
+\figref{fig:feedcomon} specifies a version of the \cd{comon} feed that
+depends upon this configuration information.  To do so, the
+description includes an auxiliary feed called \cd{nodes} that describes the
+configuration information: it is available from the
+\cd{config_location}, it should be fetched every five minutes, and its
+format is described by the \padsml{} description \cd{source} given in
+the file \cd{nodelist.pml}, which appears in \figref{fig:nodepml}.
+
+The \padsml{} description in \figref{fig:nodepml} 
+specifies that \cd{source} is a list (\cd{plist}) of
+new-line terminated records (\cd{precord}) each containing a \cd{nodeitem}.  In
+turn, a \cd{nodeitem} is either a \cd{'#'} character followed by a
+comment string, which should be tagged with the \cd{Comment}
+constructor, or a host name, which should be tagged as
+\cd{Data}. The description also defines a helper function \cd{is_node},
+which returns true if the data item in question is a host name
+rather than a comment.  Given this specification, the \cd{nodes} feed
+logically yields a list of host names and comments every five minutes.
+In fact, because of the possibility of errors, the feed actually
+delivers a {\em list option} every five minutes: \cd{Some} if the list is
+populated with data, \cd{None} if the data was unavailable at the
+given time-slice.  Furthermore, to record provenance information, each
+element in the feed is actually a pair of meta-data and the payload
+value. 
+
+Given the \cd{nodes} specification, we can define 
+the \cd{comon} feed using the notation 
+\kw{foreach} \cd{nodelist} \kw{in} \cd{nodes} \kw{create} \cd{...}.
+In this declaration, each element of \cd{nodes} is bound in turn to
+the variable \cd{nodelist} for use in generating the new feed
+declared in ``\cd{...}'' 
+The final result of the \kw{foreach} is the union of all such newly
+generated feeds.  Both the payload data {\em and} the provenance
+meta-data of \cd{nodelist}
+may be used in creating the dependent feed.  In this example, 
+we use the function \cd{value} to select only the payload portion,
+ignoring the meta-data. The complementary function \cd{meta} provides
+access to the provenance information.
+
+To complete the construction of the \cd{comon} feed,
+a small amount of functional programming allows the user 
+to manage errors and strip out comment fields.  Any such simple
+transformations may be written directly in \ocaml{}, the host language 
+into which we have embedded \padsd{}.  In particular, 
+the \cd{current} function checks if
+the \cd{nodelist} value is \cd{Some l}, in which case it caches \cd{l}
+before returning it as a result.  Otherwise, if the \cd{nodelist} value
+is \cd{None} (indicating an error), the most recently cached list of nodes 
+is used instead.  The
+rest of the \kw{sources} specification filters out comment fields and 
+converts the host names to URLs with the required port using the
+auxiliary function \cd{makeURL}.
+
+% The \kw{foreach ... create} construct merges the resulting data from
+% each machine into a single feed.  As
+% before, the format of data fetched from each node matches the
+% description \cd{Comon\_format.Source}.  
+
+With this specification, we
+expect to get data from all the active machines listed in the
+configuration file every five minutes.  We further expect the system to
+notices changes in the configuration file within five minutes.
+
+
+The previous examples all showcased feeds containing a single type
+of data.  \padsd{} also provides a datatype mechanism so we may
+construct compound feeds containing data of different sorts.  As an
+example of where such a construct is useful, the CoMon system includes a
+number of administrative data sources.  One such source is a collection of
+node profiles, collecting the domain name, IP address, physical
+location, \etc, for each node in the cluster.  A second such source is a
+list of authentication information for logging into the machines.
+These two data sources have different formats, locations, and update
+schedules, but system administrators want to keep a combined archive
+of the administrative information present in these sources.  If
+\cd{sites\_mime} is a feed description of the profile
+information and \cd{sites\_keyscan\_mime} is a feed of authentication
+information, then the declaration
+%
+\begin{code}
+\kw{feed} sites = 
+    Locale \kw{of} sites_mime
+  | Keyscan \kw{of} sites_keyscan_mime
+\end{code}
+%
+creates a feed with elements drawn from each of the two 
+feeds.  The constructors \cd{Locale} and \cd{Keyscan} tag each item in
+the compound feed to indicate its source. 
+
+% \subsection{\vizGems{} Example}
+% We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
+% the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse}
+% monitors a collection of machines described in a configuration file.
+% The \cd{hostList} description has the same form as the \cd{nodes} feed
+% we saw earlier, except it draws the data from a local file and only
+% once a day.  Unlike the earlier example, we use a \textit{feed
+% comprehension} to clean up this feed before creating the \cd{stats} feed.
+% The comprehension filters
+% the list of hosts to remove comments using the \cd{is_node} function
+% and we use the built-in \cd{flatten} function to convert the feed of
+% lists of hosts into a simple feed of hosts.  We use the \cd{mk\_host}
+% function to remove the \cd{Data} constructor around the hostnames to
+% simplify down-stream processing.
+
+% The \cd{stats} feed depends upon the \cd{hosts} feed.  For each host
+% \cd{h} in \cd{hosts}, it creates a schedule consisting of a single
+% time corresponding to ``now'' with a timeout of one minute.  It uses
+% this schedule \cd{s} to describe a compound feed, which pairs two base
+% feeds: the first uses the Unix command \cd{ping} to collect network
+% statistics about the remote machine while the second performs a remote
+% shell invocation using \cd{ssh} to find out statistics about how long
+% the machine has been up.  Both of these feeds use the \kw{proc}
+% constructor in the \kw{sources} field to compute the data on the fly,
+% rather than reading it from a file.  The argument to \kw{proc} is a
+% string that is executed in a freshly constructed shell.  The pairing
+% constructor for feeds takes a pair of feeds and returns a feed of
+% pairs, with elements sharing the same scheduled fetch time being
+% paired. This semantics is very convenient in this case, as it produces
+% a feed that for each host returns a pair of its ping and uptime
+% statistics, grouping together the information for each host. 
+% Of course, the full \vizGems{} monitoring application
+% uses many more tools than just ping and uptime to probe the remote
+% machine; the corresponding feed description has many more branches than this simplified version.
+
+
+% \begin{figure}
+% \begin{code}
+% \kw{let} config_locations = 
+%     [("file:///arrakis/config/machine_list")];
+
+% \kw{feed} hostList =  
+%   \kw{base} \{|
+%    \kw{sources}  = \kw{all} config_location;
+%    \kw{schedule} = every 1 day;
+%    \kw{format}   = Nodelist.Source;
+%  |\}
+
+% \kw{let} mk_host (Nodelist.Data h) = h
+
+% \kw{feed} hosts = 
+%     \{| mk_host n | n <- (flatten hostList), 
+%                    Nodelist.is_node n |\}
+
+% \kw{feed} stats =
+%   \kw{foreach} h \kw{in} hosts \kw{create}
+%   \kw{let} s = once, timeout 1 min \kw{in}
+%   (
+%    \kw{base} \{| 
+%       \kw{sources}  = \kw{proc} ("ping -c 1 " ^ h);   
+%       \kw{format}   = Ping.Source;  
+%       \kw{schedule} = s; |\},
+%    \kw{base} \{| 
+%       \kw{sources}  = \kw{proc} ("ssh " ^ h ^ " uptime");  
+%       \kw{format}   = Uptime.Source;  
+%       \kw{schedule} = s; |\}
+%   ) 
+% \end{code}
+% \vskip -2ex
+% \caption{\texttt{arrakis.fml} Simplified version of \vizGems{} feed.}
+% \label{fig:pulse}
+% \end{figure}
+
+
+\subsection{\vizGems{} Example}
+\label{sec:vizgems}
+We now shift to an example drawn from AT\&T's \vizGems{} project.  Like
+the earlier CoMon example, the \cd{stats} feed in \figref{fig:pulse2}
+monitors a collection of machines described in a configuration file.
+Before we discuss the \cd{stats} feed itself, we first explain some
+auxiliary feeds that we use in its definition.   
+
+The \cd{raw\_hostLists} description has the same form as the \cd{nodes}
+feed we saw earlier, except it draws the data from a local file once a
+day.  We use a \textit{feed comprehension} to define a clean
+version of the feed, \cd{host\_lists}.  In the comprehension, the
+built-in predicate \cd{is\_good} verifies that no errors occurred in
+fetching the current list of machines \cd{hl}, as would be expected
+for a local file.  The function \cd{get\_hosts} takes \cd{hl} and uses
+the built-in function \cd{get\_good} to extract the payload data from
+the provenance and error infrastructure, an operation that is
+guaranteed to succeed because of the \cd{is\_good} guard. The function
+\cd{get_hosts} then selects the non-comment entries and unwraps them to
+produce a list of unadorned host names.   
+
+We next define a feed generator \cd{gen_stats} that yields an
+integrated feed of performance statistics for each supplied host.
+When given a host \cd{h}, \cd{gen_stats} creates an every-five-minute
+schedule lasting twenty-four hours with a one minute timeout. It uses
+this schedule to describe a compound feed that pairs two base feeds:
+the first uses the Unix command \cd{ping} to collect network
+statistics about the route to \cd{h} while the second performs a
+remote shell invocation using \cd{ssh} to gather statistics about how
+long the machine has been up.  Both of these feeds use the \kw{proc}
+constructor in the \kw{sources} field to compute the data on the fly,
+rather than reading it from a file.  The argument to \kw{proc} is a
+string that the system executes in a freshly constructed shell.  The
+pairing constructor for feeds takes a pair of feeds and returns a feed
+of pairs, with elements sharing the same scheduled fetch-time being
+paired. This semantics produces a compound feed that for each host
+returns a pair of its ping and uptime statistics, conveniently
+grouping the information for each host.  Of course, the full
+\vizGems{} monitoring application uses many more tools than just \cd{ping}
+and \cd{uptime} to probe remote machines so the full feed description 
+has many more components than this simplified version.
+
+
+%% For each list of hosts in the
+%% \cd{host_lists} feed, we generate a {\em feed of lists} using 
+Finally, we define the feed \cd{stats}.  The most interesting piece
+of this declaration is the {\em list feed comprehension}, given in
+square brackets, that we use to generate a feed of lists. 
+Given a host list element \cd{hl}, the right-hand side of the comprehension
+uses the \cd{value} function to extract the payload from the meta-data and
+then considers each host \cd{h} from the resulting list in turn.  The left-hand side of
+the comprehension uses the \cd{gen_stats} feed generator to construct
+a feed of the statistics for \cd{h}.  The list feed comprehension then
+takes this collection of statistics feeds and converts them into a
+single feed, where each entry is a list of the statistics for
+the machines in \cd{hl} at a particular scheduled fetch-time.  
+We call each such entry a \textit{snapshot} of the system.
+The resulting feed makes it easy for down-stream users to perform
+actions over snapshots, relieving them of the burden of having to
+implement their own multi-way synchronization.
+Given the list feed comprehension, the \kw{foreach...create} construct
+generates a feed of snapshots from the feed of host lists.  
+%Whenever a
+%new host list arrives, the \kw{foreach...update} construct
+%terminates the snapshot feed from the old host list and starts
+%generating a new snapshot feed from the new host list.  
+
+% Note the difference between the \kw{foreach...create} construct 
+% from the CoMon example and the \kw{foreach...update} construct.  The
+% create form generates a collection of feeds and merges their
+% contents into a single all-inclusive feed.  The update form
+% generates a collection of feeds and produces a single feed by
+% concatenating the collection, stopping one feed as soon as the next is
+% generated. 
+% We have found the create form to be useful when the actual arrival
+% times of the argument feed are regular because the regularity means we
+% can give a finite schedule for the dependent feed.  In contrast, the
+% update form is useful when the argument feed is irregular and we must
+% give an infinite schedule for the dependent feed to ensure we get the
+% desired values.  We define precise semantics for the create and update
+% forms in \secref{sec:semantics}.
+
+
+% construct then merges this list of
+% feeds into a single feed with data for all the hosts.  This merged
+% feed delivers values for a given host list \cd{hl} until the next host
+% list \cd{hl}' arrives from the feed \cd{host\_lists}, at which point
+% it stops collecting data from the feeds generated from \cd{hl} and
+% starts gathering data from the machines in \cd{hl}'.
+
+% With this specification, we expect the system to return data for each
+% machine listed in the configuration file every five minutes.  We will
+% notice changes in the configuration file once a day.
+
+\begin{figure}
+\begin{code}
+\kw{let} config_locations =
+  [("file:///arrakis/config/machine_list")];
+
+\kw{feed} raw_hostLists =  
+  \kw{base} \{|
+   \kw{sources}  = \kw{all} config_locations;
+   \kw{schedule} = every 24 hours; 
+   \kw{format}   = Hosts.Source;   |\}
+
+\kw{let} get_host (Hosts.Data h) = h
+\kw{let} get_hosts hl =
+    List.map get_host 
+     (List.filter Hosts.is_node hl)
+
+\kw{feed} host_lists = 
+  \{| get_hosts (get_good hl) | 
+     hl <- raw_hostLists, is_good hl |\}
+
+\kw{feed} gen_stats (string h) = 
+  \kw{let} s = every 5 mins, 
+          timeout 1 min, 
+          lasting 24 hours \kw{in}
+  (
+   \kw{base} \{| 
+     \kw{sources}  = \kw{proc} ("ping -c 1 " ^ h);   
+     \kw{format}   = Ping.Source;  
+     \kw{schedule} = s; |\},
+   \kw{base} \{| 
+     \kw{sources}  = \kw{proc} ("ssh " ^ h ^ " uptime");  
+     \kw{format}   = Uptime.Source;  
+     \kw{schedule} = s; |\}
+  )
+
+\kw{feed} stats =
+  \kw{foreach} hl \kw{in} host_lists \kw{create}
+     [ gen_stats (h) | h <- value hl ]
+\end{code}
+\caption{Simplified version of \vizGems{} feed (\texttt{arrakis.fml}).}
+\label{fig:pulse2}
+\shrink
+\end{figure}

@@ -1,0 +1,130 @@
+{- This directory specification describes a subset of the files in
+pads/infer directory which are to be tarballed and released -}
+
+let benchmarks = [
+  "1967transactions.short";    
+  "mer_t01_01.csv";            
+  "ai.3000";
+  "asl.log";                   
+  "boot.log";                  
+  "convert.log";               
+  "crashreporter.log";         
+  "crashreporter.log.modified";
+  "dibbler.1000";              
+  "ls-l.txt";                  
+  "netstat-an";                
+  "page_log";                  
+  "quarterlypersonalincome";   
+  "railroad.txt";              
+  "rpmpkgs.txt";               
+  "scrollkeeper.log";          
+  "windowserver_last.log";     
+  "yum.txt" 
+]
+
+ let benchmarks_alt = [
+  "1967transactions";    
+  "mer_t01_01.csv";            
+  "ai";
+  "asl";                   
+  "boot";                  
+  "convert";               
+  "crashreporter";         
+  "dibbler";              
+  "ls-l";                  
+  "netstat-an";                
+  "page_log";                  
+  "quarterincome";   
+  "railroad";              
+  "rpmpkgs";               
+  "scrollkeeper";          
+  "windowserver_last.log";     
+  "yum" 
+]
+                 
+ptype data_d = pdirectory {
+  dataFiles is [d | d <- benchmarks] :: p_text <| permission = "-rw-r--r--" |>) dlist;
+  other files ...
+}
+
+ptype  gold_data_d = pdirectory {
+  dataFiles is [data | data <- benchmarks] :: (p_text <| permission = "-rw-r--r--" |>) dlist;
+}
+
+{- Pads gold descriptions represented as sml data structures. -}
+ptype ir_d = pdirectory {
+  irs is [data + ".sml" :: p_sml <| permission = "-rw-r--r--"|> | data <- benchmarks];
+}
+
+{- the gold descriptions of the 16 benchmarks, the naming convention is
+a bit different here. Maybe we want to consider renaming the .p files to
+follow the names in benchmarks list -}
+ptype gold_pads_d = pdirectory {
+  descriptions is [data + ".p" :: p_pads <| permission = "-rw-r--r--"|> | data <- benmarks_alt];
+}
+
+{- examples/gold directory -}
+ptype gold_d = pdirectory {
+  GNUmakefile :: p_make      <| permission.all = "r" && permission.user = "w" |>;
+  data        :: gold_data_d <| permission.all = "rx" |>;
+  ir          :: ir_d        <| permission.all = "rx" |>;
+  p           :: gold_pads_d <| permission.all = "rx" |>;
+}
+
+{- examples/results directory -- contains a makefile 
+   This directory has more structure than this.  The description should be fleshed out.  -}
+ptype results_d = pdirectory {
+  GNUmakefile :: p_make <| permission.all = "r" && permission.user = "w" |>;
+}
+
+{- examples directory -}
+ptype examples_d = pdirectory {
+  README      :: p_text    <| permission = "-rw-r--r--" |>;
+  GNUmakefile :: p_make    <| permission.all = "r" && permission.user = "w" |>;
+  data        :: data_d    <| permission.all = "rx" |>;
+  gold        :: gold_d    <| permission.all = "rx" |>;
+  results     :: results_d <| permission.all = "rx" |>;
+}
+
+ptype comment_t = "#" * pstring(eor);
+ptype def = "def" * pwhite * pword * pwhite * pstring(eor);
+ptype exp = "def" * pwhite * "P" * pword * pwhite * pstring(eor);
+ptype line_t = Def of def | Exp of ex | Comment of comment_t
+ptype config_f = line_t plist psource
+
+{- include directory -}
+ptype include_d = pdirectory {
+  README                               :: p_text   <| permission.all = "r" |>;
+  makefile     is "GNUmakefile.output" :: p_make   <| permission.all = "r" |>;
+  basetokens   is "basetoken.p"        :: p_pads   <| permission.all = "r" |>;
+  tokens       is "tokens.config"      :: config_f <| permission.all = "r" |>;
+  vanilla      is "vanilla.config"     :: config_f <| permission.all = "r" |>;
+}
+
+{- scripts directory -}
+ptype scripts_d = pdirectory {
+  config  is "config.pl"        :: p_perl <| permission = "-rwxr-xr-x" |>;
+  grapher is "grapher.template" :: p_perl <| permission = "-rwxr-xr-x" |>;
+  learn                         :: p_perl <| permission = "-rwxr-xr-x" |>;
+}
+
+ptype sourceFile_f = p_sml <| permission = "-rw-r--r--" |>;
+
+{- the source directory contains a main.cm and a list of sml files -}
+ptype  src_d = pdirectory {
+  main    is "main.cm" :: p_sml-cm <| permission = "-rw-r--r--" |>;
+  sources is {*.sml}   :: sourceFile_f dlist;
+}
+
+{- The root infer directory -}
+ptype infer_d = pdirectory {
+   README        :: p_text        <| permission.all = "r" |>;
+   INSTALL_NOTES :: p_text        <| permission.all = "r" |>;
+   text_license is "cpl-1.0-license.html" :: p_html <| permission.all = "r"  |>;
+   html_license is "cpl-1.0-license.txt"  :: p_text <| permission.all = "r"  |>;
+   GNUmakefile   :: p_make        <| permission.all = "r" |>;
+   examples      :: examples_d    <| permission.all = "rx" |>;
+   include       :: include_d     <| permission.all = "rx" |>;
+   scripts       :: scripts_d     <| permission.all = "rx" |>;
+   src           :: src_d         <| permission.all = "rx" |>;
+}

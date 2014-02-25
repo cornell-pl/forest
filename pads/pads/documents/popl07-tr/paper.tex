@@ -1,0 +1,79 @@
+%\documentclass[fleqn]{article}
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{xspace,pads,amsmath,math-cmds,
+            math-envs,inference-rules,times,
+            verbatim,alltt,multicol,proof,url}
+
+\usepackage{code} 
+\usepackage{epsfig}
+
+%\setlength{\oddsidemargin}{0in}
+%\setlength{\evensidemargin}{0in}
+%\setlength{\textwidth}{6.5in}
+%\setlength{\textheight}{8.5in}
+
+\begin{document}
+\title{PADS/ML: A Functional Data Description Language}
+\authorinfo{Yitzhak Mandelbaum$^\ast$, Kathleen Fisher$^\dagger$, David Walker$^\ast$, Mary
+  Fernandez$^\dagger$, Artem Gleyzer$^\ast$}
+{$^\ast$Princeton University \ \ \ \ \ \ \ $^\dagger$AT\&T Labs Research}
+ {\mono{yitzhakm,dpw,agleyzer@CS.Princeton.EDU} \ \ \ \ \mono{kfisher,mff@research.att.com}}
+
+\input{definitions}
+
+\maketitle{}
+
+\begin{abstract}  
+
+  Massive amounts of useful data are stored and processed in
+  \textit{ad hoc} formats for which common tools like parsers,
+  printers, query engines and format converters are not readily
+  available.  In this paper, we explain the {\em design}, {\em
+    implementation} and {\em theory} of \padsml{}, a new language and
+  system that facilitates generation of data processing tools for ad
+  hoc formats.  The \padsml{} design includes features such as
+  dependent, polymorphic and recursive datatypes, which allow
+  programmers to describe the syntax and semantics of ad hoc data in a
+  concise, easy-to-read notation.  The \padsml{} implementation
+  compiles these descriptions into \ml{} structures and functors that
+  include types for parsed data, functions for parsing and printing,
+  and auxiliary support for user-specified, format-dependent and
+  format-independent tool generation.  Finally, the \padsml{} theory
+  gives a precise formal meaning to the descriptions in terms of the
+  semantics of parsing, the semantics of printing, and the types of
+  data structures that represent parsed data.
+
+\end{abstract}
+
+\input{intro}
+
+\input{pml_overview}
+
+\input{impl}
+
+\input{gentool}
+
+\input{ddcpoly}
+
+\input{related_work}
+
+\input{conc}
+
+\section*{Acknowledgments}
+
+We would like to thank Derek Dreyer for discussions and advice on
+advanced module systems.
+
+\bibliographystyle{abbrv}
+\bibliography{pads}
+%\bibliography{../common/pads-long,../common/pads}
+
+\input{appendix}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: outline-minor
+%%% End:
+

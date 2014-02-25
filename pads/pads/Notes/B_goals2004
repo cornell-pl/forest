@@ -1,0 +1,27 @@
+Rick, I am leaving off P4P goals because I am not sure yet where that
+project is going.  If that project goes away I will probably be looking
+for another project to augment my PADS research.
+
+         2004 GOALS/OBJECTIVES
+         ROBERT GRUBER --- HB8680000
+
+1. PADS
+   a) Get PADS released.  This includes subgoals:
+         + Get Andrew Hume using PADS
+           (DGB asked for AT&T in-house use before release).
+         + Finish writing the manual.
+   b) Work with Trevor Jim on using PADS for automatically generating
+        parsers based on IETF specs (http, DNS, etc.).
+   c) Do extensive performance testing and tuning.
+   d) Continue to work with Mary Fernandez on PADS/Galax (XQuery) integration; 
+      the next big step is to develop and use a Galax streaming model.
+   e) Continue to evolve the language, code generator, and core library.
+
+2. Professional development
+   a) Submit papers based on PADS work.
+
+3. Objectives
+   a) Continue to support Ken Lyons use of CORBA to access ECIP3 LEC gateway services.
+   b) New project: support Howard Katseff use of CORBA to access MSAG address validation services.
+
+

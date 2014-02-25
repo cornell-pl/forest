@@ -1,0 +1,63 @@
+Punion(Id = BTy_1 58, 31.585b, 992.489b)
+	[StringConst] ""(Id = BTy_0 10, 1b, 0b);
+	Pstruct(Id = BTy_92 48, 29.585b, 991.489b)
+		Punion(Id = BTy_18 48, 11.585b, 102.985b)
+			Pstruct(Id = BTy_17 47, 9.585b, 101.985b)
+				Punion(Id = BTy_4 47, 8.585b, 101.985b)
+					[StringConst] ""(Id = BTy_3 40, 1b, 0b);
+					Pstruct(Id = BTy_13 6, 5b, 95.700b)
+						Switch(BTy_12)(Id = BTy_10 6, 4b, 17.700b):
+						case [Enum] {[StringConst] "Configuration", [StringConst] "Configure", [StringConst] "Reading", [StringConst] "Un-initialize", }:
+							Pstruct(Id = BTy_9 5, 1b, 2b)
+								[StringConst] "----"(Id = BTy_5 5, 1b, 2b);
+							End Pstruct;
+						case [StringConst] "Error":
+							[StringConst] ""(Id = BTy_11 1, 1b, 0b);
+						End Switch;
+						[string](Id = BTy_12 6, 1b, 78b);
+					End Pstruct;
+					[StringConst] "Wednesday, August 11, 2004"(Id = BTy_15 1, 1b, 4.700b);
+				End Punion;
+				[StringConst] " "(Id = BTy_16 47, 1b, 0b);
+			End Pstruct;
+			[StringConst] ""(Id = BTy_19 1, 1b, 0b);
+		End Punion;
+		RArray(Id = BTy_2 48, 4b, 765b)
+			Pstruct(Id = BTy_24 70, 4b, 85b)
+				Punion(Id = BTy_21 70, 3b, 85b)
+					[string](Id = BTy_20 69, 1b, 84b);
+					[IntConst] [0](Id = BTy_22 1, 1b, 0b);
+				End Punion;
+				[StringConst] " "(Id = BTy_23 70, 1b, 0b);
+			End Pstruct;
+		End RArray;
+		Punion(Id = BTy_41 48, 14b, 123.503b)
+			Pstruct(Id = BTy_40 45, 8b, 112.755b)
+				[string](Id = BTy_25 45, 1b, 102b);
+				RArray(Id = BTy_26 45, 4b, 7.755b)
+					Pstruct(Id = BTy_32 9, 4b, 2.585b)
+						Punion(Id = BTy_29 9, 3b, 2.585b)
+							[StringConst] ""(Id = BTy_28 8, 1b, 0b);
+							[StringConst] "inf"(Id = BTy_30 1, 1b, 1.585b);
+						End Punion;
+						[StringConst] "."(Id = BTy_31 54, 1b, 0b);
+					End Pstruct;
+				End RArray;
+				Punion(Id = BTy_34 45, 3b, 3b)
+					[StringConst] ""(Id = BTy_33 44, 1b, 0b);
+					Pstruct(Id = BTy_39 1, 1b, 2b)
+						[StringConst] "----"(Id = BTy_35 1, 1b, 2b);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
+			[StringConst] "5:14:58 PM"(Id = BTy_42 1, 1b, 3.322b);
+			Pstruct(Id = BTy_45 1, 2b, 0b)
+				[IntConst] [0](Id = BTy_43 1, 1b, 0b);
+				[StringConst] "."(Id = BTy_44 1, 1b, 0b);
+			End Pstruct;
+			Pstruct(Id = BTy_89 1, 1b, 5.426b)
+				[StringConst] "-------------------------------------------"(Id = BTy_46 1, 1b, 5.426b);
+			End Pstruct;
+		End Punion;
+	End Pstruct;
+End Punion

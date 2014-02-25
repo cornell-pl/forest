@@ -1,0 +1,138 @@
+Pstruct(Id = BTy_123 2087, 89.925b, 12884.214b)
+	Punion(Id = BTy_1 2087, 14.170b, 4827.395b)
+		[StringConst] ""(Id = BTy_0 1553, 1b, 0b);
+		Pstruct(Id = BTy_20 533, 10.585b, 4819.977b)
+			[StringConst] "\""(Id = BTy_2 533, 1b, 1b);
+			Punion(Id = BTy_6 533, 5.585b, 6.170b)
+				Pstruct(Id = BTy_5 456, 2b, 3.585b)
+					[Enum] {[StringConst] "GET", [StringConst] "POST", }(Id = BTy_3 456, 1b, 3.585b);
+					[StringConst] " "(Id = BTy_4 456, 1b, 0b);
+				End Pstruct;
+				[StringConst] ""(Id = BTy_7 69, 1b, 0b);
+				Pstruct(Id = BTy_11 8, 1b, 1b)
+					[StringConst] "(+"(Id = BTy_9 8, 1b, 1b);
+				End Pstruct;
+			End Punion;
+			[URL](Id = BTy_13 533, 1b, 4808b);
+			Punion(Id = BTy_15 533, 3b, 4.807b)
+				[StringConst] ""(Id = BTy_14 525, 1b, 0b);
+				Pstruct(Id = BTy_19 8, 1b, 3.807b)
+					[StringConst] "\"Baiduspider+"(Id = BTy_16 8, 1b, 3.807b);
+				End Pstruct;
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_25 1, 1b, 5.833b)
+			[StringConst] "\"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1;"(Id = BTy_22 1, 1b, 5.833b);
+		End Pstruct;
+	End Punion;
+	[IP](Id = BTy_26 2087, 1b, 120b);
+	[StringConst] " - "(Id = BTy_27 2087, 1b, 1.585b);
+	Punion(Id = BTy_31 2087, 3b, 85b)
+		[StringConst] "-"(Id = BTy_30 2022, 1b, 0b);
+		[string](Id = BTy_32 65, 1b, 84b);
+	End Punion;
+	[StringConst] " ["(Id = BTy_33 2087, 1b, 1b);
+	[Date](Id = BTy_36 2087, 1b, 93.629b);
+	[StringConst] ":"(Id = BTy_37 2087, 1b, 0b);
+	[Time](Id = BTy_38 2087, 1b, 229.582b);
+	[StringConst] "] "(Id = BTy_39 2087, 1b, 1b);
+	RArray(Id = BTy_41 2087, 35.170b, 6874.528b)
+		Pstruct(Id = BTy_74 6455, 35.170b, 1145.755b)
+			Punion(Id = BTy_69 6455, 34.170b, 1145.755b)
+				Pstruct(Id = BTy_68 3193, 30.585b, 1098.093b)
+					[StringConst] "\""(Id = BTy_43 3193, 1b, 1b);
+					Punion(Id = BTy_45 3193, 28.585b, 1096.093b)
+						[StringConst] "-"(Id = BTy_44 1389, 1b, 0b);
+						Pstruct(Id = BTy_64 1631, 25b, 742.508b)
+							[Enum] {[StringConst] "GET", [StringConst] "POST", }(Id = BTy_46 1631, 1b, 3.585b);
+							[StringConst] " "(Id = BTy_47 1631, 1b, 0b);
+							Switch(BTy_55)(Id = BTy_49 1631, 4b, 12.464b):
+							case [StringConst] "*":
+								[StringConst] ""(Id = BTy_48 1630, 1b, 0b);
+							case [StringConst] "/1.0":
+								Pstruct(Id = BTy_54 1, 1b, 10.464b)
+									[StringConst] "/dbwa/my/sql.php?lang=en-utf-8&server=1&collation_connection=utf8_general_ci&db=DBVisitLab&table=phpbb_forums&pos=0&session_max_rows=30&disp_direction=horizontal&repeat_cells=100&dontlimitchars=0&sql_query=SELECT+%2A+FROM+%60phpbb_forums%60&disp_message=Affected+rows%3A%26nbsp%3B7&disp_query=UPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL%2C+%60FldUrl%60+%3D+%27%2Farticles%2Findex.html%27+WHERE+%60forum_id%60+%3D+7+LIMIT+1%3BUPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL%2C+%60FldUrl%60+%3D+%27%2Fclickfraud%2Findex.html%27+WHERE+%60forum_id%60+%3D+2+LIMIT+1%3BUPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL+WHERE+%60forum_id%60+%3D+3+LIMIT+1%3BUPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL%2C+%60FldUrl%60+%3D+%27%2Fvisitoranalysis%2Findex.html%27+WHERE+%60forum_id%60+%3D+8+LIMIT+1%3BUPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL%2C+%60FldUrl%60+%3D+%27%2Fremote-response%2Findex.html%27+WHERE+%60forum_id%60+%3D+5+LIMIT+1%3BUPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL%2C+%60FldUrl%60+%3D+%27%2Fnews%2Findex.html%27+WHERE+%60forum_id%60+%3D+6+LIMIT+1%3BUPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL%2C+%60FldUrl%60+%3D+%27%2Fpub%2Findex.html%27+WHERE+%60forum_id%60+%3D+9+LIMIT+1%3BUPDATE+%60phpbb_forums%60+SET+%60prune_next%60+%3D+NULL%2C+%60FldUrl%60+%3D+%27%2Fnew-features%2Findex.html%27+WHERE+%60forum_id%60+%3D+10+LIMIT+1%3B& HTTP"(Id = BTy_50 1, 1b, 10.464b);
+								End Pstruct;
+							End Switch;
+							[Path](Id = BTy_55 1631, 1b, 544b);
+							Punion(Id = BTy_57 1631, 18b, 182.459b)
+								[StringConst] ""(Id = BTy_56 1624, 1b, 0b);
+								Pstruct(Id = BTy_63 7, 16b, 181.459b)
+									Punion(Id = BTy_61 7, 15b, 173b)
+										Pstruct(Id = BTy_60 5, 12b, 170b)
+											[StringConst] "?"(Id = BTy_58 5, 1b, 0b);
+											TBD_0(Id = BTy_0 5, 5b, 50b);
+											[StringConst] " "(Id = BTy_59 5, 1b, 0b);
+											TBD_1(Id = BTy_1 5, 5b, 120b);
+										End Pstruct;
+										TBD_2(Id = BTy_2 2, 2b, 2b);
+									End Punion;
+									[Enum] {[StringConst] "/1.0", [StringConst] "/1.1", [StringConst] "/ic/trash.png HTTP/1.1", }(Id = BTy_62 7, 1b, 8.459b);
+								End Pstruct;
+							End Punion;
+						End Pstruct;
+						[URL](Id = BTy_66 173, 1b, 352b);
+					End Punion;
+					[StringConst] "\""(Id = BTy_67 3193, 1b, 1b);
+				End Pstruct;
+				[Int] [200...404](Id = BTy_70 2704, 1b, 46.077b);
+				[StringConst] "-"(Id = BTy_72 558, 1b, 0b);
+			End Punion;
+			[StringConst] " "(Id = BTy_73 6455, 1b, 0b);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_121 2087, 30.585b, 650.494b)
+		Pstruct(Id = BTy_120 1553, 28.585b, 649.494b)
+			[StringConst] "\""(Id = BTy_75 1553, 1b, 1b);
+			Punion(Id = BTy_94 1553, 26.585b, 647.494b)
+				Pstruct(Id = BTy_93 1166, 8b, 46.751b)
+					RArray(Id = BTy_80 1166, 3b, 16.844b)
+						Separator: [StringConst] "."
+						Terminator: [StringConst] ")"
+						[Int] [1...7](Id = BTy_84 2625, 1b, 5.615b);
+					End RArray;
+					[StringConst] ") Gecko"(Id = BTy_88 1166, 1b, 2.807b);
+					[Enum] {[StringConst] "/20050716 Firefox/1.0.6", [StringConst] "/20050915 Firefox/1.0.7", [StringConst] "/20051111 Firefox/1.5", }(Id = BTy_91 1166, 1b, 13.439b);
+					[StringConst] ":"(Id = BTy_79 1166, 1b, 0b);
+					[Enum] {[StringConst] "/5.0 (Windows; U; Windows NT 5.0; en-US; rv", [StringConst] "/5.0 (Windows; U; Windows NT 5.1; en-US; rv", }(Id = BTy_77 1166, 1b, 10.853b);
+					[StringConst] "Mozilla"(Id = BTy_76 1166, 1b, 2.807b);
+				End Pstruct;
+				Pstruct(Id = BTy_116 381, 16b, 599.158b)
+					[Enum] {[StringConst] "Googlebot", [StringConst] "Mozilla", [StringConst] "msnbot", }(Id = BTy_95 381, 1b, 8.562b);
+					Punion(Id = BTy_104 381, 15b, 590.596b)
+						Pstruct(Id = BTy_103 365, 5b, 552.861b)
+							[Path](Id = BTy_96 365, 1b, 536b);
+							Punion(Id = BTy_98 365, 4b, 16.861b)
+								[StringConst] ""(Id = BTy_97 354, 1b, 0b);
+								Pstruct(Id = BTy_102 11, 2b, 15.861b)
+									[StringConst] ":/"(Id = BTy_99 11, 1b, 1b);
+									[Enum] {[StringConst] "/help.yahoo.com/help/us/ysearch/slurp)", [StringConst] "/misc.yahoo.com.cn/help.html)", [StringConst] "/search.msn.com/msnbot.htm)", }(Id = BTy_101 11, 1b, 14.861b);
+								End Pstruct;
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_115 16, 9b, 36.735b)
+							Punion(Id = BTy_106 16, 3b, 13.089b)
+								[Enum] {[StringConst] "/1.0 (+http", [StringConst] "/2.1 (+http", [StringConst] "/5.0 (compatible; Yahoo! Slurp; http", }(Id = BTy_105 15, 1b, 12.089b);
+								[StringConst] ""(Id = BTy_107 1, 1b, 0b);
+							End Punion;
+							[StringConst] ":"(Id = BTy_108 16, 1b, 0b);
+							Punion(Id = BTy_112 16, 5b, 23.647b)
+								Pstruct(Id = BTy_111 15, 2b, 14.647b)
+									[StringConst] "/"(Id = BTy_109 15, 1b, 0b);
+									[Enum] {[StringConst] "/help.yahoo.com/help/us/ysearch/slurp)", [StringConst] "/search.msn.com/msnbot.htm)", [StringConst] "/www.google.com/bot.html)", }(Id = BTy_110 15, 1b, 14.647b);
+								End Pstruct;
+								Pstruct(Id = BTy_114 1, 2b, 8b)
+									[StringConst] " "(Id = BTy_113 1, 1b, 0b);
+									TBD_3(Id = BTy_3 1, 1b, 8b);
+								End Pstruct;
+							End Punion;
+						End Pstruct;
+					End Punion;
+				End Pstruct;
+				[StringConst] "-"(Id = BTy_118 6, 1b, 0b);
+			End Punion;
+			[StringConst] "\""(Id = BTy_119 1553, 1b, 1b);
+		End Pstruct;
+		[StringConst] ""(Id = BTy_122 534, 1b, 0b);
+	End Punion;
+End Pstruct

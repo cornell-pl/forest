@@ -1,0 +1,128 @@
+Pstruct(Id = BTy_105 4510, 11101.755b, 786244.246b)
+	Switch(BTy_14)(Id = BTy_1 4510, 4b, 3.807b):
+	case [StringConst] "*":
+		[StringConst] ""(Id = BTy_0 4509, 1b, 0b);
+	case [StringConst] "14:26:41 -0800":
+		[StringConst] "("(Id = BTy_2 1, 1b, 0b);
+	End Switch;
+	[Enum] {[StringConst] "E", [StringConst] "I", [StringConst] "ipc", }(Id = BTy_3 4510, 1b, 1.585b);
+	Switch(BTy_14)(Id = BTy_5 4510, 4b, 8.807b):
+	case [StringConst] "*":
+		[StringConst] ""(Id = BTy_4 4509, 1b, 0b);
+	case [StringConst] "14:26:41 -0800":
+		Pstruct(Id = BTy_8 1, 1b, 5b)
+			[StringConst] "/send) invalid destination portW"(Id = BTy_6 1, 1b, 5b);
+		End Pstruct;
+	End Switch;
+	[StringConst] " ["(Id = BTy_9 4510, 1b, 1b);
+	[Date](Id = BTy_12 4510, 1b, 93.629b);
+	[StringConst] ":"(Id = BTy_13 4510, 1b, 0b);
+	[Time](Id = BTy_14 4510, 1b, 229.582b);
+	[StringConst] "]"(Id = BTy_15 4510, 1b, 0b);
+	Punion(Id = BTy_73 4510, 11087.755b, 785905.835b)
+		Pstruct(Id = BTy_72 3743, 8473.170b, 96383.577b)
+			RArray(Id = BTy_17 3743, 18b, 1940b)
+				Terminator: [StringConst] "\""
+				Pstruct(Id = BTy_23 10455, 17b, 277b)
+					[string](Id = BTy_19 10455, 1b, 186b);
+					Punion(Id = BTy_21 10455, 15b, 91b)
+						[StringConst] ""(Id = BTy_20 10442, 1b, 0b);
+						TBD_0(Id = BTy_0 13, 13b, 90b);
+					End Punion;
+					[StringConst] " "(Id = BTy_22 10455, 1b, 0b);
+				End Pstruct;
+			End RArray;
+			[StringConst] "\""(Id = BTy_25 3743, 1b, 1b);
+			Punion(Id = BTy_33 3743, 8423.585b, 94352.585b)
+				Pstruct(Id = BTy_32 3454, 8132b, 86418b)
+					Punion(Id = BTy_28 3454, 6640b, 10085b)
+						Pstruct(Id = BTy_27 3184, 6369b, 7540b)
+							TBD_1(Id = BTy_1 3184, 3184b, 3624b);
+							[string](Id = BTy_26 3184, 1b, 312b);
+							TBD_2(Id = BTy_2 3184, 3184b, 3604b);
+						End Pstruct;
+						TBD_3(Id = BTy_3 270, 270b, 2544b);
+					End Punion;
+					[StringConst] "@"(Id = BTy_29 3454, 1b, 0b);
+					Punion(Id = BTy_31 3454, 1491b, 76333b)
+						[IP](Id = BTy_30 1965, 1b, 120b);
+						TBD_4(Id = BTy_4 1489, 1489b, 76212b);
+					End Punion;
+				End Pstruct;
+				Pstruct(Id = BTy_35 255, 256b, 333b)
+					[string](Id = BTy_34 255, 1b, 36b);
+					TBD_5(Id = BTy_5 255, 255b, 297b);
+				End Pstruct;
+				TBD_6(Id = BTy_6 34, 34b, 7600b);
+			End Punion;
+			[StringConst] "\""(Id = BTy_37 3743, 1b, 1b);
+			Punion(Id = BTy_58 3743, 28.585b, 88.992b)
+				Pstruct(Id = BTy_57 3457, 5.585b, 15.925b)
+					Punion(Id = BTy_40 3457, 4.585b, 14.340b)
+						[StringConst] ""(Id = BTy_39 2408, 1b, 0b);
+						Pstruct(Id = BTy_52 1048, 1b, 4.755b)
+							[StringConst] " has timed out; deleting it"(Id = BTy_41 1048, 1b, 4.755b);
+						End Pstruct;
+						TBD_7(Id = BTy_7 1, 1b, 8b);
+					End Punion;
+					[StringConst] "..."(Id = BTy_54 3457, 1b, 1.585b);
+				End Pstruct;
+				Pstruct(Id = BTy_68 249, 14b, 65.067b)
+					Punion(Id = BTy_66 249, 13b, 65.067b)
+						Pstruct(Id = BTy_65 239, 2b, 24.067b)
+							[StringConst] " to job "(Id = BTy_59 239, 1b, 3b);
+							[Int] [1...130](Id = BTy_64 239, 1b, 21.067b);
+						End Pstruct;
+						TBD_8(Id = BTy_8 10, 10b, 40b);
+					End Punion;
+					[StringConst] "."(Id = BTy_67 249, 1b, 0b);
+				End Pstruct;
+				[StringConst] ""(Id = BTy_70 31, 1b, 0b);
+				TBD_9(Id = BTy_9 6, 6b, 6b);
+			End Punion;
+			[StringConst] " "(Id = BTy_18 3743, 1b, 0b);
+		End Pstruct;
+		Pstruct(Id = BTy_96 347, 21b, 937.767b)
+			[StringConst] " "(Id = BTy_85 347, 1b, 0b);
+			[Enum] {[StringConst] "Started", [StringConst] "get_printer_attrs", }(Id = BTy_86 347, 1b, 6.895b);
+			Switch(BTy_95)(Id = BTy_84 347, 18b, 146.872b):
+			case [StringConst] "*":
+				Pstruct(Id = BTy_83 328, 15b, 138.392b)
+					Punion(Id = BTy_77 328, 6b, 33b)
+						[StringConst] ""(Id = BTy_76 324, 1b, 0b);
+						TBD_10(Id = BTy_10 4, 4b, 32b);
+					End Punion;
+					[StringConst] " "(Id = BTy_78 328, 1b, 0b);
+					[Enum] {[StringConst] "backend", [StringConst] "filter", [StringConst] "resource", }(Id = BTy_79 328, 1b, 8.392b);
+					[StringConst] " "(Id = BTy_80 328, 1b, 0b);
+					Punion(Id = BTy_82 328, 6b, 97b)
+						[StringConst] ""(Id = BTy_81 324, 1b, 0b);
+						TBD_11(Id = BTy_11 4, 4b, 96b);
+					End Punion;
+				End Pstruct;
+			case [StringConst] "/printers/ ' no good!":
+				Pstruct(Id = BTy_94 19, 1b, 4.087b)
+					[StringConst] ": resource name '"(Id = BTy_87 19, 1b, 4.087b);
+				End Pstruct;
+			End Switch;
+			[Path](Id = BTy_95 347, 1b, 784b);
+		End Pstruct;
+		Pstruct(Id = BTy_110 420, 2592b, 688582.906b)
+			[StringConst] " "(Id = BTy_99 420, 1b, 0b);
+			RArray(Id = BTy_98 420, 1800b, 683579.816b)
+				Pstruct(Id = BTy_101 1799, 1800b, 42723.739b)
+					TBD_12(Id = BTy_12 1799, 1799b, 42723.739b);
+					[StringConst] " "(Id = BTy_100 1799, 1b, 0b);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_104 420, 791b, 5003.089b)
+				Pstruct(Id = BTy_103 369, 739b, 4651.022b)
+					TBD_13(Id = BTy_13 369, 369b, 1665.022b);
+					[string](Id = BTy_102 369, 1b, 48b);
+					TBD_14(Id = BTy_14 369, 369b, 2938b);
+				End Pstruct;
+				TBD_15(Id = BTy_15 51, 51b, 351.068b);
+			End Punion;
+		End Pstruct;
+	End Punion;
+End Pstruct

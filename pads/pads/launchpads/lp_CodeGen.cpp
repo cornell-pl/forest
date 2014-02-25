@@ -1,0 +1,1330 @@
+/* **************************************
+ * PADS GUI project (preliminary tests)
+ * Code generation wizard classes
+ * *********************************** */
+
+#include "lp_includes.h"
+/* **************************************
+ * Functions:
+ *  --class constructor/destructors
+ *  AccWizard
+ *  ~AccWizard
+ *
+ *  --interface
+ *  wRunWizard    --run wizard
+ *  wGetStrings   --get parameter strings specified in wizard
+ *
+ *  --event handlers
+ *  OnExpertModeCheck
+ *  OnNumRecsSpin
+ *  OnSetIncludePath
+ *  OnResetToDefault
+ *
+ *  --same as above ->
+ *
+ *  FmtWizard
+ *  ~FmtWizard
+ *  wRunWizard
+ *  wGetStrings
+ *  OnExpertModeCheck
+ *  OnNumRecsSpin
+ *  OnSetIncludePath
+ *  OnResetToDefault
+ *
+ *  XmlWizard
+ *  ~XmlWizard
+ *  wRunWizard
+ *  wGetStrings
+ *  OnExpertModeCheck
+ *  OnNumRecsSpin
+ *  OnSetIncludePath
+ *  OnResetToDefault
+ * *********************************** */
+
+/* ************************************ */
+
+IMPLEMENT_CLASS(AccWizard, wxWizard)
+
+BEGIN_EVENT_TABLE(AccWizard, wxWizard)
+  EVT_CHECKBOX(ACC_WIZ_EXPERT_MODE, AccWizard::OnExpertModeCheck)
+  EVT_SPIN(ACC_WIZ_NUM_RECS_SPIN, AccWizard::OnNumRecsSpin)
+  EVT_BUTTON(ACC_WIZ_SET_INCLUDE_PATH, AccWizard::OnSetIncludePath)
+  EVT_BUTTON(ACC_WIZ_RESET_DEFAULTS, AccWizard::OnResetToDefault)
+  //  EVT_WIZARD_CANCEL( , )
+  //  EVT_WIZARD_FINISHED( , )
+END_EVENT_TABLE()
+
+
+AccWizard::AccWizard(wxWindow* parent, wxBitmap bitmap, wxArrayString &strs, 
+		     wxString &incPath, wxString &incName, wxArrayString& nonterminalElements) : 
+  wxWizard(parent, wxID_ANY, wxEmptyString)
+{
+
+  includePath = incPath;
+  includeName = incName;
+  DB_P("got path:%s and name %s\n", includePath.c_str(), includeName.c_str());
+
+#ifdef DB_ON
+  if(strs.GetCount() != ACC_NUM_OPTS)
+    {
+      DB_P("ERROR: input strings do not match acc parameters.\n");
+      return;
+    }
+#endif
+  DB_P("starting wizard init.\n");
+
+  int strsCount = strs.GetCount();
+  wxString thisStr;
+
+  accPageFirst = NULL;
+  accPageLast = NULL;
+
+  nontElems = nonterminalElements;
+
+  wxWizardPageSimple *thisPage = new wxWizardPageSimple(this, NULL, NULL, bitmap);
+
+  if(accPageFirst == NULL && accPageLast == NULL)
+    {
+      accPageFirst = thisPage;
+      accPageLast = thisPage;
+    }
+  else
+    {
+      thisPage->SetPrev(accPageLast);
+      accPageLast->SetNext(thisPage);
+      accPageLast = thisPage;
+    }
+
+  accSizer = new wxBoxSizer(wxVERTICAL);
+  accSetControlsSizer = new wxGridBagSizer(5, 5);
+  accGridSizer = new wxGridBagSizer(0, 0);
+  accGridSizer_2 = new wxGridBagSizer(8, 8);
+
+  accInfo = new wxStaticText(thisPage, wxID_ANY, _T(accWizHelpString));
+  accExpertMode = new wxCheckBox(thisPage, ACC_WIZ_EXPERT_MODE, _T("Expert Mode"));
+  accSetDefaults = new wxButton(thisPage, ACC_WIZ_RESET_DEFAULTS, _T("Reset"));
+  for(int i = 0; i < ACC_NUM_OPTS; i++)
+    {
+      accLabels[i] = new wxStaticText(thisPage, wxID_ANY, _T(lpAccum_Labels[i]));
+    }
+  for(int i = 0; i < ACC_NUM_OPTS; i++)
+    {
+      accInput[i] = new wxTextCtrl(thisPage, 
+				   wxID_ANY, 
+				   _T(""), 
+				   wxDefaultPosition,
+				   wxSize(200, -1));
+      if(i < strsCount)
+	{
+	  thisStr = strs.Item(i);
+	  if(!thisStr.IsEmpty())
+	    accInput[i]->SetValue(thisStr);
+	  //DB_P("working on text input %d\n", i);
+	}
+    }
+
+  accNumRecsSizer = new wxBoxSizer(wxHORIZONTAL);
+  accNumRecsLabel = new wxStaticText(thisPage, wxID_ANY, _T("Number of Records to Read \n(set to <= 0 for no limit)"));
+  //accNumRecsValidator = new wxTextValidator(wxFILTER_INCLUDE_CHAR_LIST);
+  //wxArrayString  accNumRecsValidIncludes(WXSIZEOF(lpNum_Chars), lpNum_Chars);
+  //accNumRecsValidator->SetIncludes(accNumRecsValidIncludes);
+  accNumRecsText  = new wxTextCtrl(thisPage, wxID_ANY, _T(""), wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+  accNumRecs      = new wxSpinButton(thisPage, ACC_WIZ_NUM_RECS_SPIN);
+  accNumRecs->SetRange(0, 100000);
+  accNumRecs->SetValue(0);
+  accNumRecsText->SetValue(_T("0"));
+  numRecs = 0;
+  //accTZlabel      = new wxStaticText(thisPage, wxID_ANY, _T("Time Zone"));
+  //wxArrayString  tzones(NUM_TZONES, (const wxChar**)lpTimeZone_Labels);
+  /*accTZ           = new wxChoice(thisPage, 
+				 wxID_ANY,
+				 wxDefaultPosition,
+				 wxDefaultSize,
+				 tzones);
+  */
+  accNTermLabel   = new wxStaticText(thisPage, wxID_ANY, _T("Main Record Nonterminal Type"));
+  accNTerm        = new wxComboBox(thisPage, wxID_ANY, nontElems.Item(0), 
+				   wxDefaultPosition, wxDefaultSize, nontElems, wxCB_DROPDOWN);
+
+  accWsOk         = new wxCheckBox(thisPage, wxID_ANY, _T("Allow leading/trailing whitespace around integers"));
+  accUseHeader    = new wxCheckBox(thisPage, wxID_ANY, _T("Data files have headers"));
+  for(int i = 0; i < WIZ_NUM_STAT_LINES; i++)
+    accStatLines[i] = new wxStaticLine(thisPage);
+
+
+  accIncludeFileSizer = new wxStaticBoxSizer(wxHORIZONTAL, thisPage, _T("Include file generated by PADS compiler (.h) -\
+ .c file must have same name as .h file"));
+  accSelectIncludeFile = new wxButton(thisPage, 
+				   ACC_WIZ_SET_INCLUDE_PATH,
+				   _T("Open"));
+  accIncludeFilePath = new wxStaticText(thisPage, wxID_ANY, includePath);
+
+  wxArrayString choices(ACC_NUM_OPTS, (const wxChar**)lpAccum_Labels);
+  accHelpChoice = new wxChoice(thisPage, 
+			       ACC_WIZ_HELP_SELECT, 
+			       wxDefaultPosition,
+			       wxDefaultSize,
+			       choices);
+  accHelpBox = new wxStaticBoxSizer(wxVERTICAL, thisPage, _T("Parameter Help"));
+  accHelpText = new wxStaticText(thisPage, wxID_ANY, _T("Help goes here eventually...\n\n\n\n"));
+  accHelpBox->Add(accHelpText, 1, wxGROW | wxALL | wxALIGN_TOP | wxALIGN_LEFT, 2);
+
+  //accSizer->Add(accInfo,       wxGBPosition(0 ,0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //accSizer->Add(accExpertMode, wxGBPosition(1, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accSizer->Add(accInfo,       0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //accSizer->Add(accSetDefaults, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //accSizer->Add(accExpertMode, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accSetControlsSizer->Add(accSetDefaults, wxGBPosition(0, 0), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accSetControlsSizer->Add(accExpertMode, wxGBPosition(0, 1), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accSizer->Add(accSetControlsSizer, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  for(int i = 0; i < ACC_NUM_OPTS; i++)
+    {
+      accGridSizer->Add(accLabels[i], wxGBPosition(i/2, (i%2)*2), wxDefaultSpan, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 2);
+    }
+  for(int i = 0; i < ACC_NUM_OPTS; i++)
+    {
+      accGridSizer->Add(accInput[i], wxGBPosition(i/2, (i%2)*2+1), wxDefaultSpan,  wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+    }
+
+  int numStaticLine = 0;
+  int gridRow = -1;
+  accGridSizer_2->Add(accStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accNTermLabel, wxGBPosition(++gridRow, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accNTerm, wxGBPosition(gridRow, 1), wxDefaultSpan, wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accNumRecsLabel, wxGBPosition(++gridRow, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT  | wxALIGN_CENTER_VERTICAL, 2);
+  // accGridSizer_2->Add(accNumRecs,      wxGBPosition(0, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  accNumRecsSizer->Add(accNumRecsText, 0, wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER, 2);
+  accNumRecsSizer->Add(accNumRecs, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER, 2);
+  accGridSizer_2->Add(accNumRecsSizer,      wxGBPosition(gridRow, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  //accGridSizer_2->Add(accStatLines[numStaticLine++], wxGBPosition(2, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //accGridSizer_2->Add(accTZlabel,      wxGBPosition(3, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT  | wxALIGN_CENTER_VERTICAL, 2);
+  //accGridSizer_2->Add(accTZ,           wxGBPosition(3, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accWsOk,         wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accGridSizer_2->Add(accUseHeader,    wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //int sizerElem = ACC_NUM_OPTS/2 + 3;
+  accSizer->Add(accGridSizer,   1, wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accSizer->Add(accGridSizer_2, 1, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+  accIncludeFileSizer->Add(accSelectIncludeFile, 0, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  accIncludeFileSizer->Add(accIncludeFilePath, 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  accSizer->Add(accIncludeFileSizer, 0, wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  //accSizer->Add(accHelpChoice, wxGBPosition(sizerElem, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accSizer->Add(accHelpChoice, 0, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  //sizerElem++;
+  //accSizer->Add(accHelpBox, wxGBPosition(sizerElem, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  accSizer->Add(accHelpBox, 0, wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+#ifndef __WXMAC__
+  accGridSizer->Show(true);
+  accGridSizer_2->Show(false);
+#endif
+
+  thisPage->SetSizer(accSizer);
+  accSizer->Fit(thisPage);
+  FitToPage(thisPage);
+
+  accExpertMode->SetValue(false);
+  accExpertModeOn = false;
+
+  accGridSizer->Show(false);
+  accGridSizer_2->Show(true);
+  
+  DB_P("Done with accwiz init.\n");
+}
+
+AccWizard::~AccWizard()
+{
+  DB_P("deleting acc wizard labels/text\n");
+  for(int i = 0; i < ACC_NUM_OPTS; i++)
+    {
+      // this could be a big memory leak, so let's make sure it get's done right
+      accLabels[i]->Destroy();
+      accLabels[i] = NULL;
+      accInput[i]->Destroy();
+      accInput[i] = NULL;
+    }
+
+  DB_P("deleting pages\n");
+  // make sure we dealocate all the pages
+  wxWizardPage *newLastPage;
+  wxWizardPage *oldLastPage = accPageLast;
+  while(oldLastPage->GetPrev() != NULL)
+    {
+      newLastPage = oldLastPage->GetPrev();
+      oldLastPage->Destroy();
+      oldLastPage = newLastPage;
+    }
+#ifdef DB_ON
+  if(oldLastPage != accPageFirst)
+    {
+      DB_P("warning: oldLastPage != accPageFirst\n");
+    }
+#endif
+  oldLastPage->Destroy();
+
+  accPageFirst = NULL;
+  accPageLast  = NULL;
+
+  DB_P("done acc wizard delete\n");
+}
+
+
+bool AccWizard::wRunWizard(void)
+{
+  DB_P("Running Wizard...\n");
+  FitToPage(accPageFirst);
+  return RunWizard(accPageFirst);
+}
+
+void AccWizard::wGetStrings(wxArrayString &strs, 
+			     wxString &incPath, 
+			     wxString &incName)
+{
+  wxString str;
+  strs.Empty();
+  for(int i = 0; i < ACC_NUM_OPTS; i++)
+    {
+      if(accExpertModeOn == false)
+	{
+	  if(i == ACC_MAX_RECS)
+	    {
+	      if(numRecs != 0)
+		str.Printf("%d", numRecs);
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    }
+	  if(i == ACC_WSPACE_OK)
+	    {
+	      if(accWsOk->GetValue() == true)
+		str.Printf("%d", 1);
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    }
+	  /*
+	  if(i == ACC_IN_TIME_ZONE)
+	    {
+	      str = accTZ->GetStringSelection();
+	      strs.Add(str);
+	      continue;
+	    }
+	  */
+	  if(i == ACC_PADS_HDR_TY)
+	    {
+	      if(accUseHeader->GetValue() == true)
+		str = lpAccum_DefHeaderString;
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    } 
+	  if(i == ACC_PADS_TY)
+	    {
+	      str = accNTerm->GetValue().Append(_T(" ## suf"));
+	      strs.Add(str);
+	      continue;
+	    }
+	}
+      strs.Add(accInput[i]->GetValue());
+    }
+  incPath = includePath;
+  incName = includeName;
+}
+
+void AccWizard::OnExpertModeCheck(wxCommandEvent &event)
+{
+  if(accExpertMode->GetValue() == true)
+    {
+      accGridSizer_2->Show(false);
+      accGridSizer->Show(true);
+      accExpertModeOn = true;
+      if(numRecs != 0)
+	accInput[ACC_MAX_RECS]->SetValue(accNumRecsText->GetValue());
+      else
+	accInput[ACC_MAX_RECS]->SetValue(_T(""));
+      if(accUseHeader->GetValue() == true &&
+	 accInput[ACC_PADS_HDR_TY]->GetValue().IsEmpty())
+	{
+	  accInput[ACC_PADS_HDR_TY]->SetValue(_T(lpAccum_DefHeaderString));
+	}
+      if(accWsOk->GetValue() == true &&
+	 accInput[ACC_WSPACE_OK]->GetValue().IsEmpty())
+	{
+	  accInput[ACC_WSPACE_OK]->SetValue(_T(lpGeneric_DefineStr));
+	}
+      accInput[ACC_PADS_TY]->SetValue(accNTerm->GetValue().Append(_T(" ## suf")));
+    }
+  else
+    {
+      accGridSizer->Show(false);
+      accGridSizer_2->Show(true);
+      accExpertModeOn = false;
+      if(accInput[ACC_MAX_RECS]->GetValue().IsNumber())
+	{
+	  long num;
+	  wxString str;
+	  if(accInput[ACC_MAX_RECS]->GetValue().ToLong(&num))
+	    {
+	      numRecs = num;
+	      if(accNumRecs->GetMax() < num)
+		{
+		  accNumRecs->SetRange(0, (int)num);
+		}
+	      accNumRecs->SetValue((int)num);
+	      str.Printf("%d", num);
+	      accNumRecsText->SetValue(str);
+	    }
+	}
+      if(accInput[ACC_MAX_RECS]->GetValue().IsEmpty())
+	{
+	  accNumRecs->SetValue(0);
+	  accNumRecsText->SetValue(_T("0"));
+	  numRecs = 0;
+	}
+
+      if(accInput[ACC_PADS_HDR_TY]->GetValue().IsEmpty())
+	{ accUseHeader->SetValue(false); }
+      else
+	{ accUseHeader->SetValue(true); }
+
+      if(accInput[ACC_WSPACE_OK]->GetValue().IsEmpty())
+	{ accWsOk->SetValue(false); }
+      else
+	{ accWsOk->SetValue(true);  }
+      accNTerm->SetValue(accInput[ACC_PADS_TY]->GetValue().BeforeFirst('#'));
+    }
+  return;
+}
+
+void AccWizard::OnNumRecsSpin(wxSpinEvent &event)
+{
+  numRecs = event.GetPosition();
+
+  wxString str;
+  str.Printf("%d", numRecs);
+  accNumRecsText->SetValue(str);
+}
+
+void AccWizard::OnSetIncludePath(wxCommandEvent &event)
+{
+  wxFileDialog openFileDialog(this, 
+			      "Open Header File",
+			      "",
+			      "",
+			      HEADER_FILETYPES,
+			      wxOPEN | 
+			      wxFILE_MUST_EXIST,	
+			      wxDefaultPosition);
+    
+  if(openFileDialog.ShowModal() == wxID_OK)
+    {
+      includePath = openFileDialog.GetPath();
+      includeName = openFileDialog.GetFilename();
+      DB_P("got path:%s and name %s\n", includePath.c_str(), includeName.c_str());
+      accIncludeFilePath->SetLabel(includePath);
+      this->Refresh();
+    }
+  return;
+}
+
+
+void AccWizard::OnResetToDefault(wxCommandEvent &event)
+{
+  if(wxMessageBox(_T("This will reset parameters to their defaults.\nContinue?"), 
+		  _T("Confirm Control Reset"),
+		  wxICON_QUESTION | wxYES_NO) == wxNO)
+    {
+      return;
+    }
+
+  for(int i = 0; i < ACC_NUM_OPTS; i++)
+    {
+      accInput[i]->SetValue(lpAccum_DefaultValues[i]);
+    }
+
+  accNumRecs->SetValue(0);
+  accNumRecsText->SetValue(_T("0"));
+  numRecs = 0;
+  //accTZ->Select(0);
+  accWsOk->SetValue(false);
+  accUseHeader->SetValue(false);
+  
+}
+/* ************************************ */
+/* ************************************ */
+
+
+IMPLEMENT_CLASS(FmtWizard, wxWizard)
+
+BEGIN_EVENT_TABLE(FmtWizard, wxWizard)
+  EVT_CHECKBOX(FMT_WIZ_EXPERT_MODE, FmtWizard::OnExpertModeCheck)
+  EVT_SPIN(FMT_WIZ_NUM_RECS_SPIN, FmtWizard::OnNumRecsSpin)
+  EVT_BUTTON(FMT_WIZ_SET_INCLUDE_PATH, FmtWizard::OnSetIncludePath)
+  EVT_BUTTON(FMT_WIZ_RESET_DEFAULTS, FmtWizard::OnResetToDefault)
+  //  EVT_WIZARD_CANCEL( , )
+  //  EVT_WIZARD_FINISHED( , )
+END_EVENT_TABLE()
+
+
+FmtWizard::FmtWizard(wxWindow* parent, wxBitmap bitmap, wxArrayString &strs, 
+		     wxString &incPath, wxString &incName,
+		     wxArrayString& nonterminalElements) : 
+  wxWizard(parent, wxID_ANY, wxEmptyString)
+{
+
+  includePath = incPath;
+  includeName = incName;
+  DB_P("got path:%s and name %s\n", includePath.c_str(), includeName.c_str());
+
+#ifdef DB_ON
+  if(strs.GetCount() != FMT_NUM_OPTS)
+    {
+      DB_P("ERROR: input strings do not match fmt parameters.\n");
+      return;
+    }
+#endif
+  DB_P("starting wizard init.\n");
+
+  int strsCount = strs.GetCount();
+  wxString thisStr;
+
+  fmtPageFirst = NULL;
+  fmtPageLast = NULL;
+
+  nontElems = nonterminalElements;
+
+  wxWizardPageSimple *thisPage = new wxWizardPageSimple(this, NULL, NULL, bitmap);
+
+  if(fmtPageFirst == NULL && fmtPageLast == NULL)
+    {
+      fmtPageFirst = thisPage;
+      fmtPageLast = thisPage;
+    }
+  else
+    {
+      thisPage->SetPrev(fmtPageLast);
+      fmtPageLast->SetNext(thisPage);
+      fmtPageLast = thisPage;
+    }
+
+  fmtSizer = new wxBoxSizer(wxVERTICAL);
+  fmtSetControlsSizer = new wxGridBagSizer(5, 5);
+  fmtGridSizer = new wxGridBagSizer(0, 0);
+  fmtGridSizer_2 = new wxGridBagSizer(8, 8);
+
+  fmtInfo = new wxStaticText(thisPage, wxID_ANY, _T(fmtWizHelpString));
+  fmtExpertMode = new wxCheckBox(thisPage, FMT_WIZ_EXPERT_MODE, _T("Expert Mode"));
+  fmtSetDefaults = new wxButton(thisPage, FMT_WIZ_RESET_DEFAULTS, _T("Reset"));
+  for(int i = 0; i < FMT_NUM_OPTS; i++)
+    {
+      fmtLabels[i] = new wxStaticText(thisPage, wxID_ANY, _T(lpFmt_Labels[i]));
+    }
+  for(int i = 0; i < FMT_NUM_OPTS; i++)
+    {
+      fmtInput[i] = new wxTextCtrl(thisPage, 
+				   wxID_ANY, 
+				   _T(""), 
+				   wxDefaultPosition,
+				   wxSize(200, -1));
+      if(i < strsCount)
+	{
+	  thisStr = strs.Item(i);
+	  if(!thisStr.IsEmpty())
+	    fmtInput[i]->SetValue(thisStr);
+	  //DB_P("working on text input %d\n", i);
+	}
+    }
+
+  fmtDelimLabel   = new wxStaticText(thisPage, wxID_ANY, _T("Output Field Delimeter"));
+  fmtDelim        = new wxTextCtrl(thisPage, wxID_ANY, _T(""));
+  fmtNumRecsSizer = new wxBoxSizer(wxHORIZONTAL);
+  fmtNumRecsLabel = new wxStaticText(thisPage, wxID_ANY, _T("Number of Records to Read \n(set to <= 0 for no limit)"));
+  //fmtNumRecsValidator = new wxTextValidator(wxFILTER_INCLUDE_CHAR_LIST);
+  //wxArrayString  fmtNumRecsValidIncludes(WXSIZEOF(lpNum_Chars), lpNum_Chars);
+  //fmtNumRecsValidator->SetIncludes(fmtNumRecsValidIncludes);
+  fmtNumRecsText  = new wxTextCtrl(thisPage, wxID_ANY, _T(""), wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+  fmtNumRecs      = new wxSpinButton(thisPage, FMT_WIZ_NUM_RECS_SPIN);
+  fmtNumRecs->SetRange(0, 100000);
+  fmtNumRecs->SetValue(0);
+  fmtNumRecsText->SetValue(_T("0"));
+  numRecs = 0;
+  //fmtTZlabel      = new wxStaticText(thisPage, wxID_ANY, _T("Time Zone"));
+  //wxArrayString  tzones(NUM_TZONES, (const wxChar**)lpTimeZone_Labels);
+  /*fmtTZ           = new wxChoice(thisPage, 
+				 wxID_ANY,
+				 wxDefaultPosition,
+				 wxDefaultSize,
+				 tzones);
+  */
+  fmtNTermLabel   = new wxStaticText(thisPage, wxID_ANY, _T("Main Record Nonterminal Type"));
+  fmtNTerm        = new wxComboBox(thisPage, wxID_ANY, nontElems.Item(0), 
+				   wxDefaultPosition, wxDefaultSize, nontElems, wxCB_DROPDOWN);
+
+  fmtWsOk         = new wxCheckBox(thisPage, wxID_ANY, _T("Allow leading/trailing whitespace around integers"));
+  fmtUseHeader    = new wxCheckBox(thisPage, wxID_ANY, _T("Data files have headers"));
+  for(int i = 0; i < WIZ_NUM_STAT_LINES+1; i++)
+    fmtStatLines[i] = new wxStaticLine(thisPage);
+
+
+  fmtIncludeFileSizer = new wxStaticBoxSizer(wxHORIZONTAL, thisPage, _T("Include file generated by PADS compiler (.h) -\
+ .c file must have same name as .h file"));
+  fmtSelectIncludeFile = new wxButton(thisPage, 
+				   FMT_WIZ_SET_INCLUDE_PATH,
+				   _T("Open"));
+  fmtIncludeFilePath = new wxStaticText(thisPage, wxID_ANY, includePath);
+
+  wxArrayString choices(FMT_NUM_OPTS, (const wxChar**)lpFmt_Labels);
+  fmtHelpChoice = new wxChoice(thisPage, 
+			       FMT_WIZ_HELP_SELECT, 
+			       wxDefaultPosition,
+			       wxDefaultSize,
+			       choices);
+  fmtHelpBox = new wxStaticBoxSizer(wxVERTICAL, thisPage, _T("Parameter Help"));
+  fmtHelpText = new wxStaticText(thisPage, wxID_ANY, _T("Help goes here eventually...\n\n\n\n"));
+  fmtHelpBox->Add(fmtHelpText, 1, wxGROW | wxALL | wxALIGN_TOP | wxALIGN_LEFT, 2);
+
+  //fmtSizer->Add(fmtInfo,       wxGBPosition(0 ,0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //fmtSizer->Add(fmtExpertMode, wxGBPosition(1, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSizer->Add(fmtInfo,       0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //fmtSizer->Add(fmtSetDefaults, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //fmtSizer->Add(fmtExpertMode, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSetControlsSizer->Add(fmtSetDefaults, wxGBPosition(0, 0), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSetControlsSizer->Add(fmtExpertMode, wxGBPosition(0, 1), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSizer->Add(fmtSetControlsSizer, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  for(int i = 0; i < FMT_NUM_OPTS; i++)
+    {
+      fmtGridSizer->Add(fmtLabels[i], wxGBPosition(i/2, (i%2)*2), wxDefaultSpan, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 2);
+    }
+  for(int i = 0; i < FMT_NUM_OPTS; i++)
+    {
+      fmtGridSizer->Add(fmtInput[i], wxGBPosition(i/2, (i%2)*2+1), wxDefaultSpan,  wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+    }
+
+  int numStaticLine = 0;
+  int gridRow = -1;
+  fmtGridSizer_2->Add(fmtStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtNTermLabel, wxGBPosition(++gridRow, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtNTerm, wxGBPosition(gridRow, 1), wxDefaultSpan, wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtDelimLabel, wxGBPosition(++gridRow, 0), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtDelim,      wxGBPosition(gridRow, 1), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtNumRecsLabel, wxGBPosition(++gridRow, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT  | wxALIGN_CENTER_VERTICAL, 2);
+  // fmtGridSizer_2->Add(fmtNumRecs,      wxGBPosition(0, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  fmtNumRecsSizer->Add(fmtNumRecsText, 0, wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER, 2);
+  fmtNumRecsSizer->Add(fmtNumRecs, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER, 2);
+  fmtGridSizer_2->Add(fmtNumRecsSizer,      wxGBPosition(gridRow, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  //fmtGridSizer_2->Add(fmtStatLines[numStaticLine++], wxGBPosition(2, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //fmtGridSizer_2->Add(fmtTZlabel,      wxGBPosition(3, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT  | wxALIGN_CENTER_VERTICAL, 2);
+  //fmtGridSizer_2->Add(fmtTZ,           wxGBPosition(3, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtWsOk,         wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtGridSizer_2->Add(fmtUseHeader,    wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+  //int sizerElem = FMT_NUM_OPTS/2 + 3;
+  fmtSizer->Add(fmtGridSizer,   1, wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSizer->Add(fmtGridSizer_2, 1, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+  fmtIncludeFileSizer->Add(fmtSelectIncludeFile, 0, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  fmtIncludeFileSizer->Add(fmtIncludeFilePath, 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSizer->Add(fmtIncludeFileSizer, 0, wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  //fmtSizer->Add(fmtHelpChoice, wxGBPosition(sizerElem, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSizer->Add(fmtHelpChoice, 0, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  //sizerElem++;
+  //fmtSizer->Add(fmtHelpBox, wxGBPosition(sizerElem, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  fmtSizer->Add(fmtHelpBox, 0, wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+#ifndef __WXMAC__
+  fmtGridSizer->Show(true);
+  fmtGridSizer_2->Show(false);
+#endif
+
+  thisPage->SetSizer(fmtSizer);
+  fmtSizer->Fit(thisPage);
+  FitToPage(thisPage);
+
+  fmtExpertMode->SetValue(false);
+  fmtExpertModeOn = false;
+
+  fmtGridSizer->Show(false);
+  fmtGridSizer_2->Show(true);
+  
+  DB_P("Done with fmtwiz init.\n");
+}
+
+FmtWizard::~FmtWizard()
+{
+  DB_P("deleting fmt wizard labels/text\n");
+  for(int i = 0; i < FMT_NUM_OPTS; i++)
+    {
+      // this could be a big memory leak, so let's make sure it get's done right
+      fmtLabels[i]->Destroy();
+      fmtLabels[i] = NULL;
+      fmtInput[i]->Destroy();
+      fmtInput[i] = NULL;
+    }
+
+  DB_P("deleting pages\n");
+  // make sure we dealocate all the pages
+  wxWizardPage *newLastPage;
+  wxWizardPage *oldLastPage = fmtPageLast;
+  while(oldLastPage->GetPrev() != NULL)
+    {
+      newLastPage = oldLastPage->GetPrev();
+      oldLastPage->Destroy();
+      oldLastPage = newLastPage;
+    }
+#ifdef DB_ON
+  if(oldLastPage != fmtPageFirst)
+    {
+      DB_P("warning: oldLastPage != fmtPageFirst\n");
+    }
+#endif
+  oldLastPage->Destroy();
+
+  fmtPageFirst = NULL;
+  fmtPageLast  = NULL;
+
+  DB_P("done fmt wizard delete\n");
+}
+
+
+bool FmtWizard::wRunWizard(void)
+{
+  DB_P("Running Wizard...\n");
+  FitToPage(fmtPageFirst);
+  return RunWizard(fmtPageFirst);
+}
+
+void FmtWizard::wGetStrings(wxArrayString &strs, 
+			     wxString &incPath, 
+			     wxString &incName)
+{
+  wxString str;
+  strs.Empty();
+  for(int i = 0; i < FMT_NUM_OPTS; i++)
+    {
+      if(fmtExpertModeOn == false)
+	{
+	  if(i == FMT_DELIMS)
+	    {
+	      str = fmtDelim->GetValue();
+	      strs.Add(str);
+	      continue;
+	    }
+	  else if(i == FMT_MAX_RECS)
+	    {
+	      if(numRecs != 0)
+		str.Printf("%d", numRecs);
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    }
+	  else if(i == FMT_WSPACE_OK)
+	    {
+	      if(fmtWsOk->GetValue() == true)
+		str.Printf("%d", 1);
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    }
+	  /*
+	  if(i == FMT_IN_TIME_ZONE)
+	    {
+	      str = fmtTZ->GetStringSelection();
+	      strs.Add(str);
+	      continue;
+	    }
+	  */
+	  else if(i == FMT_PADS_HDR_TY)
+	    {
+	      if(fmtUseHeader->GetValue() == true)
+		str = lpFmt_DefHeaderString;
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    } 
+	  if(i == FMT_PADS_TY)
+	    {
+	      str = fmtNTerm->GetValue().Append(_T(" ## suf"));
+	      strs.Add(str);
+	      continue;
+	    }
+	}
+      strs.Add(fmtInput[i]->GetValue());
+    }
+  incPath = includePath;
+  incName = includeName;
+}
+
+void FmtWizard::OnExpertModeCheck(wxCommandEvent &event)
+{
+  if(fmtExpertMode->GetValue() == true)
+    {
+      fmtGridSizer_2->Show(false);
+      fmtGridSizer->Show(true);
+      fmtExpertModeOn = true;
+
+      fmtInput[FMT_DELIMS]->SetValue(fmtDelim->GetValue());
+      if(numRecs != 0)
+	fmtInput[FMT_MAX_RECS]->SetValue(fmtNumRecsText->GetValue());
+      else
+	fmtInput[FMT_MAX_RECS]->SetValue(_T(""));
+      if(fmtUseHeader->GetValue() == true &&
+	 fmtInput[FMT_PADS_HDR_TY]->GetValue().IsEmpty())
+	{
+	  fmtInput[FMT_PADS_HDR_TY]->SetValue(_T(lpFmt_DefHeaderString));
+	}
+      if(fmtWsOk->GetValue() == true &&
+	 fmtInput[FMT_WSPACE_OK]->GetValue().IsEmpty())
+	{
+	  fmtInput[FMT_WSPACE_OK]->SetValue(_T(lpGeneric_DefineStr));
+	}
+      fmtInput[FMT_PADS_TY]->SetValue(fmtNTerm->GetValue().Append(_T(" ## suf")));
+    }
+  else
+    {
+      fmtGridSizer->Show(false);
+      fmtGridSizer_2->Show(true);
+      fmtExpertModeOn = false;
+
+      fmtDelim->SetValue(fmtInput[FMT_DELIMS]->GetValue());
+      if(fmtInput[FMT_MAX_RECS]->GetValue().IsNumber())
+	{
+	  long num;
+	  wxString str;
+	  if(fmtInput[FMT_MAX_RECS]->GetValue().ToLong(&num))
+	    {
+	      numRecs = num;
+	      if(fmtNumRecs->GetMax() < num)
+		{
+		  fmtNumRecs->SetRange(0, (int)num);
+		}
+	      fmtNumRecs->SetValue((int)num);
+	      str.Printf("%d", num);
+	      fmtNumRecsText->SetValue(str);
+	    }
+	}
+      if(fmtInput[FMT_MAX_RECS]->GetValue().IsEmpty())
+	{
+	  fmtNumRecs->SetValue(0);
+	  fmtNumRecsText->SetValue(_T("0"));
+	  numRecs = 0;
+	}
+
+      if(fmtInput[FMT_PADS_HDR_TY]->GetValue().IsEmpty())
+	{ fmtUseHeader->SetValue(false); }
+      else
+	{ fmtUseHeader->SetValue(true); }
+
+      if(fmtInput[FMT_WSPACE_OK]->GetValue().IsEmpty())
+	{ fmtWsOk->SetValue(false); }
+      else
+	{ fmtWsOk->SetValue(true);  }
+      fmtNTerm->SetValue(fmtInput[FMT_PADS_TY]->GetValue().BeforeFirst('#'));
+    }
+  return;
+}
+
+void FmtWizard::OnNumRecsSpin(wxSpinEvent &event)
+{
+  numRecs = event.GetPosition();
+
+  wxString str;
+  str.Printf("%d", numRecs);
+  fmtNumRecsText->SetValue(str);
+}
+
+void FmtWizard::OnSetIncludePath(wxCommandEvent &event)
+{
+  wxFileDialog openFileDialog(this, 
+			      "Open Header File",
+			      "",
+			      "",
+			      HEADER_FILETYPES,
+			      wxOPEN | 
+			      wxFILE_MUST_EXIST,	
+			      wxDefaultPosition);
+    
+  if(openFileDialog.ShowModal() == wxID_OK)
+    {
+      includePath = openFileDialog.GetPath();
+      includeName = openFileDialog.GetFilename();
+      DB_P("got path:%s and name %s\n", includePath.c_str(), includeName.c_str());
+      fmtIncludeFilePath->SetLabel(includePath);
+      this->Refresh();
+    }
+  return;
+}
+
+
+void FmtWizard::OnResetToDefault(wxCommandEvent &event)
+{
+  if(wxMessageBox(_T("This will reset parameters to their defaults.\nContinue?"), 
+		  _T("Confirm Control Reset"),
+		  wxICON_QUESTION | wxYES_NO) == wxNO)
+    {
+      return;
+    }
+
+  for(int i = 0; i < FMT_NUM_OPTS; i++)
+    {
+      fmtInput[i]->SetValue(lpFmt_DefaultValues[i]);
+    }
+
+  fmtNumRecs->SetValue(0);
+  fmtNumRecsText->SetValue(_T("0"));
+  numRecs = 0;
+  //fmtTZ->Select(0);
+  fmtWsOk->SetValue(false);
+  fmtUseHeader->SetValue(false);
+  
+}
+/* ************************************ */
+/* ************************************ */
+
+
+IMPLEMENT_CLASS(XmlWizard, wxWizard)
+
+BEGIN_EVENT_TABLE(XmlWizard, wxWizard)
+  EVT_CHECKBOX(XML_WIZ_EXPERT_MODE, XmlWizard::OnExpertModeCheck)
+  EVT_SPIN(XML_WIZ_NUM_RECS_SPIN, XmlWizard::OnNumRecsSpin)
+  EVT_BUTTON(XML_WIZ_SET_INCLUDE_PATH, XmlWizard::OnSetIncludePath)
+  EVT_BUTTON(XML_WIZ_RESET_DEFAULTS, XmlWizard::OnResetToDefault)
+  //  EVT_WIZARD_CANCEL( , )
+  //  EVT_WIZARD_FINISHED( , )
+END_EVENT_TABLE()
+
+
+XmlWizard::XmlWizard(wxWindow* parent, wxBitmap bitmap, wxArrayString &strs, 
+		     wxString &incPath, wxString &incName,
+		     wxArrayString& nonterminalElements) : 
+  wxWizard(parent, wxID_ANY, wxEmptyString)
+{
+
+  includePath = incPath;
+  includeName = incName;
+  DB_P("got path:%s and name %s\n", includePath.c_str(), includeName.c_str());
+
+#ifdef DB_ON
+  if(strs.GetCount() != XML_NUM_OPTS)
+    {
+      DB_P("ERROR: input strings do not match xml parameters.\n");
+      return;
+    }
+#endif
+  DB_P("starting wizard init.\n");
+
+  int strsCount = strs.GetCount();
+  wxString thisStr;
+
+  xmlPageFirst = NULL;
+  xmlPageLast = NULL;
+
+  nontElems = nonterminalElements;
+
+  wxWizardPageSimple *thisPage = new wxWizardPageSimple(this, NULL, NULL, bitmap);
+
+  if(xmlPageFirst == NULL && xmlPageLast == NULL)
+    {
+      xmlPageFirst = thisPage;
+      xmlPageLast = thisPage;
+    }
+  else
+    {
+      thisPage->SetPrev(xmlPageLast);
+      xmlPageLast->SetNext(thisPage);
+      xmlPageLast = thisPage;
+    }
+
+  xmlSizer = new wxBoxSizer(wxVERTICAL);
+  xmlSetControlsSizer = new wxGridBagSizer(5, 5);
+  xmlGridSizer = new wxGridBagSizer(0, 0);
+  xmlGridSizer_2 = new wxGridBagSizer(8, 8);
+
+  xmlInfo = new wxStaticText(thisPage, wxID_ANY, _T(xmlWizHelpString));
+  xmlExpertMode = new wxCheckBox(thisPage, XML_WIZ_EXPERT_MODE, _T("Expert Mode"));
+  xmlSetDefaults = new wxButton(thisPage, XML_WIZ_RESET_DEFAULTS, _T("Reset"));
+  for(int i = 0; i < XML_NUM_OPTS; i++)
+    {
+      xmlLabels[i] = new wxStaticText(thisPage, wxID_ANY, _T(lpXml_Labels[i]));
+    }
+  for(int i = 0; i < XML_NUM_OPTS; i++)
+    {
+      xmlInput[i] = new wxTextCtrl(thisPage, 
+				   wxID_ANY, 
+				   _T(""), 
+				   wxDefaultPosition,
+				   wxSize(200, -1));
+      if(i < strsCount)
+	{
+	  thisStr = strs.Item(i);
+	  if(!thisStr.IsEmpty())
+	    xmlInput[i]->SetValue(thisStr);
+	  //DB_P("working on text input %d\n", i);
+	}
+    }
+
+  xmlNumRecsSizer = new wxBoxSizer(wxHORIZONTAL);
+  xmlNumRecsLabel = new wxStaticText(thisPage, wxID_ANY, _T("Number of Records to Read \n(set to <= 0 for no limit)"));
+  //xmlNumRecsValidator = new wxTextValidator(wxFILTER_INCLUDE_CHAR_LIST);
+  //wxArrayString  xmlNumRecsValidIncludes(WXSIZEOF(lpNum_Chars), lpNum_Chars);
+  //xmlNumRecsValidator->SetIncludes(xmlNumRecsValidIncludes);
+  xmlNumRecsText  = new wxTextCtrl(thisPage, wxID_ANY, _T(""), wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+  xmlNumRecs      = new wxSpinButton(thisPage, XML_WIZ_NUM_RECS_SPIN);
+  xmlNumRecs->SetRange(0, 100000);
+  xmlNumRecs->SetValue(0);
+  xmlNumRecsText->SetValue(_T("0"));
+  numRecs = 0;
+  //xmlTZlabel      = new wxStaticText(thisPage, wxID_ANY, _T("Time Zone"));
+  //wxArrayString  tzones(NUM_TZONES, (const wxChar**)lpTimeZone_Labels);
+  /*xmlTZ           = new wxChoice(thisPage, 
+				 wxID_ANY,
+				 wxDefaultPosition,
+				 wxDefaultSize,
+				 tzones);
+  */
+  xmlNTermLabel   = new wxStaticText(thisPage, wxID_ANY, _T("Main Record Nonterminal Type"));
+  xmlNTerm        = new wxComboBox(thisPage, wxID_ANY, nontElems.Item(0), 
+				   wxDefaultPosition, wxDefaultSize, nontElems, wxCB_DROPDOWN);
+
+  xmlWsOk         = new wxCheckBox(thisPage, wxID_ANY, _T("Allow leading/trailing whitespace around integers"));
+  xmlUseHeader    = new wxCheckBox(thisPage, wxID_ANY, _T("Data files have headers"));
+  for(int i = 0; i < WIZ_NUM_STAT_LINES; i++)
+    xmlStatLines[i] = new wxStaticLine(thisPage);
+
+
+  xmlIncludeFileSizer = new wxStaticBoxSizer(wxHORIZONTAL, thisPage, _T("Include file generated by PADS compiler (.h) -\
+ .c file must have same name as .h file"));
+  xmlSelectIncludeFile = new wxButton(thisPage, 
+				   XML_WIZ_SET_INCLUDE_PATH,
+				   _T("Open"));
+  xmlIncludeFilePath = new wxStaticText(thisPage, wxID_ANY, includePath);
+
+  wxArrayString choices(XML_NUM_OPTS, (const wxChar**)lpXml_Labels);
+  xmlHelpChoice = new wxChoice(thisPage, 
+			       XML_WIZ_HELP_SELECT, 
+			       wxDefaultPosition,
+			       wxDefaultSize,
+			       choices);
+  xmlHelpBox = new wxStaticBoxSizer(wxVERTICAL, thisPage, _T("Parameter Help"));
+  xmlHelpText = new wxStaticText(thisPage, wxID_ANY, _T("Help goes here eventually...\n\n\n\n"));
+  xmlHelpBox->Add(xmlHelpText, 1, wxGROW | wxALL | wxALIGN_TOP | wxALIGN_LEFT, 2);
+
+  //xmlSizer->Add(xmlInfo,       wxGBPosition(0 ,0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //xmlSizer->Add(xmlExpertMode, wxGBPosition(1, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSizer->Add(xmlInfo,       0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //xmlSizer->Add(xmlSetDefaults, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //xmlSizer->Add(xmlExpertMode, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSetControlsSizer->Add(xmlSetDefaults, wxGBPosition(0, 0), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSetControlsSizer->Add(xmlExpertMode, wxGBPosition(0, 1), wxDefaultSpan, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSizer->Add(xmlSetControlsSizer, 0, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  for(int i = 0; i < XML_NUM_OPTS; i++)
+    {
+      xmlGridSizer->Add(xmlLabels[i], wxGBPosition(i/2, (i%2)*2), wxDefaultSpan, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 2);
+    }
+  for(int i = 0; i < XML_NUM_OPTS; i++)
+    {
+      xmlGridSizer->Add(xmlInput[i], wxGBPosition(i/2, (i%2)*2+1), wxDefaultSpan,  wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+    }
+
+  int numStaticLine = 0;
+  int gridRow = -1;
+  xmlGridSizer_2->Add(xmlStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlNTermLabel, wxGBPosition(++gridRow, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlNTerm, wxGBPosition(gridRow, 1), wxDefaultSpan, wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlNumRecsLabel, wxGBPosition(++gridRow, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT  | wxALIGN_CENTER_VERTICAL, 2);
+  // xmlGridSizer_2->Add(xmlNumRecs,      wxGBPosition(0, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  xmlNumRecsSizer->Add(xmlNumRecsText, 0, wxGROW | wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER, 2);
+  xmlNumRecsSizer->Add(xmlNumRecs, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER, 2);
+  xmlGridSizer_2->Add(xmlNumRecsSizer,      wxGBPosition(gridRow, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  //xmlGridSizer_2->Add(xmlStatLines[numStaticLine++], wxGBPosition(2, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  //xmlGridSizer_2->Add(xmlTZlabel,      wxGBPosition(3, 0), wxDefaultSpan, wxALL | wxALIGN_RIGHT  | wxALIGN_CENTER_VERTICAL, 2);
+  //xmlGridSizer_2->Add(xmlTZ,           wxGBPosition(3, 1), wxDefaultSpan, wxALL | wxALIGN_LEFT   | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlWsOk,         wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlStatLines[numStaticLine++], 
+		      wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlGridSizer_2->Add(xmlUseHeader,    wxGBPosition(++gridRow, 0), wxGBSpan(1, 2), wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+  //int sizerElem = XML_NUM_OPTS/2 + 3;
+  xmlSizer->Add(xmlGridSizer,   1, wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSizer->Add(xmlGridSizer_2, 1, wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+  xmlIncludeFileSizer->Add(xmlSelectIncludeFile, 0, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  xmlIncludeFileSizer->Add(xmlIncludeFilePath, 1, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSizer->Add(xmlIncludeFileSizer, 0, wxGROW | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  //xmlSizer->Add(xmlHelpChoice, wxGBPosition(sizerElem, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSizer->Add(xmlHelpChoice, 0, wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 2);
+  //sizerElem++;
+  //xmlSizer->Add(xmlHelpBox, wxGBPosition(sizerElem, 0), wxGBSpan(1, 2), wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+  xmlSizer->Add(xmlHelpBox, 0, wxGROW | wxALL | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL, 2);
+
+#ifndef __WXMAC__
+  xmlGridSizer->Show(true);
+  xmlGridSizer_2->Show(false);
+#endif
+
+  thisPage->SetSizer(xmlSizer);
+  xmlSizer->Fit(thisPage);
+  FitToPage(thisPage);
+
+  xmlExpertMode->SetValue(false);
+  xmlExpertModeOn = false;
+
+  xmlGridSizer->Show(false);
+  xmlGridSizer_2->Show(true);
+  
+  DB_P("Done with xmlwiz init.\n");
+}
+
+XmlWizard::~XmlWizard()
+{
+  DB_P("deleting xml wizard labels/text\n");
+  for(int i = 0; i < XML_NUM_OPTS; i++)
+    {
+      // this could be a big memory leak, so let's make sure it get's done right
+      xmlLabels[i]->Destroy();
+      xmlLabels[i] = NULL;
+      xmlInput[i]->Destroy();
+      xmlInput[i] = NULL;
+    }
+
+  DB_P("deleting pages\n");
+  // make sure we dealocate all the pages
+  wxWizardPage *newLastPage;
+  wxWizardPage *oldLastPage = xmlPageLast;
+  while(oldLastPage->GetPrev() != NULL)
+    {
+      newLastPage = oldLastPage->GetPrev();
+      oldLastPage->Destroy();
+      oldLastPage = newLastPage;
+    }
+#ifdef DB_ON
+  if(oldLastPage != xmlPageFirst)
+    {
+      DB_P("warning: oldLastPage != xmlPageFirst\n");
+    }
+#endif
+  oldLastPage->Destroy();
+
+  xmlPageFirst = NULL;
+  xmlPageLast  = NULL;
+
+  DB_P("done xml wizard delete\n");
+}
+
+
+bool XmlWizard::wRunWizard(void)
+{
+  DB_P("Running Wizard...\n");
+  FitToPage(xmlPageFirst);
+  return RunWizard(xmlPageFirst);
+}
+
+void XmlWizard::wGetStrings(wxArrayString &strs, 
+			     wxString &incPath, 
+			     wxString &incName)
+{
+  wxString str;
+  strs.Empty();
+  for(int i = 0; i < XML_NUM_OPTS; i++)
+    {
+      if(xmlExpertModeOn == false)
+	{
+	  if(i == XML_MAX_RECS)
+	    {
+	      if(numRecs != 0)
+		str.Printf("%d", numRecs);
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    }
+	  if(i == XML_WSPACE_OK)
+	    {
+	      if(xmlWsOk->GetValue() == true)
+		str.Printf("%d", 1);
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    }
+	  /*
+	  if(i == XML_IN_TIME_ZONE)
+	    {
+	      str = xmlTZ->GetStringSelection();
+	      strs.Add(str);
+	      continue;
+	    }
+	  */
+	  if(i == XML_PADS_HDR_TY)
+	    {
+	      if(xmlUseHeader->GetValue() == true)
+		str = lpXml_DefHeaderString;
+	      else
+		str = "";
+	      strs.Add(str);
+	      continue;
+	    } 
+	  if(i == XML_PADS_TY)
+	    {
+	      str = xmlNTerm->GetValue().Append(_T(" ## suf"));
+	      strs.Add(str);
+	      continue;
+	    }
+	}
+      strs.Add(xmlInput[i]->GetValue());
+    }
+  incPath = includePath;
+  incName = includeName;
+}
+
+void XmlWizard::OnExpertModeCheck(wxCommandEvent &event)
+{
+  if(xmlExpertMode->GetValue() == true)
+    {
+      xmlGridSizer_2->Show(false);
+      xmlGridSizer->Show(true);
+      xmlExpertModeOn = true;
+      if(numRecs != 0)
+	xmlInput[XML_MAX_RECS]->SetValue(xmlNumRecsText->GetValue());
+      else
+	xmlInput[XML_MAX_RECS]->SetValue(_T(""));
+      if(xmlUseHeader->GetValue() == true &&
+	 xmlInput[XML_PADS_HDR_TY]->GetValue().IsEmpty())
+	{
+	  xmlInput[XML_PADS_HDR_TY]->SetValue(_T(lpXml_DefHeaderString));
+	}
+      if(xmlWsOk->GetValue() == true &&
+	 xmlInput[XML_WSPACE_OK]->GetValue().IsEmpty())
+	{
+	  xmlInput[XML_WSPACE_OK]->SetValue(_T(lpGeneric_DefineStr));
+	}
+      xmlInput[XML_PADS_TY]->SetValue(xmlNTerm->GetValue().Append(_T(" ## suf")));
+    }
+  else
+    {
+      xmlGridSizer->Show(false);
+      xmlGridSizer_2->Show(true);
+      xmlExpertModeOn = false;
+      if(xmlInput[XML_MAX_RECS]->GetValue().IsNumber())
+	{
+	  long num;
+	  wxString str;
+	  if(xmlInput[XML_MAX_RECS]->GetValue().ToLong(&num))
+	    {
+	      numRecs = num;
+	      if(xmlNumRecs->GetMax() < num)
+		{
+		  xmlNumRecs->SetRange(0, (int)num);
+		}
+	      xmlNumRecs->SetValue((int)num);
+	      str.Printf("%d", num);
+	      xmlNumRecsText->SetValue(str);
+	    }
+	}
+      if(xmlInput[XML_MAX_RECS]->GetValue().IsEmpty())
+	{
+	  xmlNumRecs->SetValue(0);
+	  xmlNumRecsText->SetValue(_T("0"));
+	  numRecs = 0;
+	}
+
+      if(xmlInput[XML_PADS_HDR_TY]->GetValue().IsEmpty())
+	{ xmlUseHeader->SetValue(false); }
+      else
+	{ xmlUseHeader->SetValue(true); }
+
+      if(xmlInput[XML_WSPACE_OK]->GetValue().IsEmpty())
+	{ xmlWsOk->SetValue(false); }
+      else
+	{ xmlWsOk->SetValue(true);  }
+      xmlNTerm->SetValue(xmlInput[XML_PADS_TY]->GetValue().BeforeFirst('#'));
+    }
+  return;
+}
+
+void XmlWizard::OnNumRecsSpin(wxSpinEvent &event)
+{
+  numRecs = event.GetPosition();
+
+  wxString str;
+  str.Printf("%d", numRecs);
+  xmlNumRecsText->SetValue(str);
+}
+
+void XmlWizard::OnSetIncludePath(wxCommandEvent &event)
+{
+  wxFileDialog openFileDialog(this, 
+			      "Open Header File",
+			      "",
+			      "",
+			      HEADER_FILETYPES,
+			      wxOPEN | 
+			      wxFILE_MUST_EXIST,	
+			      wxDefaultPosition);
+    
+  if(openFileDialog.ShowModal() == wxID_OK)
+    {
+      includePath = openFileDialog.GetPath();
+      includeName = openFileDialog.GetFilename();
+      DB_P("got path:%s and name %s\n", includePath.c_str(), includeName.c_str());
+      xmlIncludeFilePath->SetLabel(includePath);
+      this->Refresh();
+    }
+  return;
+}
+
+
+void XmlWizard::OnResetToDefault(wxCommandEvent &event)
+{
+  if(wxMessageBox(_T("This will reset parameters to their defaults.\nContinue?"), 
+		  _T("Confirm Control Reset"),
+		  wxICON_QUESTION | wxYES_NO) == wxNO)
+    {
+      return;
+    }
+
+  for(int i = 0; i < XML_NUM_OPTS; i++)
+    {
+      xmlInput[i]->SetValue(lpXml_DefaultValues[i]);
+    }
+
+  xmlNumRecs->SetValue(0);
+  xmlNumRecsText->SetValue(_T("0"));
+  numRecs = 0;
+  //xmlTZ->Select(0);
+  xmlWsOk->SetValue(false);
+  xmlUseHeader->SetValue(false);
+  
+}
+
+/* ************************************ */
+/* ************************************ */
+
+
+/* ************************************ */

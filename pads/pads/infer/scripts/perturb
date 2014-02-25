@@ -1,0 +1,12 @@
+#!/bin/bash
+wasl-run.pl 1000 25 messages.sdb.perturb.1 -single -noparse >> perturb.txt
+wasl-run.pl 2000 25 messages.sdb.perturb.1 -single -noparse >> perturb.txt
+wasl-run.pl 1000 25 messages.sdb.perturb.2 -single -noparse >> perturb.txt
+wasl-run.pl 2000 25 messages.sdb.perturb.2 -single -noparse >> perturb.txt
+wasl-run.pl 1000 25 messages.sdb.perturb.3 -single -noparse >> perturb.txt
+wasl-run.pl 2000 25 messages.sdb.perturb.3 -single -noparse >> perturb.txt
+wasl-run.pl 1000 25 messages.sdb.perturb.4 -single -noparse >> perturb.txt
+wasl-run.pl 2000 25 messages.sdb.perturb.4 -single -noparse >> perturb.txt
+wasl-run.pl 1000 25 messages.sdb.perturb.5 -single -noparse >> perturb.txt
+wasl-run.pl 2000 25 messages.sdb.perturb.5 -single -noparse >> perturb.txt
+

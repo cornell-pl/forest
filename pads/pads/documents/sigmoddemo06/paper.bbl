@@ -1,0 +1,49 @@
+\begin{thebibliography}{1}
+
+\small{
+\bibitem{galaxmanual}
+{G}alax user manual.
+\newblock \texttt{http://www.galaxquery.org}.
+
+\bibitem{padsmanual}
+{PADS} user manual.
+\newblock \url{http://www.padsproj.org/}.
+
+\bibitem{gigascope}
+C.~Cranor, Y.~Gao, T.~Johnson, V.~Shkapenyuk, and O.~Spatscheck.
+\newblock Gigascope: {H}igh performance network monitoring with an {SQL}
+  interface.
+\newblock In {\em SIGMOD}. ACM, 2002.
+
+\bibitem{fernandez+:padx}
+M.~Fern\'andez, K.~Fisher, R.~Gruber, and Y.~Mandelbaum.
+\newblock {PADX}: Querying large-scale ad hoc data with {XQuery}.
+\newblock In {\em PLAN-X}, 2006.
+
+\bibitem{fisher+:pldi05}
+K.~Fisher and R.~Gruber.
+\newblock {PADS}: A domain-specific language for processing ad hoc data.
+\newblock In {\em PLDI}, 2005.
+
+\bibitem{fisher+:popl06}
+K.~Fisher, Y.~Mandelbaum, and D.~Walker.
+\newblock The next 700 data description languages.
+\newblock In {\em POPL}, 2006.
+
+\bibitem{histograms-wavelets}
+A.~C. Gilbert, S.~Guha, P.~Indyk, Y.~Kotidis, S.~Muthukrishnan, and M.~Strauss.
+\newblock Fast, small-space algorithms for approximate histogram maintenance.
+\newblock In {\em STOC}, 2002.
+
+\bibitem{quantiles}
+A.~C. Gilbert, Y.~Kotidis, S.~Muthukrishnan, and M.~Strauss.
+\newblock How to summarize the universe: Dynamic maintenance of quantiles.
+\newblock In {\em VLDB}, 2002.
+
+\eat{\bibitem{histograms}
+S.~Guha, P.~Indyk, S.~Muthukrishnan, and M.~Strauss.
+\newblock Histogramming data streams with fast per-item processing.
+\newblock In {\em ICALP}, 2002.
+}}
+
+\end{thebibliography}

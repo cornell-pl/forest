@@ -1,0 +1,36 @@
+strengthen introduction
+  how different from grammar-based systems
+  types used for two purposes: physical and logical
+
+conclusion/discussion:
+ implemented this
+ used to describe these useful formats
+ file of useful bugs/ambiguities that we've discovered
+ multiple uses of semantics
+
+mff 
+973 360-8679
+
+ym
+973 360-8612
+
+***********************************
+questions to think about:
+
+how to organize effort on popl submission
+galois talk(s)
+ - pldi talk plus more technical slides in the middle
+ - read popl paper.
+
+summer school talks
+ hancock/pads
+
+********************************
+email
+jfp submission on traits
+jfp special issue
+popl submission
+icfp final version
+galois talks
+summer school talks
+travel approval for icfp

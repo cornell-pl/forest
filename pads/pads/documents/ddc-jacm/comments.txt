@@ -1,0 +1,169 @@
+
+Referee Comments to Authors:
+
+Referee: 1
+
+Recommendation: Needs Minor Revision
+
+Comments:
+(There are no comments)
+
+Review's recommendation for paper type: Full length technical paper
+
+Should this paper be considered for a best paper award?: No
+
+Does this paper present innovative ideas or material?: Yes
+
+In what ways does this paper advance the field?: See attached file.
+
+Is the information in the paper sound, factual, and accurate?: Yes
+
+If not, please explain why.: 
+
+What are the major contributions of the paper?: See attached file.
+
+Rate how well the ideas are presented (very difficult to understand=1 very easy to understand =5: 2
+
+Rate the overall quality of the writing (very poor=1, excellent=5: 2
+
+Does this paper cite and use appropriate references?: Yes
+
+If not, what important references are missing?: 
+
+Should anything be deleted from or condensed in the paper?: Yes
+
+If so, please explain.: See attached file.
+
+Is the treatment of the subject complete?: Yes
+
+If not, What important details / ideas/ analyses are missing?: 
+
+> p39: I find the bug hunting paragraph not very convincing. Wouldn't > you  have received the same result if you would have done a through > code review?
+
+-- I'm not sure what the reviewer means when they say "wouldn't a code review have done the same". Isn't that exactly our point, that as a derivative benefit, the code review helped us:
+
+"To our delight, the process of giving PADS/C a semantics in this framework has had additional benefits. In particular, since we defined the semantics by reviewing the existing implementation, we found (and fixed!) a couple of subtle bugs. "
+
+Perhaps i'm just not familiar with the technical meaning of "code review" which likely has an extensive literature of its own.  Ignore?
+
+
+-- Related work:
+* Add SDF2
+* !!! Put the comparison with other syntax formalisms into section 7,"applications". The idea will be that the formalization of DDC allows us to clearly compare the nature of these langauges to other formalisms. 
+* For handling of left recursion, see Jeroen Fokker. Functional parsers. In Advanced Functional Programming, First 
+International Spring School, LNCS, 925, 1995.
+* Parsec: claim LL(1), but also longest match. I don't think they are  correct in claiming LL(1). Very similar to camlp4-style choice -- dynamic lookahead (no first sets). Deterministic, first match, except in case of epsilon, in which case later branches are attempted. I think we shouldn't go into detail here. Just cite a whole slew of parser combinator libraries. 
+* Swierstra: Toys-to-tools: Errors are corrected through insertions and deletions; errors are collected in data structure, rather than being reported. Their reason is a bit different -- using laziness, and errors are found before committing to a choice. So, don't want them printed. Still, quite similar overall idea: robustness through error correction and error reports.
+* Related to yakker: he briefly discusses using weighted parsing to solve the identifier/keyword ambiguity problem.
+-- Regarding parser combinators, I think that there are a few points:
+-- 1) The reviewer is correct regarding our point on error reporting, yet it is the particulars of error reporting which are actually important, not the fact that there is error reporting.
+-- 2a) Confirm the utility of parser combinators as vehicle for semantics.
+-- 2) A similar point can be made with regard to parser combinators. Strictly speaking, DDC parsers are *not* combinators, as we only give semantics for ground ddc types, not for the constructors. To give a semantics to the constructors, we would need to use combinators. Moreover, we would need to use monadic combinators.
+That said, you can easily think of our parsers as combinators, and perhaps we should have defined them that way. Regardless, our parsers/combinators are hardly novel, nor impressive. Indeed, there are far better combinators out there. Yet, they reflect the reality. In particular, the greedy semantics of alternatives and the complex semantics of lists and the fact and way that parsing doesn't end when errors are encountered. Moreover, the combinators appear within the context of the 3-fold semantics. 
+-- 3) Moreover, by expressing them as parser combinators, makes it easier to compare them against other parsing combinators.
+-- 4) Finally, orthogonality of combinators is contribution. Whatever the parsing semantics chosen for DDC, the breakdown into DDC is important, particularly for audiences not intimately familiar with type theory.
+-- (Note: automaton-based parser generators are *implementations* of grammars, not *semantics*.)
+-- I think that we should point out the semantic similarity to packrat parsing regarding the choice operator.
+
+
+------------------------------------------------------------
+------------------------------------------------------------
+------------------------------------------------------------
+
+Referee: 2
+
+Recommendation: Needs Major Revision
+
+Comments:
+Review for "The Next 700 Data Description Languages"
+
+This paper describes design considerations that are common to data description languages.  Such languages allow the creation of specifications for many ad-hoc data formats that occur in day-to-day applications. The authors define a calculus, DDCalpha, to provide a semantic framework based on dependent types.  They prove a number of properties of DDCalpha.  The calculus is used both to describe a number of constructs in existing data description languages, and it was instrumental in the implementation of PADS/ML because the calculus is easily transferred into O'Caml functors. 
+The application area is very relevant, and it shows a good application of type theory to an important practical problem.
+
+In this review, I am focusing on the three criteria given in http://jacm.acm.org/Criteria.html
+
+   (1) the paper must be among the best papers of the year in its area, 
+   (2) the paper must be of interest to the broad community, 
+   (3) the presentation must be effective.
+
+(1) This work is certainly among the best papers in its area, as is evidenced by a publication of a prior version in a highly competitive conference.
+
+(2) and (3): the work presented, particularly its practical aspects, are clearly of interest to the broad community.  However, the presentation is only partially effective in conveying its content to the broader community. Section 1, in particular, describes the larger context of the paper and its applicability very well.  Beyond that, however, this paper is inaccessible to anybody without a deep understanding of type systems and type calculi, which excludes a broader community.  I believe the paper could benefit by reducing the amount of arcane details (which are more appropriate for a technical report or book) and by increasing the amount that is spent discussing how the use of a calculus helps in facilitating or validating the creation of practical tools, and by providing more examples that show how DDCalpha (and the description languages described by it) can capture common idioms used in format descriptions.
+
+Specific comments follow:
+
+In 2, "Preliminary Concepts" the authors discuss that types that are data descriptions specify a mapping into a data structure in a "host" programming language.  The idea of a host programming language is unique to PADS --- the other languages discussed, DataScript and PacketTypes, are explicitly independent of any host programming language in their definition.  Since this paper aims to establish a framework in which to discuss data description languages, the authors should justify why they assume that a host language is needed in addition to the data description language.  I'm guessing it's because it allows the inclusion of constants and expressions from the host language, without having to define it -- but that's not always a good thing, consider, for instance, C which does not define sizes for all its integer types.
+
+-- YHM: is the above comment true? Don't PacketTypes and DataScript 
+-- both implicitly use a host language for constraints and the like?
+
+In 3, page 12: "We provide abstraction ..."  it would increase the accessibility of the paper if concrete motivation and examples were provided for each operator and type constructor introduced.
+
+-- Done (by Kathleen)
+
+In 4.3, page 20: "It is important to note that the PD interpretation is not defined for all types. .... Yet, this requirement is not met by all types..."  This paragraph fails to discuss the implication.  What does it mean that [[tau_2]]_PD id pd_hdr * sigma does not hold for some sigma?
+
+In 5.1, Page 33.  "This property is sorely lacking in many common implementations .... for which users must examine generated code to debug compile-time errors in specifications."  I don't understand/believe this.  The authors should elaborate what constitutes a compile-time error in a yacc/lex specification.
+
+In 6.2, page 39. "We know of a couple of features, ".  It's not clear what the consequences of these limitations of DDCalpha are.  For instance, in the DataScript paper, the ability to access the current array index is essential to expressing the ELF format; and many other formats in which multiple headers are present that map to different portions of a file.  The authors should explain how DDCalpha could describe an alternate construct that can capture this common convention to justify their statement that this limitation is not troublesome.
+
+-- YHM: Did we plan to address this? I thought so (see bullet 4 of our email to Bob).
+
+Section 7.2 should be expanded, for instance, by including examples.
+
+-- done.
+
+In 8. I recommend that the authors cite and discuss
+
+Roshan James and Pooja Malpani. "Enter the Data Definition Language: A developer perspective" published Nov. 11, 2003 in .Net Developer's Journal
+http://dotnet.sys-con.com/read/39018.htm
+Though only published in a trade-journal it's original work that is similar to PADS/C and the other data description languages discussed, and either predates it or was developed concurrently.
+
+-- I would sooner add this to the intro along with Datascript and PacketTypes than to the related work. This is a paper on semantics, not yet-another-DDL. Still, I'll see if it will fit somewhere.
+
+Typos:
+page 5: whereever
+page 9: "entity".
+page 16:  "In rule BASE, " .... probably means "In rule CONST, " ... as Fig. 9 does not contain a rule of that name.
+page 19: "We assume that just as the user does not want the representation to be kept, so too the parse descriptor." --- improve grammar.
+page 20: occuring
+page 25: "impact an any guarantees"
+page 26: occured
+page 36: elobaration
+page 37: specfied
+page 40: qualifers
+page 42: marshalling/marshaler mixes American and British English(?)
+page 43: "for any standard imperative, functional[,] or object-oriented [language] requires
+page 43: "Generic for the Masses" should be "Generics for the Masses"
+
+
+
+Review's recommendation for paper type: Full length technical paper
+
+Should this paper be considered for a best paper award?: No
+
+Does this paper present innovative ideas or material?: Yes
+
+In what ways does this paper advance the field?: 
+
+Is the information in the paper sound, factual, and accurate?: Yes
+
+If not, please explain why.: 
+
+What are the major contributions of the paper?: 
+
+Rate how well the ideas are presented (very difficult to understand=1 very easy to understand =5: 2
+
+Rate the overall quality of the writing (very poor=1, excellent=5: 4
+
+Does this paper cite and use appropriate references?: Yes
+
+If not, what important references are missing?: 
+
+Should anything be deleted from or condensed in the paper?: Yes
+
+If so, please explain.: see comments to authors
+
+Is the treatment of the subject complete?: No
+
+If not, What important details / ideas/ analyses are missing?: see comments to authors

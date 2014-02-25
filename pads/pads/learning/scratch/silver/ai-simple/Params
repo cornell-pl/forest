@@ -1,0 +1,14 @@
+Source files to process: data/ai-simple
+Output directory: output/ai-simple/
+Output description file: generatedDescription
+Max depth to explore: 50
+Print line numbers in output contexts: false
+Print ids and output type tokens: true
+Print Entropy: false
+Histogram comparison tolerance (percentage): 0.01
+Struct determination tolerance (percentage): 0.1
+Noise level threshold (percentage): 0.0
+Minimum width threshold for array: 2
+Junk threshold (percentage): 0.1
+Complexity of derived type:
+	{ TC = 880.710b, ADC = 586.167b, DC = 651202.206b }

@@ -1,0 +1,109 @@
+\section{Related Work}
+\label{sec:related}
+
+% {\em PEG difference: not just dependency, but error handling?}
+
+
+To our knowledge, we are the first to attempt to specify a semantics for
+data description languages based on types such as \packettypes{},
+\datascript{} or \pads.  
+%Prior to our work, this family of languages 
+%was described informally and by example.  There was no precise
+%connection to formal dependent type theory.
+
+Of course, there are other formalisms for
+defining parsers, most famously, regular expressions and
+contex-free grammars.  In terms of recognition power,
+these formalisms differ from our type theory
+in that they have nondeterministic choice, but do not have
+dependency or constraints.  We have found that 
+dependency and constraints are absolutely essential for
+describing most of the ad hoc data sources we have studied.
+Perhaps more importantly though, unlike standard theories of
+context-free grammars,
+we do not treat our type theory merely as a recognizer for
+a collection of strings.  Our type-based descriptions 
+define {\em both} external data formats {\em and} 
+rich invariants on %(\ie{} types for)
+the internal parsed data structures.  This dual interpretation
+of types lies at the heart of tools such as \pads, \datascript{} and
+\packettypes{}.  
+%\pads{} programmers, for instance, demand that
+%representations produced by their \pads{} parsers have the expected type and 
+%count on the fact that the associated PD is accurately correlated
+%with the representation.  
+%Existing formalisms simply do not address
+%this elements of data description languages.
+
+{\em Parsing Expression Grammars} (PEGs),
+studied in the early 70s~\cite{birman+:parsing} and revitalized more 
+recently by Ford~\cite{ford:pegs}, 
+evolved from context-free grammars but
+have deterministic, prioritized choice like \ddc{} as opposed to
+nondeterministic choice.  Though PEGs have syntactic lookahead operators,
+they may be parsed in linear time through the use of
+``packrat parsing'' techniques~\cite{ford:packrat,grimm:packrat}.
+Once again, the dual interpretation of types in \ddc{} both as
+data descriptions and as classifiers for internal representations
+make our theory substantially different from the theory of PEGs.
+%In practice, PEGs has not been used to parse ad hoc data.
+
+{\sc antlr}~\cite{antlr}, a popular programming language parsing tool, 
+uses top-down recursive descent
+parsing and appears roughly similar in recognition power to PEGs and \ddc.
+{\sc antlr} also allows programmers to place annotations
+in the grammar definitions to guide construction of an abstract syntax
+tree. However, all nodes in the abstract syntax tree have a 
+single type, hence the guidance is rather crude when compared with
+the richly-typed structures that can be constructed using
+\ddc.
+
+
+% Practical experience indicates that
+% tools based on these formalisms, such as the many variations of
+% Lex and Yacc, are highly effective for processing
+% programming language syntax.  However, there is also ample evidence
+% that these tools are a poor fit for processing
+% ad hoc data --- simply put, {\em no one ever uses Lex or Yacc for 
+% these tasks}.
+% Unfortunately, the nondeterminism and lack of
+% dependency in these formalisms limit their suitability to formalizing
+% data description languages. While the parsing expression grammars
+% (PEG) formalism~\cite{ford:parsing-expression-grammars} is
+% significantly closer to the \ddc{}, it too lacks the necessary
+% dependency.
+
+% Less related, but still relevant, are Haskell's parsing
+% combinators. While these are not a formalism, they do provide an
+% elegant manner in which to express parsers. Hence, while we chose to
+% define our parsing semantics in the polymorphic lambda calculus,they
+% potentialy provide a more elegant alternative.
+
+There are many parallels between \ddc{} and {\it parser
+combinators}~\cite{burge:parser-combinators,hutton+:parser-combinators}. 
+In particular, \ddc{}'s dependent sum construct is 
+reminiscent of the bind operator in the monadic formulation of parser
+combinators.  Indeed, we can model dependent sums in Haskell as:
+\begin{code}
+\mbox{}
+sigma :: P s -> (s->P t) -> P (s,t)
+sigma m q = do \{x <- m; y <- q x; return (x,y)\}
+\mbox{}
+\end{code}%
+\noindent
+Parser combinators, however, are a general approach to specifying
+recursive descent parsing, whereas we have targeted \ddc{}
+to the domain of parsing ad hoc data. This focus leads to 
+many features not found in parser combinators, including the implicit
+type/value correspondence, the error response mechanism, and 
+arrays. Each of these features is as fundamental to \ddc{} as 
+dependent sums. These two approaches
+demonstrate the idea of a spectrum of domain-specificity in
+languages. The relationship between parser combinators and \ddc{} is
+like the relationship between a general purpose language and parser
+combinators themselves. That is, while parser combinators form an
+(embedded) domain-specific language, \ddc{} constructs form a language 
+that is even more domain-specific. 
+
+
+% % {\em Mention dependent type theory work?}

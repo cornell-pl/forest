@@ -1,0 +1,105 @@
+\section{Sample Forest Descriptions}
+This appendix contains contains \forest{} descriptions of a variety of
+different \filestores{}. The material in this appendix is best viewed
+electronically.  Some of the generated graphs are very large, but have
+been shrunk to fit on a single page.  They will not display well when
+printed.  However, readers may zoom in electronically on the PDF to
+view the details.
+
+\subsection{Pads Web Site Description}
+This \forest{} description describes the \pads{} web site. The
+description starts with \pads{} descriptions of files that contain
+information that impacts the directory structure. The
+configuration file supplies the paths where various components of the
+website should be located.  The \cd{SourceNames} file lists the names
+of the data files available for the demo.  Each user directory will
+have a subdirectory for each file listed in \cd{SourceNames}. Each
+user is logged in the file \cd{UserEntries}.  For each user in this
+file, there is a directory with a corresponding name containing all of
+the information relevant to that user.  A graph
+of the \pads{} website, generated using the \cd{ForestGraph} tool
+follows the description.
+\input{PWS}
+\newpage
+%\begin{figure}
+%\vskip -.25in
+\begin{center}
+\scalebox{.13}{\includegraphics{website.pdf}}
+\end{center}
+%\caption{Graph showing structure of PADS website, generated from
+%  description using \texttt{ForestGraph}}
+%\label{fig:pws}
+%\end{figure}
+\newpage
+\subsection{Students.hs Description}
+This section includes the \forest{} description of the Princeton
+Computer Science Department \filestore{}.
+\input{Students}
+
+\newpage
+
+\subsection{Coral.hs Description}
+
+This section gives the PADS and Forest descriptions for the CoralCDN
+Log repository. A graph of the CoralCDN
+repository, generated like the graph above using the \cd{ForestGraph}
+tool from the description and (a subset of) the actual repository 
+follows.
+
+\input{Coral}
+
+\newpage
+
+\subsection{Gene Ontology}
+
+This section presents a description of gene ontology data found 
+here: \url{http://www.geneontology.org/gene-associations/}.
+A graph generated using \texttt{ForestGraph}
+on a subset of the data follows the description.
+
+This \filestore{} is a web directory of gene association data files.
+The root directory contains a number of \cd{.gz} files,
+a \cd{readme} directory and a \cd{submission} directory.
+Each \cd{.gz} file is the gene ontology (GO) data of the genes
+in one or more organism, and the file names have the format
+\cd{"gene_association.XXX_YYY.gz"}, where \cd{XXX} represents the
+name of the institute that provides the data and \cd{YYY} is the
+name of the organism. \cd{YYY} is optional because some institute
+provides the data for only one organism.
+
+The \cd{readme} directory contains a set of \cd{.README} files for a
+subset of the GO data in the root.
+
+The \cd{submission} directory contains a set of \cd{.gz} files, their
+corresponding \cd{.conf} files, and a \cd{paint} sub-directory.
+The \cd{.gz} files are similar to the ones
+in root except they are older. The \cd{.conf} file summarizes
+some attributes of the \cd{.gz} file such as ``the name of the project'',
+``contact email'', \etc{} The paint sub-directory contains
+a further set of subdirectories of the form \cd{PTHRXXXXX}, where
+\cd{XXXXX} is a 5-digit number. These subdirectories each contain
+six text files and an XML file. These are the annotation inference
+of the gene ontology using phylogenetic trees and the PAINT tool.
+
+
+\input{GeneAssociation}
+
+\newpage
+
+\subsection{CVS.hs Description}
+
+This section provides a generic description for CVS repositories.
+
+\input{CVS}
+
+\subsection{Universal.hs Description}
+
+This section includes a universal data description.  This universal description
+is used to drive some of our generic tools.
+
+\input{Universal}
+
+\end{document}
+
+
+

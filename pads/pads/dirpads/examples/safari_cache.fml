@@ -1,0 +1,13 @@
+ptype filename = pint * '-' * pint * ".cache";
+ptype dir = [x : pint | 0 <= x && x <= 15]; 
+
+(* the pml binary spec of cache_file is included in a separate cache_file.pml file *)
+
+pdirectory cache_dir = {
+   [ f : cache_file <| permission.user = rw | f <- getfiles(dir/dir/filename)];
+}
+
+pdirectory cache_dir = {
+   dir/dir/filename :* cache_file <| permission.user = rw;
+}
+

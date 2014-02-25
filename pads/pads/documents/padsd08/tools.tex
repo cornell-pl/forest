@@ -1,0 +1,236 @@
+\subsection{The ``Off the Shelf'' User}
+\label{sec:tools}
+The \padsd{} system provides a suite of ``off-the-shelf'' tools to
+help users cope with standard data administration needs.  After writing
+a \padsd{} description, users can customize these tools by
+writing simple {\em configuration files}, such as shown in
+\figref{fig:toolconfigs}.   
+Each configuration file includes a feed declaration header 
+and a sequence of tool specifications. The header specifies the path to the 
+feed description file (\cd{comon.fml}) and the name of the feed to be created (\cd{comon}).
+Each tool specification starts with the keyword \cd{tool} followed by the
+name of the tool (\eg{}, \cd{provtrack} and \cd{rss}). The body of each tool specification 
+lists name-value pairs, where values are \ocaml{} expressions. Some attributes are 
+optional, and the compiler fills in a default value for every omitted attribute.
+\padsd{} compiles a configuration file into an \ocaml{} program that creates and archives the specified 
+feed, configures the specified tools, and applies them to the feed in parallel.
+% Multiple 
+%tools can simultaneously consume the same feed possible because feeds in
+%\padsd{} are functional and immutable. 
+In the following paragraphs, we describe some of the tools we have implemented.
+
+\begin{figure}[t]
+\centering
+\begin{codebox}
+\kw{feed} comon.fml/comon
+
+\kw{tool} provtrack
+\{
+  minalert  = true;  maxalert  = true;
+  lesssig   = 3;     moresig   = 3;     
+  slicesize = 10;
+  slicefile = "slice.acc";
+  totalfile = "total.acc";
+\}
+
+\kw{tool} rss
+\{
+  title = "CoMon Memory RSS";
+  link  = "http://www.comon.org/memory-rss.xml";
+  desc  = "CoMon Memory Usage Information";
+  path  = "<top>.[?].Mem_info";
+\}
+\end{codebox}
+\caption{Example tool configuration file (\texttt{comon.tc}).}
+\label{fig:toolconfigs}
+\shrink
+\end{figure}
+
+%  path  = ["[?]"; "Mem_info"];
+
+
+% The most straightforward use of \padsd{} is to create a feed 
+% based on a \padsd{} description, and then apply one or more built-in tools 
+% to the feed. \padsd{} provides a {\it tool configurations} ({\it configs} for short) to accomplish this task. 
+% Figure~\ref{fig:toolconfigs} presents an example config.
+
+
+
+ 
+
+%without any further programming.
+%We now briefly introduce them and discuss their uses. 
+
+%\edcom{Move this bit somewhere?}
+%A tool is typically an \ocaml{} module with a standard interface: a tool specification, a feed representation or prefeed compiled from the feed description, and a feed of interest. 
+
+\begin{figure}[t]
+\centering
+\begin{scodebox}
+======================================================
+Summary of network transmission errors
+======================================================
+ErrCode: 1      ErrMsg: Misc HTTP error Count: 12
+ErrCode: 5      ErrMsg: Bad message     Count: 27
+ErrCode: 6      ErrMsg: No reply        Count: 2
+
+======================================================
+Top 10 locations with most network errors
+======================================================
+Loc: http://planetlab01.cnds.unibe.ch:3121    Count: 2
+Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
+... omitted ...
+\end{scodebox}
+\caption{Fragment of provenance tracker output (\texttt{comon.acc}).} \label{fig:acc}
+\shrink
+\end{figure} 
+
+%===========================================================================
+%Summary of network transmission errors
+%===========================================================================
+%ErrCode: 1      ErrMsg: Misc HTTP error Count: 12
+%ErrCode: 5      ErrMsg: Bad message     Count: 27
+%ErrCode: 6      ErrMsg: No reply        Count: 2
+
+%===========================================================================
+%Top 10 locations with most network errors
+%===========================================================================
+%Loc: http://planetlab01.cnds.unibe.ch:3121    Count: 2
+%Loc: http://pepper.planetlab.cs.umd.edu:3121  Count: 2
+%Loc: http://planetlab3.cs.uchicago.edu:3121   Count: 2
+%... omitted ...
+%===========================================================================
+%<top>.<listitem>.Cpu_hog.elt1.Some.elt2 : string
+%===========================================================================
+%good vals:      554     bad vals:       0       pcnt-bad:       0.00%
+%min val: 4      max val: 22     avg val: 11     std dev: 5.29   
+
+%=> Distribution of the top 10 values out of 47 distinct values:
+%    Val: "nyu_d"                   Count: 111     pcnt-of-good-vals: 20.04%
+%    Val: "ethzcs_q"                Count: 86      pcnt-of-good-vals: 15.52%
+%    Val: "princeton_coblitz"       Count: 68      pcnt-of-good-vals: 12.27%
+%    ... omitted ...
+%    Val: "root"                    Count: 12      pcnt-of-good-vals: 2.17%
+%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+%    SUMMING                        Count: 434     pcnt-of-good-vals: 78.34%
+
+%% ======================================================
+%% <top>.<listitem>.Cpu_hog.elt1.Some.elt2 : string
+%% ======================================================
+%% good vals: 554        bad vals: 0      pcnt-bad: 0.00%
+%% min val: 4   max val: 22   avg val: 11   std dev: 5.29   
+
+%% Distribution of top 10 values of 47 distinct values:
+%%   Val                Count        Percent of good vals
+%% "nyu_d"              111                        20.04%
+%% "ethzcs_q"           86                         15.52%
+%% "princeton_coblitz"  68                         12.27%
+%% ... omitted ...
+%% "root"               12                          2.17%
+%% . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+%% SUMMING              434                        78.34%
+
+    
+% \begin{figure}
+% {\small
+% \begin{verbatim}
+% path :: =  
+%   "<top>"
+% | path.ID  (field/variant name)
+% | path.INT (branch number (from 1) of a tuple)
+% | path.[?] (any one element of array/table) 
+% | path.[*] (all elements of array/table) 
+% | path.[INT] (nth element of array (from 0))
+% | path.[Key] (a table entry indexed by the Key)
+% \end{verbatim}
+% }
+% \caption{Selector path language.}
+% \label{fig:selector-lang}
+% \end{figure}
+
+
+\textbf{\textit{Archiver.}} The archiver saves the data fetched by a feed 
+in the local file system, organizing it according to the structure
+of the feed, with one directory per base feed.  
+%One directory is created per base feed, in which the archiver stores all the files fetched by that feed. 
+It places a catalog in each directory documenting the source of 
+the data, its scheduled arrival time and the
+actual arrival time. The archiver will optionally compress
+files.
+
+% \textbf{\textit{Printer.}} The printer outputs the contents of a
+% feed.  If configured to print to a single file, the tool concatenates
+% successive items with a specified separator. If configured to print to
+% multiple files, it outputs the contents of each base feed into a
+% separate file. 
+
+
+\textbf{\textit{Profiler.}} The profiler monitors performance, reporting
+throughput, average network latency and average system latencies
+over a period of time. Users can specify in the configuration 
+when to profile and for how long.  We used this tool to produce
+some of the experimental results in \secref{sec:experiments}.
+
+\textbf{\textit{Provenance tracker.}} The provenance tracker
+maintains statistical profiles for feeds. These include error
+rates, most common errors and their source locations and times.
+For numeric data, the tracker keeps aggregates such
+as averages, max/min values and standard deviations. For other
+data (\eg{}, strings, URLs and IP addresses), it keeps the
+frequency of the top $N$ most common values. 
+The user can configure the tracker to profile entire
+feeds at once, or incrementally. The latter is useful for infinite
+feeds, because it allows users to continuously monitor feeds
+and compare their current behavior with historical statistics.  The
+tracker can output either plain text or XML. 
+\figref{fig:acc} shows portions of provenance tracker output
+for the CoMon example.
+
+\textbf{\textit{Alerter.}} The alerter allows users to register boolean 
+functions which generate notifications when they evaluate to false on
+feed items. The tool appends these notifications to a file, which can
+be piped into other tools.  The system provides a library of 
+common alerters such as exceeding max/min thresholds or deviating from the norm
+({\em i.e.,} trigger an alert when a selected value strays more than $k$
+standard deviations from its historical value). 
+Users can supply their own conditions by giving arbitrary \ocaml{} predicates
+in the configuration file.
+%This tool has also been integrated with the accumulator described above. 
+%The alerter notifies users of violated conditions by
+%appending to a file, which can then be piped to other tools such as an email
+%client.
+
+\textbf{\textit{Database loader.}} This tool allows users to load numerical
+data from a feed into an RRD.
+Users specify a function to transform
+feed items into numeric values and RRD parameters such as data source 
+type and sampling rate. RRD indexes the data by arrival time.  It
+periodically discards old data to make space for new. The tool
+supports time-indexed queries and graphing of historical data.
+
+% \textbf{\textit{Selector.}} The selector allows users to choose
+% subcomponents of feed elements using path expressions. It returns a
+% feed of the selected subcomponents, which may then be fed into other
+% tools. 
+% %\figref{fig:selector-lang} shows the path expression language,
+% %partly inspired by \xpath{}~\cite{xpath}.
+
+
+\textbf{\textit{RSS feed generator.}} The RSS feed generator converts a
+\padsd{} feed to an RSS feed. Users specify the title, link (source),
+description, update schedule and contents of the RSS feed.  Content
+specifications are written in the path expression language.
+
+
+%We apply the tools in parallel to
+%achieve maximum throughput and also because some of the tools, such as feedaccum,
+%operate on a per feed basis, rather than a per item basis. And thus running the tools
+%in pipeline is not optimal.
+
+%In summary, the tool configuration in \padsd{} is a very simple programming 
+%paradigm where minimum \ocaml{} language knowledge is required. Feed designers
+%and system administrators who hardly know any functional programming can still 
+%perform day-to-day data management tasks. For users who do know \ocaml{} programming, 
+%more control is available by programming directly against the \padsd{} 
+%tools library, which will be discussed in the next section.
+

@@ -1,0 +1,9 @@
+
+Using input file data/sirius
+
+Installed IO discipline nlrec_noseek
+reading header returned: OK
+warning: Error [in order_header_t_read]: record 5 byte 68 : Extra data before char separator '|'
+[record 5]2711797|2228733|1|9153689364|9153689364|4323689364|4323689364|79762>>>t<<<|4512197922101|2|0|1614540|LOCAL|CUST_DUE_DATE|1004504399
+warning: Error [in order_header_t_read]: record 6 byte 68 : Extra data before char separator '|'
+[record 6]2711797|2228733|1|9153689364|9153689364|4323689364|4323689364|79762>>>}<<<|4512197922101|2|0|1614540|LOCAL|CUST_DUE_DATE|1004504399

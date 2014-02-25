@@ -1,0 +1,123 @@
+---------------------------------------------
+Directory Forests (the terms of the calculus)
+---------------------------------------------
+
+string ::= "..."   (an uninterpreted string of bits or characters)
+
+name   ::= "..."   (a file or directory name (a subset of the strings))
+
+leaf   ::= name[string]    (a file with name and contents)
+         | name[path]      (a symbolic link)
+
+tree   ::= name[forest]    (a directory with name and contents)
+
+forest ::= tree; ... tree; (a set of directories)
+
+path   ::= . | .. | name | path/path | /path
+
+
+--------------------------------------------------
+Directory Descriptions (the types of the calculus)
+--------------------------------------------------
+
+x,y,...  ::= identifiers
+
+padsty   ::= a pads type -- describes a string
+
+filesort ::= any | jpg | xml(dtd) | mpg | ... (a standard, supported file type)
+
+pathty   ::= x | (x:pathty) | . | .. | padsty | pathty/pathty | /pathty
+
+dirty    ::= standard(filesort)     (describes contents of supported file type)
+           | adhoc(padsty)          (describes contents of ad hoc data file)
+           | link(pathty)           (describes contents of symbolic link)
+	   | meta(e)                (computes meta-data value)
+           | {x[path] : dirty}      (describes single path to subforest, 
+                                       described by dirty;
+                                       internal rep is a singleton record;
+                                       label of internal rep is x; 
+				       if rep of dirty has type t then 
+				       rep of this thing has type t)
+           | {x[pathty] :* dirty}   (describes paths to subforests, 
+                                       each subforest described by dirty;
+                                       label of internal rep is x; 
+				       if rep of dirty has type t then 
+                                       rep of this thing has type t list)
+           | dirty U dirty          (union of two forests;
+                                       internal rep is a tuple?)
+           | dirty option           (optional forest)
+           | <x:dirty|pred>         (constrained dirty)
+           | [pathty :* dirty | x <- e, pred]   (list comprehension dirty)
+
+           | \x:reptype.dirty       (value-parametric dirty)
+           | dirty (e)              (instantiate parametric dirty)
+
+           | /\a::TYPE.dirty        (type-parametric dirty)
+           | dirty [dirty]          (instantiate type-parametric dirty)
+
+           | \\x:reptype.e          (representation transform)
+           | dirty @ dirty          (apply representation transform)
+
+pred     ::=
+             e1 = e2                (equality)
+           | e1 < e2                (inequality)
+           | ...                    (other boolean ops)
+
+e        ::= SIZE(e1)               (size of file e1) 
+           | TIMESTAMP(e1)          (timestamp of file e1)
+	   | AC(e1)                 (access control spec of e1)
+           | OWNER(e1)              (owner of e1)
+           | ...                    (other expressions)
+
+declaration ::= pdir x = dirty      (directory decl)
+	      | ptype x = padsty    (padsty decl)
+	      | let x = e           (ordinary expression decl)
+
+----------
+Notes
+----------
+
+-- need to think about : vs. :* -- what are the alternatives?
+-- need to think about number of occurrences constraints
+
+----------
+Examples
+----------
+
+---------
+coral.pml
+---------
+
+ptype corald_ty   = ...
+ptype coraldns_ty = ...
+ptype coralweb_ty = ...
+ptype prob_ty     = ...
+
+(* this is supposed to convert a tuple of singleton records into a record *)
+let to_record x = ...
+
+pdir log =
+  /\a.\l:string.\t:timeformat.adhoc(a) U meta{time: t} U meta{loc: l}     
+
+pdir files =
+  \l:string.\t:timeformat.
+    to_record @ (
+        {corald["corald.log.head"] 
+          : <x:log[coral_ty](l)(t))| TIMESTAMP(corald) >= 700 && OWNER(corald) = "dpw">}
+      U {coraldns["coraldnssrv.log.head"]  : log[coraldns_ty](l)(t)}
+      U {coraldns["coralwebsrv.log.head"]  : log[coralweb_ty](l)(t)}
+      U {coralprob["coralwebsrv.log.head"] : log[prob_ty](l)(t)}
+    )
+
+ptype hostname = ...
+
+ptype timeformat = ...
+
+pdir coral =
+    {host:hostname/time:timeformat :* files(host)(time)}
+  U meta{title : "coralroot"}
+  U meta{owner : "mike freedman"}
+
+-------------
+end coral.pml
+-------------

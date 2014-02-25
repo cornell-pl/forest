@@ -1,0 +1,469 @@
+Starting on files data/boot.txt
+262 records.
+
+Before reduction:
+Pstruct(Id = BTy_212 262)
+	[Date] (Id = BTy_0 262);
+	[White] (Id = BTy_1 262);
+	[Time] (Id = BTy_2 262);
+	Parray(Id = BTy_3 262)([Other](:) )
+	First:
+		Punion(Id = BTy_13 262)
+			Pstruct(Id = BTy_12 261)
+				[White] (Id = BTy_4 261);
+				[String] (Id = BTy_5 261);
+				[White] (Id = BTy_6 261);
+				Punion(Id = BTy_8 261)
+					[Empty] (Id = BTy_7 233);
+					[Host] (Id = BTy_9 28);
+				End Punion;
+				[String] (Id = BTy_10 261);
+				[Other](:) (Id = BTy_11 261);
+			End Pstruct;
+			[Empty] (Id = BTy_14 1);
+		End Punion;
+	Body:
+		Pstruct(Id = BTy_69 95)
+			Punion(Id = BTy_37 95)
+				Pstruct(Id = BTy_36 14)
+					Punion(Id = BTy_16 14)
+						[Empty] (Id = BTy_15 8);
+						Pstruct(Id = BTy_22 4)
+							[White] (Id = BTy_17 4);
+							[Date] (Id = BTy_18 4);
+							[White] (Id = BTy_19 4);
+							[Time] (Id = BTy_20 4);
+							[White] (Id = BTy_21 4);
+						End Pstruct;
+						Pstruct(Id = BTy_27 2)
+							[White] (Id = BTy_24 2);
+							[String] (Id = BTy_25 2);
+							[White] (Id = BTy_26 2);
+						End Pstruct;
+					End Punion;
+					[Pint] (Id = BTy_28 14);
+					Punion(Id = BTy_34 14)
+						Pstruct(Id = BTy_33 12)
+							Punion(Id = BTy_30 12)
+								[Empty] (Id = BTy_29 8);
+								[White] (Id = BTy_31 4);
+							End Punion;
+							[String] (Id = BTy_32 12);
+						End Pstruct;
+						[Empty] (Id = BTy_35 2);
+					End Punion;
+				End Pstruct;
+				[String] (Id = BTy_38 8);
+				Pstruct(Id = BTy_48 8)
+					Punion(Id = BTy_45 8)
+						Pstruct(Id = BTy_44 4)
+							[White] (Id = BTy_39 4);
+							[String] (Id = BTy_40 4);
+							[White] (Id = BTy_41 4);
+							[String] (Id = BTy_42 4);
+							[White] (Id = BTy_43 4);
+						End Pstruct;
+						[White] (Id = BTy_46 4);
+					End Punion;
+					[Path] (Id = BTy_47 8);
+				End Pstruct;
+				Parray(Id = BTy_50 65)([White] )
+				First:
+					[White] (Id = BTy_51 65);
+				Body:
+					Pstruct(Id = BTy_54 119)
+						[String] (Id = BTy_52 119);
+						[White] (Id = BTy_53 119);
+					End Pstruct;
+				Tail:
+					Punion(Id = BTy_60 65)
+						Pstruct(Id = BTy_59 61)
+							Punion(Id = BTy_56 61)
+								[Empty] (Id = BTy_55 59);
+								[Other](/) (Id = BTy_57 2);
+							End Punion;
+							[String] (Id = BTy_58 61);
+						End Pstruct;
+						[Host] (Id = BTy_61 2);
+						Pstruct(Id = BTy_65 2)
+							[Other](() (Id = BTy_62 2);
+							[String] (Id = BTy_63 2);
+							[Other]()) (Id = BTy_64 2);
+						End Pstruct;
+					End Punion;
+				End Parray;
+			End Punion;
+			[Other](:) (Id = BTy_68 95);
+		End Pstruct;
+	Tail:
+		Punion(Id = BTy_132 262)
+			Pstruct(Id = BTy_131 28)
+				[White] (Id = BTy_71 28);
+				Punion(Id = BTy_108 28)
+					Pstruct(Id = BTy_78 20)
+						[Host] (Id = BTy_72 20);
+						Punion(Id = BTy_74 20)
+							[Empty] (Id = BTy_73 12);
+							[Other](_) (Id = BTy_75 8);
+						End Punion;
+						[String] (Id = BTy_76 20);
+						[White] (Id = BTy_77 20);
+					End Pstruct;
+					[String] (Id = BTy_79 4);
+					Pstruct(Id = BTy_107 4)
+						[Other](-) (Id = BTy_80 4);
+						[Other](-) (Id = BTy_81 4);
+						[String] (Id = BTy_82 4);
+						[Other](,) (Id = BTy_83 4);
+						[White] (Id = BTy_84 4);
+						[String] (Id = BTy_85 4);
+						[White] (Id = BTy_86 4);
+						[String] (Id = BTy_87 4);
+						[White] (Id = BTy_88 4);
+						[String] (Id = BTy_89 4);
+						[Other](,) (Id = BTy_90 4);
+						[White] (Id = BTy_91 4);
+						[String] (Id = BTy_92 4);
+						[White] (Id = BTy_93 4);
+						[String] (Id = BTy_94 4);
+						[White] (Id = BTy_95 4);
+						[String] (Id = BTy_96 4);
+						[Other](.) (Id = BTy_97 4);
+						[White] (Id = BTy_98 4);
+						[String] (Id = BTy_99 4);
+						[White] (Id = BTy_100 4);
+						[String] (Id = BTy_101 4);
+						[White] (Id = BTy_102 4);
+						[String] (Id = BTy_103 4);
+						[White] (Id = BTy_104 4);
+						[String] (Id = BTy_105 4);
+						[White] (Id = BTy_106 4);
+					End Pstruct;
+				End Punion;
+				[Other](=) (Id = BTy_109 28);
+				Punion(Id = BTy_114 28)
+					Pstruct(Id = BTy_113 20)
+						[White] (Id = BTy_110 20);
+						[Pint] (Id = BTy_111 20);
+						[White] (Id = BTy_112 20);
+					End Pstruct;
+					Pstruct(Id = BTy_128 4)
+						[Other](/) (Id = BTy_115 4);
+						[String] (Id = BTy_116 4);
+						[White] (Id = BTy_117 4);
+						[String] (Id = BTy_118 4);
+						[White] (Id = BTy_119 4);
+						[Other](-) (Id = BTy_120 4);
+						[White] (Id = BTy_121 4);
+						[String] (Id = BTy_122 4);
+						[White] (Id = BTy_123 4);
+						[String] (Id = BTy_124 4);
+						Punion(Id = BTy_127 4)
+							[White] (Id = BTy_125 2);
+							[Empty] (Id = BTy_126 2);
+						End Punion;
+					End Pstruct;
+					[Other](?) (Id = BTy_129 4);
+				End Punion;
+			End Pstruct;
+			Parray(Id = BTy_133 234)([White] )
+			First:
+				Punion(Id = BTy_135 234)
+					[White] (Id = BTy_134 230);
+					[Empty] (Id = BTy_136 4);
+				End Punion;
+			Body:
+				Pstruct(Id = BTy_176 523)
+					Punion(Id = BTy_156 523)
+						Pstruct(Id = BTy_155 472)
+							Punion(Id = BTy_138 472)
+								[Empty] (Id = BTy_137 452);
+								[Other](-) (Id = BTy_139 11);
+								[Host] (Id = BTy_141 5);
+								[Other]($) (Id = BTy_143 4);
+							End Punion;
+							[String] (Id = BTy_144 472);
+							Punion(Id = BTy_146 472)
+								[Empty] (Id = BTy_145 450);
+								[Other](,) (Id = BTy_147 16);
+								[Other](.) (Id = BTy_149 4);
+								Pstruct(Id = BTy_154 2)
+									[Other](() (Id = BTy_151 2);
+									[String] (Id = BTy_152 2);
+									[Other]()) (Id = BTy_153 2);
+								End Pstruct;
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_160 8)
+							[Pint] (Id = BTy_157 8);
+							[Other](/) (Id = BTy_158 8);
+							[Pint] (Id = BTy_159 8);
+						End Pstruct;
+						[Pint] (Id = BTy_162 19);
+						[Time] (Id = BTy_164 6);
+						[Date] (Id = BTy_165 6);
+						Pstruct(Id = BTy_168 6)
+							[IP] (Id = BTy_166 6);
+							[Other](.) (Id = BTy_167 6);
+						End Pstruct;
+						[Path] (Id = BTy_169 4);
+						Pstruct(Id = BTy_173 2)
+							[Other](>) (Id = BTy_170 2);
+							[Other](>) (Id = BTy_171 2);
+							[Path] (Id = BTy_172 2);
+						End Pstruct;
+					End Punion;
+					[White] (Id = BTy_175 523);
+				End Pstruct;
+			Tail:
+				Punion(Id = BTy_199 234)
+					Pstruct(Id = BTy_198 140)
+						Punion(Id = BTy_178 140)
+							[Empty] (Id = BTy_177 138);
+							Pstruct(Id = BTy_182 2)
+								[Other](\^[) (Id = BTy_179 2);
+								[Other]([) (Id = BTy_180 2);
+								[Pint] (Id = BTy_181 2);
+							End Pstruct;
+						End Punion;
+						[String] (Id = BTy_183 140);
+						Punion(Id = BTy_185 140)
+							[Empty] (Id = BTy_184 126);
+							Pstruct(Id = BTy_186 14)
+								[Other](.) (Id = BTy_187 14);
+								Punion(Id = BTy_189 14)
+									[Empty] (Id = BTy_188 10);
+									Pstruct(Id = BTy_193 2)
+										[Pint] (Id = BTy_190 2);
+										[Other](.) (Id = BTy_191 2);
+										[Pint] (Id = BTy_192 2);
+									End Pstruct;
+									Pstruct(Id = BTy_197 2)
+										[Other](.) (Id = BTy_195 2);
+										[Other](.) (Id = BTy_196 2);
+									End Pstruct;
+								End Punion;
+							End Pstruct;
+						End Punion;
+					End Pstruct;
+					[Empty] (Id = BTy_200 80);
+					[Path] (Id = BTy_202 8);
+					[URL] (Id = BTy_204 2);
+					Pstruct(Id = BTy_209 2)
+						[Pint] (Id = BTy_205 2);
+						[Other](>) (Id = BTy_206 2);
+						[Other](&) (Id = BTy_207 2);
+						[Pint] (Id = BTy_208 2);
+					End Pstruct;
+					[Other](.) (Id = BTy_210 2);
+				End Punion;
+			End Parray;
+		End Punion;
+	End Parray;
+End Pstruct
+
+Refined Ty:
+Pstruct(Id = BTy_212 262)
+	[Date] (Id = BTy_0 262);
+	[StringConst] " " (Id = BTy_1 262);
+	[Time] (Id = BTy_2 262);
+	Poption(Id = BTy_13 262)
+		Pstruct(Id = BTy_12 261)
+			[StringConst] " srv7 " (Id = BTy_4 261);
+			Poption(Id = BTy_8 261)
+				[Host] (Id = BTy_9 28);
+			End Poption;
+			[String] (Id = BTy_10 261);
+			[StringConst] ":" (Id = BTy_11 261);
+		End Pstruct;
+	End Poption;
+	RArray(Id = BTy_3 262)
+		Pstruct(Id = BTy_69 95)
+			Punion(Id = BTy_37 95)
+				Pstruct(Id = BTy_36 14)
+					Punion(Id = BTy_16 14)
+						Pstruct(Id = BTy_22 4)
+							[StringConst] " " (Id = BTy_17 4);
+							[Date] (Id = BTy_18 4);
+							[StringConst] " " (Id = BTy_19 4);
+							[Time] (Id = BTy_20 4);
+							[StringConst] " " (Id = BTy_21 4);
+						End Pstruct;
+						Pstruct(Id = BTy_27 2)
+							[White] (Id = BTy_24 2);
+							[StringConst] "line" (Id = BTy_25 2);
+							[White] (Id = BTy_26 2);
+						End Pstruct;
+						[Empty] (Id = BTy_15 8);
+					End Punion;
+					[Pint] (Id = BTy_28 14);
+					Poption(Id = BTy_34 14)
+						Pstruct(Id = BTy_33 12)
+							Poption(Id = BTy_30 12)
+								[StringConst] "  " (Id = BTy_31 4);
+							End Poption;
+							[Enum] {[StringConst] "NOTE", [StringConst] "c", [StringConst] "e", } (Id = BTy_32 12);
+						End Pstruct;
+					End Poption;
+				End Pstruct;
+				[Enum] {[StringConst] "d4", [StringConst] "f1", } (Id = BTy_38 8);
+				Pstruct(Id = BTy_48 8)
+					[StringConst] " " (Id = BTy_39 8);
+					Poption(Id = BTy_45 8)
+						Pstruct(Id = BTy_44 4)
+							[Enum] {[StringConst] "Listening", [StringConst] "Sending", } (Id = BTy_40 4);
+							[StringConst] " on" (Id = BTy_41 4);
+							[White] (Id = BTy_43 4);
+						End Pstruct;
+					End Poption;
+					[Path] (Id = BTy_47 8);
+				End Pstruct;
+				Pstruct(Id = BTy_214 65)
+					[StringConst] " " (Id = BTy_51 65);
+					RArray(Id = BTy_50 65)
+						Pstruct(Id = BTy_54 119)
+							[String] (Id = BTy_52 119);
+							[Enum] {[StringConst] " ", [StringConst] "  ", } (Id = BTy_53 119);
+						End Pstruct;
+					End RArray;
+					Punion(Id = BTy_60 65)
+						Pstruct(Id = BTy_59 61)
+							Poption(Id = BTy_56 61)
+								[StringConst] "/" (Id = BTy_57 2);
+							End Poption;
+							[String] (Id = BTy_58 61);
+						End Pstruct;
+						[Host] (Id = BTy_61 2);
+						[StringConst] "(localtime)" (Id = BTy_62 2);
+					End Punion;
+				End Pstruct;
+			End Punion;
+			[StringConst] ":" (Id = BTy_68 95);
+		End Pstruct;
+	End RArray;
+	Punion(Id = BTy_132 262)
+		Pstruct(Id = BTy_131 28)
+			[StringConst] " " (Id = BTy_71 28);
+			Punion(Id = BTy_108 28)
+				Pstruct(Id = BTy_78 20)
+					[Host] (Id = BTy_72 20);
+					Poption(Id = BTy_74 20)
+						[StringConst] "_" (Id = BTy_75 8);
+					End Poption;
+					[Enum] {[StringConst] "cept_source_route", [StringConst] "filter", [StringConst] "forward", [StringConst] "re_uses_pid", [StringConst] "srq", } (Id = BTy_76 20);
+					[StringConst] " " (Id = BTy_77 20);
+				End Pstruct;
+				[StringConst] "LABEL" (Id = BTy_79 4);
+				[StringConst] "--use-syslog, no facility specified, using default value.  Did you forget the " (Id = BTy_80 4);
+			End Punion;
+			[StringConst] "=" (Id = BTy_109 28);
+			Punion(Id = BTy_114 28)
+				Pstruct(Id = BTy_113 20)
+					[StringConst] " " (Id = BTy_110 20);
+					[Int] [0...1] (Id = BTy_111 20);
+					[StringConst] " " (Id = BTy_112 20);
+				End Pstruct;
+				Pstruct(Id = BTy_128 4)
+					[StringConst] "/boot duplicate - not mounted" (Id = BTy_115 4);
+					Poption(Id = BTy_127 4)
+						[White] (Id = BTy_125 2);
+					End Poption;
+				End Pstruct;
+				[StringConst] "?" (Id = BTy_129 4);
+			End Punion;
+		End Pstruct;
+		Pstruct(Id = BTy_215 234)
+			Poption(Id = BTy_135 234)
+				[Enum] {[StringConst] " ", [StringConst] "  ", [StringConst] "   ", [StringConst] "    ", } (Id = BTy_134 230);
+			End Poption;
+			RArray(Id = BTy_133 234)
+				Pstruct(Id = BTy_176 523)
+					Punion(Id = BTy_156 523)
+						Pstruct(Id = BTy_155 472)
+							Punion(Id = BTy_138 472)
+								[StringConst] "-" (Id = BTy_139 11);
+								[Host] (Id = BTy_141 5);
+								[StringConst] "$" (Id = BTy_143 4);
+								[Empty] (Id = BTy_137 452);
+							End Punion;
+							[String] (Id = BTy_144 472);
+							Punion(Id = BTy_146 472)
+								[StringConst] "," (Id = BTy_147 16);
+								[StringConst] "." (Id = BTy_149 4);
+								[StringConst] "(s)" (Id = BTy_151 2);
+								[Empty] (Id = BTy_145 450);
+							End Punion;
+						End Pstruct;
+						Pstruct(Id = BTy_160 8)
+							[Pint] (Id = BTy_157 8);
+							[StringConst] "/" (Id = BTy_158 8);
+							[Pint] (Id = BTy_159 8);
+						End Pstruct;
+						[Pint] (Id = BTy_162 19);
+						[Time] (Id = BTy_164 6);
+						[Date] (Id = BTy_165 6);
+						Pstruct(Id = BTy_168 6)
+							[IP] (Id = BTy_166 6);
+							[StringConst] "." (Id = BTy_167 6);
+						End Pstruct;
+						[Path] (Id = BTy_169 4);
+						Pstruct(Id = BTy_173 2)
+							[StringConst] ">>" (Id = BTy_170 2);
+							[Path] (Id = BTy_172 2);
+						End Pstruct;
+					End Punion;
+					[Enum] {[StringConst] " ", [StringConst] "  ", [StringConst] "   ", [StringConst] "                 ", } (Id = BTy_175 523);
+				End Pstruct;
+			End RArray;
+			Punion(Id = BTy_199 234)
+				Pstruct(Id = BTy_198 140)
+					Poption(Id = BTy_178 140)
+						Pstruct(Id = BTy_182 2)
+							[Other](\^[) (Id = BTy_179 2);
+							[StringConst] "[" (Id = BTy_180 2);
+							[IntConst] [60] (Id = BTy_181 2);
+						End Pstruct;
+					End Poption;
+					[String] (Id = BTy_183 140);
+					Poption(Id = BTy_185 140)
+						Pstruct(Id = BTy_186 14)
+							[StringConst] "." (Id = BTy_187 14);
+							Punion(Id = BTy_189 14)
+								[Pfloat] (Id = BTy_190 2);
+								[StringConst] ".." (Id = BTy_195 2);
+								[Empty] (Id = BTy_188 10);
+							End Punion;
+						End Pstruct;
+					End Poption;
+				End Pstruct;
+				[Path] (Id = BTy_202 8);
+				[URL] (Id = BTy_204 2);
+				Pstruct(Id = BTy_209 2)
+					[Int] [2...2] (Id = BTy_205 2);
+					[StringConst] ">&" (Id = BTy_206 2);
+					[Int] [1...1] (Id = BTy_208 2);
+				End Pstruct;
+				[StringConst] "." (Id = BTy_210 2);
+				[Empty] (Id = BTy_200 80);
+			End Punion;
+		End Pstruct;
+	End Punion;
+End Pstruct
+
+====== Timing information ======
+Tokenization time = 0.083
+Measure1 time = 0.008
+Reduce1 time = 0.743
+Reduce2 time = 3.238
+Reduce3 time = 0.292
+Measure2 time = 0.007
+================================
+
+Outputing partitions to directory: gen/
+Opening: gen/Ty, length 6
+opening: gen/Complexity, length 14
+opening: gen/Timing, length 10
+Excutable directory:/Users/kzhu/pads/learning/golden
+copy command: cp /Users/kzhu/pads/learning/golden/GNUMakefile.output gen/GNUmakefile
+
+Completed data/boot.txt

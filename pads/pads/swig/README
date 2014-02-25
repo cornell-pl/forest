@@ -1,0 +1,99 @@
+README
+
+This directory contains files providing and demonstrating how to use SWIG (Simplified 
+Wrapper and Interface Generator) to create other (scripting) language (e.g. perl, 
+Java) interfaces to PADS generated code and libraries.
+
+*** As this is a work in progress, there are caveats:
+	+ some SWIG knowledge may prove helpful.
+	+ it has so far been "tested" only on wall.research.att.com (32-bit Linux)
+	  and penguin.research.att.com (64-bit Linux) (and only for Perl)
+	+ there are MANY warnings issued by the processors
+
+Nevertheless, it is thought to be useful enough to check it into CVS at this point.
+
+HOW TO BUILD/RUN THE EXAMPLE
+
+	# Build the example:
+	$ make ai_accum.pl
+
+	# Run the example:
+	$ AST_ARCH=`$PADS_HOME/ast-ast/bin/package.cvs`
+	$ perl -I$AST_ARCH ./ai_accum.pl ai.dat
+
+FILES
+	GNUmakefile	- An example project makefile
+	README		- This file
+	SWIGrules.mk	- All the variable, macro and rule definitions needed
+			  to build PADS/SWIG applications.  Included by
+			  GNUmakefile above.
+	accumulator.pm	- A Perl Module re-implementing the accumulator
+			  template program.
+	ai.dat		- Example data file, taken from padsc/examples/data
+	ai.i		- User-supplied SWIG I/F to ai format description
+	ai.p		- PADS description of ai data (from padsc/examples/data)
+	ai_accum.pl	- A Perl driver program that uses the accumulator.pm
+			  module and parameterizes it with the ai interface.
+	gen		- The directory where padsc output goes.
+	generators.i	- A utility SWIG interface to generate certain API fns
+			  that make more sense on the C side of the C/script
+			  interface.
+	pads.i		- A SWIG I/F to the libpads API.
+
+SWIG OVERVIEW 
+
+Typical applications of this technology involve creating a SWIG interface
+definition file (*.i) to specify what (native) library code and data the
+scripting language program may call or use.  The SWIG processor is run over the 
+interface definition and produces two things: a scripting language interface
+module (e.g. foo.pm) and a C-language foreign function interface file full
+of wrappers (e.g. foo_wrap.c).  The C-language wrapping code, along with the
+native library are compiled and linked with special options to produce a
+shared object that has internal references already resolved.  This prevents
+conflicts between the scripting language implementation and ast/pads-generated
+code at link time. The users scripting language program uses the interface
+module and makes calls into the native library code via the interface module.
+
+SMALL SWIG EXAMPLE:
+
+    1. Given
+	foo.c:
+		int foo() { return 42; }
+
+    2. Write
+	example.i:
+		int foo();
+
+    3. and use SWIG to generate
+	example_wrap.c:
+		....
+
+	example.pm:
+		...
+
+    4. finally, write the application script	
+	example.pl:
+		#!/usr/bin/perl -w
+		use example;
+		print example::foo() . "\n";
+
+PADS-SPECIFIC NOTES:
+
+A LIBPADS Interface description is provided (pads.i).  This interface covers
+functions such as P_open etc. which appear in libpads.  It also contains minor
+AST functions that bleed through the libpads API in many of the PADS example
+programs or program templates (e.g. error()).  Ultimately this leads to the
+creation of a library called libpads.so which is a superset of the one of the
+same name that is built by "make libpads".  The overloading of the name is a
+consequence of SWIG limitations AND the desire to use "pads" as the package
+name for qualifying libpads API calls.  Sorry.
+
+NB: SWIG provides a default correspondence between C datatypes and the target
+scripting language's datatypes.  This is not always satisfactory though and
+through the use of a SWIG feature called "typemaps" (inspired by those of PERLXS
+no doubt) some API signatures have been changed to make them more idiomatic
+in the scripting language (e.g. returning a pointer via the function's return
+value instead of as a ** argument).  Consult pads.i for documentation.
+
+Users should create a separate interface description for any PADS-generated code.
+E.g. my_type.p should have a my_type.i interface created.

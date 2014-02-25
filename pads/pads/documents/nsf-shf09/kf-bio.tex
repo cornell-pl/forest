@@ -1,0 +1,339 @@
+\documentclass[11pt]{article}
+        % Use font 11pt Roman.
+%\documentstyle{article}
+
+%\def\references{\newpage\section*{References}}
+%\newcounter{refcount}
+%\def\lit#1{~[\ref{#1}]}
+%\def\cit#1#2#3#4{#1\quad#2\quad{\it #3}\quad #4\vskip.15in }
+%\def\citb#1#2#3{#1\quad{\it #2}.\quad#3.}
+%\def\citu#1#2{#1\quad#2.}
+
+
+\newcommand{\comment}[1]{}
+
+
+% No header or foot; top 2.0in, left 0.6in, right 0.9in, bottom 0.5in
+
+%\pagestyle{empty}
+%\topmargin=-.5in
+%\textheight=8.8in
+%\leftmargin=-1.0in
+%\oddsidemargin=.25in
+%\oddsidemargin=.25in
+%\textwidth=6.2in
+
+\setlength{\textheight}{22.8true cm}
+%\setlength{\textwidth}{15.4true cm}
+\setlength{\textwidth}{15.9true cm}
+\setlength{\oddsidemargin}{.55true cm}
+\setlength{\evensidemargin}{.55true cm}
+\setlength{\topmargin}{-1.0cm}
+\pagestyle{empty}
+
+\newlength{\oldparindent}
+\setlength{\oldparindent}{\parindent}
+\setlength{\parindent}{0pt}
+
+% No indentation at the beginning of paragraphs.
+
+% Don't hyphenate.
+%\hyphenpenalty=10000
+
+
+% Rsection: a resume section environment.
+\newenvironment{Rsection}[1]{
+  \noindent{\bf #1}
+  \begin{list}{}{\topsep=-\parskip
+                 \leftmargin=-0.0in}
+    \item[]
+}{
+  \end{list}
+%  \vspace \baselineskip
+}
+                           
+% Section: a resume section environment.
+\newenvironment{Section}[1]{
+  \centerline{\bf #1}
+  \begin{list}{}{\topsep=-\parskip
+                 \leftmargin=-0.5in}
+    \item[]
+}{
+  \end{list}
+%  \vspace \baselineskip
+}
+
+% edlist: a resume education list environment.
+\newenvironment{edlist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.25in}
+}{
+  \end{list}
+}
+
+
+% edlist2: a resume education list environment.
+\newenvironment{edlist2}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.25in
+                 \setlength{\rightmargin}{\leftmargin}
+                 \textwidth=4in}
+}{
+  \end{list}
+}
+                           
+
+% honorlist: a resume honor list environment.
+\newenvironment{honor2list}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{list}
+}  
+
+\newenvironment{honor2enum}{
+  \begin{enumerate}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{enumerate}
+}  
+
+\newenvironment{honor3enum}{
+  \begin{enumerate}{}{\topsep=-\parskip
+                 \itemindent=-0in
+                 \itemsep=0.0\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{enumerate}
+}  
+
+
+
+% honorlist: a resume honor list environment.
+\newenvironment{honorlist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemindent=-0.in
+                 \itemsep=0.2\baselineskip
+                 \leftmargin=.25in}
+}{
+  \end{list}
+}  
+
+
+% joblist: a resume job list environment.
+\newenvironment{joblist}{
+  \begin{list}{}{\topsep=-\parskip
+                 \itemsep=0.5\baselineskip
+                 \leftmargin=0.5in}
+}{
+  \end{list}
+}
+
+                                      
+% job: a job entry for a joblist environment
+\newcommand{\job}[3]{
+  \item[]
+  \begin{tabbing}
+    \hspace{-0.5in}\=\hspace{1.5in}\=\kill
+    \>    {\it #1:}       \> #2   \\
+    \>                    \> #3   \\
+  \end{tabbing}
+  \vspace{-\baselineskip}
+}
+
+              
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\leftmargin=-1in
+\begin{document}
+
+
+\centerline{\Large \bf {\LARGE \bf K}ATHLEEN {\LARGE \bf F}ISHER}
+\vskip .3in
+
+\normalsize
+\it
+\begin{tabular}{@{\hspace{0in}}l@{\hspace{2.4in}}l}
+AT\&T Labs  & Phone: (973) 610-2669  \\
+1 River Oaks Place    & Email: {\rm kfisher@research.att.com} \\
+San Jose, CA 95134
+
+\end{tabular}
+\rm
+\vskip.3in
+
+\begin{Rsection}{\Large \bf {Professional Preparation}}
+\vskip.1in
+\begin{edlist}
+
+\item {\bf Stanford University, Stanford, California }
+  \begin{honor2list}
+  \item {Mathematical \& Computational Science, B.Sc. with Distinction, 1991.}  
+
+  \end{honor2list}
+\item {\bf Stanford University}
+\begin{honor2list}
+\item {Computer Science, Ph.D. 1996.}
+\end{honor2list}
+\end{edlist}
+\end{Rsection}
+
+
+\vskip.3in
+\begin{Rsection}{\Large \bf {Appointments}}
+\vskip.1in
+\begin{edlist}
+\item {\bf AT\&T Labs Research}\\
+{\bf  Software Systems Department} \\
+%\vskip .05in
+\vspace{-1ex}
+\begin{honor2list}
+\item Principal Member of the Technical Staff, April 2002--present.
+\item Senior Member of the Technical Staff, September 1996--April 2002.
+\end{honor2list}
+
+
+%\newpage
+\end{edlist}
+\end{Rsection}
+
+
+\vskip.3in
+\begin{Rsection}{{\Large \bf {Selected Publications}} 
+}
+\vskip.1in
+\begin{edlist}
+
+\item {\bf Selected papers of greatest relevance (in chronological order)}
+\begin{honor2enum}
+\vskip .1in
+
+\bibitem{pads:wasl}
+K.~Fisher, D.~Walker, and K.~Q. Zhu.\newblock Incremental learning of system log formats.\newblock In {\em Workshop on the Analysis of System Logs}, 2009.\bibitem{fisher+:dirttoshovels}K.~Fisher, D.~Walker, K.~Q. Zhu, and P.~White.\newblock From dirt to shovels: Fully automatic tool generation from ad hoc  data.\newblock In {\em {ACM} Symposium on Principles of Programming Languages},  pages 421--434. {ACM} Press, Jan. 2008.\bibitem{mandelbaum+:pads-ml}Y.~Mandelbaum, K.~Fisher, D.~Walker, M.~Fernandez, and A.~Gleyzer.\newblock {PADS/ML}: {A} functional data description language.\newblock In {\em {ACM} Symposium on Principles of Programming Languages}.  {ACM} Press, Jan. 2007.\bibitem{fisher+:popl06}K.~Fisher, Y.~Mandelbaum, and D.~Walker.\newblock The next 700 data description languages.\newblock In {\em {ACM} Symposium on Principles of Programming Languages}.  {ACM} Press, Jan. 2006.\bibitem{fisher+:pads}K.~Fisher and R.~Gruber.\newblock {PADS}: {A} domain specific language for processing ad hoc data.\newblock In {\em {ACM} Conference on Programming Language Design and  Implementation}, pages 295--304. {ACM} Press, June 2005.
+
+%
+
+
+\end{honor2enum}
+\item {\bf Selected other publications (in chronological order):}
+\begin{honor2enum}
+\bibitem{signatures}N.~Ramsey, K.~Fisher, and P.~Govereau.\newblock An expressive language of signatures.\newblock In {\em {ACM} International Conference on Functional Programming},  pages 27--40. {ACM} Press, 2005.
+
+\bibitem{hancock:toplas}C.~Cortes, K.~Fisher, D.~Pregibon, A.~Rogers, and F.~Smith.\newblock Hancock: {A} language for analyzing transactional data streams.\newblock {\em {ACM} Transactions on Progamming Languages and Systems},  26(2):301--338, March 2004.
+
+\bibitem{class-types}K.~Fisher and J.~Reppy.\newblock Inheritance-based subtyping.\newblock {\em Information and Computation}, 177(1):28--55, Aug. 2002.
+
+\bibitem{kdd00}
+C.~Cortes, K.~Fisher, D.~Pregibon, A.~Rogers, and F.~Smith.\newblock Hancock: A language for extracting signatures from data streams.\newblock In {\em {ACM} International Conference on Knowledge Discovery and  Data Mining}, pages 9--17, August 2000.\bibitem{fisher-reppy-pldi99}K.~Fisher and J.~Reppy.\newblock The design of a class mechanism for {\sc moby}.\newblock In {\em {ACM} Conference on Programming Language Design and  Implementation}, pages 37--49. {ACM} Press, 1999.
+\end{honor2enum}
+
+\end{edlist}
+\end{Rsection}
+
+
+
+\vskip.3in
+\begin{Rsection}{\Large \bf {Synergistic Activities}}
+\begin{itemize}
+\vskip .1in
+\item ACM SIGPLAN Chair (2007 - 2009).  Vice Chair (2003 - 2007).  Member at large (2001 - 2003).
+\item Elected member of CRA Board.  (2009 - present).
+\item Editor, Journal of Functional Programming (2005 - present).
+\item Program Chair for ICFP 2004, CUFP (2006,2007), FOOL (2001).
+\item Member of the Steering Committees of POPL, PLDI, and OOPSLA.
+\item I have mentored six graduate students at AT\&T: four on the PADS project and two on the Hancock project.
+\item I co-organized and led the 2008 SIGPLAN Workshop on Undergraduate Programming Language Curriculum, which led to a published report describing recommended practices.  
+\item Co-Chair of CRA-W, CRA's standing committee charged with increasing the representation of women in research roles in computer science.  As part of my work on this committee, I serve as a speaker at the annual Grad Cohort Conference, which brings together first, second, and third-year female graduate students to provide information about how to succeed in graduate school and beyond.
+\item Faculty Support Chair for the Federated Conference on Research in Computing 2003.  I ran a fellowship program that permitted 50 professors at institutions with high percentages of women and minorities to attend the conferences and tutorials at FCRC.  Barbara Ryder (Rutgers) and I were awarded a grant from NSF to fund this program.
+
+\end{itemize}
+\end{Rsection}
+\vskip.3in
+\begin{Rsection}{\Large \bf {Collaborators and Other Affiliations}}
+\begin{itemize}
+\vskip .1in
+\item Collaborators: 
+Mary Fern\'andez (AT\&T Labs),
+Yitzhak Mandelbaum (AT\&T Labs),
+David Walker (Princeton University),
+Robert Gruber(Google),
+Alex Aiken (Stanford University),
+Peter Hawkins (Stanford University),
+Norman Ramsey (Harvard University),
+Paul Govereau (Harvard University),
+Mooly Sagiv (Tel Aviv University),
+Kenny Zhu (Shanghai Jiao Tong University),
+Peter White (Galois),
+Michael Burke (Galois),
+Artem Glyzer (Princeton University)
+
+
+\item Graduate (Ph.D.) Advisor: 
+John Mitchell (Stanford)
+\item Thesis Advisees (graduated): Pascal Peres (Stanford MSC, 2007)
+\item Thesis Advisees (current): none
+\end{itemize}
+\end{Rsection}
+
+%wasl: \cite{pads:wasl}
+%dirt to shovels: \cite{fisher+:dirttoshovels},
+%pads-ml: \cite{mandelbaum+:pads-ml}
+%pads-theory: \cite{fisher+:popl06}
+%pads-orig: \cite{fisher+:pads},
+
+%signatures: \cite{signatures}
+%moby: \cite{fisher-reppy-pldi99}
+%hancock-kdd: \cite{kdd00}
+%moby-classtypes : \cite{class-types}
+%hancock-toplas : \cite{hancock:toplas}
+
+
+%\bibliographystyle{abbrv}
+%\bibliography{kfisher}
+
+% \iffalse
+% \vskip.3in
+% \begin{Rsection}{\Large \bf {Selected Awards and Fellowships}}
+% \begin{itemize}
+% \vskip .1in
+% \end{itemize}
+% \end{Rsection}
+% \fi
+
+
+
+
+%\newpage
+
+%\newpage
+
+
+
+
+
+%%%%%$$^{\ref{fn:second}}$
+
+
+
+
+
+
+
+%\vskip.3in
+
+
+
+
+\end{document}
+

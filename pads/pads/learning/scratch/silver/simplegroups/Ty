@@ -1,0 +1,22 @@
+Pstruct(Id = BTy_22 3, 14b, 52.798b)
+	[Int] [12...123](Id = BTy_0 3, 1b, 20.422b);
+	[StringConst] ","(Id = BTy_1 3, 1b, 0b);
+	Punion(Id = BTy_3 3, 3b, 1b)
+		[StringConst] " "(Id = BTy_2 2, 1b, 0b);
+		[StringConst] ""(Id = BTy_4 1, 1b, 0b);
+	End Punion;
+	[StringConst] "\""(Id = BTy_5 3, 1b, 1b);
+	Punion(Id = BTy_15 3, 6b, 19.884b)
+		Pstruct(Id = BTy_14 2, 4b, 16.884b)
+			[Enum] {[StringConst] "goodbye", [StringConst] "hello", }(Id = BTy_6 2, 1b, 5.129b);
+			[StringConst] ", "(Id = BTy_7 2, 1b, 1b);
+			RArray(Id = BTy_8 2, 2b, 10.755b)
+				Separator: [StringConst] " "
+				[Enum] {[StringConst] "fred", [StringConst] "the", }(Id = BTy_10 3, 1b, 3.585b);
+			End RArray;
+		End Pstruct;
+		[StringConst] "helo"(Id = BTy_16 1, 1b, 2b);
+	End Punion;
+	[StringConst] "\", "(Id = BTy_17 3, 1b, 2b);
+	[Enum] {[StringConst] "today", [StringConst] "tomorrow", [StringConst] "yesterday", }(Id = BTy_21 3, 1b, 8.492b);
+End Pstruct

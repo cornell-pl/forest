@@ -1,0 +1,84 @@
+Starting on files data/dibbler.1000
+999 records.
+
+Before reduction:
+Parray(Id = BTy_0 999)([Other](|) )
+First:
+	Pstruct(Id = BTy_3 999)
+		[Pint] (Id = BTy_1 999);
+		[Other](|) (Id = BTy_2 999);
+	End Pstruct;
+Body:
+	Pstruct(Id = BTy_22 18998)
+		Punion(Id = BTy_11 18998)
+			Pstruct(Id = BTy_10 11714)
+				Punion(Id = BTy_5 11714)
+					[Empty] (Id = BTy_4 11713);
+					Pstruct(Id = BTy_8 1)
+						[String] (Id = BTy_6 1);
+						[White] (Id = BTy_7 1);
+					End Pstruct;
+				End Punion;
+				[Pint] (Id = BTy_9 11714);
+			End Pstruct;
+			Pstruct(Id = BTy_18 6286)
+				[String] (Id = BTy_12 6286);
+				Punion(Id = BTy_14 6286)
+					[Empty] (Id = BTy_13 6285);
+					Pstruct(Id = BTy_17 1)
+						[White] (Id = BTy_15 1);
+						[String] (Id = BTy_16 1);
+					End Pstruct;
+				End Punion;
+			End Pstruct;
+			[Empty] (Id = BTy_20 998);
+		End Punion;
+		[Other](|) (Id = BTy_21 18998);
+	End Pstruct;
+Tail:
+	[Pint] (Id = BTy_23 999);
+End Parray
+
+Refined Ty:
+RArray(Id = BTy_0 999)
+	Separator: [StringConst] "|"
+	Punion(Id = BTy_11 20996)
+		Pstruct(Id = BTy_10 13712)
+			Poption(Id = BTy_5 13712)
+				Pstruct(Id = BTy_8 1)
+					[String] (Id = BTy_6 1);
+					[White] (Id = BTy_7 1);
+				End Pstruct;
+			End Poption;
+			[Pint] (Id = BTy_9 13712);
+		End Pstruct;
+		Pstruct(Id = BTy_18 6286)
+			[String] (Id = BTy_12 6286);
+			Poption(Id = BTy_14 6286)
+				Pstruct(Id = BTy_17 1)
+					[White] (Id = BTy_15 1);
+					[String] (Id = BTy_16 1);
+				End Pstruct;
+			End Poption;
+		End Pstruct;
+		[Empty] (Id = BTy_20 998);
+	End Punion;
+End RArray
+
+====== Timing information ======
+Tokenization time = 1.689
+Measure1 time = 0.046
+Reduce1 time = 1.955
+Reduce2 time = 26.305
+Reduce3 time = 0.892
+Measure2 time = 0.029
+================================
+
+Outputing partitions to directory: gen/
+Opening: gen/Ty, length 6
+opening: gen/Complexity, length 14
+opening: gen/Timing, length 10
+Excutable directory:/Users/kzhu/pads/learning/golden
+copy command: cp /Users/kzhu/pads/learning/golden/GNUMakefile.output gen/GNUmakefile
+
+Completed data/dibbler.1000

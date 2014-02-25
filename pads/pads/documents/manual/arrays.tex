@@ -1,0 +1,462 @@
+\chapter{Parrays}
+\label{chap:arrays}
+\cutname{arrays.html}
+\Parray{}s are used to describe sequences of values of the same type.
+We call the repeated type the \textit{base type} of the sequence.
+\section{Syntax}
+\label{sec:arrays-syntax}
+The syntax for \Parray{}s is given by the following BNF grammar fragment:
+\tskip{}
+\begin{tabular}{rcl}
+\nont{p\_size\_spec} & \is{} & \opt{\nont{expresssion}} \alt{}\opt{\nont{expression}} : \opt{\nont{expression}}\\[1ex]
+\\
+\nont{p\_term\_expression} & \is{} & \Pnosep{} \alt{} \nont{p\_expression}\\[1ex]
+\nont{p\_array\_constraint} & \is{}  & \Psep{}(\nont{p\_expression})  \alt{} \Pterm{}(\nont{p\_term\_expression})\\
+                            & \alt{} & \Plast{}(\nont{predicate}) \alt{} \Pended{}(\nont{predicate})\\
+                            & \alt{} & \Plongest{}  \alt{} \Pomit{}(\nont{predicate})\\[1ex]
+\nont{p\_array\_constraints} & \is{} & \nont{p\_array\_constraint} 
+\alt{} \nont{p\_array\_constraint} \&\& \nont{p\_array\_constraints}\\[1ex]
+\\
+\nont{p\_range}  & \is{} & `[' \nont{expression} .. \nont{expression}`]'  \alt{} identifier\\
+\nont{p\_forall} & \is{} & \Pforall{} ( identifier \Pin{} \nont{p\_range} : \nont{expression} )\\
+\nont{p\_array\_post}  & \is{} & \nont{predicate} \alt{} \nont{p\_forall}\\
+\nont{p\_array\_posts} & \is{} & \nont{p\_array\_post} \alt{} \nont{p\_array\_post} \&\& \nont{p\_array\_posts}\\[1ex]
+\\
+\nont{array\_ty} & \is{} &  \Parray{} identifier \opt{\nont{p\_formals}} \{\\
+&& \quad \nont{p\_ty} `['\nont{p\_size\_spec}`]' \opt{: \nont{p\_array\_constraints}}\\
+&& \}\ \opt{ \Pwhere{} \ \{\ \nont{p\_array\_posts}\ \}}; \\[4ex]
+\end{tabular}
+
+\noindent
+We explain the meaning of this syntax in the remainder of this chapter.
+All non-terminals not defined in this grammar fragment were
+defined previously.
+Predicates (\nont{predicate}) are described in \secref{sec:common-predicates}.
+\padsl{} types (\nont{p\_ty}) and formal parameters (\nont{p\_formals})
+are described in \secref{sec:common-parameterization}.
+\padsl{} expressions \nont{p\_expressions} are defined in \secref{sec:expressions}.
+Literals (\nont{p\_literal})  are described in
+\secref{sec:common-literals}.
+Expressions (\nont{expression}) represent any \C{} expression.
+We put single quotation marks around the left and right brackets to
+indicate they appear in the grammer, rather than as a meta-notation
+for optionality.
+
+\subsection{Examples}
+In this section, we illustrate various uses of \Parray{}s.
+\subsubsection{Resolved IP address}
+To describe a resolved IP address in ASCII, an example of which is:
+\begin{center}
+\begin{verbatim}
+135.207.26.22
+\end{verbatim}
+\end{center}
+we use the specification:
+
+\inputCode{code/nIP}
+%
+\noindent
+which indicates that \Parray{} \cd{nIP} is a sequence of
+four \cd{Puint8}'s.  The elements of the sequence are separated by
+dots and the sequence is terminated by a space.  As a part of parsing
+the sequence, the generated read function for this type will read the
+separators.  It will check that the terminator is present, but will
+not consume it.  This specification has two termination conditions: a
+maximum size (4) and a terminator (a space).  Parsing will terminate
+when either condition is satisified.  An error will be reported if the
+other condition is not also satisifed.
+
+\subsubsection{Binary sequence of integers}
+As another example, the \Parray{} \cd{seq_t}
+
+\inputCode{code/seq_t}
+%
+\noindent
+uses the \Plast{} predicate to terminate a
+sequence of 32-bit binary integers as soon as one of those integers is
+greater than ten.  The special variable \cd{elts} refers to the
+sequence matched so far, while \cd{current} is the index of the most
+recently read element.  If the expression within the \Plast{} clause
+evaluates to true, parsing for the array terminates.  The current
+element is then the last element in the array.
+
+\subsubsection{Sorted sequence of structs}
+In the next example, the \Parray{} \cd{sorted_t} uses a \Pwhere{}
+clause to check that the elements of the sequence were sorted by the
+\cd{id} field of the element type..
+
+\inputCode{code/sorted_t}
+%
+\noindent
+A \Pforall{} expression executes its body once for each value in the
+range. The index variable, \cd{i} in the example, is bound to the
+range value in the body.
+
+\subsection{Special variables}
+\label{sec:special-variables}
+Within the various expression contexts of \Parray{} declarations, a
+number of variables are in scope.  The following table lists the
+variables, their types, and their bindings.
+
+\myvskip{1ex}
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Variable & Type & Contexts & Binding \\\hline \hline
+\texttt{numRead}  & \texttt{int}     & \Pparsecheck{} & Number of elements read from source. \\ \hline
+\texttt{length}   & \texttt{int}     & all & Number of elements in in-memory representation of sequence.\\ \hline
+\texttt{elts}     & \texttt{rep\_t *}& all & In-memory representation of element sequence. \\ \hline
+\texttt{pds}      & \texttt{pd\_t *} & all & In-memory representation of parse descriptor sequence. \\ \hline
+\texttt{current}  & \texttt{int}     & all & Index of most recently read element.  \\ \hline
+\texttt{elt}      & \texttt{rep\_t}  & all & Most recently read element of sequence. \\ \hline
+\texttt{pd}       & \texttt{pd\_t}   & \Pparsecheck{} & Most recently set  parse descriptor. \\ \hline
+\texttt{consume}  & \texttt{int}     & \Pended{} & See \Pended{} section for explanation. \\ \hline
+\texttt{begin}    & \Ppost{}         & \Pparsecheck{} & Position in input source before reading sequence. \\ \hline
+\texttt{end}      & \Ppost{}         & \Pparsecheck{} within \Pwhere{} & Position in input source after reading sequence. \\ \hline
+\texttt{eltBegin}& \Ppost{}         & \Pparsecheck{} & Position in input source before reading element. \\ \hline
+\texttt{eltEnd}  & \Ppost{}         & \Pparsecheck{} & Position in input source after reading element. \\ \hline
+\end{tabular}
+\end{center}
+\myvskip{1ex}
+
+\noindent
+In the table, we use \texttt{rep\_t} to denote the type of the
+in-memory representation of the base type of the sequence \ie{},
+\texttt{rep\_t} is the base type for the sequence.  Similarly,
+\texttt{pd\_t} denotes the type of the parse descriptor for the base
+type of the sequence. In the table, \textit{arrayName} denotes the
+name of the array; it is a synonym for the special variable \texttt{elts}.
+
+
+\subsection{Size specifications}
+\label{sec:array-size-spec}
+There are five different kinds of size specifications possible:
+			
+\begin{center}	   
+\begin{tabular}{ll}
+  \texttt{[]}         & unbounded \\
+  \texttt{[n]}        & exactly size \texttt{n}\\
+  \texttt{[low:high]} & at least \texttt{low}, at most \texttt{high}\\
+  \texttt{[low:]}     & at least \texttt{low}, no upper bound\\
+  \texttt{[:high]}    & at most  \texttt{high}, no lower bound\\
+\end{tabular}
+\end{center} 
+
+\noindent
+As an example, the following specification describes an integer
+sequence of length at least \texttt{min} and at most \texttt{max}:
+
+\inputCode{code/size}
+%
+\noindent
+A maximum size specification constitutes a termination condition for
+reading the array.  It is an error for the lower bound to be greater
+than the upper bound.
+
+\subsection{\Psep}
+The \Psep{} constraint is used to specify separators, \ie{} data in
+the source that occurs between sequence elements.  The body of the
+\Psep{} constraint can be a character, string, or regular expression. 
+It is an error for a \Parray{} to contain more than one \Psep{} clause.
+
+\subsection{\Pterm}
+The \Pterm{} constraint is used to specify a terminator, \ie{} data in
+the source that occurs after the last element of the sequence and
+indicates that the sequence has ended.  The body of the \Pterm{}
+constraint can be a character, string, or regular expression, or the
+special keyword \Pnosep{}, which indicates that the lack of a
+separator should be interpreted as signalling the end of the
+sequence.   The terminator is not consumed by the read function for
+the array. 
+It is an error for a \Parray{} to contain more than one \Pterm{} clause.
+The following description uses \Pnosep{} to indicate that
+an IP address should be terminated by the lack of a period.
+
+\inputCode{code/nosep}
+
+
+\subsection{\Plast}
+The \Plast{} constraint is used to specify an arbitrary termination
+condition.  The body of the constraint is a predicate expression (\cf{}
+\ref{sec:common-predicates}).  It is evaluated after reading each
+element in the array.  If it evaluates to true, array parsing
+terminates. \secref{sec:special-variables} lists the variables that
+are in scope within the predicate.
+The following description uses a \Plast{} predicate to 
+terminate array parsing if the number of input bytes consumed by
+reading the sequence is greater than a specified amount.
+
+\inputCode{code/last}
+%
+\noindent
+If an array has a \Plast{} constraint, it cannot have a
+\Plongest{} or a \Pended{} constraint.
+
+
+\subsection{\Plongest{}}
+The \Plongest{} specifier indicates that parsing the sequence continues
+until the parser detects an error, either in parsing a separator for the
+array or in parsing an element. The parser returns the data that
+produced the
+error to the input.  If the array declaration includes a
+separator, the separator preceding the returned element
+is also returned to the input.  The following \pads{} code describes a
+non-empty sequence of even integers separated by the character
+\cd('a'), followed by a character \cd('a'), followed by a non-empty
+sequence of odd integers, separated by the character \cd('a') and
+terminated by the character \cd('b'):
+
+\inputCode{code/longest}
+%
+\noindent
+If an array has a \Plongest{} constraint, it cannot have a
+\Plast{} or a \Pended{} constraint.
+
+
+\subsection{\Pended}
+The \Pended{} clause is similar to \Plast{}, except that it allows 
+the specification writer to indicate whether to consume the terminating
+element.   As with \Plast{}, \Pended{} takes a predicate and has in
+scope the variables describd in \secref{sec:special-variables}.  When the
+predicate returns true, the array terminates.  By default, the
+terminating element is returned to the input, as is any preceeding
+separator.  To indicate that the terminating element should 
+instead be considered part of the array, the predicate can set the
+special variable \texttt{consume} to true as a side-effect. 
+
+The specification in \figref{fig:array-ended} describes a sequence of
+comma-separated 
+integers.  The \cd{isDone} function in the \Pended{} clause examines
+the most recently read value and the parse descriptor to determine if
+the sequence has terminated.  Because the function takes the parse
+descriptor as an argument, it must be within the scope of a
+\Pparsecheck{} clause.
+
+\begin{figure}
+\inputCode{code/ended}
+\caption{\Parray{} with \Pomit{} clause.}
+\label{fig:array-ended}
+\end{figure}
+
+If an array has a \Pended{} constraint, it cannot have a
+\Plast{} or a \Plongest{} constraint.
+
+\subsection{\Pomit}
+Like \Plast{} and \Pended{}, the \Pomit{} clause takes a predicate and
+has the variables in scope described in
+\secref{sec:special-variables}. 
+The predicate is evaluated after reading each element in the array.
+When the predicate returns true, the just-read element is not stored
+into the array;  it is ``omitted''.  It is because of the \Pomit{}
+predicate that the special variables \texttt{numRead} and
+\texttt{length} need not be the same.  Variable \texttt{numRead}
+indicates the total number of possible elements that have been read,
+while \texttt{length} indicates the number that have been stored into
+the array.  Consequently, \texttt{numRead} will always be greater than
+or equal to \texttt{length}.  
+
+
+The following code reads a sequence of up to four
+space-separated, signed 
+integers terminated by the end of the record.  It omits each of the
+negative numbers from the in-memory representation.
+
+\inputCode{code/array-omit}
+
+\subsection{Optional \Pwhere{} clause}
+If given, a \Pwhere{} clause expresses constraints over the entirety
+of a \Parray{} value. The special variables that are in scope are
+described in \secref{sec:special-variables}.
+If the predicate given in
+the \Pwhere{} clause evaluates to false (\ie{}, zero), the error code
+in the associated parse descriptor will indicate a user-constraint
+error has occurred.   Syntactically,  \Pwhere{} clauses for arrays are
+a \cd{\&\&}-separated sequence of array predicates.   There are two types of
+array predicates: general predicates, which include \Pparsecheck{}
+constraints, and  
+\Pforall{} predicates.  The value of the \Pwhere{} clause is the
+conjunction of the values of each of the array predicates.  The
+predicates are evaluated in the order they are listed.
+
+\subsection{General predicates}
+General predicates, which include \Pparsecheck{} predicates, are
+described in \secref{sec:common-predicates}
+
+\subsection{\Pforall}
+\Pforall{} predicates provide a way to write constraints over the entirety
+of the in-memory representation of an array after it has been fully
+parsed. The following example checks that the resulting integer
+sequence is in sorted order
+
+\inputCode{code/array-forall}
+%
+\noindent
+Syntactically, the \Pforall{} clause gives an index variable
+(\texttt{i} in the example) and a range for that variable (\texttt{0}
+to \texttt{length-2}, inclusive).  Ranges can be written either as an
+integer lower and upper bound, as in the example, or as the name of
+the array, in which case the lower bound is zero and the upper bound
+is one less than the length of the array. Following the colon, it gives a
+boolean-valued expression. This expression is executed once for each
+value of the index in the range;  the value of the clause is the
+conjunction of the resulting values.
+
+\subsection{In-line arrays}
+For conciseness, \Parray{}s can be declared in-line in \Pstruct{} and
+\Punion{} declartions  (\cf{} \secref{sec:structs-inline} and
+\secref{sec:unions-inline}).
+
+\section{Termination conditions}
+There are a number of conditions under which parsing for an array will
+terminate:
+
+\begin{itemize}
+\item{\textit{Size limit.}} If an array specification includes an upper bound,
+  then parsing will terminate after the indicated number of elements
+  have been placed in the in-memory representation.  Note that omitted
+  elements are not included in this total.
+\item\textit{Terminator.} For an array with a \Pterm{} clause, parsing
+  terminates whenever the terminating sequence is found.
+\item\textit{End-of-source.} Parsing terminates if it reaches the end of the
+  data source.
+\item{\Plast{}.} If an array has a \Plast{} clause, parsing terminates
+  whenever the specified predicate evalutes to true.
+\item{\Plongest{}.} For an array with a \Plongest{} clause, parsing terminates
+  as soon as there is an error detected in reading an element.  The
+  erroneous element value is not included in the array.
+\item{\Pended{}.} If an array has a \Pended{} clause, parsing
+  terminates whenever the specified predicate evaluates to true.
+\item{\textit{Failure to consume input.}} If array parsing code fails
+  to consume any input in reading the next element of the sequence,
+  then parsing for the array will terminate.  (The alternative is to
+  loop infinitely).
+\end{itemize}
+A single array specification can include many of these termination
+conditions.  If any of the conditions trigger, then array parsing
+terminates.  
+
+After a termination condition has been detected, the parse function
+does error checking.  In particular,
+if an array specification has a minimum size and the
+length of the in-memory representation does not satisfy this
+requirement, the parse descriptor will record the error 
+\cd{P_ARRAY_SIZE_ERR}.  
+
+
+\section{Generated library}
+To explain the data structures and operations generated for array
+declarations, we will use the description of resolved IP addresses as
+an example.
+
+\inputCode{code/nIP}
+
+\subsection{In-memory representation}
+\label{sec:arrays-rep}
+The in-memory representation of a \Parray{} is a struct with three
+fields.  
+
+\inputCode{code/ai.arrayRep}
+%
+\noindent
+The first of these is an integer recording the length of the
+array in memory.  The second is an array of elements of the base type
+of the array.  The third field is a pointer to a growable buffer that
+manages the dynamically-allocated space for the array.
+
+
+\subsection{Mask}
+\label{sec:arrays-masks}
+The mask for a \Parray{} is a struct containing a pair of masks.  The
+\cd{element} field stores a mask of the base element mask type.  This
+mask specifies how to handle each element in the array.  The
+\cd{arrayLevel} mask allows the user to toggle behavior at the level
+of the \Parray{} as a whole. 
+
+\inputCode{code/ai.arrayMask}
+
+
+\subsection{Parse descriptor}
+\label{sec:arrays-parse-descriptors}
+The parse descriptor for a \Parray{} is a \c{} struct, with all the
+fields described in \secref{sec:common-parse-descriptor}.  
+
+\inputCode{code/ai.arrayPD}
+%
+\noindent
+In addition, the field \cd{neerr} records the number of errors that
+occurred while processing elements of the array. The field
+\cd{firstError} records the index of the first element that triggered
+an error.  This field is only valid if the \cd{errCode} has the value
+\cd{ARRAY_ELEM_ERR}.  The \cd{numRead} field records the number of
+elements in the array storing the parse descriptors for each of the
+array elements.  The field \cd{elts} stores the array of base parse
+descriptors.  Finally, field \cd{_internal} contains a pointer to the
+growable buffer that manages the dynamically-allocated space for the
+array of base parse descriptors.
+
+\subsection{Operations}
+The operations generated by the \pads{} compiler for a \Parray{} are
+those described in \chapref{chap:common-features}.
+\figref{figure:array-ops} lists these operations.
+\begin{figure}
+\inputCode{code/ai.arrayOps}
+\caption{Prototypes of operations generated for
+  the \Parray{} \texttt{nIP}.}
+\label{figure:array-ops}
+\end{figure}
+
+\subsubsection{Read function}
+The error codes for \Pstruct{}s appear in \figref{fig:array-read-error-codes}.
+\begin{figure}
+\begin{center}
+\begin{tabular}{l|p{3in}}
+Code                            & Meaning \\ \hline
+ \cd{P_NO\_ERR}                 & No error occurred\\[1ex]
+ \cd{P_ARRAY_ELEM_ERR}          & An error occurred during
+                                    parsing one of the elements of
+                                    the \Parray{}. The parse
+                                    descriptor for the element whose
+				    index is \texttt{firstError}
+                                    will contain more
+                                    information describing the precise
+                                    nature of the error.\\[1ex]
+ \cd{P_ARRAY_SEP_ERR}           & Error reading a separator.\\[1ex]
+ \cd{P_ARRAY_TERM_ERR}          & Error reading the terminator.\\[1ex]
+ \cd{P_STRUCT_EXTRA_BEFORE_SEP} & Unexpected data before a separator.\\[1ex]
+ \cd{P_STRUCT_EXTRA_BEFORE_TERM}& Unexpected data before the terminator.\\[1ex]
+ \cd{P_ARRAY_SEP_TERM_SAME_ERR} & The separator and terminator sequences were the same.\\[1ex]
+ \cd{P_ARRAY_SIZE_ERR}          & The size of 
+                                    the parsed \Parray{} did not match
+				    the specified size constraints.\\[1ex]
+ \cd{P_ARRAY_MIN_BIGGER_THAN_MAX_ERR}
+                                & Minimum size larger than maximum size.\\[1ex]
+ \cd{P_ARRAY_MIN_NEGATIVE}
+                                & Negative minimum size.\\[1ex]
+ \cd{P_ARRAY_MAX_NEGATIVE}
+                                & Negative maximum size.\\[1ex]
+
+ \cd{P_ARRAY_USER_CONSTRAINT_ERR}
+                                & \Pwhere{} clause returned false.\\[1ex]
+\end{tabular}
+\caption{Error codes that can be returned by \Parray{} read functions.}
+\label{fig:array-read-error-codes}
+\end{center}
+\end{figure}
+\noindent
+If multiple errors occur during the parsing of a \Parray{}, the
+\cd{errCode} field will reflect the first detected error.  The array
+of parse descriptors will describe any errors detected while
+reading the \Parray{} elements.
+
+\subsubsection{Accumulator functions}
+Accumulator functions for \Parray{}s are described in
+\chapref{chap:accumulators}. 
+
+\subsubsection{Histogram functions}
+Histogram functions for \Parray{}s are described in
+\chapref{chap:histogram}. 
+
+\subsubsection{Clustering functions}
+Clustering functions for \Parray{}s are described in
+\chapref{chap:cluster}. 
+

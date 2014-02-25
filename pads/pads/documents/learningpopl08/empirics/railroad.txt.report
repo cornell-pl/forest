@@ -1,0 +1,27 @@
+DATA FILE:  railroad.txt
+
+Record count =  67
+Byte count =    6218
+
+Unrefined complexity scores
+{ TC = 1529.726b, ADC = 1377.058b, DC = 34034.553b } normalized by 49744 is 0.714946105294
+
+New complexity scores
+{ TC = 2410.842b, ADC = 469.086b, DC = 22781.792b } normalized by 49744 is 0.506445677836
+
+
+Golden complexity =
+{ TC = 2251.631b, ADC = 381.458b, DC = 23709.082b } normalized by 49744 is 0.521886313957
+gen/railroad.txt-accum.out: success rate = 100.00%
+The average time = 0.00
+The average success rate = 100.00%
+
+====== Timing information ==================================
+Tokenization and structure inference time = 0.049
+First measurement time = 0.005
+First reduction time = 0.241
+Second reduction time = 1.946
+Third reduction time = 0.477
+Second measurement time = 0.007
+Total time = 2.726
+============================================================

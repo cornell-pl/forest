@@ -1,0 +1,198 @@
+This directory contains a PADS Inference System for inferring a description
+of newline-separated ASCII data.  
+
+1. Requirements:
+   You must have sml/nj 110.64 or later, available from www.smlnj.org.
+   You must have PADS 2.00 or later, available from www.padsproj.org.
+
+2. You must set the PROBLEARN_HOME environment variable to the root of the
+   PADS Inference System distribution, which means, you must set it to
+   point to pads/probinfer directory.
+
+3. To compile the learning program, just type "make" in the $LEARN_HOME
+   directory. This will compile the source files in the src directory
+   and put the sml/nj heap image in the directory lib.  The script
+   that invokes the system is in the scripts directory. The first time
+   you compile the system, it may take anywhere from 1 mins to 10 mins
+   depending on the speed of your processor. This is due to the compilation
+   of fairly large regular expressions specified in the token definition. 
+   You might want to add $PROBLEARN_HOME/scripts to you search path.
+
+4. The "learn" program takes a data file input and produces an 
+   intermediate representation (IR) and also prints out the PADS
+   description. For details of the usage of "learn", type:
+   
+   $PROBLEARN_HOME> scripts/learn --help 
+
+   PADS Learning System 1.0
+   learn  [-d <string>] [-n <string>] [-maxdepth <int>] [-lineNos] 
+   [-ids] [-h <float>] [-s <float>] [-noise <float>] [-a <int>] 
+   [-ma <int>] [-j <float>] [-e] [-lex <string>] [-au <string> ...] 
+   [-training <string>] [-testing <string>] [-inctraining <string>]
+   [--help] files...
+
+   -d      output directory (default gen/)
+   -n      name of output file (default generatedDescription)
+   -maxdepth       maximum depth for exploration (default 50)
+   -lineNos        print line numbers in output contexts (default false)
+   -ids    print ids in type and tokens matching base types (default false)
+   -h      histogram comparison tolerance (percentage, default 0.01)
+   -s      struct determination tolerance (percentage, default 0.1)
+   -noise  noise level (percentage, default 0.0)
+   -a      array width requirement (default 4)
+   -ma     minimum array width (default 0)
+   -j      junk threshold (percentage, default 0.1)
+   -e      Print entropy tokens (default false)
+   -lex    prefix of the lex config to be used (default "vanilla")
+   -au     run only the golden file
+   -training        take a training run
+   -testing         take a testing run
+   -inctraining     take an incremental training run 
+
+   For example, 
+
+   >scripts/learn examples/data/crashreporter.log
+
+   will generate in the probinfer/gen directory a Ty which contains the IR, 
+   and crashreporter.log.p which is the PADS description. In addition,
+   a number of tools avilable to this data source in the form of .c
+   files are generated in the same directory. For data source XYZ,
+   XYZ-accum.c is the accumulator tool, XYZ-xml.c is the XML tool, 
+   XYZ-fmt.c is the formatting tool, XYZ-graph is the grapher too etc. 
+   For example, to build the accumulator tool for crashreporter.log, do:
+   
+   >cd gen/
+   >make crashreporter.log-accum
+
+   To build the xml tool, do:
+   >make crashreporter.log-xml
+
+   To build the fmt tool, do:
+   >make crashreporter.log-fmt
+
+   Executable programs crashreporter.log-accum and crashreporter.log-xml
+   will be created in directory gen/ARCH, where ARCH is a string that
+   represents the OS and the CPU architecture, such as darwin.ppc and 
+   linux.i386.
+
+   To run the accumulator, xml-conversion, and formatting programs,
+   >ARCH/crashreporter.log-accum ../examples/data/crashreporter.log
+   >ARCH/crashreporter.log-xml ../examples/data/crashreporter.log
+   >ARCH/crashreporter.log-fmt ../examples/data/crashreporter.log
+
+   The grapher tool is a generated Perl script. To use the
+   grapher tool, you need to have a working gnuplot (you can get a copy
+   from http://www.gnuplot.info). To run the grapher, you first make 
+   the formatting tool by doing:
+   >make crashreporter.log-fmt 
+   as above
+
+   and then execute
+   >./crashreporter.log-graph 
+
+   to see detailed usage of the grapher. And example of use is:
+   >./crashreporter.log-graph -d ../examples/data/crashreporter.log \
+    -x 2 -y 5 -s impulses -t %H:%M:%S
+
+
+5. The directory examples contains the subdirectory data with many
+   sample data sources.  The example directory contains a README file
+   explaining how to run the inference tool on these data source and
+   put the results in the results directory, one sub-directory per
+   data source.
+
+6. The directory training/log contains the training
+   data. training/log/log.list file lists the names of files that are
+   used by the training run. To make one training run, first set the
+   ECHO_TOKEN environment variable to the path of the token log file
+   you want to generate. And then prepare the description, a tool and
+   the corresponding data file under training/data. Then go to
+   training/data directory, you can generate the token log file by doing:
+   >make ai-fmt
+
+   and then execute
+   >./ARCH/ai-fmt 
+
+   the token log file will be ready to use.
+
+   And then move this token log file into training/log directory. Add
+   the name of this file into training/log/log.list. You can comment
+   out any token log file that you don't want to include in training
+   data by putting a "#" at the beginning of the line.
+
+   Finally, go to $PROBLEARN_HOME and type:
+   $PROBLEARN_HOME> scripts/learn -training true .
+
+   then you can see the outputs of this training run at training directory.
+
+7. The "problearn" program takes a data file input and prints out the
+   tokenization results returned by the HMM library we're testing. For
+   example:
+   
+   $PROBLEARN_HOME> scripts/problearn examples/data/simplegroups
+
+   will print out the records in simplegroups followed by the token
+   sequences returned by the HMM library based on the training data
+   specified in pads/probinfer/training/log/log.list. 
+ 
+8. To do an incremental training, put your new training token log
+   files in training/log directory and edit training/log/inc.list to
+   list all new file names. Go to $PROBLEARN_HOME and type:
+   $PROBLEARN_HOME> scripts/learn -inctraining true .
+
+   then your new training data will be included.
+
+9. Here're additional instructions for training. First, Kathleen can
+   use her data to do a training run from scratch. Kathleen, please
+   follow the steps below:
+
+   1. Write descriptions.
+   2. Use Kathleen's token logging tool on the hand-written
+   descriptions and the data files to generate token logging files.
+   3. Put those token logging files under pads/probinfer/training/log
+   directory. Edit pads/probinfer/training/log/log.list file to
+   include the file names of them.
+   4. Go to pads/probinfer directory and type "make" to build the
+   learning system, as well as the HMM library.
+   5. Do a training run from scratch by typing:
+   $PROBLEARN_HOME> scripts/learn -training true .
+   and this will generate in pads/probinfer/training 10 files as the
+   training results: BeginTokenCount, CharTokenCount, EmitProb,
+   EndProb, EndTokenCount, InitProb, TokenCount, TokenName,
+   TokenPairCount, TransProb.
+
+   Then, we can add the statistical results learned from other data
+   together with Kathleen's data by doing an incremental training
+   run following the instructions below:
+
+   1. Put these 5 files from Kathleen into pads/probinfer/training
+      directory: BeginTokenCount, CharTokenCount, EndTokenCount,
+      TokenCount, TokenPairCount.
+   2. Write descriptions.
+   3. Use Kathleen's token logging tool on the hand-written
+   descriptions and the data files to generate token logging files.
+   4. Put those token logging files under pads/probinfer/training/log
+   directory. Edit pads/probinfer/training/log/inc.list file to
+   include the file names of them. (* Note that the file is inc.list
+   other than log.list. *) 
+   5. Go to pads/probinfer directory and type "make" to build the
+   learning system, as well as the HMM library.
+   6. Do an incremental training run by typing:
+   $PROBLEARN_HOME> scripts/learn -inctraining true .
+   and this will generate in pads/probinfer/training 10 files as the
+   training results: BeginTokenCount, CharTokenCount, EmitProb,
+   EndProb, EndTokenCount, InitProb, TokenCount, TokenName,
+   TokenPairCount, TransProb, in which 5 files will be used by the HMM
+   library for testing new data. 
+
+10.The "evaluatehmm" program takes a data file input and the token
+   logging file generated by the corresponding hand-written
+   description, and produces the comparison between the tokenization
+   results returned by the HMM library and that from the hand-written
+   description. Note that you should first put the token logging
+   file's name in training/log/testname. For example:
+   
+   $PROBLEARN_HOME> scripts/evaluatehmm examples/data/ai.3000
+
+   will print out the comparison results. In this case the content of
+   training/log/testname file should be ai.3000.tokenFile

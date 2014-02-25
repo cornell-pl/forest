@@ -1,0 +1,249 @@
+Descriptions of PADS/D Applications
+-----------------------------------
+
+
+*********************************************************************
+*********************************************************************
+
+Curtis Huttenhower/Olga Apps 04/17/08
+-------------------------------------
+
+* Overview:  Data for bio sources comes in 4 broad categories:
+    1.  Structured, manually curated data.  
+           * For example, databases such as GO, MIPS, KEGG, REALTOME, 
+             HPRD contain this data.  
+           * The data is created by people (eg: the GO administrators) 
+             manually.  They add it to their database.
+           * It can be accessed by experimentors like Curtis/Olga by 
+             downloading it from their website.
+           * A repository of structured data like GO is a few MB in size.
+           * These sites are typically updated once every 1-30 days.
+           * Mode of use by Olga/Curtis involves downloading a new, entire
+             database and throwing away the previous data.  (ie: there is
+             no retention of previous versions of the database.  
+    2.  "Lists" of factoids.
+           * this data isn't structured like the GO data; it is basically
+             just list of useful facts like genes, gene sequences, gene
+             structures, gene functions.
+           * these lists share many of the properties of the stuctured data
+             (1)
+    3.  Experimental data (primarily micro-array data).
+           * This data accumulates and is not deleted.
+           * Each new batch of experiments may be on the order of 100MB
+           * Not regularly updated -- updating is a manual process in which
+             Curtis/Olga checks a website to see if new data is available.
+             PADS/D could improve on this process by providing a facility for
+             polling for new data from a source.
+    4.  Very, very ad hoc data.
+           * There is some data they get from completely unpredictable sources
+             (eg: they read a paper and email the authors to talk about their
+                  experiments)
+           * PADS can't help obtaining this sort of data.
+
+Applications:
+
+* For GO and other ontologies, which are organized as a DAG, they
+traverse the data looking for some kind of relationship.  Basically
+they are doing a complex query over a semi-structured database.  It's
+conceivable (I can't be totally sure) that these queries could be
+expressed in XQuery, if there was a tool that pumped the ad hoc data into
+PADX.
+
+* For Microarrays -- there are application-specific algorithms that traverse
+the data, normalize, collapse, etc.  It's unlikely information extraction
+from microarrays could be accomplished via translation into a database
+and standard database queries.
+            
+* Lars Bongo and Kai Li are looking at taking "lots" or "all" bio data and
+pumping it into one really big structured database.
+
+Olga/Curtis Papers on database frameworks that use the data above:
+
+Hibbs MA, Hess DC, Myers CL, Huttenhower C, Li K, Troyanskaya OG. Exploring
+the functional landscape of gene expression: directed search of large
+microarray compendia. Bioinformatics 23:20 p2692-9, October 2007
+
+Huttenhower C, Hibbs M, Myers C, Troyanskaya OG. A scalable method for
+integration and functional analysis of multiple microarray datasets.
+Bioinformatics 22:23 p2890-7, September 2006
+
+Myers CL, Robson D, Wible A, Hibbs MA, Chiriac C, Theesfeld CL, Dolinski K,
+Troyanskaya OG. Discovery of biological networks from diverse functional
+genomic data. Genome Biology 6(13):R114, December 2005
+
+And the names and locations of some of the data repositories are:
+
+Ontologies and functional catalogs
+----------------------------------
+
+GO
+http://www.geneontology.org/
+
+KEGG
+http://www.genome.jp/kegg/
+
+MIPS
+http://mips.gsf.de/
+
+HPRD
+http://www.hprd.org/
+
+Reactome
+http://reactome.org/
+
+OMIM
+http://www.ncbi.nlm.nih.gov/sites/entrez?db=omim
+
+Organism annotations and curation
+---------------------------------
+
+SGD
+http://www.yeastgenome.org/
+
+MGI
+http://www.informatics.jax.org/
+
+WormBase
+http://www.wormbase.org/
+
+FlyBase
+http://flybase.bio.indiana.edu/
+
+TAIR
+http://www.arabidopsis.org/
+
+NCBI
+http://www.ncbi.nlm.nih.gov/
+
+EBI
+http://www.ebi.ac.uk/
+
+Microarray data
+---------------
+
+GEO
+http://www.ncbi.nlm.nih.gov/geo/
+
+SMD
+http://genome-www5.stanford.edu/
+
+ArrayExpress
+http://www.ebi.ac.uk/microarray-as/aer/?#ae-main
+
+ExpressDB
+http://arep.med.harvard.edu/ExpressDB/
+
+Sequence and domain data
+------------------------
+
+GenBank
+http://www.ncbi.nlm.nih.gov/Genbank/
+
+EMBL
+http://www.ebi.ac.uk/embl/
+
+Transfac
+http://www.gene-regulation.com/pub/databases.html
+
+PFAM
+http://www.sanger.ac.uk/Software/Pfam/
+
+SMART
+http://smart.embl-heidelberg.de/
+
+ProSite
+http://ca.expasy.org/prosite/
+
+Other organized data
+--------------------
+
+BIND
+http://bond.unleashedinformatics.com/Action?
+
+bioGRID
+http://www.thebiogrid.org/
+
+DIP
+http://dip.doe-mbi.ucla.edu/dip/Search.cgi?SM=3
+
+IntAct
+http://www.ebi.ac.uk/intact/site/index.jsf
+
+MINT
+http://mint.bio.uniroma2.it/mint/Welcome.do
+
+MIPS PPI
+http://mips.gsf.de/proj/ppi/
+
+
+*********************************************************************
+*********************************************************************
+
+
+Coral CDN  04/12/08:
+--------------------
+
+-- a content distribution network that runs on between 250-300 host
+nodes.  The goal of the system is to give web clients faster access to
+data by placing data at nodes that are closer to clients and also
+replicating data across more nodes when there are flash crowds.
+
+-- currently, there is a centralized "collector" node that grabs log
+data from each of the 250 host nodes.  The way this works is that the
+hosts append-write to a log file and then after a certain period of
+time/certain events/certain log size (log size isn't actually
+implemented, but could be), a pointer to the file is copied to a new
+directory.  The host begins writing to a new log file with new data.
+The collector node uses "rsync" unix utility to grab the copied file
+and then when it is done, deletes the copied file.  rsync sounds like
+it might be useful to us for the "extensible" log case because it is a
+utility that allow you to only copy the "new" blocks.
+
+-- on the collector, logs are organized as:
+  * 1 subdirectory/host node
+        * 1 nested subdirectory/timestamp
+               * a file for each different kind of log (I think ...
+notes are sketchy here)
+
+-- applications:  best application is sending the data into a
+"column-oriented" database.  A column-oriented database is one that
+makes it more efficient to implement certain kinds of statistical
+queries like "what is the average bandwidth in this time interval" --
+normally asking about a time interval is a linear pass through all
+data which is too expensive.  Apparently BigTable is such a database
+-- Kathleen should ask Bob about PADS/D --> BigTable for sure.
+Apparently, outside developers were given access to BigTable 2 days
+ago but all accounts are now gone.  If we wanted to perhaps we could
+twist the arm of someone connected to the project?? <hint, hint>
+
+-- doing queries over an SQL database would be useful, but apparently
+Mike used to have a completely separate monitoring system that pumped
+all of his data into a regular database and he stopped doing that
+because it simply did not scale.  Mike is worried that SQL-like things
+in general will not be useful because they want scale (not because the
+functionality wouldn't be useful but just because of the scaling
+problems)
+
+-- Mike also writes scripts over his files, but this is often annoying
+because the directory structure he has set up doesn't match the style
+of query he wants to do -- eg: he wants the query to be over time
+ranges but that means he has to go into every top level directory
+because the top-level structure is per-host not per-time.
+
+-- could also use alerts --> Mike sees performance problem --> how to
+run really fast queries
+
+-- Mike's application's goals:  needs to compute various stats to do
+performance debugging, get performance insights to change architecture
+in the future, to enforce distributed quota management.
+   -- Mike needs things like: time-seres analysis to find out (#users
+or bandwidth or bytes transfered or load per node) per (day or week).
+Needs to generate histograms over last year or 4 years; Needs
+popularity of individual files for quota management
+
+-- related work on column-oriented databases:
+    -- Stream Basis
+    -- Dan Abadi
+    -- Aster Data Systems
+    -- BigTable
+    -- Mike Stonebreake

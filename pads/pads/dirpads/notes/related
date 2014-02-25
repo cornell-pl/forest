@@ -1,0 +1,65 @@
+http://www.cfengine.org/
+  This tool manages clusters of pcs.  It has a configuration language
+  in which one can specifiy some properties of various files.  It does
+  not seem to have provisions for extracting data from files and using
+  that information to describe the file system.  It does not seem to
+  be trying to describe the complete set of files relevant to an
+  applicaiton.  It seems like we could fit in as a piece of this
+  system.
+
+http://www.lcfg.org/
+  This is another tool for managing clusters of PCs.  It is based on a
+  configuration language, but that language seems to be really
+  key-value pairs written in files that are pre-processed by the C pre
+  processor to implement an inheritance-like mechanism.  It does not
+  seem to have an explicit representation for directory or file
+  structure.  It does make a good case for a declarative system for
+  managing configuration.
+
+   This system was developed by researchers at the university of
+   edinburgh. It seems like it would be good to raise the level of
+   abstraction over what this system provides.
+
+http://research.iu.hio.no/promises.php
+ This website describes "promise theory," apparently the underlying
+ theory of the cfengine.  It asserts that agents need to document what
+ they provide as a way of building trust (presumably when they
+ actually deliver what they say they will).   I'm not sure how this
+ project would relate to what we are doing.  The text is kind of
+ vague.
+
+http://www.vestasys.org/
+  This site describes a software configuration system for large scale
+  software projects (>500K source lines).  Developed at Compaq/Digital
+  Systems Research Lab
+
+Vesta is a system for software configuration management. It stores
+collections of source files, keeps track of which versions of which
+files go together, and automates the process of building a complete
+software artifact from its component pieces.  Vesta's novel approach
+gives it three important properties. First, every build is repeatable,
+because its component sources and build tools are stored immutably and
+immortally, and its configuration description completely specifies what
+com- ponents and tools are used and how they are put together. Second,
+every build is incremental, because results of previous builds are
+cached and reused. Third, ev- ery build is consistent, because all
+build dependencies are automatically captured and recorded, so that a
+cached result from a previous build is reused only when doing so is
+certain to be correct. In addition, Vesta's flexible language for
+writing configuration descriptions makes it easy to describe large
+software configurations in a modular fashion and to create variant
+configurations by customizing build pa- rameters. This paper gives a
+brief overview of Vesta, outlining Vesta's advantages over traditional
+tools, how those benefits are achieved, and the system's overall
+performance.
+
+https://fedorahosted.org/squeal/
+http://dmalcolm.livejournal.com/3069.html
+
+"squeal" (formerly "show") is a mashup of SQL and the command-line. It
+lets you issue SQL-like queries upon files in the filesystem.
+
+For example, here's a simple command-line way of querying log files,
+to see who's been viewing this web site:
+
+  squeal "count(*)", host from /var/log/httpd/*access_log* group by host;
