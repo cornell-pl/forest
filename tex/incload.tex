@@ -1,0 +1,161 @@
+\documentclass{report}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath, amsthm, amssymb, amsbsy}
+\usepackage{microtype}
+\usepackage{color}
+\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{thmtools}
+\usepackage{wrapfig}
+\usepackage{stmaryrd}
+\usepackage{listings}
+\usepackage{cancel}
+\usepackage[all]{xy}
+
+\theoremstyle{theorem}
+\newtheorem{theorem}{Theorem}[section]
+
+\begin{document}
+
+$\varepsilon_\delta$ is a delta-environment:
+\begin{displaymath}
+	\varepsilon_\delta ::= \emptyset ~|~ \varepsilon_\delta,x \mapsto (v,\delta_v)
+\end{displaymath}
+
+We can lift an environment $\varepsilon$ into a delta-environment $\varepsilon_\emptyset$ with $\varepsilon_\delta~(x) = (v,\emptyset)$, for all $x \mapsto v$ in $\varepsilon$.
+And unlift a delta-environment $\varepsilon_\delta$ by applying each delta. A delta-environment is well-formed if for every $x \mapsto (v,\delta_v)$, $\delta_v$ is a $v$-delta.
+
+\begin{align*}
+	&\delta_F & ::= & ~\mathtt{addFile}(r,u) ~|~ \mathtt{remFile}(r) ~|~ \mathtt{moveFile}(r,r')\\
+	&         & |   & ~\mathtt{addDir}(r) ~|~ \mathtt{remDir}(r) ~|~ \mathtt{moveDir}(r,r')\\
+	&         & |   & ~\mathtt{addLink}(r,r') ~|~ \mathtt{remLink}(r)\\
+	&         & |   & ~\mathtt{changeAttrs}(r,a)\\
+	&         & |   & ~\delta_F ; {\delta_F}' ~|~ \emptyset
+\end{align*}
+
+\begin{align*}
+	&\delta_v & ::= & ~\leadsto v ~|~ \pi_1~(\delta_v) ~|~ \pi_2~(\delta_v)\\
+	&         & |   & ~f \leftarrow \delta_v ~|~ \delta_v?\\
+	&         & |   & ~\mathtt{del}(i) ~|~ \mathtt{ins}(i) ~|~ \mathtt{reorder}(i,j) ~|~ \mathtt{pos}(i,\delta_v)\\
+	&         & |   & ~\delta_v ; {\delta_v}' ~|~ \emptyset
+\end{align*}
+
+We define $\delta_{v_1} \otimes \delta_{v_2} = \pi_1~(\delta_{v_1}) ; \pi_2~(\delta_{v_2})$.
+
+$\boxed{r/\delta_F}$
+
+\begin{displaymath}
+	r/\delta_F
+\end{displaymath}
+
+The operation $\llbracket e \rrbracket^{\varepsilon_\delta}_{\tau}$ should be some kind of self-adjusting expression evaluation that exploits edits to variables.
+
+We assume that $\delta_F$ only contains edit operations valid from the current path $r$.
+The operation $\delta_f \cap r$ filters the deltas in $\delta_F$ to only those whose domain is within the path $r$.
+
+$\boxed{\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)}$
+
+\begin{displaymath}
+	\frac{\varepsilon_\delta ; \llbracket r/e \rrbracket^{\varepsilon_\delta}_{Path} \vdash \mathtt{load}~ (F,v,d)~ \delta_F \cap (r/e) \rhd (\delta_v,\delta_d)}
+	{\varepsilon_\delta ; r ; e::s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{\begin{array}{c}
+		\varepsilon_\delta ; r ; s_1 \vdash \mathtt{load}~ (F,v_1,d_1)~ \delta_F \rhd (\delta_{v_1},\delta_{d_1})\\
+		(\varepsilon_\delta,x \mapsto (v_1,\delta_{v_1}),x_{md} \mapsto (d_1,\delta_{d_1})) ; r ; s_2 \vdash \mathtt{load}~ (F,v_2,d_2)~ \delta_F \rhd (\delta_{v_2},\delta_{d_2})\\
+		valid_{12}({d_1}',{d_2}') = valid({d_1}') \wedge valid({d_2}')
+	\end{array}}
+	{\varepsilon_\delta ; r ; \langle x:s_1,s_2 \rangle \vdash \mathtt{load}~ (F,(v_1,v_2),(b,(d_1,d_2)))~ \delta_F \rhd (\delta_{v_1} \otimes \delta_{v_2},valid_{12} \leftarrow (\delta_{d_1} \otimes \delta_{d_2})) }
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{\llbracket e \rrbracket^{\varepsilon_\delta}_{Bool} = b' \quad valid_e(x) = b'}
+	{\varepsilon_\delta ; r ; P(e) \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\emptyset,valid_e \leftarrow \emptyset)}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{r \notin \mathtt{dom}(\delta_F~F)}
+	{\varepsilon_\delta ; r ; s? \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto Nothing,\leadsto (True,Nothing))}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{\begin{array}{c}
+		r \in \mathtt{dom}(\delta_F~F) \quad r \in \mathtt{dom}(F)\\
+		valid_?(Just~d') = valid(d')\quad
+		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)
+	\end{array}}
+	{\varepsilon_\delta ; r ; s? \vdash \mathtt{load}~ (F,Just ~v,(b,Just ~d))~ \delta_F \rhd (\delta_v?,valid_? \leftarrow (\delta_d?))}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{\begin{array}{c}
+		r \in \mathtt{dom}(\delta_F~F) \quad r \notin \mathtt{dom}(F)\\
+		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (\delta_F~F) \rhd (v',d')
+	\end{array}}
+	{\varepsilon_\delta ; r ; s? \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto Just~v',\leadsto (valid(d'),Just~d'))}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{\begin{array}{c}
+		\llbracket e \rrbracket^{old(\varepsilon_\delta)}_{[String]} = [w_1,\dots,w_k] \quad
+		\llbracket e \rrbracket^{\varepsilon_\delta}_{[String]} = [w_1',\dots,w_l']\\
+		match([w_1',\dots,w_l'],[w_1,\dots,w_k]) = \delta_w\\
+		\forall i \in \mathtt{dom}(\delta_w) . (\varepsilon_\delta,x \mapsto (w_i,\emptyset)) ; r ; s \vdash \mathtt{load}~ (F,v_i,d_i) \delta_F \rhd (\delta_{v_i},\delta_{d_i})\\
+		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v,\delta_d)\\
+		valid_*([d_1',\dots,d_l']) = \bigwedge_{j=1}^l valid(d_j')
+	\end{array}}
+	{\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,vs,(b,ds))~ \delta_F \rhd (\mathtt{pos}(i,\delta_{v_i}) ; \dots ; \mathtt{pos}(k,\delta_{v_k}) ; \delta_v,valid_* \leftarrow (\mathtt{pos}(i,\delta_{d_i}) ; \dots ; \mathtt{pos}(k,\delta_{d_k}) ; \delta_d))}
+\end{displaymath}
+
+$\boxed{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~ F~ \delta_F~\delta_w \rhd (\delta_v,\delta_d)}$
+
+\begin{displaymath}
+	\frac{}
+	{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\emptyset \rhd (\emptyset,\emptyset)}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')
+	}
+	{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~(\mathtt{del}(i);\delta_w) \rhd (\mathtt{del}(i);\delta_v',\mathtt{del}(i);\delta_d')}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')
+	}
+	{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~(\mathtt{reorder}(i,j);\delta_w) \rhd (\mathtt{reorder}(i,j);\delta_v',\mathtt{reorder}(i,j);\delta_d')}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{\begin{array}{c}
+		(\varepsilon_\delta,x \mapsto w') ; r ; s \vdash \mathtt{load}~ (\delta_F ~F) \rhd (v',d')\\
+		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~\delta_w \rhd (\delta_v',\delta_d')
+	\end{array}}
+	{\varepsilon_\delta ; r ; s \vdash \mathtt{load}_x~F~ \delta_F ~(\mathtt{ins}(i,w');\delta_w) \rhd (\mathtt{ins}(i,v');\delta_v',\mathtt{ins}(i,d');\delta_d')}
+\end{displaymath}
+
+\begin{theorem}[Incrementality]
+	$\varepsilon_\emptyset ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \emptyset \rhd (\emptyset,\emptyset)$.
+\end{theorem}
+
+\begin{theorem}[Soundness]
+	Suppose that $\varepsilon ; r ; s \vdash \mathtt{load}~ F~ \rhd (v,d)$, $\varepsilon_\delta$ is a $\varepsilon$-delta, $\delta_F$ is a $F$-delta, and $\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)$.
+	Then $\delta_v$ is a $v$-delta, $\delta_d$ is a $d$-delta, and $\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (\delta_F~F)~ \rhd (\delta_v~v,\delta_d~d)$.
+\end{theorem}
+	
+\end{document}
+
+
+
+
+
+
+
+
+
+
