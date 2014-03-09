@@ -91,7 +91,7 @@ Derivation rules have precedence (top-down).
 Note: Essentially, we only support moves within the same matching expression; if we move a file to a different directory, like promoting a junior student to senior in the Princeton example, we will load it again.
 
 Invariant: $\delta_f \cap (r \cup under(r)) = \delta_F$ (we are only monitoring events on the parts of the filesystem that we keep in memory).
-File system updates $\delta_F$ need to be valid over $F$.
+File system updates $\delta_F$ need to be valid over $F$.\\
 
 $\boxed{\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)}$
 	
@@ -152,22 +152,22 @@ $\boxed{e :: s}$
 	\frac{\begin{array}{c}
 		(\delta_F~F) \cap \llbracket r/e \rrbracket^{\varepsilon_\delta}_{Paths} = \{r_1',\dots,r_l'\} \quad
 		F \cap \llbracket r/e \rrbracket^{old(\varepsilon_\delta)}_{Paths} = \{r_1,\dots,r_k\} \\
-		\mathtt{move}(r_1,r_1') \subseteq \delta_F \quad F' = \mathtt{move}(r_1,r_1')~F \\
-		\varepsilon_\delta ; r_1' ; s \vdash \mathtt{load}~ (F',v,d)~ (\delta_F \cap r_1') \rhd (\delta_v,\delta_d)\\
+		\delta_F = \mathtt{move}(r_1,r_1') ; \delta_F' \quad F' = \mathtt{move}(r_1,r_1')~F \\
+		\varepsilon_\delta ; r_1' ; s \vdash \mathtt{load}~ (F',v,d)~ (\delta_F' \cap (r_1' \cup under(r_1'))) \rhd (\delta_v,\delta_d)\\
 		valid_{e} (r_0,d_0) = l \equiv 1 \wedge valid(d_0)
 	\end{array}}
 	{\varepsilon_\delta ; r ; e::s \vdash \mathtt{load}~ (F,v,(b,(r_1,d)))~ \delta_F \rhd (\delta_v,valid_{e} \leftarrow (\leadsto r_1' \otimes \delta_d))}
 \end{displaymath}
-\begin{displaymath}
-	\frac{\begin{array}{c}
-		(\delta_F~F) \cap \llbracket r/e \rrbracket^{\varepsilon_\delta}_{Paths} = \{r_1',\dots,r_l'\} \quad
-		F \cap \llbracket r/e \rrbracket^{old(\varepsilon_\delta)}_{Paths} = \{r_1,\dots,r_k\} \\
-		\delta_F \cap r_1 = \emptyset \quad r_1 = r_1'\\
-		\varepsilon_\delta ; r_1 ; s \vdash \mathtt{load}~ (F,v,d)~ (\delta_F \cap r_1) \rhd (\delta_v,\delta_d)\\
-		valid_{e} (r_0,d_0) = l \equiv 1 \wedge valid(d_0)
-	\end{array}}
-	{\varepsilon_\delta ; r ; e::s \vdash \mathtt{load}~ (F,v,(b,(r_1,d)))~ \delta_F \rhd (\delta_v,valid_{e} \leftarrow \pi_2 (\delta_d))}
-\end{displaymath}
+%\begin{displaymath}
+%	\frac{\begin{array}{c}
+%		(\delta_F~F) \cap \llbracket r/e \rrbracket^{\varepsilon_\delta}_{Paths} = \{r_1',\dots,r_l'\} \quad
+%		F \cap \llbracket r/e \rrbracket^{old(\varepsilon_\delta)}_{Paths} = \{r_1,\dots,r_k\} \\
+%		\delta_F \cap r_1 = \emptyset \quad r_1 = r_1'\\
+%		\varepsilon_\delta ; r_1 ; s \vdash \mathtt{load}~ (F,v,d)~ (\delta_F \cap (r_1 \cup under(r_1))) \rhd (\delta_v,\delta_d)\\
+%		valid_{e} (r_0,d_0) = l \equiv 1 \wedge valid(d_0)
+%	\end{array}}
+%	{\varepsilon_\delta ; r ; e::s \vdash \mathtt{load}~ (F,v,(b,(r_1,d)))~ \delta_F \rhd (\delta_v,valid_{e} \leftarrow \pi_2 (\delta_d))}
+%\end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
 		\varepsilon_\delta;r;e :: s \vdash \mathtt{load}~ (\delta_F~F) \rhd (v',d')
@@ -268,6 +268,12 @@ $\boxed{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~ F~ \delta_F~\delta_w 
 	Suppose that $\varepsilon ; r ; s \vdash \mathtt{load}~ F~ \rhd (v,d)$, $\varepsilon_\delta$ is a $\varepsilon$-delta, $\delta_F$ is a $F$-delta, and $\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)$.
 	Then $\delta_v$ is a $v$-delta, $\delta_d$ is a $d$-delta, and $\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (\delta_F~F)~ \rhd (\delta_v~v,\delta_d~d)$.
 \end{theorem}
+	
+I suggest a more reasonable notion of equivalence:
+\begin{displaymath}
+	(v,d) \sim (v',d') \triangleq valid(d)=valid(d') ~\wedge~ (valid(d) \Rightarrow v = v')
+\end{displaymath}
+Data may differ when invalid, and metadata may subtly change (like access times, etc?).
 	
 \end{document}
 
