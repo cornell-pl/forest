@@ -1,6 +1,6 @@
 {- XXX  add error checking to all calls to system; wrap with failure -}
 
-{-# LANGUAGE ScopedTypeVariables, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances #-}
+{-# LANGUAGE ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
 
 {-
 ** *********************************************************************
@@ -39,6 +39,9 @@ import Language.Pads.Padsc
 import Language.Forest.MetaData
 import Language.Forest.Generic
 import Language.Forest.Errors
+import Language.Forest.Delta
+import Language.Forest.MetaData
+import Language.Forest.ListDiff
 
 import qualified System.FilePath.Posix
 import System.FilePath.Glob
@@ -51,6 +54,10 @@ import System.IO
 import System.IO.Unsafe
 import Text.Regex
 import System.FilePath.Posix
+import Control.Monad
+import Data.List
+
+import Debug.Trace
 
 -- import Data.Time.Clock (getCurrentTime :: IO UTCTime)
 -- import Data.Time.Clock.Posix (getPOSIXTime:: IO POSIXTime)
@@ -195,7 +202,7 @@ gzipload load path = checkPath path (do
         }
   })
 
-doLoadSymLink :: FilePath -> IO(FilePath, (Forest_md, Base_md))
+doLoadSymLink :: FilePath -> IO (FilePath, (Forest_md, Base_md))
 doLoadSymLink path = checkPath path (do
     md <- getForestMD path
     fpEither <- CE.try (readSymbolicLink path)
@@ -212,7 +219,6 @@ doLoadSymLink path = checkPath path (do
                 (fp, (md,cleanBasePD))
   )
 
-
 doLoadConstraint :: (Data rep, ForestMD md) => IO(rep,md) -> FilePath -> ((rep,md) -> Bool) -> IO(rep,md)
 doLoadConstraint load path pred = checkPath path (do
  { result @ ~(r,fmd) <- load
@@ -223,6 +229,12 @@ doLoadConstraint load path pred = checkPath path (do
                newbfmd = updateForestMDwith bfmd [constraintViolation]
            in return (r, replace_fmd_header fmd newbfmd)
  })
+
+doLoadDeltaConstraint :: (Data rep, ForestMD md) => rep -> IO (ValueDeltas rep,ValueDeltas md) -> FilePath -> ((rep,md) -> Bool) -> IO (ValueDeltas rep,ValueDeltas md)
+doLoadDeltaConstraint rep load path pred = do
+	(drep,dmd) <- load
+	rep' <- applyValueDeltas drep rep
+	return (drep,dmd ++ [Apply $ \md' -> if pred (rep',md') then md' else replace_fmd_header md' $ updateForestMDwith (get_fmd_header md') [constraintViolation] ])
 
 doLoadMaybe :: ForestMD md =>  FilePath -> IO (rep,md) -> IO (Maybe rep, (Forest_md, Maybe md))
 doLoadMaybe path f = do
@@ -238,12 +250,138 @@ doLoadMaybe path f = do
       }
    }
 
+doLoadDeltaMaybe :: ForestMD md => FilePath -> ((rep,md) -> IO (ValueDeltas rep,ValueDeltas md)) -> IO (rep,md) -> (Maybe rep,(Forest_md,Maybe md)) -> IO (ValueDeltas (Maybe rep), ValueDeltas (Forest_md, Maybe md))
+doLoadDeltaMaybe path fDelta f (mrep,(fmd,mmd)) = do
+	exists <- fileExist path
+	case (exists,mrep,mmd) of
+		(False,_,_) -> return $ ([Replace Nothing],[Replace (cleanForestMDwithFile path,Nothing)])
+		(True,Just rep,Just md) -> do
+			(drep,dmd) <- fDelta (rep,md)
+			return $ ( [ModMb drep], [ModSnd [ModMb dmd],Apply $ \(fmd,imd) -> (revalidateForestMDwith fmd [get_fmd_header $ fromJust imd],imd)] )
+		otherwise -> liftM replaceBoth (doLoadMaybe path f)
+
+doLoadDeltaSimpleIs :: (Data rep,ForestMD md) => FilePath -> FilePath -> FilePath -> FileSystemDeltas -> (FilePath -> FileSystemDeltas -> IO (ValueDeltas rep,ValueDeltas md)) -> IO (ValueDeltas rep,ValueDeltas md) -> IO (ValueDeltas rep,ValueDeltas md)
+doLoadDeltaSimpleIs path newName fullpath_old df loadD loadS = trace ("reloading simple is "++path++":"++newName ++ ":"++fullpath_old++ ":"++show df) $ case isSubPathOf fullpath_old path of
+	Just oldName -> if movePathToPathInFSDelta path oldName newName df
+		then skipValidationIf (oldName == newName) $ do
+				(drep,dmd) <- loadD newName (intersectFSDeltasWithPathsUnder df $ concatPath path newName)
+				return (drep,Apply (replace_fullpath $ concatPath path newName) : dmd) -- we need to update the fullpath in the metadata
+		else trace "loadS1" $ loadS
+	Nothing -> trace "loadS2" $ loadS
+
+doLoadDeltaSimpleMatches :: (Data rep,ForestMD md,Matching a) => FilePath -> a -> FilePath -> FileSystemDeltas -> (FilePath -> FileSystemDeltas -> IO (ValueDeltas rep,ValueDeltas md)) -> IO (ValueDeltas rep,ValueDeltas md) -> IO (ValueDeltas rep,ValueDeltas md)
+doLoadDeltaSimpleMatches path expr fullpath_old df loadD loadS = trace ("reloading simple match "++path ++ show df) $case isSubPathOf fullpath_old path of
+	Just oldName -> do
+		case movePathToInFSDelta path oldName df of
+			Just newName -> do
+				newNames <- getMatchingFiles path expr
+				if newName `elem` newNames
+					then skipValidationIf (oldName == newName) $ do
+						(drep,dmd) <- loadD newName (intersectFSDeltasWithPathsUnder df $ concatPath path newName)
+						let multiple md = if length newNames > 1 then replace_fmd_header md (addMultipleMatchesErrorMD newNames $ get_fmd_header md) else md
+						return (drep,Apply (multiple . replace_fullpath (concatPath path newName)) : dmd)
+					else trace "loadS3" $ loadS
+			otherwise -> trace "loadS4" $ loadS
+	Nothing -> trace "loadS5" $ loadS
+
+type CompDeltaList rep md = [(String , (FilePath -> (rep,md) -> FileSystemDeltas -> IO (ValueDeltas rep,ValueDeltas md) , FilePath -> IO (rep,md)))]
+
+lookupLoadD j db = fst $ snd $ db!!j
+lookupLoadS name = snd . fromJust . lookup name
+
+doLoadCompoundDelta :: (Data rep,ForestMD md) => FilePath -> ([(String,rep)],[(String,md)]) -> FileSystemDeltas -> CompDeltaList rep md -> IO (ListDeltas (String,rep),ListDeltas (String,md))
+doLoadCompoundDelta path (rep,md) df newNamesLoad = trace ("reloading compound inside"++show path) $ do
+	let oldNames = map fst rep
+	let newNames = map fst newNamesLoad
+	(dmods,mapdw,dw) <- trace (show oldNames ++"----\n"++ show newNames) $ alignFileLists path df oldNames newNames
+	let loadiD (i,j) = doLoadIDelta i path (oldNames!!i) (dmods!!i) (snd $ rep!!i,snd $ md!!i) df (lookupLoadD j newNamesLoad)
+	(dRepMods,dMdMods) <- liftM ((concat >< concat) . unzip) $ mapM loadiD mapdw
+	(dRepLst,dMdLst) <- doLoadPathDeltas path newNamesLoad dw
+	return (dRepMods ++ dRepLst , dMdMods ++ dMdLst)
+
+doLoadIDelta :: (Data rep,ForestMD md) => Int -> FilePath -> FilePath -> ValueDeltas FilePath -> (rep,md) -> FileSystemDeltas -> (FilePath -> (rep,md) -> FileSystemDeltas -> IO (ValueDeltas rep,ValueDeltas md)) -> IO (ListDeltas (String,rep),ListDeltas (String,md))
+doLoadIDelta i path newfile [] (vi,di) df loadiD = skipValidation $ do -- filename did not change
+	let newPath = concatPath path newfile
+	(drepi,dmdi) <- loadiD newPath (vi,di) (intersectFSDeltasWithPathsUnder df newPath)
+	return $ ([ModPos i [ModSnd drepi]],[ModPos i [ModSnd dmdi]])
+doLoadIDelta i path oldfile dfile (vi,di) df loadiD = do -- since this represents a FS move, we need to update the fullpath in the metadata
+	newfile <- applyValueDeltas dfile oldfile
+	let newPath = concatPath path newfile
+	(drepi,dmdi) <- loadiD newPath (vi,di) (intersectFSDeltasWithPathsUnder df newPath)
+	return $ ([ModPos i [ModFst [Replace newfile],ModSnd drepi]],[ModPos i [ModFst [Replace newfile],ModSnd $ Apply (replace_fullpath newPath) : dmdi]])
+
+doLoadPathDeltas :: FilePath -> CompDeltaList rep md -> ListDeltas String -> IO (ListDeltas (String,rep),ListDeltas (String,md))
+doLoadPathDeltas path newNamesLoad [] = return ([],[])
+doLoadPathDeltas path newNamesLoad (DelPos p : ds) = doLoadPathDeltas path newNamesLoad ds >>= \(dv,dd) -> return (DelPos p:dv,DelPos p:dd)
+doLoadPathDeltas path newNamesLoad (ReorderPos f : ds) = doLoadPathDeltas path newNamesLoad ds >>= \(dv,dd) -> return (ReorderPos f:dv,ReorderPos f:dd)
+doLoadPathDeltas path newNamesLoad (InsPos p name : ds) = do -- static load for the new file
+	(dv,dd) <- doLoadPathDeltas path newNamesLoad ds
+	(rep,md) <- (lookupLoadS name newNamesLoad) (concatPath path name)
+	return (InsPos p (name,rep) : dv , InsPos p (name,md) : dd)
+
+-- we return a list of deltas on each position and a list of deltas represented both as a mapping from source positions to target positions and a sequence of DelPos,InsPos,ReorderPos operations
+-- the first list reflects move operations in the filesystem
+alignFileLists :: FilePath -> FileSystemDeltas -> [FilePath] -> [FilePath] -> IO ([ValueDeltas FilePath],[(Int,Int)],ListDeltas FilePath)
+alignFileLists path df sfiles tfiles = do
+	let dsfiles = alignMoves path df sfiles
+	sfiles' <- mapM (uncurry applyValueDeltas) (zip dsfiles sfiles)
+	(mapdw,dw) <- align sfiles' tfiles
+	return (dsfiles,mapdw,dw)
+
+alignMoves :: FilePath -> FileSystemDeltas -> [FilePath] -> [ValueDeltas FilePath]
+alignMoves path df (sfile:sfiles) = case movePathToInFSDelta path sfile df of
+		Just tfile@((==sfile) -> False) -> replaceDelta tfile : alignMoves path df sfiles
+		otherwise -> [] : alignMoves path df sfiles
+alignMoves path df [] = []
+
+doLoadDirectoryDelta :: Data rep => FilePath -> FileSystemDeltas -> (Maybe FileInfo -> IO (ValueDeltas rep,ValueDeltas (Forest_md,md))) -> IO (rep,(Forest_md,md)) -> IO (ValueDeltas rep,ValueDeltas (Forest_md,md))
+doLoadDirectoryDelta path df loadD loadS = trace ("reloading directory " ++ path) $ do
+	case intersectFSDeltasWithPath True df path of
+		[] -> skipValidation $ loadD Nothing -- when the directory is not updated
+		[ChangeAttrs ((==path) -> True) a'] -> loadD (Just a') -- when only the directory attributes are updated
+		[RemDir ((==path) -> True)] -> return ([],[ModFst [Apply (invalidateForestMD (MissingFile path))]]) -- when the directory is removed
+		otherwise -> trace ("doLoadDirectoryDelta: " ++ show df) $ liftM replaceBoth loadS -- for any other case, default non-incremental load
+
+doLoadConstantDelta :: Data rep => FilePath -> FileSystemDeltas -> IO (rep,(Forest_md,md)) -> IO (ValueDeltas rep,ValueDeltas (Forest_md,md))
+doLoadConstantDelta path df loadS = trace ("reloading file " ++ path) $ do
+	case intersectFSDeltasWithPath False df path of
+		[] -> return ([],[])
+		[ChangeAttrs ((==path) -> True) a'] -> return ([],[ModFst [Apply $ \fmd -> fmd { fileInfo = a' } ]])
+		otherwise -> trace ("doLoadConstant: " ++ show df) $ liftM replaceBoth loadS
+
+skipValidation = skipValidationIf True
+
+skipValidationIf :: Bool -> IO (ValueDeltas rep,ValueDeltas md) -> IO (ValueDeltas rep,ValueDeltas md)
+skipValidationIf b io = do
+	(drep,dmd) <- io
+	if b && isEmptyVD drep && isEmptyVD dmd then return ([],[]) else return (drep,dmd)
+
+skipUpdate :: [Bool] -> IO (ValueDeltas rep,ValueDeltas md) -> IO (ValueDeltas rep,ValueDeltas md)
+skipUpdate l io = if and l then return ([],[]) else io
+
+emptyDelta :: [Bool] -> a -> ValueDeltas a
+emptyDelta l v = if (and l) then [] else replaceDelta v
+
+pEmptyDelta :: ValueDeltas v -> v1 -> ValueDeltas v1
+pEmptyDelta d v = emptyDelta [isEmptyVD d] v
+
+checkPredMD :: (Data rep,ForestMD md) => Bool -> IO (ValueDeltas rep,ValueDeltas md) -> IO (ValueDeltas rep,ValueDeltas md)
+checkPredMD cond io = do
+	(drep,dmd) <- io
+	return (drep,if cond then dmd else [Apply $ \md -> replace_fmd_header md (addPredFailureMD $ get_fmd_header md)])
 
 pickFile :: [FilePath] -> FilePath
 pickFile files = case files of
   [] -> "-This is an illegal file path according to POSIX Standard."  -- an illegal file path
 --  [] -> ""  -- an illegal file path
   f:fs -> f
+
+checkMultiple :: (Data rep, ForestMD md) => [String] -> IO (rep,md) -> IO (rep,md)
+checkMultiple files io = if length files > 1
+	then do
+		(rep,md) <- io
+		return (rep,replace_fmd_header md (addMultipleMatchesErrorMD files $ get_fmd_header md))
+	else io
 
 checkNonEmpty :: (Data rep, ForestMD md) => FilePath -> FilePath -> IO(rep,md) -> IO(rep,md)
 checkNonEmpty path file ifExists = 
@@ -256,7 +394,7 @@ checkNonEmpty path file ifExists =
           return (myempty, myempty)
   else ifExists
 
-checkPath :: (Data rep, ForestMD md) => FilePath -> IO(rep,md) -> IO(rep,md)
+checkPath :: (Data rep, ForestMD md) => FilePath -> IO (rep,md) -> IO (rep,md)
 checkPath path ifExists = do 
    { exists <-  fileExist path
    ; if not exists then 
@@ -267,6 +405,7 @@ checkPath path ifExists = do
      else ifExists
    }
 
+checkPathIsDir :: (Data rep, ForestMD md) => FilePath -> IO (rep,md) -> IO (rep,md)
 checkPathIsDir path ifGood = do
   { isGood <- doesDirectoryExist path
   ; if isGood then ifGood
@@ -288,7 +427,8 @@ nonDir fmd = do
   ; return (myempty, new_md)
   }
 
-
+invalidateForestMD :: Language.Forest.Errors.ErrMsg -> Forest_md -> Forest_md
+invalidateForestMD errMsg f_md = f_md { Language.Forest.MetaData.numErrors = Language.Forest.MetaData.numErrors f_md + 1, errorMsg = Just errMsg }
 
 data GL = GL String
 
@@ -349,17 +489,9 @@ getMatchingFilesGlob' path (GL glob) = do
   ; return matches
   }
 
-isGlobal s = case s of 
-  '/' : rest -> True
-  otherwise -> False
-
-concatPath stem new = 
-  if isGlobal new then new else
-    case new of
-     [] -> stem
-     ('/':rest) -> new
-     otherwise -> stem ++ "/" ++ new
-
-
-
 envVar str = fromJust (unsafePerformIO $ (System.Posix.Env.getEnv str))
+
+infix 7  ><
+-- The infix product combinator.
+(><) :: (a -> b) -> (c -> d) -> (a,c) -> (b,d)
+(f >< g) (x,y) = (f x,g y)

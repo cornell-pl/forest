@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell, NamedFieldPuns, ScopedTypeVariables, RecordWildCards, FlexibleInstances, MultiParamTypeClasses,
-    UndecidableInstances  #-}
+    UndecidableInstances, ViewPatterns  #-}
 
 {-
 ** *********************************************************************
@@ -37,27 +37,38 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Forest.Syntax as PS
 import Language.Forest.MetaData
+import Language.Forest.Errors
 import Language.Forest.Generic
 import qualified Language.Forest.Errors as E
 import Language.Forest.Writing
+import Language.Forest.Delta
 import System.Directory
 import System.FilePath.Posix
 
 import Language.Haskell.TH as TH
-import Language.Haskell.TH.Syntax
-import Language.Pads.Padsc
+import Language.Haskell.TH.Syntax hiding (lift)
+import Language.Pads.Padsc hiding (lift)
 import Language.Pads.TH
 import Language.Forest.ForestIO
+import Language.Forest.TH
 
 import Data.Data
+import Data.Maybe
 import Data.Char
+import Data.List
 import qualified Data.Map as Map
 import qualified Data.List as List
 import qualified Control.Exception as CE
 import Control.Monad
+import Data.Set (Set(..))
+import qualified Data.Set as Set
+import Data.Map (Map(..))
+import qualified Data.Map as Map
+import Control.Monad.State (State(..),StateT(..))
+import qualified Control.Monad.State as State
 
-
-
+import qualified Control.Lens as L
+import Control.Lens.TH
 
 {- Code generation routines -}
 make_forest_declarations :: [ForestDecl] -> Q [Dec]
@@ -68,26 +79,30 @@ make_forest_declaration (ForestDecl (id, pat, forestTy)) = do
    let ty_name    = getTyName    id
    let md_ty_name = getMDName    id
    let load_name  = getLoadName  id
+   let loadDelta_name  = getLoadDeltaName  id
    let wn         = getWriteManifestName id
    let genM_name  = getGenManifestName id
    let arg_info_opt = mergeMaybe pat (fmap patToTy pat)
-   (ty_decl, md_ty_decls, md_ty) <- genRepMDDecl forestTy ty_name md_ty_name  -- Generate reprsentation and meta-data decls for padsTy
-   let forestInstance       :: [Dec] = genFInst    load_name wn genM_name ty_name md_ty      forestTy arg_info_opt
+   (ty_decl, md_ty_decls, md_ty) <- genRepMDDecl forestTy ty_name md_ty_name  -- Generate representation and meta-data decls for padsTy
+   let forestInstance       :: [Dec] = genFInst    load_name loadDelta_name wn genM_name ty_name md_ty      forestTy arg_info_opt
    loadM :: [Dec]                   <- genLoadM    load_name    ty_name md_ty_name forestTy arg_info_opt
+   loadDeltaM :: [Dec]              <- State.evalStateT (genLoadDeltaM loadDelta_name    ty_name md_ty_name forestTy arg_info_opt) Map.empty
    writeManifest :: [Dec]           <- genWriteManifest wn      ty_name md_ty_name forestTy arg_info_opt
    generateManifest :: [Dec]        <- genGenManifest genM_name load_name wn ty_name md_ty_name arg_info_opt
    return (   [ty_decl]    
            ++ md_ty_decls  
            ++ forestInstance
            ++ loadM
+           ++ loadDeltaM
            ++ writeManifest
            ++ generateManifest
            )
 
-genFInst load_name wn_name genM_name ty_name md_ty forestTy mpat_info = 
-      let (inst, load, wn, genM) = case mpat_info of
+genFInst load_name loadDelta_name wn_name genM_name ty_name md_ty forestTy mpat_info = 
+      let (inst, load, loadDelta, wn, genM) = case mpat_info of
                           Nothing -> (AppT (AppT (ConT ''Forest) (ConT ty_name)) md_ty,   -- Forest RepTy MDTy
                                       mkName "load",
+                                      mkName "loadDelta",
                                       mkName "updateManifest",
                                       mkName "generateManifest")
                           Just (p,arg_ty) -> 
@@ -95,12 +110,14 @@ genFInst load_name wn_name genM_name ty_name md_ty forestTy mpat_info =
                                         (AppT (AppT (ConT ''Forest1) arg_ty) (ConT ty_name)) 
                                         md_ty,   -- Forest1 Arg RepTy MDTy
                                       mkName "load1",
+                                      mkName "loadDelta1",
                                       mkName "updateManifest1",
                                       mkName "generateManifest1")
           load_method = ValD (VarP load) (NormalB (VarE load_name)) []
+          loadDelta_method = ValD (VarP loadDelta) (NormalB (VarE loadDelta_name)) []
           update_manifest_method = ValD (VarP wn) (NormalB (VarE wn_name)) []
           generate_manifest_method = ValD (VarP genM) (NormalB (VarE genM_name)) []
-      in [InstanceD [] inst [load_method, update_manifest_method, generate_manifest_method]]
+      in [InstanceD [] inst [load_method, loadDelta_method, update_manifest_method, generate_manifest_method]]
 
 genGenManifest :: Name -> Name -> Name -> Name -> Name -> Maybe (TH.Pat, TH.Type) -> Q[Dec]
 genGenManifest genMName load_name wn rep_name md_name mpat_info = do 
@@ -178,8 +195,6 @@ wrapRepP repN fty repP = case fty of
   Directory _ -> repP
   otherwise   -> ConP repN [repP]
 
-
-
 writeE' :: (ForestTy, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
 writeE' (forestTy, repE, mdE, manE) = case forestTy of
   File fTy -> writeFileManifest fTy repE mdE manE
@@ -192,95 +207,84 @@ writeE' (forestTy, repE, mdE, manE) = case forestTy of
   FComp comp -> writeListManifest comp repE mdE manE
   Gzip fty -> writeGzipManifest fty repE mdE manE
   Tar fty -> writeTarManifest fty repE mdE manE
---  otherwise -> return (VarE 'undefined)
 
 writeTarManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
 writeTarManifest fty repE mdE manE = do
-  { (irepE, irepP) <- doGenPE "rep"
-  ; (imdE,  imdP)  <- doGenPE "md"
-  ; (imanE, imanP) <- doGenPE "manifest"
-  ; writeItemE <- writeE' (fty, irepE, imdE, imanE)
-  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
-  ; return (AppE (AppE (AppE (AppE (VarE 'doWriteTarManifest) repE) mdE) itemFnE) manE)
-  }
-
+	(irepE, irepP) <- doGenPE "rep"
+	(imdE,  imdP)  <- doGenPE "md"
+	(imanE, imanP) <- doGenPE "manifest"
+	writeItemE <- writeE' (fty, irepE, imdE, imanE)
+	let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
+	return (AppE (AppE (AppE (AppE (VarE 'doWriteTarManifest) repE) mdE) itemFnE) manE)
 
 doWriteTarManifest rep (md @ (fmd,base)) doItem manifest = do 
-  { freshManifest <- newManifest
-  ; rawContentManifest <- doItem (rep,md) freshManifest
-  ; contentManifest <- validateManifest rawContentManifest
-  ; let tarStatus = collectManifestErrors contentManifest
-  ; print "Finished generating manifest for tar"
-  ; let localDirToTarName = takeBaseName(dropExtensions (fullpath (fileInfo fmd)))
-  ; print ("name of directory to tar: " ++ localDirToTarName)
-  ; let tarName = addExtension  localDirToTarName "tar"
-  ; scratchDir <- getTempForestScratchDirectory
-  ; let dirToTarName = combine scratchDir localDirToTarName
-  ; createDirectoryIfMissing True dirToTarName
-  ; canonScratchDir <- System.Directory.canonicalizePath scratchDir
-  ; let clipPath = getClipPathFromTarManifest contentManifest canonScratchDir
-  ; storeManifestAt' dirToTarName clipPath contentManifest
---  ; storeManifestAt dirToTarName contentManifest
-  ; oldCurDir <- getCurrentDirectory
-  ; setCurrentDirectory scratchDir
-  ; doShellCmd ("tar -cvf " ++ tarName  ++ " " ++ localDirToTarName )
-  ; doShellCmd ("mv " ++ tarName  ++ " " ++ (tempDir manifest) )
-  ; setCurrentDirectory oldCurDir
-  ; updateManifestWithTar tarName tarStatus fmd manifest   --XXX: need to pass errors in temp manifest on to higher-level manifest
-  }
-
+	freshManifest <- newManifest
+	rawContentManifest <- doItem (rep,md) freshManifest
+	contentManifest <- validateManifest rawContentManifest
+	let tarStatus = collectManifestErrors contentManifest
+	print "Finished generating manifest for tar"
+	let localDirToTarName = takeBaseName(dropExtensions (fullpath (fileInfo fmd)))
+	print ("name of directory to tar: " ++ localDirToTarName)
+	let tarName = addExtension  localDirToTarName "tar"
+	scratchDir <- getTempForestScratchDirectory
+	let dirToTarName = combine scratchDir localDirToTarName
+	createDirectoryIfMissing True dirToTarName
+	canonScratchDir <- System.Directory.canonicalizePath scratchDir
+	let clipPath = getClipPathFromTarManifest contentManifest canonScratchDir
+	storeManifestAt' dirToTarName clipPath contentManifest
+	oldCurDir <- getCurrentDirectory
+	setCurrentDirectory scratchDir
+	doShellCmd ("tar -cvf " ++ tarName  ++ " " ++ localDirToTarName )
+	doShellCmd ("mv " ++ tarName  ++ " " ++ (tempDir manifest) )
+	setCurrentDirectory oldCurDir
+	updateManifestWithTar tarName tarStatus fmd manifest   --XXX: need to pass errors in temp manifest on to higher-level manifest
 
 writeGzipManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
 writeGzipManifest fty repE mdE manE = do
-  { (irepE, irepP) <- doGenPE "rep"
-  ; (imdE,  imdP)  <- doGenPE "md"
-  ; (imanE, imanP) <- doGenPE "manifest"
-  ; writeItemE <- writeE' (fty, irepE, imdE, imanE)
-  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
-  ; return (AppE (AppE (AppE (AppE (VarE 'doWriteGzipManifest) repE) mdE) itemFnE) manE)
-  }
+	(irepE, irepP) <- doGenPE "rep"
+	(imdE,  imdP)  <- doGenPE "md"
+	(imanE, imanP) <- doGenPE "manifest"
+	writeItemE <- writeE' (fty, irepE, imdE, imanE)
+	let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
+	return (AppE (AppE (AppE (AppE (VarE 'doWriteGzipManifest) repE) mdE) itemFnE) manE)
 
 doWriteGzipManifest rep (fmd,base) doItem manifest = do 
-  { let fmd' = removeGzipSuffix fmd
-  ; manifest' <- doItem (rep,(fmd',base)) manifest
-  ; gzipManifestEntry fmd manifest'
-  }
-
+	let fmd' = removeGzipSuffix fmd
+	manifest' <- doItem (rep,(fmd',base)) manifest
+	gzipManifestEntry fmd manifest'
+	
 gSnd expE = AppE (VarE 'snd) expE
 gFst expE = AppE (VarE 'fst) expE
 
 writeListManifest :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp 
 writeListManifest comp repE mdE manE = do
-  { let fmdE = gFst mdE 
-  ; let fileP = generatorP comp
-  ; (fp_repEs, fp_mdEs) <- case tyConNameOpt comp of
-        Nothing -> return (repE, gSnd mdE)
-        Just str -> do { arity <- getTyConArity str
-                       ; if arity == 1 then 
-                              return (AppE (VarE 'toList1) repE,  AppE (VarE 'toList1) (gSnd mdE))
-                         else 
-                              return (AppE (VarE 'toList2) repE,  AppE (VarE 'toList2) (gSnd mdE))
-                       }
-  ; (irepE, irepP) <- doGenPE "rep"
-  ; (imdE,  imdP)  <- doGenPE "md"
-  ; (imanE, imanP) <- doGenPE "manifest"
-  ; writeItemE <- writeE' (descTy comp, irepE, imdE, imanE)
-  ; let getPathE = AppE (VarE 'takeFileName) (AppE (VarE 'get_fullpath) imdE)
-  ; let writeItemBodyE = LetE[ ValD fileP (NormalB  getPathE ) []] writeItemE
-  ; let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemBodyE
-  ; return (AppE (AppE (AppE (AppE (AppE (VarE 'doWriteList) fmdE) fp_repEs) fp_mdEs) itemFnE) manE)
-  }
-
+	let fmdE = gFst mdE 
+	let fileP = generatorP comp
+	(fp_repEs, fp_mdEs) <- case tyConNameOpt comp of
+	    Nothing -> return (repE, gSnd mdE)
+	    Just str -> do { arity <- getTyConArity str
+	                   ; if arity == 1 then 
+	                          return (AppE (VarE 'toList1) repE,  AppE (VarE 'toList1) (gSnd mdE))
+	                     else 
+	                          return (AppE (VarE 'toList2) repE,  AppE (VarE 'toList2) (gSnd mdE))
+	                   }
+	(irepE, irepP) <- doGenPE "rep"
+	(imdE,  imdP)  <- doGenPE "md"
+	(imanE, imanP) <- doGenPE "manifest"
+	writeItemE <- writeE' (descTy comp, irepE, imdE, imanE)
+	let getPathE = AppE (VarE 'takeFileName) (AppE (VarE 'get_fullpath) imdE)
+	let writeItemBodyE = LetE[ ValD fileP (NormalB  getPathE ) []] writeItemE
+	let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemBodyE
+	return (AppE (AppE (AppE (AppE (AppE (VarE 'doWriteList) fmdE) fp_repEs) fp_mdEs) itemFnE) manE)
+	
 --doWriteList :: Forest rep md  => 
 --    Forest_md -> [(FilePath,rep)] -> [(FilePath,md)] ->  ((rep, md) -> Manifest -> IO Manifest ) -> Manifest -> IO Manifest
 doWriteList fmd fp_reps fp_mds doItem manifest = do
-   { let (files, reps) = List.unzip fp_reps
-   ; let mds = snd (List.unzip fp_mds)
-   ; let rep_mds = List.zip reps mds
-   ; manifest' <- updateManifestWithComp fmd files manifest
-   ; foldM (\manifest'' rm -> doItem rm manifest'')  manifest' rep_mds
-   }
-
+	let (files, reps) = List.unzip fp_reps
+	let mds = snd (List.unzip fp_mds)
+	let rep_mds = List.zip reps mds
+	manifest' <- updateManifestWithComp fmd files manifest
+	foldM (\manifest'' rm -> doItem rm manifest'')  manifest' rep_mds
 
 writeMaybeManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
 writeMaybeManifest ty repE mdE manE = do 
@@ -371,7 +375,7 @@ genLoadM load_name rep_name pd_name forestTy mpat_info = do
    let core_ty = arrowTy (ConT ''FilePath) (AppT (ConT ''IO) (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name)))
    pathName    <- newName "path"
    let (pathE, pathP) = genPE pathName
-   core_bodyE <- genLoadBody pathE rep_name pd_name forestTy
+   core_bodyE <- genLoadBody pathE rep_name forestTy
    let path_bodyE = LamE [pathP] core_bodyE
    let (bodyE,ty) = case mpat_info of
                      Nothing -> (path_bodyE, core_ty)
@@ -386,8 +390,8 @@ genLoadM load_name rep_name pd_name forestTy mpat_info = do
   do (rep,md) <- rhsE
      return (Rep rep, md)
 -}
-genLoadBody :: TH.Exp -> Name -> Name -> ForestTy -> Q TH.Exp
-genLoadBody pathE repN mdN ty = do
+genLoadBody :: TH.Exp -> Name -> ForestTy -> Q TH.Exp
+genLoadBody pathE repN ty = do
    rhsE        <- loadE ty pathE
    case ty of 
      Directory _ -> return rhsE
@@ -419,7 +423,6 @@ loadNonEmptyE ty pathE fileE = do
 
 loadE :: ForestTy -> TH.Exp -> Q TH.Exp
 loadE ty pathE = case ty of
---  Named f_name   -> return (AppE (VarE (getLoadName f_name)) pathE)
   Named f_name   -> return (AppE (VarE 'load) pathE)
   File (file_name, argEOpt) -> case argEOpt of 
                                 Nothing ->     return (AppE (VarE 'fileLoad) pathE)
@@ -462,13 +465,6 @@ loadTar ty pathE = do
   ; let rhsE =  LamE [newPathP] rawE
   ; return (AppE (AppE (VarE 'tarload) rhsE) pathE)
   }
-
-{-
-loadTyApp :: ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
-loadTyApp ty pathE argE = do
-  loadFnE <- loadE ty pathE            
-  return (AppE loadFnE argE) 
--}
 
 loadMaybe :: ForestTy -> TH.Exp -> Q TH.Exp
 loadMaybe ty pathE = do 
@@ -527,8 +523,8 @@ loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
                             else (AppE (VarE 'pickFile) filesE,
                                   [BindS filesP (AppE (AppE (VarE 'getMatchingFiles) pathE) externalE)])
    let newPathE     = AppE (AppE (VarE 'concatPath) pathE) fileE
-   rhsE <- loadNonEmptyE forestTy newPathE fileE
---   rhsE <- loadE forestTy newPathE 
+   rhsE' <- loadNonEmptyE forestTy newPathE fileE
+   let rhsE = if isForm then rhsE' else appE2 (VarE 'checkMultiple) filesE rhsE'
    let stmt1 = BindS (TupP [repP,mdP]) rhsE                            
    case predM of 
      Nothing -> let
@@ -549,15 +545,15 @@ loadSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 
 loadComp :: CompField -> TH.Exp -> Q TH.Exp
 loadComp cinfo pathE = do
-   { fmdName   <- newName ("fmd")
-   ; let (fmdE, fmdP) = genPE fmdName
-   ; (_,_,_,stmts) <- loadCompound cinfo pathE
-   ; let dir_mdS = BindS  fmdP (AppE (VarE 'getForestMD) pathE)
-   ; let resultE = TupE [VarE (mkName "this"), TupE[fmdE, VarE (mkName "this_md")]]
-   ; let returnS = NoBindS (AppE (VarE 'return) resultE)
-   ; let isGoodE = DoE ([dir_mdS]++stmts++[returnS])
-   ; return (AppE (AppE (VarE 'checkPathIsDir) pathE) isGoodE)
-   }
+	fmdName   <- newName ("fmd")
+	let (fmdE, fmdP) = genPE fmdName
+	(_,_,bmdE,stmts) <- loadCompound cinfo pathE
+	let dir_mdS = BindS  fmdP (AppE (VarE 'getForestMD) pathE)
+	let resultE = TupE [VarE (mkName "this"), TupE[appE2 (VarE 'updateForestMDwith) fmdE (ListE [bmdE]), VarE (mkName "this_md")]]
+	let returnS = NoBindS (AppE (VarE 'return) resultE)
+	let isGoodE = DoE ([dir_mdS]++stmts++[returnS])
+	return (AppE (AppE (VarE 'checkPathIsDir) pathE) isGoodE)
+	
 
 loadCompound :: CompField -> TH.Exp -> Q ([TH.FieldExp], [TH.FieldExp], TH.Exp, [Stmt])
 loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, descTy, generatorP, generatorG, predEOpt}) pathE = do
@@ -601,9 +597,242 @@ loadCompound (CompField {internalName, tyConNameOpt, explicitName, externalE, de
    let mapStmt = BindS (TildeP (TupP [repP, mdP, bmdP]))  buildMapsE
    return ([(repName,repE)], [(mdName,mdE)], bmdE, genStmts++predStmts++[mapStmt])       -- Include named rep and md in result
 
-runGetTyConArity :: String ->  Int
-runGetTyConArity str = unsafePerformIO (runQ (getTyConArity str))
+genLoadDeltaM :: Name -> Name -> Name -> ForestTy -> Maybe (TH.Pat, TH.Type) -> DeltaQ [Dec]
+genLoadDeltaM loadDelta_name rep_name pd_name forestTy mpat_info = do
+   let repmd_ty = (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT pd_name))
+   let repmdDelta_ty = (AppT (AppT (TupleT 2) (AppT (ConT ''ValueDeltas) $ ConT rep_name)) (AppT (ConT ''ValueDeltas) $ ConT pd_name))
+   let core_ty = arrowTy (ConT ''FilePath) $ arrowTy repmd_ty $ arrowTy (ConT ''FileSystemDeltas) (AppT (ConT ''IO) repmdDelta_ty)
+   argName     <- case mpat_info of { Nothing -> return Nothing; Just _ -> State.lift $ liftM Just $ newName "arg" }
+   dargName     <- case mpat_info of { Nothing -> return Nothing; Just _ -> State.lift $ liftM Just $ newName "darg" }
+   pathName    <- State.lift $ newName "path"
+   repName     <- State.lift $ newName "rep"
+   mdName      <- State.lift $ newName "md"
+   dfName      <- State.lift $ newName "df"
+   State.modify $ \env -> maybe env (\(pat,_) -> addPVars (VarE $ fromJust dargName) (Set.toList $ patPVars pat) $ Map.insert (fromJust argName) (VarE $ fromJust dargName) env) mpat_info -- addes pattern variable deltas to the env.
+   core_bodyE <- genLoadDeltaBody (liftM VarE argName) pathName repName mdName dfName rep_name forestTy
+   let path_bodyE = LamE [VarP pathName,TildeP (TupP [VarP repName,VarP mdName]),VarP dfName] core_bodyE
+   let (bodyE,ty) = case mpat_info of
+                     Nothing -> (path_bodyE, core_ty)
+                     Just (pat,pat_ty) -> ( LamE [TupP [AsP (fromJust argName) pat,VarP $ fromJust dargName]] path_bodyE,
+                                            arrowTy (tupT2 pat_ty $ AppT (ConT ''ValueDeltas) pat_ty) core_ty)
+   let sigD = SigD loadDelta_name ty
+   let funD = ValD (VarP loadDelta_name) (NormalB bodyE) []
+   return [sigD, funD]
 
+addPVars :: TH.Exp -> [Name] -> DeltaEnv -> DeltaEnv
+addPVars d [] env = env
+addPVars d (n:ns) env = Map.insert n (makePDelta d n) $ addPVars d ns env
+
+-- creates virtual deltas for pattern variables in the argument of a loaddelta1 function
+makePDelta :: TH.Exp -> Name -> TH.Exp
+makePDelta d var = appE2 (VarE 'pEmptyDelta) d (VarE var)
+
+
+genLoadDeltaBody :: Maybe TH.Exp -> Name -> Name -> Name -> Name -> Name -> ForestTy -> DeltaQ TH.Exp
+genLoadDeltaBody argE pathName repName mdName dfName tyRep forestTy = do
+	case forestTy of
+		Directory _ -> loadDeltaE forestTy (VarE pathName) argE repName mdName (VarE dfName)
+		otherwise -> do -- add type constructor
+			x <- State.lift $ newName "x"
+			rhsE <- liftM (LetE [ValD (ConP tyRep [VarP x]) (NormalB $ VarE repName) []]) $ loadDeltaE forestTy (VarE pathName) argE x mdName (VarE dfName)
+			lns <- State.lift $ genNewTypeIso tyRep 
+			let applyRepLens = UInfixE (AppE (VarE 'modLens) lns) (VarE '(><)) (VarE 'id)	
+			return $ AppE (VarE 'skipValidation) $ AppE (AppE (VarE 'liftM) applyRepLens) rhsE
+
+loadDeltaE :: ForestTy -> TH.Exp -> Maybe TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ TH.Exp
+loadDeltaE forestTy pathE argE repName mdName dfE = case forestTy of
+  Named f_name    -> checkEmptyDeltaEnv forestTy dfE $ return $ appE3 (VarE 'loadDelta) pathE (TupE [VarE repName,VarE mdName]) dfE
+  File _          -> loadConstantDelta forestTy pathE dfE 
+  Gzip ty         -> loadConstantDelta forestTy pathE dfE 
+  Tar  ty         -> loadConstantDelta forestTy pathE dfE 
+  SymLink         -> loadConstantDelta forestTy pathE dfE 
+  FConstraint p ty pred -> checkEmptyDeltaEnv forestTy dfE $ loadDeltaConstraint p ty pred pathE argE repName mdName dfE
+  Fapp (Named f_name) arE -> checkEmptyDeltaEnv forestTy dfE $ do
+	darE <- mkArgDelta arE
+	return $ appE4 (VarE $ getLoadDeltaName f_name) (TupE [arE,darE]) pathE (TupE [VarE repName,VarE mdName]) dfE -- XXX should add type checking to ensure that ty is expecting an argument
+  Directory dirTy -> checkEmptyDeltaEnv forestTy dfE $ loadDirectoryDelta argE dirTy pathE repName mdName dfE
+  FMaybe forestTy -> checkEmptyDeltaEnv forestTy dfE $ loadDeltaMaybe forestTy pathE argE repName mdName dfE
+  FComp cinfo     -> checkEmptyDeltaEnv forestTy dfE $ loadDeltaComp cinfo pathE argE repName mdName dfE
+--	otherwise -> return $ VarE 'undefined
+
+mkArgDelta :: TH.Exp -> DeltaQ TH.Exp
+mkArgDelta arE = do
+	env <- State.get
+	let envVars = Map.toList $ Map.filterWithKey (\v dv -> v `Set.member` expVars arE) env -- variables in the environment that are used in the argument expression
+	let mkBool (v,dv) = AppE (VarE 'isEmptyVD) dv
+	return $ appE2 (VarE 'emptyDelta) (ListE $ map mkBool envVars) arE
+
+loadDeltaConstraint :: TH.Pat -> ForestTy -> TH.Exp -> TH.Exp -> Maybe TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ TH.Exp
+loadDeltaConstraint pat ty predE pathE argE repName mdName dfE = do
+	loadAction <- loadDeltaE ty pathE argE repName mdName dfE
+	let predFnE = modPredE pat predE
+	return $ appE4 (VarE 'doLoadDeltaConstraint) (VarE repName) loadAction pathE predFnE
+
+loadDeltaMaybe :: ForestTy -> TH.Exp -> Maybe TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ TH.Exp
+loadDeltaMaybe ty pathE argE repName mdName dfE = do
+	let r = mkName "r"
+	let d = mkName "d"
+	rhsDE <- liftM (LamE [TupP [VarP r,VarP d]]) $ loadDeltaE ty pathE argE r d dfE
+	rhsE <- State.lift $ loadE ty pathE
+	return $ appE4 (VarE 'doLoadDeltaMaybe) pathE rhsDE rhsE (TupE [VarE repName,VarE mdName])
+
+loadDeltaComp :: CompField -> TH.Exp -> Maybe TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ TH.Exp
+loadDeltaComp cinfo pathE argE repName mdName dfE = do
+	drepName <- State.lift $ newName $ "dthis"
+ 	dmdName <- State.lift $ newName $ "dthis_md"
+	dStmts <- loadCompoundDelta argE cinfo pathE dfE (VarE repName) (AppE (VarE 'snd) (VarE mdName)) drepName dmdName
+	return $ DoE $ dStmts ++ [NoBindS $ AppE (VarE 'return) $ TupE [VarE drepName,AppE (VarE 'modSnd) (VarE dmdName)]]
+
+loadConstantDelta :: ForestTy -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
+loadConstantDelta forestTy pathE dfE = State.lift $ liftM (appE3 (VarE 'doLoadConstantDelta) pathE dfE) $ loadE forestTy pathE
+
+loadDirectoryDelta :: Maybe TH.Exp -> DirectoryTy -> TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ TH.Exp
+loadDirectoryDelta argE (Record id fields) pathE repName mdName dfE = do
+	let underDf = AppE (AppE (VarE 'intersectFSDeltasWithPathsUnder) dfE) pathE
+	dfD <- State.lift $ newName "dfD"
+	newAtts <- State.lift $ newName "a'"
+	(loadContents,dV,dMD) <- loadDirectoryContentsDelta argE id fields pathE repName mdName (VarE dfD) -- recursive load
+	validateMD <- revalidateDirectoryFieldsWith newAtts (fieldnames fields)
+	let deltaLoad = LamE [VarP newAtts] $ DoE $ loadContents ++ [NoBindS $ AppE (VarE 'return) $ TupE [dV,UInfixE dMD (VarE '(++)) validateMD]]
+	let staticLoad = case argE of 
+		Nothing -> VarE 'load
+		Just arg -> AppE (VarE 'load1) arg
+	return $ DoE [LetS [ValD (VarP dfD) (NormalB underDf) []],NoBindS $ appE4 (VarE 'doLoadDirectoryDelta) pathE dfE deltaLoad (AppE staticLoad pathE)]
+
+-- the new attributes are optional
+revalidateDirectoryFieldsWith :: Name -> [String] -> DeltaQ TH.Exp
+revalidateDirectoryFieldsWith atts fields = do
+	let fmd = mkName "fmd"
+	let imd = mkName "imd"
+	let fmd' = appE3 (VarE 'maybe) (VarE fmd) (AppE (VarE 'updateForestMDAttributes) (VarE fmd)) (VarE atts)
+	let apply = AppE (AppE (VarE 'revalidateForestMDwith) fmd') $ ListE $ map (\f -> AppE (VarE 'get_fmd_header) $ AppE (VarE $ mkName $ f++"_field_md") (VarE imd)) fields
+	return $ ListE [AppE (ConE 'Apply) $ LamE [TupP [VarP fmd,VarP imd]] $ TupE [apply,VarE imd]]
+
+-- body, dRep name, dMD name
+loadDirectoryContentsDelta :: Maybe TH.Exp -> String -> [Field] -> TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ ([Stmt],TH.Exp,TH.Exp)
+loadDirectoryContentsDelta argE id fields pathE repName mdName df = do
+	(body,dreps,dmds) <- loadRecordFieldsDelta argE fields pathE repName mdName df
+	drepName <- State.lift $ newName "drep"
+	dmdName <- State.lift $ newName "dmd"
+	drep <- groupFieldDeltas id (zip (fieldnames fields) dreps) >>= \x -> return $ ValD (VarP drepName) (NormalB x) []
+	dmd  <- groupFieldDeltas id (zip (map (++"_md") $ fieldnames fields) dmds) >>= \x -> return $ ValD (VarP dmdName) (NormalB $ AppE (VarE 'modSnd) x) []
+	return (body ++ [LetS [drep,dmd]],VarE drepName,VarE dmdName)
+
+groupFieldDeltas :: String -> [(String,TH.Exp)] -> DeltaQ TH.Exp
+groupFieldDeltas id [] = return emptyUpd
+groupFieldDeltas id [(field,d)] = do
+	return $ AppE (AppE (VarE 'modLens) (VarE $ mkName $ "lns_"++ id ++"_"++ field)) d
+groupFieldDeltas id ((field,d):ds) = do
+	let e = AppE (AppE (VarE 'modLens) (VarE $ mkName $ "lns_"++ id ++"_"++ field)) d
+	es <- groupFieldDeltas id ds
+	return $ UInfixE e (VarE '(++)) es
+
+-- body, dRepFields names, dMDFields names
+loadRecordFieldsDelta :: Maybe TH.Exp -> [Field] -> TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ ([Stmt],[TH.Exp],[TH.Exp])
+loadRecordFieldsDelta argE [] pathE repName mdName df = return ([],[],[])
+loadRecordFieldsDelta argE (f:fs) pathE repName mdName df = do
+	(stmts,drep,dmd) <- loadFieldDelta argE f pathE repName mdName df
+	(stmtss,dreps,dmds) <- loadRecordFieldsDelta argE fs pathE repName mdName df
+	return (stmts++stmtss,drep:dreps,dmd:dmds)
+
+-- body, dRepField name, dMDField name
+loadFieldDelta :: Maybe TH.Exp -> Field -> TH.Exp -> Name -> Name -> TH.Exp -> DeltaQ ([Stmt],TH.Exp,TH.Exp)
+loadFieldDelta argE field pathE rootrepName rootmdName rootdf = do
+	let internal = case field of { Simple (x,_,_,_,_) -> x; Comp c -> internalName c }
+	let repOldName = mkName $ internal++"_old"
+	let mdOldName = mkName $ internal++"_md_old"
+	let repName = mkName internal
+	let mdName = mkName $ internal++"_md"
+	let drepName = mkName $ "d"++internal
+	let dmdName = mkName $ "d"++internal++"_md"
+	let fieldName = mkName $ internal++"_field"
+	let fieldMdName = mkName $ internal++"_field_md"
+	let repOld = ValD (VarP repOldName) (NormalB $ AppE (VarE repName) (VarE rootrepName)) []
+	let mdOld = ValD (VarP mdOldName) (NormalB $ AppE (VarE mdName) (AppE (VarE 'snd) (VarE rootmdName))) []
+	let oldStmts = LetS [repOld,mdOld]
+	updE <- case field of
+		Simple s -> loadSimpleDelta argE s pathE rootrepName rootmdName rootdf repOldName mdOldName drepName dmdName repName mdName
+		Comp   c -> loadCompoundDelta argE c pathE rootdf (VarE repOldName) (VarE mdOldName) drepName dmdName 
+	let repNew = BindS (VarP repName) (AppE (AppE (VarE 'applyValueDeltas) (VarE drepName)) $ VarE repOldName)
+	let mdNew = BindS (VarP mdName) (AppE (AppE (VarE 'applyValueDeltas) (VarE dmdName)) $ VarE mdOldName)
+	fieldMdE <- case field of
+		Simple _ -> return $ VarE mdName
+		Comp c -> do
+			let auxE toList = UInfixE (VarE 'mergeForestMDs) (VarE '(.)) $ UInfixE (AppE (VarE 'map) (UInfixE (VarE 'get_fmd_header) (VarE '(.)) $ VarE 'snd)) (VarE '(.)) $ UInfixE toList (VarE '(.)) (VarE mdName)
+			case tyConNameOpt c of
+				Nothing -> return $ auxE (VarE 'id)
+				Just str -> do
+					arity <- State.lift $ getTyConArity str
+					return $ if arity == 1 then auxE (VarE 'toList1) else auxE (VarE 'toList2)
+	let fields = LetS [ValD (VarP fieldName) (NormalB $ VarE repName) [],ValD (VarP fieldMdName) (NormalB fieldMdE) []]
+	State.modify (Map.insert repName (VarE drepName) . Map.insert mdName (VarE dmdName))
+	return ([fields,oldStmts]++updE++[repNew,mdNew],VarE drepName,VarE dmdName)
+
+loadSimpleDelta :: Maybe TH.Exp -> BasicField -> TH.Exp -> Name -> Name -> TH.Exp -> Name -> Name -> Name -> Name -> Name -> Name -> DeltaQ [Stmt]
+loadSimpleDelta argE b@(internal,isForm,externalE,forestTy,predM) pathE rootrepName rootmdName rootdf repOldName mdOldName drepName dmdName repName mdName = do -- internal is Exp :: ForestTy where Exp
+	let newName = mkName "newName"
+	(_,_,_,staticStmts) <- State.lift $ loadSimple b pathE
+	let staticLoadE = DoE $ staticStmts ++ [NoBindS $ AppE (VarE 'return) $ AppE (VarE 'replaceBoth) (TupE [VarE repName,VarE mdName])]
+	let dfName' = mkName "df'"
+	let newPathE = AppE (AppE (VarE 'concatPath) pathE) (VarE newName)
+	loadPathE <- liftM (LamE [VarP newName,VarP dfName']) $ loadDeltaE forestTy newPathE argE repOldName mdOldName (VarE dfName') -- load normally
+	let loadPredE = case predM of
+		Nothing -> loadPathE
+		Just pE -> appE2 (VarE 'checkPredMD) pE loadPathE
+	let doLoad = if isForm then VarE 'doLoadDeltaSimpleIs else VarE 'doLoadDeltaSimpleMatches
+	let updE = BindS (TupP [VarP drepName,VarP dmdName]) $ appE6 doLoad pathE externalE (AppE (VarE 'get_fullpath) $ VarE mdOldName) rootdf loadPathE staticLoadE
+	return [updE]
+
+loadCompoundDelta :: Maybe TH.Exp -> CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> Name -> Name -> DeltaQ [Stmt]
+loadCompoundDelta argE (CompField internalName tyConNameOpt explicitName externalE descTy generatorP generatorG predEOpt) pathE df repOldE mdOldE drepName dmdName = do
+	filesName <- State.lift $ newName (internalName++"_files")
+	metaName <- State.lift $ newName (internalName++"_metadatas")
+	let p = mkName "p"
+	let vi = mkName "vi"
+	let di = mkName "di"
+	let dfi = mkName "dfi"
+	let genStmts = case generatorG of 
+		Explicit expE    -> [LetS [ValD (VarP filesName) (NormalB expE) []]]
+		Matches  regexpE -> [BindS (VarP filesName) $ appE2 (VarE 'getMatchingFiles) pathE regexpE]
+	loadDE <- liftM (LamE [VarP p,TupP [VarP vi,VarP di],VarP dfi]) $ loadDeltaE descTy (VarE p) argE vi di (VarE dfi)
+	loadSE <- State.lift $ liftM (LamE [VarP p]) $ loadE descTy (VarE p)
+	let compResultE = TupE [externalE,TupE [loadDE,loadSE]]
+	let (generatorP', generatorE, metaStmts, compPredStmts) = case predEOpt of
+		Nothing ->    (generatorP, VarE filesName, [], [])
+		Just predE -> (getAttPat explicitName externalE
+		              ,appE2 (VarE 'zip) (VarE filesName) (VarE metaName)
+		              ,[BindS (VarP metaName) $ appE2 (VarE 'mapM) (AppE (VarE 'getRelForestMD) pathE) (VarE filesName)]
+                      ,[NoBindS predE])
+	let compE = CompE $ [BindS generatorP' generatorE] ++ compPredStmts ++ [NoBindS compResultE]
+	containerLoadE <- case tyConNameOpt of
+		Nothing -> return $ appE4 (VarE 'doLoadCompoundDelta) pathE (TupE [repOldE,mdOldE]) df compE
+		Just str -> do
+			arity <- State.lift $ getTyConArity str
+			if arity == 1
+				then do
+					let loadCompE = appE4 (VarE 'doLoadCompoundDelta) pathE (TupE [AppE (VarE 'toList1) repOldE,AppE (VarE 'toList1) mdOldE]) df compE
+					let lns = appE2 (VarE 'L.iso) (VarE 'toList1) (VarE 'buildContainer1)
+					let expE = UInfixE (AppE (VarE 'modLens) lns) (VarE '(><)) (AppE (VarE 'modLens) lns)
+					return $ AppE (AppE (VarE 'liftM) expE) loadCompE
+				else do
+					let loadCompE = appE4 (VarE 'doLoadCompoundDelta) pathE (TupE [AppE (VarE 'toList2) repOldE,AppE (VarE 'toList2) mdOldE]) df compE
+					let lns = appE2 (VarE 'L.iso) (VarE 'toList2) (VarE 'buildContainer2)
+					let expE = UInfixE (AppE (VarE 'modLens) lns) (VarE '(><)) (AppE (VarE 'modLens) lns)
+					return $ AppE (AppE (VarE 'liftM) expE) loadCompE
+	let updE = BindS (TupP [VarP drepName,VarP dmdName]) $ containerLoadE
+	return (genStmts++metaStmts++[updE])
+
+singleton = (:[])
+
+genNewTypeIso :: Name -> Q TH.Exp
+genNewTypeIso ty_name = do
+	x <- newName "x"
+	return $ AppE (AppE (VarE 'L.iso) (LamE [ConP ty_name [VarP x]] (VarE x)) ) (ConE ty_name)
+
+emptyUpd = ListE []
+
+--runGetTyConArity :: String ->  Int
+--runGetTyConArity str = unsafePerformIO (runQ (getTyConArity str))
 
 getTyConArity :: String -> Q Int
 getTyConArity str = do 
@@ -691,26 +920,15 @@ insertRepMDsGeneric2 inputs = do
     (repList, mdList, bmd) <- insertRepMDsList inputs
     return (buildContainer2 repList, buildContainer2 mdList, bmd)
 
-addPredFailureMD :: Forest_md -> Forest_md
-addPredFailureMD (Forest_md{numErrors, errorMsg, fileInfo}) = 
-  let errMsg' = case errorMsg of
-                  Nothing -> E.ForestPredicateFailure
-                  Just e ->  e
-  in Forest_md{numErrors = numErrors + 1, errorMsg = Just errMsg', fileInfo = fileInfo}
-
-
 appendStringM str1E str2E = 
    AppE (AppE (VarE '(++)) str1E) str2E
 
 mkStrLitM s = LitE (StringL s)
 
- 
-
-
-
 genRepMDDecl :: ForestTy -> Name -> Name -> Q (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDecl ty ty_name md_ty_name = case ty of
   Directory dirTy -> genRepMDDir dirTy ty_name md_ty_name
+  (FConstraint _ (Directory dirTy) _) -> genRepMDDir dirTy ty_name md_ty_name
   others          -> do (rep,md) <- genRepMDTy others
                         return (mk_newTyD ty_name rep, [mk_TySynD md_ty_name md], md) 
 
@@ -745,10 +963,12 @@ genRepMDDeclRecord ty_name md_ty_name fields = do
     ; let  md_decl       = mk_TySynD md_ty_name md_ty
     ;  if length vsts' == 0 then 
          error ("Error: Directory " ++ (show ty_name) ++ " must contain at least one named field.")
-       else 
-        return (ty_decl, [imd_decl,md_decl], md_ty)
+       else do
+		lenses <- makeLensesForDec (L.set lensField (\n -> Just $ "lns_"++nameBase ty_name++"_"++n) lensRules) ty_decl
+		lenses_md <- makeLensesForDec (L.set lensField (\n -> Just $ "lns_"++nameBase ty_name++"_"++n) lensRules) imd_decl
+		return (ty_decl, lenses++lenses_md++[imd_decl,md_decl], md_ty)
     }
- 
+
 type VST = (TH.Name, TH.Strict, TH.Type)
 genRepMDField :: Field -> Q (VST, VST)
 genRepMDField (Simple (internal, isForm, external, ty, predM)) = do
@@ -825,6 +1045,7 @@ getBranchNameL   str = mkName  (strToLower str)
 getTyName pname = mkName  (strToUpper pname)
 
 getLoadName pname = mkName ((strToLower pname) ++ "_load")
+getLoadDeltaName pname = mkName ((strToLower pname) ++ "_loadDelta")
 getWriteManifestName pname = mkName ((strToLower pname) ++ "_updateManifest")
 getGenManifestName pname = mkName ((strToLower pname) ++ "_generateManifest")
 
@@ -834,3 +1055,27 @@ mk_newTyD ty_name ty = NewtypeD [] ty_name [] con derives
           derives = (map mkName ["Show", "Eq"]) ++  [''Typeable, ''Data, ''Ord]
 
 mk_TySynD ty_name ty = TySynD ty_name [] ty
+
+appE2 f x y = AppE (AppE f x) y
+appE3 f x y z = AppE (AppE (AppE f x) y) z
+appE4 f x y z w = AppE (AppE (AppE (AppE f x) y) z) w
+appE5 f x y z w q = AppE (AppE (AppE (AppE (AppE f x) y) z) w) q
+appE6 f x y z w q e = AppE (AppE (AppE (AppE (AppE (AppE f x) y) z) w) q) e
+
+tupT2 :: Type -> Type -> Type
+tupT2 t1 t2 = AppT (AppT (TupleT 2) t1) t2
+
+-- takes a set of delta variables, in this case, the name of the variable with the post-state a a delta that originated it
+checkEmptyDeltaEnv :: ForestTy -> TH.Exp -> DeltaQ TH.Exp -> DeltaQ TH.Exp
+checkEmptyDeltaEnv ty dfE e = do
+	env <- State.get
+	x <- e
+	let tyVars = forestTyVars ty
+	let envVars = Map.toList $ Map.filterWithKey (\v dv -> v `Set.member` tyVars) env
+	let mkBool (v,dv) = AppE (VarE 'isEmptyVD) dv
+	return $ appE2 (VarE 'skipUpdate) (UInfixE (ListE $ map mkBool envVars) (VarE '(++)) (ListE [AppE (VarE 'isEmptyFSD) dfE])) x
+
+type DeltaEnv = Map Name TH.Exp
+
+type DeltaQ a = StateT DeltaEnv Q a
+

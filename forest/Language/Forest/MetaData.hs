@@ -63,6 +63,7 @@ import Language.Pads.RegExp
 import Language.Pads.Generic
 import Language.Pads.GenPretty
 import Language.Forest.Errors
+import Language.Forest.Delta
 
 
 {- Base type library support -}
@@ -99,7 +100,7 @@ data FileInfo = FileInfo { fullpath :: FilePath
 
 instance Show FileInfo where
   show f = "FileInfo {" 
-                    ++  "fullpath = " ++ (fullpath f)     ++ ", "
+                    ++  "fullpath = " ++ (show $ fullpath f)     ++ ", "
                     ++  "owner = "    ++ (owner f)        ++ ", "
                     ++  "group = "    ++ (group f)        ++ ", "
                     ++  "size = "     ++ (show $ size f)  ++ ", "
@@ -169,7 +170,7 @@ data Forest_md = Forest_md { numErrors :: Int
                            }
    deriving (Typeable, Data, Eq, Show, Ord)
 
-forest_md_def = Forest_md{ numErrors = 1
+forest_md_def = Forest_md{ numErrors = 1 --XXX: shouldn't this be 0?
                          , errorMsg = Nothing
                          , fileInfo = fileInfo_def
                          }
@@ -212,7 +213,9 @@ instance Data b => ForestMD (Forest_md,b) where
   get_fmd_header (h,b) = h
   replace_fmd_header (h1,b) h2 = (h2,b)
 
-
+replace_fullpath :: ForestMD md => FilePath -> md -> md
+replace_fullpath s md = replace_fmd_header md (replaceInfo $ get_fmd_header md)
+	where replaceInfo fmd = fmd { fileInfo = (fileInfo fmd) { fullpath = s} }
 
 cleanForestMD = Forest_md {numErrors = 0, errorMsg = Nothing, fileInfo = fileInfo_def}
 errorForestMD = Forest_md {numErrors = 1, errorMsg = Nothing, fileInfo = errorFileInfo}
@@ -284,6 +287,29 @@ mergeForestMDs mds =
                      cleanForestMD                          
                      mds
 
+updateForestMDAttributes f info = f { fileInfo = info }
+
+addPredFailureMD :: Forest_md -> Forest_md
+addPredFailureMD (Forest_md{numErrors, errorMsg, fileInfo}) = 
+  let errMsg' = case errorMsg of
+                  Nothing -> ForestPredicateFailure
+                  Just e ->  e
+  in Forest_md{numErrors = numErrors + 1, errorMsg = Just errMsg', fileInfo = fileInfo}
+
+addMultipleMatchesErrorMD :: [String] -> Forest_md -> Forest_md
+addMultipleMatchesErrorMD names (Forest_md{numErrors, errorMsg, fileInfo}) = 
+  let errMsg' = case errorMsg of
+                  Nothing -> MultipleMatches names
+                  Just e ->  e
+  in Forest_md{numErrors = numErrors + 1, errorMsg = Just errMsg', fileInfo = fileInfo}
+
+revalidateForestMDwith base updates =  let
+       (Forest_md {numErrors=numd, errorMsg = errorMsgd, fileInfo=infod}) = base
+       (Forest_md {numErrors=numc, errorMsg = errorMsgc, fileInfo=infoc}) = mergeForestMDs updates
+   in  (Forest_md {numErrors=numc 
+                  , errorMsg = errorMsgc
+                  , fileInfo=infod})
+
 updateForestMDwith base updates =  let
        (Forest_md {numErrors=numd, errorMsg = errorMsgd, fileInfo=infod}) = base
        (Forest_md {numErrors=numc, errorMsg = errorMsgc, fileInfo=infoc}) = mergeForestMDs updates
@@ -294,7 +320,7 @@ updateForestMDwith base updates =  let
 
 isAscii_old :: FilePath -> IO Bool
 isAscii_old fp = do 
-  { let cmd = "file -i -L " ++ fp
+  { let cmd = "file -i -L " ++ show fp
   ; (_, Just hout, _, ph) <-
        createProcess (shell cmd){ std_out = CreatePipe }
 
@@ -306,7 +332,7 @@ isAscii_old fp = do
 
 isAscii :: FilePath -> IO Bool
 isAscii fp =  do
-  { let cmd = "file -i -L " ++ fp
+  { let cmd = "file -i -L " ++ show fp
   ; result <- doShellCmd cmd
   ; return ("ascii" `Data.List.isSuffixOf` result)
   }

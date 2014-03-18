@@ -2,14 +2,15 @@
 
 module Examples.Coral where
 
+import Language.Pads.CodeGen
 import Language.Pads.Padsc hiding (take)
 import Language.Forest.Forestc hiding (Status)
 import Language.Forest.Graph (mdToPDF)
 import Language.Pads.GenPretty
 import Control.Arrow
 
-import Data.Map (fromListWith, fold, toList, toDescList)
-import List (sortBy,length,map)
+import Data.Map as Map (fromListWith, fold, toList, toDescList)
+import Data.List as List (sortBy,length,map)
 import System.IO.Unsafe (unsafePerformIO)
 
 comma_ws = REd ",[ \t]*" " "
@@ -20,13 +21,13 @@ status_re = REd "[0-9]+" "0"
 
   type Byte = constrain x :: Int where <| 0 <= x && x <= 256 |>
 
-  data IP_Port = IP_Port
+  data IP_Port = IP_Port                                
     { '"', 
       ip   :: (Byte,'.',Byte,'.',Byte,'.', Byte), ":",
       port :: Int, '"' }
 
   type Status = StringME status_re
-
+  
   data Statistics = Statistics
     { stats_size       :: Int,              comma_ws
     , stats_proxy      :: StringME '[01]',  comma_ws
@@ -34,29 +35,29 @@ status_re = REd "[0-9]+" "0"
     , stats_lookup     :: Int,              comma_ws
     , stats_xfer       :: Int,              comma_ws
     , stats_total      :: Int }
-
+  
   type NoQuote = StringME '[^\"]*'
-
+  
   type Generic = ('"',NoQuote,'"')
-
+  
   type Url = Generic
-
+  
   data Header = Header
     { version       :: Maybe (StringME '[12],[ \t]*')
     , time          :: Time     }
-
+  
   data Request = Request
    { src       :: IP_Port, comma_ws
    , dst       :: IP_Port, comma_ws
    , url       :: Url } 
-
+  
   data InData = InData
     { "\"IN\"",               comma_ws
     , in_req     :: Request,  comma_ws
     , in_status1 :: Status,   comma_ws
     , in_status2 :: Status,   comma_ws
     , in_stats   :: Statistics }
-
+  
   data OutData = OutData
     { "\"OUT\"",                                 comma_ws 
     , out_remote    :: StringME <| RE "\"(REM|LOC)\"" |>,  comma_ws
@@ -66,19 +67,18 @@ status_re = REd "[0-9]+" "0"
     , out_stats     :: Statistics,               comma_ws
     , out_forwarded :: Generic,                  comma_ws
     , out_via       :: Generic  }
-
+  
   data InOut = In InData | Out OutData
-
+  
   data Entry = Entry
     { header  :: Header,   comma_ws
     , payload :: InOut
     , EOR }
-
+  
   type Entries = [Entry] terminator EOR
   
   data Coral = Coral (Entries, EOF)
 |]
-cRE         = RE "classof[0-9][0-9]" 
 
 [forest|
   type Log = Directory 
@@ -92,6 +92,7 @@ cRE         = RE "classof[0-9][0-9]"
   type Top  = [ s :: Site | s <- matches <| RE "[^.].*" |> ] 
 |]
 
+cRE         = RE "classof[0-9][0-9]" 
 
 go () = unsafePerformIO $ top_load "/home/nate/coraldata"  
 load_logs () = fst(go ())

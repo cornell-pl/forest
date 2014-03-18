@@ -38,13 +38,15 @@ import Data.Generics
 import Language.Pads.Generic
 import Language.Forest.MetaData
 import Language.Forest.Writing
+import Language.Forest.Delta
 import System.FilePath.Posix
 import Data.Map hiding (map)
 import Data.Set hiding (map)
 import qualified Data.List as L
 
 class (Data rep, ForestMD md) => Forest rep md | rep -> md  where
- load :: FilePath -> IO(rep, md)
+ load :: FilePath -> IO (rep,md)
+ loadDelta :: FilePath -> (rep,md) -> FileSystemDeltas -> IO (ValueDeltas rep,ValueDeltas md)
  generateManifest :: (rep,md) -> IO Manifest
  updateManifest :: (rep,md) -> Manifest -> IO Manifest
  fdef :: rep
@@ -53,7 +55,8 @@ class (Data rep, ForestMD md) => Forest rep md | rep -> md  where
 
  
 class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
- load1 :: arg -> FilePath -> IO(rep, md)
+ load1 :: arg -> FilePath -> IO (rep, md)
+ loadDelta1 :: (arg,ValueDeltas arg) -> FilePath -> (rep,md) -> FileSystemDeltas -> IO (ValueDeltas rep,ValueDeltas md)
  generateManifest1 :: arg -> (rep,md) -> IO Manifest
  fdef1 :: arg -> rep
  fdef1 = \s->myempty

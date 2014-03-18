@@ -44,5 +44,6 @@ data ErrMsg = ForestError String
             | NotADirectory String
             | ConstraintViolation
             | SystemError Int
+            | MultipleMatches [String]
      deriving (Typeable, Data, Show, Eq, Ord)
 

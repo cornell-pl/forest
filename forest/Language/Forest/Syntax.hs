@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TemplateHaskell #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -33,9 +33,13 @@
 
 module Language.Forest.Syntax where
 
-import Data.Generics
+import Data.Generics hiding (mkQ,everything)
 import Language.Haskell.TH  as TH 
-import Language.Haskell.TH.Instances.Lift
+import Data.Generics.TH
+import Language.Forest.TH
+--import Language.Haskell.TH.Instances.Lift
+import Data.Set (Set(..))
+import qualified Data.Set as Set
 
 newtype ForestDecl = ForestDecl (String, Maybe TH.Pat, ForestTy)
    deriving (Ord, Eq, Data, Typeable, Show)
@@ -55,7 +59,7 @@ data ForestTy = Directory DirectoryTy
 data DirectoryTy = Record String [Field]
    deriving (Ord, Eq, Data, Typeable, Show)
 
-type FileTy = (String, Maybe TH.Exp)
+type FileTy = (String, Maybe TH.Exp) -- type name, expression argument
 
 -- internal name, isForm, external name, description type, optional predicate
 type BasicField = (String, Bool, TH.Exp, ForestTy, Maybe TH.Exp)  
@@ -80,4 +84,13 @@ data CompField = CompField
 data Field = Simple BasicField
            | Comp  CompField
    deriving (Ord, Eq, Data, Typeable, Show)
+
+fieldnames = map fieldname
+fieldname (Simple (x,_,_,_,_)) = x
+fieldname (Comp c) = internalName c
+
+-- | Gets all the variables used in expressions inside Forest specifications
+forestTyVars :: ForestTy -> Set Name
+forestTyVars = $(everything [| Set.union |] (mkQ [| Set.empty |] 'expVars) [t| ForestTy |])
+
 
