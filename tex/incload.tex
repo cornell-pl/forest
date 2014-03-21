@@ -1,4 +1,6 @@
-\documentclass{report}
+\documentclass[10pt,twoside,a4paper]{article}
+
+\usepackage[margin=.7in]{geometry}
 
 \usepackage[utf8x]{inputenc}
 \usepackage{amsmath, amsthm, amssymb, amsbsy}
@@ -13,34 +15,40 @@
 \usepackage{listings}
 \usepackage{cancel}
 \usepackage[all]{xy}
+\usepackage{mathtools}
 
 \theoremstyle{theorem}
 \newtheorem{theorem}{Theorem}[section]
+\theoremstyle{lemma}
+\newtheorem{lemma}{Lemma}[section]
+\theoremstyle{property}
+\newtheorem{property}{Property}[section]
+
+\def\fst{\pi_1}
+\def\snd{\pi_2}
 
 \begin{document}
 
 \begin{figure}[t]
-$\boxed{\varepsilon;r;s \vdash \mathtt{load}~ F \rhd (v,d)}$
+$\boxed{\varepsilon;s \vdash \mathtt{load}~ F \rhd (v,d)}$
 
 \begin{displaymath}
 	\frac{}
-	{\varepsilon;r;k \vdash \mathtt{load}~ F \rhd {load}_{k}~(F,r)}
+	{\varepsilon,. \mapsto r;k \vdash \mathtt{load}~ F \rhd {load}_{k}~(F,r)}
 \end{displaymath}
-
-\begin{displaymath}
-	\frac{\begin{array}{c}
-		{load}_{\mathtt{Directory}}(F,r) = d_1 \quad \varepsilon;r;s \vdash \mathtt{load}~ F \rhd (v_2,d_2)\\
-		b = valid(d_1) \wedge valid(d_2)
-	\end{array}}
-	{\varepsilon;r;\mathtt{Directory}~s \vdash \mathtt{load}~ F \rhd (v_2,(b,(d_1,d_2)))}
-\end{displaymath}
-
+%\begin{displaymath}
+%	\frac{\begin{array}{c}
+%		{load}_{\mathtt{Directory}}(F,r) = d_1 \quad \varepsilon;r;s \vdash \mathtt{load}~ F \rhd (v_2,d_2)\\
+%		b = valid(d_1) \wedge valid(d_2)
+%	\end{array}}
+%	{\varepsilon;r;\mathtt{Directory}~s \vdash \mathtt{load}~ F \rhd (v_2,(b,(d_1,d_2)))}
+%\end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
 		F \cap \llbracket r/e \rrbracket^{\varepsilon}_{Paths} = \{r_1,\dots,r_k\}  \quad
-		\quad \varepsilon;r_1;s \vdash \mathtt{load}~ F \rhd (v,d)
+		\quad \varepsilon,. \mapsto r_1;s \vdash \mathtt{load}~ F \rhd (v,d)
 	\end{array}}
-	{\varepsilon;r;e :: s \vdash \mathtt{load}~ F \rhd (v,(k \equiv 1,(r_1,d))) }
+	{\varepsilon,. \mapsto r;e :: s \vdash \mathtt{load}~ F \rhd (v,(k \equiv 1 \wedge valid(d),(r_1,d))) }
 \end{displaymath}
 
 \begin{displaymath}
@@ -52,16 +60,16 @@ $\boxed{\varepsilon;r;s \vdash \mathtt{load}~ F \rhd (v,d)}$
 
 Changes:
 \begin{itemize}
-	\item Introduced a new specification $\mathtt{Directory}~s$. The metadata holds the attributes of directories (similarly to constant files).
+%	\item Introduced a new specification $\mathtt{Directory}~s$. The metadata holds the attributes of directories (similarly to constant files).
 	\item Considered non-deterministic expression evaluation (when using arbitrary regular expressions in non-list-comprehension matches). Metadata contains determinism checking and the chosen filename, when many matches are possible.
 \end{itemize}
 
+
+We can lift an environment $\varepsilon$ into a delta-environment $\varepsilon_\emptyset$ with $\varepsilon_\delta~(x) = (v,\emptyset)$, for all $x \mapsto v$ in $\varepsilon$:
 $\varepsilon_\delta$ is a delta-environment:
 \begin{displaymath}
 	\varepsilon_\delta ::= \emptyset ~|~ \varepsilon_\delta,x \mapsto (v,\delta_v)
 \end{displaymath}
-
-We can lift an environment $\varepsilon$ into a delta-environment $\varepsilon_\emptyset$ with $\varepsilon_\delta~(x) = (v,\emptyset)$, for all $x \mapsto v$ in $\varepsilon$.
 And unlift a delta-environment $\varepsilon_\delta$ by applying each delta. A delta-environment is well-formed if for every $x \mapsto (v,\delta_v)$, $\delta_v$ is a $v$-delta.
 
 \begin{align*}
@@ -84,79 +92,101 @@ We define $\delta_{v_1} \otimes \delta_{v_2} = \pi_1~(\delta_{v_1}) ; \pi_2~(\de
 The operation $\llbracket e \rrbracket^{\varepsilon_\delta}_{\tau}$ should be some kind of self-adjusting expression evaluation that exploits edits to variables.
 
 The operation $\delta_f \cap r$ selects the deltas in $\delta_F$ that directly affect the path $r$. For instance, $\mathtt{remFile}~(/a/b) \cap /a = \mathtt{remFile}~(/a/b)$. 
-For paths under $r$ we write $under(r)$.
+The operation $\delta_F \searrow r$ filters only the file system updates that affect $F$ under the focus $r$.
 
 Derivation rules have precedence (top-down).
 
 Note: Essentially, we only support moves within the same matching expression; if we move a file to a different directory, like promoting a junior student to senior in the Princeton example, we will load it again.
 
-Invariant: $\delta_f \cap (r \cup under(r)) = \delta_F$ (we are only monitoring events on the parts of the filesystem that we keep in memory).
+Invariant: $\delta_f \searrow r = \delta_F$ (we are only monitoring events on the parts of the filesystem that we keep in memory).
 File system updates $\delta_F$ need to be valid over $F$.\\
 
-$\boxed{\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)}$
+The delta environment $\varepsilon_\delta$ always contains a special variable $. \mapsto (r,\delta_r)$ that denotes the current path.
+
+$r \xrightarrow{\delta_F} r'$ corresponds to symbolically evaluating $\delta_F$ over path $r$, to arrive at path $r'$.
+If $a = b$ then $\delta(a,b) = \emptyset$, otherwise $\delta(a,b) = \leadsto b$.
+
+%We write $\delta_F \cap \varepsilon_\delta(.) = \delta_F'$ for $\varepsilon_\delta(.) = (r,\delta_r) ~\wedge~ \delta_F \cap (\delta_r ~r) = \delta_F'$.
+
+$\boxed{\varepsilon_\delta ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)}$
 	
-$\boxed{k}$
+$\boxed{s = k}$
 
 \begin{displaymath}
 	\frac{\begin{array}{c}
+		r' = \delta_r ~ r \quad r \neq r' \quad r \xrightarrow{\delta_F} r'\\
+		\varepsilon_\delta , . \mapsto (r',\emptyset) ; k \vdash \mathtt{load}~ (\mathtt{move} (r,r') ~ F,v,d)~ (\delta_F \searrow r') \rhd (\delta_v,\delta_d)
 	\end{array}}
-	{\varepsilon_\delta ; r ; k \vdash \mathtt{load}~ (F,v,d)~ \emptyset \rhd (\emptyset,\emptyset)}
+	{\varepsilon_\delta , . \mapsto (r,\delta_r) ; k \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)}
 \end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
+		r = \delta_r ~r \quad \delta_F \cap r = \emptyset
 	\end{array}}
-	{\varepsilon_\delta ; r ; k \vdash \mathtt{load}~ (F,v,d)~ \mathtt{changeAttrs}(r,a') \rhd (\emptyset,\pi_2(\leadsto a'))}
+	{\varepsilon_\delta , . \mapsto (r,\delta_r) ; k \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\emptyset,\emptyset)}
 \end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		\varepsilon_\delta ; r ; k \vdash \mathtt{load}~ (\delta_F~ F)~  \rhd (v',d')
+	r = \delta_r ~r \quad \delta_F \cap r = \mathtt{changeAttrs}(r,a')
 	\end{array}}
-	{\varepsilon_\delta ; r ; k \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto v',\leadsto d')}
+	{\varepsilon_\delta , . \mapsto (r,\delta_r) ; k \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\emptyset,\pi_2(\leadsto a'))}
 \end{displaymath}
-
-$\boxed{\mathtt{Directory}~s}$
-
+%\begin{displaymath}
+%	\frac{\begin{array}{c}
+%	\delta_F \cap (\delta_r ~r) = \mathtt{rem}(r)
+%	\end{array}}
+%	{\varepsilon_\delta , . \mapsto (r,\delta_r) ; k \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\emptyset,\pi_1 (\leadsto False))}
+%\end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		\delta_F \cap r = \emptyset \quad
-		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d_2)~ (\delta_F \cap under(r)) \rhd (\delta_v,\delta_{d_2})\\
-		valid_{dir}(d_1,d_2) = valid(d_1) \wedge valid (d_2)
+		new(\varepsilon_\delta) ; k \vdash \mathtt{load}~ (\delta_F~ F)~  \rhd (v',d')
 	\end{array}}
-	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,(b,(d_1,d_2)))~ \delta_F \rhd (\delta_v,valid_{dir} \leftarrow \pi_2(\delta_{d_2})}
-\end{displaymath}
-\begin{displaymath}
-	\frac{\begin{array}{c}
-		\delta_F \cap r = \mathtt{changeAttrs}(r,a') \quad
-		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d_2)~ (\delta_F \cap under(r)) \rhd (\delta_v,\delta_{d_2})\\
-		valid_{dir}(d_1,d_2) = valid(d_1) \wedge valid (d_2)
-	\end{array}}
-	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,(b,(d_1,d_2)))~ \delta_F \rhd (\delta_v,valid_{dir} \leftarrow (\pi_2(\leadsto a') \otimes \delta_{d_2}))}
-\end{displaymath}
-The next $\mathtt{remDir}$ rule is a shortcut, but it violates a stronger notion of soundness for default generated data when the schema is invalid...
-\begin{displaymath}
-	\frac{\begin{array}{c}
-		\delta_F \cap r = \mathtt{remDir}(r) \quad valid_{rem}(x) = False
-	\end{array}}
-	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,(b,(d_1,d_2)))~ \delta_F \rhd (\emptyset,valid_{rem} \leftarrow \emptyset)}
-\end{displaymath}
-\begin{displaymath}
-	\frac{\begin{array}{c}
-		\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (\delta_F~ F)~  \rhd (v',d')
-	\end{array}}
-	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto v',\leadsto d')}
+	{\varepsilon_\delta ; k \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto v',\leadsto d')}
 \end{displaymath}
 
-$\boxed{e :: s}$
+%$\boxed{\mathtt{Directory}~s}$
+
+%\begin{displaymath}
+%	\frac{\begin{array}{c}
+%		\delta_F \cap r = \emptyset \quad
+%		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d_2)~ (\delta_F \searrow r) \rhd (\delta_v,\delta_{d_2})\\
+%		valid_{dir}(d_1,d_2) = valid(d_1) \wedge valid (d_2)
+%	\end{array}}
+%	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,(b,(d_1,d_2)))~ \delta_F \rhd (\delta_v,valid_{dir} \leftarrow \pi_2(\delta_{d_2})}
+%\end{displaymath}
+%\begin{displaymath}
+%	\frac{\begin{array}{c}
+%		\delta_F \cap r = \mathtt{changeAttrs}(r,a') \quad
+%		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d_2)~ (\delta_F \searrow r) \rhd (\delta_v,\delta_{d_2})\\
+%		valid_{dir}(d_1,d_2) = valid(d_1) \wedge valid (d_2)
+%	\end{array}}
+%	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,(b,(d_1,d_2)))~ \delta_F \rhd (\delta_v,valid_{dir} \leftarrow (\pi_2(\leadsto a') \otimes \delta_{d_2}))}
+%\end{displaymath}
+%The next $\mathtt{remDir}$ rule is a shortcut, but it violates a stronger notion of soundness for default generated data when the schema is invalid...
+%\begin{displaymath}
+%	\frac{\begin{array}{c}
+%		\delta_F \cap r = \mathtt{remDir}(r) \quad valid_{rem}(x) = False
+%	\end{array}}
+%	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,(b,(d_1,d_2)))~ \delta_F \rhd (\emptyset,valid_{rem} \leftarrow \emptyset)}
+%\end{displaymath}
+%\begin{displaymath}
+%	\frac{\begin{array}{c}
+%		\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (\delta_F~ F)~  \rhd (v',d')
+%	\end{array}}
+%	{\varepsilon_\delta ; r ; \mathtt{Directory}~s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto v',\leadsto d')}
+%\end{displaymath}
+
+$\boxed{s = e :: s}$
 
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		(\delta_F~F) \cap \llbracket r/e \rrbracket^{\varepsilon_\delta}_{Paths} = \{r_1',\dots,r_l'\} \quad
-		F \cap \llbracket r/e \rrbracket^{old(\varepsilon_\delta)}_{Paths} = \{r_1,\dots,r_k\} \\
-		r_1 \xrightarrow{\delta_F} r_1' \quad F' = \mathtt{move}(r_1,r_1')~F \\
-		\varepsilon_\delta ; r_1' ; s \vdash \mathtt{load}~ (F',v,d)~ (\delta_F \cap under(r_1')) \rhd (\delta_v,\delta_d)\\
-		valid_{e} (r_0,d_0) = l \equiv 1 \wedge valid(d_0)
+		F \cap \llbracket r/e \rrbracket^{old(\varepsilon_\delta)}_{Paths} = \{r_1,\dots,r_k\} \quad
+		(\delta_F~F) \cap \llbracket (\delta_r ~ r)/e \rrbracket^{new(\varepsilon_\delta)}_{Paths} = \{r_1',\dots,r_l'\} \\
+		r_1 \xrightarrow{\delta_F} r_1' \quad \delta_{r_1} = \delta(r_1,r_1') \quad
+		\varepsilon_\delta, . \mapsto (r_1,\delta_{r_1}) ; s \vdash \mathtt{load}~ (F,v,d)~ (\delta_F \searrow r_1') \rhd (\delta_v,\delta_d)\\
+		valid_{e::} (r_0,d_0) = l \equiv 1 \wedge valid(d_0)
 	\end{array}}
-	{\varepsilon_\delta ; r ; e::s \vdash \mathtt{load}~ (F,v,(b,(r_1,d)))~ \delta_F \rhd (\delta_v,valid_{e} \leftarrow (\leadsto r_1' \otimes \delta_d))}
+	{\varepsilon_\delta, . \mapsto (r,\delta_r) ; e::s \vdash \mathtt{load}~ (F,v,(b,(r_1,d)))~ \delta_F \rhd (\delta_v,valid_{e::} \leftarrow (\delta_{r_1} \otimes \delta_d) )}
 \end{displaymath}
 %\begin{displaymath}
 %	\frac{\begin{array}{c}
@@ -170,117 +200,287 @@ $\boxed{e :: s}$
 %\end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		\varepsilon_\delta;r;e :: s \vdash \mathtt{load}~ (\delta_F~F) \rhd (v',d')
+		\varepsilon_\delta ; e :: s \vdash \mathtt{load}~ (\delta_F~F) \rhd (v',d')
 	\end{array}}
-	{\varepsilon_\delta ; r ; e::s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto v',\leadsto d')}
+	{\varepsilon_\delta ; e::s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto v',\leadsto d')}
 \end{displaymath}
 
-$r \xrightarrow{\delta_F} r'$ corresponds to symbolically evaluate $\delta_F$ on path $r$, to arrive at path $r'$.
-
-$\boxed{\langle x : s_1, s_2 \rangle}$
+$\boxed{s = \langle x : s_1, s_2 \rangle}$
 
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		\varepsilon_\delta ; r ; s_1 \vdash \mathtt{load}~ (F,v_1,d_1)~ \delta_F \rhd (\delta_{v_1},\delta_{d_1})\\
-		(\varepsilon_\delta,x \mapsto (v_1,\delta_{v_1}),x_{md} \mapsto (d_1,\delta_{d_1})) ; r ; s_2 \vdash \mathtt{load}~ (F,v_2,d_2)~ \delta_F \rhd (\delta_{v_2},\delta_{d_2})\\
+		\varepsilon_\delta ; s_1 \vdash \mathtt{load}~ (F,v_1,d_1)~ \delta_F \rhd (\delta_{v_1},\delta_{d_1})\\
+		valid(\delta_{d_1} ~ d_1) = False\\
+	\end{array}}
+	{\varepsilon_\delta ; \langle x:s_1,s_2 \rangle \vdash \mathtt{load}~ (F,(v_1,v_2),(b,(d_1,d_2)))~ \delta_F \rhd (\pi_1(\delta_{v_1}) , (\leadsto False) \otimes \pi_1 (\delta_{d_1})) }
+\end{displaymath}
+NOTE: depending on our notion of equivalence, we may have such an optimization rule, i.e., we stop if there are already errors.
+\begin{displaymath}
+	\frac{\begin{array}{c}
+		\varepsilon_\delta ; s_1 \vdash \mathtt{load}~ (F,v_1,d_1)~ \delta_F \rhd (\delta_{v_1},\delta_{d_1})\\
+		(\varepsilon_\delta,x \mapsto (v_1,\delta_{v_1}),x_{md} \mapsto (d_1,\delta_{d_1})) ; s_2 \vdash \mathtt{load}~ (F,v_2,d_2)~ \delta_F \rhd (\delta_{v_2},\delta_{d_2})\\
 		valid_{12}({d_1}',{d_2}') = valid({d_1}') \wedge valid({d_2}')
 	\end{array}}
-	{\varepsilon_\delta ; r ; \langle x:s_1,s_2 \rangle \vdash \mathtt{load}~ (F,(v_1,v_2),(b,(d_1,d_2)))~ \delta_F \rhd (\delta_{v_1} \otimes \delta_{v_2},valid_{12} \leftarrow (\delta_{d_1} \otimes \delta_{d_2})) }
+	{\varepsilon_\delta ; \langle x:s_1,s_2 \rangle \vdash \mathtt{load}~ (F,(v_1,v_2),(b,(d_1,d_2)))~ \delta_F \rhd (\delta_{v_1} \otimes \delta_{v_2},valid_{12} \leftarrow (\delta_{d_1} \otimes \delta_{d_2})) }
 \end{displaymath}
 
-$\boxed{P(e)}$
+$\boxed{s = P(e)}$
 
 \begin{displaymath}
-	\frac{\llbracket e \rrbracket^{\varepsilon_\delta}_{Bool} = b' \quad valid_e(x) = b'}
-	{\varepsilon_\delta ; r ; P(e) \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\emptyset,valid_e \leftarrow \emptyset)}
+	\frac{\llbracket e \rrbracket^{new(\varepsilon_\delta)}_{Bool} = b}
+	{\varepsilon_\delta ; P(e) \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\emptyset,\leadsto (b,()))}
 \end{displaymath}
 
-$\boxed{s?}$
+$\boxed{s = s?}$
 
 \begin{displaymath}
-	\frac{r \notin \mathtt{dom}(\delta_F~F)}
-	{\varepsilon_\delta ; r ; s? \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto Nothing,\leadsto (True,Nothing))}
+	\frac{
+		\varepsilon(.) = (r,\delta_r) \quad(\delta_r ~ r) \notin \mathtt{dom}(\delta_F~F)
+	}
+	{\varepsilon_\delta ; s? \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto Nothing,\leadsto (True,Nothing))}
 \end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		r \in \mathtt{dom}(\delta_F~F) \quad r \in \mathtt{dom}(F)\\
+		\varepsilon(.) = (r,\delta_r) \quad (\delta_r ~ r) \in \mathtt{dom}(\delta_F~F) \quad r \in \mathtt{dom}(F)\\
 		valid_?(Just~d') = valid(d')\quad
-		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)
+		\varepsilon_\delta ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)
 	\end{array}}
-	{\varepsilon_\delta ; r ; s? \vdash \mathtt{load}~ (F,Just ~v,(b,Just ~d))~ \delta_F \rhd (\delta_v?,valid_? \leftarrow (\delta_d?))}
+	{\varepsilon_\delta ; s? \vdash \mathtt{load}~ (F,Just ~v,(b,Just ~d))~ \delta_F \rhd (\delta_v?,valid_? \leftarrow (\delta_d?))}
 \end{displaymath}
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		r \in \mathtt{dom}(\delta_F~F) \\
-		\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (\delta_F~F) \rhd (v',d')
+		new(\varepsilon_\delta) ; s \vdash \mathtt{load}~ (\delta_F~F) \rhd (v',d')
 	\end{array}}
-	{\varepsilon_\delta ; r ; s? \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto Just~v',\leadsto (valid(d'),Just~d'))}
+	{\varepsilon_\delta ; s? \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\leadsto Just~v',\leadsto (valid(d'),Just~d'))}
 \end{displaymath}
 
-$\boxed{[ s \mid x \in e]}$
+$\boxed{s = [ s \mid x \in e]}$
 
 \begin{displaymath}
 	\frac{\begin{array}{c}
 		\llbracket e \rrbracket^{old(\varepsilon_\delta)}_{[String]} = [w_1,\dots,w_k] \quad
-		\llbracket e \rrbracket^{\varepsilon_\delta}_{[String]} = [w_1',\dots,w_l']\\
-		match(r,\delta_F,[w_1,\dots,w_k],[w_1',\dots,w_l']) = \delta_w\\
-		\forall i \in \mathtt{dom}(\delta_w) . (\varepsilon_\delta,x \mapsto (w_i,\delta_F(w_i))) ; r ; s \vdash \mathtt{load}~ (F,v_i,d_i)~ \delta_F \rhd (\delta_{v_i},\delta_{d_i})\\
-		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')\quad
+		\llbracket e \rrbracket^{new(\varepsilon_\delta)}_{[String]} = [w_1',\dots,w_l']\\
+		\varepsilon_\delta(.) = (r,\delta_r) \quad r' = \delta_r ~ r \quad
+		match(\delta_F,r,[w_1,\dots,w_k],r',[w_1',\dots,w_l']) = \delta_w\\
+		\forall (i,j) \in \delta_w .\quad r/w_i \xrightarrow{\delta_F} r'/w_j' \quad \wedge 
+		 \quad \varepsilon_\delta,x \mapsto (w_i,\delta (w_i,w_j')) ; s \vdash \mathtt{load}~ (F,v_i,d_i)~ \delta_F \rhd (\delta_{v_i},\delta_{d_i})\\
+		\varepsilon_\delta ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')\quad
 		valid_*([d_1',\dots,d_l']) = \bigwedge_{j=1}^l valid(d_j')\\
 		\delta_v = \mathtt{pos}(i,\delta_{v_i}) ; \dots ; \mathtt{pos}(k,\delta_{v_k}) ; \delta_v'\quad
 		\delta_d = \mathtt{pos}(i,\delta_{d_i}) ; \dots ; \mathtt{pos}(k,\delta_{d_k}) ; \delta_d'
 	\end{array}}
-	{\varepsilon_\delta ; r ; [ s \mid x \in e] \vdash \mathtt{load}~ (F,vs,(b,ds))~ \delta_F \rhd (\delta_v,valid_* \leftarrow \delta_d)}
+	{\varepsilon_\delta ; [ s \mid x \in e] \vdash \mathtt{load}~ (F,vs,(b,ds))~ \delta_F \rhd (\delta_v,valid_* \leftarrow \delta_d)}
 \end{displaymath}
 
 Match needs to receive the filesystem deltas: matching modulo filesystem moves, not only by filename.
-$\delta_F(w_i)$ returns an empty delta if $w_i$ has not been changed in $\delta_F$ and a filename delta if $w_i$ has been moved to some file $w_j'$.
+%$\delta_F(w_i)$ returns an empty delta if $w_i$ has not been changed in $\delta_F$ and a filename delta if $w_i$ has been moved to some file $w_j'$.
 
-$\boxed{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~ F~ \delta_F~\delta_w \rhd (\delta_v,\delta_d)}$
+$\boxed{\varepsilon_\delta ; s \vdash_x \mathtt{load}~ F~ \delta_F~\delta_w \rhd (\delta_v,\delta_d)}$
 
 \begin{displaymath}
 	\frac{}
-	{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\emptyset \rhd (\emptyset,\emptyset)}
+	{\varepsilon_\delta ; s \vdash_x \mathtt{load}~F~ \delta_F ~\emptyset \rhd (\emptyset,\emptyset)}
 \end{displaymath}
 
 \begin{displaymath}
 	\frac{
-		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')
+		\varepsilon_\delta ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')
 	}
-	{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~(\mathtt{del}(i);\delta_w) \rhd (\mathtt{del}(i);\delta_v',\mathtt{del}(i);\delta_d')}
+	{\varepsilon_\delta ; s \vdash_x \mathtt{load}~F~ \delta_F ~(\mathtt{del}(i);\delta_w) \rhd (\mathtt{del}(i);\delta_v',\mathtt{del}(i);\delta_d')}
 \end{displaymath}
 
 \begin{displaymath}
 	\frac{
-		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')
+		\varepsilon_\delta ; s \vdash_x \mathtt{load}~F~ \delta_F ~\delta_w \rhd (\delta_v',\delta_d')
 	}
-	{\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~ \delta_F ~(\mathtt{reorder}(i,j);\delta_w) \rhd (\mathtt{reorder}(i,j);\delta_v',\mathtt{reorder}(i,j);\delta_d')}
+	{\varepsilon_\delta ; s \vdash_x \mathtt{load}~F~ \delta_F ~(\mathtt{reorder}(i,j);\delta_w) \rhd (\mathtt{reorder}(i,j);\delta_v',\mathtt{reorder}(i,j);\delta_d')}
 \end{displaymath}
 
 \begin{displaymath}
 	\frac{\begin{array}{c}
-		(\varepsilon_\delta,x \mapsto w') ; r ; s \vdash \mathtt{load}~ (\delta_F ~F) \rhd (v',d')\\
-		\varepsilon_\delta ; r ; s \vdash_x \mathtt{load}~F~\delta_w \rhd (\delta_v',\delta_d')
+		new(\varepsilon_\delta),x \mapsto w' ; s \vdash \mathtt{load}~ (\delta_F ~F) \rhd (v',d')\\
+		\varepsilon_\delta ; s \vdash_x \mathtt{load}~F~\delta_w \rhd (\delta_v',\delta_d')
 	\end{array}}
-	{\varepsilon_\delta ; r ; s \vdash \mathtt{load}_x~F~ \delta_F ~(\mathtt{ins}(i,w');\delta_w) \rhd (\mathtt{ins}(i,v');\delta_v',\mathtt{ins}(i,d');\delta_d')}
+	{\varepsilon_\delta ; s \vdash \mathtt{load}_x~F~ \delta_F ~(\mathtt{ins}(i,w');\delta_w) \rhd (\mathtt{ins}(i,v');\delta_v',\mathtt{ins}(i,d');\delta_d')}
 \end{displaymath}
 
 \begin{theorem}[Incrementality]
-	$\varepsilon_\emptyset ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \emptyset \rhd (\emptyset,\emptyset)$.
+	If $\varepsilon_\emptyset ; s \vdash \mathtt{load}~ (F,v,d)~ \emptyset \rhd (\emptyset,\emptyset)$.
 \end{theorem}
-This theorem is not really supported by the above semantics, but could be enforced if we find it sensible.
+This is not really considered in our semantics, but can be thought as an implementation optimization.
+%We define $\delta_v \simeq \delta_v' ~\triangleq~ \forall v. ~\delta_v ~ v = \delta_v' ~ v $.
 
-\begin{theorem}[Soundness]
-	Suppose that $\varepsilon ; r ; s \vdash \mathtt{load}~ F~ \rhd (v,d)$, $\varepsilon_\delta$ is a $\varepsilon$-delta, $\delta_F$ is a $F$-delta, and $\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)$.
-	Then $\delta_v$ is a $v$-delta, $\delta_d$ is a $d$-delta, and $\varepsilon_\delta ; r ; s \vdash \mathtt{load}~ (\delta_F~F)~ \rhd (\delta_v~v,\delta_d~d)$.
-\end{theorem}
-	
+\begin{displaymath}
+	\xymatrix@=2cm{
+	F\ar@{->}[r]^{\mathtt{load}}
+	\ar@{..>}[d]_{\delta_F}="a"
+	& (v,d)\ar@{..>}[d]^{\delta_v \,\otimes\, \delta_d}="b"\\
+	%
+	F' \ar@{->}[r]^{\mathtt{load}}
+	& (v',d')
+	\ar@{=>}^{\mathtt{load_\delta}}"a";"b"
+	}
+\end{displaymath}
 I suggest a more reasonable notion of equivalence:
 \begin{displaymath}
 	(v,d) \sim (v',d') \triangleq valid(d)=valid(d') ~\wedge~ (valid(d) \Rightarrow v = v')
 \end{displaymath}
 Data may differ when invalid, and metadata may subtly change (like access times, etc?).
+
+\begin{property}
+	$\delta_F ~ F =_r (\delta_F \searrow r) ~ F$
+\label{prop:deltaFUnder1}
+\end{property}
+\begin{property}
+	$(\delta_F \searrow r') ~ (\mathtt{move}(r,r') ~ F) = (\delta_F \searrow r') ~ F$
+\label{prop:deltaFUnder2}
+\end{property}
+
+\begin{theorem}[Soundness]
+	Suppose that
+	\begin{align*}
+		\varepsilon ; s \vdash \mathtt{load}~ F~ \rhd (v,d)\\
+		\varepsilon_\delta ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)\\
+		\varepsilon' ; s \vdash \mathtt{load}~ (\delta_F~F)~ \rhd (v',d')
+	\end{align*}
+	with $\varepsilon = old(\varepsilon_\delta)$ and $\varepsilon' = new(\varepsilon_\delta)$.
+	Then $(v',d') \sim (\delta_v ~ v,\delta_d ~ d)$.
+\end{theorem}
+\begin{proof}By induction\\
+	\textbf{Case: } $s = k$\\
+	\begin{enumerate}
+		\item
+		By the definitions, we have
+		
+	\begin{minipage}[b]{0.45\textwidth}
+		\begin{align*}
+			&\varepsilon , . \mapsto r ; k \vdash \mathtt{load}~ F~ \rhd (v,d) \\
+			&\varepsilon_\delta , . \mapsto (r',\emptyset) ; k \vdash \mathtt{load}~ (F',v,d)~ (\delta_F \searrow r') \rhd (\delta_v,\delta_d) \\
+			&\varepsilon' , . \mapsto r' ; k \vdash \mathtt{load}~ (\delta_F ~ F) \rhd (v',d')
+		\end{align*}
+	\end{minipage}
+	\begin{minipage}[b]{0.45\textwidth}
+		\begin{align*}
+			r' = \delta_r ~ r \quad r \neq r'\\
+			r \xrightarrow{\delta_F} r'\\
+			F' = \mathtt{move}(r,r')~F
+		\end{align*}
+	\end{minipage}
 	
+	By~\ref{theorem:movability}, we know that
+	\begin{align*}
+		\varepsilon , . \mapsto r' ; k \vdash \mathtt{load}~ F' \rhd (v,d_0)
+	\end{align*}
+	with $valid(d) = valid(d_0)$.
+	
+	By~\ref{prop:deltaFUnder1},~\ref{prop:deltaFUnder2} and~\ref{theorem:locality} we know that
+	\begin{align*}
+		\varepsilon' , . \mapsto r' ; k \vdash \mathtt{load}~ ((\delta_F \searrow r') ~ F') \rhd (v',d')
+	\end{align*}
+	
+	By the induction hypothesis applied to (the same) $k$, we have $(v',d') \sim (\delta_v ~ v,\delta_d ~ d_0)$. Note that this is guaranteed to halt in the next step.
+	Since $\delta_d$ is always of the form $\emptyset$, $\pi_2 (\leadsto a)$ or $\leadsto d$, we can show that $valid(d) = valid(d_0) \Rightarrow \delta_d(d) = \delta_d(d_0)$, what concludes this case.
+	
+		\item
+		By the definitions, we have
+
+		\begin{align*}
+			\varepsilon(.) = r \quad
+			(v,d) = load_k (F,r)\\
+			%
+			\varepsilon_\delta(.) = (r,\delta_r) \quad r = \delta_r ~ r \quad
+			\delta_F \cap r = \emptyset\\
+			%
+			\varepsilon'(.) = r \quad
+			(v',d') = load_k (\delta_F ~ F,r)
+		\end{align*}
+
+		By the assumption that $F(r) = F'(r) \Rightarrow load_k(F,r) = load_k(F',r)$, showing that $\delta_F \cap r = \emptyset ~\Leftrightarrow~ \forall F.~F(r) = (\delta_F~F)(r)$ finishes the case.
+
+		\item
+		By the definitions, we have
+		
+		\begin{align*}
+			\varepsilon(.) = r \quad
+			(v,d) = load_k (F,r)
+			%
+			\varepsilon_\delta(.) = (r,\delta_r) \quad r = \delta_r ~ r \quad
+			\delta_F \cap r = \mathtt{changeAttrs(r,a')}\\
+			%
+			\varepsilon'(.) = r \quad
+			(v',d') = load_k (\delta_F ~ F,r)
+		\end{align*}
+		
+		By the assumption that $\fst(F(r)) = \fst(F'(r)) \Rightarrow \fst(load_k(F,r)) = \fst(load_k(F',r))$, showing that $\delta_F \cap r = \mathtt{changeAttrs}(r,a') ~\Leftrightarrow~ \forall F. (F(r)\downarrow \Rightarrow ~\fst(F(r)) = \fst((\delta_F~F)(r)) \wedge \snd((\delta_F~F)(r)) = a')$ finishes the case.
+		
+		\item
+		Trivial to show that $(v',d') = (\delta_v ~ v,\delta_d ~ d')$.
+	\end{enumerate}
+	
+	
+	\textbf{Case: } $s = e :: s_1$\\
+	\begin{enumerate}
+		\item
+		By the definitions, we have
+		
+	\begin{minipage}[b]{0.45\textwidth}
+		\begin{align*}
+			&\varepsilon , . \mapsto r_1 ; s_1 \vdash \mathtt{load}~ F \rhd (v_1,d_1)\\
+			&\varepsilon_\delta , . \mapsto (r_1,\leadsto r_j') ; s_1 \vdash \mathtt{load}~ (F,v_1,d_1) (\delta_F \searrow r_j') \rhd (\delta_{v_1},\delta_{d_1})\\
+			&\varepsilon' , . \mapsto r_1' ; s_1 \vdash \mathtt{load}~ (\delta_F ~ F) \rhd (v_1',d_1')\\
+		\end{align*}
+	\end{minipage}
+	\begin{minipage}[b]{0.45\textwidth}
+		\begin{align*}
+			F \cap \llbracket r / e \rrbracket^{\varepsilon}_{Paths} = \{ r_1,\dots,r_k \}\\
+			b = k \equiv 1 \wedge valid(d_1) \quad v = v_1 \quad d = (b,(r_1,d_1))\\
+			%
+			r_1 \xrightarrow{\delta_F} r_j' \quad 1 \leq j \leq l \quad valid_{e::} (r_0,d_0) = l \equiv 1 \wedge valid(d_0)\\
+			\delta_v = \delta_{v_1} \quad \delta_d = valid_{e::} \leftarrow ((\leadsto r_j') \otimes \delta_{d_1}) \\
+			%
+			(\delta_F ~ F) \cap \llbracket (\delta_r ~ r) / e \rrbracket^{\varepsilon'}_{Paths} = \{ r_1',\dots,r_l' \}\\
+			b' = l \equiv 1 \wedge valid(d_1') \quad v' = v_1' \quad d' = (b',(r_1',d_1'))
+		\end{align*}
+	\end{minipage}
+		When $l \neq 1$, we know that both $b'$ and $valid_{e::}$ always return $False$, and we are done.
+	
+		When $l = 1$, we know that $j = 1$.
+		By~\ref{prop:deltaFUnder1} and~\ref{theorem:locality} we know that
+		\begin{align*}
+			\varepsilon' , . \mapsto r_1' ; s_1 \vdash \mathtt{load}~ ((\delta_F \searrow r_1') ~ F) \rhd (v_1',d_1')
+		\end{align*}
+		By the induction hypothesis applied to $s_1$, we have $(v_1',d_1') \sim (\delta_{v_1} ~ v_1,\delta_{d_1} ~ d_1)$, what extends by the definitions to $(v',d') \sim (\delta_{v} ~ v,\delta_{d} ~ d)$.
+		\item
+		Trivial to show that $(v',d') = (\delta_v ~ v,\delta_d ~ d)$.
+	\end{enumerate}
+	
+\end{proof}
+
+\begin{theorem}[Locality]
+	If
+	\begin{align*}
+		\varepsilon ; r ; s \vdash \mathtt{load}~ F \rhd (v,d)\\
+		\varepsilon ; r ; s \vdash \mathtt{load}~ F' \rhd (v',d')
+	\end{align*}
+	and $F =_r F'$,
+	then $v = v'$ and $d = d'$.
+\label{theorem:locality}
+\end{theorem}
+We define $F =_r F' \triangleq (\forall p.~ F(r/p) = F'(r/p))$.
+With this we can prove that loading path $r$ with $\delta_F~F$ or $(\delta_F \searrow r)~F$ is the same.
+
+
+\begin{theorem}[Atomic Movability]
+	If
+	\begin{align*}
+		\varepsilon , . \mapsto r ; k \vdash \mathtt{load}~ F \rhd (v,d)\\
+		\varepsilon , . \mapsto r' ; k \vdash \mathtt{load}~ (\delta_F ~F) \rhd (v',d')\\
+	\end{align*}
+	and $r \xrightarrow{\delta_F} r'$,
+	then $v = v'$ and $valid(d) = valid(d')$.
+\label{theorem:movability}
+\end{theorem}
+
 \end{document}
 
 
