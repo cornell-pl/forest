@@ -61,6 +61,7 @@ $\boxed{\varepsilon;s \vdash \mathtt{load}~ F \rhd (v,d)}$
 Changes:
 \begin{itemize}
 %	\item Introduced a new specification $\mathtt{Directory}~s$. The metadata holds the attributes of directories (similarly to constant files).
+	\item Merged the current path into the environment. The current path always present as a special variable $. \mapsto r$.
 	\item Considered non-deterministic expression evaluation (when using arbitrary regular expressions in non-list-comprehension matches). Metadata contains determinism checking and the chosen filename, when many matches are possible.
 \end{itemize}
 
@@ -70,8 +71,10 @@ $\varepsilon_\delta$ is a delta-environment:
 \begin{displaymath}
 	\varepsilon_\delta ::= \emptyset ~|~ \varepsilon_\delta,x \mapsto (v,\delta_v)
 \end{displaymath}
-And unlift a delta-environment $\varepsilon_\delta$ by applying each delta. A delta-environment is well-formed if for every $x \mapsto (v,\delta_v)$, $\delta_v$ is a $v$-delta.
+And compute the pre- $old(\varepsilon_\delta)$ and post- $new(\varepsilon_\delta)$ states of a delta environment $\varepsilon_\delta$.
+%A delta-environment is well-formed if for every $x \mapsto (v,\delta_v)$, $\delta_v$ is a $v$-delta.
 
+Filesystem deltas:
 \begin{align*}
 	&\delta_F & ::= & ~\mathtt{addFile}(r,u) ~|~ \mathtt{remFile}(r) ~|~ \mathtt{moveFile}(r,r')\\
 	&         & |   & ~\mathtt{addDir}(r) ~|~ \mathtt{remDir}(r) ~|~ \mathtt{moveDir}(r,r')\\
@@ -80,6 +83,7 @@ And unlift a delta-environment $\varepsilon_\delta$ by applying each delta. A de
 	&         & |   & ~\delta_F ; {\delta_F}' ~|~ \emptyset
 \end{align*}
 
+Value deltas:
 \begin{align*}
 	&\delta_v & ::= & ~\leadsto v ~|~ \pi_1~(\delta_v) ~|~ \pi_2~(\delta_v)\\
 	&         & |   & ~f \leftarrow \delta_v ~|~ \delta_v?\\
@@ -103,7 +107,7 @@ File system updates $\delta_F$ need to be valid over $F$.\\
 
 The delta environment $\varepsilon_\delta$ always contains a special variable $. \mapsto (r,\delta_r)$ that denotes the current path.
 
-$r \xrightarrow{\delta_F} r'$ corresponds to symbolically evaluating $\delta_F$ over path $r$, to arrive at path $r'$.
+$r \xrightarrow{\delta_F} r'$ corresponds to symbolically evaluating $\delta_F$ over path $r$, to arrive at path $r'$. We represent this as an abstract filesystem operation $\mathtt{move(r,r')}$.
 If $a = b$ then $\delta(a,b) = \emptyset$, otherwise $\delta(a,b) = \leadsto b$.
 
 %We write $\delta_F \cap \varepsilon_\delta(.) = \delta_F'$ for $\varepsilon_\delta(.) = (r,\delta_r) ~\wedge~ \delta_F \cap (\delta_r ~r) = \delta_F'$.
@@ -331,6 +335,7 @@ Data may differ when invalid, and metadata may subtly change (like access times,
 	$\delta_F ~ F =_r (\delta_F \searrow r) ~ F$
 \label{prop:deltaFUnder1}
 \end{property}
+
 \begin{property}
 	$(\delta_F \searrow r') ~ (\mathtt{move}(r,r') ~ F) = (\delta_F \searrow r') ~ F$
 \label{prop:deltaFUnder2}

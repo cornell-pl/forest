@@ -14,39 +14,39 @@ import Language.Haskell.TH.Syntax hiding (lift)
 -- Instance of Ord that are useful but missing from Language.Haskell.TH
 --------------------------------------------------------------------------------
 
---deriving instance Ord Exp
---deriving instance Ord Dec
---deriving instance Ord Type
---deriving instance Ord Pat
---
---deriving instance Ord Body
---deriving instance Ord Callconv
---deriving instance Ord Clause
---deriving instance Ord Con
---deriving instance Ord FamFlavour
---deriving instance Ord Foreign
---deriving instance Ord FunDep
---deriving instance Ord Guard
---deriving instance Ord Inline
----- Removed in GHC 7.6.x
----- deriving instance Ord InlineSpec
----- Typed to 'Type'.
----- deriving instance Ord Kind
---deriving instance Ord Lit
---deriving instance Ord Match
---deriving instance Ord Pragma
---deriving instance Ord Pred
---deriving instance Ord Range
---deriving instance Ord Safety
---deriving instance Ord Stmt
---deriving instance Ord Strict
---deriving instance Ord TyVarBndr
---deriving instance Ord RuleBndr
---deriving instance Ord TyLit
---deriving instance Ord Phases
---deriving instance Ord RuleMatch
---deriving instance Ord FixityDirection
---deriving instance Ord Fixity
+deriving instance Ord Exp
+deriving instance Ord Dec
+deriving instance Ord Type
+deriving instance Ord Pat
+
+deriving instance Ord Body
+deriving instance Ord Callconv
+deriving instance Ord Clause
+deriving instance Ord Con
+deriving instance Ord FamFlavour
+deriving instance Ord Foreign
+deriving instance Ord FunDep
+deriving instance Ord Guard
+deriving instance Ord Inline
+-- Removed in GHC 7.6.x
+-- deriving instance Ord InlineSpec
+-- Typed to 'Type'.
+-- deriving instance Ord Kind
+deriving instance Ord Lit
+deriving instance Ord Match
+deriving instance Ord Pragma
+deriving instance Ord Pred
+deriving instance Ord Range
+deriving instance Ord Safety
+deriving instance Ord Stmt
+deriving instance Ord Strict
+deriving instance Ord TyVarBndr
+deriving instance Ord RuleBndr
+deriving instance Ord TyLit
+deriving instance Ord Phases
+deriving instance Ord RuleMatch
+deriving instance Ord FixityDirection
+deriving instance Ord Fixity
 
 --------------------------------------------------------------------------------
 -- Quasi instances for monad transformers

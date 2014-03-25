@@ -94,7 +94,7 @@ papers2_dot = do
 	let fmd = get_fmd_header md
 	print (numErrors fmd)
 	print (errorMsg fmd)
-	mdToPDF md "/Users/hpacheco/Documents/Papers2/papers2.pdf"
+--	mdToPDF md "/Users/hpacheco/Documents/Papers2/papers2.pdf"
 	return (rep,md)
 
 -- > (rep,md) <- timeIt $ papers2_dot

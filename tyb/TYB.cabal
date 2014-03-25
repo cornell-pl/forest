@@ -1,5 +1,5 @@
 Name:                TYB
-Version:             0.2.3
+Version:             0.2.4
 Synopsis:            Template Your Boilerplate - a Template Haskell version of SYB
 Description:         TYB is a generic-programming system that uses Template
                      Haskell to generate boiler-plate traversals at compile
