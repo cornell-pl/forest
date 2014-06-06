@@ -74,14 +74,15 @@ import Data.Data
 import Data.Maybe
 import System.Random
 
-
+-- lazy file loading
 fileload :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
 fileload path = checkPath path (do
    fmd        <- unsafeInterleaveIO (getForestMD path)
    ~(rep, md) <- unsafeInterleaveIO (parseFile path)
    return (rep, (fmd, md)))
+-- Isn't lazy I/O being used by default? Is unsafeInterleaveIO really necessary here?
 
-
+-- | strict file loading
 fileload' :: Pads pads md => FilePath -> IO (pads, (Forest_md, md))
 fileload' path = checkPath path (do
    fmd        <- (getForestMD path)

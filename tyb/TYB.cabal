@@ -23,7 +23,7 @@ Library
                        , array >= 0.3
                        , containers >= 0.4
                        , mtl >= 2.0
-                       , transformers >= 0.2
+                       , transformers >= 0.2, th-orphans
   Other-modules:       Data.Generics.TH.Instances, Data.Generics.TH.VarSet,
                        Debug.TH
   -- Build-tools:         

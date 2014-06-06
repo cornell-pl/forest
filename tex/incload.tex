@@ -341,8 +341,12 @@ Data may differ when invalid, and metadata may subtly change (like access times,
 \label{prop:deltaFUnder2}
 \end{property}
 
+We say that $\delta_x$ is a $x$-delta if $\delta_x ~ x$ is defined.
+
+The delta load judgment denotes a total function as long as $\delta_F$ is a $F$-delta.
+
 \begin{theorem}[Soundness]
-	Suppose that
+	Suppose that $\delta_F$ is a $F$-delta and that
 	\begin{align*}
 		\varepsilon ; s \vdash \mathtt{load}~ F~ \rhd (v,d)\\
 		\varepsilon_\delta ; s \vdash \mathtt{load}~ (F,v,d)~ \delta_F \rhd (\delta_v,\delta_d)\\

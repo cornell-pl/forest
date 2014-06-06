@@ -22,7 +22,7 @@ import Language.Haskell.TH
 
 -- | Compatibility shim for recent changes to template haskell's 'tySynInstD'
 tySynInstD' :: Name -> [TypeQ] -> TypeQ -> DecQ
-tySynInstD' = tySynInstD
+tySynInstD' n xs x = tySynInstD n (tySynEqn xs x)
 
 appsT :: TypeQ -> [TypeQ] -> TypeQ
 appsT = foldl appT

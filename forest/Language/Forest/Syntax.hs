@@ -36,7 +36,7 @@ module Language.Forest.Syntax where
 import Data.Generics hiding (mkQ,everything)
 import Language.Haskell.TH  as TH 
 import Data.Generics.TH
-import Language.Forest.TH
+--import Language.Forest.TH
 --import Language.Haskell.TH.Instances.Lift
 import Data.Set (Set(..))
 import qualified Data.Set as Set
@@ -88,9 +88,5 @@ data Field = Simple BasicField
 fieldnames = map fieldname
 fieldname (Simple (x,_,_,_,_)) = x
 fieldname (Comp c) = internalName c
-
--- | Gets all the variables used in expressions inside Forest specifications
-forestTyVars :: ForestTy -> Set Name
-forestTyVars = $(everything [| Set.union |] (mkQ [| Set.empty |] 'expVars) [t| ForestTy |])
 
 

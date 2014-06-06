@@ -9,6 +9,10 @@ import Language.Forest.Pretty
 import Data.Maybe
 
 import System.IO.Unsafe (unsafePerformIO)
+import System.Posix.Files
+import Control.Concurrent
+import Control.Concurrent.Async
+import System.Directory
 
 [forest| type Universal_d = Directory 
              { ascii_files  is [ f :: TextFile     | f <- matches <|GL "*"|>, <| get_kind  f_att == AsciiK      |> ]
@@ -47,3 +51,59 @@ getDesc path = do
  ; return (pretty 80 (ppr_decls decls))
  }
 
+loadUniversal :: FilePath -> IO Universal_d
+loadUniversal path = do
+	(rep,md) <- load path
+	return rep
+
+dtree :: Universal_d -> IO ()
+dtree uni = do
+	putStrLn "ascii_files"
+	mapM_ (putStrLn . fst) $ ascii_files uni
+	putStrLn "binary_files"
+	mapM_ (putStrLn . fst) $ binary_files uni
+	putStrLn "directories"
+	mapM_ (putStrLn . fst) $ directories uni
+	putStrLn "symLinks"
+	mapM_ (putStrLn . fst) $ symLinks uni
+	return ()
+	
+loadTest :: IO Universal_d_md
+loadTest = do
+	let th1 = do
+		threadDelay 0
+		(rep,md) <- load "test"
+		dtree rep
+		return md
+	let th2 = do
+		threadDelay $ fromEnum $ 10^6 * 0.05
+		createSymbolicLink "a.txt" "test/0.txt"
+	(md,()) <- concurrently th1 th2
+--	md <- th1
+	removeFile "test/0.txt"
+	return md
+	
+--mangled result:
+-- ascii_files
+-- binary_files
+-- a.txt
+-- a1.txt
+-- a2.txt
+-- a3.txt
+-- a4.txt
+-- a5.txt
+-- a6.txt
+-- b.txt
+-- directories
+-- symLinks
+-- 0.txt
+-- b.txt
+
+	
+	
+	
+	
+	
+	
+	
+	

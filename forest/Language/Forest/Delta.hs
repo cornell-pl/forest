@@ -5,7 +5,7 @@ module Language.Forest.Delta where
 import {-# SOURCE #-} Language.Forest.MetaData
 
 import Control.Monad
-import Control.Lens
+import Control.Lens hiding (runIdentity)
 import Data.Maybe
 import Data.List
 import Data.Functor.Identity

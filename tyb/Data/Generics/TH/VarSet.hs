@@ -152,8 +152,8 @@ varSet e_1   = (let memoized_2 = \x_3 acc_4 -> accVarRef x_3 ((\_x_5 -> case _x_
                                                                                                                                                arg_202
                                                                                                                                                arg_203 -> memoized_156 arg_199 (memoized_7 arg_200 (memoized_198 arg_201 (memoized_165 arg_202 (memoized_159 arg_203 acc_143))))
                                                                                                        Language.Haskell.TH.Syntax.TySynInstD arg_204
-                                                                                                                                             arg_205
-                                                                                                                                             arg_206 -> memoized_7 arg_204 (memoized_198 arg_205 (memoized_47 arg_206 acc_143))) x_142)
+                                                                                                                                             (TySynEqn arg_205
+                                                                                                                                             arg_206) -> memoized_7 arg_204 (memoized_198 arg_205 (memoized_47 arg_206 acc_143))) x_142)
                     memoized_198 = GHC.Base.const GHC.Base.id
                     memoized_192 = GHC.Base.const GHC.Base.id
                     memoized_191 = GHC.Base.const GHC.Base.id

@@ -9,6 +9,8 @@ import qualified Data.Set as Set
 import Data.Maybe
 import Control.Monad
 import Data.Generics.TH
+import Language.Forest.TH.StageDefs
+import Language.Forest.Syntax
 	
 -- | Computes the set of external variables used by an arbitrary Haskell expression
 expVars :: Exp -> Set Name
@@ -57,8 +59,6 @@ patVars = $(let notExp t = do isExp <- eqType [t|Exp|] t
                                                return (h,True)
                               else liftM (,False) (mkQ [| (Set.empty,Set.empty) |] 'getName t)          
             in everythingBut [| pairwiseUnion |] notExp [t| Pat |])
-	where getName :: Name -> (Set Name,Set Name)
-	      getName x = (Set.singleton x,Set.empty)
 
 -- | Computes the set of variables defined in a declaration, and the set of variables used in declaration expressions
 decsVars :: [Dec] -> (Set Name,Set Name)
@@ -89,7 +89,7 @@ guardedVars (NormalG e,e') = expVars e `Set.union` expVars e'
 guardedVars (PatG stmts,e) = stmtsVars (stmts++[NoBindS e])
 
 rangeVars :: Range -> Set Name
-rangeVars = $(everything [| Set.union |] (mkQ [| Set.empty |] 'expVars) [t| Range |])
+rangeVars = $(everything [| Set.union |] (mkQ [| Set.empty |] 'expVars') [t| Range |])
 
 unionMap :: Ord b => (a -> Set b) -> [a] -> Set b
 unionMap f = foldr (\x s -> f x `Set.union` s) Set.empty
@@ -102,6 +102,8 @@ pairwiseUnionMap f = foldr (\x (s1,s2) -> let (bs,cs) = f x in (bs `Set.union` s
 
 expat = ViewP (VarE $ mkName "a") (VarP $ mkName "b")
 
-
+-- | Gets all the variables used in expressions inside Forest specifications
+forestTyVars :: ForestTy -> Set Name
+forestTyVars = $(everything [| Set.union |] (mkQ [| Set.empty |] 'expVars') [t| ForestTy |])
 
 
