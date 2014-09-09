@@ -1,0 +1,149 @@
+\documentclass[10pt,twoside,a4paper]{article}
+
+\usepackage[margin=.7in]{geometry}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath, amsthm, amssymb, amsbsy}
+\usepackage{microtype}
+\usepackage{color}
+\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{thmtools}
+\usepackage{wrapfig}
+\usepackage{stmaryrd}
+\usepackage{listings}
+\usepackage{cancel}
+\usepackage[all]{xy}
+\usepackage{mathtools}
+\usepackage{array}
+\usepackage{verbatim}
+
+\theoremstyle{theorem}
+\newtheorem{theorem}{Theorem}[section]
+\theoremstyle{lemma}
+\newtheorem{lemma}{Lemma}[section]
+\theoremstyle{property}
+\newtheorem{property}{Property}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{assumption}
+\newtheorem{assumption}{Assumption}[section]
+
+\def\fst{\pi_1}
+\def\snd{\pi_2}
+\def\id{\emptyset}
+\def\newenv{\delta_\varepsilon(\varepsilon)}
+
+\title{File System Update Syntax and Properties}
+\author{Yiming Wu}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+We have discussed syntax and properties of Increamental Forest in other paper, but we have never discussed those of the updates thoroughly.
+We believe if we can design filesystem updates syntax carefully, we will boost Increamental Forest remarkably.\\
+
+Our design of updates is based on two purposes:
+\begin{itemize}
+\item To discard redundant updates that will be covered later.
+\item To arrange the order of a set of updates correctly so that Increamental Forest will only need to traverse file system once.
+\end{itemize}
+
+\section{Syntax of Updates}
+In this section, we will discuss syntax of update. Let's start with basic definitions:\\
+
+
+$\boxed{Basic~Definition}$
+\begin{align*}
+	String ~u ::= & ~\Sigma^\ast \\ 
+	Filesystem ~F ::= & ~\{r_1 \mapsto T_1 \dots r_n \mapsto T_n\}
+\end{align*}
+
+A file system $F$ is \emph{well-formed} if it encodes a tree with directories at the internal nodes and files and symbolic links at the leaves. More formally, $F$ is \emph{well-formed} if the following conditions hold:
+
+\begin{itemize}
+	\item $\mathtt{dom}(F)$ is prefixed-closed.
+	\item $F(r) = \mathtt{Dir}(u_1,u_2,\dots,u_n)$ implies $r/u_i \in \mathtt{dom}(F)$ for all $i$ from $1$ to $n$, and
+	\item $F(r) = \mathtt{File}~\omega$ implies $r/u' \notin \mathtt{dom}(F)$ for all $u'$
+\end{itemize}
+
+The syntax of updates is:\\
+
+$\boxed{Syntax ~of ~Update}$
+\begin{align*}
+	Elementry ~Update ~~\rho ::= & ~\mathtt{addFile}(r,\omega) ~|~ \mathtt{rmvFile}(r) \\
+	Update~of~Filesystem ~~\delta ::= & ~\rho ~|~ \delta_1 \cdot \delta_2 ~|~ \emptyset
+\end{align*}
+
+As we can see, syntax of updates goes mostly the same with our design in Increamental Forest paper.
+\\
+
+
+$\boxed{Semantic~of~Update}$
+%!!!!!laignment problem
+\begin{eqnarray*}
+	\delta & : & F \mapsto F\\
+	\emptyset ~F & = & F\\
+	\mathtt{addFile}(r,\omega) ~F & = & F \cdot (r \mapsto \omega)\\
+	\mathtt{rmvFile}(r) ~F & = & \{r' \mapsto F(r') \mid r' \in \mathtt{dom}(F) \setminus {r}\}\\
+	\delta_1 \cdot \delta_2 ~F & = & \delta_2 ~(\delta_1 ~F)
+\end{eqnarray*}
+
+\newpage
+
+The file system that Increamental Forest deals with should always be well-formed. 
+Thus updates should be \emph{well-formed} so that file system is always \emph{well-formed}.
+
+\begin{definition}[Well-Formed Update]
+	An update $\delta$ is well-formed for file system $F$ if $wf(F) \Rightarrow wf(\delta F)$
+\end{definition}
+
+\section{Equivalance of Updates}
+
+In real world file system, there are different sequence of updates but will have the same effect on file system. For example:
+\begin{displaymath}
+	\mathtt{addFile}(r, \omega) \cdot \mathtt{rmvFile}(r) \cdot \mathtt{addFile}(r, \omega') = \mathtt{addFile}(r, \omega')
+\end{displaymath}
+
+\begin{definition}[Equivalance of Updates]
+	Two updates $\delta_1$ and $\delta_2$ is equivalant for file system $F$ iff $\delta_1 ~F = \delta_2 ~F$. We write $\delta_1 \equiv \delta_2$.
+\end{definition}
+
+We can prove that our \emph{Equivalance of Updates} is an equivalant relation.\\
+
+$\boxed{Equivalant~Relation}$
+\begin{displaymath}
+\begin{array}{ll}
+	\delta_1 \equiv \delta_1 & \textrm{REFL} \\
+	\delta_1 \equiv \delta_2, \delta_2 \equiv \delta_3 \Rightarrow \delta_3 \equiv \delta_1 & \textrm{ASSOC} \\
+	\delta_1 \cdot (\delta_2 \cdot \delta_3) \equiv (\delta_1 \cdot \delta_2) \cdot \delta_3 & \textrm{TRANS}
+\end{array}
+\end{displaymath}\\
+
+The first two properties are easy to prove, let's prove the third property.
+
+\begin{proof}[TRANS]
+
+\begin{eqnarray*}
+	(\delta_1 \cdot (\delta_2 \cdot \delta_3)) ~F & = & \delta_3 (\delta_2 (\delta_1 ~F)) \\
+	((\delta_1 \cdot \delta_2) \cdot \delta_3) ~F & = & \delta_3 (\delta_2 (\delta_1 ~F)) \\
+	\delta_3 (\delta_2 (\delta_1 ~F)) & = & \delta_3 (\delta_2 (\delta_1 ~F)) \\
+	& \Rightarrow & \delta_1 \cdot (\delta_2 \cdot \delta_3) \equiv (\delta_1 \cdot \delta_2) \cdot \delta_3
+\end{eqnarray*}
+\end{proof}
+
+Before we start defining equivalant algebraic operations, let's define some basic operations on updates first.\\
+
+$\boxed{Basic~Operations ~of ~Update}$
+\begin{align*}
+	& \pi(\mathtt{addFile}(r,\omega')) = r\\
+	& \pi(\mathtt{rmvFile}(r)) = r
+\end{align*}
+
+
+\end{document}
+
+%\begin{vacation}
+
