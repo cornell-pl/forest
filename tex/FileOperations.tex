@@ -116,9 +116,9 @@ We can prove that our \emph{Equivalance of Updates} is an equivalant relation.\\
 $\boxed{Equivalant~Relation}$
 \begin{displaymath}
 \begin{array}{ll}
-	\delta_1 \equiv \delta_1 & \textrm{REFL} \\
-	\delta_1 \equiv \delta_2, \delta_2 \equiv \delta_3 \Rightarrow \delta_3 \equiv \delta_1 & \textrm{ASSOC} \\
-	\delta_1 \cdot (\delta_2 \cdot \delta_3) \equiv (\delta_1 \cdot \delta_2) \cdot \delta_3 & \textrm{TRANS}
+	\delta_1 \equiv \delta_1 & \textrm{(REFL)} \\
+	\delta_1 \equiv \delta_2, \delta_2 \equiv \delta_3 \Rightarrow \delta_3 \equiv \delta_1 & \textrm{(ASSOC)} \\
+	\delta_1 \cdot (\delta_2 \cdot \delta_3) \equiv (\delta_1 \cdot \delta_2) \cdot \delta_3 & \textrm{(TRANS)}
 \end{array}
 \end{displaymath}\\
 
@@ -134,15 +134,56 @@ The first two properties are easy to prove, let's prove the third property.
 \end{eqnarray*}
 \end{proof}
 
-Before we start defining equivalant algebraic operations, let's define some basic operations on updates first.\\
+Before we start defining equivalant algebraic operations, let's define some basic operations first.\\
 
-$\boxed{Basic~Operations ~of ~Update}$
+$\boxed{PI~Operations}$
 \begin{align*}
 	& \pi(\mathtt{addFile}(r,\omega')) = r\\
-	& \pi(\mathtt{rmvFile}(r)) = r
+	& \pi(\mathtt{rmvFile}(r)) = r\\
+	& \pi(\delta_1 \cdot \delta_2) = \pi(\delta_1) \cup \pi(\delta_2)
+\end{align*}
+$\boxed{Prefix ~ and ~ Sufix}$
+\begin{align*}
+	& pre(.) = \emptyset\\
+	& pre(r/a) = pre(r) \cup \{r/a\}\\
+	& suf(r) = \{r\} \quad & if~F(r)~is~a~\mathtt{File}\\
+	& suf(r) = (\bigcup suf(r/u_i)) \cup \{r\} \quad & if~F(r) = (u_1,\dots,u_n)
 \end{align*}
 
+Operation $\pi$ gives out the path a basic update $\rho$ is focusing on.
+Operation $pre$ gives out the set of all the prefix of path $r$.
+Operation $suf$ gives out the set of all the sufix of path $r$.
+With prefix and sufix operation, we can define partial order of path $r$.
 
+\begin{definition}[Partial Order of Path]
+	A path $r_1$ is the prefix of $r_2$, written as $r_1 \sqsubseteq r_2$, when $pre(r_1) \subseteq pre(r_2)$.
+\end{definition}
+
+With these operations, we can progress to equivalent operations of update.\\
+
+$\boxed{Equivalent ~Operations ~of ~Update}$
+\begin{align*}
+	& \rho_1 \cdot \rho_2 \equiv \rho_2  & if~ \pi(\rho_1) = \pi(\rho_2) \quad & (\mathtt{CLOBBER})\\
+	& \rho_1 \cdot \rho_2 \equiv \rho_2 \cdot \rho_1  & if~ \pi(\rho_1) \not\sqsubseteq \pi(\rho_2) ~and~ \pi(\rho_2) \not\sqsubseteq \pi(\rho_1) \quad & (\mathtt{SWAP})
+\end{align*}
+
+We call the first operation $\mathtt{CLOBBER}$ rule, the second as $\mathtt{SWAP}$ rule. 
+By intuition, $\mathtt{CLOBBER}$ rule will help us economize the sequence of updates that happen in one path.
+$\mathtt{SWAP}$ rule will help us changing the order of updates on filesystem so that we can deal with all those updates in the order we want.\\
+
+\newpage
+
+\begin{definition}[Normall Form Update]
+	A sequence of updates $\delta$ is normall form it is either
+	\begin{align*}
+		& \rho\\
+		& \rho \cdot \delta_1 & \pi(\delta_1) \cap pre(r) = \emptyset \quad & if~\rho = \mathtt{addFile}(r,\omega)\\
+		& 					  & \pi(\delta_1) \cap suf(r) = \emptyset \quad & if~\rho = \mathtt{rmvFile}(r)\\
+	\end{align*}
+\end{definition}
+
+\begin{theorem}[Soundness]
+\end{theorem}
 \end{document}
 
 %\begin{vacation}
