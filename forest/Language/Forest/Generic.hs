@@ -86,7 +86,7 @@ data Transaction fs a where
 	Load :: Forest fs args rep md => ForestIs fs args -> FilePath -> Transaction fs (rep,md)
 	Manifest :: Forest fs args rep md => (rep,md) -> Transaction fs Manifest
 	Store :: FSRep fs => Manifest -> Transaction fs ()
-	Lift :: FSRep fs => ForestO fs a -> Transaction fs a -- we can mutate values inside transactions; Forest monads shall not allow arbitrary, just interacting with thunks in the same way as @TVar@s
+	Lift :: FSRep fs => ForestO fs a -> Transaction fs a -- we can mutate values inside transactions; Forest monads shall not allow arbitrary IO, just interacting with thunks in the same way as @TVar@s
 	Bind :: Transaction fs a -> (a -> Transaction fs b) -> Transaction fs b
 
 -- * Incremental Forest interface

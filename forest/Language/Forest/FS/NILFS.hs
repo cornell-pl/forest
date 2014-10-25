@@ -1,7 +1,8 @@
-{-# LANGUAGE ConstraintKinds, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables, ConstraintKinds, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
 
 module Language.Forest.FS.NILFS where
 
+import Control.Monad.Incremental.Adapton.Memo
 import Filesystem.Path.CurrentOS hiding (FilePath,concat,(</>))
 import Language.Forest.FS.FSDelta
 import Language.Forest.IO.Utils
@@ -175,19 +176,44 @@ instance (Output U l (IncForest 'NILFS) IORef IO,ForestLayer NILFS l) => Thunk (
 	new = liftM NILFSU . thunk
 	read (NILFSU t) = force t
 
-instance (Output U l (IncForest 'NILFS) IORef IO,ForestLayer NILFS l) => Output (ICThunk NILFS) l (IncForest NILFS) IORef IO where
+instance (Output U Outside (IncForest 'NILFS) IORef IO,ForestLayer NILFS Outside) => Output (ICThunk NILFS) Outside (IncForest NILFS) IORef IO where
+	thunk = liftM NILFSU . thunk
+	force (NILFSU t) = force t
+
+instance (Output U Inside (IncForest 'NILFS) IORef IO,ForestLayer NILFS Inside) => Output (ICThunk NILFS) Inside (IncForest NILFS) IORef IO where
 	thunk = liftM NILFSU . thunk
 	force (NILFSU t) = force t
 	memo rec = liftM NILFSU . Inc.memo (\f -> rec (liftM NILFSU . f))
-	gmemoQ ctx f = genericQMemoNILFSU (gmemoQ ctx (unGenericQMemoNILFSU . f . genericQMemoNILFSU))
+	gmemoQ ctx (f :: (GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b)) =
+		let memo_func :: GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
+		    memo_func = gmemoNonRecNILFSU ctx (f memo_func)
+		in memo_func
 
 type GenericQMemoNILFSU ctx l inc r m b = GenericQMemo ctx (ICThunk NILFS) l inc r m b
+type NewGenericQMemoNILFSU ctx l inc r m b = NewGenericQMemo ctx (ICThunk NILFS) l inc r m b
 
-genericQMemoNILFSU :: GenericQMemoU ctx l (IncForest NILFS) r m b -> GenericQMemoNILFSU ctx l (IncForest NILFS) r m b
-genericQMemoNILFSU (GenericQMemo f) = GenericQMemo $ liftM NILFSU . f
-unGenericQMemoNILFSU :: GenericQMemoNILFSU ctx l (IncForest NILFS) r m b -> GenericQMemoU ctx l (IncForest NILFS) r m b
-unGenericQMemoNILFSU (GenericQMemo f) = GenericQMemo $ liftM adaptonU . f
-	
+-- we just repeat the code from adapton here as workaround. revise this!
+gmemoNonRecNILFSU :: Proxy ctx -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
+gmemoNonRecNILFSU ctx f = unNewGenericQ (newGmemoNonRecNILFSU ctx (NewGenericQ f)) where
+	newGmemoNonRecNILFSU ctx f = gmemoNonRecNILFSU' ctx f (unsafePerformIO $ debug "NewTable!!" $ WeakTable.newFor f)
+
+gmemoNonRecNILFSU' :: Proxy ctx -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> MemoTable (TypeRep,KeyDynamic) (U Inside (IncForest NILFS) IORef IO b) -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
+gmemoNonRecNILFSU' ctx (NewGenericQ f) tbl = NewGenericQ $ \arg -> do
+	let (mkWeak,k) = memoKeyCtx dict ctx $! arg
+	let tyk = (typeRepOf arg,keyDynamicCtx dict ctx (proxyOf arg) k)
+	lkp <- debug ("memo search "++show tyk) $ inL $ liftIO $ WeakTable.lookup tbl tyk
+	case lkp of
+		Nothing -> do
+			let finalizethunk = WeakTable.finalize tbl tyk
+			NILFSU thunk <- f arg
+			let thunkmemo = addFinalizerU thunk (liftIO finalizethunk)
+			inL $ liftIO $ WeakTable.insertWithMkWeak tbl mkWeak tyk thunk
+			debug (show tyk ++" => "++show thunk) $ return $ NILFSU thunkmemo
+		Just thunk -> debug ("memo hit "++show tyk ++ " " ++ show thunk) $ do
+			let finalizethunk = WeakTable.finalize tbl tyk
+			let thunkmemo = addFinalizerU thunk (liftIO finalizethunk)
+			return $ NILFSU thunkmemo
+
 instance ForestInput NILFS FSThunk Inside where
 	fsref v = do
 		deps <- forestIO $ newIORef []

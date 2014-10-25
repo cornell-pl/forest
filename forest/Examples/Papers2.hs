@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, OverlappingInstances, TypeFamilies, StandaloneDeriving, TypeOperators, ConstraintKinds, DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables, ViewPatterns #-}
+{-# LANGUAGE RankNTypes, TupleSections, OverlappingInstances, TypeFamilies, StandaloneDeriving, TypeOperators, ConstraintKinds, DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables, ViewPatterns #-}
 
 module Main where
 --module Examples.Papers2 where
@@ -647,55 +647,48 @@ articlePaperNamesWithYear year = articlePapersWithYear year >=> mapJoinListInc (
 
 articlePapersWithYear :: (FSRep fs,ForestOutput fs ICThunk Inside,MData (MemoCtx NoCtx) (ForestI fs) (Papers2 fs :.: Papers2_md fs),MData (MemoCtx NoCtx) (ForestI fs) (Articles fs :.: Articles_md fs),MData (MemoCtx NoCtx) (ForestI fs) (Year fs :.: Year_md fs))
                       => Integer -> Papers2 fs :.: Papers2_md fs -> ForestI fs (ForestJoinListICThunkI fs (Paper fs :.: Paper_md fs))
-articlePapersWithYear year = unGenericQMemo (garticlePapersWithYear proxyNoCtx year)
+articlePapersWithYear = garticlePapersWithYear proxyNoCtx
 
 -- recursive query that collects papers within specific years within articles
 garticlePapersWithYear :: (FSRep fs,ForestOutput fs ICThunk Inside,MData (MemoCtx ctx) (ForestI fs) (Articles fs :.: Articles_md fs),MData (MemoCtx ctx) (ForestI fs) (Year fs :.: Year_md fs))
                        => Proxy ctx -> Integer -> ForestGenericQMemo ctx fs Inside (ForestJoinListICThunkI' fs (Paper fs :.: Paper_md fs))
-garticlePapersWithYear ctx year = everythingButInc ctx joinListInc'' $ GenericQMemoBut $ mkQButTypeInc (return EmptyMod) (f ctx) where
+garticlePapersWithYear ctx year = everythingButInc ctx joinListInc'' $ mkQButTypeInc (return EmptyMod) (f ctx) where
 	f :: (FSRep fs,ForestOutput fs ICThunk Inside,MData (MemoCtx ctx) (ForestI fs) (Articles fs :.: Articles_md fs),MData (MemoCtx ctx) (ForestI fs) (Year fs :.: Year_md fs))
 	  => Proxy ctx -> Articles fs :.: Articles_md fs -> ForestI fs (ForestJoinListICThunkI' fs (Paper fs :.: Paper_md fs))
-	f ctx x = unGenericQMemo (gpapersWithYear ctx year) x >>= force
+	f ctx x = gpapersWithYear ctx year x >>= force
 
 -- recursive query that collects papers within specific years
 gpapersWithYear :: (FSRep fs,ForestOutput fs ICThunk Inside,MData (MemoCtx ctx) (ForestI fs) (Year fs :.: Year_md fs))
                 => Proxy ctx -> Integer -> ForestGenericQMemo ctx fs Inside (ForestJoinListICThunkI' fs (Paper fs :.: Paper_md fs))
-gpapersWithYear ctx year = everythingButInc ctx joinListInc'' $ GenericQMemoBut $ mkQButTypeInc (return EmptyMod) (f ctx) where
+gpapersWithYear ctx year = everythingButInc ctx joinListInc'' $ mkQButTypeInc (return EmptyMod) (f ctx) where
 	f :: (FSRep fs,ForestOutput fs ICThunk Inside,MData (MemoCtx ctx) (ForestI fs) (Year fs :.: Year_md fs))
 	  => Proxy ctx -> Year fs :.: Year_md fs -> ForestI fs (ForestJoinListICThunkI' fs (Paper fs :.: Paper_md fs))
 	f ctx x@(y_rep :.: y_md@(_,arg_y)) = force arg_y >>= \mb -> case mb of
-		Just ((==year) -> True) -> unGenericQMemo (gpapers ctx) x >>= force
+		Just ((==year) -> True) -> gpapers ctx x >>= force
 		otherwise -> return EmptyMod
 
 -- recursive query that collects papers
 gpapers :: (FSRep fs,ForestOutput fs ICThunk Inside) => Proxy ctx -> ForestGenericQMemo ctx fs Inside (ForestJoinListICThunkI' fs (Paper fs :.: Paper_md fs))
-gpapers ctx = listifyInc ctx f where
-	f :: (FSRep fs,ForestOutput fs ICThunk Inside) => Paper fs :.: Paper_md fs -> ForestI fs Bool
-	f x@(rep :.: md) = return True
+gpapers ctx = listifyInc ctx (\(x::(Paper fs :.: Paper_md fs)) -> return True)
 
 paperNames :: (FSRep fs,MData (MemoCtx NoCtx) (ForestI fs) (Author_md fs),ForestOutput fs ICThunk Inside) => Author_md fs -> ForestI fs (ForestJoinListICThunkI fs FilePath)
-paperNames (x::Author_md fs) = do
-	let zero = return EmptyMod
-	unGenericQMemo (everythingButInc proxyNoCtx joinListInc'' (q zero)) x
-  where
-	q zero = GenericQMemoBut $ mkQButTypeInc zero (\(paper_md::Paper_md fs) -> liftM (SingleMod . fullpath . fileInfo) $ get_fmd_header paper_md)
+paperNames (x::Author_md fs) = everythingButInc proxyNoCtx joinListInc''
+	(mkQButTypeInc (return EmptyMod) (\(paper_md::Paper_md fs) -> liftM (SingleMod . fullpath . fileInfo) $ get_fmd_header paper_md))
+	x
 	
 papersNames :: (FSRep fs,MData (MemoCtx NoCtx) (ForestI fs) (Papers2_md fs),ForestOutput fs ICThunk Inside) => Papers2_md fs -> ForestI fs (ForestJoinListICThunkI fs FilePath)
-papersNames (x::Papers2_md fs) = do
-	let zero = return EmptyMod
-	unGenericQMemo (everythingButInc proxyNoCtx joinListInc'' (q zero)) x
-  where
-	q zero = GenericQMemoBut $ mkQButTypeInc zero (\(paper_md::Paper_md fs) -> liftM (SingleMod . fullpath . fileInfo) $ get_fmd_header paper_md)
+papersNames (x::Papers2_md fs) = everythingButInc proxyNoCtx joinListInc''
+	(mkQButTypeInc (return EmptyMod) (\(paper_md::Paper_md fs) -> liftM (SingleMod . fullpath . fileInfo) $ get_fmd_header paper_md))
+	x
 
 --joinListInc'' tx my = thunk my >>= \ty -> return $ JoinMod tx ty
 joinListInc'' tx my = thunk my >>= \ty -> joinListPruneInc tx ty >>= force
 
 paperCount :: (FSRep fs,MData (MemoCtx NoCtx) (ForestI fs) (Papers2 fs),ForestOutput fs ICThunk Inside) => Papers2 fs -> ForestI fs (ForestICThunkI fs Int)
-paperCount (papers2::Papers2 fs) = do
-	let zero = return 0
-	unGenericQMemo (everythingButInc proxyNoCtx (\tx my -> force tx >>= \x -> liftM (x+) my) (q zero)) papers2
-  where
-	q zero = GenericQMemoBut $ mkQButTypeInc zero (\(paper::Paper fs) -> return 1)
+paperCount (papers2::Papers2 fs) = everythingButInc proxyNoCtx
+	(\tx my -> force tx >>= \x -> liftM (x+) my)
+	(mkQButTypeInc (return 0) (\(paper::Paper fs) -> return 1))
+	papers2
 
 topkLargestFiles :: (Memo (ForestICThunkI fs (ForestListICThunkI' fs (String, Int))),FSRep fs,MData (MemoCtx NoCtx) (ForestI fs) (Papers2_md fs),ForestOutput fs ICThunk Inside)
 	=> Int -> Papers2_md fs -> ForestI fs (ForestListICThunkI fs (String,Int))
@@ -704,12 +697,12 @@ topkLargestFiles k papers2_md = fileSizes papers2_md >>= takeInc k
 -- | computes a list of (authorname,numpapers) sorted from most to least prolific author
 fileSizes :: (Memo (ForestICThunkI fs (ForestListICThunkI' fs (String,Int))),FSRep fs,MData (MemoCtx NoCtx) (ForestI fs) (Papers2_md fs),ForestOutput fs ICThunk Inside)
 	=> Papers2_md fs -> ForestI fs (ForestListICThunkI fs (String,Int))
-fileSizes papers2_md = do
-	let zero = return NilMod
-	unGenericQMemo (everythingButInc proxyNoCtx (mergeInc' cmp) (q zero)) papers2_md
+fileSizes (x::Papers2_md fs) = everythingButInc proxyNoCtx (mergeInc' cmp)
+	(q (Proxy::Proxy fs)) x
   where
 	cmp (name1,count1) (name2,count2) = compare count2 count1 -- sort in reverse by highest count
-	q zero = GenericQMemoBut $ mkQButTypeInc zero $ \(md::BinaryFile_md fs) -> fsforce md >>= \(fmd,_) -> do
+	q :: Proxy fs -> GenericQ (MemoCtx NoCtx) (ForestI fs) (ForestListICThunkI fs (String,Int),Bool)
+	q fs = mkQButTypeInc (return NilMod) $ \(md::BinaryFile_md fs) -> fsforce md >>= \(fmd,_) -> do
 		let info = fileInfo fmd
 		liftM (ConsMod (fullpath info,fromEnum $ size info)) $ const NilMod
 
@@ -724,22 +717,23 @@ topkProlificAuthors k papers2_md = authorPaperCount papers2_md >>= takeInc k
 
 authorPaperCount :: (Eq (ForestListICThunkI fs (ForestListICThunkI fs (String,Int))),Hashable (ForestListICThunkI fs (ForestListICThunkI fs (String,Int))),Memo (ForestListICThunkI fs (ForestListICThunkI fs (String,Int))),Memo (ForestICThunkI fs (ForestListICThunkI' fs (String,Int))),FSRep fs,MData (MemoCtx NoCtx) (ForestI fs) (Papers2_md fs),ForestOutput fs ICThunk Inside)
 	=> Papers2_md fs -> ForestI fs (ForestListICThunkI fs (String,Int))
-authorPaperCount papers2_md = unGenericQMemo (everythingButInc proxyNoCtx (mergeMapInc' cmp mrg) q) papers2_md
+authorPaperCount (x::Papers2_md fs) = everythingButInc proxyNoCtx
+	(mergeMapInc' cmp mrg)
+	(q (Proxy::Proxy fs))
+	x
   where
-	zero = return NilMod
 	cmp (name1,count1) (name2,count2) = compare count2 count1 -- sort in reverse by highest count
 	mrg count1 count2 = return $ count1 + count2 -- sum counts for the same author
-	q = GenericQMemoBut $ mkQButTypeInc zero $ \((md,tyear :*: tname)::Author_md fs) -> force tname >>= \mb -> case mb of
-		Nothing -> zero
+	q :: Proxy fs -> GenericQ (MemoCtx NoCtx) (ForestI fs) (ForestListICThunkI fs (String,Int),Bool)
+	q fs = mkQButTypeInc (return NilMod) $ \((md,tyear :*: tname)::Author_md fs) -> force tname >>= \mb -> case mb of
+		Nothing -> return NilMod
 		Just name -> do
 			count <- liftM (Map.size . authorPapers_md . snd) $ fsforce md
 			liftM (ConsMod (name,count)) $ const NilMod
 
 mergeMapInc' :: (Eq (ListMod mod l inc r m (ListMod mod l inc r m (k, v))),Hashable (ListMod mod l inc r m (ListMod mod l inc r m (k, v))),Memo k,Memo v,Memo (ListMod mod l inc r m (ListMod mod l inc r m (k, v))),MonadIO m,Memo (ListMod mod l inc r m (k,v)),Eq k,Eq v,Output mod l inc r m,Eq (ListMod mod l inc r m (k,v)))
 	=> ((k,v) -> (k,v) -> Ordering) -> (v -> v -> l inc r m v) -> ListMod mod l inc r m (k,v) -> l inc r m (ListMod' mod l inc r m (k,v)) -> l inc r m (ListMod' mod l inc r m (k,v))
-mergeMapInc' cmp mrg tx my = do
-	ty <- thunk my
-	mergeMapInc cmp mrg tx ty >>= force
+mergeMapInc' cmp mrg tx my = thunk my >>= mergeMapInc cmp mrg tx >>= force
 
 --namesWithYear; does not load other parts
 --namesWithYear; change something else
