@@ -1,4 +1,4 @@
-forest
+Incremental Forest
 ======
 
 Requirements:
