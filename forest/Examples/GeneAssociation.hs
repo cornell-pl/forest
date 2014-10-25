@@ -2,7 +2,7 @@
 
 module Examples.GeneAssociation where
 import Language.Pads.Padsc
-import Language.Forest.Forestc hiding (sources)
+import Language.Forest.Class hiding (sources)
 import System.IO.Unsafe (unsafePerformIO)
 import Language.Pads.GenPretty
 import Language.Forest.Graph

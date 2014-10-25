@@ -63,7 +63,10 @@ Library
                        Language.Pads.Library.BinaryUtilities,
                        Language.Pads.Library.Native, 
                        Language.Pads.Library.BigEndian,
-                       Language.Pads.Library.LittleEndian
+                       Language.Pads.Library.LittleEndian,
+                       Language.Pads.Errors, 
+                       Language.Pads.MetaData, 
+                       Language.Pads.CoreBaseTypes
 
 
   -- Packages needed in order to build this package.
@@ -85,9 +88,6 @@ Library
 
   -- Modules not exported by this package.
   Other-modules:       Language.Pads.CodeGen,
-                       Language.Pads.CoreBaseTypes, 
-                       Language.Pads.Errors, 
-                       Language.Pads.MetaData, 
                        Language.Pads.PadsParser,
                        Language.Pads.LazyList 
   

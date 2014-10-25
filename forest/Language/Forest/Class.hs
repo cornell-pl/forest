@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -29,34 +30,34 @@
 ************************************************************************
 -}
 
-module Language.Pads.Quote
-    (pads)
-    where
+module Language.Forest.Class (
+     module Language.Forest.Errors,
+     module Language.Forest.Parser,
+     module Language.Forest.MetaData,
+     module Language.Forest.Generic,
+     module Language.Forest.Quote,
+     module Language.Forest.IO,
+     module Language.Forest.BaseTypes,
+     module Language.Forest.Manifest,
+     Map
+  ) 
+  where
 
-import Prelude hiding (exp, init)
-import System.IO.Unsafe (unsafePerformIO)
+import Language.Forest.Errors
+import Language.Forest.Parser
+import Language.Forest.MetaData
+import Language.Forest.Generic
+import Language.Forest.Quote
+import Language.Forest.IO
+import Language.Forest.BaseTypes
+import Data.Map
+import Language.Forest.Manifest
 
-import Language.Haskell.TH
-import Language.Haskell.TH.Quote (QuasiQuoter(..))
-
-import Language.Pads.CodeGen
-import qualified Language.Pads.Parser as P
 
 
-pads :: QuasiQuoter
-pads  = QuasiQuoter (error "parse expression")
-                    (error "parse pattern")
-                    (error "parse type")
-                    pparse
+  
 
-pparse :: String -> Q [Dec]
-pparse input = do
-    loc <- location
-    let fileName = loc_filename loc
-    let (line,column) = loc_start loc
-    case P.parsePadsDecls fileName line column input of
-      Left err -> unsafePerformIO $ fail $ show err
-      Right x  -> make_pads_declarations x
+
 
 
 

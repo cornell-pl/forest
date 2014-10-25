@@ -1,2 +1,0 @@
-#!/bin/bash
-wasl-run.pl 500 100 free_clickthroughs.dat.cleaned thirdpartycontent.log eventstream.current strace_jaccn.dat HALO_have2impression.log.1 messages.sdb searchevents.dat.cleaned LA-UR-06-0803-MX20_NODES_0_TO_255_EVENTS.csv LA-UR-06-1446-MX16-NODE-NOZ.TXT 4046.xls -incsize -u 0.5 > initinc.results.uc_0.5 

@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 {-
 ** *********************************************************************
 *                                                                      *
@@ -34,7 +36,7 @@ module Language.Forest.Parser where
 
 import Language.Forest.Syntax as S
 
-import Control.Monad (msum)
+import Control.Monad (msum,liftM)
 import Text.Parsec
 import qualified Text.Parsec.String as PS
 import Text.Parsec.Error
@@ -80,12 +82,11 @@ forestDecls = do { decls <- many1 forestDecl
 
 forestDecl :: Parser ForestDecl
 forestDecl = do { reserved "type"
-                ; id <- identifier
-                ; pat <- param
+                ; (id,pats) <- params
                 ; rawty <- forestTy
                 ; predM <- optionMaybe fieldPredicate
                 ; let ty = integratePred rawty predM 
-                ; return (ForestDecl(id, pat, replaceName id ty))
+                ; return (ForestDecl(id, pats, replaceName id ty))
                 } <?> "Forest Declaration"
 
 integratePred :: ForestTy -> Maybe TH.Exp -> ForestTy
@@ -108,8 +109,7 @@ forestTy =   directoryTy
          <|> fileTy
          <|> maybeTy
          <|> symLinkTy
-         <|> gzipTy
-         <|> tarTy
+         <|> archiveTy
          <|> constrainTy
          <|> try fnAppTy
          <|> try compTy
@@ -130,10 +130,13 @@ fnTy   =  namedTy
 parenTy :: Parser ForestTy
 parenTy = parens forestTy
 
+forestArgs :: Parser [TH.Exp]
+forestArgs = many1 forestArg <?> "forest arguments"
+
 fnAppTy :: Parser ForestTy
 fnAppTy = do { ty <- fnTy
-             ; exp <- forestArg
-             ; return (Fapp ty exp)
+             ; exps <- forestArgs
+             ; return (Fapp ty exps)
              } <?> "type function application"
 
 maybeTy :: Parser ForestTy
@@ -142,17 +145,41 @@ maybeTy = do { reserved "Maybe"
              ; return (FMaybe ty)
              } <?> "Forest Maybe type"
 
+archiveTy :: Parser ForestTy
+archiveTy = gzipTy <|> tarTy <|> zipTy <|> bzipTy <|> rarTy <?> "Forest Archive Type"
+
+-- for example for an archive.tar.gz file, the AVFS path archive.tar.gz# accesses directly the content of the tar
 gzipTy :: Parser ForestTy
-gzipTy = do { reserved "Gzip"
-             ; ty <- forestTy
-             ; return (Gzip ty)
-             } <?> "Forest Gzip type"
+gzipTy = (do
+	reserved "Gzip"
+	ty <- forestTy
+	case ty of
+		Archive archtype descTy -> return $ Archive (archtype++[Gzip]) descTy
+		otherwise -> return (Archive [Gzip] ty)) <?> "Forest Gzip type"
 
 tarTy :: Parser ForestTy
 tarTy = do { reserved "Tar"
              ; ty <- forestTy
-             ; return (Tar ty)
+             ; return (Archive [Tar] ty)
              } <?> "Forest Tar type"
+
+zipTy :: Parser ForestTy
+zipTy = do { reserved "Zip"
+             ; ty <- forestTy
+             ; return (Archive [Zip] ty)
+             } <?> "Forest Zip type"
+
+bzipTy :: Parser ForestTy
+bzipTy = do { reserved "Bzip"
+             ; ty <- forestTy
+             ; return (Archive [Bzip] ty)
+             } <?> "Forest Bzip type"
+
+rarTy :: Parser ForestTy
+rarTy = do { reserved "Rar"
+             ; ty <- forestTy
+             ; return (Archive [Rar] ty)
+             } <?> "Forest Rar type"
 
 constrainTy :: Parser ForestTy
 constrainTy = do
@@ -183,7 +210,7 @@ fileBodyTy = do { id <- identifier
                 }
 
 forestArgR :: Parser TH.Exp
-forestArgR = PadsP.expression 
+forestArgR = PadsP.expression
 
 forestArg :: Parser TH.Exp
 forestArg = forestArgR <|> parens forestArgR
@@ -326,6 +353,13 @@ pathSpec = forestArg
 isLowerCase [] = False
 isLowerCase (x:xs) = isLower x
 
+params :: Parser (String,[TH.Pat])
+params = do { str <- manyTill anyChar (reservedOp "=")
+           ; idpat <- case LHM.parsePat str of 
+                              Left err    -> unexpected ("Failed to parse Haskell pattern: " ++ err)
+                              Right (ConP id pats) -> return (nameBase id,pats)
+           ; return idpat                            
+           } <?> "Forest parameter"
 
 param :: Parser (Maybe TH.Pat)
 param = do { str <- manyTill anyChar (reservedOp "=")
@@ -338,7 +372,8 @@ param = do { str <- manyTill anyChar (reservedOp "=")
 
 replaceName :: String -> ForestTy -> ForestTy
 replaceName str ty = case ty of
-  Directory (Record _ body) -> Directory(Record str body)
+  Directory (Record _ body) -> Directory (Record str body)
+  FConstraint pat (Directory (Record _ body)) pred -> FConstraint pat (Directory (Record str body)) pred
   otherwise -> ty
 
 

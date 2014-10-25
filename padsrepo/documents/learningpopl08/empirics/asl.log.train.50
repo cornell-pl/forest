@@ -1,8 +1,0 @@
-gen/asl.log.chunk0.out: time = 22.67
-gen/asl.log.chunk0.out: success rate = 99.53%
-gen/asl.log.chunk1.out: time = 23.97
-gen/asl.log.chunk1.out: success rate = 99.73%
-gen/asl.log.chunk2.out: time = 22.16
-gen/asl.log.chunk2.out: success rate = 99.73%
-The average time = 22.93
-The average success rate = 99.67%

@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts, ScopedTypeVariables #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -32,10 +32,14 @@
 
 module Language.Forest.Graph where
 
+import Data.WithClass.MData
 import System.IO
 import System.IO.Unsafe
+import Control.Monad
+--import Control.Monad.IO.Class
 
-import Language.Forest.Forestc
+import Language.Forest.FS.FSRep
+import Language.Forest.Class
 import Data.Graph.Inductive.Graph
 import qualified Data.Graph.Inductive.PatriciaTree as MG
 import Data.GraphViz
@@ -44,64 +48,68 @@ import System.FilePath.Posix
 import Data.Map 
 import Data.List
 import qualified Data.Text.Lazy as Lazy
+import qualified Data.Text.Lazy.IO as Text
 import qualified Data.Maybe as Maybe
+import Control.Monad.Incremental
 
 type NodeTy = Forest_md
 type EdgeLabel = ()
 
-type ForestGraphParams = GraphvizParams Int NodeTy EdgeLabel () NodeTy
-defaultGraphVizParams :: ForestGraphParams = defaultParams
+type ForestGraphParams fs = GraphvizParams Int (NodeTy fs) EdgeLabel () (NodeTy fs)
+defaultGraphVizParams :: (ForestGraphParams fs)
+defaultGraphVizParams = defaultParams
   { isDirected = True
   , globalAttributes = [GraphAttrs [Ordering OutEdges, RankDir FromLeft]]
   , clusterBy = N
-  , clusterID = const (Int 0)
-  , fmtCluster = const []
+  , clusterID = Prelude.const (Num $ Int 0)
+  , fmtCluster = Prelude.const []
   , fmtNode =  displayNodes
-  , fmtEdge =  const []
+  , fmtEdge =  Prelude.const []
   }
 
-displayNodes :: (Int, Forest_md) -> Attributes
-displayNodes (_,fmd) = 
-  let fInfo = fileInfo fmd
-      full = fullpath fInfo
-      name = takeFileName full
-      shape = case kind fInfo of 
-               DirectoryK -> [Shape BoxShape]
-               BinaryK  -> [PenWidth 2.0]
-               AsciiK   -> []
-               otherwise -> []
-      symLink' = if Maybe.isJust (symLink fInfo)
-                 then [Style [SItem Dashed []]]
-                 else []
-      color = if numErrors fmd > 0
-                then [FillColor myGrey, Style[SItem Filled []]]
-                else []
-  in [FontName (Lazy.pack "Courier"), mkLabel (Lazy.pack name)] ++ color ++ shape ++ symLink'
+displayNodes :: (Int, Forest_md fs) -> Attributes
+displayNodes (_,fmd) =
+	let fInfo = fileInfo fmd
+	    full = fullpath fInfo
+	    name = takeFileName full
+	    shape = case kind fInfo of 
+			DirectoryK -> [Shape BoxShape]
+			BinaryK  -> [PenWidth 2.0]
+			AsciiK   -> []
+			otherwise -> []
+	    symLink' = if Maybe.isJust (symLink fInfo)
+			then [Style [SItem Dashed []]]
+			else []
+--	color <- get_errors fmd >>= \err -> if numErrors err > 0
+--		then return [FillColor myGrey, Style[SItem Filled []]]
+--		else return []
+	    color = []
+	in [FontName (Lazy.pack "Courier"), mkLabel (Lazy.pack name)] ++ color ++ shape ++ symLink'
 
-mdToPDF :: ForestMD md => md -> FilePath -> IO(Maybe String)
+mdToPDF :: (MData NoCtx (ForestO fs) md,ForestMD fs md) => md -> FilePath -> ForestO fs (Maybe String)
 mdToPDF md filePath = mdToPDFWithParams defaultGraphVizParams md filePath 
 
-mdToPDFWithParams :: ForestMD md => ForestGraphParams -> md -> FilePath -> IO(Maybe String)
+mdToPDFWithParams :: (MData NoCtx (ForestO fs) md,ForestMD fs md) => ForestGraphParams fs -> md -> FilePath -> ForestO fs (Maybe String)
 mdToPDFWithParams params md filePath = do
-  { let dg = toDotGraphWithParams params md
-  ; result <- runGraphviz dg Pdf filePath
-  ; return (Just result)
-  }
+	dg <- toDotGraphWithParams params md
+	let txt = printDotGraph dg
+	inL $ Text.writeFile "/home/hpacheco/papers2.dot" txt
+	result <- forestIO $ runGraphviz dg Pdf filePath
+	return (Just result)
 
-toDotGraph md = 
-  toDotGraphWithParams defaultGraphVizParams md 
+toDotGraph md = toDotGraphWithParams defaultGraphVizParams md 
 
-toDotGraphWithParams params md = let
-  (nodes,edges) = getNodesAndEdgesMD md
-  g = myMkGraph nodes edges
-  dg = graphToDot params g
-  in dg
+toDotGraphWithParams params md = do
+  (nodes,edges) <- getNodesAndEdgesMD md
+  let g = myMkGraph nodes edges
+      dg = graphToDot params g
+  return dg
 
-getNodesAndEdgesMD md = 
-  let allpaths = Data.List.nub(listMDNonEmptyFiles md)
-      fileNames = Prelude.map (fullpath . fileInfo) allpaths
+getNodesAndEdgesMD md = do
+  allpaths <- liftM Data.List.nub $ listMDNonEmptyFiles md
+  let fileNames = Prelude.map (fullpath . fileInfo) allpaths
       idMap = Data.Map.fromList (zip fileNames [0..])
-  in getNodesAndEdges idMap allpaths ([], [])
+  return $ getNodesAndEdges idMap allpaths ([], [])
 
 getNodesAndEdges idMap []        (nodes, edges) = (nodes, edges)
 getNodesAndEdges idMap (finfo:finfos) (nodes, edges) = 
@@ -114,7 +122,7 @@ getNodesAndEdges idMap (finfo:finfos) (nodes, edges) =
                     Nothing -> []
    in getNodesAndEdges idMap finfos (node:nodes, new_edges++edges)
 
-myMkGraph :: [LNode NodeTy] -> [LEdge EdgeLabel] -> MG.Gr NodeTy EdgeLabel
+myMkGraph :: FSRep fs => [LNode (NodeTy fs)] -> [LEdge EdgeLabel] -> MG.Gr (NodeTy fs) EdgeLabel
 myMkGraph = mkGraph
 
 mkLabel s = Label (StrLabel s)

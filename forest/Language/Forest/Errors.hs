@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ScopedTypeVariables, UndecidableInstances, FlexibleContexts, MultiParamTypeClasses, FlexibleInstances, TemplateHaskell, DeriveDataTypeable #-}
 
 {-
 ** *********************************************************************
@@ -35,14 +35,31 @@
 module Language.Forest.Errors where
 import Text.PrettyPrint.Mainland as PP
 import Data.Data
+import Data.WithClass.MData
+import Data.DeriveTH
+import Data.WithClass.Derive.MData
+import Data.WithClass.Derive.DeepTypeable
+import Data.DeepTypeable
+import Language.Haskell.TH.Syntax
+
+data Forest_err = Forest_err { numErrors :: Int, errorMsg :: Maybe ErrMsg } deriving (Eq,Ord,Typeable,Data,Show)
 
 data ErrMsg = ForestError String
             | ForestIOException String
             | ForestPredicateFailure
             | MissingFile String
+            | MissingDirectory String
             | MatchFailure String
             | NotADirectory String
             | ConstraintViolation
             | SystemError Int
+            | MultipleMatches FilePath [String]
+			| WrongFileExtension String FilePath
      deriving (Typeable, Data, Show, Eq, Ord)
+
+$( derive makeMData ''ErrMsg )
+$( derive makeMData ''Forest_err )
+$( derive makeDeepTypeable ''ErrMsg )
+$( derive makeDeepTypeable ''Forest_err )
+
 

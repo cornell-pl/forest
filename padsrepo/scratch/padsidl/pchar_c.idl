@@ -1,9 +1,0 @@
-import "padsc.idl";
-
-/* Prefix function name with i (for idl) b/c Pchar_read is an existing macro. */
-Perror_t iPchar_read ([in,ptr] P_t *pads, [out,ref] Pbase_pd *pd, [out,ref] Pchar *c_out);
-
-/*****************/
-/*   Pchar_lit   */
-/*****************/
-int iPchar_lit_write2io([in,ptr] P_t *pads,[in] SfioPtr io,[in] Pchar c);

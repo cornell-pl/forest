@@ -1,8 +1,16 @@
 forest
 ======
 
-Forest project
+Requirements:
+*	GHC 7.8.3
+*	nilfs-utils (https://github.com/konis/nilfs-utils/tree/diff-v2) with patched Linux kernel (https://github.com/konis/nilfs2/tree/diffapi-v2) for log-based filesystem support
 
-* padsrepo: copy of the original pads SVN repository
-* pasd-haskell: clone of the Galois repository (https://github.com/GaloisInc/pads-haskell) that has a more updated version of pads-haskell
-* forest: forest source code updated to work with GHC 7.6.3
+Dependencies:
+*	pads-haskell: data description language
+*	adapton: general-purpose incremental programming library (https://github.com/cornell-pl/HsAdapton/tree/master)
+
+Running:
+
+A good way to start is to load some example module. For instance, inside directory forest/, you will typically want:
+
+ghci Examples/Papers2.hs -ddump-splices -fcontext-stack=60

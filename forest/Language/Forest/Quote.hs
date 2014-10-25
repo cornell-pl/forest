@@ -34,13 +34,14 @@ module Language.Forest.Quote
     where
 
 import Prelude hiding (exp, init)
-import Foreign (unsafePerformIO)
+import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 
 import Language.Forest.CodeGen
 import qualified Language.Forest.Parser as P
+
 
 
 parse :: Monad m

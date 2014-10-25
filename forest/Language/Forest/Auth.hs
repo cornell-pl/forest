@@ -1,3 +1,5 @@
+{-# LANGUAGE ConstraintKinds, FlexibleContexts #-}
+
 {-
 ** *********************************************************************
 *                                                                      *
@@ -31,7 +33,11 @@
 
 
 module Language.Forest.Auth where
-import Language.Forest.Forestc
+
+import Data.IORef
+import Data.WithClass.MData
+import Language.Forest.FS.FSRep
+import Language.Forest.Class
 import qualified Data.Map as Map
 import Data.Map (Map(..))
 import qualified Data.Set  as S
@@ -47,41 +53,41 @@ restrictingPaths files =
 
 
 
-canRead :: ForestMD md => md -> FilePath -> String -> Either String (Bool, [FilePath])
-canRead md fileName id = canDoOpFromMap (mapInfoFiles md) Read id fileName 
+canRead :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> FilePath -> String -> ForestL fs l (Either String (Bool, [FilePath]))
+canRead md fileName id = mapInfoFiles md >>= \mapInfo -> return $ canDoOpFromMap mapInfo Read id fileName 
 
-canWrite :: ForestMD md => md -> FilePath -> String -> Either String (Bool, [FilePath])
-canWrite md fileName id = canDoOpFromMap (mapInfoFiles md) Write id fileName 
+canWrite :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> FilePath -> String -> ForestL fs l (Either String (Bool, [FilePath]))
+canWrite md fileName id = mapInfoFiles md >>= \mapInfo -> return $ canDoOpFromMap mapInfo Write id fileName 
 
-canExec :: ForestMD md => md -> FilePath -> String -> Either String (Bool, [FilePath])
-canExec md fileName id = canDoOpFromMap (mapInfoFiles md) Execute id fileName 
+canExec :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> FilePath -> String -> ForestL fs l (Either String (Bool, [FilePath]))
+canExec md fileName id = mapInfoFiles md >>= \mapInfo -> return $ canDoOpFromMap mapInfo Execute id fileName 
 
-readProhibited :: ForestMD md => md -> String ->  [(FilePath, [FilePath])]
+readProhibited :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> String -> ForestL fs l [(FilePath, [FilePath])]
 readProhibited md id = opProhibited md Read id
 
-writeProhibited :: ForestMD md => md -> String ->  [(FilePath, [FilePath])]
+writeProhibited :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> String -> ForestL fs l [(FilePath, [FilePath])]
 writeProhibited md id = opProhibited md Write id
 
-execProhibited :: ForestMD md => md -> String ->  [(FilePath, [FilePath])]
+execProhibited :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> String -> ForestL fs l [(FilePath, [FilePath])]
 execProhibited md id = opProhibited md Execute id
 
 {- Collecting operations on files. -}
-opProhibited :: ForestMD md => md -> Permission -> String ->  [(FilePath, [FilePath])]
-opProhibited md op id = 
-  let mapInfo = mapInfoFiles md
-      files = Map.keys mapInfo
-      groups = unsafePerformIO $ getGroups id
-      allResults = L.map (\f -> (f,canDoOpFromMap' mapInfo op id groups ((Map.!) mapInfo f) f )) files
-      badFiles = L.filter (\(f,(b,files)) -> not b) allResults
-      formatedFiles = L.map (\(f,(b,files)) -> (f,files)) badFiles
-  in formatedFiles
+opProhibited :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> Permission -> String -> ForestL fs l [(FilePath, [FilePath])]
+opProhibited md op id = do
+	mapInfo <- mapInfoFiles md
+	let files = Map.keys mapInfo
+	groups <- forestIO $ getGroups id
+	let allResults = L.map (\f -> (f,canDoOpFromMap' mapInfo op id groups ((Map.!) mapInfo f) f )) files
+	let badFiles = L.filter (\(f,(b,files)) -> not b) allResults
+	let formatedFiles = L.map (\(f,(b,files)) -> (f,files)) badFiles
+	return formatedFiles
 
 
 {- Supplied fileName should be relative to the same starting point given to the load function
    that produced the supplied meta data.
 -}
-canDoOp :: ForestMD md => md -> Permission -> FilePath -> String -> Either String (Bool, [FilePath])
-canDoOp md op fileName id = canDoOpFromMap (mapInfoFiles md) op id fileName 
+canDoOp :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> Permission -> FilePath -> String -> ForestL fs l (Either String (Bool, [FilePath]))
+canDoOp md op fileName id = mapInfoFiles md >>= \mapInfo -> return $ canDoOpFromMap mapInfo op id fileName 
 
 
 canDoOpFromMap :: Map FilePath FileInfo -> Permission -> String -> FilePath -> Either String (Bool, [FilePath])
@@ -114,8 +120,8 @@ canDoOpOnPath infoMap op id groups filePath canDo problemFiles =
 {- Supplied fileName should be relative to the same starting point given to the load function
    that produced the supplied meta data.
 -}
-checkAuth :: ForestMD md => md -> FilePath -> String -> Either String ([Permission], [Permission])
-checkAuth md fileName id = checkAuthFromMap (mapInfoFiles md) fileName id
+checkAuth :: (MData NoCtx (l (IncForest fs) IORef IO) md,ForestLayer fs l,ForestMD fs md) => md -> FilePath -> String -> ForestL fs l (Either String ([Permission], [Permission]))
+checkAuth md fileName id = mapInfoFiles md >>= \mapInfo -> return $ checkAuthFromMap mapInfo fileName id
 
 
 checkAuthFromMap :: Map FilePath FileInfo -> FilePath -> String -> Either String ([Permission],[Permission])

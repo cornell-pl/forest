@@ -1,3 +1,7 @@
+{- XXX  add error checking to all calls to system; wrap with failure -}
+
+{-# LANGUAGE FlexibleContexts, ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
+
 {-
 ** *********************************************************************
 *                                                                      *
@@ -29,34 +33,26 @@
 ************************************************************************
 -}
 
-module Language.Pads.Quote
-    (pads)
-    where
+module Language.Forest.IO (
+	  module Language.Forest.IO.Loading
+	, module Language.Forest.IO.DeltaLoading
+	, module Language.Forest.IO.Utils
+	, module Language.Forest.IO.Storing
+	) where
 
-import Prelude hiding (exp, init)
-import System.IO.Unsafe (unsafePerformIO)
-
-import Language.Haskell.TH
-import Language.Haskell.TH.Quote (QuasiQuoter(..))
-
-import Language.Pads.CodeGen
-import qualified Language.Pads.Parser as P
+import Language.Forest.IO.Loading
+import Language.Forest.IO.DeltaLoading
+import Language.Forest.IO.Utils
+import Language.Forest.IO.Storing
 
 
-pads :: QuasiQuoter
-pads  = QuasiQuoter (error "parse expression")
-                    (error "parse pattern")
-                    (error "parse type")
-                    pparse
 
-pparse :: String -> Q [Dec]
-pparse input = do
-    loc <- location
-    let fileName = loc_filename loc
-    let (line,column) = loc_start loc
-    case P.parsePadsDecls fileName line column input of
-      Left err -> unsafePerformIO $ fail $ show err
-      Right x  -> make_pads_declarations x
+
+
+
+
+
+
 
 
 

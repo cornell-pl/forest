@@ -3,7 +3,7 @@
 module Examples.CVS where
 
 import Language.Pads.Padsc
-import Language.Forest.Forestc hiding (Local, Dir, entries)
+import Language.Forest.Class hiding (Local, Dir, entries)
 import Language.Pads.GenPretty
 
 import System.IO.Unsafe (unsafePerformIO)

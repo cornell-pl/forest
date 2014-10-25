@@ -88,6 +88,8 @@ patType p = case p of
                 StringL s -> VarT ''String
   TupP ps  -> mkTupleT (map patType ps)
   SigP p t -> t
+  ParensP p -> patType p
+  otherwise -> error $ show p
 
 
 -----------------------------------------------------------
@@ -462,8 +464,9 @@ genParseRecord c fields pred = do
   }
   where
 
+genLabMDName :: String -> Maybe String -> Q Name
 genLabMDName s (Just lab) = return (mkFieldMDName lab)
-genLabMDName s Nothing    = newName s
+genLabMDName s Nothing    = liftM mangleName (newName s)
 
 genParseField :: FieldInfo -> Name -> Q Stmt
 genParseField (labM, (strict, ty), expM) xn = do

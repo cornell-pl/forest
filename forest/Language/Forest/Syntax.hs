@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE StandaloneDeriving, DeriveDataTypeable, TemplateHaskell #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -33,29 +33,38 @@
 
 module Language.Forest.Syntax where
 
-import Data.Generics
+import Language.Haskell.TH.Instances
+import Data.Typeable
+import Data.Data
+--import Data.Generics hiding (mkQ,everything)
 import Language.Haskell.TH  as TH 
-import Language.Haskell.TH.Instances.Lift
+--import Data.Generics.TH
+--import Language.Forest.TH
+--import Language.Haskell.TH.Instances.Lift
+import Data.Set (Set(..))
+import qualified Data.Set as Set
 
-newtype ForestDecl = ForestDecl (String, Maybe TH.Pat, ForestTy)
+newtype ForestDecl = ForestDecl (String,[TH.Pat], ForestTy)
    deriving (Ord, Eq, Data, Typeable, Show)
 
 data ForestTy = Directory DirectoryTy 
               | File FileTy 
-              | Gzip ForestTy
-              | Tar ForestTy
+              | Archive [ArchiveType] ForestTy
               | Named String 
               | FMaybe ForestTy
               | SymLink
               | FConstraint TH.Pat ForestTy TH.Exp    {- pattern bound to underlying type, underlying type, predicate -}
-              | Fapp ForestTy TH.Exp
+              | Fapp ForestTy [TH.Exp] -- non-empty list of arguments
               | FComp CompField
    deriving (Ord, Eq, Data, Typeable, Show)
+
+data ArchiveType = Gzip | Tar | Zip | Bzip | Rar
+	deriving (Ord, Eq, Data, Typeable, Show)
 
 data DirectoryTy = Record String [Field]
    deriving (Ord, Eq, Data, Typeable, Show)
 
-type FileTy = (String, Maybe TH.Exp)
+type FileTy = (String, Maybe TH.Exp) -- type name, expression argument
 
 -- internal name, isForm, external name, description type, optional predicate
 type BasicField = (String, Bool, TH.Exp, ForestTy, Maybe TH.Exp)  
@@ -81,3 +90,50 @@ data Field = Simple BasicField
            | Comp  CompField
    deriving (Ord, Eq, Data, Typeable, Show)
 
+archiveExtension :: [ArchiveType] -> String
+archiveExtension = foldl1 (\ext1 ext2 -> ext1 ++ "." ++ ext2) . map archiveExtension'
+
+archiveExtension' :: ArchiveType -> String
+archiveExtension' Gzip = "gz"
+archiveExtension' Tar = "tar"
+archiveExtension' Zip = "zip"
+archiveExtension' Bzip = "bzip"
+archiveExtension' Rar = "rar"
+
+fieldnames :: [Field] -> [String]
+fieldnames = map fieldname
+fieldname :: Field -> String
+fieldname (Simple (x,_,_,_,_)) = x
+fieldname (Comp c) = internalName c
+
+--deriving instance Ord Exp
+--deriving instance Ord Pat
+--deriving instance Ord Lit
+--deriving instance Ord Type
+--deriving instance Ord TyLit
+--deriving instance Ord TyVarBndr
+--deriving instance Ord Pred
+--deriving instance Ord Guard
+--deriving instance Ord Stmt
+--deriving instance Ord Dec
+--deriving instance Ord Body
+--deriving instance Ord Con
+--deriving instance Ord Strict
+--deriving instance Ord FamFlavour
+--deriving instance Ord TH.Fixity
+--deriving instance Ord Range
+--deriving instance Ord TH.FixityDirection
+--deriving instance Ord Foreign
+--deriving instance Ord TH.Match
+--deriving instance Ord Callconv
+--deriving instance Ord Safety
+--deriving instance Ord Pragma
+--deriving instance Ord AnnTarget
+--deriving instance Ord Inline
+--deriving instance Ord Role
+--deriving instance Ord Phases
+--deriving instance Ord TySynEqn
+--deriving instance Ord RuleBndr
+--deriving instance Ord FunDep
+--deriving instance Ord RuleMatch
+--deriving instance Ord Clause

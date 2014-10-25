@@ -60,6 +60,7 @@ data May a = Jus a
 
 
 data Exxy a = Exxy {exxy :: Int, Char, aa :: a}
+
 |]
 
 

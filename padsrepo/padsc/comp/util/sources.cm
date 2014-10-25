@@ -1,6 +1,0 @@
-Group(../main.cm) is
-
-	$/smlnj-lib.cm
-
-	parseCmdLine-sig.sml
-	parseCmdLine.sml

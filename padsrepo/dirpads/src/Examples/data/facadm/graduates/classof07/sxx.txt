@@ -1,9 +1,0 @@
-
-- - - - - - - - - - - - - - - - - - -
-Type    Yr  Course     Grade
-         1             A+ to F
-d        2             P  (  Pass )
-t  D  p  3             INC
-o  .  .  4  Dept  xxx  N  (Not Avail)
-- - - - - - - - - - - - - - - - - - -
-

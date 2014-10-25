@@ -7,7 +7,7 @@ Name:                forest
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             1.0.2
+Version:             2.0.0
 
 -- A short (one-line) description of the package.
 Synopsis:            A declarative language for specifying filestores.
@@ -58,7 +58,9 @@ Extra-source-files:  Examples/CVS.hs,
                      Examples/PWS.hs,
                      Examples/Students2.hs,
                      Examples/Universal.hs,
-                     Examples/Coral.hs 
+                     Examples/Coral.hs,
+                     Examples/Papers2.hs,
+                     Language.Forest.Infer
 
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.2
@@ -66,33 +68,54 @@ Cabal-version:       >=1.2
 
 Library
   -- Modules exported by the library.
-  Exposed-modules: Language.Forest.Forestc,
+  Exposed-modules: Language.Forest.Class,
                    Language.Forest.Auth,
-                   Language.Forest.Infer,
+                   Language.Forest.BaseTypes,
+                   Language.Forest.BX,
+                   Language.Forest.Display,
+                   Language.Forest.Draw,
+                   Language.Forest.Errors,
+                   Language.Forest.FS.Diff,
+                   Language.Forest.FS.FSDelta,
+                   Language.Forest.FS.FSRep,
+                   Language.Forest.FS.NILFS,
+                   Language.Forest.FS.NILFSDiff,
+                   Language.Forest.FS.NoFS,
+                   Language.Forest.Generic,
                    Language.Forest.Graph,
+                   Language.Forest.IO.DeltaLoading,
+                   Language.Forest.IO.Loading,
+                   Language.Forest.IO.Memo,
+                   Language.Forest.IO.Utils,
+                   Language.Forest.IO.Storing,
+                   Language.Forest.IO,
+                   Language.Forest.MetaData,
+                   Language.Forest.Parser,
                    Language.Forest.Pretty,
+                   Language.Forest.Quote,
                    Language.Forest.Shell,
-                   Language.Forest.Writing
+                   Language.Forest.Syntax,
+                   Language.Forest.Manifest,
+                   Language.Pads.Instances,
+                   Language.Forest.ValueDelta,
+                   Data.List.Diff
   
   -- Packages needed in order to build this package.
   Build-depends: base >= 4, containers, pads-haskell,
-                 template-haskell, 
+                 template-haskell, concurrent-extra, mtl, ref-fd, hashable,
                  haskell-src-meta, 
-                 parsec, syb,
-                 regex-compat, directory, process, unix, Glob,
-                 filepath, mainland-pretty, derive, time, MissingH,
-                 graphviz, fgl, random, text
+                 parsec, adapton >= 0.0.1, syb-with-class-and-effects >= 0.3.7,
+                 regex-compat, directory, process, unix, Glob, system-filepath, canonical-filepath, split,
+                 filepath, mainland-pretty, derive >= 2.5.17, time, MissingH,
+                 graphviz, fgl, random, text, safe, bytestring, transformers, array
   
   -- Modules not exported by this package.
-  Other-modules: Language.Forest.BaseTypes
-                 Language.Forest.CodeGen,
-                 Language.Forest.Errors,
-                 Language.Forest.ForestIO,
-                 Language.Forest.Generic,
-                 Language.Forest.MetaData,
-                 Language.Forest.Parser,
-                 Language.Forest.Quote,
-                 Language.Forest.Syntax
+  Other-modules: Language.Forest.CodeGen,
+                 Language.Forest.CodeGen.DeltaLoading,
+                 Language.Forest.CodeGen.Loading,
+                 Language.Forest.CodeGen.Storing,
+                 Language.Forest.CodeGen.Utils,
+                 Language.Forest.TH
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         

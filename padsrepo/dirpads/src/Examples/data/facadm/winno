@@ -1,4 +1,0 @@
-#!/bin/bash
-
-awk '{ sub(/\r$/,""); print }' $1 > $1.temp
-mv $1.temp $1

@@ -1,9 +1,0 @@
-#!/bin/bash
-
-for myfile in $1/*.txt
-do
-#         echo $myfile
-         awk -f sanitize.awk $myfile > $myfile.temp
-         cp $myfile.temp $myfile
-         rm $myfile.temp
-done

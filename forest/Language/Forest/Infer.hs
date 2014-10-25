@@ -31,7 +31,7 @@
 -}
 
 module Language.Forest.Infer where
-import Language.Forest.Forestc
+import Language.Forest.Class
 import Language.Forest.Syntax
 import Language.Haskell.TH
 
@@ -42,7 +42,7 @@ import Data.Data
 
 
 
-buildDesc :: (ForestMD md) => md -> [ForestDecl]
+buildDesc :: (ForestMD fs md) => md -> ForestO fs [ForestDecl]
 buildDesc md = 
   let allpaths = Data.List.nub(listMDNonEmptyFiles md)
       (dirs,files) = Data.List.partition (\fmd -> (kind . fileInfo) fmd == DirectoryK) allpaths

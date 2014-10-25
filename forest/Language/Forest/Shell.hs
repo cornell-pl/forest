@@ -1,110 +1,120 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-
-** *********************************************************************
-*                                                                      *
-*              This software is part of the pads package               *
-*           Copyright (c) 2005-2011 AT&T Knowledge Ventures            *
-*                      and is licensed under the                       *
-*                        Common Public License                         *
-*                      by AT&T Knowledge Ventures                      *
-*                                                                      *
-*                A copy of the License is available at                 *
-*                    www.padsproj.org/License.html                     *
-*                                                                      *
-*  This program contains certain software code or other information    *
-*  ("AT&T Software") proprietary to AT&T Corp. ("AT&T").  The AT&T     *
-*  Software is provided to you "AS IS". YOU ASSUME TOTAL RESPONSIBILITY*
-*  AND RISK FOR USE OF THE AT&T SOFTWARE. AT&T DOES NOT MAKE, AND      *
-*  EXPRESSLY DISCLAIMS, ANY EXPRESS OR IMPLIED WARRANTIES OF ANY KIND  *
-*  WHATSOEVER, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF*
-*  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, WARRANTIES OF  *
-*  TITLE OR NON-INFRINGEMENT.  (c) AT&T Corp.  All rights              *
-*  reserved.  AT&T is a registered trademark of AT&T Corp.             *
-*                                                                      *
-*                   Network Services Research Center                   *
-*                          AT&T Labs Research                          *
-*                           Florham Park NJ                            *
-*                                                                      *
-*              Kathleen Fisher <kfisher@research.att.com>              *
-*                                                                      *
-************************************************************************
--}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ExtendedDefaultRules #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 module Language.Forest.Shell where
 
-import Language.Forest.Forestc
-import System.Directory
+import Data.Text (Text(..))
+import qualified Data.Text as T
+import Data.String
+import Control.Monad
+import System.Exit
+import System.Process
 import System.IO
-import System.IO.Unsafe
-import System.Cmd
-import System.FilePath.Posix
-import Data.List
+import System.Directory
+import Safe
 
-execShellCmdWithManifest md cmdf = do 
- { let files = listNonEmptyFiles md
- ; td <- getTemporaryDirectory
- ; (fp, handle) <- openTempFile td "ForestTempFile"
- ; mapM_ (hPutStrLn handle) files
- ; hClose handle
- ; let cmd = cmdf fp
- ; system cmd
- ; removeFile fp
- }
+--runShelly :: String -> [String] -> IO String
+--runShelly (fromString -> cmd) (map fromString -> args) = liftM T.unpack $
+--	shelly $ silently $ run cmd args
+--
+--runShelly__ :: String -> [String] -> IO Int
+--runShelly__ (fromString -> cmd) (map fromString -> args) =
+--	shelly $ silently $ run cmd args >> lastExitCode
+--
+--runShelly_ :: String -> [String] -> IO ()
+--runShelly_ (fromString -> cmd) (map fromString -> args) =
+--	shelly $ silently $ run_ cmd args
+--
+--pipe2Shelly :: String -> [String] -> String -> [String] -> IO String
+--pipe2Shelly (fromString -> cmd1) (map fromString -> args1) (fromString -> cmd2) (map fromString -> args2) = liftM T.unpack $
+--	shelly $ silently $ run cmd1 args1 -|- run cmd2 args2
+--
+--sudoShelly_ :: String -> [String] -> IO ()
+--sudoShelly_ (fromString -> cmd) (map fromString -> args) = shelly $ silently $ run_ "sudo" (cmd:args)
 
-execShellCmdWithXArgs' :: [FilePath] -> String -> IO String
-execShellCmdWithXArgs' files cmd = do
- { let delimFiles = intersperse ['\0'] files
- ; td <- getTemporaryDirectory
- ; (fp, handle) <- openTempFile td "ForestTempFile"
- ; mapM_ (hPutStr handle) delimFiles
- ; hClose handle
- ; (result_fp, result_handle) <- openTempFile td "ForestResultFile"
- ; let x_cmd =  "cat " ++ fp ++ " | xargs -0 " ++ cmd ++ "> "++ result_fp
- ; system x_cmd
- ; let result = unsafePerformIO (hGetContents result_handle)
--- ; hClose result_handle
- ; removeFile fp
- ; removeFile result_fp
- ; return result
- } 
+-- gets the physical device on which a path is mounted (linux-specific)
+pathDevice :: String -> IO String
+pathDevice path = liftM (head . words) $ runShellCommand $ "/usr/sbin/grub-probe --target=device "++ show path
 
-execShellCmdWithXArgs :: (ForestMD md) => md -> String -> IO String
-execShellCmdWithXArgs     md cmd = execShellCmdWithXArgs' (listNonEmptyFiles md) cmd
+-- gets the path where a given device is mounted
+devicePath :: String -> IO String
+devicePath device = liftM (head . words) $ runShellCommand $ "mount | egrep "++show device++" | awk '{print $3}'"
 
-execShellCmdWithXArgsDirs :: (ForestMD md) => md -> String -> IO String
-execShellCmdWithXArgsDirs md cmd = execShellCmdWithXArgs' (listDirs md) cmd
+mergePDFsTo :: [String] -> String -> IO ExitCode
+mergePDFsTo pdfs to = runShellCommand_ $ "pdftk " ++ unwords pdfs ++ " cat output " ++ to
 
-ls :: (ForestMD md) => md -> String -> IO String
-ls md options = execShellCmdWithXArgs md ("ls " ++ options)
+devicePathMay :: String -> IO (Maybe String)
+devicePathMay device = liftM (headMay . words) $ runShellCommand $ "mount | egrep "++show device++" | awk '{print $3}'"
 
-rm :: (ForestMD md) => md -> String -> IO String
-rm md options = execShellCmdWithXArgs md ("rm " ++ options)
+-- mounts the avfs filesystem that allows to look inside compressed files via a virtual filesystem mount at root ~/.avfs without extracting them
+mountAVFS :: IO ExitCode
+mountAVFS = runShellCommand_ "mountavfs"
 
-rmdir :: (ForestMD md) => md -> String -> IO String
-rmdir md options = execShellCmdWithXArgs' (reverse (sort(listDirs md))) ("rmdir " ++ options)
+unmountAVFS :: IO ExitCode
+unmountAVFS = runShellCommand_ "umountavfs"
 
-grep :: (ForestMD md) => md -> String -> IO String
-grep md options = execShellCmdWithXArgs md ("grep " ++ options)
-  
-tar :: (ForestMD md) => md -> FilePath -> IO ()
-tar md name = execShellCmdWithManifest md (\fp -> "tar -T " ++ fp ++ " -cf " ++ name)
+-- runs an arbitrary command and returns the stdout
+--runShellCommand :: String -> IO String
+--runShellCommand cmd = do
+--	tempDir <- getTemporaryDirectory
+--	(fp,handle) <- openTempFile tempDir "ForestResultFile"
+--	system $ cmd ++ " > ForestResultFile"
+--	result <- hGetContents handle
+--	hClose handle
+--	removeFile fp
+--	return result
 
-cp :: (ForestMD md) => md -> FilePath ->  IO ()
-cp md target = do
- { td <- getTemporaryDirectory
- ; (fp, handle) <- openTempFile td "ForestCp.tar"
- ; let baseName = takeFileName fp
- ; let targetPath = target ++ "/" ++ baseName
- ; tar md fp
- ; system ("mv " ++ fp ++ " " ++ target)
- ; system ("cd " ++ target ++ "; tar -xvf " ++ targetPath)
- ; hClose handle
- ; removeFile targetPath
- }
+sudoShellCommand :: String -> IO String
+sudoShellCommand cmd = runShellCommand $ "sudo "++cmd
 
-getLoadArgs s = 
-  let (ty_name, arg) = Data.List.break (\c->c=='(') s
-  in case arg of 
-       [] -> (ty_name, Nothing)
-       '(':str -> if Data.List.last str == ')' then (ty_name, Just (init str)) 
-                  else error ("Argument to shell tool should be enclosed in parens.  Instead found:"++arg)
+sudoShellCommand_ :: String -> IO ExitCode
+sudoShellCommand_ cmd = runShellCommand_ $ "sudo "++cmd
+
+runShellCommand_ :: String -> IO ExitCode
+runShellCommand_ cmd = putStrLn ("Running command: "++show cmd) >> system cmd
+
+runShellCommand :: String -> IO String
+runShellCommand cmd = do
+	putStrLn ("Running command: "++show cmd)
+	let process = (shell cmd) { std_out = CreatePipe }
+	(_,Just hout,_,_) <- createProcess process
+	result <- hGetContents hout
+	return result
+
+removePath :: FilePath -> IO ExitCode
+removePath path = do
+	test <- doesPathExistShell path
+	if test
+		then runShellCommand_ ("rm -rf " ++ path)
+		else return ExitSuccess
+
+doesDirectoryExistShell :: FilePath -> IO Bool
+doesDirectoryExistShell path = liftM (==ExitSuccess) $ runShellCommand_ ("test -d " ++ path)
+
+doesFileExistShell :: FilePath -> IO Bool
+doesFileExistShell path = liftM (==ExitSuccess) $ runShellCommand_ ("test -f " ++ path)
+
+doesPathExistShell :: FilePath -> IO Bool
+doesPathExistShell path = liftM (==ExitSuccess) $ runShellCommand_ ("test " ++ path)
+
+getDirectoryContentsShell :: FilePath -> IO [FilePath]
+getDirectoryContentsShell path = liftM lines $ runShellCommand ("ls -1 " ++ path)
+
+--avfsPath :: FilePath -> IO FilePath
+--avfsPath path = getHomeDirectory >>= \home -> return $ home </> ".avfs" </> path
+ 
+--doShellCmd :: String -> IO String
+--doShellCmd cmd = do 
+--	(_, Just hout, _, ph) <- createProcess (shell cmd){ std_out = CreatePipe }
+--	isEof <- hIsEOF hout
+--	if isEof
+--		then do
+--			waitForProcess ph
+--			return ""
+--		else do
+--			result <- hGetLine hout
+--			hClose hout
+--			waitForProcess ph
+--			return result	
