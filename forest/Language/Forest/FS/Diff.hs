@@ -19,6 +19,14 @@ import Control.Monad.Incremental
 
 -- * filesystem tree difference
 
+-- | Tests if the contents of two files differ
+fileIsDifferent :: FilePath -> FilePath -> IO Bool
+fileIsDifferent f1 f2 = do
+	let cmd = "diff " ++ f1 ++ " " ++ f2
+	result <- runShellCommand cmd
+	return $ not $ null result
+
+-- | Returns a filesystem delta tree reporting the (recursive) difference between two paths
 diffPath :: FilePath -> FilePath -> IO FSTreeDelta
 diffPath dskpath1 dskpath2 = do
 	difflines <- runShellCommand $ "diff -qr " ++ dskpath1 ++ " " ++ dskpath2

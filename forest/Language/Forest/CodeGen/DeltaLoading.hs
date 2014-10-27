@@ -3,6 +3,7 @@
 
 module Language.Forest.CodeGen.DeltaLoading where
 
+import Prelude hiding (const,read)
 import Language.Forest.CodeGen.Utils
 import Control.Monad.Incremental
 import Language.Forest.CodeGen.Loading
@@ -44,12 +45,12 @@ import qualified Control.Monad.Reader as Reader
 import Control.Monad.Trans.Class
 
 -- for each variable name, we store (a boolean that indicates whether its value has NOT changed (changes are ALWAYS stable), the name of a thunk that holds its value, a pattern to match against the thunk's value)
-type DeltaEnv = Map Name (TH.Exp,Maybe (Name,ThunkTy,Pat))
+type DeltaEnv = Map Name (TH.Exp,Maybe (Name,Pat))
 
 type DeltaQ a = ReaderT DeltaEnv Q a
 
 --environments store maps from variables to (the name of the thunk that holds its value,a pattern to match against the thunk's value)
-type Env = Map Name (Maybe (Name,ThunkTy,Pat))
+type Env = Map Name (Maybe (Name,Pat))
 type EnvQ = ReaderT Env Q
 
 runDeltaQ :: DeltaQ a -> EnvQ a
@@ -68,18 +69,14 @@ forceVarsDeltaQ e f = do
 	let forceVar var f = \e -> do
 		envvars <- Reader.ask
 		case Map.lookup var envvars of
-			Just (dv,Just (thunk,ty,pat)) -> do
+			Just (dv,Just (thunk,pat)) -> do
 				
 				let update env = Set.foldr replaceVar env (patPVars pat) where
 					replaceVar var env = case Map.lookup var env of
-						Just (dv,Just (thunk,ty,pat))-> Map.insert var (dv,Nothing) env
+						Just (dv,Just (thunk,pat))-> Map.insert var (dv,Nothing) env
 						Nothing -> env
-				let myforce = case ty of
-					FSThunk -> VarE 'fsforce
-					ICThunk -> VarE 'force
-				Reader.local update $ f $ UInfixE (AppE myforce (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
+				Reader.local update $ f $ UInfixE (AppE (VarE 'read) (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
 			otherwise -> f e
-	
 	(Set.foldr forceVar f expvars) e
 
 genLoadDeltaM :: (Name,Name) -> Name -> ForestTy -> [(TH.Pat, TH.Type)] -> DeltaQ TH.Exp
@@ -103,7 +100,7 @@ genLoadDeltaM (untyRep,tyRep) pd_name forestTy pat_infos = do
 			thunkNames <- lift $ genForestTupleNames (length pat_infos) "u"
 			let update env = foldl updateArg env (zip (zip thunkNames dargNames) pat_infos) where
 				updateArg env ((thunkName,dargName),(pat,ty)) = Map.fromSet insertVar (patPVars pat) `Map.union` env -- left-biased union
-					where insertVar var = (AppE (VarE 'isEmptySValueDelta) (VarE dargName),Just (thunkName,ICThunk,pat))
+					where insertVar var = (AppE (VarE 'isEmptySValueDelta) (VarE dargName),Just (thunkName,pat))
 				
 			Reader.local update $ do -- adds pattern variable deltas to the env.
 				newrepmdName <- State.lift $ newName "newrepmd"
@@ -353,7 +350,7 @@ loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitNa
 		isoE <- lift $ tyConNameOptIso tyConNameOpt
 		
 		-- actual loading
-		let update = Map.insert fileName (appE2 (VarE 'isSameFileName) fileNameE dfileNameE,Nothing) . Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,FSThunk,VarP fileNameAtt))
+		let update = Map.insert fileName (appE2 (VarE 'isSameFileName) fileNameE dfileNameE,Nothing) . Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt))
 		Reader.local update $ case predM of
 			Nothing -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,newdfP,fieldrepmdP]) $ runEnvQ $ loadE descTy newpathE treeE newdfE treeE' fieldrepmdE

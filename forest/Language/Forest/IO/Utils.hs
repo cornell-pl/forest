@@ -4,7 +4,7 @@ module Language.Forest.IO.Utils where
 
 import Language.Pads.Padsc hiding (numErrors)
 import Language.Forest.MetaData
-import Language.Forest.Generic
+--import Language.Forest.Generic
 import Language.Forest.Errors
 import Language.Forest.FS.FSDelta
 import Language.Forest.MetaData

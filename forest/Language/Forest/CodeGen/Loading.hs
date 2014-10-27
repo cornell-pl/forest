@@ -5,6 +5,7 @@ module Language.Forest.CodeGen.Loading where
 
 import {-# SOURCE #-} Language.Forest.CodeGen.DeltaLoading
 
+import Prelude hiding (const,read)
 import Language.Forest.CodeGen.Utils
 import Control.Monad.Trans
 import Control.Monad.Incremental
@@ -43,39 +44,23 @@ import qualified Data.Map as Map
 import Control.Monad.State (State(..),StateT(..))
 import qualified Control.Monad.State as State
 
--- receives a set of variables and an expression with thunks, and forces the thunks to get the corresponding values
+-- receives an expression with thunks, and returns an expression that forces the thunks to get the corresponding values
 forceVarsEnvQ :: Exp -> (Exp -> EnvQ a) -> EnvQ a
 forceVarsEnvQ e f = do
 	let expvars = expVars e
 	let forceVar var f = \e -> do
 		envvars <- Reader.ask
 		case Map.lookup var envvars of
-			Just (Just (thunk,ty,pat)) -> do
+			Just (Just (thunk,pat)) -> do
 				
 				let update env = Set.foldr (\var env -> Map.insert var Nothing env) env (patPVars pat)
-				let myforce = case ty of
-					FSThunk -> VarE 'fsforce
-					ICThunk -> VarE 'force
-				Reader.local update $ f $ UInfixE (AppE myforce (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
+				Reader.local update $ f $ UInfixE (AppE (VarE 'read) (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
 			otherwise -> f e
-	
 	(Set.foldr forceVar f expvars) e
-	
---forceVarsEnvQ e = do
---	let expvars = expVars e
---	let forceVar var m = do
---		envvars <- Reader.ask
---		case Map.lookup var envvars of
---			Just (Just (thunk,pat)) -> m >>= \e -> return $ UInfixE (AppE (VarE 'force) (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
---			otherwise -> m
---	Set.foldr forceVar (return e) expvars
 
 genLoadM :: Name -> Name -> ForestTy -> [(TH.Pat,TH.Type)] -> EnvQ TH.Exp
-genLoadM rep_name pd_name forestTy pat_infos = do
+genLoadM rep_name md_name forestTy pat_infos = do
 	fsName <- lift $ newName "fs"
-	let core_ty = ForallT [PlainTV fsName] [ClassP ''FSRep [VarT fsName]]
-				$ arrowTy (ConT ''FilePath)
-				$ arrowTy (AppT (ConT ''FSTree) (VarT fsName)) (AppT (AppT (ConT ''ForestO) (VarT fsName)) (AppT (AppT (TupleT 2) (appTyFS fsName rep_name)) (appTyFS fsName pd_name)))
 	pathName    <- lift $ newName "path"
 	treeName    <- lift $ newName "tree"
 	oldtreeName    <- lift $ newName "oldtree"
@@ -95,7 +80,7 @@ genLoadM rep_name pd_name forestTy pat_infos = do
 		otherwise -> do
 			(argsP,stmts,argsThunksE,argThunkNames) <- genLoadArgsE (zip [1..] pat_infos) treeE forestTy
 			let update env = foldl updatePat env (zip argThunkNames pat_infos)
-				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,ICThunk,pat)) (patPVars pat) `Map.union` env --left-biased union
+				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
 			Reader.local update $ do -- adds pattern variable deltas to the env.
 				let addArgsE = AppE (VarE 'rtupM) argsThunksE
 				core_bodyE <- genLoadBody pathE oldtreeE dfE treeE getMDE rep_name forestTy
@@ -158,11 +143,11 @@ loadFile fileName (Just argE) pathE oldtreeE dfE treeE getMDE = do
 
 -- these are terminals in the spec
 loadWithArgsE :: [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
-loadWithArgsE [] pathE oldtreeE dfE treeE getMDE = return $ appE6 (VarE 'loadNoDelta) (TupE []) pathE oldtreeE dfE treeE getMDE
+loadWithArgsE [] pathE oldtreeE dfE treeE getMDE = return $ appE6 (VarE 'loadScratch) (TupE []) pathE oldtreeE dfE treeE getMDE
 loadWithArgsE argsE pathE oldtreeE dfE treeE getMDE = do
 	argsE <- mapM (\e -> forceVarsEnvQ e return) argsE
 	let tupArgsE = foldl1' (appE2 (ConE '(:*:))) argsE
-	return $ appE6 (VarE 'loadNoDelta) tupArgsE pathE oldtreeE dfE treeE getMDE
+	return $ appE6 (VarE 'loadScratch) tupArgsE pathE oldtreeE dfE treeE getMDE
 
 loadConstraint :: TH.Exp -> TH.Pat -> TH.Exp -> EnvQ TH.Exp -> EnvQ TH.Exp
 loadConstraint treeE pat predE load = forceVarsEnvQ predE $ \predE' -> do
@@ -295,7 +280,7 @@ loadCompound isNested (CompField internal tyConNameOpt explicitName externalE de
 		-- build representation and metadata containers from a list
 		buildContainerE <- lift $ tyConNameOptBuild tyConNameOpt
 		
-		let update = Map.insert fileName Nothing . Map.insert fileNameAtt (Just (fileNameAttThunk,FSThunk,VarP fileNameAtt))  --force the @FileInfo@ thunk
+		let update = Map.insert fileName Nothing . Map.insert fileNameAtt (Just (fileNameAttThunk,VarP fileNameAtt))  --force the @FileInfo@ thunk
 		
 		-- container loading
 		Reader.local update $ case predM of

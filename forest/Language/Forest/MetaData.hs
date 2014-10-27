@@ -190,6 +190,10 @@ class (FSRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestM
 	get_errors md = do
 		fmd <- get_fmd_header md
 		inside $ fsforce $ errors fmd
+	isValidMD :: ForestLayer fs l => md -> ForestL fs l Bool
+	isValidMD md = do
+		err <- get_errors md
+		return $ numErrors err == 0
 	replace_errors :: md -> (Forest_err -> ForestI fs Forest_err) -> ForestI fs md
 	replace_errors md f = do
 		replace_fmd_header md $ \fmd -> do
@@ -371,6 +375,31 @@ cleanForestMDwithFile path = do
 --                         , symLink
 --                         , kind
 --                         }  
+
+-- | Tests if two metadata values are both valid or invalid
+sameValidity :: (ForestLayer fs l,ForestMD fs md1,ForestMD fs md2) => md1 -> md2 -> ForestL fs l Bool
+sameValidity md1 md2 = do
+	err1 <- get_errors md1
+	err2 <- get_errors md2
+	return $ (numErrors err1 == 0) == (numErrors err2 == 0)
+
+-- | Tests if two metadata values point to the same filepath
+sameFullPath :: (ForestLayer fs l,ForestMD fs md1,ForestMD fs md2) => md1 -> md2 -> ForestL fs l Bool
+sameFullPath md1 md2 = do
+	fmd1 <- get_fmd_header md1
+	fmd2 <- get_fmd_header md2
+	return $ fullpath (fileInfo fmd1) == fullpath (fileInfo fmd2)
+
+-- | Tests if two metadata values point to the same canonical filepath, in respect to a given tree
+sameCanonicalFullPathInTree :: (ForestLayer fs l,ForestMD fs md1,ForestMD fs md2) => md1 -> md2 -> FSTree fs -> ForestL fs l Bool
+sameCanonicalFullPathInTree md1 md2 tree = do
+	fmd1 <- get_fmd_header md1
+	fmd2 <- get_fmd_header md2
+	let path1 = fullpath (fileInfo fmd1)
+	let path2 = fullpath (fileInfo fmd2)
+	dskpath1 <- canonalizePathInTree path1 tree
+	dskpath2 <- canonalizePathInTree path2 tree
+	return $ dskpath1 == dskpath2
 
 mergeForestErrs :: Forest_err -> Forest_err -> Forest_err
 mergeForestErrs err1 err2 = Forest_err { numErrors = numErrors err1 + numErrors err2, errorMsg = mergeErrors (errorMsg err1) (errorMsg err2) }

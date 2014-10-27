@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns, RecordWildCards #-}
+{-# LANGUAGE ConstraintKinds, DeriveDataTypeable, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, FlexibleContexts, StandaloneDeriving, NamedFieldPuns, RecordWildCards #-}
 
 module Language.Forest.Manifest where
 
@@ -10,12 +10,23 @@ import System.IO
 import Language.Forest.FS.FSRep
 import Language.Forest.MetaData
 import Language.Pads.Padsc
+import Language.Forest.Syntax
 
-
+import Data.Map (Map(..))
 import qualified Data.Map as Map
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
+import Data.Set (Set(..))
 import qualified Data.Set as Set
+import Language.Forest.FS.Diff
+import Data.Monoid
+import Control.Monad.Incremental.Display
+import Control.Monad.Incremental
+import Prelude hiding (const,read)
+import qualified Prelude
+import Data.IORef
+
+-- ** Manifest data types
 
 type Message = String
 
@@ -26,85 +37,192 @@ data Content = Local FilePath     -- contents are in file in temp directory with
              | Dir
              | ListComp [FilePath]
              | None               -- file path should not exist
-             | LocalGzip FilePath      -- like local, except file has been gzipped
-             | LocalTar  FilePath      -- like local, except file has been tarred
-   deriving (Show, Eq)
+             | LocalArchive [ArchiveType] FilePath      -- like local, except for archives; takes a list of archive types, like tar.gz
+   deriving (Show, Eq,Data,Typeable)
+
+instance (Layer l inc r m) => Display l inc r m Content where
+	displaysPrec x rest = return $ showsPrec 0 x rest
 
 data Status = Invalid Message | Valid | NotValidated
-   deriving (Show, Eq)
+   deriving (Show, Eq,Data,Typeable)
+
+instance (Layer l inc r m) => Display l inc r m Status where
+	displaysPrec x rest = return $ showsPrec 0 x rest
 
 data ManifestEntry =  ManifestEntry
-         { content       :: [Content]    -- list of content sources for canonical path
-         , sources       :: [FilePath]   -- list of files that mapped to canonical path
+         { content       :: [Content]    -- list of content sources for canonical path (temporary files stored by Forest)
+         , sources       :: [FilePath]   -- list of files that mapped to canonical path (for error reporting only)
          , status        :: Status       -- report on validity of manifest
-         }  
-       deriving (Show,Eq)
+         }  -- the two lists should have the same length
+       deriving (Show,Eq,Data,Typeable)
 
-type ManifestTable = Map.Map FilePath ManifestEntry
+instance (Layer l inc r m) => Display l inc r m ManifestEntry where
+	displaysPrec x rest = return $ showsPrec 0 x rest
 
-data Manifest = ManifestC
-     { count   :: Int             -- used for generating unique local names
-     , pathToRoot    :: Maybe FilePath     -- path to parent directory of FileStore
-     , tempDir :: FilePath        -- temp directory in which local files are written
-     , entries :: ManifestTable   -- map from canonical names to manifest entries
-     } deriving (Show)
+type ManifestTable = Map FilePath ManifestEntry
 
---newManifest :: IO Manifest
---newManifest = do 
---  forestDir <- getTempForestOanifestDirectory
---  canonTemp <- canonicalizePath forestDir
---  return (Manifest
---           { count = 0
---           , pathToRoot = Nothing
---           , tempDir = canonTemp
---           , entries = Map.empty
---           })
---
---
-storeManifest :: Manifest -> ForestO fs ()
-storeManifest manifest = error "TODO"
---storeManifest  (Manifest {tempDir, entries, ..}) = do
---	let mlist = Map.toList entries
---	mapM_ (storeManifestEntryAt [] [] tempDir) mlist
+--should we store the manifest in a top-level thunk?
+--storing is an inherently strict operation, so there is no point in more precise laziness
+-- unless we incrementally generate manifests, but for incremental storing the generated manifest should be proportional to the size of the modifications and that would suffice
+
+data Manifest fs = MakeManifest
+     {
+--      pathToRoot    :: Maybe FilePath     -- path to parent directory of FileStore
+      manifestTree :: FSTree fs -- the FileStore version against which the manifest has been generated and to which it can be consistently applied; applying the manifest to any other filestore may yield inconsistent results
+--     , tempDir :: FilePath        -- temp directory in which local files are written
+     , entries :: ManifestTable   -- map from canonical paths to manifest entries
+     , tests :: [ForestO fs Status] -- a *delayed* sequence of validity tests on the data (they should never return @NotValidated@)
+     } deriving (Typeable)
+
+deriving instance (Data (ForestO fs Status),Typeable fs,Data (FSTree fs)) => Data (Manifest fs)
+
+-- showing a manifest does not evaluate the tests
+instance Show (FSTree fs) => Show (Manifest fs) where
+	show man = "(MakeManifest " ++ show (manifestTree man) ++ " " ++ show (entries man) ++ " " ++ show (map (Prelude.const "<test>") $ tests man) ++ ")"
+
+-- displaying a manifest will evaluate the tests
+instance (ForestLayer fs Outside,Typeable fs,Show (FSTree fs)) => Display Outside (IncForest fs) IORef IO (Manifest fs) where
+	displaysPrec man rest = do
+		stests <- displaysPrec (tests man) (')':rest)
+		let sentries = showsPrec 0 (entries man) (' ':stests)
+		return $ "(MakeManifest " ++ show (manifestTree man) ++ " " ++ sentries
+
+instance Monoid Status where
+	mempty = Valid
+	mappend Valid s2 = s2
+	mappend s1 Valid = s1
+	mappend (Invalid m1) (Invalid m2) = Invalid $ m1 ++ "; " ++ m2
+	mappend NotValidated (Invalid m2) = Invalid m2
+	mappend (Invalid m1) NotValidated = Invalid m1
+
+instance Monoid ManifestEntry where
+	mempty = ManifestEntry [] [] Valid
+	mappend e1 e2 = ManifestEntry (content e1 ++ content e2) (sources e1 ++ sources e2) (status e1 `mappend` status e2)
+
+-- | creates a fresh manifest with the latest tree
+newManifest :: FSRep fs => ForestO fs (Manifest fs)
+newManifest = latestTree >>= newManifestForTree
+
+newManifestForTree :: FSRep fs => FSTree fs -> ForestO fs (Manifest fs)
+newManifestForTree tree = return $ MakeManifest tree Map.empty []
+
+-- ** manifest validation
+
+-- | Validates a manifest against the filestore tree to which it is supposed to be applied and returns a validated manifest
+-- conflicts only arise from trying to write different content to the same file?
+validateManifest :: FSRep fs => Manifest fs -> ForestO fs (Manifest fs)
+validateManifest man = do
+	entries' <- mapM detectConflictInEntry $ Map.toList (entries man)
+	tests' <- mapM (\m -> m >>= return . return) (tests man) -- evaluates each test
+	return $ man { entries = Map.fromList entries', tests = tests' }
+
+detectConflictInEntry :: FSRep fs => (FilePath,ManifestEntry) -> ForestO fs (FilePath,ManifestEntry)
+detectConflictInEntry (dskpath,entry) = do
+	status' <- detectContentConflict (zip (content entry) (sources entry))
+	return (dskpath,entry { status = status' })
+
+detectContentConflict :: FSRep fs => [(Content,FilePath)] -> ForestO fs Status
+detectContentConflict content_fp = case content_fp of
+	[] ->  return Valid
+	[x] -> return Valid
+	(x:y:rest) -> do
+		cxy    <- detectPairConflict x y
+		cyrest <- detectContentConflict (y:rest)
+		return $ cxy `mappend` cyrest
+		
+detectPairConflict :: FSRep fs => (Content,FilePath) -> (Content,FilePath) -> ForestO fs Status
+detectPairConflict (c1,s1) (c2,s2) = case (c1,c2) of
+	(Local fp1,Local fp2) -> do
+		isDifferent <- forestIO $ fileIsDifferent fp1 fp2
+		if isDifferent
+			then return $ Invalid $ "File " ++ s1 ++ " is in conflict with file " ++ s2
+			else return Valid
+	(LocalArchive exts1 fp1,LocalArchive exts2 fp2) -> do
+		isDifferent <- forestIO $ fileIsDifferent fp1 fp2
+		if isDifferent
+			then return $ Invalid $ "Archived file " ++ addArchiveTypes s1 exts1 ++ " is in conflict with archived file " ++ addArchiveTypes s2 exts2
+			else return Valid
+	(None,None) -> return Valid
+	(Link target1,Link target2) -> if target1 == target2
+		then return Valid
+		else return $ Invalid $ "Link " ++ target1 ++ " clashed with target " ++ target2
+	(Dir,Dir) -> return Valid   --- update this to manage conflicts with contained comprehensions
+	(ListComp f1,ListComp f2) -> return NotValidated  -- We will check this in the next stage...
+	(ListComp _,Dir) -> return Valid
+	(Dir,ListComp _) -> return Valid
+	(t1,t2) -> return $ Invalid $ show t1 ++ " is in conflict with "  ++ show t2
+
+-- ** manifest storing
+
+storeManifest :: FSRep fs => Manifest fs -> ForestO fs ()
+storeManifest = mapM_ storeManifestEntry . Map.toList . entries
 	
-	
---storeManifestAt :: FilePath -> Manifest -> IO ()
---storeManifestAt destDir (Manifest {tempDir, pathToRoot, entries, ..}) = do
---  { let mlist = Map.toList entries
---  ; let clipPath = case pathToRoot of {Nothing -> [] ; Just r -> dropFileName r}
---  ; mapM_ (storeManifestEntryAt destDir clipPath tempDir) mlist
+storeManifestEntry :: FSRep fs => (FilePath,ManifestEntry) -> ForestO fs ()
+storeManifestEntry = undefined
+--storeManifestEntryAt destDir clipPath tempDir (canonPath, (ManifestEntry {content, ..}))  = do
+--  { let targetPath = getTargetPath' destDir clipPath canonPath
+--  ; createDirectoryIfMissing True (takeDirectory targetPath)
+--  ; case List.head content of 
+--      Local localName -> do 
+--        { let srcPath = combine tempDir localName
+--        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
+--        ; return ()
+--        }
+--      LocalTar localName -> do 
+--        { let srcPath = combine tempDir localName
+--        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
+--        ; return ()
+--        }
+--      LocalGzip localName -> do 
+--        { let srcPath = combine tempDir localName
+--        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
+--        ; return ()
+--        }
+--      Link linkDest -> do
+--        { doShellCmd ("ln -s " ++ linkDest ++ " " ++ targetPath)
+--        ; return ()
+--        }
+--      Dir -> return ()  -- Nothing needs to be done in this case because dir is already created
+--      ListComp files -> return () -- Nothing needs to be done in this case because files are listed separately
+--      None -> do
+--        { doShellCmd ("rm -rf "  ++ targetPath)
+--        ; return ()
+--        } 
+--
 --  }
---
---storeManifestAt' :: FilePath -> FilePath -> Manifest -> IO ()
---storeManifestAt' destDir clipPath (Manifest {tempDir, entries, ..}) = do
---  { let mlist = Map.toList entries
---  ; mapM_ (storeManifestEntryAt destDir clipPath tempDir) mlist
---  }
---
---
---validateManifest :: Manifest -> IO Manifest
---validateManifest (Manifest {tempDir, entries, count, pathToRoot}) = do
---  { let mlist = Map.toList entries
---  ; mlist' <- mapM (detectConflictInEntry tempDir) mlist
---  ; return (Manifest{count, pathToRoot, tempDir, entries = (Map.fromList mlist') })
---  }
---
---cleanManifest :: Manifest -> IO ()
---cleanManifest manifest = do
---  { let forestDir = tempDir manifest
---  ; let cmd = "rm -rf " ++ forestDir
---  ; doShellCmd  cmd
---  ; return ()
---  }
---
---
---
---setManifestRoot :: (ForestMD fmd) => fmd -> Manifest -> IO Manifest
---setManifestRoot fmd (m @ Manifest{count,pathToRoot,tempDir,entries}) = case pathToRoot of 
---  Nothing -> do { canon_path <- canonicalizePath (get_fullpath fmd)
---                ; return  ( Manifest{count,pathToRoot = Just canon_path,tempDir,entries})
---                }
---  Just _  -> return m
+
+-- ** manifest manipulation functions
+
+boolStatus :: String -> Bool -> Status
+boolStatus msg b = if b then Valid else (Invalid msg)
+
+addFileToManifest :: FSRep fs => (FilePath -> content -> IO ()) -> FilePath -> FilePath -> content -> Manifest fs -> ForestO fs (Manifest fs)
+addFileToManifest printContent canpath path content man = do
+	tmpFile <- tempPath
+	forestIO $ printContent tmpFile content -- writes the content to the temporary file
+	let updEntry = ManifestEntry [Local tmpFile] [path] NotValidated
+	let newEntry = ManifestEntry [Local tmpFile] [path] Valid -- a single entry is always valid
+	return $ man { entries = Map.insertWith (\y x -> mappend x y) canpath newEntry (entries man) }
+
+removeFileFromManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
+removeFileFromManifest canpath path man =
+	let updEntry = ManifestEntry [None] [path] NotValidated
+	    newEntry = ManifestEntry [None] [path] Valid -- a single entry is always valid
+	in man { entries = Map.insertWith (\y x -> mappend x y) canpath newEntry (entries man) }
+
+addTestToManifest :: FSRep fs => ForestO fs Status -> Manifest fs -> Manifest fs
+addTestToManifest testm man = man { tests = testm : tests man }
+
+addDirToManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
+addDirToManifest canpath path man =
+	let updEntry = ManifestEntry [Dir] [path] NotValidated
+	    newEntry = ManifestEntry [Dir] [path] Valid
+	in man { entries = Map.insertWith (\y x -> mappend x y) canpath newEntry (entries man) }
+
+
+
+
+
 --
 --collectManifestErrors :: Manifest -> Status
 --collectManifestErrors manifest = joinStatus (collectErrorsManifestTable (entries manifest))
@@ -196,65 +314,13 @@ storeManifest manifest = error "TODO"
 --
 --
 --
---detectConflictInEntry :: FilePath -> (FilePath, ManifestEntry) -> IO (FilePath, ManifestEntry)
---detectConflictInEntry manifestDir (fp, ManifestEntry{content,sources,status}) = do 
---  { status' <- detectContentConflict manifestDir (List.zip content sources)
---  ; return (fp, ManifestEntry{content,sources,status = status'})
---  }
---
---detectContentConflict :: FilePath -> [(Content, FilePath)] -> IO Status
---detectContentConflict manifestDir content_fp = case content_fp of
---  [] ->  return Valid
---  [x] -> return Valid
---  (x:y:rest) -> do { cxy    <- detectPairConflict manifestDir x y
---                   ; cyrest <- detectContentConflict manifestDir (y:rest)
---                   ; return (combineStatus cxy cyrest)
---                   }
---
---joinStatus :: [Status] -> Status
---joinStatus ss = List.foldl combineStatus Valid ss
+
 --
 --promoteNotValidated :: Status -> Status
 --promoteNotValidated status = case status of 
 --  NotValidated -> Valid
 --  x -> x
 --
---combineStatus :: Status -> Status -> Status
---combineStatus s1 s2 = case (s1,s2) of
---  (Invalid m1, Invalid m2) -> (Invalid (m1 ++ "; " ++ m2))
---  (i @ (Invalid _), _) -> i
---  (_, i @ (Invalid _)) -> i
---  (Valid, NotValidated) -> NotValidated
---  (NotValidated, Valid) -> NotValidated
---  (NotValidated, NotValidated) -> NotValidated
---  (Valid, Valid) -> Valid
---
---detectPairConflict :: FilePath -> (Content, FilePath) -> (Content, FilePath) -> IO Status
---detectPairConflict manifestDir (c1,s1) (c2,s2) = case (c1,c2) of
---  (Local fp1, Local fp2) -> do
---        { isDifferent <- fileIsDifferent (combine manifestDir fp1) (combine manifestDir fp2)
---        ; if isDifferent then return (Invalid ("File " ++ s1 ++ " is in conflict with file " ++ s2))
---                         else return Valid
---        }
---  (LocalGzip fp1, LocalGzip fp2) -> do
---        { isDifferent <- fileIsDifferent (combine manifestDir fp1) (combine manifestDir fp2)
---        ; if isDifferent then return (Invalid ("Gzipped file " ++ s1 ++ " is in conflict with gzipped file " ++ s2))
---                         else return Valid
---        }
---  (LocalTar fp1, LocalTar fp2) -> do
---        { isDifferent <- fileIsDifferent (combine manifestDir fp1) (combine manifestDir fp2)
---        ; if isDifferent then return (Invalid ("Tarred file " ++ s1 ++ " is in conflict with Tarred file " ++ s2))
---                         else return Valid
---        }
---  (None, None) -> return Valid
---  (Link target1, Link target2) -> 
---        if target1 == target2 then return Valid
---                              else return (Invalid ("Link " ++ target1 ++ " clashed with target " ++ target2))
---  (Dir, Dir) -> return Valid   --- update this to manage conflicts with contained comprehensions
---  (ListComp f1, ListComp f2) -> return NotValidated  -- We will check this in the next stage...
---  (ListComp _, Dir) -> return Valid
---  (Dir, ListComp _) -> return Valid
---  (t1, t2) -> return (Invalid ((show t1) ++ " is in conflict with "  ++ (show t2)))
 --
 --  
 --getTargetPath' destDir clipPath fullPath = 
@@ -299,42 +365,6 @@ storeManifest manifest = error "TODO"
 --  }
 --
 --
---storeManifestEntryAt :: FilePath -> FilePath -> FilePath -> (FilePath, ManifestEntry) -> IO ()
---storeManifestEntryAt destDir clipPath tempDir (canonPath, (ManifestEntry {content, ..}))  = do
---  { let targetPath = getTargetPath' destDir clipPath canonPath
---  ; print ("DestDir = " ++ destDir)
---  ; print ("canonPath = " ++ canonPath)
---  ; print ("clipPath = " ++ clipPath)
---  ; print ("targetPath = " ++ targetPath)
---  ; createDirectoryIfMissing True (takeDirectory targetPath)
---  ; case List.head content of 
---      Local localName -> do 
---        { let srcPath = combine tempDir localName
---        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
---        ; return ()
---        }
---      LocalTar localName -> do 
---        { let srcPath = combine tempDir localName
---        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
---        ; return ()
---        }
---      LocalGzip localName -> do 
---        { let srcPath = combine tempDir localName
---        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
---        ; return ()
---        }
---      Link linkDest -> do
---        { doShellCmd ("ln -s " ++ linkDest ++ " " ++ targetPath)
---        ; return ()
---        }
---      Dir -> return ()  -- Nothing needs to be done in this case because dir is already created
---      ListComp files -> return () -- Nothing needs to be done in this case because files are listed separately
---      None -> do
---        { doShellCmd ("rm -rf "  ++ targetPath)
---        ; return ()
---        } 
---
---  }
 --
 --
 --gzipManifestEntry :: ForestMD fmd => fmd -> Manifest -> IO Manifest
@@ -397,16 +427,15 @@ storeManifest manifest = error "TODO"
 --
 --updateManifestWith :: ForestMD fmd => (FilePath -> payload -> IO ()) -> payload -> fmd -> Manifest -> IO Manifest
 --updateManifestWith printF payload fmd manifest0 = do
---   { let fullPath = get_fullpath fmd
---   ; let isLink   = get_symLink fmd
---   ; if Maybe.isJust isLink then print ("found symlink:" ++ fullPath) else print ("not symlink: " ++ fullPath)
---   ; canonPath <- canonicalizePath fullPath
---   ; mostlyCanonPath <- mostlyCanonicalizeLink fullPath
---   ; let baseName = takeBaseName canonPath
---   ; let (localName, targetPath, manifest1) = getNewLocalName baseName manifest0
---   ; printF targetPath payload 
---   ; return (updateManifestRaw canonPath mostlyCanonPath localName isLink manifest1)
---   }
+--	let fullPath = get_fullpath fmd
+--	let isLink   = get_symLink fmd
+--	canonPath <- canonicalizePath fullPath -- path in the value metadata
+--	mostlyCanonPath <- mostlyCanonicalizeLink fullPath --path with everything canonicalized except the filename?
+--	let baseName = takeBaseName canonPath
+--	let (localName, targetPath, manifest1) = getNewLocalName baseName manifest0
+--	printF targetPath payload 
+--	return $ updateManifestRaw canonPath mostlyCanonPath localName isLink manifest1
+	
 --
 --updateManifestRaw :: FilePath -> FilePath -> FilePath -> Maybe FilePath -> Manifest -> Manifest
 --updateManifestRaw  canonPath origPath localName optLinkTarget (manifest @ Manifest{count,pathToRoot,tempDir,entries=orig_entries}) = 
@@ -589,16 +618,7 @@ storeManifest manifest = error "TODO"
 --                                }
 --   in (Map.insert compDir newEntry table)      
 --
---
---
---
---
---       
---
---fileIsDifferent :: FilePath -> FilePath -> IO Bool
---fileIsDifferent f1 f2 = do
---  { let cmd = "diff " ++ f1 ++ " " ++ f2
---  ; result <- doShellCmd cmd
---  ; return (result /= "")
---  }
+ 
+
+	
 

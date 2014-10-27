@@ -43,13 +43,15 @@ import Language.Haskell.TH  as TH
 --import Language.Haskell.TH.Instances.Lift
 import Data.Set (Set(..))
 import qualified Data.Set as Set
+import System.FilePath.Posix
+import Data.Char
 
 newtype ForestDecl = ForestDecl (String,[TH.Pat], ForestTy)
    deriving (Ord, Eq, Data, Typeable, Show)
 
 data ForestTy = Directory DirectoryTy 
               | File FileTy 
-              | Archive [ArchiveType] ForestTy
+              | Archive [ArchiveType] ForestTy -- list of archive types, e.g., tar.gz
               | Named String 
               | FMaybe ForestTy
               | SymLink
@@ -57,6 +59,12 @@ data ForestTy = Directory DirectoryTy
               | Fapp ForestTy [TH.Exp] -- non-empty list of arguments
               | FComp CompField
    deriving (Ord, Eq, Data, Typeable, Show)
+
+addArchiveTypes :: FilePath -> [ArchiveType] -> FilePath
+addArchiveTypes = foldl (\path -> addExtension path . showArchiveType)
+
+showArchiveType :: ArchiveType -> String
+showArchiveType = (\(x:xs) -> toLower x : xs) . show
 
 data ArchiveType = Gzip | Tar | Zip | Bzip | Rar
 	deriving (Ord, Eq, Data, Typeable, Show)

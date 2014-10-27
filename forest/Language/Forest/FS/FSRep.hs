@@ -230,6 +230,8 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	changesBetween :: FSTree fs -> FSTree fs -> ForestO fs FSTreeDelta
 	-- translates a tree filepath to an on-disk filepath
 	pathInTree :: ForestLayer fs l => FilePath -> FSTree fs -> ForestL fs l OnDisk
+	-- translates an on-disk filepath to a tree filepath
+	pathFromTree :: ForestLayer fs l => OnDisk -> FSTree fs -> ForestL fs l FilePath
 	-- appends a relative path to an original tree path
 	stepPathInTree :: ForestLayer fs l => FSTree fs -> FilePath -> FilePath -> ForestL fs l FilePath
 	
@@ -279,8 +281,6 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 
 newHSThunk :: (Eq a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
 newHSThunk = new
-
-data ThunkTy = FSThunk | HSThunk | ICThunk deriving (Show,Eq,Typeable)
 
 type ForestThunk fs mod l = Thunk (mod fs) l (IncForest fs) IORef IO
 type ForestOutput fs mod l = Output (mod fs) l (IncForest fs) IORef IO

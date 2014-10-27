@@ -23,9 +23,9 @@ type FileName = String
 type OnDisk = FilePath
 
 -- filesystem deltas store the modified file content
-data FSTreeDeltaNode = FSTreeNew FSTreeDelta MoveFrom OnDisk -- a new directory
-					 | FSTreeChg FSTreeDelta OnDisk -- a directory whose metadata has changed
-					 | FSTreeNop FSTreeDelta -- a directory that has not have changed
+data FSTreeDeltaNode = FSTreeNew FSTreeDelta MoveFrom OnDisk -- a new directory or file
+					 | FSTreeChg FSTreeDelta OnDisk -- a directory or file whose metadata has changed
+					 | FSTreeNop FSTreeDelta -- a directory or file that has not have changed
 					 | FSTreeRem
 	deriving (Show,Eq,Ord)
 
@@ -40,6 +40,9 @@ data FSDelta = Add FilePath OnDisk
 	deriving (Show,Eq,Ord)
 
 -- * Operations on filesystem deltas
+
+commitFSTreeDelta :: FSTreeDelta -> IO ()
+commitFSTreeDelta = error "For jonathan"
 
 onDiskWriteMay :: FSTreeDeltaNodeMay -> Maybe OnDisk
 onDiskWriteMay = maybe Nothing onDiskWrite

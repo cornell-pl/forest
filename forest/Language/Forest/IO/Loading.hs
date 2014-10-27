@@ -242,68 +242,6 @@ doLoadNewPath oldpath file oldtree df tree getMD load = debug ("doLoadNewPath " 
 	let newdf = focusFSTreeDeltaNodeMayByRelativePath df file -- focusing the tree deltas is important for the skipping conditions to fire for unchanged branches of the FS
 	load newpath newdf getMD
 
-checkPathData :: (ForestInput fs FSThunk Inside,Eq rep,MData NoCtx (ForestI fs) rep,FSRep fs) => FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs rep)
-checkPathData path tree ifExists = fsthunk [tree] $ checkPathData' False path tree ifExists
-checkPathMeta :: (MData NoCtx (ForestI fs) md,Eq md,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs md -> ForestI fs (ForestFSThunkI fs md)
-checkPathMeta path tree ifExists = fsthunk [tree] $ checkPathMeta' False path tree ifExists
-checkPath :: (MData NoCtx (ForestI fs) md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
-checkPath path tree ifExists = do
-	ifExistsThunk <- newHSThunk ifExists
-	dataThunk <- checkPathData path tree $ getRep $ read ifExistsThunk
-	metaThunk <- checkPathMeta path tree $ getMd $ read ifExistsThunk
-	return (dataThunk,metaThunk)
-	
-checkPathData' :: (MData NoCtx (ForestI fs) rep,FSRep fs) => Bool -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep
-checkPathData' isDir path tree ifExists = do
-	exists <- if isDir then doesDirectoryExistInTree path tree else doesFileExistInTree path tree
-	if exists then ifExists else mdefault
-checkPathMeta' :: (MData NoCtx (ForestI fs) md,ForestMD fs md) => Bool -> FilePath -> FSTree fs -> ForestI fs md -> ForestI fs md
-checkPathMeta' isDir path tree ifExists = {-debug ("checkPathMeta' "++show path ++ showFSTree tree) $ -} do
-	let (doesExist,missingErr) = if isDir then (doesDirectoryExistInTree,missingDirForestErr) else (doesFileExistInTree,missingPathForestErr)
-	exists <- doesExist path tree
-	if exists
-		then ifExists
-		else do
-			def_md <- mdefault
-			def_md' <- replace_errors def_md $ Prelude.const $ return $ missingErr path
-			return def_md'
-checkPath' :: (MData NoCtx (ForestI fs) md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => Maybe Bool -> FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (rep,md)
-checkPath' cond path tree ifExists = {-debug ("checkPath' "++show path ++ showFSTree tree) $ -} do
-	exists <- case cond of
-		Nothing -> doesExistInTree path tree
-		Just isDir -> if isDir then doesDirectoryExistInTree path tree else doesFileExistInTree path tree
-	if exists
-		then ifExists
-		else do
-			def_rep <- mdefault
-			def_md <- mdefault
-			def_md' <- replace_errors def_md $ Prelude.const $ return $ missingPathForestErr path
-			return (def_rep,def_md')
-			
-checkFileExtension :: (MData NoCtx (ForestI fs) md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => String -> FilePath -> ForestI fs (rep,md) -> ForestI fs (rep,md)
-checkFileExtension ext path ifExists = do
-	if isSuffixOf ext path
-		then ifExists
-		else do
-			def_rep <- mdefault
-			def_md <- mdefault
-			def_md' <- replace_errors def_md $ Prelude.const $ return $ wrongFileExtensionForestErr ext path
-			return (def_rep,def_md')
-
-mkThunks :: (ForestInput fs FSThunk Inside,Eq rep,Eq md,FSRep fs) => FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
-mkThunks tree load = do
-	loadThunk <- newHSThunk load
-	dataThunk <- fsThunk [tree] $ getRep $ read loadThunk
-	metaThunk <- fsThunk [tree] $ getMd $ read loadThunk
-	return (dataThunk,metaThunk)
-
-mkThunksM :: (ForestInput fs FSThunk Inside,FSRep fs,Eq rep,Eq md) => FSTree fs -> ForestI fs (ForestI fs rep,ForestI fs md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
-mkThunksM tree load = do
-	(loadData,loadMeta) <- load
-	dataThunk <- fsthunk [tree] loadData
-	metaThunk <- fsthunk [tree] loadMeta
-	return (dataThunk,metaThunk)
-
 doLoadDirectory :: (ForestInput fs FSThunk Inside,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,FSRep fs,MData NoCtx (ForestI fs) md)
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 doLoadDirectory path tree collectMDErrors getMD load = mkThunksM tree $ doLoadDirectory' path tree collectMDErrors getMD load
@@ -402,6 +340,8 @@ doLoadCompoundWithConstraint path matchingM oldtree df tree pred buildContainerR
 	let mdlist = map (id >< snd) loadlist
 	return (buildContainerRep replist,buildContainerMd mdlist)
 
+-- ** auxiliary functions
+
 -- tries to pick a file that has been moved
 pickFileNoDelta :: FSRep fs => FilePath -> [FileName] -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs FileName
 pickFileNoDelta path' files' df tree' = do
@@ -411,4 +351,64 @@ pickFileNoDelta path' files' df tree' = do
 	let files'' = foldl' reorderFile [] files'
 	return $ pickFile files''
 
+checkPathData :: (ForestInput fs FSThunk Inside,Eq rep,MData NoCtx (ForestI fs) rep,FSRep fs) => FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs rep)
+checkPathData path tree ifExists = fsthunk [tree] $ checkPathData' False path tree ifExists
+checkPathMeta :: (MData NoCtx (ForestI fs) md,Eq md,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs md -> ForestI fs (ForestFSThunkI fs md)
+checkPathMeta path tree ifExists = fsthunk [tree] $ checkPathMeta' False path tree ifExists
+checkPath :: (MData NoCtx (ForestI fs) md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
+checkPath path tree ifExists = do
+	ifExistsThunk <- newHSThunk ifExists
+	dataThunk <- checkPathData path tree $ getRep $ read ifExistsThunk
+	metaThunk <- checkPathMeta path tree $ getMd $ read ifExistsThunk
+	return (dataThunk,metaThunk)
+	
+checkPathData' :: (MData NoCtx (ForestI fs) rep,FSRep fs) => Bool -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep
+checkPathData' isDir path tree ifExists = do
+	exists <- if isDir then doesDirectoryExistInTree path tree else doesFileExistInTree path tree
+	if exists then ifExists else mdefault
+checkPathMeta' :: (MData NoCtx (ForestI fs) md,ForestMD fs md) => Bool -> FilePath -> FSTree fs -> ForestI fs md -> ForestI fs md
+checkPathMeta' isDir path tree ifExists = {-debug ("checkPathMeta' "++show path ++ showFSTree tree) $ -} do
+	let (doesExist,missingErr) = if isDir then (doesDirectoryExistInTree,missingDirForestErr) else (doesFileExistInTree,missingPathForestErr)
+	exists <- doesExist path tree
+	if exists
+		then ifExists
+		else do
+			def_md <- mdefault
+			def_md' <- replace_errors def_md $ Prelude.const $ return $ missingErr path
+			return def_md'
+checkPath' :: (MData NoCtx (ForestI fs) md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => Maybe Bool -> FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (rep,md)
+checkPath' cond path tree ifExists = {-debug ("checkPath' "++show path ++ showFSTree tree) $ -} do
+	exists <- case cond of
+		Nothing -> doesExistInTree path tree
+		Just isDir -> if isDir then doesDirectoryExistInTree path tree else doesFileExistInTree path tree
+	if exists
+		then ifExists
+		else do
+			def_rep <- mdefault
+			def_md <- mdefault
+			def_md' <- replace_errors def_md $ Prelude.const $ return $ missingPathForestErr path
+			return (def_rep,def_md')
+			
+checkFileExtension :: (MData NoCtx (ForestI fs) md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => String -> FilePath -> ForestI fs (rep,md) -> ForestI fs (rep,md)
+checkFileExtension ext path ifExists = do
+	if isSuffixOf ext path
+		then ifExists
+		else do
+			def_rep <- mdefault
+			def_md <- mdefault
+			def_md' <- replace_errors def_md $ Prelude.const $ return $ wrongFileExtensionForestErr ext path
+			return (def_rep,def_md')
 
+mkThunks :: (ForestInput fs FSThunk Inside,Eq rep,Eq md,FSRep fs) => FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
+mkThunks tree load = do
+	loadThunk <- newHSThunk load
+	dataThunk <- fsThunk [tree] $ getRep $ read loadThunk
+	metaThunk <- fsThunk [tree] $ getMd $ read loadThunk
+	return (dataThunk,metaThunk)
+
+mkThunksM :: (ForestInput fs FSThunk Inside,FSRep fs,Eq rep,Eq md) => FSTree fs -> ForestI fs (ForestI fs rep,ForestI fs md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
+mkThunksM tree load = do
+	(loadData,loadMeta) <- load
+	dataThunk <- fsthunk [tree] loadData
+	metaThunk <- fsthunk [tree] loadMeta
+	return (dataThunk,metaThunk)

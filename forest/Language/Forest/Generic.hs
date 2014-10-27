@@ -33,6 +33,7 @@
 
 module Language.Forest.Generic   where
 
+import Data.Monoid
 import Data.WithClass.MData
 import Language.Pads.Generic
 import Control.Monad.Incremental
@@ -84,8 +85,8 @@ data BOOL = TRUE | FALSE
 -- for transaction repair we will need a DSL for transactions, so that we can inspect their structure and replace load/store operations by incremental variants
 data Transaction fs a where
 	Load :: Forest fs args rep md => ForestIs fs args -> FilePath -> Transaction fs (rep,md)
-	Manifest :: Forest fs args rep md => (rep,md) -> Transaction fs Manifest
-	Store :: FSRep fs => Manifest -> Transaction fs ()
+	Manifest :: Forest fs args rep md => ForestIs fs args -> (rep,md) -> Transaction fs (Manifest fs)
+	Store :: FSRep fs => Manifest fs -> Transaction fs ()
 	Lift :: FSRep fs => ForestO fs a -> Transaction fs a -- we can mutate values inside transactions; Forest monads shall not allow arbitrary IO, just interacting with thunks in the same way as @TVar@s
 	Bind :: Transaction fs a -> (a -> Transaction fs b) -> Transaction fs b
 
@@ -114,7 +115,7 @@ class (FSRep fs) => IncrementalForest fs args rep md | rep -> md, rep -> args wh
 instance (Forest fs args rep md) => IncrementalForest fs args rep md where
 	
 	loadTree tree margs path = do
-		(rep,md) <- inside $ loadNoDelta margs path tree Nothing tree getForestMDInTree -- for batch loading we use the same tree and assume that nothing changed
+		(rep,md) <- inside $ loadScratch margs path tree Nothing tree getForestMDInTree -- for batch loading we use the same tree and assume that nothing changed
 		loadInfo <- inside $ fsref (path,tree)
 		return ((rep,md),loadInfo)
 	
@@ -132,7 +133,7 @@ instance (Forest fs args rep md) => IncrementalForest fs args rep md where
 class (ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => Forest fs args rep md | rep -> md, rep -> args  where
 	
 	-- batch non-incremental load (takes an original tree and a delta to handle moves whenever the old and new values are not in sync)
-	loadNoDelta :: ForestIs fs args -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
+	loadScratch :: ForestIs fs args -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
 	
 	-- | incremental load function that considers the original source data and returns a stable delta
 	-- expects the old data to be consistent with the old path and the old tree
@@ -141,26 +142,35 @@ class (ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => Forest
 	loadDelta :: Proxy args -> SValueDeltas (ForestICThunksI fs args) -> ForestI fs FilePath -> FSTree fs -> OldData fs rep md -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md)
 
 	-- | Writes the data to a private Forest on-disk location and generates a manifest file
-	generateManifestNoDelta :: FSTree fs -> (rep,md) -> ForestO fs Manifest
+	generateManifestScratch :: ForestIs fs args -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)
+	generateManifestScratch args tree dta = newManifestForTree tree >>= updateManifestScratch args tree dta
+	
+	updateManifestScratch :: ForestIs fs args -> FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs)
 
---	updateManifest :: Proxy fs -> (rep,md) -> Manifest -> IO Manifest
+	-- | generates default metadata based on the specification
+	defaultMd :: rep -> FilePath -> ForestI fs md
 
 -- | Class to support variadic Forest functions
 class FSRep fs => ForestArgs fs args where
 	newArgs :: Proxy fs -> Proxy args -> ForestIs fs args -> ForestI fs (ForestICThunksI fs args)
 	deltaArgs :: Proxy fs -> Proxy args -> SValueDeltas (ForestICThunksI fs args)
 	andSValueDeltas :: Proxy fs -> Proxy args -> SValueDeltas (ForestICThunksI fs args) -> SValueDelta (ForestICThunksI fs args)
+	checkArgs :: Proxy fs -> Proxy args -> ForestIs fs args -> ForestICThunksI fs args -> ForestO fs Status
 	
 instance FSRep fs => ForestArgs fs () where
 	newArgs fs args () = return ()
 	deltaArgs fs args = ()
 	andSValueDeltas fs args () = Id
+	checkArgs _ _ _ _ = return Valid
 	
 instance (Eq a,FSRep fs) => ForestArgs fs (Arg a) where
 	newArgs fs args m = thunk m
 	deltaArgs fs args = Delta
 	andSValueDeltas fs args d = d
-	
+	checkArgs _ _ marg targ = do
+		arg <- inside $ marg
+		arg' <- inside $ force targ
+		return $ boolStatus "top-level argument mismatch" (arg == arg')
 	
 instance (ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a :*: b) where
 	newArgs fs (args :: Proxy (a1 :*: a2)) (m1 :*: m2) = do
@@ -169,6 +179,10 @@ instance (ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a :*: b) wh
 		return (t1 :*: t2)
 	deltaArgs fs (args :: Proxy (a1 :*: a2)) = (deltaArgs fs (Proxy :: Proxy a1) :*: deltaArgs fs (Proxy :: Proxy a2))
 	andSValueDeltas fs (args :: Proxy (a1 :*: a2)) (d1 :*: d2) = andSValueDeltas fs (Proxy :: Proxy a1) d1 `timesSValueDelta` andSValueDeltas fs (Proxy :: Proxy a2) d2
+	checkArgs fs (args :: Proxy (a1 :*: a2)) (marg1 :*: marg2) (targ1 :*: targ2) = do
+		status1 <- checkArgs fs (Proxy :: Proxy a1) marg1 targ1
+		status2 <- checkArgs fs (Proxy :: Proxy a2) marg2 targ2
+		return $ status1 `mappend` status2
 	
 type family ForestICThunks (fs :: FS) l args :: * where
 	ForestICThunks fs l (a :*: b) = (ForestICThunks fs l a :*: ForestICThunks fs l b)
@@ -194,17 +208,8 @@ type family SValueDeltas  args :: * where
 	SValueDeltas (Arg a) = SValueDelta a
 	SValueDeltas (ICThunk fs l inc r m a) = SValueDelta (ICThunk fs l inc r m a)
 	SValueDeltas () = ()
---type family SValueDeltasL fs l args :: * where
---	SValueDeltasL fs l (a :*: b) = (SValueDeltasL fs l a :*: SValueDeltasL fs l b)
---	SValueDeltasL fs l (Arg a) = SValueDeltaL fs l a
---	SValueDeltasL fs l () = ()
---type SValueDeltasO fs args = SValueDeltasL fs Outside args
---type SValueDeltasI fs args = SValueDeltasL fs Inside args
 
 type OldData fs rep md = ((rep,md),GetForestMD fs)
-	
---	generateManifest1 :: arg -> Proxy fs -> (rep,md) -> IO Manifest
---	updateManifest1 :: arg -> Proxy fs -> (rep,md) -> Manifest -> IO Manifest
 
 --validateLists :: (FilePath -> IO a) -> (a -> Manifest -> IO Manifest) -> Manifest -> IO Manifest
 --validateLists  load updateMan (m @ Manifest {tempDir, pathToRoot, entries, count}) = do

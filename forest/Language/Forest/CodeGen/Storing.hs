@@ -41,6 +41,61 @@ import Data.Map (Map(..))
 import qualified Data.Map as Map
 import Control.Monad.State (State(..),StateT(..))
 import qualified Control.Monad.State as State
+import {-# SOURCE #-} Language.Forest.CodeGen.DeltaLoading
+import Language.Forest.CodeGen.Loading
+
+genManifestM :: Name -> Name -> ForestTy -> [(TH.Pat,TH.Type)] -> EnvQ TH.Exp
+genManifestM rep_name md_name forestTy pat_infos = return $ VarE 'undefined
+--	fsName <- lift $ newName "fs"
+--	treeName    <- lift $ newName "tree"
+--	dtaName    <- lift $ newName "dta"
+--	manName    <- lift $ newName "man"
+--	let (treeE, treeP) = genPE treeName
+--	let (dtaE, dtaP) = genPE dtaName
+--	let (fsE, fsP) = genPE fsName
+--	let (manE,manP) = genPE manName
+--	
+--	case pat_infos of
+--		[] -> do
+--			core_bodyE <- genManifestBody treeE dtaE manE rep_name forestTy
+--			return $ LamE [TupP [],treeP,dtaP,manP] core_bodyE
+--		otherwise -> do
+--			(argPats,argThunkNames) <- genManifestArgsE (zip [1..] pat_infos) treeE forestTy
+--			let update env = foldl updatePat env (zip argThunkNames pat_infos)
+--				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
+--			Reader.local update $ do -- adds pattern variable deltas to the env.
+--				margsName <- lift $ newName "margs"
+--				newdtaName <- lift $ newName "newdta"
+--				let (margsE,margsP) = genPE margsName
+--				let (newdtaE,newdtaP) = genPE newdtaName
+--				core_bodyE <- genManifestBody treeE newdtaE manE rep_name forestTy
+--				return $ LamE [margsP,treeP,AsP dtaP (TupP [WildP,TupP [WildP,targsP]]),manP] $
+--					appE4 (VarE 'doManifestArgs) margsE dtaE (LamE [newdtaP] core_bodyE) manE
+--
+--genManifestBody :: TH.Exp -> TH.Exp -> Name -> ForestTy -> EnvQ TH.Exp
+--genManifestBody treeE dtaE manE repN ty = case ty of 
+--	Directory _ -> manifestE ty treeE dtaE manE
+--	FConstraint _ (Directory _) _ -> manifestE ty treeE dtaE manE
+--	otherwise   -> do -- Decompose the representation type constructor
+--		let dtaE' = AppE (InfixE (Just $ ConE $ getUnTyName repN) (VarE '(><)) (Just $ VarE 'id)) dtaE
+--		manifestE ty treeE dtaE' manE
+--
+---- loads top-level arguments into the environment
+--genManifestArgsE :: [(Int,(TH.Pat,TH.Type))] -> TH.Exp -> ForestTy -> EnvQ ([Pat],[Name])
+--genManifestArgsE [pat_info] forestTy = genManifestArgE pat_info treeE forestTy
+--genManifestArgsE (pat_info:pat_infos) treeE forestTy = do
+--	(pat,names1) <- genManifestArgE pat_info forestTy
+--	(pats,names2) <- genManifestArgsE pat_infos forestTy
+--	return (ConP '(:*:) [pat,pats],names1++names2)
+--
+--genManifestArgE :: (Int,(TH.Pat,TH.Type)) -> TH.Exp -> ForestTy -> EnvQ ([Pat],[Name])
+--genManifestArgE (i,(pat,pat_ty)) treeE forestTy = do
+--	mName <- lift $ newName $ "m"++show i
+--	thunkName <- lift $ newName $ "t"++show i
+--	return (VarP mName,[thunkName])
+--
+--manifestE :: ForestTy -> Exp -> Exp -> Exp -> EnvQ Exp
+--manifestE ty treeE dtaE manE = return $ VarE 'undefined
 
 --writeFileManifest :: (String, Maybe TH.Exp) -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
 --writeFileManifest (pty_name, optArg) repE mdE manE = do
@@ -127,7 +182,7 @@ do { man2P <- setManifestRoot mdE man1E
 --  Directory dTy -> writeDirManifest dTy repE mdE manE
 --  Named f_name -> return (AppE (AppE  (VarE (getWriteManifestName f_name))  (TupE [repE, mdE])) manE)
 --  SymLink -> return (AppE (AppE (VarE 'updateManifestWithLink) (AppE (VarE 'fst) mdE)) manE)
---  FConstraint _ ty _ -> writeE' (ty, repE, mdE, manE)
+--  FConstraint _ ty _ -> writeE' (ty, repE, mdE, manE) -- not checking!!!
 --  Fapp ty argE -> writeAppManifest ty argE repE mdE manE
 --  FMaybe ty -> writeMaybeManifest ty repE mdE manE
 --  FComp comp -> writeListManifest comp repE mdE manE

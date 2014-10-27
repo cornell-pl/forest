@@ -98,45 +98,30 @@ make_forest_declaration (ForestDecl (id, pats, forestTy)) = do
    let unty_name    = getUnTyName    id
    let md_ty_name = getMDName    id
    fsName <- newName "fs"
-   let wn         = getWriteManifestName id
-   let genM_name  = getGenManifestName id
    let arg_infos = map (\pat -> (pat,patToTy pat)) pats
    (ty_decl, md_ty_decls, md_ty) <- genRepMDDecl fsName forestTy (unty_name,ty_name) md_ty_name arg_infos  -- Generate representation and meta-data decls for padsTy
-   loadWithM :: TH.Exp        <- Reader.runReaderT (genLoadM   ty_name md_ty_name forestTy arg_infos) Map.empty
+   loadM :: TH.Exp        <- Reader.runReaderT (genLoadM   ty_name md_ty_name forestTy arg_infos) Map.empty
    loadDeltaM :: TH.Exp       <- Reader.runReaderT (genLoadDeltaM  (unty_name,ty_name) md_ty_name forestTy arg_infos) Map.empty
-   writeManifest :: [Dec]    <- return [] --genWriteManifest wn      ty_name md_ty_name forestTy arg_info_opt
-   generateManifest :: [Dec] <- return [] --genGenManifest genM_name wn ty_name md_ty_name arg_info_opt
-   forestInstance :: [Dec]   <- genFInst  fsName  loadWithM loadDeltaM wn genM_name ty_name md_ty_name      forestTy arg_infos
+   manifestM :: TH.Exp <- Reader.runReaderT (genManifestM ty_name md_ty_name forestTy arg_infos) Map.empty
+   forestInstance :: [Dec]   <- genFInst  fsName  loadM loadDeltaM manifestM ty_name md_ty_name      forestTy arg_infos
    return (   [ty_decl]    
            ++ md_ty_decls  
            ++ forestInstance
-           ++ writeManifest
-           ++ generateManifest
            )
 
-genFInst fsName loadWithM loadDeltaM wn_name genM_name ty_name md_ty_name forestTy pat_infos = do
-      let (inst, loadWith, loadDelta, wn, genM) = case pat_infos of
-                          [] -> (appT4 (ConT ''Forest) (VarT fsName) (TupleT 0) (appTyFS fsName ty_name) (appTyFS fsName md_ty_name),   -- Forest RepTy MDTy
-                                      mkName "loadNoDelta",
-                                      mkName "loadDelta",
-                                      mkName "updateManifest",
-                                      mkName "generateManifest")
-                          otherwise -> (appT4 (ConT ''Forest) (VarT fsName) ({-thunksTy fsName mpat_infos-}forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) (appTyFS fsName ty_name) (appTyFS fsName md_ty_name),
-                                      mkName "loadNoDelta",
-                                      mkName "loadDelta",
-                                      mkName "updateManifest",
-                                      mkName "generateManifest")
-          loadWith_method = ValD (VarP loadWith) (NormalB loadWithM) []
-          loadDelta_method = ValD (VarP loadDelta) (NormalB loadDeltaM) []
---          update_manifest_method = ValD (VarP wn) (NormalB (VarE wn_name)) []
---          generate_manifest_method = ValD (VarP genM) (NormalB (VarE genM_name)) []
-      let ctx = [ClassP ''Typeable [VarT fsName]
-				,ClassP ''ForestMD [VarT fsName,(appTyFS fsName md_ty_name)]
-				,ClassP ''ForestOutput [VarT fsName,ConT ''ICThunk,ConT ''Inside]
---				,ClassP ''ForestOutput [VarT fsName,ConT ''FSThunk,ConT ''Inside]
---				,ClassP ''ForestOutput [VarT fsName,ConT ''Thunk,ConT ''Outside]
-				]
-      return $ [InstanceD ctx inst [loadWith_method,loadDelta_method]]
+genFInst fsName loadM loadDeltaM manifestM ty_name md_ty_name forestTy pat_infos = do
+	let inst = case pat_infos of
+		[] -> appT4 (ConT ''Forest) (VarT fsName) (TupleT 0) (appTyFS fsName ty_name) (appTyFS fsName md_ty_name)   -- Forest RepTy MDTy
+		otherwise -> appT4 (ConT ''Forest) (VarT fsName) ({-thunksTy fsName mpat_infos-}forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) (appTyFS fsName ty_name) (appTyFS fsName md_ty_name)
+	let load_method = ValD (VarP $ mkName "loadScratch") (NormalB loadM) []
+	let loadDelta_method = ValD (VarP $ mkName "loadDelta") (NormalB loadDeltaM) []
+	let manifest_method = ValD (VarP $ mkName "updateManifestScratch") (NormalB manifestM) []
+
+	let ctx = [ClassP ''Typeable [VarT fsName]
+			,ClassP ''ForestMD [VarT fsName,(appTyFS fsName md_ty_name)]
+			,ClassP ''ForestOutput [VarT fsName,ConT ''ICThunk,ConT ''Inside]
+			]
+	return $ [InstanceD ctx inst [load_method,loadDelta_method,manifest_method]]
 
 -- | Generates representation and metadata type declarations for a Forest specification
 genRepMDDecl :: Name -> ForestTy -> (Name,Name) -> Name -> [(TH.Pat,TH.Type)] -> Q (TH.Dec, [TH.Dec], TH.Type)

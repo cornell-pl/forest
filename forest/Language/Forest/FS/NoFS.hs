@@ -70,7 +70,7 @@ checkNoFSTransaction chg (d:ds) = checkNoFSTransaction' d chg && checkNoFSTransa
 checkNoFSTransaction' :: NoFSWrites -> NoFSChangesFlat -> Bool
 checkNoFSTransaction' (writesBefore) (readsAfter,writesAfter) = do
 	readsAfter `Set.intersection` writesBefore == Set.empty -- no write-read conflicts
-	&& writesAfter `Set.intersection` writesBefore == Set.empty -- no write-write conflicts
+--	&& writesAfter `Set.intersection` writesBefore == Set.empty -- no write-write conflicts
 
 -- adds a new commited transaction, and deletes done transactions that finished before the start of the earliest running transaction
 finishTransaction :: UTCTime -> NoFSWrites -> IO ()
@@ -79,6 +79,7 @@ finishTransaction starttime writes = do
 	case mb of
 		Just oldt -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.filterWithKey (\t _ -> t > oldt) $ Map.insert now writes m)
 		Nothing -> return ()
+	error "perform actual commit!"
 
 {-# NOINLINE noFSLock #-}
 noFSLock :: Lock
@@ -134,8 +135,8 @@ atomicallyNoFS t = do
 	tryAgain
 	
 intepretNoFSTransaction :: Transaction NoFS a -> TFS NoFS a
-intepretNoFSTransaction (Load margs path) = inside $ loadNoDelta margs path NoFSTree Nothing NoFSTree getForestMDInTree 
-intepretNoFSTransaction (Manifest dta) = generateManifestNoDelta NoFSTree dta
+intepretNoFSTransaction (Load margs path) = inside $ loadScratch margs path NoFSTree Nothing NoFSTree getForestMDInTree 
+intepretNoFSTransaction (Manifest margs dta) = generateManifestScratch margs NoFSTree dta
 intepretNoFSTransaction (Store manifest) = storeManifest manifest
 
 instance Incremental (IncForest NoFS) IORef IO where
