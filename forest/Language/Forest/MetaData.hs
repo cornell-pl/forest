@@ -27,8 +27,8 @@
 *                           Florham Park NJ                            *
 *                                                                      *
 *              Kathleen Fisher <kfisher@research.att.com>              *
-*                                                                      *
-************************************************************************
+
+***********************************************************************i
 -}
 
 module Language.Forest.MetaData where
@@ -75,7 +75,7 @@ import Data.WithClass.Derive.MData
 import Data.WithClass.Derive.DeepTypeable
 import Data.DeepTypeable
 import Language.Haskell.TH.Syntax
-import Data.Derive.MDataForest
+--import Data.Derive.MDataForest
 
 import Data.List hiding (group, unzip, zip)
 
