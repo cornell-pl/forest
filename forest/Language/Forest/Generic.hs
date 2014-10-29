@@ -50,7 +50,7 @@ import Control.Monad
 import Language.Forest.ValueDelta
 import Data.DeriveTH                 
 import Data.WithClass.Derive.MData
-import Data.Derive.MDataWithClassForest
+--import Data.Derive.MDataWithClassForest
 import Data.WithClass.MGenerics
 import Data.IORef
 --import Control.Monad.IO.Class

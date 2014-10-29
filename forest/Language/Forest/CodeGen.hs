@@ -52,7 +52,7 @@ import System.Directory
 import System.FilePath.Posix
 import Data.DeriveTH
 import Data.WithClass.MData
-import Data.Derive.MDataWithClassForest
+--import Data.Derive.MDataWithClassForest
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax hiding (lift)
