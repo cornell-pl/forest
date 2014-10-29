@@ -224,6 +224,14 @@ tyConNameOptBuild (Just str) = do
 		1 -> return $ VarE 'buildContainer1
 		2 -> return $ VarE 'buildContainer2
 
+tyConNameOptToList :: Maybe String -> Q TH.Exp
+tyConNameOptToList Nothing = return $ VarE 'id
+tyConNameOptToList (Just str) = do
+	arity <- getTyConArity str
+	case arity of
+		1 -> return $ VarE 'toList1
+		2 -> return $ VarE 'toList2
+
 tyConNameOptIso :: Maybe String -> Q TH.Exp
 tyConNameOptIso Nothing = return $ appE2 (ConE 'Iso) (VarE 'id) (VarE 'id)
 tyConNameOptIso (Just str) = do

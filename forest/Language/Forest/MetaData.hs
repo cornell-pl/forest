@@ -383,6 +383,11 @@ sameValidity md1 md2 = do
 	err2 <- get_errors md2
 	return $ (numErrors err1 == 0) == (numErrors err2 == 0)
 
+sameValidity' :: (ForestLayer fs l,ForestMD fs md1) => md1 -> Forest_err -> ForestL fs l Bool
+sameValidity' md1 err2 = do
+	err1 <- get_errors md1
+	return $ (numErrors err1 == 0) == (numErrors err2 == 0)
+
 -- | Tests if two metadata values point to the same filepath
 sameFullPath :: (ForestLayer fs l,ForestMD fs md1,ForestMD fs md2) => md1 -> md2 -> ForestL fs l Bool
 sameFullPath md1 md2 = do

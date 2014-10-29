@@ -7,6 +7,7 @@ import Prelude hiding (const,read)
 import Language.Forest.CodeGen.Utils
 import Control.Monad.Incremental
 import Language.Forest.CodeGen.Loading
+import Language.Haskell.TH.Quote
 
 import Language.Forest.Syntax as PS
 import Language.Forest.MetaData
@@ -44,7 +45,7 @@ import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.Trans.Class
 
--- for each variable name, we store (a boolean that indicates whether its value has NOT changed (changes are ALWAYS stable), the name of a thunk that holds its value, a pattern to match against the thunk's value)
+-- for each variable name, we store (a boolean that indicates whether its value has NOT changed (changes are ALWAYS stable), the name of a thunk that holds its value, an optional pattern to match against the thunk's value when the variable is used)
 type DeltaEnv = Map Name (TH.Exp,Maybe (Name,Pat))
 
 type DeltaQ a = ReaderT DeltaEnv Q a
@@ -197,8 +198,8 @@ loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE' repmdE = do
 	let (newRepMdE, newRepMdP) = genPE newRepMdName
 	rhsE <- liftM (LamE [newPathP,newGetMDP,newdfP,newTreeP]) $ runEnvQ $ loadE ty newPathE newTreeE newdfE newTreeE' newGetMDE
 	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP']) $ loadDeltaE ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE'
-	ext <- lift $ liftString (archiveExtension archtype)
-	return $ appE8 (VarE 'doLoadDeltaArchive) ext pathE dpathE dfE treeE' repmdE rhsE rhsDE
+	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
+	return $ appE8 (VarE 'doLoadDeltaArchive) exts pathE dpathE dfE treeE' repmdE rhsE rhsDE
 
 loadDeltaSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
 loadDeltaSymLink pathE dpathE dfE treeE' repmdE = return $ appE5 (VarE 'doLoadDeltaSymLink) pathE dpathE dfE treeE' repmdE

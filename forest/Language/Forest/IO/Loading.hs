@@ -141,13 +141,13 @@ doLoadFile1 repProxy arg path (oldtree::FSTree fs) df tree getMD = debug ("doLoa
 -- The copy operation needs to make a deep strict copy of the argument value, to ensure that we are copying the correct state of a @FSThunk@ and its recursively contained @FSThunk@s
 -- XXX: we are actually disregarding the filepaths that occur in the forest metadata for the contents of the archived specification
 doLoadArchive :: (ForestMD fs md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,FSRep fs,MData NoCtx (ForestI fs) md) =>
-	String -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs
+	[ArchiveType] -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md))
 	-> (FilePath -> FilePath -> OldData fs rep md -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md))
 	-> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
-doLoadArchive ext path oldtree df tree getMD load loadD = do
+doLoadArchive exts path oldtree df tree getMD load loadD = do
 	-- static loading
-	let load_folder = mkThunks tree $ doLoadArchive' ext path oldtree df tree getMD load
+	let load_folder = mkThunks tree $ doLoadArchive' exts path oldtree df tree getMD load
 	-- memoized reuse
 --	let reuse_same_file = do
 --		mb <- lookupmemo path
@@ -188,10 +188,10 @@ doLoadArchive ext path oldtree df tree getMD load loadD = do
 		otherwise -> load_folder
 
 doLoadArchive' :: (ForestMD fs md,MData NoCtx (ForestI fs) rep,FSRep fs,MData NoCtx (ForestI fs) md) =>
-	String -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs
+	[ArchiveType] -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md))
 	-> ForestI fs (rep,(Forest_md fs,md))
-doLoadArchive' ext path oldtree df tree getMD load = checkPath' (Just False) path tree $ checkFileExtension ext path $ do
+doLoadArchive' exts path oldtree df tree getMD load = checkPath' (Just False) path tree $ checkFileExtension (archiveExtension exts) path $ do
 	fmd <- getMD path tree
 	avfsTree <- virtualTree tree
 	(rep,md_arch) <- load (cardinalPath path) getForestMDInTree avfsTree Nothing avfsTree -- since we use the same tree, there is no problem here

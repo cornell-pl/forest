@@ -33,11 +33,11 @@ diffPath dskpath1 dskpath2 = do
 	foldM diffLine Map.empty $ lines difflines
   where
 --	diffLine :: FSRep fs => FSTreeDelta -> String -> ForestO fs FSTreeDelta
-	diffLine td (matchRegex onlyInRegex -> Just [path,file]) = if isSubPathOf dskpath1 path
+	diffLine td (matchRegex onlyInRegex -> Just [path,file]) = if isParentPathOf dskpath1 path
 		then do
 			let d = Rem (path </> file)
 			return $ appendToFSTreeDelta d td
-		else if isSubPathOf dskpath2 path
+		else if isParentPathOf dskpath2 path
 			then do
 				let d = Add (path </> file) (path </> file)
 				return $ appendToFSTreeDelta d td
@@ -60,7 +60,11 @@ focusDiffFSTree tree path tree' path' = do
 
 -- adds a cardinal to a file to look inside its content (for AVFS containers)
 cardinalPath :: FilePath -> FilePath
-cardinalPath path@(lastMay -> Just '#') = init path
+cardinalPath path@(lastMay -> Just '#') = path
 cardinalPath path = path ++ "#"
 
+-- removes a trailing cardinal from an archive path (for AVFS containers)
+uncardinalPath :: FilePath -> FilePath
+uncardinalPath path@(lastMay -> Just '#') = init path
+uncardinalPath path = path
 

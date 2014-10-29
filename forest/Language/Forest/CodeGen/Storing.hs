@@ -43,285 +43,255 @@ import Control.Monad.State (State(..),StateT(..))
 import qualified Control.Monad.State as State
 import {-# SOURCE #-} Language.Forest.CodeGen.DeltaLoading
 import Language.Forest.CodeGen.Loading
+import Language.Haskell.TH.Quote
 
 genManifestM :: Name -> Name -> ForestTy -> [(TH.Pat,TH.Type)] -> EnvQ TH.Exp
-genManifestM rep_name md_name forestTy pat_infos = return $ VarE 'undefined
---	fsName <- lift $ newName "fs"
---	treeName    <- lift $ newName "tree"
---	dtaName    <- lift $ newName "dta"
---	manName    <- lift $ newName "man"
---	let (treeE, treeP) = genPE treeName
---	let (dtaE, dtaP) = genPE dtaName
---	let (fsE, fsP) = genPE fsName
---	let (manE,manP) = genPE manName
---	
---	case pat_infos of
---		[] -> do
---			core_bodyE <- genManifestBody treeE dtaE manE rep_name forestTy
---			return $ LamE [TupP [],treeP,dtaP,manP] core_bodyE
---		otherwise -> do
---			(argPats,argThunkNames) <- genManifestArgsE (zip [1..] pat_infos) treeE forestTy
---			let update env = foldl updatePat env (zip argThunkNames pat_infos)
---				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
---			Reader.local update $ do -- adds pattern variable deltas to the env.
---				margsName <- lift $ newName "margs"
---				newdtaName <- lift $ newName "newdta"
---				let (margsE,margsP) = genPE margsName
---				let (newdtaE,newdtaP) = genPE newdtaName
---				core_bodyE <- genManifestBody treeE newdtaE manE rep_name forestTy
---				return $ LamE [margsP,treeP,AsP dtaP (TupP [WildP,TupP [WildP,targsP]]),manP] $
---					appE4 (VarE 'doManifestArgs) margsE dtaE (LamE [newdtaP] core_bodyE) manE
---
---genManifestBody :: TH.Exp -> TH.Exp -> Name -> ForestTy -> EnvQ TH.Exp
---genManifestBody treeE dtaE manE repN ty = case ty of 
---	Directory _ -> manifestE ty treeE dtaE manE
---	FConstraint _ (Directory _) _ -> manifestE ty treeE dtaE manE
---	otherwise   -> do -- Decompose the representation type constructor
---		let dtaE' = AppE (InfixE (Just $ ConE $ getUnTyName repN) (VarE '(><)) (Just $ VarE 'id)) dtaE
---		manifestE ty treeE dtaE' manE
---
----- loads top-level arguments into the environment
---genManifestArgsE :: [(Int,(TH.Pat,TH.Type))] -> TH.Exp -> ForestTy -> EnvQ ([Pat],[Name])
---genManifestArgsE [pat_info] forestTy = genManifestArgE pat_info treeE forestTy
---genManifestArgsE (pat_info:pat_infos) treeE forestTy = do
---	(pat,names1) <- genManifestArgE pat_info forestTy
---	(pats,names2) <- genManifestArgsE pat_infos forestTy
---	return (ConP '(:*:) [pat,pats],names1++names2)
---
---genManifestArgE :: (Int,(TH.Pat,TH.Type)) -> TH.Exp -> ForestTy -> EnvQ ([Pat],[Name])
---genManifestArgE (i,(pat,pat_ty)) treeE forestTy = do
---	mName <- lift $ newName $ "m"++show i
---	thunkName <- lift $ newName $ "t"++show i
---	return (VarP mName,[thunkName])
---
---manifestE :: ForestTy -> Exp -> Exp -> Exp -> EnvQ Exp
---manifestE ty treeE dtaE manE = return $ VarE 'undefined
+genManifestM rep_name md_name forestTy pat_infos = do
+	fsName <- lift $ newName "fs"
+	treeName    <- lift $ newName "tree"
+	dtaName    <- lift $ newName "dta"
+	manName    <- lift $ newName "man"
+	let (treeE, treeP) = genPE treeName
+	let (dtaE, dtaP) = genPE dtaName
+	let (fsE, fsP) = genPE fsName
+	let (manE,manP) = genPE manName
+	
+	case pat_infos of
+		[] -> do
+			core_bodyE <- genManifestBody treeE dtaE manE rep_name forestTy
+			return $ LamE [TupP [],treeP,dtaP,manP] core_bodyE
+		otherwise -> do
+			(targsP,argThunkNames) <- genManifestArgsE (zip [1..] pat_infos) forestTy
+			let argsT = forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos
+			let proxyArgs = SigE (ConE 'Proxy) $ AppT (ConT ''Proxy) argsT
+			let update env = foldl updatePat env (zip argThunkNames pat_infos)
+				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
+			Reader.local update $ do -- adds pattern variable deltas to the env.
+				margsName <- lift $ newName "margs"
+				newdtaName <- lift $ newName "newdta"
+				newmanName <- lift $ newName "newman"
+				let (margsE,margsP) = genPE margsName
+				let (newmanE,newmanP) = genPE newmanName
+				let (newdtaE,newdtaP) = genPE newdtaName
+				core_bodyE <- genManifestBody treeE newdtaE newmanE rep_name forestTy
+				return $ LamE [margsP,treeP,AsP dtaName (TupP [WildP,TupP [WildP,targsP]]),manP] $
+					appE5 (VarE 'doManifestArgs) proxyArgs margsE dtaE (LamE [newdtaP,newmanP] core_bodyE) manE
 
---writeFileManifest :: (String, Maybe TH.Exp) -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
---writeFileManifest (pty_name, optArg) repE mdE manE = do
--- { let funE = case optArg of 
---               Nothing   -> VarE 'updateManifestPads
---               Just argE -> AppE (VarE 'updateManifestPads1) argE
--- ; let resultE = AppE (AppE funE (TupE [repE, mdE])) manE
--- ; return resultE
--- }
+genManifestBody :: TH.Exp -> TH.Exp -> TH.Exp -> Name -> ForestTy -> EnvQ TH.Exp
+genManifestBody treeE dtaE manE repN ty = case ty of 
+	Directory _ -> manifestE ty treeE dtaE manE
+	FConstraint _ (Directory _) _ -> manifestE ty treeE dtaE manE
+	otherwise   -> do -- Decompose the representation type constructor
+		let dtaE' = AppE (InfixE (Just $ VarE $ getUnTyName $ nameBase repN) (VarE '(><)) (Just $ VarE 'id)) dtaE
+		manifestE ty treeE dtaE' manE
 
---genGenManifest :: Name -> Name -> Name -> Name -> Maybe (TH.Pat, TH.Type) -> Q[Dec]
---genGenManifest genMName wn rep_name md_name mpat_info = do 
---  { let core_ty = arrowTy (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT md_name)) 
---                      (AppT (ConT ''IO) (ConT (mkName "Manifest")))
---  ; (argE, argP) <- doGenPE "arg"
---  ; (bodyE,ty) <- case mpat_info of
---        Nothing -> do 
---            { bodyE <- genGenManE (VarE 'load) (VarE wn)
---            ; return (bodyE, core_ty)
---            }
---        Just(pat,pat_ty) -> do
---            { core_bodyE <- genGenManE (AppE (VarE 'load1) argE) (AppE (VarE wn) argE)
---            ; return (LamE [argP] core_bodyE,
---                      arrowTy pat_ty core_ty)
---            }
---  ; let sigD = SigD genMName ty
---  ; let funD = ValD (VarP genMName) (NormalB bodyE) []
---  ; return [sigD, funD]
---  }
---
---genGenManE :: TH.Exp -> TH.Exp -> Q TH.Exp
---genGenManE loadE updateManE  = do
---  { (man0E,man0P) <- doGenPE "manifest"
---  ; (man1E,man1P) <- doGenPE "manifest"
---  ; (man2E,man2P) <- doGenPE "manifest"
---  ; (forestE,forestP) <- doGenPE "forest"
---  ; let newManifestS = BindS man0P (VarE 'newManifest)
---  ; let rawManifestS = BindS man1P (AppE (AppE updateManE forestE) man0E ) 
---  ; let medManifestS = BindS man2P (AppE (VarE 'validateManifest) man1E ) 
---  ; let finalS = NoBindS (AppE (AppE (AppE (VarE 'validateLists) loadE) updateManE) man2E)
---  ; return (LamE [forestP] (DoE [newManifestS,rawManifestS,medManifestS,finalS]))
---  }
---
---genWriteManifest :: Name -> Name ->  Name -> ForestTy -> Maybe (TH.Pat, TH.Type) -> Q [Dec]
---genWriteManifest    funName rep_name md_name forestTy mpat_info = do 
---   core_bodyE <- writeE rep_name forestTy
---   let core_ty = arrowTy (AppT (AppT (TupleT 2) (ConT rep_name)) (ConT md_name)) 
---                (arrowTy (ConT (mkName "Manifest")) 
---                (AppT (ConT ''IO) (ConT (mkName "Manifest"))))
---   let (bodyE,ty) = case mpat_info of
---                     Nothing -> (core_bodyE, core_ty)
---                     Just (pat,pat_ty) -> ( LamE [pat] core_bodyE,
---                                            arrowTy pat_ty core_ty)
---   let sigD = SigD funName ty
---   let funD = ValD (VarP funName) (NormalB bodyE) []
---   return [sigD, funD]
---
---writeE :: Name -> ForestTy -> Q TH.Exp
---writeE repN ty = do
---   repName  <- genRepName 
---   mdName   <- genMdName
---   (repE, repP)   <- doGenPE "rep"
---   (mdE,  mdP)    <- doGenPE "md"
---   (man1E, man1P) <- doGenPE "manifest"
---   (man2E, man2P) <- doGenPE "manifest"
---   let frepP       = wrapRepP repN ty repP 
---   let setRootE = AppE (AppE (VarE 'setManifestRoot) mdE) man1E
---   rhsE        <- writeE' (ty, repE, mdE, man2E)
-----   let letE = LetE [ValD man2P (NormalB setRootE) []] rhsE
---   let setRootS = BindS man2P setRootE
---   let bodyE = DoE [setRootS, NoBindS rhsE]
---   let writeFun = LamE [TupP [frepP, mdP]] (LamE [man1P] bodyE)
---   return writeFun
+-- loads top-level arguments into the environment
+genManifestArgsE :: [(Int,(TH.Pat,TH.Type))] -> ForestTy -> EnvQ (Pat,[Name])
+genManifestArgsE [pat_info] forestTy = genManifestArgE pat_info forestTy
+genManifestArgsE (pat_info:pat_infos) forestTy = do
+	(pat,names1) <- genManifestArgE pat_info forestTy
+	(pats,names2) <- genManifestArgsE pat_infos forestTy
+	return (ConP '(:*:) [pat,pats],names1++names2)
 
-{-
-do { man2P <- setManifestRoot mdE man1E
-   ; rhsE
-   }
--}
+genManifestArgE :: (Int,(TH.Pat,TH.Type)) -> ForestTy -> EnvQ (Pat,[Name])
+genManifestArgE (i,(pat,pat_ty)) forestTy = do
+	thunkName <- lift $ newName $ "t"++show i
+	return (VarP thunkName,[thunkName])
 
---writeE' :: (ForestTy, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
---writeE' (forestTy, repE, mdE, manE) = case forestTy of
---  File fTy -> writeFileManifest fTy repE mdE manE
---  Directory dTy -> writeDirManifest dTy repE mdE manE
---  Named f_name -> return (AppE (AppE  (VarE (getWriteManifestName f_name))  (TupE [repE, mdE])) manE)
---  SymLink -> return (AppE (AppE (VarE 'updateManifestWithLink) (AppE (VarE 'fst) mdE)) manE)
---  FConstraint _ ty _ -> writeE' (ty, repE, mdE, manE) -- not checking!!!
---  Fapp ty argE -> writeAppManifest ty argE repE mdE manE
---  FMaybe ty -> writeMaybeManifest ty repE mdE manE
---  FComp comp -> writeListManifest comp repE mdE manE
---  Gzip fty -> writeGzipManifest fty repE mdE manE
---  Tar fty -> writeTarManifest fty repE mdE manE
+manifestE :: ForestTy -> Exp -> Exp -> Exp -> EnvQ Exp
+manifestE ty treeE dtaE manE = case ty of
+	Named f_name               -> manifestWithArgsE [] treeE dtaE manE
+	Fapp (Named f_name) argEs  -> manifestWithArgsE argEs treeE dtaE manE
+	File (file_name, argEOpt) -> manifestFile file_name argEOpt treeE dtaE manE
+	Archive archtype ty         -> manifestArchive archtype ty treeE dtaE manE
+	SymLink         -> manifestSymLink treeE dtaE manE
+	FConstraint p ty pred -> manifestConstraint treeE p pred dtaE manE $ manifestE ty treeE
+	Directory dirTy -> manifestDirectory dirTy treeE dtaE manE
+	FMaybe forestTy -> manifestMaybe forestTy treeE dtaE manE
+	FComp cinfo     -> manifestComp cinfo treeE dtaE manE
 
---writeTarManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
---writeTarManifest fty repE mdE manE = do
---	(irepE, irepP) <- doGenPE "rep"
---	(imdE,  imdP)  <- doGenPE "md"
---	(imanE, imanP) <- doGenPE "manifest"
---	writeItemE <- writeE' (fty, irepE, imdE, imanE)
---	let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
---	return (AppE (AppE (AppE (AppE (VarE 'doWriteTarManifest) repE) mdE) itemFnE) manE)
---
---doWriteTarManifest rep (md @ (fmd,base)) doItem manifest = do 
---	freshManifest <- newManifest
---	rawContentManifest <- doItem (rep,md) freshManifest
---	contentManifest <- validateManifest rawContentManifest
---	let tarStatus = collectManifestErrors contentManifest
---	print "Finished generating manifest for tar"
---	let localDirToTarName = takeBaseName(dropExtensions (fullpath (fileInfo fmd)))
---	print ("name of directory to tar: " ++ localDirToTarName)
---	let tarName = addExtension  localDirToTarName "tar"
---	scratchDir <- getTempForestScratchDirectory
---	let dirToTarName = combine scratchDir localDirToTarName
---	createDirectoryIfMissing True dirToTarName
---	canonScratchDir <- System.Directory.canonicalizePath scratchDir
---	let clipPath = getClipPathFromTarManifest contentManifest canonScratchDir
---	storeManifestAt' dirToTarName clipPath contentManifest
---	oldCurDir <- getCurrentDirectory
---	setCurrentDirectory scratchDir
---	doShellCmd ("tar -cvf " ++ tarName  ++ " " ++ localDirToTarName )
---	doShellCmd ("mv " ++ tarName  ++ " " ++ (tempDir manifest) )
---	setCurrentDirectory oldCurDir
---	updateManifestWithTar tarName tarStatus fmd manifest   --XXX: need to pass errors in temp manifest on to higher-level manifest
+-- they are terminals in the spec
+manifestWithArgsE :: [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestWithArgsE [] treeE dtaE manE = return $ appE4 (VarE 'updateManifestScratch) (TupE []) treeE dtaE manE
+manifestWithArgsE argsE treeE dtaE manE = do
+	argsE <- mapM (\e -> forceVarsEnvQ e return) argsE
+	let tupArgsE = foldl1' (appE2 (ConE '(:*:))) argsE
+	return $ appE4 (VarE 'updateManifestScratch) tupArgsE treeE dtaE manE
 
---writeGzipManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
---writeGzipManifest fty repE mdE manE = do
---	(irepE, irepP) <- doGenPE "rep"
---	(imdE,  imdP)  <- doGenPE "md"
---	(imanE, imanP) <- doGenPE "manifest"
---	writeItemE <- writeE' (fty, irepE, imdE, imanE)
---	let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemE
---	return (AppE (AppE (AppE (AppE (VarE 'doWriteGzipManifest) repE) mdE) itemFnE) manE)
---
---doWriteGzipManifest rep (fmd,base) doItem manifest = do 
---	let fmd' = removeGzipSuffix fmd
---	manifest' <- doItem (rep,(fmd',base)) manifest
---	gzipManifestEntry fmd manifest'
---	
---gSnd expE = AppE (VarE 'snd) expE
---gFst expE = AppE (VarE 'fst) expE
+manifestArchive :: [ArchiveType] -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestArchive archtype ty treeE dtaE manE = do
+	newTreeName <- lift $ newName "new_tree"
+	let (newTreeE, newTreeP) = genPE newTreeName
+	newmanName <- lift $ newName "man"
+	let (newmanE,newmanP) = genPE newmanName
+	newdtaName <- lift $ newName "dta"
+	let (newdtaE,newdtaP) = genPE newdtaName
+	
+	manifestContentsE <- liftM (LamE [newTreeP,newdtaP,newmanP]) $ manifestE ty newTreeE newdtaE newmanE
+	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
+	return $ appE5 (VarE 'doManifestArchive) exts treeE dtaE manifestContentsE manE
 
---writeListManifest :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp 
---writeListManifest comp repE mdE manE = do
---	let fmdE = gFst mdE 
---	let fileP = generatorP comp
---	(fp_repEs, fp_mdEs) <- case tyConNameOpt comp of
---	    Nothing -> return (repE, gSnd mdE)
---	    Just str -> do { arity <- getTyConArity str
---	                   ; if arity == 1 then 
---	                          return (AppE (VarE 'toList1) repE,  AppE (VarE 'toList1) (gSnd mdE))
---	                     else 
---	                          return (AppE (VarE 'toList2) repE,  AppE (VarE 'toList2) (gSnd mdE))
---	                   }
---	(irepE, irepP) <- doGenPE "rep"
---	(imdE,  imdP)  <- doGenPE "md"
---	(imanE, imanP) <- doGenPE "manifest"
---	writeItemE <- writeE' (descTy comp, irepE, imdE, imanE)
---	let getPathE = AppE (VarE 'takeFileName) (AppE (VarE 'get_fullpath) imdE)
---	let writeItemBodyE = LetE[ ValD fileP (NormalB  getPathE ) []] writeItemE
---	let itemFnE = LamE [TupP[irepP,imdP], imanP] writeItemBodyE
---	return (AppE (AppE (AppE (AppE (AppE (VarE 'doWriteList) fmdE) fp_repEs) fp_mdEs) itemFnE) manE)
---	
-----doWriteList :: Forest rep md  => 
-----    Forest_md -> [(FilePath,rep)] -> [(FilePath,md)] ->  ((rep, md) -> Manifest -> IO Manifest ) -> Manifest -> IO Manifest
---doWriteList fmd fp_reps fp_mds doItem manifest = do
---	let (files, reps) = List.unzip fp_reps
---	let mds = snd (List.unzip fp_mds)
---	let rep_mds = List.zip reps mds
---	manifest' <- updateManifestWithComp fmd files manifest
---	foldM (\manifest'' rm -> doItem rm manifest'')  manifest' rep_mds
+manifestSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestSymLink treeE dtaE manE = do
+  return $ appE3 (VarE 'doManifestSymLink) treeE dtaE manE
 
---writeMaybeManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
---writeMaybeManifest ty repE mdE manE = do 
---  (jrepE, jrepP) <- doGenPE "rep"
---  (jmdE,  jmdP)  <- doGenPE "md"
---  (freshFmdE, freshFmdP) <- doGenPE "fmd"
---  justE <- writeE' (ty, jrepE, jmdE, manE)
---  let justB = NormalB justE
---  let jrepPat = ConP 'Just [jrepP]
---  let jmdPat =  TupP[freshFmdP, ConP 'Just [jmdP]]
---  let justPat = TupP [jrepPat, jmdPat]
---  let justmatch = Match justPat justB []
---  let nrepPat = ConP 'Nothing []
---  let nmdPat =  TupP[freshFmdP, ConP 'Nothing []]
---  let nPat = TupP [nrepPat, nmdPat]
---  let nmatchE = AppE (AppE (VarE 'updateManifestWithNone) freshFmdE) manE
---  let nmatch = Match nPat (NormalB nmatchE) []
---  let caseE = CaseE(TupE[repE,mdE]) [justmatch,nmatch]
---  return caseE
+manifestConstraint :: TH.Exp -> TH.Pat -> TH.Exp -> TH.Exp -> TH.Exp -> (Exp -> Exp -> EnvQ TH.Exp) -> EnvQ TH.Exp
+manifestConstraint treeE pat predE dtaE manE manifest = forceVarsEnvQ predE $ \predE' -> do
+	newmanName <- lift $ newName "man"
+	let (newmanE,newmanP) = genPE newmanName
+	newdtaName <- lift $ newName "dta"
+	let (newdtaE,newdtaP) = genPE newdtaName
+	
+	let predFnE = modPredE pat predE'
+	manifestAction <- liftM (LamE [newdtaP,newmanP]) $ manifest newdtaE newmanE
+	return $ appE5 (VarE 'doManifestConstraint) treeE predFnE dtaE manifestAction manE
 
---writeAppManifest :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
---writeAppManifest ty argE repE mdE manE = case ty of
---  Named f_name   -> return (AppE (AppE (AppE  (VarE (getWriteManifestName f_name))  argE) (TupE [repE, mdE])) manE)
+manifestFile :: String -> Maybe TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestFile fileName Nothing treeE dtaE manE = do
+	return $ appE3 (VarE 'doManifestFile) treeE dtaE manE
+manifestFile fileName (Just argE) treeE dtaE manE = do
+	return $ appE4 (VarE 'doManifestFile1) argE treeE dtaE manE
 
+manifestMaybe :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestMaybe ty treeE dtaE manE = do 
+	newdtaName <- lift $ newName "newdta"
+	newmanName <- lift $ newName "newman"
+	let (newdtaE,newdtaP) = genPE newdtaName
+	let (newmanE,newmanP) = genPE newmanName
+	doContentsE <- liftM (LamE [newdtaP,newmanP]) $ manifestE ty treeE newdtaE newmanE
+	return $ appE4 (VarE 'doManifestMaybe) treeE dtaE doContentsE manE
 
---writeDirManifest :: DirectoryTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
---writeDirManifest (Record fty_name  fields) repE mdE manE = do
---  { let (repEs, repPs) = getPEforFields getBranchNameL fields
---  ; let (mdEs,   mdPs)  = getPEforFields getBranchMDNameL fields
---  ; (freshFmdE, freshFmdP) <- doGenPE "fmd"
---  ; (symManE, symManP) <- doGenPE "manifest_sym"
---  ; let mdPat  = TupP[freshFmdP, RecP (getStructInnerMDName (mkName fty_name)) mdPs]
---  ; let repPat = RecP (mkName fty_name) repPs
---  ; let casePat = TupP [repPat, mdPat]
----- calculate the body
---  ; let symCheckE = AppE (AppE (VarE 'updateManifestWithDir) freshFmdE) manE
---  ; let checkS = BindS symManP symCheckE
---  ; (freshManE, freshManP) <- doGenPE "manifest"
---  ; let fields_rep_mds_manifest = List.zip4 fields repEs mdEs (repeat freshManE)
---  ; expE <- mapM (writeField freshManP freshFmdE) fields_rep_mds_manifest
---  ; let printItemsE = ListE expE
---  ; let doFieldsS = NoBindS (AppE (AppE (VarE 'doWriteFields) symManE) printItemsE)
---  ; let caseBody = NormalB (DoE [checkS, doFieldsS])
---  ; let match = Match casePat caseBody []
---  ; let caseE = CaseE (TupE [repE, mdE]) [match]
---  ; return caseE
---  }
+manifestDirectory :: DirectoryTy -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestDirectory dirTy@(Record id fields) treeE dtaE manE = do
+	newdtaName <- lift $ newName "newdta"
+	newmanName <- lift $ newName "newman"
+	pathName <- lift $ newName "path"
+	let (newdtaE,newdtaP) = genPE newdtaName
+	let (newmanE,newmanP) = genPE newmanName
+	let (pathE,pathP) = genPE pathName
+	doDirE <- liftM (LamE [pathP,newdtaP,newmanP]) $ manifestDirectoryContents dirTy treeE pathE newdtaE newmanE
+	collectMDs <- lift $ genMergeFieldsMDErrors fields	
+	return $ appE5 (VarE 'doManifestDirectory) treeE collectMDs dtaE doDirE manE
 
+manifestDirectoryContents :: DirectoryTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ Exp
+manifestDirectoryContents (Record id fields) treeE parentPathE dtaE manE = do
+	liftM DoE $ manifestFields fields treeE parentPathE dtaE manE
 
---doWriteFields  :: Monad m => a -> [a -> m a] -> m a
---doWriteFields = foldM (\manifest' doItem -> doItem manifest') 
---
---writeField :: TH.Pat -> TH.Exp -> (Field, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
---writeField manP dirfmdE (field, repE, mdE, manE) = do
---  { bodyE <- case field of
---             Simple (_,_,_,fTy,_) ->  writeE' (fTy, repE, mdE, manE)
---             Comp comp            ->  writeListManifest comp repE (TupE [dirfmdE, mdE]) manE  
---  ; return (LamE [manP] bodyE)  
---  }
+manifestFields :: [Field] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ [Stmt]
+manifestFields [] treeE parentPathE dtaE manE = return [NoBindS $ returnExp manE]
+manifestFields (field:fields) treeE parentPathE dtaE man0E = do
+	man1Name <- lift $ newName "man"
+	let (man1E,man1P) = genPE man1Name
+	(rep_field,md_field,stmts_field) <- manifestField field treeE parentPathE dtaE man0E man1P
+	let update = Map.insert rep_field Nothing . Map.insert md_field Nothing
+	stmts_fields <- Reader.local update $ manifestFields fields treeE parentPathE dtaE man1E
+	return $ stmts_field++stmts_fields
+
+manifestField :: Field -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> Pat -> EnvQ (Name,Name,[Stmt])
+manifestField field treeE parentPathE dtaE man0E man1P = case field of
+	Simple s -> manifestSimple s treeE parentPathE dtaE man0E man1P
+	Comp   c -> manifestCompound True c treeE parentPathE dtaE man0E man1P
+
+manifestComp :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestComp cinfo treeE dtaE manE = do
+	newdtaName <- lift $ newName "newdta"
+	newmanName <- lift $ newName "newman"
+	pathName <- lift $ newName "path"
+	let (newdtaE,newdtaP) = genPE newdtaName
+	let (newmanE,newmanP) = genPE newmanName
+	let (pathE,pathP) = genPE pathName
+	
+	let collectMDs = genMergeFieldMDErrors (Comp cinfo)
+	doCompE <- liftM (LamE [pathP,newdtaP,newmanP]) $ manifestCompContents cinfo treeE pathE newdtaE newmanE
+	return $ appE5 (VarE 'doManifestDirectory) treeE collectMDs dtaE doCompE manE
+
+manifestCompContents :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+manifestCompContents cinfo treeE parentPathE dtaE manE = do
+	man1Name <- lift $ newName "man1"
+	let (man1E,man1P) = genPE man1Name
+	(_,_,stmts) <- manifestCompound False cinfo treeE parentPathE dtaE manE man1P
+	let doCompE = DoE $ stmts ++ [NoBindS $ returnExp man1E]
+	return doCompE
+
+manifestSimple :: BasicField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> Pat -> EnvQ (Name,Name,[Stmt])
+manifestSimple (internal, isForm, externalE, forestTy, predM) treeE parentPathE dtaE man0E man1P = do
+	-- variable declarations
+	let repName = mkName internal
+	let mdName  = mkName (internal++"_md")
+	let (repE,repP) = genPE repName
+	let (mdE,mdP) = genPE mdName
+	newmanName <- lift $ newName "man"
+	let (newmanE,newmanP) = genPE newmanName
+	newdtaName <- lift $ newName "dta"
+	let (newdtaE,newdtaP) = genPE newdtaName
+	
+	let innerRepE = AppE repE $ AppE (VarE 'fst) dtaE
+	let innerMdE = AppE mdE $ AppE (VarE 'snd) dtaE
+	let innerdtaE = TupE [innerRepE,innerMdE]
+	
+	-- we need to name the variables after the field names
+	varName <- lift $ newName "var"
+	let (varE,varP) = genPE varName
+	let letRepS = [LetS [ValD varP (NormalB innerRepE) []],LetS [ValD repP (NormalB varE) []]]
+	let letMdS = [LetS [ValD varP (NormalB innerMdE) []],LetS [ValD repP (NormalB varE) []]]
+	
+	manifestFocusE <- do
+		manifestContentE <- liftM (LamE [newdtaP,newmanP]) $ manifestE forestTy treeE newdtaE newmanE
+		case predM of
+			Nothing -> return $ appE6 (VarE 'doManifestSimple) parentPathE externalE treeE innerdtaE manifestContentE man0E
+			Just pred -> return $ appE7 (VarE 'doManifestSimpleWithConstraint) parentPathE externalE treeE (modPredE (VarP repName) pred) innerdtaE manifestContentE man0E
+	let bindManS = BindS man1P manifestFocusE
+	return (repName,mdName,bindManS:letRepS++letMdS)
+
+manifestCompound :: Bool -> CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Pat -> EnvQ (Name,Name,[Stmt])
+manifestCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) treeE parentPathE dtaE man0E man1P = do
+	-- variable declarations
+	let repName = mkName internal
+	let mdName  = mkName (internal++"_md")
+	let (repE,repP) = genPE repName
+	let (mdE,mdP) = genPE mdName
+	newmanName <- lift $ newName "man"
+	let (newmanE,newmanP) = genPE newmanName
+	newdtaName <- lift $ newName "dta"
+	let (newdtaE,newdtaP) = genPE newdtaName
+	
+	let innerRepE = if isNested then AppE repE $ AppE (VarE 'fst) dtaE else AppE (VarE 'fst) dtaE
+	let innerMdE = if isNested then AppE mdE $ AppE (VarE 'snd) dtaE else AppE (VarE 'snd) dtaE
+	let innerdtaE = TupE [innerRepE,innerMdE]
+	
+	-- we need to name the variables after the field names
+--	let letRepS = LetS [ValD repP (NormalB innerRepE) []]
+--	let letMdS = LetS [ValD mdP (NormalB innerMdE) []]
+	varName <- lift $ newName "var"
+	let (varE,varP) = genPE varName
+	let letRepS = [LetS [ValD varP (NormalB innerRepE) []],LetS [ValD repP (NormalB varE) []]]
+	let letMdS = [LetS [ValD varP (NormalB innerMdE) []],LetS [ValD repP (NormalB varE) []]]
+	
+	let genE = case generatorG of
+		Explicit expE -> expE
+		Matches regexpE -> regexpE
+
+	forceVarsEnvQ genE $ \genE -> do
+		-- optional filtering
+		let fileName = getCompName explicitName externalE
+		let fileNameAtt = mkName $ nameBase fileName++"_att"
+		let fileNameAttThunk = mkName $ nameBase fileName++"_att_thunk"
+		
+		-- build representation and metadata containers from a list
+		destroyContainerE <- lift $ tyConNameOptToList tyConNameOpt
+		
+		let update = Map.insert fileName Nothing . Map.insert fileNameAtt (Just (fileNameAttThunk,VarP fileNameAtt))  --force the @FileInfo@ thunk
+		
+		-- container loading
+		Reader.local update $ case predM of
+			Nothing -> do
+				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newdtaP,newmanP]) $ manifestE descTy treeE newdtaE newmanE
+				let manifestContainerE = appE8 (VarE 'doManifestCompound) parentPathE genE treeE destroyContainerE destroyContainerE innerdtaE manifestSingleE man0E
+				let bindManS = BindS man1P manifestContainerE
+				return (repName,mdName,bindManS:letRepS++letMdS)
+				
+			Just predE -> forceVarsEnvQ predE $ \predE -> do
+				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newdtaP,newmanP]) $ manifestE descTy treeE newdtaE newmanE
+				let manifestContainerE = appE9 (VarE 'doManifestCompoundWithConstraint) parentPathE genE treeE destroyContainerE destroyContainerE (modPredEComp (VarP fileName) predE) innerdtaE manifestSingleE man0E
+				let bindManS = BindS man1P manifestContainerE
+				return (repName,mdName,bindManS:letRepS++letMdS)

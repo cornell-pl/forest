@@ -210,8 +210,14 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	
 	-- Filesystem tree representation
 	data FSTree fs :: *
-	-- registers a write to the contents of a path in the filesystem; receives an on-disk location from which the content can be retrieved
-	writePath :: FilePath -> OnDisk -> ForestO fs ()
+	-- registers the deletion of a path from the filesystem
+	deletePath :: FilePath -> ForestO fs ()
+	-- registers a write to the contents of a file in the filesystem; receives an on-disk location from which the content can be retrieved
+	writeFile :: FilePath -> OnDisk -> ForestO fs ()
+	-- registers the creation of a new empty directory in the filesystem
+	writeDir :: FilePath -> ForestO fs ()
+	-- registers a creation of a symbolic link in the filesystem; receives a target on-disk location that the link points to
+	writeLink :: FilePath -> FilePath -> ForestO fs ()
 	-- registers a write to the metadata of a path in the filesystem; receives an on-disk location from which the metadata can be retrieved
 	writePathMD :: FilePath -> OnDisk -> ForestO fs ()
 	-- generates a fresh forest temporary path

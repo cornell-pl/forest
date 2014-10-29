@@ -175,7 +175,7 @@ instance FSRep NoFS where
 	data FSTree NoFS = NoFSTree | VirtualNoFSTree
 	
 	-- log the modifications
-	writePath path ondisk = modifyNoFSTreeDeltas $ appendToFSTreeDelta (Add path ondisk)
+	writeFile path ondisk = modifyNoFSTreeDeltas $ appendToFSTreeDelta (Add path ondisk)
 	writePathMD path ondisk = modifyNoFSTreeDeltas $ appendToFSTreeDelta (ChgAttrs path ondisk)
 	
 	-- registers a new temporary path

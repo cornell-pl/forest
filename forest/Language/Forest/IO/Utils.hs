@@ -24,13 +24,13 @@ import System.IO.Unsafe
 import Text.Regex
 import System.FilePath.Posix
 import Control.Monad
-import Data.List
+import Data.List as List
 import Language.Forest.FS.FSRep
 --import Control.Monad.IO.Class
 import Data.WithClass.MData
 import Language.Forest.Shell
 import Language.Forest.BX
-
+import Language.Forest.Syntax
 
 import qualified Control.Exception as CE
 
@@ -83,19 +83,6 @@ getTempDir = do
 	forestIO $ createDirectoryIfMissing False fp
 	return fp
 
-untar :: FilePath -> FilePath -> IO ExitCode
-untar path tempDir = do
-	oldCurDir <- getCurrentDirectory
-	setCurrentDirectory tempDir
-	exitCode <- system $ "tar -xf "++path
-	setCurrentDirectory oldCurDir
-	return exitCode
-
-gunzip :: FilePath -> FilePath -> IO ExitCode
-gunzip path tempFile = do
-	exitCode <- system $ "gunzip " ++ path ++ " -c > " ++ tempFile -- XXX: redo using Shelly
-	return exitCode
-
 remove :: FilePath -> IO ()
 remove path = do
 	let cmd = "rm -rf " ++ path   
@@ -119,8 +106,11 @@ mapFromJust (Just x:xs) = x : mapFromJust xs
 --invalidateForestMD :: Language.Forest.Errors.ErrMsg -> Forest_md fs -> Forest_md fs
 --invalidateForestMD errMsg f_md = f_md { numErrors = numErrors f_md + 1, errorMsg = Just errMsg }
 
-isSubPathOf :: FilePath -> FilePath -> Bool
-isSubPathOf = isPrefixOf
+isParentPathOf :: FilePath -> FilePath -> Bool
+isParentPathOf = isPrefixOf
+
+commonParentPath :: FilePath -> FilePath -> FilePath
+commonParentPath path1 path2 = joinPath $ List.map fst $ takeWhile (uncurry (==)) $ zip (splitDirectories path1) (splitDirectories path2)
 
 getMatchingFilesInTreeM :: (ForestLayer fs l,Matching fs a) => FilePath -> ForestL fs l a -> FSTree fs -> ForestL fs l [FilePath]
 getMatchingFilesInTreeM path matchingM tree = do
@@ -238,3 +228,60 @@ foldM1 f (x:y:xs) = f x y >>= \z -> foldM1 f (z:xs)
 const2 = Prelude.const . Prelude.const
 
 
+-- archive manipulation
+
+-- | archive extensions, original compressed file, temporary output directory
+decompressArchive :: FSRep fs => [ArchiveType] -> FilePath -> FilePath -> ForestO fs ()
+decompressArchive [x] oriFile archiveDir = decompressArchive' x oriFile archiveDir
+decompressArchive (snocMay -> Just (xs,Gzip)) oriFile archiveDir = do
+	tmpFile <- getTempPath
+	forestIO $ runShellCommand_ $ "gunzip " ++ oriFile ++ " -c > " ++ tmpFile
+	decompressArchive xs tmpFile archiveDir
+	forestIO $ removePath tmpFile
+	return ()
+decompressArchive (snocMay -> Just (xs,Bzip)) oriFile archiveDir = do
+	tmpFile <- getTempPath
+	forestIO $ runShellCommand_ $ "bzip2 -kcd " ++ oriFile ++ " > " ++ archiveDir
+	decompressArchive xs tmpFile archiveDir
+	forestIO $ removePath tmpFile
+	return ()
+decompressArchive xs _ _ = error $ "decompression not implemented " ++ show xs
+
+decompressArchive' :: FSRep fs => ArchiveType -> FilePath -> FilePath -> ForestO fs ()
+decompressArchive' Gzip oriFile archiveDir = forestIO $ runShellCommand_ ("gunzip " ++ oriFile ++ " -c > " ++ archiveDir) >> return ()
+decompressArchive' Tar oriFile archiveDir = do
+	oldCurDir <- forestIO $ getCurrentDirectory
+	forestIO $ setCurrentDirectory archiveDir
+	forestIO $ runShellCommand_ $ "tar -xf " ++ oriFile
+	forestIO $ setCurrentDirectory oldCurDir
+decompressArchive' Zip oriFile archiveDir = error $ "decompression not implemented " ++ show Zip
+decompressArchive' Bzip oriFile archiveDir = forestIO $ runShellCommand_ ("bzip2 -kcd " ++ oriFile ++ " > " ++ archiveDir) >> return ()
+decompressArchive' Rar oriFile archiveDir = error $ "decompression not implemented " ++ show Rar
+
+-- | archive extensions, content directory, output compressed file
+compressArchive :: FSRep fs => [ArchiveType] -> FilePath -> FilePath -> ForestO fs ()
+compressArchive [x] archiveDir archiveFile = compressArchive' x archiveDir archiveFile
+compressArchive (snocMay -> Just (xs,Gzip)) archiveDir archiveFile = do
+	tmpFile <- getTempPath
+	compressArchive xs archiveDir tmpFile
+	forestIO $ runShellCommand_ $ "gzip -kc " ++ tmpFile ++ " > " ++ archiveFile
+	forestIO $ removePath tmpFile
+	return ()
+compressArchive (snocMay -> Just (xs,Bzip)) archiveDir archiveFile = do
+	tmpFile <- getTempPath
+	compressArchive xs archiveDir tmpFile
+	forestIO $ runShellCommand_ $ "bzip2 -kc " ++ tmpFile ++ " > " ++ archiveFile
+	forestIO $ removePath tmpFile
+	return ()
+compressArchive xs _ _ = error $ "compression not implemented " ++ show xs
+
+compressArchive' :: FSRep fs => ArchiveType -> FilePath -> FilePath -> ForestO fs ()
+compressArchive' Gzip archiveDir archiveFile = error $ "compression not implemented " ++ show Gzip
+compressArchive' Tar archiveDir archiveFile = error $ "compression not implemented " ++ show Tar
+compressArchive' Zip archiveDir archiveFile = error $ "compression not implemented " ++ show Zip
+compressArchive' Bzip archiveDir archiveFile = forestIO $ runShellCommand_ ("bzip2 -kc " ++ archiveDir ++ " > " ++ archiveFile) >> return ()
+compressArchive' Rar archiveDir archiveFile = error $ "compression not implemented " ++ show Rar
+
+snocMay :: [a] -> Maybe ([a],a)
+snocMay [] = Nothing
+snocMay xs = Just (init xs,last xs)

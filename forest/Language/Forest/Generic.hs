@@ -143,7 +143,7 @@ class (ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => Forest
 
 	-- | Writes the data to a private Forest on-disk location and generates a manifest file
 	generateManifestScratch :: ForestIs fs args -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)
-	generateManifestScratch args tree dta = newManifestForTree tree >>= updateManifestScratch args tree dta
+	generateManifestScratch args tree dta = newManifestWith "/" tree >>= updateManifestScratch args tree dta
 	
 	updateManifestScratch :: ForestIs fs args -> FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs)
 

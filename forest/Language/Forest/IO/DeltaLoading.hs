@@ -86,11 +86,11 @@ doLoadDeltaFile1 isEmptyDArg arg' mpath path' oldtree df tree' ((rep_thunk::Fore
 			return (Delta,Delta)
 
 doLoadDeltaArchive :: (ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) rep,MData NoCtx (ForestI fs) md,ForestMD fs md,MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Eq rep,Eq md,FSRep fs) =>
-	String -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> OldData fs (ForestFSThunkI fs rep) (ForestFSThunkI fs (Forest_md fs,md))
+	[ArchiveType] -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> OldData fs (ForestFSThunkI fs rep) (ForestFSThunkI fs (Forest_md fs,md))
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md))
 	-> (FilePath -> FilePath -> OldData fs rep md -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs rep),SValueDelta (ForestFSThunkI fs (Forest_md fs,md)))
-doLoadDeltaArchive ext mpath path' oldtree df tree' ((rep_thunk,md_thunk),getMD) load loadD = do
+doLoadDeltaArchive exts mpath path' oldtree df tree' ((rep_thunk,md_thunk),getMD) load loadD = do
 	path <- inside mpath
 	case (path == path',df) of
 		(True,isEmptyFSTreeDeltaNodeMay -> True) -> return (Id,Id)
@@ -102,7 +102,7 @@ doLoadDeltaArchive ext mpath path' oldtree df tree' ((rep_thunk,md_thunk),getMD)
 			return (Id,Delta)
 		otherwise -> do
 			let df' = Just $ FSTreeNew Map.empty (Just path) path -- since @doLoadArchive@ computes a diff anyway, we can always try to reuse any memoized data on the old path
-			(rep',md') <- inside $ doLoadArchive ext path' oldtree df' tree' getMD load loadD
+			(rep',md') <- inside $ doLoadArchive exts path' oldtree df' tree' getMD load loadD
 			fsoverwrite [tree'] rep_thunk $ fsforce rep'
 			fsoverwrite [tree'] md_thunk $ fsforce md'
 			return (Delta,Delta)

@@ -112,7 +112,7 @@ make_forest_declaration (ForestDecl (id, pats, forestTy)) = do
 genFInst fsName loadM loadDeltaM manifestM ty_name md_ty_name forestTy pat_infos = do
 	let inst = case pat_infos of
 		[] -> appT4 (ConT ''Forest) (VarT fsName) (TupleT 0) (appTyFS fsName ty_name) (appTyFS fsName md_ty_name)   -- Forest RepTy MDTy
-		otherwise -> appT4 (ConT ''Forest) (VarT fsName) ({-thunksTy fsName mpat_infos-}forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) (appTyFS fsName ty_name) (appTyFS fsName md_ty_name)
+		otherwise -> appT4 (ConT ''Forest) (VarT fsName) (forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) (appTyFS fsName ty_name) (appTyFS fsName md_ty_name)
 	let load_method = ValD (VarP $ mkName "loadScratch") (NormalB loadM) []
 	let loadDelta_method = ValD (VarP $ mkName "loadDelta") (NormalB loadDeltaM) []
 	let manifest_method = ValD (VarP $ mkName "updateManifestScratch") (NormalB manifestM) []

@@ -63,9 +63,6 @@ data ForestTy = Directory DirectoryTy
 addArchiveTypes :: FilePath -> [ArchiveType] -> FilePath
 addArchiveTypes = foldl (\path -> addExtension path . showArchiveType)
 
-showArchiveType :: ArchiveType -> String
-showArchiveType = (\(x:xs) -> toLower x : xs) . show
-
 data ArchiveType = Gzip | Tar | Zip | Bzip | Rar
 	deriving (Ord, Eq, Data, Typeable, Show)
 
@@ -99,14 +96,14 @@ data Field = Simple BasicField
    deriving (Ord, Eq, Data, Typeable, Show)
 
 archiveExtension :: [ArchiveType] -> String
-archiveExtension = foldl1 (\ext1 ext2 -> ext1 ++ "." ++ ext2) . map archiveExtension'
+archiveExtension = foldl1 (\ext1 ext2 -> ext1 ++ "." ++ ext2) . map showArchiveType
 
-archiveExtension' :: ArchiveType -> String
-archiveExtension' Gzip = "gz"
-archiveExtension' Tar = "tar"
-archiveExtension' Zip = "zip"
-archiveExtension' Bzip = "bzip"
-archiveExtension' Rar = "rar"
+showArchiveType :: ArchiveType -> String
+showArchiveType Gzip = "gz"
+showArchiveType Tar = "tar"
+showArchiveType Zip = "zip"
+showArchiveType Bzip = "bz2"
+showArchiveType Rar = "rar"
 
 fieldnames :: [Field] -> [String]
 fieldnames = map fieldname

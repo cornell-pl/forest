@@ -140,7 +140,7 @@ instance FSRep NILFS where
 		cpath <- canonalizePathInTree path tree
 		let newpath = path </> rel
 		cnewpath <- canonalizePathInTree newpath tree
-		if cpath `isSubPathOf` cnewpath
+		if cpath `isParentPathOf` cnewpath
 			then return newpath 
 			else error $ "NILFS incremental loading forbids non-tree-like filesystems" ++ show cpath ++ " " ++ show newpath
 	
@@ -444,6 +444,11 @@ latestNILFSTree :: IO (FSTree NILFS)
 latestNILFSTree = do
 	(snapshot,snapshotTime,_) <- latestNILFSCheckpoint
 	return $ NILFSTree snapshot snapshotTime
+
+makeNewNILFSCheckpoint :: Bool -> IO Int
+makeNewNILFSCheckpoint isSS = do
+	let mkSS = if isSS then " -s" else ""
+	liftM (Prelude.read) $ sudoShellCommand $ "mkcp -p" ++ mkSS
 
 proxyNILFS :: Proxy NILFS
 proxyNILFS = Proxy

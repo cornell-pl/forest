@@ -9,6 +9,7 @@ import Prelude hiding (const,read)
 import Language.Forest.CodeGen.Utils
 import Control.Monad.Trans
 import Control.Monad.Incremental
+import Language.Haskell.TH.Quote
 
 import Language.Forest.Syntax as PS
 import Language.Forest.MetaData
@@ -177,8 +178,8 @@ loadArchive archtype ty pathE oldtreeE dfE treeE getMDE = do
 	let (newRepMdE, newRepMdP) = genPE newRepMdName
 	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP,newdfP,newTreeP']) $ loadE ty newPathE newTreeE newdfE newTreeE' newGetMDE
 	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP']) $ runDeltaQ (loadDeltaE ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE')
-	ext <- lift $ liftString (archiveExtension archtype)
-	return $ appE8 (VarE 'doLoadArchive) ext pathE oldtreeE dfE treeE getMDE rhsE rhsDE
+	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
+	return $ appE8 (VarE 'doLoadArchive) exts pathE oldtreeE dfE treeE getMDE rhsE rhsDE
 
 loadMaybe :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
 loadMaybe ty pathE oldtreeE dfE treeE getMDE = do 
