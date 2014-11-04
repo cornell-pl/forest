@@ -66,25 +66,25 @@ import Data.DeepTypeable
 import Language.Haskell.TH.Syntax
 
 [forest|
-	type Paper (y :: Maybe Integer) (n :: Maybe String) = BinaryFile where <| return $ isPaperOf (fullpath this_att) y n |>
+	type Paper (y :: Maybe Integer) (n :: Maybe String) = BinaryFile where (isPaperOf (fullpath this_att) y n)
 
     type Supplemental (y :: Maybe Integer) (n :: Maybe String) = Directory {
-		supplementalFiles is Map [ p :: Paper y n | p <- matches <| return $ GL "*" |>, <| return $ isNotHiddenFile p p_att |> ] 
+		supplementalFiles is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
 	} 
 
 	type Author (y :: Maybe Integer) (n :: Maybe String) = Directory {
-		authorPapers is Map [ p :: Paper y n | p <- matches <| return $ GL "*" |>, <| return $ isNotHiddenFile p p_att |> ] 
-	,   supplemental is "Supplemental" :: Maybe (Supplemental y n) where <| return True |>
+		authorPapers is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
+	,   supplemental is "Supplemental" :: Maybe (Supplemental y n) where True
 	}
 
 	type Year (y :: Maybe Integer) = Directory {
-		authors is Map [ n :: Author <|return y|> <| return $ getAuthor n |> | n <- matches <| return $ GL "*" |>, <| return $ not (hidden n) |> ]
+		authors is Map [ n :: Author y (getAuthor n) | n <- matches (GL "*"), (not (hidden n)) ]
 	}
 
-	type Articles = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ] where <| return True |>
-	type Books    = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ]
-	type Media    = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ]
-	type Reports  = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ]
+	type Articles = Map [ y :: Year (getYear y) | y <- matches yearRE ] where True
+	type Books    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
+	type Media    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
+	type Reports  = Map [ y :: Year (getYear y) | y <- matches yearRE ]
 
 	type Library (articles :: [String]) = Directory {
 		database is "Database.papersdb" :: BinaryFile
@@ -94,9 +94,9 @@ import Language.Haskell.TH.Syntax
 		articles is "Articles" :: Maybe Articles
 	,   books is "Books" :: Maybe Books
 	,   media is "Media" :: Maybe Media
-	,   reports is "Reports" :: Maybe Reports where <| return True |>
+	,   reports is "Reports" :: Maybe Reports where True
 	,	library matches libraryRE :: Maybe Library <| allPaperNames articles books media reports |>
-	} where <| return True |>
+	} where True
 |]
 
 libraryRE = RE "Library.papers2|Library.papers"

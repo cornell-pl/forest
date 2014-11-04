@@ -64,6 +64,7 @@ runEnvQ m = do
 	env <- Reader.ask
 	lift $ Reader.runReaderT m (Map.map snd env)
 
+-- forces thunk variables in an arbitrary expression
 forceVarsDeltaQ :: Exp -> (Exp -> DeltaQ a) -> DeltaQ a
 forceVarsDeltaQ e f = do
 	let expvars = expVars e
@@ -73,9 +74,7 @@ forceVarsDeltaQ e f = do
 			Just (dv,Just (thunk,pat)) -> do
 				
 				let update env = Set.foldr replaceVar env (patPVars pat) where
-					replaceVar var env = case Map.lookup var env of
-						Just (dv,Just (thunk,pat))-> Map.insert var (dv,Nothing) env
-						Nothing -> env
+					replaceVar var env = Map.insert var (dv,Nothing) env
 				Reader.local update $ f $ UInfixE (AppE (VarE 'read) (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
 			otherwise -> f e
 	(Set.foldr forceVar f expvars) e

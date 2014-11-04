@@ -28,10 +28,10 @@ import Language.Forest.Draw
 import Language.Forest.FS.FSRep
 
 [forest| type Universal_d = Directory 
-             { ascii_files  is [ f :: TextFile     | f <- matches <| return $ GL "*" |>, <| return $ kind  f_att == AsciiK      |> ]
-             , binary_files is [ b :: BinaryFile   | b <- matches <| return $ GL "*" |>, <| return $ kind  b_att == BinaryK     |> ]
-             , directories  is [ d :: Universal_d  | d <- matches <| return $ GL "*" |>, <| return $ kind  d_att == DirectoryK  |> ]
-             , symLinks     is [ s :: SymLink      | s <- matches <| return $ GL "*" |>, <| return $ isJust (symLink s_att)     |> ]
+             { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
+             , binary_files is [ b :: BinaryFile   | b <- matches (GL "*"), (kind  b_att == BinaryK) ]
+             , directories  is [ d :: Universal_d  | d <- matches (GL "*"), (kind  d_att == DirectoryK) ]
+             , symLinks     is [ s :: SymLink      | s <- matches (GL "*"), (isJust (symLink s_att)) ]
              } |]
 
 [forest| type Universal_zip = Gzip (Tar Universal_d) |]

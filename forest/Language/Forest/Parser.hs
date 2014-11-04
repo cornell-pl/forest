@@ -37,6 +37,8 @@ module Language.Forest.Parser where
 import Language.Forest.Syntax as S
 
 import Control.Monad (msum,liftM)
+import Control.Monad.State (StateT(..))
+import qualified Control.Monad.State as State
 import Text.Parsec
 import qualified Text.Parsec.String as PS
 import Text.Parsec.Error
@@ -54,6 +56,14 @@ import qualified Language.Pads.Parser as PadsP
 import Language.Pads.Syntax
 
 type Parser = PS.Parser
+
+changeParsecState :: (Functor m,Monad m) => (u -> v) -> (v -> u) -> ParsecT s u m a -> ParsecT s v m a
+changeParsecState forward backward = mkPT . transform . runParsecT where
+	mapState f st = st { PP.stateUser = f (PP.stateUser st) }
+	mapReply f (PP.Ok a st err) = PP.Ok a (mapState f st) err
+	mapReply _ (PP.Error e) = PP.Error e
+	fmap3 = fmap . fmap . fmap
+	transform p st = fmap3 (mapReply forward) (p (mapState backward st))
 
 lexer :: PT.TokenParser ()
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-", ","],
@@ -94,8 +104,30 @@ integratePred ty predM = case predM of
   Nothing -> ty
   Just predE -> FConstraint (TH.VarP (mkName "this")) ty predE
 
-haskellExp :: Parser (TH.Exp)
-haskellExp = do 
+-- a regular Haskell expression in parenthesis to which we add a return
+haskellParenthesisExp :: Parser TH.Exp
+haskellParenthesisExp = (liftM (AppE (VarE 'return)) $ do
+	str <- parseParentherizedExp
+	case LHM.parseExp str of
+		Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
+		Right expTH -> return expTH
+	) <?> "haskell expression"
+
+parseParentherizedExp :: Parser String
+parseParentherizedExp = changeParsecState (const ()) (const (0::Int)) $ do
+	spaces
+	char '('
+	let go = (char '(' >>= \c -> PP.modifyState succ >> return c) <|> (char ')' >>= \c -> PP.modifyState pred >> return c) <|> anyChar
+	let stop = do
+		count <- PP.getState
+		if count == (0::Int) then char ')' else parserZero
+	str <- manyTill go stop
+	spaces
+	return str
+
+-- a more general monadic Haskell expression
+haskellMonadicExp :: Parser TH.Exp
+haskellMonadicExp = do 
    { reservedOp "<|"
    ; str <- manyTill anyChar (reservedOp "|>") 
    ; case LHM.parseExp str of
@@ -103,6 +135,21 @@ haskellExp = do
                  Right expTH -> return expTH
    } <?> "haskell expression"
 
+--parserExp :: Parser TH.Exp
+--parserExp = do
+--	str <- getInput
+--	case LHM.parseExp str of
+--		Left err -> parserZero
+--		Right expTH -> do
+--			setInput ""
+--			parserReturn expTH
+
+-- a non-parentherized literal Haskell expression to which we add a return
+literalExp :: Parser TH.Exp
+literalExp = liftM (AppE (VarE 'return)) PadsP.literal
+
+haskellExp :: Parser TH.Exp
+haskellExp = haskellParenthesisExp <|> haskellMonadicExp <|> literalExp
 
 forestTy :: Parser ForestTy
 forestTy =   directoryTy
@@ -213,11 +260,6 @@ fileBodyTy = do { id <- identifier
 
 forestArgR :: Parser TH.Exp
 forestArgR = haskellExp
-          <|> literalExp
-
--- adds a return to a literal expression
-literalExp :: Parser TH.Exp
-literalExp = liftM (AppE (VarE 'return)) PadsP.literal
 
 forestArg :: Parser TH.Exp
 forestArg = forestArgR <|> parens forestArgR
@@ -406,5 +448,3 @@ test2 = Language.Forest.Parser.parse forestDecls filename line column input
               line = 0
               column = 0
               input = "type Grads_d = Directory  { classes is  [: aclass :: Class_d (: \"07\"   :)  | aclass <- matches (RE \"classof[0-9][0-9]\") :] }"
-
-

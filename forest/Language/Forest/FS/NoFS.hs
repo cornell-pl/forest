@@ -199,7 +199,7 @@ instance FSRep NoFS where
 		return result
 		
 	stepPathInTree _ path rel = return $ path </> rel
-	canonalizePathWithTree path _ = return $ canonalizePath path
+	canonalizePathWithTree path _ = forestIO $ canonalizePath path
 	
 	showFSTree NoFSTree = "NoFSTree"
 	showFSTree VirtualNoFSTree = "VirtualNoFSTree"
