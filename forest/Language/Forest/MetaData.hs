@@ -402,9 +402,9 @@ sameCanonicalFullPathInTree md1 md2 tree = do
 	fmd2 <- get_fmd_header md2
 	let path1 = fullpath (fileInfo fmd1)
 	let path2 = fullpath (fileInfo fmd2)
-	dskpath1 <- canonalizePathInTree path1 tree
-	dskpath2 <- canonalizePathInTree path2 tree
-	return $ dskpath1 == dskpath2
+	canpath1 <- canonalizePathWithTree path1 tree
+	canpath2 <- canonalizePathWithTree path2 tree
+	return $ canpath1 == canpath2
 
 mergeForestErrs :: Forest_err -> Forest_err -> Forest_err
 mergeForestErrs err1 err2 = Forest_err { numErrors = numErrors err1 + numErrors err2, errorMsg = mergeErrors (errorMsg err1) (errorMsg err2) }

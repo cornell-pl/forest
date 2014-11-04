@@ -158,7 +158,7 @@ loadConstraint treeE pat predE load = forceVarsEnvQ predE $ \predE' -> do
 
 loadSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
 loadSymLink pathE oldtreeE dfE treeE getMDE = do
-  return $ appE5 (VarE 'doLoadSymLink) pathE oldtreeE dfE treeE getMDE
+  return $ appE4 (VarE 'doLoadSymLink) pathE dfE treeE getMDE
 
 loadArchive :: [ArchiveType] -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
 loadArchive archtype ty pathE oldtreeE dfE treeE getMDE = do

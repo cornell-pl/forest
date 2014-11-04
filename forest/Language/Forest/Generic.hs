@@ -65,22 +65,7 @@ type TFS fs = ForestO fs
 
 class (FSRep fs) => TransactionalForest fs where
 	
-	-- if we allow incremental data reuse among transactions, we can't allow Forest data to escape the monad
-	atomically :: Pure a => Transaction fs a -> IO a
-	
-	atomically_ :: Transaction fs () -> IO ()
-	atomically_ = atomically
-
--- | A constraint to distinguish Forest data that can't escape transactions from regular data
-type Pure a = Purity a ~ TRUE
-
--- | A type-level predicate to determine purity
-type family Purity a :: BOOL
-type instance Purity () = TRUE
--- TODO: define the remaining instances... and an automatic generator
-
--- type-level booleans
-data BOOL = TRUE | FALSE
+	atomically :: Transaction fs a -> IO a
 
 -- for transaction repair we will need a DSL for transactions, so that we can inspect their structure and replace load/store operations by incremental variants
 data Transaction fs a where

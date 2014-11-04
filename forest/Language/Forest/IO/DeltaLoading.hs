@@ -88,7 +88,7 @@ doLoadDeltaFile1 isEmptyDArg arg' mpath path' oldtree df tree' ((rep_thunk::Fore
 doLoadDeltaArchive :: (ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) rep,MData NoCtx (ForestI fs) md,ForestMD fs md,MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Eq rep,Eq md,FSRep fs) =>
 	[ArchiveType] -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> OldData fs (ForestFSThunkI fs rep) (ForestFSThunkI fs (Forest_md fs,md))
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md))
-	-> (FilePath -> FilePath -> OldData fs rep md -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md))
+	-> (ForestI fs FilePath -> FilePath -> OldData fs rep md -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs rep),SValueDelta (ForestFSThunkI fs (Forest_md fs,md)))
 doLoadDeltaArchive exts mpath path' oldtree df tree' ((rep_thunk,md_thunk),getMD) load loadD = do
 	path <- inside mpath

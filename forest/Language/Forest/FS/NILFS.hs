@@ -71,11 +71,8 @@ instance Incremental (IncForest NILFS) IORef IO where
 	
 	world = NILFSForestO . inside . adaptonInner
 	
-	-- the forestdir needs to be a directory outside of the logged filesystem
-	data IncrementalArgs (IncForest NILFS) = NILFSForestConfig { rootPath :: FilePath, forestDir :: FilePath }
+	runIncremental m = getNILFSCfg >>= \cfg -> runForest cfg m
 	
-	runIncremental = runNILFSForest
-
 instance InLayer Outside (IncForest NILFS) IORef IO where
 	inL = NILFSForestO . Adapton.Outer
 	{-# INLINE inL #-}
@@ -100,6 +97,11 @@ instance Eq (FSTree NILFS) where
 -- FSTree operations can be treated as pure, since NILFS snapshots are stable throughout the run of a program; although in reality old anpshots may be purged?
 -- our current Forest state is stored in an IORef, so it is not thread-safe!
 instance FSRep NILFS where
+	
+	-- the forestdir needs to be a directory outside of the logged filesystem
+	data ForestCfg NILFS = NILFSForestConfig { rootPath :: FilePath, forestDir :: FilePath }
+	
+	runForest = runNILFSForest
 	
 	forestIO = inside . liftAdaptonNILFS . inL . liftIO where
 		liftAdaptonNILFS :: Inside Adapton IORef IO a -> Inside (IncForest NILFS) IORef IO a
@@ -136,10 +138,27 @@ instance FSRep NILFS where
 				let result = home </> ".avfs" </> makeRelative "/" (mountpoint </> makeRelative rootPath path)
 				return $ {-debug ("pathInTree: "++show path ++ " " ++ show (snapshot,mountpoint,rootPath) ++ " -> " ++ show result) -} result
 			Nothing -> forestIO (mountSnapshot snapshot) >> pathInTree path tree
+	pathFromTree path tree@(NILFSTree snapshot time) = do
+		mb <- forestIO $ WeakTable.lookup liveSnapshots snapshot
+		case mb of
+			Just ref -> do
+				(mountpoint,_) <- forestIO $ readIORef ref
+				(forestDir,((rootPath,rootFolder),device)) <- forestIO $ readIORef forestData
+				return $ rootPath </> makeRelative mountpoint path
+			Nothing -> forestIO (mountSnapshot snapshot) >> pathFromTree path tree
+	pathFromTree path tree@(VirtualNILFSTree snapshot time) = do
+		mb <- forestIO $ WeakTable.lookup liveSnapshots snapshot
+		case mb of
+			Just ref -> do
+				(mountpoint,_) <- forestIO $ readIORef ref
+				(forestDir,((rootPath,rootFolder),device)) <- forestIO $ readIORef forestData
+				home <- forestIO $ getHomeDirectory
+				return $ rootPath </> makeRelative (home </> ".avfs" </> makeRelative "/" mountpoint) path
+			Nothing -> forestIO (mountSnapshot snapshot) >> pathFromTree path tree
 	stepPathInTree tree path rel = do
-		cpath <- canonalizePathInTree path tree
+		cpath <- canonalizePathWithTree path tree
 		let newpath = path </> rel
-		cnewpath <- canonalizePathInTree newpath tree
+		cnewpath <- canonalizePathWithTree newpath tree
 		if cpath `isParentPathOf` cnewpath
 			then return newpath 
 			else error $ "NILFS incremental loading forbids non-tree-like filesystems" ++ show cpath ++ " " ++ show newpath
@@ -204,15 +223,10 @@ gmemoNonRecNILFSU' ctx (NewGenericQ f) tbl = NewGenericQ $ \arg -> do
 	lkp <- debug ("memo search "++show tyk) $ inL $ liftIO $ WeakTable.lookup tbl tyk
 	case lkp of
 		Nothing -> do
-			let finalizethunk = WeakTable.finalize tbl tyk
 			NILFSU thunk <- f arg
-			let thunkmemo = addFinalizerU thunk (liftIO finalizethunk)
 			inL $ liftIO $ WeakTable.insertWithMkWeak tbl mkWeak tyk thunk
-			debug (show tyk ++" => "++show thunk) $ return $ NILFSU thunkmemo
-		Just thunk -> debug ("memo hit "++show tyk ++ " " ++ show thunk) $ do
-			let finalizethunk = WeakTable.finalize tbl tyk
-			let thunkmemo = addFinalizerU thunk (liftIO finalizethunk)
-			return $ NILFSU thunkmemo
+			debug (show tyk ++" => "++show thunk) $ return $ NILFSU thunk
+		Just thunk -> debug ("memo hit "++show tyk ++ " " ++ show thunk) $ return $ NILFSU thunk
 
 instance ForestInput NILFS FSThunk Inside where
 	fsref v = do
@@ -266,8 +280,7 @@ fsforceIO t = do
 	removeDependentThunk oldtrees t
 	
 	writeIORef (snapshots t) []
-	cfg <- getNILFSCfg
-	v <- runNILFSForest cfg $ Inc.getOutside $ adaptonThunk t
+	v <- runIncremental $ Inc.getOutside $ adaptonThunk t
 --	putStrLn $ "finished forcing " ++ show (hashUnique $ Adapton.idNM $ Adapton.metaL $ adaptonThunk t)
 	return v
 
@@ -408,7 +421,7 @@ createForestData (NILFSForestConfig rootPathFolder forestDir) = do
 	
 	writeIORef forestData (forestDir,((rootPath,rootFolder),rootDevice))
 
-getNILFSCfg :: IO (IncrementalArgs (IncForest NILFS))
+getNILFSCfg :: IO (ForestCfg NILFS)
 getNILFSCfg = do
 	(forestDir,((rootPath,rootFolder),rootDevice)) <- readIORef forestData
 	return $ NILFSForestConfig (rootPath </> rootFolder) forestDir

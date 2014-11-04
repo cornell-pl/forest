@@ -190,14 +190,18 @@ instance FSRep fs => Eq (ForestICThunk fs l a) where
 type ForestO fs = Outside (IncForest fs) IORef IO
 type ForestI fs = Inside (IncForest fs) IORef IO
 
-type ForestCfg fs = IncrementalArgs (IncForest fs)
+{-# NOINLINE forestCfg #-}
+forestCfg :: IORef (ForestCfg fs)
+forestCfg = unsafePerformIO $ newIORef (error "no initial Forest cfg")
 
 -- | Class that implements filesystem-specific operations
 class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput fs ICThunk Outside,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside,ForestInput fs FSThunk Inside,Eq (FSTree fs),DeepTypeable fs,Incremental (IncForest fs) IORef IO) => FSRep (fs :: FS) where
 	
+	-- some configuration parameters, such as the home forest directory
+	data ForestCfg fs :: *
+	
 	-- runs a Forest computation (includes the FS monitor, incremental computation, etc)
 	runForest :: ForestCfg fs -> ForestO fs a -> IO a
-	runForest = runIncremental
 	
 	-- we don't want to make the Forest monads instances of @MonadIO@ to prevent users from using it
 	forestIO :: ForestLayer fs l => IO a -> ForestL fs l a
@@ -237,6 +241,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	-- translates a tree filepath to an on-disk filepath
 	pathInTree :: ForestLayer fs l => FilePath -> FSTree fs -> ForestL fs l OnDisk
 	-- translates an on-disk filepath to a tree filepath
+	-- optional: if the FS does not support this functionality, this can be undefined provided a specialized instance for @canonalizePathWithTree@
 	pathFromTree :: ForestLayer fs l => OnDisk -> FSTree fs -> ForestL fs l FilePath
 	-- appends a relative path to an original tree path
 	stepPathInTree :: ForestLayer fs l => FSTree fs -> FilePath -> FilePath -> ForestL fs l FilePath
@@ -253,8 +258,9 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	doesExistInTree path tree = pathInTree path tree >>= \diskpath -> do
 		isDir <- forestIO $ doesDirectoryExist diskpath
 		if isDir then return True else forestIO $ doesFileExist diskpath
-	canonalizePathInTree :: ForestLayer fs l => FilePath -> FSTree fs -> ForestL fs l OnDisk
-	canonalizePathInTree path tree = forestIO . canonalizePath =<< pathInTree path tree
+	-- returns a canonical version of a filepath according for a given tree
+	canonalizePathWithTree :: ForestLayer fs l => FilePath -> FSTree fs -> ForestL fs l FilePath
+	canonalizePathWithTree path tree = flip pathFromTree tree =<< forestIO . canonalizePath =<< pathInTree path tree
 
 	showFSTree :: FSTree fs -> String
 	-- | is a tree more recent than a given point in time?

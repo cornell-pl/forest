@@ -78,7 +78,7 @@ finishTransaction starttime writes = do
 	mb <- modifyMVar runningTransactions (\xs -> return (List.delete starttime xs,lastMay xs))
 	case mb of
 		Just oldt -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.filterWithKey (\t _ -> t > oldt) $ Map.insert now writes m)
-		Nothing -> return ()
+		Nothing -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.insert now writes m)
 	error "perform actual commit!"
 
 {-# NOINLINE noFSLock #-}
@@ -121,7 +121,7 @@ modifyNoFSTreeDeltas f = State.modify $ \((x,td),z) -> ((x,f td),z)
 
 atomicallyNoFS :: Transaction NoFS a -> IO a
 atomicallyNoFS t = do
-	let try = runIncremental NoFSIncrementalArgs $ do
+	let try = runIncremental $ do
 		time <- forestIO $ startNoFSTransaction
 		x <- intepretNoFSTransaction t
 		(reads,td) <- getNoFSChanges
@@ -146,9 +146,7 @@ instance Incremental (IncForest NoFS) IORef IO where
 
 	world = NoFSForestO . State.mapStateT inside . runNoFSForestI
 
-	data IncrementalArgs (IncForest NoFS) = NoFSIncrementalArgs
-
-	runIncremental _ m = runLazyNonIncOuter $ State.evalStateT (runNoFSForestO m) ((Set.empty,Map.empty),Set.empty)
+	runIncremental m = runLazyNonIncOuter $ State.evalStateT (runNoFSForestO m) ((Set.empty,Map.empty),Set.empty)
 
 instance InLayer Outside (IncForest NoFS) IORef IO where
 	inL = NoFSForestO . lift . LazyNonIncOuter
@@ -199,7 +197,9 @@ instance FSRep NoFS where
 		home <- forestIO $ getHomeDirectory
 		let result = home </> ".avfs" </> makeRelative "/" ondisk
 		return result
+		
 	stepPathInTree _ path rel = return $ path </> rel
+	canonalizePathWithTree path _ = return $ canonalizePath path
 	
 	showFSTree NoFSTree = "NoFSTree"
 	showFSTree VirtualNoFSTree = "VirtualNoFSTree"

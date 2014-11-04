@@ -69,33 +69,33 @@ import Language.Haskell.TH.Syntax
 	type Paper (y :: Maybe Integer) (n :: Maybe String) = BinaryFile where <| return $ isPaperOf (fullpath this_att) y n |>
 
     type Supplemental (y :: Maybe Integer) (n :: Maybe String) = Directory {
-		supplementalFiles is Map [ p :: Paper <|return y|> <|return n|> | p <- matches <| return $ GL "*" |>, <| return $ isNotHiddenFile p p_att |> ] 
+		supplementalFiles is Map [ p :: Paper y n | p <- matches <| return $ GL "*" |>, <| return $ isNotHiddenFile p p_att |> ] 
 	} 
 
 	type Author (y :: Maybe Integer) (n :: Maybe String) = Directory {
-		authorPapers is Map [ p :: Paper <|return y|> <|return n|> | p <- matches <| return $ GL "*" |>, <| return $ isNotHiddenFile p p_att |> ] 
-	,   supplemental is <| return "Supplemental" |> :: Maybe (Supplemental <|return y|> <|return n|>) where <| return True |>
+		authorPapers is Map [ p :: Paper y n | p <- matches <| return $ GL "*" |>, <| return $ isNotHiddenFile p p_att |> ] 
+	,   supplemental is "Supplemental" :: Maybe (Supplemental y n) where <| return True |>
 	}
 
 	type Year (y :: Maybe Integer) = Directory {
 		authors is Map [ n :: Author <|return y|> <| return $ getAuthor n |> | n <- matches <| return $ GL "*" |>, <| return $ not (hidden n) |> ]
 	}
 
-	type Articles = Map [ y :: Year <| return $ getYear y |> | y <- matches <| return yearRE |> ] where <| return True |>
-	type Books    = Map [ y :: Year <| return $ getYear y |> | y <- matches <| return yearRE |> ]
-	type Media    = Map [ y :: Year <| return $ getYear y |> | y <- matches <| return yearRE |> ]
-	type Reports  = Map [ y :: Year <| return $ getYear y |> | y <- matches <| return yearRE |> ]
+	type Articles = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ] where <| return True |>
+	type Books    = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ]
+	type Media    = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ]
+	type Reports  = Map [ y :: Year <| return $ getYear y |> | y <- matches yearRE ]
 
 	type Library (articles :: [String]) = Directory {
-		database is <| return "Database.papersdb" |> :: BinaryFile
+		database is "Database.papersdb" :: BinaryFile
 	}
 
 	type Papers2 = Directory {
-		articles is <| return "Articles" |> :: Maybe Articles
-	,   books is <| return "Books" |> :: Maybe Books
-	,   media is <| return "Media" |> :: Maybe Media
-	,   reports is <| return "Reports" |> :: Maybe Reports where <| return True |>
-	,	library matches <| return libraryRE |> :: Maybe Library <| allPaperNames articles books media reports |>
+		articles is "Articles" :: Maybe Articles
+	,   books is "Books" :: Maybe Books
+	,   media is "Media" :: Maybe Media
+	,   reports is "Reports" :: Maybe Reports where <| return True |>
+	,	library matches libraryRE :: Maybe Library <| allPaperNames articles books media reports |>
 	} where <| return True |>
 |]
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 module Examples.Universal where
 import Language.Pads.Padsc hiding (numErrors)
 import Language.Forest.Class
@@ -8,6 +8,10 @@ import Language.Forest.Graph
 import Language.Forest.Pretty
 import Language.Forest.FS.NILFS
 import Data.Maybe
+import Data.DeepTypeable
+import Data.IORef
+import Control.Monad.Incremental
+import Language.Haskell.TH.Syntax
 
 import System.IO.Unsafe (unsafePerformIO)
 import System.Posix.Files
@@ -21,12 +25,13 @@ import Control.Monad.IO.Class
 import Language.Forest.MetaData
 --import Language.Forest.Show
 import Language.Forest.Draw
+import Language.Forest.FS.FSRep
 
 [forest| type Universal_d = Directory 
-             { ascii_files  is [ f :: TextFile     | f <- matches <|GL "*"|>, <| kind  f_att == AsciiK      |> ]
-             , binary_files is [ b :: BinaryFile   | b <- matches <|GL "*"|>, <| kind  b_att == BinaryK     |> ]
-             , directories  is [ d :: Universal_d  | d <- matches <|GL "*"|>, <| kind  d_att == DirectoryK  |> ]
-             , symLinks     is [ s :: SymLink      | s <- matches <|GL "*"|>, <| isJust (symLink s_att)     |> ]
+             { ascii_files  is [ f :: TextFile     | f <- matches <| return $ GL "*" |>, <| return $ kind  f_att == AsciiK      |> ]
+             , binary_files is [ b :: BinaryFile   | b <- matches <| return $ GL "*" |>, <| return $ kind  b_att == BinaryK     |> ]
+             , directories  is [ d :: Universal_d  | d <- matches <| return $ GL "*" |>, <| return $ kind  d_att == DirectoryK  |> ]
+             , symLinks     is [ s :: SymLink      | s <- matches <| return $ GL "*" |>, <| return $ isJust (symLink s_att)     |> ]
              } |]
 
 [forest| type Universal_zip = Gzip (Tar Universal_d) |]
@@ -39,23 +44,23 @@ universal_zip_root' = "/media/hpacheco/nilfs/judy2.tar.gz"
 universal_zip_Errors :: FSRep fs => ((Universal_zip fs,Universal_zip_md fs),LoadInfo fs) -> ForestO fs ()
 universal_zip_Errors ((rep,md),_) = do
 	err <- get_errors md
-	liftIO $ print (numErrors err)
-	liftIO $ print (errorMsg err)
+	forestIO $ print (numErrors err)
+	forestIO $ print (errorMsg err)
 
-universal_zip :: (Typeable fs,FSRep fs,Eq (FSTree fs)) => Proxy fs -> ForestO fs ()
-universal_zip (fs :: Proxy fs) = do
-	dta@(repmd::(Universal_zip fs,Universal_zip_md fs),_) <- load () universal_zip_root
+universal_zip :: ForestO NILFS ()
+universal_zip = do
+	dta@(repmd::(Universal_zip NILFS,Universal_zip_md NILFS),_) <- load () universal_zip_root
 	universal_zip_Errors dta
-	forestDrawToPDF fs repmd $ "/home/hpacheco/1.pdf"
+	forestDrawToPDF proxyNILFS repmd $ "/home/hpacheco/1.pdf"
 	 
 	-- reload
-	reload () universal_zip_root' dta
+	reload universal_zip_root' dta
 	universal_zip_Errors dta
-	forestDrawToPDF fs repmd $ "/home/hpacheco/2.pdf"
+	forestDrawToPDF proxyNILFS repmd $ "/home/hpacheco/2.pdf"
 	
 	return ()
 
-universal_zip_NILFS = runForest (NILFSForestConfig "/media/hpacheco/nilfs/" myDir) $ universal_zip Proxy
+universal_zip_NILFS = runForest (NILFSForestConfig "/media/hpacheco/nilfs/" myDir) $ universal_zip
 --mkPrettyInstance ''Universal_d
 --mkPrettyInstance ''Universal_d_md
 

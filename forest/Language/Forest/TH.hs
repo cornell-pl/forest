@@ -1,4 +1,4 @@
-{-# LANGUAGE DoAndIfThenElse, TemplateHaskell, TupleSections #-}
+{-# LANGUAGE ViewPatterns, DoAndIfThenElse, TemplateHaskell, TupleSections #-}
 
 module Language.Forest.TH where
 	
@@ -111,6 +111,7 @@ getCompFieldExternalName explicitName externalE = case explicitName of
 	Just str -> str
 	Nothing -> case externalE of
 		VarE name -> nameBase name
+		AppE (VarE ((=='return) -> True)) (VarE name) -> nameBase name
 	
 -- | Gets all the variables used in expressions inside Forest specifications, with care for variables defined by Forest
 forestTyVars :: ForestTy -> Set Name

@@ -151,7 +151,7 @@ loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
 		(loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE')
 	SymLink -> checkUnevaluated "symlink" treeE' repmdE
 		(loadSymLink pathE' treeE dfE treeE')
-		(loadDeltaSymLink pathE dpathE dfE treeE')
+		(loadDeltaSymLink pathE dpathE treeE dfE treeE')
 	FConstraint pat descTy predE -> loadDeltaConstraint pat repmdE predE $ \newrepmdE -> loadDeltaE descTy pathE treeE newrepmdE dpathE dfE treeE'	
 		--checkUnevaluated "constraint" treeE' repmdE
 --		(\newGetMDE -> loadConstraint treeE' pat predE $ loadE descTy pathE' treeE dfE treeE' newGetMDE)
@@ -196,13 +196,13 @@ loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE' repmdE = do
 	let (newGetMDE, newGetMDP) = genPE newGetMDName
 	let (newDPathE, newDPathP) = genPE newDPathName
 	let (newRepMdE, newRepMdP) = genPE newRepMdName
-	rhsE <- liftM (LamE [newPathP,newGetMDP,newdfP,newTreeP]) $ runEnvQ $ loadE ty newPathE newTreeE newdfE newTreeE' newGetMDE
+	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP,newdfP,newTreeP']) $ runEnvQ $ loadE ty newPathE newTreeE newdfE newTreeE' newGetMDE
 	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP']) $ loadDeltaE ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE'
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
-	return $ appE8 (VarE 'doLoadDeltaArchive) exts pathE dpathE dfE treeE' repmdE rhsE rhsDE
+	return $ appE9 (VarE 'doLoadDeltaArchive) exts pathE dpathE treeE dfE treeE' repmdE rhsE rhsDE
 
-loadDeltaSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
-loadDeltaSymLink pathE dpathE dfE treeE' repmdE = return $ appE5 (VarE 'doLoadDeltaSymLink) pathE dpathE dfE treeE' repmdE
+loadDeltaSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
+loadDeltaSymLink pathE dpathE treeE dfE treeE' repmdE = return $ appE6 (VarE 'doLoadDeltaSymLink) pathE dpathE treeE dfE treeE' repmdE
 
 loadDeltaMaybe :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
 loadDeltaMaybe forestTy treeE pathE dpathE dfE treeE' repmdE = do 

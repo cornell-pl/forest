@@ -65,6 +65,8 @@ getCompName explicitName externalE = case explicitName of
 	Just str -> mkName str
 	Nothing -> case externalE of
 		VarE name -> name
+		AppE (VarE ((=='return) -> True)) (VarE name) -> name
+		e -> error $ "getCompName: " ++ show e
 
 getFileAttNames explicitName externalE = case explicitName of
 	Just str ->
@@ -73,6 +75,10 @@ getFileAttNames explicitName externalE = case explicitName of
 		in (mkName str, VarP getMDName,VarE getMDName,attName)
 	Nothing -> case externalE of
 		VarE name -> 
+			let getMDName = mkName ((nameBase name) ++"_getMD")
+			    attName = mkName ((nameBase name) ++"_att")			
+			in (name, VarP getMDName,VarE getMDName,attName)
+		AppE (VarE ((=='return) -> True)) (VarE name) ->
 			let getMDName = mkName ((nameBase name) ++"_getMD")
 			    attName = mkName ((nameBase name) ++"_att")			
 			in (name, VarP getMDName,VarE getMDName,attName)
@@ -90,6 +96,10 @@ getAttMDPatFromExp externalE = case externalE of
 	let getMDName = mkName ((nameBase name) ++"_getMD")
 	    attName = mkName ((nameBase name) ++"_att")
 	in (VarE getMDName,TildeP (TupP [VarP name,ViewP (VarE 'splitMD) $ TupP [VarP getMDName,VarP attName] ]))
+  AppE (VarE ((=='return) -> True)) (VarE name) ->
+	let getMDName = mkName ((nameBase name) ++"_getMD")
+	    attName = mkName ((nameBase name) ++"_att")
+	in (VarE getMDName,TildeP (TupP [VarP name,ViewP (VarE 'splitMD) $ TupP [VarP getMDName,VarP attName] ]))
   otherwise -> error "Forest: Couldn't convert file expression to pattern; please supply an explicit name with 'name as exp' form"
 
 getAttPat explicitName externalE = 
@@ -99,6 +109,7 @@ getAttPat explicitName externalE =
 
 getAttPatFromExp externalE = case externalE of
   VarE name -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_att"))])
+  AppE (VarE ((=='return) -> True)) (VarE name) -> TildeP (TupP[VarP name, VarP (mkName ((nameBase name) ++"_att"))])
   otherwise -> error "Forest: Couldn't convert file expression to pattern; please supply an explicit name with 'name as exp' form"
 
 getRepMDPat explicitName externalE = 

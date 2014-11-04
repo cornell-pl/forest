@@ -170,10 +170,12 @@ zipTy = do { reserved "Zip"
              } <?> "Forest Zip type"
 
 bzipTy :: Parser ForestTy
-bzipTy = do { reserved "Bzip"
-             ; ty <- forestTy
-             ; return (Archive [Bzip] ty)
-             } <?> "Forest Bzip type"
+bzipTy = (do
+	reserved "Bzip"
+	ty <- forestTy
+	case ty of
+		Archive archtype descTy -> return $ Archive (archtype++[Bzip]) descTy
+		otherwise -> return (Archive [Bzip] ty)) <?> "Forest Bzip type"
 
 rarTy :: Parser ForestTy
 rarTy = do { reserved "Rar"
@@ -210,7 +212,12 @@ fileBodyTy = do { id <- identifier
                 }
 
 forestArgR :: Parser TH.Exp
-forestArgR = PadsP.expression
+forestArgR = haskellExp
+          <|> literalExp
+
+-- adds a return to a literal expression
+literalExp :: Parser TH.Exp
+literalExp = liftM (AppE (VarE 'return)) PadsP.literal
 
 forestArg :: Parser TH.Exp
 forestArg = forestArgR <|> parens forestArgR
