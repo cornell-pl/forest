@@ -3,6 +3,7 @@ Incremental Forest
 
 Requirements:
 *	GHC 7.8.3
+*	avfs (`sudo apt-get install avfs` on Ubuntu) for compressed archives support
 *	nilfs-utils (https://github.com/konis/nilfs-utils/tree/diff-v2) with patched Linux kernel (https://github.com/konis/nilfs2/tree/diffapi-v2) for log-based filesystem support
 
 Dependencies:

@@ -30,10 +30,11 @@ import System.CPUTime
 
 
 class (Data rep, PadsMD md) => Pads rep md | rep -> md  where
-  def :: rep
-  def = gdef
-  parsePP  :: PadsParser(rep,md)
-  printFL :: (rep,md) -> FList
+	def :: rep
+	def = gdef
+	defaultMd :: rep -> md
+	parsePP  :: PadsParser(rep,md)
+	printFL :: (rep,md) -> FList
 
 parseS   :: Pads rep md => String -> ((rep, md), String) 
 parseS cs = parseStringInput parsePP cs 
@@ -56,10 +57,11 @@ printFile filepath r = B.writeFile filepath (printBS r)
 
 
 class (Data rep, PadsMD md) => Pads1 arg rep md | rep->md, rep->arg where
-  def1 :: arg -> rep
-  def1 =  \_ -> gdef
-  parsePP1  :: arg -> PadsParser(rep,md)
-  printFL1 :: arg -> (rep,md) -> FList
+	def1 :: arg -> rep
+	def1 =  \_ -> gdef
+	defaultMd1 :: arg -> rep -> md
+	parsePP1  :: arg -> PadsParser(rep,md)
+	printFL1 :: arg -> (rep,md) -> FList
 
 parseS1 :: Pads1 arg rep md => arg -> String -> ((rep, md), String) 
 parseS1 arg cs = parseStringInput (parsePP1 arg) cs

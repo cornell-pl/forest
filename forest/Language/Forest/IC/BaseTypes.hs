@@ -1,3 +1,5 @@
+{-# LANGUAGE ConstraintKinds, UndecidableInstances, FlexibleContexts, GeneralizedNewtypeDeriving, TemplateHaskell, QuasiQuotes, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable, TypeSynonymInstances,FlexibleInstances #-}
+
 {-
 ** *********************************************************************
 *                                                                      *
@@ -29,54 +31,28 @@
 ************************************************************************
 -}
 
-module Language.Forest.Quote
-    (forest,iforest)
-    where
+module Language.Forest.IC.BaseTypes where
 
-import Prelude hiding (exp, init)
-import System.IO.Unsafe (unsafePerformIO)
+import Data.DeepTypeable
+import Language.Haskell.TH.Syntax
+import Language.Forest.Pure.Generic
+import Language.Forest.Pure.MetaData
+import Language.Forest.Quote
+import Language.Forest.Manifest
+import Language.Pads.Padsc 
+import Data.WithClass.MData
+import Language.Forest.FS.FSRep
+import Language.Forest.IC.ICRep
 
-import Language.Haskell.TH
-import Language.Haskell.TH.Quote (QuasiQuoter(..))
+import Data.IORef
+import Control.Monad.Incremental
 
-import Language.Forest.Pure.CodeGen as Pure
-import Language.Forest.IC.CodeGen as IC
-import qualified Language.Forest.Parser as P
-
-import Language.Forest.Syntax
-
-parse :: Monad m
-      => ForestMode -> Loc
-      -> P.Parser a
-      -> String
-      -> m a
-parse mode loc p input = let
-  fileName = loc_filename loc
-  (line,column) = loc_start loc
-  in case P.parse mode p fileName line column input of
-       Left err -> unsafePerformIO $ fail $ show err
-       Right x  -> return x
+[iforest|
+  type TextFile   = File Text
+  type BinaryFile = File Binary
+  type AnyFile    = File Binary
+|]
 
 
-fparse1 mode p pToQ s
-    = do  loc <- location
-          x <- Language.Forest.Quote.parse mode loc p s
-          pToQ x
 
-fquasiquote1 mode p = QuasiQuoter
-	(error "parse expression")
-	(error "parse pattern")
-	(error "parse type")
-	(fparse1 mode p $ make_decls mode)
 
-make_decls PureForest = Pure.make_forest_declarations
-make_decls ICForest = IC.make_forest_declarations
-
--- | A quasi-quoter for Forest with pure functional data structures
-forest :: QuasiQuoter
-forest  = fquasiquote1 PureForest P.forestDecls
-
--- | A quasi-quoter for Forest with IC-specific data structures
-iforest :: QuasiQuoter
-iforest  = fquasiquote1 ICForest P.forestDecls
-    

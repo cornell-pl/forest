@@ -55,7 +55,7 @@ import Data.Maybe
 import qualified Language.Pads.Parser as PadsP
 import Language.Pads.Syntax
 
-type Parser = PS.Parser
+type Parser = Parsec String ForestMode
 
 changeParsecState :: (Functor m,Monad m) => (u -> v) -> (v -> u) -> ParsecT s u m a -> ParsecT s v m a
 changeParsecState forward backward = mkPT . transform . runParsecT where
@@ -65,7 +65,7 @@ changeParsecState forward backward = mkPT . transform . runParsecT where
 	fmap3 = fmap . fmap . fmap
 	transform p st = fmap3 (mapReply forward) (p (mapState backward st))
 
-lexer :: PT.TokenParser ()
+lexer :: PT.TokenParser u
 lexer = PT.makeTokenParser (haskellStyle { reservedOpNames = ["=", "(:", ":)", "<=>", "{", "}", "::", "<|", "|>", "|", "->", "[:", ":]", "<-", ","],
                                            reservedNames   = ["is", "File", "Directory", "type", "matches", "Maybe", "as", "constrain", "where"]})
 
@@ -106,28 +106,33 @@ integratePred ty predM = case predM of
 
 -- a regular Haskell expression in parenthesis to which we add a return
 haskellParenthesisExp :: Parser TH.Exp
-haskellParenthesisExp = (liftM (AppE (VarE 'return)) $ do
+haskellParenthesisExp = (do
+	mode <- PP.getState
 	str <- parseParentherizedExp
 	case LHM.parseExp str of
 		Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
-		Right expTH -> return expTH
+		Right expTH -> case mode of
+			PureForest -> return expTH
+			ICForest -> return $ (AppE (VarE 'return))  expTH
 	) <?> "haskell expression"
 
 parseParentherizedExp :: Parser String
-parseParentherizedExp = changeParsecState (const ()) (const (0::Int)) $ do
+parseParentherizedExp = do
+	mode <- getState
+	changeParsecState (const mode) (const (0::Int)) $ do
 	spaces
-	char '('
+	reservedOp "("
 	let go = (char '(' >>= \c -> PP.modifyState succ >> return c) <|> (char ')' >>= \c -> PP.modifyState pred >> return c) <|> anyChar
 	let stop = do
 		count <- PP.getState
-		if count == (0::Int) then char ')' else parserZero
+		if count == (0::Int) then reservedOp ")" else parserZero
 	str <- manyTill go stop
 	spaces
 	return str
 
--- a more general monadic Haskell expression
-haskellMonadicExp :: Parser TH.Exp
-haskellMonadicExp = do 
+-- a more general forest escaped Haskell expression
+haskellForestEscapedExp :: Parser TH.Exp
+haskellForestEscapedExp = do 
    { reservedOp "<|"
    ; str <- manyTill anyChar (reservedOp "|>") 
    ; case LHM.parseExp str of
@@ -135,21 +140,18 @@ haskellMonadicExp = do
                  Right expTH -> return expTH
    } <?> "haskell expression"
 
---parserExp :: Parser TH.Exp
---parserExp = do
---	str <- getInput
---	case LHM.parseExp str of
---		Left err -> parserZero
---		Right expTH -> do
---			setInput ""
---			parserReturn expTH
-
 -- a non-parentherized literal Haskell expression to which we add a return
 literalExp :: Parser TH.Exp
-literalExp = liftM (AppE (VarE 'return)) PadsP.literal
+literalExp = do
+	mode <- PP.getState
+	let literal = changeParsecState (const mode) (const ()) PadsP.literal
+	mode <- PP.getState
+	case mode of
+		PureForest -> literal
+		ICForest -> liftM (AppE (VarE 'return)) literal
 
 haskellExp :: Parser TH.Exp
-haskellExp = haskellParenthesisExp <|> haskellMonadicExp <|> literalExp
+haskellExp = haskellParenthesisExp <|> haskellForestEscapedExp <|> literalExp
 
 forestTy :: Parser ForestTy
 forestTy =   directoryTy
@@ -427,24 +429,16 @@ replaceName str ty = case ty of
 
 
 
-parse :: PS.Parser a -> SourceName -> Line -> Column -> String -> Either ParseError a
-parse p fileName line column input 
-  = PP.parse (do {  setPosition (newPos fileName line column)
-                  ; whiteSpace
-                  ; x <- p
-                  ; eof
-                  ; return x
-                  }) fileName input
+parse :: ForestMode -> Parser a -> SourceName -> Line -> Column -> String -> Either ParseError a
+parse mode p fileName line column input = PP.runParser core mode fileName input where
+	core = do
+		setPosition (newPos fileName line column)
+		whiteSpace
+		x <- p
+		eof
+		return x
+		
 
+--parse :: Stream s Identity t => Parsec s () a -> SourceName -> s -> Either ParseError a
+--runParser :: Stream s Identity t => Parsec s u a -> u -> SourceName -> s -> Either ParseError a
 
-test = Language.Forest.Parser.parse forestDecls filename line column input 
-        where filename = "test"
-              line = 0
-              column = 0
-              input = "type Hosts_f  = File Hosts_t\ntype Simple_d = Directory\n{ local  is \"local.txt\"  :: File Hosts_t\n, remote is \"remote.txt\" :: Hosts_f }"   
-
-test2 = Language.Forest.Parser.parse forestDecls filename line column input 
-        where filename = "test"
-              line = 0
-              column = 0
-              input = "type Grads_d = Directory  { classes is  [: aclass :: Class_d (: \"07\"   :)  | aclass <- matches (RE \"classof[0-9][0-9]\") :] }"

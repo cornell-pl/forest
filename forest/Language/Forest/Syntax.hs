@@ -46,6 +46,9 @@ import qualified Data.Set as Set
 import System.FilePath.Posix
 import Data.Char
 
+-- The mode in which forest is run, which affects parsing
+data ForestMode = PureForest | ICForest deriving (Eq,Show,Typeable,Data)
+
 newtype ForestDecl = ForestDecl (String,[TH.Pat], ForestTy)
    deriving (Ord, Eq, Data, Typeable, Show)
 
