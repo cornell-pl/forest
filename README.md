@@ -3,7 +3,7 @@ Incremental Forest
 
 Requirements:
 *	GHC 7.8.3
-*	avfs (`sudo apt-get install avfs` on Ubuntu) for compressed archives support
+*	avfs (`sudo apt-get install avfs` on Ubuntu) for compressed archive support
 *	nilfs-utils (https://github.com/konis/nilfs-utils/tree/diff-v2) with patched Linux kernel (https://github.com/konis/nilfs2/tree/diffapi-v2) for log-based filesystem support
 
 Dependencies:
@@ -14,4 +14,4 @@ Running:
 
 A good way to start is to load some example module. For instance, inside directory forest/, you will typically want:
 
-ghci Examples/Papers2.hs -ddump-splices -fcontext-stack=60
+ghci Examples/Pure/Papers2.hs -ddump-splices -fcontext-stack=60
