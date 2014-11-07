@@ -51,36 +51,36 @@ import Language.Forest.IC.CodeGen.Loading
 import Language.Haskell.TH.Quote
 
 genManifestM :: Name -> Name -> ForestTy -> [(TH.Pat,TH.Type)] -> EnvQ TH.Exp
-genManifestM rep_name md_name forestTy pat_infos = do
-	fsName <- lift $ newName "fs"
-	treeName    <- lift $ newName "tree"
-	dtaName    <- lift $ newName "dta"
-	manName    <- lift $ newName "man"
-	let (treeE, treeP) = genPE treeName
-	let (dtaE, dtaP) = genPE dtaName
-	let (fsE, fsP) = genPE fsName
-	let (manE,manP) = genPE manName
-	
-	case pat_infos of
-		[] -> do
-			core_bodyE <- genManifestBody treeE dtaE manE rep_name forestTy
-			return $ LamE [TupP [],treeP,dtaP,manP] core_bodyE
-		otherwise -> do
-			(targsP,argThunkNames) <- genManifestArgsE (zip [1..] pat_infos) forestTy
-			let argsT = Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos
-			let proxyArgs = SigE (ConE 'Proxy) $ AppT (ConT ''Proxy) argsT
-			let update env = foldl updatePat env (zip argThunkNames pat_infos)
-				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
-			Reader.local update $ do -- adds pattern variable deltas to the env.
-				margsName <- lift $ newName "margs"
-				newdtaName <- lift $ newName "newdta"
-				newmanName <- lift $ newName "newman"
-				let (margsE,margsP) = genPE margsName
-				let (newmanE,newmanP) = genPE newmanName
-				let (newdtaE,newdtaP) = genPE newdtaName
-				core_bodyE <- genManifestBody treeE newdtaE newmanE rep_name forestTy
-				return $ LamE [margsP,treeP,AsP dtaName (TupP [WildP,TupP [WildP,targsP]]),manP] $
-					Pure.appE5 (VarE 'doManifestArgs) proxyArgs margsE dtaE (LamE [newdtaP,newmanP] core_bodyE) manE
+genManifestM rep_name md_name forestTy pat_infos = return $ VarE 'undefined --do
+--	fsName <- lift $ newName "fs"
+--	treeName    <- lift $ newName "tree"
+--	dtaName    <- lift $ newName "dta"
+--	manName    <- lift $ newName "man"
+--	let (treeE, treeP) = genPE treeName
+--	let (dtaE, dtaP) = genPE dtaName
+--	let (fsE, fsP) = genPE fsName
+--	let (manE,manP) = genPE manName
+--	
+--	case pat_infos of
+--		[] -> do
+--			core_bodyE <- genManifestBody treeE dtaE manE rep_name forestTy
+--			return $ LamE [TupP [],treeP,dtaP,manP] core_bodyE
+--		otherwise -> do
+--			(targsP,argThunkNames) <- genManifestArgsE (zip [1..] pat_infos) forestTy
+--			let argsT = Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos
+--			let proxyArgs = SigE (ConE 'Proxy) $ AppT (ConT ''Proxy) argsT
+--			let update env = foldl updatePat env (zip argThunkNames pat_infos)
+--				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
+--			Reader.local update $ do -- adds pattern variable deltas to the env.
+--				margsName <- lift $ newName "margs"
+--				newdtaName <- lift $ newName "newdta"
+--				newmanName <- lift $ newName "newman"
+--				let (margsE,margsP) = genPE margsName
+--				let (newmanE,newmanP) = genPE newmanName
+--				let (newdtaE,newdtaP) = genPE newdtaName
+--				core_bodyE <- genManifestBody treeE newdtaE newmanE rep_name forestTy
+--				return $ LamE [margsP,treeP,AsP dtaName (TupP [WildP,TupP [WildP,targsP]]),manP] $
+--					Pure.appE5 (VarE 'doManifestArgs) proxyArgs margsE dtaE (LamE [newdtaP,newmanP] core_bodyE) manE
 
 genManifestBody :: TH.Exp -> TH.Exp -> TH.Exp -> Name -> ForestTy -> EnvQ TH.Exp
 genManifestBody treeE dtaE manE repN ty = case ty of 

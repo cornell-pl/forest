@@ -5,7 +5,7 @@ module Language.Forest.IC.CodeGen.DeltaLoading where
 
 import Prelude hiding (const,read)
 import Language.Forest.IC.CodeGen.Utils
-import Control.Monad.Incremental
+import Control.Monad.Incremental as Inc
 import Language.Forest.IC.CodeGen.Loading
 import Language.Haskell.TH.Quote
 import Language.Forest.IC.IO.DeltaLoading
@@ -112,7 +112,6 @@ genLoadDeltaM (untyRep,tyRep) pd_name forestTy pat_infos = do
 				
 				let forceThunk (n,(pat,_)) = if (patPVars pat `Set.intersection` forestTyVars forestTy) == Set.empty -- if the variables defined by the pattern are unused
 					then [] else [BindS pat $ AppE (VarE 'forceOutside) (VarE n)]
---				let thunkValuesS = concatMap forceThunk (zip thunkNames pat_infos)
 				
 				let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
 				return $ LamE pats $ Pure.appE5 (VarE 'doLoadDeltaArgs) (VarE proxyName) (VarE $ fromJust dargsName) (VarE repmdName) (VarE treeName') recBodyE
@@ -236,6 +235,7 @@ loadDeltaDirectory dirTy@(Record id fields) pathE treeE dpathE dfE treeE' repmdE
 	let tyName = mkName id
 	let drepE = mergeFieldDeltas drepEs
 	let dmdE = mergeFieldDeltas dmdEs
+	
 --	let repE = appConE (getStructInnerName tyName) $ map snd repEs
 --	let mdE = appConE (getStructInnerMDName tyName) $ map snd mdEs
 --	let resultE = TupE [repE,mdE]
@@ -251,7 +251,7 @@ loadFieldsDelta [] pathE treeE repmdE dpathE dfE treeE' = return ([],[],[])
 loadFieldsDelta (field:fields) pathE treeE repmdE dpathE dfE treeE' = do
 	(rep_name,rep_field,md_name,md_field, stmts_field)  <- loadFieldDelta field pathE treeE repmdE dpathE dfE treeE'
 	-- updates the delta environment similarly to Forest <x:s1,s2> specifications; adds representation (this) and metadata (this_md) variables to the environment
-	let update = Map.insert rep_name (AppE (VarE 'isEmptyNSValueDelta) $ VarE rep_field,Nothing) . Map.insert md_name (AppE (VarE 'isEmptyNSValueDelta) $ VarE md_field,Nothing)
+	let update = Map.insert rep_name (AppE (VarE 'isEmptySValueDelta) $ VarE rep_field,Nothing) . Map.insert md_name (AppE (VarE 'isEmptySValueDelta) $ VarE md_field,Nothing)
 	(reps_fields, md_fields, stmts_fields) <- Reader.local update $ loadFieldsDelta fields pathE treeE repmdE dpathE dfE treeE'
 	return (rep_field:reps_fields, md_field:md_fields, stmts_field++stmts_fields)
 
@@ -278,17 +278,36 @@ loadDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE treeE repmd
 	newdfName <- lift $ newName "newdf"
 	let (newdfE,newdfP) = genPE newdfName
 	
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
+	yName <- lift $ newName "y"
+	let (yE,yP) = genPE yName
+	
+	let fieldStmt1 = LetS [
+		 ValD xP (NormalB $ AppE (VarE repName) $ AppE (InfixE (Just $ VarE 'fst) (VarE '(.)) (Just $ VarE 'fst)) repmdE) []
+		,ValD yP (NormalB $ AppE (VarE mdName) $ AppE (InfixE (Just $ VarE 'snd) (VarE '(.)) (Just $ VarE 'fst)) repmdE) []
+		]
+	let fieldStmt2 = LetS [
+		ValD (VarP repName) (NormalB xE) []
+		,ValD (VarP mdName) (NormalB yE) []
+		]
+	
+	let innerrepmdE = TupE [TupE [ xE, yE],AppE (VarE 'snd) repmdE]
+	
 	-- actual loading
-	lensRepE <- lift $ buildFieldLens repName
-	lensMdE <- lift $ buildFieldLens mdName
+--	lensRepE <- lift $ buildFieldLens repName
+--	lensMdE <- lift $ buildFieldLens mdName
+	
+--	let innerrepmdE = AppE (UInfixE (AppE (VarE 'Inc.get) lensRepE) (VarE '(><)) (AppE (VarE 'Inc.get) lensMdE)) repmdE
+	
 	loadContentNoDeltaE <- liftM (LamE [newpathP,newdfP,fieldrepmdP]) $ runEnvQ $ loadE forestTy newpathE treeE newdfE treeE' fieldrepmdE
 	loadContentDeltaE <- liftM (LamE [fieldrepmdP,newpathP,newdpathP,newdfP]) $ loadDeltaE forestTy newpathE treeE fieldrepmdE newdpathE newdfE treeE'
 	let loadE = case predM of
-		Nothing -> Pure.appE11 (VarE 'doLoadDeltaSimple) lensRepE lensMdE pathE dpathE externalE treeE dfE treeE' repmdE loadContentNoDeltaE loadContentDeltaE
-		Just pred -> Pure.appE12 (VarE 'doLoadDeltaSimpleWithConstraint) lensRepE lensMdE pathE dpathE externalE treeE dfE treeE' repmdE (modPredE (VarP repName) pred) loadContentNoDeltaE loadContentDeltaE
+		Nothing -> Pure.appE9 (VarE 'doLoadDeltaSimple) pathE dpathE externalE treeE dfE treeE' innerrepmdE loadContentNoDeltaE loadContentDeltaE
+		Just pred -> Pure.appE10 (VarE 'doLoadDeltaSimpleWithConstraint) pathE dpathE externalE treeE dfE treeE' innerrepmdE (modPredE (VarP repName) pred) loadContentNoDeltaE loadContentDeltaE
 	let loadStmt = BindS (TupP [VarP drepName,VarP dmdName]) loadE
 	
-	return (repName,drepName,mdName,dmdName,[loadStmt])
+	return (repName,drepName,mdName,dmdName,[fieldStmt1,fieldStmt2,loadStmt])
 
 loadDeltaComp :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
 loadDeltaComp cinfo pathE treeE dpathE dfE treeE' repmdE = do
@@ -322,6 +341,23 @@ loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitNa
 	newdfName <- lift $ newName "newdf"
 	let (newdfE,newdfP) = genPE newdfName
 	
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
+	yName <- lift $ newName "y"
+	let (yE,yP) = genPE yName
+	
+	let fieldStmt1 = LetS [
+		 ValD xP (NormalB $ AppE (VarE repName) $ AppE (InfixE (Just $ VarE 'fst) (VarE '(.)) (Just $ VarE 'fst)) repmdE) []
+		,ValD yP (NormalB $ AppE (VarE mdName) $ AppE (InfixE (Just $ VarE 'snd) (VarE '(.)) (Just $ VarE 'fst)) repmdE) []
+		]
+	let fieldStmt2 = LetS [
+		ValD (VarP repName) (NormalB xE) []
+		,ValD (VarP mdName) (NormalB yE) []
+		]
+	let fieldStmts = if insideDirectory then [fieldStmt1,fieldStmt2] else []
+	
+	let innerrepmdE = if insideDirectory then TupE [TupE [VarE repName,VarE mdName],AppE (VarE 'snd) repmdE] else repmdE
+	
 	let genE = case generatorG of
 		Explicit expE -> expE
 		Matches regexpE -> regexpE
@@ -342,12 +378,12 @@ loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitNa
 		let (dfileNameAttE,dfileNameAttP) = genPE dfileNameAtt
 		
 		-- lenses and isomorphisms
-		(lensRepE,lensMdE) <- if insideDirectory
-			then do
-				lensRepE <- lift $ buildFieldLens repName
-				lensMdE <- lift $ buildFieldLens mdName
-				return (lensRepE,lensMdE)
-			else return (idLensE,idLensE)
+--		(lensRepE,lensMdE) <- if insideDirectory
+--			then do
+--				lensRepE <- lift $ buildFieldLens repName
+--				lensMdE <- lift $ buildFieldLens mdName
+--				return (lensRepE,lensMdE)
+--			else return (idLensE,idLensE)
 				
 		isoE <- lift $ tyConNameOptIso tyConNameOpt
 		
@@ -357,15 +393,15 @@ loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitNa
 			Nothing -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,newdfP,fieldrepmdP]) $ runEnvQ $ loadE descTy newpathE treeE newdfE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP]) $ loadDeltaE descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE'
-				let loadActionE = Pure.appE13 (VarE 'doLoadDeltaCompound) lensRepE lensMdE isoE isoE pathE dpathE genE treeE dfE treeE' repmdE loadElementE loadElementDeltaE
+				let loadActionE = Pure.appE11 (VarE 'doLoadDeltaCompound) isoE isoE pathE dpathE genE treeE dfE treeE' innerrepmdE loadElementE loadElementDeltaE
 				let deltasE = BindS (TupP [drepP,dmdP]) $ loadActionE
-				return (repName,drepName,mdName,dmdName,[deltasE])
+				return (repName,drepName,mdName,dmdName,fieldStmts++[deltasE])
 			Just predE -> forceVarsDeltaQ predE $ \predE -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,newdfP,fieldrepmdP]) $ runEnvQ $ loadE descTy newpathE treeE newdfE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP]) $ loadDeltaE descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE'
-				let loadActionE = Pure.appE14 (VarE 'doLoadDeltaCompoundWithConstraint) lensRepE lensMdE isoE isoE pathE dpathE genE treeE dfE treeE' repmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE
+				let loadActionE = Pure.appE12 (VarE 'doLoadDeltaCompoundWithConstraint) isoE isoE pathE dpathE genE treeE dfE treeE' innerrepmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE
 				let deltasE = BindS (TupP [drepP,dmdP]) $ loadActionE
-				return (repName,drepName,mdName,dmdName,[deltasE])
+				return (repName,drepName,mdName,dmdName,fieldStmts++[deltasE])
 
 loadDeltaConstraint :: TH.Pat -> TH.Exp -> TH.Exp -> (TH.Exp -> DeltaQ TH.Exp) -> DeltaQ TH.Exp
 loadDeltaConstraint pat repmdE predE load = forceVarsDeltaQ predE $ \predE -> do

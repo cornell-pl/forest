@@ -223,7 +223,7 @@ genRepMDComp fsName (CompField {internalName, tyConNameOpt, descTy, predEOpt, ..
 			case arity of 
 				1 -> return (mkStringConTupleTy (mkName str) rng_rep_ty, mkStringConTupleTy (mkName str) rng_md_ty') 
 				2 -> return (mkStringConCurryTy (mkName str) rng_rep_ty, mkStringConCurryTy (mkName str) rng_md_ty') 
-	return ( rep_ty, md_ty)
+	return (fsthunkTy fsName rep_ty,fsthunkTy fsName md_ty)
 	
 genRepMDCompTy fsName info = do
 	(rep_ty, md'_ty) <- genRepMDComp fsName info

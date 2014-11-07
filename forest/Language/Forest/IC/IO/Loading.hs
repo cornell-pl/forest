@@ -300,12 +300,12 @@ doLoadSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,Eq imd',ForestMD f
 	-> ForestI fs (rep',(md',ForestICThunkI fs Bool))
 doLoadSimpleWithConstraint path matching oldtree df tree pred load = doLoadConstraint tree pred $ matching >>= \m -> doLoadFocus path m oldtree df tree getForestMDInTree load
 
-doLoadCompound :: (ForestMD fs (md',FSThunk fs Inside (IncForest fs) IORef IO FileInfo),Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs md', imd ~ (md',ForestFSThunkI fs FileInfo)) =>
+doLoadCompound :: (Eq container_md,Eq container_rep,ForestMD fs (md',FSThunk fs Inside (IncForest fs) IORef IO FileInfo),Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs md', imd ~ (md',ForestFSThunkI fs FileInfo)) =>
 	FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ([(FilePath,rep')] -> container_rep) -> ([(FilePath,imd)] -> container_md)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs (rep',md'))
-	-> ForestI fs (container_rep,container_md)
-doLoadCompound path matchingM oldtree df tree buildContainerRep buildContainerMd load = debug ("doLoadCompound: "++show path) $ do
+	-> ForestI fs (ForestFSThunkI fs container_rep,ForestFSThunkI fs container_md)
+doLoadCompound path matchingM oldtree df tree buildContainerRep buildContainerMd load = mkThunks tree $ debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM
 	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files
@@ -319,13 +319,13 @@ doLoadCompound path matchingM oldtree df tree buildContainerRep buildContainerMd
 	let mdlist = map (id >< snd) loadlist
 	return (buildContainerRep replist,buildContainerMd mdlist)
 
-doLoadCompoundWithConstraint :: (ForestOutput fs ICThunk Inside,Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs md',imd ~ (md',(ForestFSThunkI fs FileInfo,ForestICThunkI fs Bool)) ) =>
+doLoadCompoundWithConstraint :: (Eq container_md,Eq container_rep,ForestOutput fs ICThunk Inside,Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs md',imd ~ (md',(ForestFSThunkI fs FileInfo,ForestICThunkI fs Bool)) ) =>
 	FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> (FilePath -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> ([(FilePath,rep')] -> container_rep) -> ([(FilePath,imd)] -> container_md)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs (rep',md'))
-	-> ForestI fs (container_rep,container_md)
-doLoadCompoundWithConstraint path matchingM oldtree df tree pred buildContainerRep buildContainerMd load = debug ("doLoadCompound: "++show path) $ do
+	-> ForestI fs (ForestFSThunkI fs container_rep,ForestFSThunkI fs container_md)
+doLoadCompoundWithConstraint path matchingM oldtree df tree pred buildContainerRep buildContainerMd load = mkThunks tree $ debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM -- matching expressions are not saved for incremental reuse
 	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files

@@ -21,7 +21,7 @@ import Language.Forest.IC.ValueDelta
 
 mergeFieldDeltas :: [Name] -> TH.Exp
 mergeFieldDeltas [] = Pure.returnExp $ ConE 'Id
-mergeFieldDeltas ds = Pure.appE2 (VarE 'foldl1) (VarE '(>:>)) $ ListE $ map VarE ds
+mergeFieldDeltas ds = Pure.appE2 (VarE 'foldl1) (VarE '(>:>)) $ ListE $ map (AppE (VarE 'liftSValueDelta) . VarE) ds
 
 idLensE :: TH.Exp
 idLensE = Pure.appE2 (ConE 'Lens) (VarE 'id) (AppE (VarE 'curry) $ VarE 'snd)
