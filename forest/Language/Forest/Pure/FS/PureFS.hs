@@ -1,6 +1,6 @@
 {-# LANGUAGE ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
 
--- Regular filesystem with optimistic concurrency support for transactions, with purely functional data structures
+-- Original Forest with purely functional data structures
 
 module Language.Forest.Pure.FS.PureFS where
 
