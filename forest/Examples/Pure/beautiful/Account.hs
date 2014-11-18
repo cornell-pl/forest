@@ -68,6 +68,10 @@ pureTransfer1 from to amount = do
       _ -> forestIO $ print "At least one of the accounts does not exist"
   }
 
+pureTrans from to amount = runForest PureFSForestCfg $ pureTransfer1 from to amount
+
+pureTransAcc amount = pureTrans "acc1" "acc2" amount
+
 {-
 universal_zip_Errors :: FSRep fs => (Universal_zip,Universal_zip_md) -> ForestM fs ()
 universal_zip_Errors (rep,md) = do
