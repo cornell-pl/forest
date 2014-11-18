@@ -52,8 +52,10 @@ runningTransactions = unsafePerformIO $ newMVar []
 doneTransactions :: MVar (Map UTCTime TxFSWrites)
 doneTransactions = unsafePerformIO $ newMVar Map.empty
 
-startTxFSTransaction :: IO UTCTime
-startTxFSTransaction = modifyMVar runningTransactions (\xs -> getCurrentTime >>= \t -> return (t:xs,t))
+startTxFSTransaction ::(MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS UTCTime
+startTxFSTransaction = do
+  State.modify  $ \_ -> ((Set.empty,Map.empty),Set.empty)
+  forestIO $ modifyMVar runningTransactions (\xs -> getCurrentTime >>= \t -> return (t:xs,t))
 
 -- validates and commits a transaction as a single atomic operation
 validateAndCommitTxFSTransaction :: UTCTime -> TxFSChangesFlat -> IO Bool
@@ -165,7 +167,7 @@ atomicallyTxFS t =
   in
   let tryIt = do
         {
-          time <- forestIO $ startTxFSTransaction;
+          time <- startTxFSTransaction;
           result <- try t;
           case result of
             Left (exc :: TxExcep) -> do
