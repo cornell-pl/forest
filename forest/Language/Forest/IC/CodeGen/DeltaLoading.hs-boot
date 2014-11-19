@@ -10,11 +10,11 @@ import Language.Forest.IC.Generic
 -- for each variable name, we store (a boolean that indicates whether its value has NOT changed (changes are ALWAYS stable), the name of a thunk that holds its value, a pattern to match against the thunk's value)
 type DeltaEnv = Map Name (TH.Exp,Maybe (Name,Pat))
 
-type DeltaQ a = ReaderT (ICMode,DeltaEnv) Q a
+type DeltaQ a = ReaderT (Name,Name,DeltaEnv) Q a
 
 --environments store maps from variables to (the name of the thunk that holds its value,a pattern to match against the thunk's value)
 type Env = Map Name (Maybe (Name,Pat))
-type EnvQ = ReaderT (ICMode,Env) Q
+type EnvQ = ReaderT (Name,Name,Env) Q
 
 runDeltaQ :: DeltaQ a -> EnvQ a
 

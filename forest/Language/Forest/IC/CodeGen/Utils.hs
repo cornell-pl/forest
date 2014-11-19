@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns, TemplateHaskell, MultiParamTypeClasses, FlexibleContexts, ConstraintKinds, TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE KindSignatures, ViewPatterns, TemplateHaskell, MultiParamTypeClasses, FlexibleContexts, ConstraintKinds, TypeSynonymInstances, FlexibleInstances #-}
 
 module Language.Forest.IC.CodeGen.Utils where
 
@@ -21,6 +21,9 @@ import Language.Forest.IC.Generic
 import Language.Forest.IC.ValueDelta
 import Data.Generics
 import Language.Haskell.TH.Quote
+
+proxyN :: Name -> TH.Exp
+proxyN name = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) $ VarT name)
 
 mergeFieldDeltas :: [Name] -> TH.Exp
 mergeFieldDeltas [] = Pure.returnExp $ ConE 'Id
@@ -117,6 +120,7 @@ modeProxy mode = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) $ modeT mode)
 	
 appTyModeFS mode fsName ty_name = Pure.appT2 (ConT ty_name) (PromotedT mode) (VarT fsName)
 appTyModeFS' modeName fsName ty_name = Pure.appT2 (ConT ty_name) (VarT modeName) (VarT fsName)
+appTyModeFS'' modeT fsName ty_name = Pure.appT2 (ConT ty_name) modeT (VarT fsName)
 
 allMDArgs :: Data a => a -> [Type]
 allMDArgs = listify mdArg where

@@ -95,8 +95,6 @@ defaultE ty repE pathE = return $ VarE 'undefined --case ty of
 --	FMaybe forestTy -> defaultMaybe forestTy repE pathE 
 --	FComp cinfo     -> defaultComp cinfo repE pathE 
 --
---proxyFileName :: String -> TH.Exp
---proxyFileName name = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) $ ConT $ mkName name)
 --
 --defaultFile :: String -> Maybe TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
 --defaultFile fileName Nothing repE pathE = do

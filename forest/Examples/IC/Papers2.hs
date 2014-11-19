@@ -62,31 +62,31 @@ import Language.Forest.IC
 		supplementalFiles is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
 	} 
 
-	type Author (y :: Maybe Integer) (n :: Maybe String) = Directory {
-		authorPapers is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
-	,   supplemental is "Supplemental" :: Maybe (Supplemental y n)
-	}
-
-	type Year (y :: Maybe Integer) = Directory {
-		authors is Map [ n :: Author y (getAuthor n) | n <- matches (GL "*"), (not (hidden n)) ]
-	}
-
-	type Articles = Map [ y :: Year (getYear y) | y <- matches yearRE ] where True
-	type Books    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
-	type Media    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
-	type Reports  = Map [ y :: Year (getYear y) | y <- matches yearRE ]
-
-	type Library (articles :: [String]) = Directory {
-		database is "Database.papersdb" :: BinaryFile
-	}
-
-	type Papers2 = Directory {
-		articles is "Articles" :: Maybe Articles
-	,   books is "Books" :: Maybe Books
-	,   media is "Media" :: Maybe Media
-	,   reports is "Reports" :: Maybe Reports where True
-	,	library matches libraryRE :: Maybe Library <| allPaperNames articles books media reports |>
-	} where True
+--	type Author (y :: Maybe Integer) (n :: Maybe String) = Directory {
+--		authorPapers is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
+--	,   supplemental is "Supplemental" :: Maybe (Supplemental y n)
+--	}
+--
+--	type Year (y :: Maybe Integer) = Directory {
+--		authors is Map [ n :: Author y (getAuthor n) | n <- matches (GL "*"), (not (hidden n)) ]
+--	}
+--
+--	type Articles = Map [ y :: Year (getYear y) | y <- matches yearRE ] where True
+--	type Books    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
+--	type Media    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
+--	type Reports  = Map [ y :: Year (getYear y) | y <- matches yearRE ]
+--
+--	type Library (articles :: [String]) = Directory {
+--		database is "Database.papersdb" :: BinaryFile
+--	}
+--
+--	type Papers2 = Directory {
+--		articles is "Articles" :: Maybe Articles
+--	,   books is "Books" :: Maybe Books
+--	,   media is "Media" :: Maybe Media
+--	,   reports is "Reports" :: Maybe Reports where True
+--	,	library matches libraryRE :: Maybe Library <| allPaperNames articles books media reports |>
+--	} where True
 |]
 
 libraryRE = RE "Library.papers2|Library.papers"

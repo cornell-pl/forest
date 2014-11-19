@@ -100,39 +100,39 @@ make_forest_declaration mb (ForestDecl (id, pats, forestTy)) = do
 	let md_ty_name = Pure.getMDName id
 	fsName <- newName "fs"
 	modeName <- newName "mode"
+	let mode = maybe modeName modeN mb
 	let arg_infos = map (\pat -> (pat,patToTy pat)) pats
 	(ty_decl, md_ty_decls, md_ty) <- genRepMDDecl modeName fsName forestTy (unty_name,ty_name) md_ty_name arg_infos  -- Generate representation and meta-data decls for padsTy
-	let genMode mode = do
-		loadM :: TH.Exp <- Reader.runReaderT (genLoadM ty_name md_ty_name forestTy arg_infos) (mode,Map.empty)
-		loadDeltaM :: TH.Exp <- Reader.runReaderT (genLoadDeltaM (unty_name,ty_name) md_ty_name forestTy arg_infos) (mode,Map.empty)
-		manifestM :: TH.Exp <- Reader.runReaderT (genManifestM ty_name md_ty_name forestTy arg_infos) (mode,Map.empty)
-		defaultM :: TH.Exp <- genDefaultM ty_name md_ty_name forestTy arg_infos
-		forestInstance :: [Dec] <- genFInst (modeN mode) fsName  loadM loadDeltaM manifestM defaultM ty_name md_ty_name      forestTy arg_infos
-		return forestInstance
-	case mb of
-		Nothing -> do
-			insts1 <- genMode ICData
-			insts2 <- genMode ICExpr
-			return $ ty_decl:md_ty_decls++insts1++insts2
-		Just ICData -> do
-			insts1 <- genMode ICData
-			return $ ty_decl:md_ty_decls++insts1
-		Just ICExpr -> do
-			insts2 <- genMode ICExpr
-			return $ ty_decl:md_ty_decls++insts2
 
-genFInst mode fsName loadM loadDeltaM manifestM defaultM ty_name md_ty_name forestTy pat_infos = do
+	loadM :: TH.Exp <- Reader.runReaderT (genLoadM ty_name md_ty_name forestTy arg_infos) (mode,fsName,Map.empty)
+	loadDeltaM :: TH.Exp <- Reader.runReaderT (genLoadDeltaM (unty_name,ty_name) md_ty_name forestTy arg_infos) (mode,fsName,Map.empty)
+	manifestM :: TH.Exp <- Reader.runReaderT (genManifestM ty_name md_ty_name forestTy arg_infos) (mode,fsName,Map.empty)
+	defaultM :: TH.Exp <- genDefaultM ty_name md_ty_name forestTy arg_infos
+	
+	let mkInst modeT = genFInst modeT fsName  loadM loadDeltaM manifestM defaultM ty_name md_ty_name      forestTy arg_infos
+	
+	insts <- case mb of
+		Nothing -> do
+			inst1 <- mkInst $ PromotedT 'ICData
+			inst2 <- mkInst $ PromotedT 'ICExpr
+			return $ inst1++inst2
+		Just ICData -> mkInst $ PromotedT 'ICData
+		Just ICExpr -> mkInst $ PromotedT 'ICExpr
+
+	return $ ty_decl:md_ty_decls++insts
+
+genFInst modeT fsName loadM loadDeltaM manifestM defaultM ty_name md_ty_name forestTy pat_infos = do
 	mdName <- newName "md"
 	let (inst,mdT) = case pat_infos of
-		[] -> (Pure.appT5 (ConT ''ICForest) (PromotedT mode) (VarT fsName) (TupleT 0) (Pure.appTyFS fsName ty_name) (VarT mdName) , (appTyModeFS mode fsName md_ty_name))  
-		otherwise -> (Pure.appT5 (ConT ''ICForest) (PromotedT mode) (VarT fsName) (Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) (Pure.appTyFS fsName ty_name) (VarT mdName) , (appTyModeFS mode fsName md_ty_name))
+		[] -> (Pure.appT5 (ConT ''ICForest) modeT (VarT fsName) (TupleT 0) (Pure.appTyFS fsName ty_name) (VarT mdName) , (appTyModeFS'' modeT fsName md_ty_name))  
+		otherwise -> (Pure.appT5 (ConT ''ICForest) modeT (VarT fsName) (Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) (Pure.appTyFS fsName ty_name) (VarT mdName) , (appTyModeFS'' modeT fsName md_ty_name))
 	let load_method = ValD (VarP 'loadScratch) (NormalB loadM) []
 	let loadDelta_method = ValD (VarP 'loadDelta) (NormalB loadDeltaM) []
 	let manifest_method = ValD (VarP 'updateManifestScratch) (NormalB manifestM) []
 	let default_method = ValD (VarP 'IC.defaultMd) (NormalB defaultM) []
 
 	let ctx = [ClassP ''Typeable [VarT fsName]
-			,ClassP ''ForestMD [VarT fsName,(appTyModeFS mode fsName md_ty_name)]
+			,ClassP ''ForestMD [VarT fsName,(appTyModeFS'' modeT fsName md_ty_name)]
 			,ClassP ''ForestOutput [VarT fsName,ConT ''ICThunk,ConT ''Inside]
 			, (VarT mdName) ` EqualP` mdT
 			]

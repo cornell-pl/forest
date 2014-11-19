@@ -13,6 +13,7 @@ import Control.Monad.Trans
 import Control.Monad.Incremental
 import Language.Haskell.TH.Quote
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
+import Data.WithClass.MData
 
 import Language.Forest.Syntax as PS
 import Language.Forest.IC.MetaData
@@ -54,11 +55,11 @@ forceVarsEnvQ :: Exp -> (Exp -> EnvQ a) -> EnvQ a
 forceVarsEnvQ e f = do
 	let expvars = expVars e
 	let forceVar var f = \e -> do
-		(mode,envvars) <- Reader.ask
+		(mode,fs,envvars) <- Reader.ask
 		case Map.lookup var envvars of
 			Just (Just (thunk,pat)) -> do
 				
-				let update (mode,env) = (mode,Set.foldr (\var env -> Map.insert var Nothing env) env (patPVars pat))
+				let update (mode,fs,env) = (mode,fs,Set.foldr (\var env -> Map.insert var Nothing env) env (patPVars pat))
 				Reader.local update $ f $ UInfixE (AppE (VarE 'read) (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
 			otherwise -> f e
 	(Set.foldr forceVar f expvars) e
@@ -69,6 +70,7 @@ genLoadM rep_name md_name forestTy pat_infos = do
 	pathName    <- lift $ newName "path"
 	treeName    <- lift $ newName "tree"
 	oldtreeName    <- lift $ newName "oldtree"
+	argsName <- lift $ newName "args"
 	getMDName    <- lift $ newName "getMD"
 	dfName <- lift $ newName "df"
 	let (pathE, pathP) = genPE pathName
@@ -80,20 +82,18 @@ genLoadM rep_name md_name forestTy pat_infos = do
 	
 	case pat_infos of
 		[] -> do
+			(mode,fs,_) <- Reader.ask
 			core_bodyE <- genLoadBody pathE oldtreeE dfE treeE getMDE rep_name forestTy
-			return $ LamE [WildP,TupP [],pathP,oldtreeP,dfP,treeP,getMDP] core_bodyE
+			return $ LamE [VarP mode,VarP argsName,TupP [],pathP,oldtreeP,dfP,treeP,getMDP] core_bodyE
 		otherwise -> do
 			(argsP,stmts,argsThunksE,argThunkNames) <- genLoadArgsE (zip [1..] pat_infos) treeE forestTy
-			let update (mode,env) = (mode,foldl updatePat env (zip argThunkNames pat_infos))
+			let update (mode,fs,env) = (mode,fs,foldl updatePat env (zip argThunkNames pat_infos))
 				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
 			Reader.local update $ do -- adds pattern variable deltas to the env.
-				(mode,_) <- Reader.ask
-				let addArgsE = AppE (VarE 'rtupM) argsThunksE
+				(mode,fs,_) <- Reader.ask
 				core_bodyE <- genLoadBody pathE oldtreeE dfE treeE getMDE rep_name forestTy
-				let core_bodyE' = case mode of
-					ICExpr -> UInfixE (InfixE (Just $ VarE 'return) (VarE '(>><<)) $ Just addArgsE) (VarE '(=<<)) core_bodyE
-					ICData -> core_bodyE
-				return $ LamE [WildP,argsP,pathP,oldtreeP,dfP,treeP,getMDP] $ --DoE $ stmts ++ [NoBindS core_bodyE]
+				let core_bodyE' = Pure.appE4 (VarE 'doLoadArgs) (VarE mode) (VarE argsName) argsThunksE core_bodyE
+				return $ LamE [VarP mode,VarP argsName,argsP,pathP,oldtreeP,dfP,treeP,getMDP] $ --DoE $ stmts ++ [NoBindS core_bodyE]
 					DoE $ stmts ++ [NoBindS core_bodyE']
 
 {-
@@ -153,23 +153,22 @@ loadFile fileName (Just argE) pathE oldtreeE dfE treeE getMDE = do
 -- these are terminals in the spec
 loadWithArgsE :: [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
 loadWithArgsE [] pathE oldtreeE dfE treeE getMDE = do
-	(mode,_) <- Reader.ask
-	return $ Pure.appE7 (VarE 'loadScratch) (modeProxy mode) (TupE []) pathE oldtreeE dfE treeE getMDE
-loadWithArgsE argsE pathE oldtreeE dfE treeE getMDE = do
-	(mode,_) <- Reader.ask
-	argsE <- mapM (\e -> forceVarsEnvQ e return) argsE
+	let proxyE = AppE (VarE 'proxyOf) $ TupE []
+	(mode,fs,_) <- Reader.ask
+	return $ Pure.appE8 (VarE 'loadScratch) (VarE mode) proxyE (TupE []) pathE oldtreeE dfE treeE getMDE
+loadWithArgsE argEs pathE oldtreeE dfE treeE getMDE = do
+	(mode,fs,_) <- Reader.ask
+	argsE <- mapM (\e -> forceVarsEnvQ e return) argEs
+	let proxyE = AppE (VarE 'proxyOf) $ Pure.forestTupleE argEs
 	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
-	return $ Pure.appE7 (VarE 'loadScratch) (modeProxy mode) tupArgsE pathE oldtreeE dfE treeE getMDE
+	return $ Pure.appE8 (VarE 'loadScratch) (VarE mode) proxyE tupArgsE pathE oldtreeE dfE treeE getMDE
 
 loadConstraint :: TH.Exp -> TH.Pat -> TH.Exp -> EnvQ TH.Exp -> EnvQ TH.Exp
 loadConstraint treeE pat predE load = forceVarsEnvQ predE $ \predE' -> do
-	(mode,_) <- Reader.ask
+	(mode,fs,_) <- Reader.ask
 	let predFnE = modPredE pat predE'
 	loadAction <- load
-	let load = case mode of
-		ICExpr -> 'doLoadConstraintExpr
-		ICData -> 'doLoadConstraintNoExpr
-	return $ Pure.appE3 (VarE load) treeE predFnE loadAction
+	return $ Pure.appE4 (VarE 'doLoadConstraint) (VarE mode) treeE predFnE loadAction
 
 loadSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
 loadSymLink pathE oldtreeE dfE treeE getMDE = do
@@ -222,7 +221,7 @@ loadFields :: [Field] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ 
 loadFields [] pathE oldtreeE dfE treeE getMDE = return ([],[],[])
 loadFields (field:fields) pathE oldtreeE dfE treeE getMDE = do
 	(rep_field,   md_field, stmts_field)  <- loadField field pathE oldtreeE dfE treeE getMDE
-	let update (mode,env) = (mode,Map.insert rep_field Nothing $ Map.insert md_field Nothing env)
+	let update (mode,fs,env) = (mode,fs,Map.insert rep_field Nothing $ Map.insert md_field Nothing env)
 	(reps_fields, md_fields, stmts_fields) <- Reader.local update $ loadFields fields pathE oldtreeE dfE treeE getMDE
 	return (rep_field:reps_fields, md_field:md_fields, stmts_field++stmts_fields)
 
@@ -246,15 +245,12 @@ loadSimple (internal, isForm, externalE, forestTy, predM) pathE oldtreeE dfE tre
 	let (newdfE,newdfP) = genPE newdfName
 	
 	loadFocusE <- do
-		(mode,_) <- Reader.ask
+		(mode,fs,_) <- Reader.ask
 		loadContentE <- liftM (LamE [newpathP,newdfP,newGetMdP]) $ loadE forestTy newpathE oldtreeE newdfE treeE newGetMdE
 		case predM of
 			Nothing -> return $ Pure.appE6 (VarE 'doLoadSimple) pathE externalE oldtreeE dfE treeE loadContentE
 			Just pred -> do
-				let doLoad = case mode of
-					ICExpr -> 'doLoadSimpleWithConstraintExpr
-					ICData -> 'doLoadSimpleWithConstraintNoExpr
-				return $ Pure.appE7 (VarE doLoad) pathE externalE oldtreeE dfE treeE (modPredE (VarP repName) pred) loadContentE
+				return $ Pure.appE8 (VarE 'doLoadSimpleWithConstraint) (VarE mode) pathE externalE oldtreeE dfE treeE (modPredE (VarP repName) pred) loadContentE
 	let stmt1 = BindS (TildeP $ TupP [repP,mdP]) loadFocusE
 	return (repName,mdName,[stmt1])
 
@@ -301,26 +297,20 @@ loadCompound isNested (CompField internal tyConNameOpt explicitName externalE de
 		-- build representation and metadata containers from a list
 		buildContainerE <- lift $ Pure.tyConNameOptBuild tyConNameOpt
 		
-		let update (mode,env) = (mode,Map.insert fileName Nothing $ Map.insert fileNameAtt (Just (fileNameAttThunk,VarP fileNameAtt)) env)  --force the @FileInfo@ thunk
+		let update (mode,fs,env) = (mode,fs,Map.insert fileName Nothing $ Map.insert fileNameAtt (Just (fileNameAttThunk,VarP fileNameAtt)) env)  --force the @FileInfo@ thunk
 		
 		-- container loading
-		(mode,_) <- Reader.ask
+		(mode,fs,_) <- Reader.ask
 		Reader.local update $ case predM of
 			Nothing -> do
-				let doLoad = case mode of
-					ICExpr -> 'doLoadCompoundExpr
-					ICData -> 'doLoadCompoundNoExpr
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdfP,newGetMDP]) $ loadE descTy newpathE oldtreeE newdfE treeE newGetMDE
-				let loadContainerE = Pure.appE8 (VarE doLoad) pathE genE oldtreeE dfE treeE buildContainerE buildContainerE loadSingleE
+				let loadContainerE = Pure.appE9 (VarE 'doLoadCompound) (VarE mode) pathE genE oldtreeE dfE treeE buildContainerE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName,VarP mdName]) loadContainerE
 				return (repName,mdName,[loadContainerS])
 				
 			Just predE -> forceVarsEnvQ predE $ \predE -> do
-				let doLoad = case mode of
-					ICExpr -> 'doLoadCompoundWithConstraintExpr
-					ICData -> 'doLoadCompoundWithConstraintNoExpr
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdfP,newGetMDP]) $ loadE descTy newpathE oldtreeE newdfE treeE newGetMDE
-				let loadContainerE = Pure.appE9 (VarE doLoad) pathE genE oldtreeE dfE treeE (modPredEComp (VarP fileName) predE) buildContainerE buildContainerE loadSingleE
+				let loadContainerE = Pure.appE10 (VarE 'doLoadCompoundWithConstraint) (VarE mode) pathE genE oldtreeE dfE treeE (modPredEComp (VarP fileName) predE) buildContainerE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName,VarP mdName]) loadContainerE
 				return (repName,mdName,[loadContainerS])
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE ConstraintKinds, FlexibleContexts, TemplateHaskell, NamedFieldPuns, ScopedTypeVariables, RecordWildCards, FlexibleInstances, MultiParamTypeClasses,
+{-# LANGUAGE KindSignatures, DataKinds, ConstraintKinds, FlexibleContexts, TemplateHaskell, NamedFieldPuns, ScopedTypeVariables, RecordWildCards, FlexibleInstances, MultiParamTypeClasses,
     UndecidableInstances, ViewPatterns  #-}
 
 module Language.Forest.Pure.CodeGen.Utils where
@@ -357,6 +357,9 @@ isSameFileName s1 s2 = s1 == s2
 
 anyProxy :: Proxy args
 anyProxy = Proxy
+
+anyFSProxy :: Proxy (fs :: FS)
+anyFSProxy = Proxy
 
 mkOptConstraintFunComp :: Name -> Maybe TH.Exp -> TH.Exp
 mkOptConstraintFunComp field predM = case predM of

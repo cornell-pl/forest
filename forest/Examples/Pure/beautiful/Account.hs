@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.Universal where
+module Examples.Pure.Beautiful.Account where
 	
 import Language.Pads.Padsc hiding (numErrors)
 import Data.Maybe
@@ -28,7 +28,9 @@ import Control.Monad.IO.Class
 |]
 
 -- Change this to the forest directory to make the example work for you!
-forestDir = "/home/dilorenzo/everything/research/forest/forest/forest" 
+--Hugo: made it a relative path (it is fine as long as we use the Makefile)
+--forestDir = "/home/dilorenzo/everything/research/forest/forest/forest" 
+forestDir = "."
 
 accountDir = forestDir ++ "/Examples/Pure/beautiful/Account"
 
