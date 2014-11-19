@@ -58,35 +58,85 @@ countFiles = do
     let (Account_d_inner lst) = rep
     forestIO $ print $ length lst
 
-pureTransfer1 :: FSRep fs => String -> String -> Int -> ForestM fs ()
-pureTransfer1 from to amount = do
+-- PURE STUFF:
+
+pureTransfer :: FSRep fs => String -> String -> Int -> ForestM fs ()
+pureTransfer from to amount = do
   {
     ((Account_d_inner lst),md) :: (Account_d, Account_d_md) <- load () accountDir;
     case ((lookup from lst), (lookup to lst)) of
       (Just (Account f), Just (Account t)) -> do
-        mani <- manifest () ((Account_d_inner [(from, (Account (show ((read f)-amount)))),(to, (Account (show ((read t)+amount))))]),md)
-        -- store mani
         forestIO $ print (from ++ " has " ++ f ++ " and " ++ to ++ " has " ++ t)
+        if ((amount >= 0 && (read f) >= amount) || (amount < 0 && (read t) >= (- amount)))
+          then do
+            pureWithdraw from amount
+            pureDeposit to amount
+          else forestIO $ print "The account does not have enough money"
       _ -> forestIO $ print "At least one of the accounts does not exist"
   }
 
-pureTrans from to amount = runForest PureFSForestCfg $ pureTransfer1 from to amount
+pureWithdraw :: FSRep fs => String -> Int -> ForestM fs ()
+pureWithdraw acc amount = do
+  {
+    ((Account_d_inner lst),md) :: (Account_d, Account_d_md) <- load () accountDir;
+    case (lookup acc lst) of
+      Just (Account bal) -> do 
+        let newbal = read bal
+        if (amount < 0 || newbal >= amount) then do
+          let result = [(acc, (Account (show (newbal-amount))))]
+          mani <- manifest () ((Account_d_inner result),md)
+           -- store mani
+          forestIO $ print (acc ++ " had " ++ bal ++ " and lost " ++ (show amount))
+         else forestIO $ print "The account does not have enough money"
+      _ -> forestIO $ print "The account does not exist"
+  }
 
-pureTransAcc amount = pureTrans "acc1" "acc2" amount
+pureDeposit acc amount = pureWithdraw acc (- amount)
 
-{-
-universal_zip_Errors :: FSRep fs => (Universal_zip,Universal_zip_md) -> ForestM fs ()
-universal_zip_Errors (rep,md) = do
-	let err = get_errors md
-	forestIO $ print (numErrors err)
-	forestIO $ print (errorMsg err)
+-- Pure Helpers
 
-universal_zip :: FSRep fs => ForestM fs ()
-universal_zip = do
-	(dta::(Universal_zip,Universal_zip_md)) <- load () universal_zip_root
-	universal_zip_Errors dta
-	
-	return ()
+pureTrans from to amount = runForest PureFSForestCfg $ pureTransfer from to amount
+pureWith acc amount = runForest PureFSForestCfg $ pureWithdraw acc amount
+pureDepo acc amount = runForest PureFSForestCfg $ pureDeposit acc amount
 
-universal_zip_TxFS = runForest TxFSForestCfg $ universal_zip
--}
+pureTransAcc = pureTrans "acc1" "acc2"
+
+-- Transactional Stuff
+
+transTransfer :: String -> String -> Int -> IO ()
+transTransfer from to amount = atomically (do {transWithdraw from amount; transDeposit to amount})
+
+transWithdraw :: String -> Int -> ForestM TxFS () -- How do I make this take any TransactionalPureForest FS?
+transWithdraw acc amount = do  -- Now with retry!
+  {
+    ((Account_d_inner lst),md) :: (Account_d, Account_d_md) <- load () accountDir;
+    case (lookup acc lst) of
+      Just (Account bal) -> do 
+        let newbal = read bal
+        check (amount < 0 || newbal >= amount)
+        let result = [(acc, (Account (show (newbal-amount))))]
+        mani <- manifest () ((Account_d_inner result),md)
+        -- store mani
+        forestIO $ print (acc ++ " had " ++ bal ++ " and lost " ++ (show amount))
+      _ -> forestIO $ print "The account does not exist"
+  }
+
+
+transWithdraw2 :: String -> String -> Int -> ForestM TxFS () -- How do I make this take any TransactionalPureForest FS?
+transWithdraw2 acc1 acc2 amount = orElse (transWithdraw acc1 amount) (transWithdraw acc2 amount)
+
+transDeposit acc amount = transWithdraw acc (- amount)
+
+-- Transactional Helpers
+
+check :: Bool -> ForestM TxFS ()
+check True = return ()
+check False = retry
+
+-- Note: retry only works when called from an atomically block
+transWith acc amount = atomically (transWithdraw acc amount)
+transWith2 acc1 acc2 amount = atomically (transWithdraw2 acc1 acc2 amount) 
+transDepo acc amount = atomically (transDeposit acc amount)
+
+transTransAcc = transTransfer "acc1" "acc2"
+transWith2Acc = transWith2 "acc1" "acc2" 
