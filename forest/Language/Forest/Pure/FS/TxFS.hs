@@ -1,8 +1,11 @@
-{-# LANGUAGE ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
+{-# LANGUAGE ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- Regular filesystem with optimistic concurrency support for transactions, with purely functional data structures
 
 module Language.Forest.Pure.FS.TxFS where
+
+import Control.Monad.Catch
+import Control.Concurrent
 
 import Language.Forest.FS.FSRep
 import Control.Applicative
@@ -49,8 +52,10 @@ runningTransactions = unsafePerformIO $ newMVar []
 doneTransactions :: MVar (Map UTCTime TxFSWrites)
 doneTransactions = unsafePerformIO $ newMVar Map.empty
 
-startTxFSTransaction :: IO UTCTime
-startTxFSTransaction = modifyMVar runningTransactions (\xs -> getCurrentTime >>= \t -> return (t:xs,t))
+startTxFSTransaction ::(MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS UTCTime
+startTxFSTransaction = do
+  State.modify  $ \_ -> ((Set.empty,Map.empty),Set.empty)
+  forestIO $ modifyMVar runningTransactions (\xs -> getCurrentTime >>= \t -> return (t:xs,t))
 
 -- validates and commits a transaction as a single atomic operation
 validateAndCommitTxFSTransaction :: UTCTime -> TxFSChangesFlat -> IO Bool
@@ -82,6 +87,25 @@ finishTransaction starttime writes = do
 		Nothing -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.insert now writes m)
 	error "perform actual commit!"
 
+recCheck :: TxFSReads -> [TxFSWrites] -> Bool
+recCheck reads [] = True
+recCheck reads (d:ds) = (reads `Set.intersection` d == Set.empty) && recCheck reads ds
+
+checkForRestart :: UTCTime -> TxFSReads -> IO (Bool, UTCTime) 
+checkForRestart time reads =
+  do
+  {
+    if reads == Set.empty
+    then return (True, time)
+    else do
+      {
+        newtime <- getCurrentTime;
+        writeList <- liftM (map snd . Map.toAscList . Map.filterWithKey (\k v -> k > time)) $ readMVar doneTransactions;
+        return(recCheck reads writeList, newtime)
+      }
+  }
+
+                             
 {-# NOINLINE noFSLock #-}
 noFSLock :: Lock
 noFSLock = unsafePerformIO $ Lock.new
@@ -89,9 +113,13 @@ noFSLock = unsafePerformIO $ Lock.new
 instance TransactionalPureForest TxFS where
 
 	atomically = atomicallyTxFS
+        retry = retryTxFS
+        orElse = orElseTxFS
+        catch = catchTxFS
+        throw = throwTxFS
 
 -- we remember a set of read files
--- we use an asbolute tree delta (starting at the filesystem's root) to keep track of the filesystem modifications performed by the transaction, to be committed at the end
+-- we use an absolute tree delta (starting at the filesystem's root) to keep track of the filesystem modifications performed by the transaction, to be committed at the end
 -- we keep a set of temporary files/directories used  by the transaction, that are purged after commit
 type TxFSLog = (TxFSChanges,Set FilePath)
 
@@ -101,6 +129,9 @@ type TxFSWrites = Set FilePath
 type TxFSChangesFlat = (TxFSReads,TxFSWrites)
 -- changes as a set of reads and a modification tree
 type TxFSChanges = (TxFSReads,FSTreeDelta)
+data TxExcep = TxExcep deriving (Show, Typeable)
+
+instance Exception TxExcep
 
 getTxFSChanges :: (MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS TxFSChanges
 getTxFSChanges = liftM fst State.get
@@ -121,19 +152,73 @@ modifyTxFSTreeDeltas :: (MonadState TxFSLog (ForestM TxFS)) => (FSTreeDelta -> F
 modifyTxFSTreeDeltas f = State.modify $ \((x,td),z) -> ((x,f td),z)
 
 atomicallyTxFS :: ForestM TxFS a -> IO a
-atomicallyTxFS t = do
-	let try = runForest TxFSForestCfg $ do
-		time <- forestIO $ startTxFSTransaction
-		x <- t
-		(reads,td) <- getTxFSChanges
-		let writes = fsTreeDeltaWrites td
-		success <- forestIO $ validateAndCommitTxFSTransaction time (reads,writes)
-		getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ()) -- remove all temporary data used by this run
-		return (x,success)
-	let tryAgain = do
-		(x,success) <- try
-		if success then return x else tryAgain -- if a transaction is invalid or fails, just restart it
-	tryAgain
+atomicallyTxFS t =
+  let keepTrying fail time reads = do
+        {
+          if fail
+          then do
+            {
+              threadDelay 1000000;
+              (failure,newtime) <- checkForRestart time reads;
+              keepTrying failure newtime reads
+            }
+          else return ()
+        }
+  in
+  let tryIt = do
+        {
+          time <- startTxFSTransaction;
+          result <- try t;
+          case result of
+            Left (exc :: TxExcep) -> do
+              {
+                -- Retry has been called!
+                -- Check every 1s if global transaction log has a new entry written to something
+                -- we tried to read.
+                -- Eventually change this to watch files both for interoperability with outside transactions and for less arbitrary time measurement
+                (reads,_) <- getTxFSChanges;
+                forestIO $ modifyMVar_ runningTransactions (return . List.delete time);
+                getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ());
+                forestIO $ keepTrying True time reads;
+                tryIt
+              }
+            Right x -> do
+              {
+                (reads,td) <- getTxFSChanges;
+                let writes = fsTreeDeltaWrites td in do
+                  {
+                    success <- forestIO $ validateAndCommitTxFSTransaction time (reads,writes);
+                    getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ()); -- remove all temporary data used by this run
+                    if success then return x else tryIt
+                  }
+              }
+        }
+   in
+    runForest TxFSForestCfg tryIt
+    
+-- Assume always called in atomically
+-- Throw exception, catch in atomically or orElse.        
+retryTxFS :: ForestM TxFS a
+retryTxFS = throwM TxExcep
+
+-- Assume always called in atomically
+-- Needs to be able to 'catch' retries somehow
+-- Do a1
+-- If a1 retries (catch)
+--    Do a2
+--    If a2 retries (catch)
+--       Retry choice (call retry, which should then be caught by atomically, or throw OrElse)
+orElseTxFS :: ForestM TxFS a -> ForestM TxFS a -> ForestM TxFS a 
+orElseTxFS a1 a2 =
+  let catch = Control.Monad.Catch.catch in
+  catch (catch a1 (\ (ex :: TxExcep) -> a2)) (\ (ex :: TxExcep) -> retry)
+
+
+catchTxFS :: Exception e => FTM fs a -> (e -> FTM fs a) -> FTM fs a
+catchTxFS = error "Not Implemented"
+
+throwTxFS :: Exception e => e -> FTM fs a
+throwTxFS = error "Not Implemented"
 
 -- filesystems are always different
 instance Eq (FSTree TxFS) where
@@ -141,7 +226,7 @@ instance Eq (FSTree TxFS) where
 
 instance FSRep TxFS where
 	
-	newtype ForestM TxFS a = TxFSForestM { runTxFSForestM :: StateT TxFSLog IO a } deriving (Functor,Applicative,Monad,MonadState TxFSLog,MonadLazy)
+	newtype ForestM TxFS a = TxFSForestM { runTxFSForestM :: StateT TxFSLog IO a } deriving (Functor,Applicative,Monad,MonadState TxFSLog,MonadLazy,MonadThrow,MonadCatch)
 	
 	data ForestCfg TxFS = TxFSForestCfg
 	
