@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, ConstraintKinds, TemplateHaskell, DeriveDataTypeable, UndecidableInstances, TypeOperators, TypeFamilies, DataKinds, KindSignatures, MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, FlexibleInstances, NamedFieldPuns #-}
+{-# LANGUAGE OverlappingInstances, StandaloneDeriving, GADTs, ConstraintKinds, TemplateHaskell, DeriveDataTypeable, UndecidableInstances, TypeOperators, TypeFamilies, DataKinds, KindSignatures, MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, FlexibleInstances, NamedFieldPuns #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -33,6 +33,7 @@
 
 module Language.Forest.IC.Generic   where
 
+import Prelude hiding (mod)
 import Data.Monoid
 import Data.WithClass.MData
 import Language.Pads.Generic
@@ -52,63 +53,66 @@ import Control.Monad
 import Language.Forest.IC.ValueDelta
 import Data.DeriveTH                 
 import Data.WithClass.Derive.MData
+import Data.WithClass.Derive.DeepTypeable
 import Data.WithClass.MGenerics
 import Data.IORef
 import Language.Forest.IC.MetaData
+import Data.DeepTypeable
+import Language.Haskell.TH.Syntax
 
 
 -- * Incremental Forest interface
 
 -- (root path,current tree)
-type LoadInfo fs = ForestFSThunk fs Inside (FilePath,FSTree fs) -- the args don't need to be remembered because in the current impl they are already being stored together with the md. we store the root path to avoid forcing the metadata thunk
+type LoadInfo fs = ForestFSThunk fs Inside (FilePath,FSTree fs) -- we store the root path to avoid forcing the metadata thunk
 
 -- we follow a closed-world assumption: the computations of the top-level arguments of a specification cannot be modified; nevertheless, they may depend on modifiables and their values are updated accordingly.
 
 -- * Automatically generated "not to be seen" Forest class
 
 -- A Class for the types of Forest specifications
-class (ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => ICForest fs args rep md | rep -> md, rep -> args  where
+class (ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => ICForest (mode :: ICMode) fs args rep md | rep -> md, rep -> args  where
 	
 	-- loads a specification at the most recent FS snapshot
-	load :: ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo fs)
-	load args path = forestM latestTree >>= \t -> loadTree t args path
+	load :: Proxy mode -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo fs)
+	load mode args path = forestM latestTree >>= \t -> loadTree mode t args path
 	
 	-- loads a specification at a given FS snapshot
-	loadTree :: FSTree fs -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo fs)
-	loadTree tree margs path = do
-		(rep,md) <- inside $ loadScratch margs path tree Nothing tree getForestMDInTree -- for batch loading we use the same tree and assume that nothing changed
+	loadTree :: Proxy mode -> FSTree fs -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo fs)
+	loadTree mode tree margs path = do
+		(rep,md) <- inside $ loadScratch mode margs path tree Nothing tree getForestMDInTree -- for batch loading we use the same tree and assume that nothing changed
 		loadInfo <- inside $ ref (path,tree)
 		return ((rep,md),loadInfo)
 	
 	-- incrementally reloads a specification given older data and the most recent FS snapshot
-	reload :: FilePath -> ((rep,md),LoadInfo fs) -> ForestO fs ()
-	reload path info = forestM latestTree >>= \t -> reloadTree t Proxy path info
+	reload :: Proxy mode -> FilePath -> ((rep,md),LoadInfo fs) -> ForestO fs ()
+	reload mode path info = forestM latestTree >>= \t -> reloadTree mode t Proxy path info
 	
 	-- incrementally reloads a specification given older data and a newer FS snapshot
-	reloadTree :: FSTree fs -> Proxy args -> FilePath -> ((rep,md),LoadInfo fs) -> ForestO fs ()
-	reloadTree newTree proxy path ((rep,md),loadInfo) = debug ("reloading") $ do
-		(originalPath,originalTree) <- inside $ get loadInfo
-		treeDelta <- debug ("loadedInfo") $ changesBetween originalTree newTree -- assume that the @FSTreeDelta@ is absolute
-		let relTreeDelta = focusFSTreeDeltaByRelativePathMay treeDelta path
-		let dargs = (deltaArgs (Proxy::Proxy fs) proxy) -- we assume that top-level arguments always change, since we don't track their modifications
-		(drep,dmd) <- debug ("initial FSDelta: "++ show path ++" --> "++ show relTreeDelta) $ loadDelta proxy dargs (return originalPath) originalTree ((rep,md),getForestMDInTree) path relTreeDelta newTree -- we can discard the top-level deltas
-		set loadInfo (path,newTree)
+	reloadTree :: Proxy mode -> FSTree fs -> Proxy args -> FilePath -> ((rep,md),LoadInfo fs) -> ForestO fs ()
+	reloadTree mode newTree proxy path ((rep,md),loadInfo) = debug ("reloading") $ do undefined
+--		(originalPath,originalTree) <- inside $ get loadInfo
+--		treeDelta <- debug ("loadedInfo") $ changesBetween originalTree newTree -- assume that the @FSTreeDelta@ is absolute
+--		let relTreeDelta = focusFSTreeDeltaByRelativePathMay treeDelta path
+--		let dargs = (deltaArgs (Proxy::Proxy fs) proxy) -- we assume that top-level arguments always change, since we don't track their modifications
+--		(drep,dmd) <- debug ("initial FSDelta: "++ show path ++" --> "++ show relTreeDelta) $ loadDelta mode proxy dargs (return originalPath) originalTree ((rep,md),getForestMDInTree) path relTreeDelta newTree -- we can discard the top-level deltas
+--		set loadInfo (path,newTree)
 	
 	
 	-- batch non-incremental load (takes an original tree and a delta to handle moves whenever the old and new values are not in sync)
-	loadScratch :: ForestIs fs args -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
+	loadScratch :: Proxy mode -> ForestIs fs args -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
 	
 	-- | incremental load function that considers the original source data and returns a stable delta
 	-- expects the old data to be consistent with the old path and the old tree
 	-- invariant: the FSTreeDelta is always relative to the updated root filepath
 	-- the original root path is given as a computation (possibly over the original data), so that we can delay its evaluation
-	loadDelta :: Proxy args -> SValueDeltas (ForestICThunksI fs args) -> ForestI fs FilePath -> FSTree fs -> OldData fs rep md -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md)
+	loadDelta :: Proxy mode -> Proxy args -> LoadDeltaArgs mode fs args -> ForestI fs FilePath -> FSTree fs -> OldData fs rep md -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md)
 
 	-- | Writes the data to a private Forest on-disk location and generates a manifest file
-	generateManifestScratch :: ForestIs fs args -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)
-	generateManifestScratch args tree dta = forestM (newManifestWith "/" tree) >>= updateManifestScratch args tree dta
+	generateManifestScratch :: Proxy mode -> ForestIs fs args -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)
+	generateManifestScratch mode args tree dta = forestM (newManifestWith "/" tree) >>= updateManifestScratch mode args tree dta
 	
-	updateManifestScratch :: ForestIs fs args -> FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs)
+	updateManifestScratch :: Proxy mode -> ForestIs fs args -> FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs)
 
 	-- | generates default metadata based on the specification
 	defaultMd :: ForestIs fs args -> rep -> FilePath -> ForestI fs md
@@ -209,5 +213,56 @@ mapInfoFiles md = do
   fileInfos <- listInfoNonEmptyFiles md
   let keyedInfos = map (\finfo -> (fullpath finfo, finfo)) fileInfos
   return $ Data.Map.fromList keyedInfos
+
+type family LoadDeltaArgs (mode :: ICMode) (fs :: FS) args :: * where
+	LoadDeltaArgs ICData fs args = (ForestIs fs args,SValueDeltas args) -- they are not in fact stable deltas, but we store the new computations separately
+	LoadDeltaArgs ICExpr fs args = SValueDeltas (ForestICThunksI fs args)
+
+type family MDArgs (mode :: ICMode) md args :: * where
+	MDArgs ICData md args = md
+	MDArgs ICExpr md args = (md,args)
+
+-- whether only forest data representations are incremental or even the expressions whitin a forest specifications are incrementally replayed
+data ICMode = ICData | ICExpr deriving Typeable
+deriving instance Typeable ICData
+deriving instance Typeable ICExpr
+$( derive makeDeepTypeable ''ICMode )
+
+instance DeepTypeable ICData where
+	typeTree (_::Proxy ICData) = MkTypeTree (mkName "Language.Forest.IC.Generic.ICData") [] []
+instance DeepTypeable ICExpr where
+	typeTree (_::Proxy ICExpr) = MkTypeTree (mkName "Language.Forest.IC.Generic.ICExpr") [] []
+
+-- * strictly copying @FSThunk@s
+
+class (FSRep fs,ForestLayer fs l) => CopyFSThunks fs l a where
+	copyFSThunks :: Proxy fs -> Proxy l -> (FilePath -> FilePath) -> a -> ForestL fs l a
+
+copyFSThunksProxy :: Proxy fs -> Proxy l -> Proxy (CopyFSThunksDict fs l)
+copyFSThunksProxy fs l = Proxy
+
+data CopyFSThunksDict fs l a = CopyFSThunksDict { copyFSThunksDict :: Proxy fs -> Proxy l -> (FilePath -> FilePath) -> a -> ForestL fs l a }
+
+instance (CopyFSThunks fs l a) => Sat (CopyFSThunksDict fs l a) where
+	dict = CopyFSThunksDict { copyFSThunksDict = copyFSThunks }
+
+-- we make a strict copy by forcing the original thunk
+instance (ForestLayer fs l,Eq a,ForestInput fs FSThunk l) => CopyFSThunks fs l (ForestFSThunk fs l a) where
+	copyFSThunks _ _ f t = get t >>= ref 
+
+-- change fullpaths
+instance (ForestInput fs FSThunk Inside,ForestLayer fs l) => CopyFSThunks fs l (Forest_md fs) where
+	copyFSThunks _ _ f fmd = do
+		errors' <- inside $ get (errors fmd) >>= ref
+		let fileInfo' = (fileInfo fmd) { fullpath = f (fullpath $ fileInfo fmd) }
+		return $ Forest_md errors' fileInfo'
+
+-- just traverse recursively, until there are no more @FSThunks@ inside the type
+instance (ForestLayer fs l,MData (CopyFSThunksDict fs l) (ForestL fs l) a) => CopyFSThunks fs l a where
+	 copyFSThunks fs l f x = do
+		let hasFSThunk (MkTypeTree name _ _) = showName name == "Language.Forest.FS.FSRep.FSThunk"
+		if hasDeepTypeable hasFSThunk (proxyOf x)
+			then gmapT (copyFSThunksProxy fs l) (copyFSThunksDict dict fs l f) x
+			else return x
 
 

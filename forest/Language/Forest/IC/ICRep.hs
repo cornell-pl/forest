@@ -130,6 +130,8 @@ fsRef :: (Eq a,FSRep fs,ForestInput fs FSThunk l) => a -> ForestL fs l (ForestFS
 fsRef = ref
 fsThunk :: (Eq a,FSRep fs,ForestInput fs FSThunk l) => ForestL fs l a -> ForestL fs l (ForestFSThunk fs l a)
 fsThunk = mod
+icThunk :: (Eq a,FSRep fs,ForestOutput fs ICThunk l) => ForestL fs l a -> ForestL fs l (ForestICThunk fs l a)
+icThunk = thunk
 newHSThunk :: (Eq a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
 newHSThunk = new
 
@@ -221,31 +223,6 @@ instance (Memo a,Memo b) => Memo (a :.: b) where
 	memoKey (x :.: y) = (andMkWeak wx wy,(kx,ky))
 		where (wx,kx) = memoKey x
 		      (wy,ky) = memoKey y
-
--- * strictly copying @FSThunk@s
-
-class (FSRep fs,ForestLayer fs l) => CopyFSThunks fs l a where
-	copyFSThunks :: Proxy fs -> Proxy l -> a -> ForestL fs l a
-
-copyFSThunksProxy :: Proxy fs -> Proxy l -> Proxy (CopyFSThunksDict fs l)
-copyFSThunksProxy fs l = Proxy
-
-data CopyFSThunksDict fs l a = CopyFSThunksDict { copyFSThunksDict :: Proxy fs -> Proxy l -> a -> ForestL fs l a }
-
-instance (CopyFSThunks fs l a) => Sat (CopyFSThunksDict fs l a) where
-	dict = CopyFSThunksDict { copyFSThunksDict = copyFSThunks }
-
--- we make a strict copy by forcing the original thunk
-instance (FSRep fs,ForestLayer fs l,Eq a,ForestInput fs FSThunk l) => CopyFSThunks fs l (ForestFSThunk fs l a) where
-	copyFSThunks _ _ t = get t >>= ref 
-
--- just traverse recursively, until there are no more @FSThunks@ inside the type
-instance (FSRep fs,ForestLayer fs l,MData (CopyFSThunksDict fs l) (ForestL fs l) a) => CopyFSThunks fs l a where
-	 copyFSThunks fs l x = do
-		let hasFSThunk (MkTypeTree name _ _) = showName name == "Language.Forest.FS.FSRep.FSThunk"
-		if hasDeepTypeable hasFSThunk (proxyOf x)
-			then gmapT (copyFSThunksProxy fs l) (copyFSThunksDict dict fs l) x
-			else return x
 
 -- * @DeepTypeable@
 

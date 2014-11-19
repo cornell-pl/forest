@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleContexts, ConstraintKinds, TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE ViewPatterns, TemplateHaskell, MultiParamTypeClasses, FlexibleContexts, ConstraintKinds, TypeSynonymInstances, FlexibleInstances #-}
 
 module Language.Forest.IC.CodeGen.Utils where
 
@@ -17,7 +17,10 @@ import Language.Forest.IO.Utils
 import Language.Pads.Padsc hiding (lift)
 import Language.Forest.IC.BX as BX
 import Language.Pads.TH
+import Language.Forest.IC.Generic
 import Language.Forest.IC.ValueDelta
+import Data.Generics
+import Language.Haskell.TH.Quote
 
 mergeFieldDeltas :: [Name] -> TH.Exp
 mergeFieldDeltas [] = Pure.returnExp $ ConE 'Id
@@ -85,6 +88,7 @@ mk_newTyD fsName (unty_name,ty_name) ty = NewtypeD [] ty_name [PlainTV fsName] c
           derives = [''Typeable,''Eq]
 
 mk_TySynD fsName ty_name ty = TySynD ty_name [PlainTV fsName] ty
+mk_TySynDMode modeName fsName ty_name ty = TySynD ty_name [KindedTV modeName (ConT ''ICMode),PlainTV fsName] ty
 
 -- generates a function that collects the fields of all the specifications in a directory and returns a list of @Forest_md@s
 genMergeFieldsMDErrors :: [Field] -> Q TH.Exp
@@ -100,3 +104,37 @@ genMergeFieldMDErrors (Simple _) = VarE 'get_errors
 genMergeFieldMDErrors (Comp compField) = case tyConNameOpt compField of
 	Nothing -> VarE 'merge_list_errors
 	Just str -> VarE 'merge_container_errors
+
+modeT :: ICMode -> Type
+modeT = PromotedT . modeN
+
+modeN :: ICMode -> Name
+modeN ICExpr = 'ICExpr
+modeN ICData = 'ICData
+
+modeProxy :: ICMode -> Exp
+modeProxy mode = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) $ modeT mode) 
+	
+appTyModeFS mode fsName ty_name = Pure.appT2 (ConT ty_name) (PromotedT mode) (VarT fsName)
+appTyModeFS' modeName fsName ty_name = Pure.appT2 (ConT ty_name) (VarT modeName) (VarT fsName)
+
+allMDArgs :: Data a => a -> [Type]
+allMDArgs = listify mdArg where
+	mdArg :: Type -> Bool
+	mdArg ty@(AppT (AppT (AppT (ConT ((==''MDArgs) -> True)) mode) md) args) = True
+	mdArg _ = False
+
+allTypes :: Data a => a -> [Type]
+allTypes = listify ty where
+	ty :: Type -> Bool
+	ty x = True
+
+removePred :: Data a => (Pred -> Bool) -> a -> a
+removePred p = everywhere (mkT remP) where
+	remP :: [Pred] -> [Pred]
+	remP ps = filter (not . p) ps
+	
+replaceType :: Data a => (Type -> Type) -> a -> a
+replaceType f = everywhere (mkT f)
+
+

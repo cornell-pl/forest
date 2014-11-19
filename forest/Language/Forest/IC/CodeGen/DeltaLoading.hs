@@ -50,32 +50,34 @@ import Control.Monad.Trans.Class
 -- for each variable name, we store (a boolean that indicates whether its value has NOT changed (changes are ALWAYS stable), the name of a thunk that holds its value, an optional pattern to match against the thunk's value when the variable is used)
 type DeltaEnv = Map Name (TH.Exp,Maybe (Name,Pat))
 
-type DeltaQ a = ReaderT DeltaEnv Q a
+-- the first boolean denotes the IC mode
+type DeltaQ a = ReaderT (ICMode,DeltaEnv) Q a
 
 --environments store maps from variables to (the name of the thunk that holds its value,a pattern to match against the thunk's value)
 type Env = Map Name (Maybe (Name,Pat))
-type EnvQ = ReaderT Env Q
+-- the first boolean denotes the IC mode
+type EnvQ = ReaderT (ICMode,Env) Q
 
 runDeltaQ :: DeltaQ a -> EnvQ a
 runDeltaQ m = do
-	env <- Reader.ask
-	lift $ Reader.runReaderT m (Map.map (ConE 'False,) env) -- all non-delta variables have changed
+	(mode,env) <- Reader.ask
+	lift $ Reader.runReaderT m (mode,Map.map (ConE 'False,) env) -- all non-delta variables have changed
 
 runEnvQ :: EnvQ a -> DeltaQ a
 runEnvQ m = do
-	env <- Reader.ask
-	lift $ Reader.runReaderT m (Map.map snd env)
+	(mode,env) <- Reader.ask
+	lift $ Reader.runReaderT m (mode,Map.map snd env)
 
 -- forces thunk variables in an arbitrary expression
 forceVarsDeltaQ :: Exp -> (Exp -> DeltaQ a) -> DeltaQ a
 forceVarsDeltaQ e f = do
 	let expvars = expVars e
 	let forceVar var f = \e -> do
-		envvars <- Reader.ask
+		(_,envvars) <- Reader.ask
 		case Map.lookup var envvars of
 			Just (dv,Just (thunk,pat)) -> do
 				
-				let update env = Set.foldr replaceVar env (patPVars pat) where
+				let update (mode,env) = (mode,Set.foldr replaceVar env (patPVars pat)) where
 					replaceVar var env = Map.insert var (dv,Nothing) env
 				Reader.local update $ f $ UInfixE (AppE (VarE 'read) (VarE thunk)) (VarE '(>>=)) (LamE [pat] e)
 			otherwise -> f e
@@ -86,6 +88,9 @@ genLoadDeltaM (untyRep,tyRep) pd_name forestTy pat_infos = do
 	dargsName     <- case pat_infos of
 		[] -> return Nothing
 		otherwise -> State.lift $ liftM Just $ newName "dargs"
+	margsName     <- case pat_infos of
+		[] -> return Nothing
+		otherwise -> State.lift $ liftM Just $ newName "margs"
 	pathName    <- State.lift $ newName "path"
 	dpathName    <- State.lift $ newName "dpath"
 	treeName    <- State.lift $ newName "tree"
@@ -94,33 +99,43 @@ genLoadDeltaM (untyRep,tyRep) pd_name forestTy pat_infos = do
 	dfName      <- State.lift $ newName "df"
 	proxyName      <- State.lift $ newName "proxy"
 	dargNames <- lift $ Pure.genForestTupleNames (length pat_infos) "d"
+	margNames <- lift $ Pure.genForestTupleNames (length pat_infos) "m"
 	case pat_infos of -- add type argument variables to the environment
 		[] -> do
 			core_bodyE <- genLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName repmdName dpathName dfName treeName' (untyRep,tyRep) forestTy
-			return $ LamE [VarP proxyName,TupP [],VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName'] core_bodyE
+			return $ LamE [WildP,VarP proxyName,WildP,VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName'] core_bodyE
 		otherwise -> do
 			thunkNames <- lift $ Pure.genForestTupleNames (length pat_infos) "u"
-			let update env = foldl updateArg env (zip (zip thunkNames dargNames) pat_infos) where
+			let update (mode,env) = (mode,foldl updateArg env (zip (zip thunkNames dargNames) pat_infos)) where
 				updateArg env ((thunkName,dargName),(pat,ty)) = Map.fromSet insertVar (patPVars pat) `Map.union` env -- left-biased union
 					where insertVar var = (AppE (VarE 'isEmptySValueDelta) (VarE dargName),Just (thunkName,pat))
 				
 			Reader.local update $ do -- adds pattern variable deltas to the env.
-				newrepmdName <- State.lift $ newName "newrepmd"
-				core_bodyE <- genLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName newrepmdName dpathName dfName treeName' (untyRep,tyRep) forestTy
-				let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
-				let pats = [VarP proxyName,dargsP,VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName']
-				
-				let forceThunk (n,(pat,_)) = if (patPVars pat `Set.intersection` forestTyVars forestTy) == Set.empty -- if the variables defined by the pattern are unused
-					then [] else [BindS pat $ AppE (VarE 'forceOutside) (VarE n)]
-				
-				let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
-				return $ LamE pats $ Pure.appE5 (VarE 'doLoadDeltaArgs) (VarE proxyName) (VarE $ fromJust dargsName) (VarE repmdName) (VarE treeName') recBodyE
+				(mode,_) <- Reader.ask
+				case mode of
+					ICExpr -> do -- IC expressions
+						newrepmdName <- State.lift $ newName "newrepmd"
+						core_bodyE <- genLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName newrepmdName dpathName dfName treeName' (untyRep,tyRep) forestTy
+						let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
+						let pats = [WildP,VarP proxyName,dargsP,VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName']
+						
+						let forceThunk (n,(pat,_)) = if (patPVars pat `Set.intersection` forestTyVars forestTy) == Set.empty -- if the variables defined by the pattern are unused
+							then [] else [BindS pat $ AppE (VarE 'forceOutside) (VarE n)]
+						
+						let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
+						return $ LamE pats $ Pure.appE5 (VarE 'doLoadDeltaArgsExpr) (VarE proxyName) (VarE $ fromJust dargsName) (VarE repmdName) (VarE treeName') recBodyE
+					ICData -> do -- no IC expressions
+						newrepmdName <- State.lift $ newName "newrepmd"
+						core_bodyE <- genLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName newrepmdName dpathName dfName treeName' (untyRep,tyRep) forestTy
+						let margsP = AsP (fromJust margsName) $ Pure.forestTupleP $ map VarP margNames
+						let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
+						let pats = [WildP,VarP proxyName,TupP [margsP,dargsP],VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName']
 
--- takes a pattern and a delta over its argument value and tries to split it into a set of deltas over the pattern variables
---splitPatternsDelta :: [(Name,(TH.Pat, TH.Type))] -> DeltaEnv
---splitPatternsDelta = Map.unions . map splitPatternDelta
---splitPatternDelta :: (Name,(TH.Pat,TH.Type)) -> DeltaEnv
---splitPatternDelta (name,(pat,pat_ty)) = Map.fromList $ map (\var -> (var,AppE (VarE 'isEmptySValueDelta) (VarE name))) $ Set.toList $ patPVars pat
+						let forceThunk (n,(pat,_)) = if (patPVars pat `Set.intersection` forestTyVars forestTy) == Set.empty -- if the variables defined by the pattern are unused
+							then [] else [BindS pat $ AppE (VarE 'forceOutside) (VarE n)]
+
+						let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
+						return $ LamE pats $ Pure.appE5 (VarE 'doLoadDeltaArgsNoExpr) (VarE proxyName) (VarE $ fromJust margsName) (VarE repmdName) (VarE treeName') recBodyE
 
 genLoadDeltaBody :: TH.Exp -> Maybe TH.Exp -> Name -> Name -> Name -> Name -> Name -> Name -> (Name,Name) -> ForestTy -> DeltaQ TH.Exp
 genLoadDeltaBody proxyE argE pathName treeName repmdName dpathName dfName treeName' (untyRep,tyRep) forestTy = do
@@ -153,9 +168,6 @@ loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
 		(loadSymLink pathE' treeE dfE treeE')
 		(loadDeltaSymLink pathE dpathE treeE dfE treeE')
 	FConstraint pat descTy predE -> loadDeltaConstraint pat repmdE predE $ \newrepmdE -> loadDeltaE descTy pathE treeE newrepmdE dpathE dfE treeE'	
-		--checkUnevaluated "constraint" treeE' repmdE
---		(\newGetMDE -> loadConstraint treeE' pat predE $ loadE descTy pathE' treeE dfE treeE' newGetMDE)
---		(\newrepmdE -> loadDeltaConstraint pat newrepmdE predE $ \newrepmdE1 -> loadDeltaE descTy pathE treeE newrepmdE1 dpathE dfE treeE')
 	(Directory dirTy) -> checkStop "directory" forestTy pathE dpathE repmdE dfE treeE'
 		(loadDirectory dirTy pathE' treeE dfE treeE')
 		(loadDeltaDirectory dirTy pathE treeE dpathE dfE treeE')
@@ -168,17 +180,31 @@ loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
   where pathE' = dpathE
         getMDE = AppE (VarE 'snd) repmdE
 
+-- terminals in the spec
 loadDeltaNamed :: TH.Exp -> [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
-loadDeltaNamed proxyE [] pathE treeE repmdE dpathE dfE treeE' = return $ Pure.appE8 (VarE 'loadDelta) proxyE (TupE []) pathE treeE repmdE dpathE dfE treeE'
+loadDeltaNamed proxyE [] pathE treeE repmdE dpathE dfE treeE' = do
+	(mode,_) <- Reader.ask
+	let unit = case mode of
+		ICExpr -> TupE []
+		ICData -> TupE [TupE [],TupE []]
+	return $ Pure.appE9 (VarE 'loadDelta) (modeProxy mode) proxyE unit pathE treeE repmdE dpathE dfE treeE'
 loadDeltaNamed proxyE argEs pathE treeE repmdE dpathE dfE treeE' = do
+	(mode,_) <- Reader.ask
 	let makeArgDelta e = do
 		b <- lift $ newName "b"
 		condE <- isEmptyDeltaEnvExp e
 		return ((condE,b),AppE (VarE 'makeSValueDelta) (VarE b))
+		
 	zips <- mapM makeArgDelta argEs
+	
 	let (conds,dargEs) = unzip zips
+	argEs <- mapM (\e -> forceVarsDeltaQ e return) argEs
+	let loadArgs = case mode of
+		ICExpr -> Pure.forestTupleE dargEs
+		ICData -> TupE [Pure.forestTupleE argEs,Pure.forestTupleE dargEs]
+		
 	let runCondsS = map (\(e,b) -> LetS [ValD (VarP b) (NormalB e) []]) conds 
-	return $ DoE $ runCondsS ++ [NoBindS $ Pure.appE8 (VarE 'loadDelta) proxyE (Pure.forestTupleE $ dargEs) pathE treeE repmdE dpathE dfE treeE']
+	return $ DoE $ runCondsS ++ [NoBindS $ Pure.appE9 (VarE 'loadDelta) (modeProxy mode) proxyE loadArgs pathE treeE repmdE dpathE dfE treeE']
 
 loadDeltaArchive :: [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> DeltaQ Exp
 loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE' repmdE = do
@@ -251,7 +277,7 @@ loadFieldsDelta [] pathE treeE repmdE dpathE dfE treeE' = return ([],[],[])
 loadFieldsDelta (field:fields) pathE treeE repmdE dpathE dfE treeE' = do
 	(rep_name,rep_field,md_name,md_field, stmts_field)  <- loadFieldDelta field pathE treeE repmdE dpathE dfE treeE'
 	-- updates the delta environment similarly to Forest <x:s1,s2> specifications; adds representation (this) and metadata (this_md) variables to the environment
-	let update = Map.insert rep_name (AppE (VarE 'isEmptySValueDelta) $ VarE rep_field,Nothing) . Map.insert md_name (AppE (VarE 'isEmptySValueDelta) $ VarE md_field,Nothing)
+	let update (mode,env) = (mode,Map.insert rep_name (AppE (VarE 'isEmptySValueDelta) $ VarE rep_field,Nothing) $ Map.insert md_name (AppE (VarE 'isEmptySValueDelta) $ VarE md_field,Nothing) env)
 	(reps_fields, md_fields, stmts_fields) <- Reader.local update $ loadFieldsDelta fields pathE treeE repmdE dpathE dfE treeE'
 	return (rep_field:reps_fields, md_field:md_fields, stmts_field++stmts_fields)
 
@@ -299,12 +325,14 @@ loadDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE treeE repmd
 --	lensMdE <- lift $ buildFieldLens mdName
 	
 --	let innerrepmdE = AppE (UInfixE (AppE (VarE 'Inc.get) lensRepE) (VarE '(><)) (AppE (VarE 'Inc.get) lensMdE)) repmdE
-	
+	(mode,_) <- Reader.ask
 	loadContentNoDeltaE <- liftM (LamE [newpathP,newdfP,fieldrepmdP]) $ runEnvQ $ loadE forestTy newpathE treeE newdfE treeE' fieldrepmdE
 	loadContentDeltaE <- liftM (LamE [fieldrepmdP,newpathP,newdpathP,newdfP]) $ loadDeltaE forestTy newpathE treeE fieldrepmdE newdpathE newdfE treeE'
 	let loadE = case predM of
 		Nothing -> Pure.appE9 (VarE 'doLoadDeltaSimple) pathE dpathE externalE treeE dfE treeE' innerrepmdE loadContentNoDeltaE loadContentDeltaE
-		Just pred -> Pure.appE10 (VarE 'doLoadDeltaSimpleWithConstraint) pathE dpathE externalE treeE dfE treeE' innerrepmdE (modPredE (VarP repName) pred) loadContentNoDeltaE loadContentDeltaE
+		Just pred -> case mode of
+			ICExpr -> Pure.appE9 (VarE 'doLoadDeltaSimpleWithConstraintExpr) pathE dpathE externalE treeE dfE treeE' innerrepmdE loadContentNoDeltaE loadContentDeltaE
+			ICData -> Pure.appE10 (VarE 'doLoadDeltaSimpleWithConstraintNoExpr) pathE dpathE externalE treeE dfE treeE' innerrepmdE (modPredE (VarP repName) pred) loadContentNoDeltaE loadContentDeltaE
 	let loadStmt = BindS (TupP [VarP drepName,VarP dmdName]) loadE
 	
 	return (repName,drepName,mdName,dmdName,[fieldStmt1,fieldStmt2,loadStmt])
@@ -388,29 +416,40 @@ loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitNa
 		isoE <- lift $ tyConNameOptIso tyConNameOpt
 		
 		-- actual loading
-		let update = Map.insert fileName (Pure.appE2 (VarE 'Pure.isSameFileName) fileNameE dfileNameE,Nothing) . Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt))
+		(mode,_) <- Reader.ask
+		let update (mode,env) = (mode,Map.insert fileName (Pure.appE2 (VarE 'Pure.isSameFileName) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
 		Reader.local update $ case predM of
 			Nothing -> do
+				let doLoad = case mode of
+					ICExpr -> 'doLoadDeltaCompoundExpr
+					ICData -> 'doLoadDeltaCompoundNoExpr
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,newdfP,fieldrepmdP]) $ runEnvQ $ loadE descTy newpathE treeE newdfE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP]) $ loadDeltaE descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE'
-				let loadActionE = Pure.appE11 (VarE 'doLoadDeltaCompound) isoE isoE pathE dpathE genE treeE dfE treeE' innerrepmdE loadElementE loadElementDeltaE
+				let loadActionE = Pure.appE11 (VarE doLoad) isoE isoE pathE dpathE genE treeE dfE treeE' innerrepmdE loadElementE loadElementDeltaE
 				let deltasE = BindS (TupP [drepP,dmdP]) $ loadActionE
 				return (repName,drepName,mdName,dmdName,fieldStmts++[deltasE])
 			Just predE -> forceVarsDeltaQ predE $ \predE -> do
+				let doLoad = case mode of
+					ICExpr -> 'doLoadDeltaCompoundWithConstraintExpr
+					ICData -> 'doLoadDeltaCompoundWithConstraintNoExpr
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,newdfP,fieldrepmdP]) $ runEnvQ $ loadE descTy newpathE treeE newdfE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP]) $ loadDeltaE descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE'
-				let loadActionE = Pure.appE12 (VarE 'doLoadDeltaCompoundWithConstraint) isoE isoE pathE dpathE genE treeE dfE treeE' innerrepmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE
+				let loadActionE = Pure.appE12 (VarE doLoad) isoE isoE pathE dpathE genE treeE dfE treeE' innerrepmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE
 				let deltasE = BindS (TupP [drepP,dmdP]) $ loadActionE
 				return (repName,drepName,mdName,dmdName,fieldStmts++[deltasE])
 
 loadDeltaConstraint :: TH.Pat -> TH.Exp -> TH.Exp -> (TH.Exp -> DeltaQ TH.Exp) -> DeltaQ TH.Exp
 loadDeltaConstraint pat repmdE predE load = forceVarsDeltaQ predE $ \predE -> do
+	(mode,_) <- Reader.ask
 	newRepMdName <- lift $ newName "newrepmd"
 	let (newRepMdE,newRepMdP) = genPE newRepMdName
 	
 	let predFnE = modPredE pat predE
 	loadAction <- load newRepMdE
-	return $ Pure.appE2 (VarE 'doLoadDeltaConstraint) repmdE $ LamE [newRepMdP] loadAction 
+	let load = case mode of
+		ICExpr -> Pure.appE2 (VarE 'doLoadDeltaConstraintExpr) repmdE $ LamE [newRepMdP] loadAction 
+		ICData -> Pure.appE3 (VarE 'doLoadDeltaConstraintNoExpr) repmdE predFnE $ LamE [newRepMdP] loadAction
+	return load
 
 -- tests if the environment variables used by given the forest specification have not changed
 --isEmptyDeltaEnv :: (a -> Set Name) -> a -> DeltaQ TH.Exp
@@ -427,7 +466,7 @@ loadDeltaConstraint pat repmdE predE load = forceVarsDeltaQ predE $ \predE -> do
 
 isEmptyDeltaEnv :: (a -> Set Name) -> a -> DeltaQ TH.Exp
 isEmptyDeltaEnv getVars ty = do
-	env <- Reader.ask
+	(mode,env) <- Reader.ask
 	let tyVars = getVars ty
 	let envVars = map (fst . snd) $ Map.toList $ Map.filterWithKey (\v dv -> v `Set.member` tyVars) env
 	return $ AppE (VarE 'and) (ListE envVars)

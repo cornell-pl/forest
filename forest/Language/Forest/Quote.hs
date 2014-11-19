@@ -37,6 +37,7 @@ import Prelude hiding (exp, init)
 import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Haskell.TH
+import Language.Forest.IC.Generic
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 
 import Language.Forest.Pure.CodeGen as Pure
@@ -69,8 +70,14 @@ fquasiquote1 mode p = QuasiQuoter
 	(error "parse type")
 	(fparse1 mode p $ make_decls mode)
 
+fquasiquote1IC mb p = QuasiQuoter
+	(error "parse expression")
+	(error "parse pattern")
+	(error "parse type")
+	(fparse1 ICForest p $ IC.make_forest_declarations mb)
+
 make_decls PureForest = Pure.make_forest_declarations
-make_decls ICForest = IC.make_forest_declarations
+make_decls ICForest = IC.make_forest_declarations Nothing
 
 -- | A quasi-quoter for Forest with pure functional data structures
 forest :: QuasiQuoter
@@ -79,4 +86,12 @@ forest  = fquasiquote1 PureForest P.forestDecls
 -- | A quasi-quoter for Forest with IC-specific data structures
 iforest :: QuasiQuoter
 iforest  = fquasiquote1 ICForest P.forestDecls
+	
+-- | A quasi-quoter for incremental forest with data thunks
+idforest :: QuasiQuoter
+idforest  = fquasiquote1IC (Just ICData) P.forestDecls
+
+-- | A quasi-quoter for incremental forest with data and expression thunks
+ieforest :: QuasiQuoter
+ieforest  = fquasiquote1IC (Just ICExpr) P.forestDecls
     

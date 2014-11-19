@@ -1,4 +1,4 @@
-{-# LANGUAGE ConstraintKinds, UndecidableInstances, FlexibleContexts, GeneralizedNewtypeDeriving, TemplateHaskell, QuasiQuotes, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable, TypeSynonymInstances,FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies,KindSignatures, DataKinds, ConstraintKinds, UndecidableInstances, FlexibleContexts, GeneralizedNewtypeDeriving, TemplateHaskell, QuasiQuotes, ScopedTypeVariables, MultiParamTypeClasses, DeriveDataTypeable, TypeSynonymInstances,FlexibleInstances #-}
 
 {-
 ** *********************************************************************

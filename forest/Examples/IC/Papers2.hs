@@ -64,7 +64,7 @@ import Language.Forest.IC
 
 	type Author (y :: Maybe Integer) (n :: Maybe String) = Directory {
 		authorPapers is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
-	,   supplemental is "Supplemental" :: Maybe (Supplemental y n) where <| validAuthor authorPapers_md |>
+	,   supplemental is "Supplemental" :: Maybe (Supplemental y n)
 	}
 
 	type Year (y :: Maybe Integer) = Directory {
@@ -88,9 +88,6 @@ import Language.Forest.IC
 	,	library matches libraryRE :: Maybe Library <| allPaperNames articles books media reports |>
 	} where True
 |]
-
-validAuthor :: ForestFSThunkI fs (Map String (Paper_md fs,(ForestFSThunkI fs FileInfo, ForestICThunkI fs Bool))) -> ForestI fs Bool
-validAuthor = undefined
 
 libraryRE = RE "Library.papers2|Library.papers"
 

@@ -193,7 +193,7 @@ manifestFields (field:fields) treeE parentPathE dtaE man0E = do
 	man1Name <- lift $ newName "man"
 	let (man1E,man1P) = genPE man1Name
 	(rep_field,md_field,stmts_field) <- manifestField field treeE parentPathE dtaE man0E man1P
-	let update = Map.insert rep_field Nothing . Map.insert md_field Nothing
+	let update (mode,env) = (mode,Map.insert rep_field Nothing $ Map.insert md_field Nothing env)
 	stmts_fields <- Reader.local update $ manifestFields fields treeE parentPathE dtaE man1E
 	return $ stmts_field++stmts_fields
 
@@ -290,7 +290,7 @@ manifestCompound isNested (CompField internal tyConNameOpt explicitName external
 		-- build representation and metadata containers from a list
 		destroyContainerE <- lift $ Pure.tyConNameOptToList tyConNameOpt
 		
-		let update = Map.insert fileName Nothing . Map.insert fileNameAtt (Just (fileNameAttThunk,VarP fileNameAtt))  --force the @FileInfo@ thunk
+		let update (mode,env) = (mode,Map.insert fileName Nothing $ Map.insert fileNameAtt (Just (fileNameAttThunk,VarP fileNameAtt)) env)  --force the @FileInfo@ thunk
 		
 		-- container loading
 		Reader.local update $ case predM of

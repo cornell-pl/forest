@@ -140,7 +140,7 @@ forestTupleP :: [Pat] -> Pat
 forestTupleP = foldl1' (\p1 p2 -> UInfixP p1 ('(:*:)) p2)
 
 forestTupleE :: [Exp] -> Exp
-forestTupleE = foldl1' (\e1 e2 -> UInfixE e1 (ConE '(:*:)) e2)
+forestTupleE = foldl1' (\e1 e2 -> InfixE (Just e1) (ConE '(:*:)) (Just e2))
 
 -- generates a function that collects the fields of all the specifications in a directory and returns a list of @Forest_md@s
 genMergeFieldsMDErrors :: [Field] -> Q TH.Exp
@@ -305,6 +305,7 @@ appE15 f x y z w q e x1 x2 x3 x4 x5 x6 x7 x8 x9 = AppE (AppE (AppE (AppE (AppE (
 appT2 f x y = AppT (AppT f x) y
 appT3 f x y z = AppT (AppT (AppT f x) y) z
 appT4 f x y z w = AppT (AppT (AppT (AppT f x) y) z) w
+appT5 f x y z w q = AppT (AppT (AppT (AppT (AppT f x) y) z) w) q
 
 tupT2 :: Type -> Type -> Type
 tupT2 t1 t2 = AppT (AppT (TupleT 2) t1) t2

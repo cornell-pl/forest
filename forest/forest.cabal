@@ -119,7 +119,6 @@ Library
                    Language.Forest.Pure.Show,
                    Language.Forest.Quote,
                    Language.Forest.Syntax,
-                   Language.Forest.TH,
                    Language.Forest.Pure,
                    Language.Forest.IC
   
@@ -133,12 +132,7 @@ Library
                  graphviz, fgl, random, text, safe, bytestring, transformers, array, syb, th-orphans
   
   -- Modules not exported by this package.
-  Other-modules: Language.Forest.CodeGen,
-                 Language.Forest.CodeGen.DeltaLoading,
-                 Language.Forest.CodeGen.Loading,
-                 Language.Forest.CodeGen.Storing,
-                 Language.Forest.CodeGen.Utils,
-                 Language.Forest.TH
+  Other-modules: 
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         
