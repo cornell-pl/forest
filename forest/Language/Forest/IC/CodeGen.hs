@@ -109,7 +109,7 @@ make_forest_declaration mb (ForestDecl (id, pats, forestTy)) = do
 	manifestM :: TH.Exp <- Reader.runReaderT (genManifestM ty_name md_ty_name forestTy arg_infos) (mode,fsName,Map.empty)
 	defaultM :: TH.Exp <- genDefaultM ty_name md_ty_name forestTy arg_infos
 	
-	let mkInst modeT = genFInst modeT fsName  loadM loadDeltaM manifestM defaultM ty_name md_ty_name      forestTy arg_infos
+	let mkInst modeT = genFInst modeName modeT fsName  loadM loadDeltaM manifestM defaultM ty_name md_ty_name      forestTy arg_infos
 	
 	insts <- case mb of
 		Nothing -> do
@@ -119,9 +119,15 @@ make_forest_declaration mb (ForestDecl (id, pats, forestTy)) = do
 		Just ICData -> mkInst $ PromotedT 'ICData
 		Just ICExpr -> mkInst $ PromotedT 'ICExpr
 
-	return $ ty_decl:md_ty_decls++insts
+	let args_ty = case arg_infos of
+		[] -> TupleT 0
+		otherwise -> Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) arg_infos
+	let loadDelta_alias = FunD (mkName $ "loadDelta_"++nameBase ty_name) [Clause [VarP modeName] (NormalB $ Pure.appE2 (VarE 'loadDelta) (VarE modeName) (proxyT args_ty)) []]
+	let proxyArgs_alias = FunD (mkName $ "proxyArgs_"++nameBase ty_name) [Clause [] (NormalB $ proxyT args_ty) []]
 
-genFInst modeT fsName loadM loadDeltaM manifestM defaultM ty_name md_ty_name forestTy pat_infos = do
+	return $ ty_decl:md_ty_decls++insts++[loadDelta_alias,proxyArgs_alias]
+
+genFInst modeName modeT fsName loadM loadDeltaM manifestM defaultM ty_name md_ty_name forestTy pat_infos = do
 	mdName <- newName "md"
 	let (inst,mdT) = case pat_infos of
 		[] -> (Pure.appT5 (ConT ''ICForest) modeT (VarT fsName) (TupleT 0) (Pure.appTyFS fsName ty_name) (VarT mdName) , (appTyModeFS'' modeT fsName md_ty_name))  
@@ -136,6 +142,7 @@ genFInst modeT fsName loadM loadDeltaM manifestM defaultM ty_name md_ty_name for
 			,ClassP ''ForestOutput [VarT fsName,ConT ''ICThunk,ConT ''Inside]
 			, (VarT mdName) ` EqualP` mdT
 			]
+	
 	return $ [InstanceD ctx inst [load_method,loadDelta_method,manifest_method,default_method]]
 
 -- | Generates representation and metadata type declarations for a Forest specification

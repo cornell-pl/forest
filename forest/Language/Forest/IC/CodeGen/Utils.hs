@@ -22,6 +22,9 @@ import Language.Forest.IC.ValueDelta
 import Data.Generics
 import Language.Haskell.TH.Quote
 
+proxyT :: Type -> TH.Exp
+proxyT ty = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) ty)
+
 proxyN :: Name -> TH.Exp
 proxyN name = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) $ VarT name)
 

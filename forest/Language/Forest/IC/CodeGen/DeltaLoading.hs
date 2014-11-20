@@ -122,31 +122,6 @@ genLoadDeltaM (untyRep,tyRep) pd_name forestTy pat_infos = do
 				let pats = [VarP mode,VarP proxyName,argsP,VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName']
 				let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
 				return $ LamE pats $ Pure.appE6 (VarE 'doLoadDeltaArgs) (VarE mode) (VarE proxyName) (VarE argsName) (VarE repmdName) (VarE treeName') recBodyE
-				
---   			case mode of
---   				ICExpr -> do -- IC expressions
---   			--		newrepmdName <- State.lift $ newName "newrepmd"
---   			--		core_bodyE <- genLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName newrepmdName dpathName dfName treeName' (untyRep,tyRep) forestTy
---   			--		let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
---   					let pats = [WildP,VarP proxyName,dargsP,VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName']
---   					
---   			--		let forceThunk (n,(pat,_)) = if (patPVars pat `Set.intersection` forestTyVars forestTy) == Set.empty -- if the variables defined by the pattern are unused
---   			--			then [] else [BindS pat $ AppE (VarE 'forceOutside) (VarE n)]
---   					
---   					let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
---   					return $ LamE pats $ Pure.appE5 (VarE 'doLoadDeltaArgsExpr) (VarE proxyName) (VarE $ fromJust dargsName) (VarE repmdName) (VarE treeName') recBodyE
---   				ICData -> do -- no IC expressions
---   			--		newrepmdName <- State.lift $ newName "newrepmd"
---   				--	core_bodyE <- genLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName newrepmdName dpathName dfName treeName' (untyRep,tyRep) forestTy
---   					let margsP = AsP (fromJust margsName) $ Pure.forestTupleP $ map VarP margNames
---   			--		let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
---   					let pats = [WildP,VarP proxyName,TupP [margsP,dargsP],VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName']
---
---   			--		let forceThunk (n,(pat,_)) = if (patPVars pat `Set.intersection` forestTyVars forestTy) == Set.empty -- if the variables defined by the pattern are unused
---   			--			then [] else [BindS pat $ AppE (VarE 'forceOutside) (VarE n)]
---
---   					let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
---   					return $ LamE pats $ Pure.appE5 (VarE 'doLoadDeltaArgsNoExpr) (VarE proxyName) (VarE $ fromJust margsName) (VarE repmdName) (VarE treeName') recBodyE
 
 genLoadDeltaBody :: TH.Exp -> Maybe TH.Exp -> Name -> Name -> Name -> Name -> Name -> Name -> (Name,Name) -> ForestTy -> DeltaQ TH.Exp
 genLoadDeltaBody proxyE argE pathName treeName repmdName dpathName dfName treeName' (untyRep,tyRep) forestTy = do
@@ -167,8 +142,8 @@ genLoadDeltaBody proxyE argE pathName treeName repmdName dpathName dfName treeNa
 
 loadDeltaE :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
 loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
-	Named _ -> loadDeltaNamed [] pathE treeE repmdE dpathE dfE treeE'
-	Fapp (Named _) argEs -> loadDeltaNamed argEs pathE treeE repmdE dpathE dfE treeE'
+	Named ty_name -> loadDeltaNamed ty_name [] pathE treeE repmdE dpathE dfE treeE'
+	Fapp (Named ty_name) argEs -> loadDeltaNamed ty_name argEs pathE treeE repmdE dpathE dfE treeE'
 	File (file_name, argEOpt) -> checkUnevaluated "file" treeE' repmdE
 		(loadFile file_name argEOpt pathE' treeE dfE treeE')
 		(loadDeltaFile forestTy argEOpt pathE treeE dpathE dfE treeE')
@@ -192,14 +167,12 @@ loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
         getMDE = AppE (VarE 'snd) repmdE
 
 -- terminals in the spec
-loadDeltaNamed :: [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
-loadDeltaNamed [] pathE treeE repmdE dpathE dfE treeE' = do
-	let proxyE = AppE (VarE 'proxyOf) $ TupE []
+loadDeltaNamed :: String -> [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
+loadDeltaNamed ty_name [] pathE treeE repmdE dpathE dfE treeE' = do
 	(mode,fs,_) <- Reader.ask
 	let unit = Pure.appE2 (VarE 'mkEmptyLoadDeltaArgs) (VarE mode) (proxyN fs)
-	return $ Pure.appE9 (VarE 'loadDelta) (VarE mode) proxyE unit pathE treeE repmdE dpathE dfE treeE'
-loadDeltaNamed argEs pathE treeE repmdE dpathE dfE treeE' = do
-	let proxyE = AppE (VarE 'proxyOf) $ Pure.forestTupleE argEs
+	return $ Pure.appE8 (VarE $ mkName $ "loadDelta_"++ty_name) (VarE mode) unit pathE treeE repmdE dpathE dfE treeE'
+loadDeltaNamed ty_name argEs pathE treeE repmdE dpathE dfE treeE' = do
 	(mode,fs,_) <- Reader.ask
 	let makeArgDelta e = do
 		b <- lift $ newName "b"
@@ -210,10 +183,10 @@ loadDeltaNamed argEs pathE treeE repmdE dpathE dfE treeE' = do
 	
 	let (conds,dargEs) = unzip zips
 	argEs <- mapM (\e -> forceVarsDeltaQ e return) argEs
-	let loadArgs = Pure.appE5 (VarE 'mkLoadDeltaArgs) (VarE mode) (proxyN fs) proxyE (Pure.forestTupleE argEs) (Pure.forestTupleE dargEs)
+	let loadArgs = Pure.appE5 (VarE 'mkLoadDeltaArgs) (VarE mode) (proxyN fs) (VarE $ mkName $ "proxyArgs_"++ty_name) (Pure.forestTupleE argEs) (Pure.forestTupleE dargEs)
 		
 	let runCondsS = map (\(e,b) -> LetS [ValD (VarP b) (NormalB e) []]) conds 
-	return $ DoE $ runCondsS ++ [NoBindS $ Pure.appE9 (VarE 'loadDelta) (VarE mode) proxyE loadArgs pathE treeE repmdE dpathE dfE treeE']
+	return $ DoE $ runCondsS ++ [NoBindS $ Pure.appE8 (VarE $ mkName $ "loadDelta_"++ty_name) (VarE mode) loadArgs pathE treeE repmdE dpathE dfE treeE']
 
 loadDeltaArchive :: [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> DeltaQ Exp
 loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE' repmdE = do

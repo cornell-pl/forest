@@ -129,8 +129,8 @@ genLoadArgE (i,(pat,pat_ty)) treeE forestTy = do
 
 loadE :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
 loadE ty pathE oldtreeE dfE treeE getMDE = case ty of
-	Named f_name               -> loadWithArgsE [] pathE oldtreeE dfE treeE getMDE
-	Fapp (Named f_name) argEs  -> loadWithArgsE argEs pathE oldtreeE dfE treeE getMDE
+	Named ty_name               -> loadWithArgsE ty_name [] pathE oldtreeE dfE treeE getMDE
+	Fapp (Named ty_name) argEs  -> loadWithArgsE ty_name argEs pathE oldtreeE dfE treeE getMDE
 	File (file_name, argEOpt) -> loadFile file_name argEOpt pathE oldtreeE dfE treeE getMDE
 	Archive archtype ty         -> loadArchive archtype ty pathE oldtreeE dfE treeE getMDE
 	SymLink         -> loadSymLink pathE oldtreeE dfE treeE getMDE
@@ -151,17 +151,16 @@ loadFile fileName (Just argE) pathE oldtreeE dfE treeE getMDE = do
 	return $ Pure.appE7 (VarE 'doLoadFile1) proxy argE pathE oldtreeE dfE treeE getMDE
 
 -- these are terminals in the spec
-loadWithArgsE :: [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
-loadWithArgsE [] pathE oldtreeE dfE treeE getMDE = do
+loadWithArgsE :: String -> [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> EnvQ TH.Exp
+loadWithArgsE ty_name [] pathE oldtreeE dfE treeE getMDE = do
 	let proxyE = AppE (VarE 'proxyOf) $ TupE []
 	(mode,fs,_) <- Reader.ask
 	return $ Pure.appE8 (VarE 'loadScratch) (VarE mode) proxyE (TupE []) pathE oldtreeE dfE treeE getMDE
-loadWithArgsE argEs pathE oldtreeE dfE treeE getMDE = do
+loadWithArgsE ty_name argEs pathE oldtreeE dfE treeE getMDE = do
 	(mode,fs,_) <- Reader.ask
 	argsE <- mapM (\e -> forceVarsEnvQ e return) argEs
-	let proxyE = AppE (VarE 'proxyOf) $ Pure.forestTupleE argEs
 	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
-	return $ Pure.appE8 (VarE 'loadScratch) (VarE mode) proxyE tupArgsE pathE oldtreeE dfE treeE getMDE
+	return $ Pure.appE8 (VarE 'loadScratch) (VarE mode) (VarE $ mkName $ "proxyArgs_"++ty_name) tupArgsE pathE oldtreeE dfE treeE getMDE
 
 loadConstraint :: TH.Exp -> TH.Pat -> TH.Exp -> EnvQ TH.Exp -> EnvQ TH.Exp
 loadConstraint treeE pat predE load = forceVarsEnvQ predE $ \predE' -> do

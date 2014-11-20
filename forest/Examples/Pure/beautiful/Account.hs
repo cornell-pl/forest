@@ -18,8 +18,7 @@ import Control.Monad.IO.Class
 
 
 [pads|
- data Account = Account (StringME <|RE "[0-9]+"|>)
-
+ data Account = Account Int
  |]
 
 [forest|
@@ -66,8 +65,8 @@ pureTransfer from to amount = do
     ((Account_d_inner lst),md) :: (Account_d, Account_d_md) <- load () accountDir;
     case ((lookup from lst), (lookup to lst)) of
       (Just (Account f), Just (Account t)) -> do
-        forestIO $ print (from ++ " has " ++ f ++ " and " ++ to ++ " has " ++ t)
-        if ((amount >= 0 && (read f) >= amount) || (amount < 0 && (read t) >= (- amount)))
+        forestIO $ print (from ++ " has " ++ show f ++ " and " ++ to ++ " has " ++ show t)
+        if ((amount >= 0 && f >= amount) || (amount < 0 && t >= (- amount)))
           then do
             pureWithdraw from amount
             pureDeposit to amount
@@ -80,13 +79,12 @@ pureWithdraw acc amount = do
   {
     ((Account_d_inner lst),md) :: (Account_d, Account_d_md) <- load () accountDir;
     case (lookup acc lst) of
-      Just (Account bal) -> do 
-        let newbal = read bal
+      Just (Account newbal) -> do 
         if (amount < 0 || newbal >= amount) then do
-          let result = [(acc, (Account (show (newbal-amount))))]
+          let result = [(acc, (Account $ newbal-amount))]
           mani <- manifest () ((Account_d_inner result),md)
            -- store mani
-          forestIO $ print (acc ++ " had " ++ bal ++ " and lost " ++ (show amount))
+          forestIO $ print (acc ++ " had " ++ show newbal ++ " and lost " ++ (show amount))
          else forestIO $ print "The account does not have enough money"
       _ -> forestIO $ print "The account does not exist"
   }
@@ -111,13 +109,12 @@ transWithdraw acc amount = do  -- Now with retry!
   {
     ((Account_d_inner lst),md) :: (Account_d, Account_d_md) <- load () accountDir;
     case (lookup acc lst) of
-      Just (Account bal) -> do 
-        let newbal = read bal
+      Just (Account newbal) -> do 
         check (amount < 0 || newbal >= amount)
-        let result = [(acc, (Account (show (newbal-amount))))]
+        let result = [(acc, (Account $ newbal-amount))]
         mani <- manifest () ((Account_d_inner result),md)
         -- store mani
-        forestIO $ print (acc ++ " had " ++ bal ++ " and lost " ++ (show amount))
+        forestIO $ print (acc ++ " had " ++ show newbal ++ " and lost " ++ (show amount))
       _ -> forestIO $ print "The account does not exist"
   }
 
