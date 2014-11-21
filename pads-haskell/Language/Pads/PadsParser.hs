@@ -21,8 +21,6 @@ import Data.Char
 
 import Control.Monad
 
-
-
 parseStringInput :: PadsParser a -> String -> (a,String)
 parseStringInput pp cs = case pp #  (S.padsSourceFromString cs) of
                            ((r,rest),b) -> (r, S.padsSourceToString rest)  

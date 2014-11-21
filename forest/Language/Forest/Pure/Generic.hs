@@ -86,6 +86,7 @@ class (FSRep fs,Data rep,ForestMD md) => PureForest fs args rep md | rep -> md, 
 	store = storeManifest
 	
 	-- | generates default metadata based on the specification
+	-- note that @defaultMd@ tries to generate default metadata that is as consistent as possible with the representation, but cannot achieve that in general, e.g., if there is a user-specified constraint
 	defaultMd :: args -> rep -> FilePath -> ForestM fs md
 
 listDirs :: Data  md => md -> [FilePath] 

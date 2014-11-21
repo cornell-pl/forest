@@ -16,13 +16,14 @@ import Language.Pads.MetaData
 import Language.Pads.PadsParser
 import qualified Language.Pads.Errors as E
 import qualified Language.Pads.Source as S
-import Language.Pads.LazyList
+import Language.Pads.PadsPrinter
 import qualified Data.ByteString as B
 import qualified Control.Exception as CE
 import Data.Data
 import Data.Generics.Aliases (extB, ext1B)
 import Data.Map
 import Data.Set
+import Language.Pads.Errors
 
 import System.Posix.Types
 import Foreign.C.Types
@@ -33,8 +34,13 @@ class (Data rep, PadsMD md) => Pads rep md | rep -> md  where
 	def :: rep
 	def = gdef
 	defaultMd :: rep -> md
-	parsePP  :: PadsParser(rep,md)
-	printFL :: (rep,md) -> FList
+	defaultMd _ = myempty
+	parsePP  :: PadsParser (rep,md)
+	printFL :: PadsPrinter (rep,md)
+	defaultRepMd :: (rep,md)
+	defaultRepMd = (rep,md) where
+		rep = def
+		md = defaultMd rep
 
 parseS   :: Pads rep md => String -> ((rep, md), String) 
 parseS cs = parseStringInput parsePP cs 
@@ -45,14 +51,16 @@ parseBS cs = parseByteStringInput parsePP cs
 parseFile :: Pads rep md => FilePath -> IO (rep, md)
 parseFile file = parseFileWith parsePP file
 
-printS :: Pads rep md => (rep,md) -> String
+printS :: Pads rep md => (rep,md) -> (String)
 printS = S.byteStringToStr . printBS
 
-printBS :: Pads rep md => (rep,md) -> B.ByteString
-printBS r = printFL r B.empty
+printBS :: Pads rep md => (rep,md) -> (B.ByteString)
+printBS r = let f = (printFL r) in f B.empty
 
 printFile :: Pads rep md => FilePath -> (rep,md) -> IO ()
-printFile filepath r = B.writeFile filepath (printBS r)
+printFile filepath r = do
+	let str = printBS r
+	B.writeFile filepath str
 
 
 
@@ -60,8 +68,13 @@ class (Data rep, PadsMD md) => Pads1 arg rep md | rep->md, rep->arg where
 	def1 :: arg -> rep
 	def1 =  \_ -> gdef
 	defaultMd1 :: arg -> rep -> md
-	parsePP1  :: arg -> PadsParser(rep,md)
-	printFL1 :: arg -> (rep,md) -> FList
+	defaultMd1 _ _ = myempty
+	parsePP1  :: arg -> PadsParser (rep,md)
+	printFL1 :: arg -> PadsPrinter (rep,md)
+	defaultRepMd1 :: arg -> (rep,md)
+	defaultRepMd1 arg = (rep,md) where
+		rep = def1 arg
+		md = defaultMd1 arg rep
 
 parseS1 :: Pads1 arg rep md => arg -> String -> ((rep, md), String) 
 parseS1 arg cs = parseStringInput (parsePP1 arg) cs
@@ -74,14 +87,15 @@ parseBS1 arg cs = parseByteStringInput (parsePP1 arg) cs
 parseFile1 :: Pads1 arg rep md => arg-> FilePath -> IO (rep, md)
 parseFile1 arg file = parseFileWith (parsePP1 arg) file
 
-printS1 :: Pads1 arg rep md => arg -> (rep,md) -> String
+printS1 :: Pads1 arg rep md => arg -> (rep,md) -> (String)
 printS1 arg (rep,md) = S.byteStringToStr (printBS1 arg (rep,md))
 
-printBS1 :: Pads1 arg rep md => arg -> (rep,md) -> B.ByteString
-printBS1 arg r = printFL1 arg r B.empty
-
+printBS1 :: Pads1 arg rep md => arg -> (rep,md) -> (B.ByteString)
+printBS1 arg r = let f = (printFL1 arg r) in f B.empty
 printFile1 :: Pads1 arg rep md => arg -> FilePath -> (rep,md) -> IO ()
-printFile1 arg filepath r = B.writeFile filepath (printBS1 arg r)
+printFile1 arg filepath r = do
+	let str = printBS1 arg r
+	B.writeFile filepath str
 
 
 parseFileWith  :: (Data rep, PadsMD md) => PadsParser (rep,md) -> FilePath -> IO (rep,md)

@@ -16,8 +16,6 @@ module Language.Pads.Syntax where
 import Data.Generics
 import Language.Haskell.TH
 
-
-
 data PadsDecl = PadsDeclType   String [String] (Maybe Pat) PadsTy
               | PadsDeclData   String [String] (Maybe Pat) PadsData [QString]
               | PadsDeclNew    String [String] (Maybe Pat) BranchInfo [QString]
@@ -60,8 +58,11 @@ hasRep (PExpression l)   = False
 hasRep (PTycon ["EOF"])  = False
 hasRep (PTycon ["EOR"])  = False
 hasRep (PTycon ["Void"]) = False
-hasRep _                 = True
+hasRep ty                 = True
 
 qName :: QString -> String
 qName [n] = n
 qName (n:ms) = n ++ "." ++ qName ms
+
+
+

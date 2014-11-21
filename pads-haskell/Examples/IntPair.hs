@@ -9,7 +9,7 @@ import Language.Pads.MetaData
 import Language.Pads.CoreBaseTypes
 import Language.Pads.Quote
 import Language.Pads.RegExp
-import Language.Pads.LazyList
+import Language.Pads.PadsPrinter
 import qualified Language.Pads.BaseTypes as BT
 
 
@@ -66,7 +66,7 @@ data Exxy a = Exxy {exxy :: Int, Char, aa :: a}
 
 
 
-bi::a->(Int,Int_md)->(Char,Char_md)
+bi :: a -> (Int,Int_md) -> (Char,Char_md)
 bi x = undefined
 ib y = undefined
 

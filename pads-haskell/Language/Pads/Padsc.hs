@@ -26,7 +26,7 @@ module Language.Pads.Padsc (
      module Language.Pads.Quote,
      module Language.Pads.BaseTypes,
      module Language.Pads.Pretty,
-     module Language.Pads.LazyList,
+     module Language.Pads.PadsPrinter,
      module Data.Data,
      ppr, pretty
   ) 
@@ -43,7 +43,7 @@ import Language.Pads.CoreBaseTypes
 import Language.Pads.Quote
 import Language.Pads.BaseTypes
 import Language.Pads.Pretty
-import Language.Pads.LazyList
+import Language.Pads.PadsPrinter
 
 import Data.Data
 import Text.PrettyPrint.Mainland hiding (line,  dot)
