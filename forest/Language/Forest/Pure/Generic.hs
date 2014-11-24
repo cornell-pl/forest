@@ -81,13 +81,14 @@ class (FSRep fs,Data rep,ForestMD md) => PureForest fs args rep md | rep -> md, 
 	
 	-- automatically generated manifest function
 	updateManifestWithTree :: args -> FSTree fs -> (rep,md) -> Manifest fs -> ForestM fs (Manifest fs)
-
-	store :: FSRep fs => Manifest fs -> ForestM fs ()
-	store = storeManifest
 	
 	-- | generates default metadata based on the specification
 	-- note that @defaultMd@ tries to generate default metadata that is as consistent as possible with the representation, but cannot achieve that in general, e.g., if there is a user-specified constraint
 	defaultMd :: args -> rep -> FilePath -> ForestM fs md
+
+
+store :: FSRep fs => Manifest fs -> ForestM fs ()
+store = storeManifest
 
 listDirs :: Data  md => md -> [FilePath] 
 listDirs = map fullpath . listify (\(r::FileInfo) -> (kind r) `elem` [DirectoryK])

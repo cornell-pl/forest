@@ -1,7 +1,9 @@
 {-# LANGUAGE DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 module Examples.Pure.Beautiful.Account where
-	
+
+import System.Random
+
 import Language.Pads.Padsc hiding (numErrors)
 import Data.Maybe
 import Data.IORef
@@ -31,7 +33,7 @@ import Control.Monad.IO.Class
 --forestDir = "/home/dilorenzo/everything/research/forest/forest/forest" 
 forestDir = "."
 
-accountDir = forestDir ++ "/Examples/Pure/beautiful/Account"
+accountDir = forestDir ++ "/Examples/Pure/Beautiful/Account"
 
 getAccounts :: FSRep fs => ForestM fs ()
 getAccounts = do
@@ -81,9 +83,9 @@ pureWithdraw acc amount = do
     case (lookup acc lst) of
       Just (Account newbal) -> do 
         if (amount < 0 || newbal >= amount) then do
-          let result = [(acc, (Account $ newbal-amount))]
+          let result = [(acc, (Account $ newbal-amount))] ++ (filter (\ (name, _) -> name /= acc) lst) 
           mani <- manifest () ((Account_d_inner result),md)
-           -- store mani
+          store mani
           forestIO $ print (acc ++ " had " ++ show newbal ++ " and lost " ++ (show amount))
          else forestIO $ print "The account does not have enough money"
       _ -> forestIO $ print "The account does not exist"
@@ -136,4 +138,27 @@ transWith2 acc1 acc2 amount = atomically (transWithdraw2 acc1 acc2 amount)
 transDepo acc amount = atomically (transDeposit acc amount)
 
 transTransAcc = transTransfer "acc1" "acc2"
-transWith2Acc = transWith2 "acc1" "acc2" 
+transWith2Acc = transWith2 "acc1" "acc2"
+
+forever :: IO () -> IO ()
+forever act = do
+  act
+  forever act
+
+randomDelay :: IO ()
+randomDelay = do
+  waitTime <- getStdRandom (randomR (1, 1000000))
+  threadDelay waitTime
+
+-- Test function
+
+withdrawer = forkIO (forever (do {transWith2Acc 100; randomDelay }))
+
+depositer = forkIO (forever (do {transDepo "acc1" 50; randomDelay }))
+
+transferer = forkIO (forever (do {transTransAcc 30; randomDelay }))
+
+runTest = do
+  withdrawer
+  depositer
+  transferer
