@@ -226,7 +226,7 @@ doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 		files <- Pure.getMatchingFilesInTree parentPath matching tree
 		path <- forestO $ liftM (fullpath . fileInfo) $ get_fmd_header md
 		fmd <- forestO $ get_fmd_header md
-		let name = makeRelative path parentPath
+		let name = makeRelative parentPath path
 		isValid <- forestO $ isValidMD fmd
 		-- implication because the value may be invalid due to other errors
 		return $ boolStatus "inconsistent matching expression and focus path" ((not $ null (List.delete name files)) <= isValid)

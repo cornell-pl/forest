@@ -85,6 +85,7 @@ pureWithdraw acc amount = do
         if (amount < 0 || newbal >= amount) then do
           let result = [(acc, (Account $ newbal-amount))] ++ (filter (\ (name, _) -> name /= acc) lst) 
           mani <- manifest () ((Account_d_inner result),md)
+          forestIO $ print mani
           store mani
           forestIO $ print (acc ++ " had " ++ show newbal ++ " and lost " ++ (show amount))
          else forestIO $ print "The account does not have enough money"

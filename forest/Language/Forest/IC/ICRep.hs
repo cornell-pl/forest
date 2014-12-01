@@ -5,7 +5,7 @@
 module Language.Forest.IC.ICRep where
 
 import Prelude hiding (const,read,mod)
-import System.Mem.WeakRef
+import System.Mem.WeakKey
 import Control.Monad
 import Data.Maybe
 import Data.WithClass.MData

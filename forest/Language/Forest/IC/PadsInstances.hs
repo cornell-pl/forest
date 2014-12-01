@@ -28,7 +28,7 @@ import System.Mem.StableName
 import System.Mem.Weak as Weak
 import System.Mem.WeakTable as WeakTable
 import System.Mem.MemoTable
-import System.Mem.WeakRef
+import System.Mem.WeakKey
 
 $( derive makeMData ''Base_md )
 $( derive makeMData ''ErrMsg )

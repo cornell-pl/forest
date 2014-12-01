@@ -17,7 +17,7 @@ import Data.Map (Map(..))
 import qualified Data.Map as Map
 import Data.List.Split
 import System.Posix.Types
-import System.Mem.WeakRef
+import System.Mem.WeakKey
 import Data.Int
 import Data.IORef
 import Control.Monad.Incremental as Inc

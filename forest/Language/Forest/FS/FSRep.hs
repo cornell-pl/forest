@@ -4,7 +4,7 @@
 
 module Language.Forest.FS.FSRep where
 
-import System.Mem.WeakRef
+import System.Mem.WeakKey
 import Control.Monad
 import Data.Maybe
 import Data.List.Split

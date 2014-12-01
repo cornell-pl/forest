@@ -69,7 +69,7 @@ deriving instance (Data (ForestM fs Status),Typeable fs,Data (FSTree fs)) => Dat
 
 -- showing a manifest does not evaluate the tests
 instance Show (FSTree fs) => Show (Manifest fs) where
-	show man = "(MakeManifest " ++ show (manifestTree man) ++ " " ++ show (entries man) ++ " " ++ show (map (Prelude.const "<test>") $ tests man) ++ ")"
+	show man = "(MakeManifest " ++ show (pathRoot man) ++ " " ++ show (manifestTree man) ++ " " ++ show (entries man) ++ " " ++ show (map (Prelude.const "<test>") $ tests man) ++ ")"
 
 instance Monoid Status where
 	mempty = Valid
@@ -187,31 +187,31 @@ addFileToManifest printContent canpath path content man = do
 	return $ addFileToManifest' canpath path tmpFile man
 
 addFileToManifest' :: FSRep fs => FilePath -> FilePath -> FilePath -> Manifest fs -> (Manifest fs)
-addFileToManifest' canpath path tmpFile man =
-	let updEntry = ManifestEntry [Local tmpFile] [makeRelative path (pathRoot man)] NotValidated
-	    newEntry = ManifestEntry [Local tmpFile] [makeRelative path (pathRoot man)] Valid -- a single entry is always valid
-	in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative canpath (pathRoot man)) newEntry (entries man) }
+addFileToManifest' canpath path tmpFile man = --debug ("addFileToManifest: "++show canpath ++" "++show path) $ 
+	let updEntry = ManifestEntry [Local tmpFile] [makeRelative (pathRoot man) path] NotValidated
+	    newEntry = ManifestEntry [Local tmpFile] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
+	in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
 	
 addLinkToManifest :: FSRep fs => FilePath -> FilePath -> FilePath -> Manifest fs -> (Manifest fs)
-addLinkToManifest canpath path linkPath man =
-	let updEntry = ManifestEntry [Link linkPath] [makeRelative path (pathRoot man)] NotValidated
-	    newEntry = ManifestEntry [Link linkPath] [makeRelative path (pathRoot man)] Valid -- a single entry is always valid
-	in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative canpath (pathRoot man)) newEntry (entries man) }
+addLinkToManifest canpath path linkPath man = --debug ("addLinkToManifest: "++show canpath ++" "++show path) $
+	let updEntry = ManifestEntry [Link linkPath] [makeRelative (pathRoot man) path] NotValidated
+	    newEntry = ManifestEntry [Link linkPath] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
+	in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
 
 removePathFromManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
-removePathFromManifest canpath path man =
-	let updEntry = ManifestEntry [None] [makeRelative path (pathRoot man)] NotValidated
-	    newEntry = ManifestEntry [None] [makeRelative path (pathRoot man)] Valid -- a single entry is always valid
-	in man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative canpath (pathRoot man)) newEntry (entries man) }
+removePathFromManifest canpath path man = --debug ("removePathFromManifest: "++show canpath ++" "++show path) $
+	let updEntry = ManifestEntry [None] [makeRelative (pathRoot man) path] NotValidated
+	    newEntry = ManifestEntry [None] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
+	in man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
 
 addTestToManifest :: FSRep fs => ForestM fs Status -> Manifest fs -> Manifest fs
 addTestToManifest testm man = man { tests = testm : tests man }
 
 addDirToManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
-addDirToManifest canpath path man =
-	let updEntry = ManifestEntry [Dir] [makeRelative path (pathRoot man)] NotValidated
-	    newEntry = ManifestEntry [Dir] [makeRelative path (pathRoot man)] Valid
-	in man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative canpath (pathRoot man)) newEntry (entries man) }
+addDirToManifest canpath path man = --debug ("addDirToManifest: "++show canpath ++" "++show path) $
+	let updEntry = ManifestEntry [Dir] [makeRelative (pathRoot man) path] NotValidated
+	    newEntry = ManifestEntry [Dir] [makeRelative (pathRoot man) path] Valid
+	in man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
 
 collectManifestErrors :: Manifest fs -> Status
 collectManifestErrors manifest = mconcat (collectErrorsManifestTable (entries manifest))

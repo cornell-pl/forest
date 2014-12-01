@@ -193,7 +193,7 @@ doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 		files <- getMatchingFilesInTree parentPath matching tree
 		let path = fullpath $ fileInfo $ get_fmd_header md
 		let fmd = get_fmd_header md
-		let name = makeRelative path parentPath
+		let name = makeRelative parentPath path
 		let isValid = isValidMD fmd
 		-- implication because the value may be invalid due to other errors
 		return $ boolStatus "inconsistent matching expression and focus path" ((not $ null (List.delete name files)) <= isValid)

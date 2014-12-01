@@ -40,7 +40,7 @@ import Control.Monad
 import Data.WithClass.MGenerics
 import System.Mem.MemoTable
 import System.Mem.StableName
-import System.Mem.WeakRef
+import System.Mem.WeakKey
 import System.IO.Unsafe
 import System.Mem.Weak
 

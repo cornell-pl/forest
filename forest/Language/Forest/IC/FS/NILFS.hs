@@ -18,7 +18,7 @@ import Control.Concurrent
 import Language.Forest.IC.IO.Memo
 import Control.Exception
 --import Control.Concurrent.Async
-import System.Mem.WeakRef
+import System.Mem.WeakKey
 --import Control.Lens hiding (runIdentity,inside)
 import Data.Maybe
 import Data.Hashable
@@ -424,4 +424,4 @@ instance Hashable (U l Adapton r m a) => Hashable (ICThunk NILFS l (IncForest NI
 	hashWithSalt i = hashWithSalt i . adaptonU
 
 instance WeakRef (FSThunk NILFS l (IncForest NILFS) IORef IO) where
-	mkWeakWithRefKey t v f = mkWeakWithRefKey (Adapton.dataL $ adaptonThunk t) v f
+	mkWeakRefKey t v f = mkWeakRefKey (Adapton.dataL $ adaptonThunk t) v f

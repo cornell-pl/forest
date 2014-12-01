@@ -11,7 +11,7 @@ import Data.Dynamic
 --import Control.Monad.IO.Class
 import System.IO.Unsafe
 import System.Mem.Weak
-import System.Mem.WeakRef
+import System.Mem.WeakKey
 import System.Mem.WeakTable (WeakTable(..))
 import System.Mem.WeakTable as WeakTable
 import Language.Forest.IC.Generic
@@ -32,7 +32,7 @@ memoForest path (rep,md,arg) tree = do
 	addUnmemoFSThunk md $ unmemoForest path (proxyOf rep)
 
 unmemoForest :: Typeable rep => FilePath -> Proxy rep -> IO ()
-unmemoForest path rep = WeakTable.finalize memoTableForest (path,typeRep rep)
+unmemoForest path rep = WeakTable.finalizeEntry memoTableForest (path,typeRep rep)
 
 -- looks up and removes cached loaded data from the memo table
 lookupmemoForest :: (ICRep fs,Typeable rep,Typeable md,Typeable arg) => FilePath -> Proxy rep -> ForestI fs (Maybe ((ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg),FSTree fs))
