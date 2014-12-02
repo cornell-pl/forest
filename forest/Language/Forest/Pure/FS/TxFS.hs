@@ -58,13 +58,13 @@ startTxFSTransaction = do
   forestIO $ modifyMVar runningTransactions (\xs -> getCurrentTime >>= \t -> return (t:xs,t))
 
 -- validates and commits a transaction as a single atomic operation
-validateAndCommitTxFSTransaction :: UTCTime -> TxFSChangesFlat -> IO Bool
-validateAndCommitTxFSTransaction starttime chgs@(reads,writes) = Lock.with noFSLock $ do
+validateAndCommitTxFSTransaction :: UTCTime -> TxFSChangesFlat -> FSTreeDelta -> IO Bool
+validateAndCommitTxFSTransaction starttime chgs@(reads,writes) td = Lock.with noFSLock $ do
 	-- gets the transactions that commited after the current transaction's start time
 	finished <- liftM (map snd . Map.toAscList . Map.filterWithKey (\k v -> k > starttime)) $ readMVar doneTransactions
 	let check = checkTxFSTransaction chgs finished
 	if check
-		then finishTransaction starttime writes
+		then finishTransaction starttime writes td
 		else modifyMVar_ runningTransactions (return . List.delete starttime)
 	return check
 
@@ -79,13 +79,16 @@ checkTxFSTransaction' (writesBefore) (readsAfter,writesAfter) = do
 --	&& writesAfter `Set.intersection` writesBefore == Set.empty -- no write-write conflicts
 
 -- adds a new commited transaction, and deletes done transactions that finished before the start of the earliest running transaction
-finishTransaction :: UTCTime -> TxFSWrites -> IO ()
-finishTransaction starttime writes = do
+finishTransaction :: UTCTime -> TxFSWrites -> FSTreeDelta -> IO ()
+finishTransaction starttime writes td = do
 	mb <- modifyMVar runningTransactions (\xs -> return (List.delete starttime xs,lastMay xs))
+        commitPhase td
 	case mb of
 		Just oldt -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.filterWithKey (\t _ -> t > oldt) $ Map.insert now writes m)
 		Nothing -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.insert now writes m)
-	error "perform actual commit!"
+
+commitPhase :: FSTreeDelta -> IO ()
+commitPhase td = error "Not implemented"
 
 recCheck :: TxFSReads -> [TxFSWrites] -> Bool
 recCheck reads [] = True
@@ -170,6 +173,16 @@ atomicallyTxFS t =
           time <- startTxFSTransaction;
           result <- try t;
           case result of
+            Right x -> do
+              {
+                (reads,td) <- getTxFSChanges;
+                let writes = fsTreeDeltaWrites td in do
+                  {
+                    success <- forestIO $ validateAndCommitTxFSTransaction time (reads,writes) td;
+                    getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ()); -- remove all temporary data used by this run
+                    if success then return x else tryIt
+                  }
+              }
             Left (exc :: TxExcep) -> do
               {
                 -- Retry has been called!
@@ -181,16 +194,6 @@ atomicallyTxFS t =
                 getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ());
                 forestIO $ keepTrying True time reads;
                 tryIt
-              }
-            Right x -> do
-              {
-                (reads,td) <- getTxFSChanges;
-                let writes = fsTreeDeltaWrites td in do
-                  {
-                    success <- forestIO $ validateAndCommitTxFSTransaction time (reads,writes);
-                    getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ()); -- remove all temporary data used by this run
-                    if success then return x else tryIt
-                  }
               }
         }
    in
