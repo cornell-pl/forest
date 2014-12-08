@@ -6,6 +6,7 @@ module Language.Forest.Pure.FS.TxFS where
 
 import Control.Monad.Catch
 import Control.Concurrent
+import System.Cmd
 
 import Language.Forest.FS.FSRep
 import Control.Applicative
@@ -41,6 +42,16 @@ import qualified Control.Monad.State as State
 import Language.Forest.Manifest
 import Data.Time.Clock
 import Safe
+
+
+{-
+TODO:
+- Currently overly pessimistic. Any files with the same names will be assumed to be the same.
+- Make it look prettier
+- Make it watch files?
+-- Easy without Mvars
+-- NOW WITH MVARS?!
+-}
 
 -- a list of the starting times of running transactions sorted from newest to oldest
 {-# NOINLINE runningTransactions #-}
@@ -82,13 +93,32 @@ checkTxFSTransaction' (writesBefore) (readsAfter,writesAfter) = do
 finishTransaction :: UTCTime -> TxFSWrites -> FSTreeDelta -> IO ()
 finishTransaction starttime writes td = do
 	mb <- modifyMVar runningTransactions (\xs -> return (List.delete starttime xs,lastMay xs))
-        commitPhase td
+        commitPhase td ""
 	case mb of
 		Just oldt -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.filterWithKey (\t _ -> t > oldt) $ Map.insert now writes m)
 		Nothing -> modifyMVar_ doneTransactions (\m -> getCurrentTime >>= \now -> return $ Map.insert now writes m)
 
-commitPhase :: FSTreeDelta -> IO ()
-commitPhase td = error "Not implemented"
+commitPhase :: FSTreeDelta -> FilePath -> IO ()
+commitPhase td cpath = Map.foldrWithKey
+    (\ npath node m -> case node of
+        FSTreeNew dmap mf od -> do --What is mf for?
+ --         print dmap
+   --       print cpath
+          if (cpath ++ npath) == od || (cpath ++ npath) == "/" ++ od then
+            commitPhase dmap (cpath ++ npath ++ "/")
+          else do
+            code <- runShellCommand_ ("cp -r " ++ od ++ " " ++ (cpath ++ npath))
+            print code
+            commitPhase dmap (cpath ++ npath ++ "/")
+            m
+        FSTreeChg dmap od    -> error "Not Implemented"
+        FSTreeNop dmap       ->
+          commitPhase dmap (cpath ++ npath ++ "/")
+        FSTreeRem            -> do
+          code <- removePath (cpath ++ npath)
+          print code
+    ) (return ()) td
+
 
 recCheck :: TxFSReads -> [TxFSWrites] -> Bool
 recCheck reads [] = True
@@ -99,14 +129,29 @@ checkForRestart time reads =
   do
   {
     if reads == Set.empty
-    then return (True, time)
+    -- If reads are empty, we just wait a bit and then try again. It is unclear what good behavior is.
+    -- Looping forever seems like a poor choice in general, on the other hand, I can't imagine decent ways in which they
+    -- would have this result.
+    then do
+      threadDelay 9000000
+      return (False, time)
     else do
-      {
-        newtime <- getCurrentTime;
-        writeList <- liftM (map snd . Map.toAscList . Map.filterWithKey (\k v -> k > time)) $ readMVar doneTransactions;
+        newtime <- getCurrentTime
+        writeList <- liftM (map snd . Map.toAscList . Map.filterWithKey (\k v -> k > time)) $ readMVar doneTransactions
+{-        print ("Reads: " ++ (show reads))
+        print ("Writes: " ++ (show writeList))
+        let b = recCheck reads writeList
+        print b
+-}
         return(recCheck reads writeList, newtime)
-      }
   }
+
+-- Helper function for splitting on strings
+wordsWhen     :: (Char -> Bool) -> String -> [String]
+wordsWhen p s =  case dropWhile p s of
+                      "" -> []
+                      s' -> w : wordsWhen p s''
+                            where (w, s'') = break p s'
 
                              
 {-# NOINLINE noFSLock #-}
@@ -132,7 +177,7 @@ type TxFSWrites = Set FilePath
 type TxFSChangesFlat = (TxFSReads,TxFSWrites)
 -- changes as a set of reads and a modification tree
 type TxFSChanges = (TxFSReads,FSTreeDelta)
-data TxExcep = TxExcep deriving (Show, Typeable)
+data TxExcep = TxExcep TxFSLog deriving (Show, Typeable)
 
 instance Exception TxExcep
 
@@ -161,9 +206,10 @@ atomicallyTxFS t =
           if fail
           then do
             {
-              threadDelay 1000000;
+              threadDelay 10000000;
               (failure,newtime) <- checkForRestart time reads;
               keepTrying failure newtime reads
+--              threadDelay 4000000;
             }
           else return ()
         }
@@ -172,10 +218,13 @@ atomicallyTxFS t =
         {
           time <- startTxFSTransaction;
           result <- try t;
+          (reads,_) <- getTxFSChanges;
+          forestIO $ print ("IT works! " ++ (show reads));
           case result of
             Right x -> do
               {
                 (reads,td) <- getTxFSChanges;
+                forestIO $ print td;
                 let writes = fsTreeDeltaWrites td in do
                   {
                     success <- forestIO $ validateAndCommitTxFSTransaction time (reads,writes) td;
@@ -183,38 +232,36 @@ atomicallyTxFS t =
                     if success then return x else tryIt
                   }
               }
-            Left (exc :: TxExcep) -> do
-              {
-                -- Retry has been called!
-                -- Check every 1s if global transaction log has a new entry written to something
-                -- we tried to read.
-                -- Eventually change this to watch files both for interoperability with outside transactions and for less arbitrary time measurement
-                (reads,_) <- getTxFSChanges;
-                forestIO $ modifyMVar_ runningTransactions (return . List.delete time);
-                getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ());
-                forestIO $ keepTrying True time reads;
-                tryIt
-              }
+            Left (TxExcep((r,_),_)) -> do
+              -- Retry has been called!
+              -- Check every 1s if global transaction log has a new entry written to something
+              -- we tried to read.
+              -- Eventually change this to watch files both for interoperability with outside transactions and for less arbitrary time measurement
+              forestIO $ print r
+              let newr = Set.map (last . (wordsWhen (\ c -> c=='\\' || c == '/'))) r
+              forestIO $ print newr
+              forestIO $ modifyMVar_ runningTransactions (return . List.delete time)
+              getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ())
+              forestIO $ keepTrying True time newr
+              tryIt
         }
    in
     runForest TxFSForestCfg tryIt
     
 -- Assume always called in atomically
 -- Throw exception, catch in atomically or orElse.        
-retryTxFS :: ForestM TxFS a
-retryTxFS = throwM TxExcep
+retryTxFS :: (MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS a
+retryTxFS = do
+  x <- State.get
+  throwM (TxExcep x)
 
 -- Assume always called in atomically
 -- Needs to be able to 'catch' retries somehow
 -- Do a1
 -- If a1 retries (catch)
 --    Do a2
---    If a2 retries (catch)
---       Retry choice (call retry, which should then be caught by atomically, or throw OrElse)
 orElseTxFS :: ForestM TxFS a -> ForestM TxFS a -> ForestM TxFS a 
-orElseTxFS a1 a2 =
-  let catch = Control.Monad.Catch.catch in
-  catch (catch a1 (\ (ex :: TxExcep) -> a2)) (\ (ex :: TxExcep) -> retry)
+orElseTxFS a1 a2 = Control.Monad.Catch.catch a1 (\ (ex :: TxExcep) -> a2)
 
 
 catchTxFS :: Exception e => FTM fs a -> (e -> FTM fs a) -> FTM fs a
@@ -264,9 +311,23 @@ instance FSRep TxFS where
 	pathInTree path TxFSTree = do
 		(reads,td) <- getTxFSChanges
 		let td' = focusFSTreeDeltaByRelativePathMay td path
+                case td' of
+                  Nothing -> return ()
+                  Just x -> do
+                    forestIO $ putStr "\n\n\n\n"
+                    forestIO $ print ("CHECKIT: " ++ (show x))
 		case onDiskWriteMay td' of
-			Nothing -> putTxFSRead path >> return path
-			Just ondisk -> return ondisk
+			Nothing -> do
+                          (r1,_) <- getTxFSChanges
+ --                         forestIO $ print ("Before: " ++ (show r1))
+                          forestIO $ print ("adding " ++ path)
+                          putTxFSRead path
+                          (r2,_) <- getTxFSChanges
+ --                         forestIO $ print ("After: " ++ (show r2))
+                          return path
+			Just ondisk -> do
+                          forestIO $ print ("Exists " ++ ondisk)
+                          return ondisk
 	pathInTree path VirtualTxFSTree = do
 		ondisk <- pathInTree path TxFSTree
 		home <- forestIO $ getHomeDirectory
