@@ -128,8 +128,8 @@ forever act = do
 
 randomDelay :: IO ()
 randomDelay = do
-  --waitTime <- getStdRandom (randomR (1000000, 10000000))
-  threadDelay 10000000 --waitTime
+  waitTime <- getStdRandom (randomR (1000000, 10000000))
+  threadDelay waitTime
 
 -- Test function
 

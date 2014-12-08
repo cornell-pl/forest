@@ -46,6 +46,7 @@ import Safe
 
 {-
 TODO:
+- Figure out how to get writes to work with relative paths
 - Currently overly pessimistic. Any files with the same names will be assumed to be the same.
 - Make it look prettier
 - Make it watch files?
@@ -206,10 +207,9 @@ atomicallyTxFS t =
           if fail
           then do
             {
-              threadDelay 10000000;
+              threadDelay 1000000;
               (failure,newtime) <- checkForRestart time reads;
               keepTrying failure newtime reads
---              threadDelay 4000000;
             }
           else return ()
         }
@@ -218,13 +218,11 @@ atomicallyTxFS t =
         {
           time <- startTxFSTransaction;
           result <- try t;
-          (reads,_) <- getTxFSChanges;
-          forestIO $ print ("IT works! " ++ (show reads));
           case result of
             Right x -> do
               {
                 (reads,td) <- getTxFSChanges;
-                forestIO $ print td;
+--                forestIO $ print td;
                 let writes = fsTreeDeltaWrites td in do
                   {
                     success <- forestIO $ validateAndCommitTxFSTransaction time (reads,writes) td;
@@ -237,9 +235,7 @@ atomicallyTxFS t =
               -- Check every 1s if global transaction log has a new entry written to something
               -- we tried to read.
               -- Eventually change this to watch files both for interoperability with outside transactions and for less arbitrary time measurement
-              forestIO $ print r
               let newr = Set.map (last . (wordsWhen (\ c -> c=='\\' || c == '/'))) r
-              forestIO $ print newr
               forestIO $ modifyMVar_ runningTransactions (return . List.delete time)
               getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ())
               forestIO $ keepTrying True time newr
@@ -310,23 +306,18 @@ instance FSRep TxFS where
 	-- reads from the FS or from the modification log
 	pathInTree path TxFSTree = do
 		(reads,td) <- getTxFSChanges
-		let td' = focusFSTreeDeltaByRelativePathMay td path
-                case td' of
-                  Nothing -> return ()
-                  Just x -> do
-                    forestIO $ putStr "\n\n\n\n"
-                    forestIO $ print ("CHECKIT: " ++ (show x))
+                currDir <- forestIO $ getCurrentDirectory
+                let a:rest = path
+                let newpath =
+                      if a == '.'
+                      then currDir ++ rest
+                      else a:rest
+		let td' = focusFSTreeDeltaByRelativePathMay td newpath
 		case onDiskWriteMay td' of
 			Nothing -> do
-                          (r1,_) <- getTxFSChanges
- --                         forestIO $ print ("Before: " ++ (show r1))
-                          forestIO $ print ("adding " ++ path)
-                          putTxFSRead path
-                          (r2,_) <- getTxFSChanges
- --                         forestIO $ print ("After: " ++ (show r2))
-                          return path
+                          putTxFSRead newpath
+                          return newpath
 			Just ondisk -> do
-                          forestIO $ print ("Exists " ++ ondisk)
                           return ondisk
 	pathInTree path VirtualTxFSTree = do
 		ondisk <- pathInTree path TxFSTree
