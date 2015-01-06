@@ -95,7 +95,7 @@ doManifestFile1 arg tree (rep_t,md_t) man = do
 				then return $ removePathFromManifest canpath path man
 				else return man
 
-doManifestArchive :: (ForestMD fs md,Eq rep,Eq md,ForestInput fs FSThunk Inside,ICRep fs) =>
+doManifestArchive :: (Typeable rep,Typeable md,ForestMD fs md,Eq rep,Eq md,ForestInput fs FSThunk Inside,ICRep fs) =>
 	[ArchiveType] -> FSTree fs 
 	-> (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 	-> (FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
@@ -163,7 +163,7 @@ doManifestConstraint tree pred (rep,(md,pred_t)) manifestContent man = do
 	let man1 = addTestToManifest testm man
 	manifestContent (rep,md) man1
 
-doManifestDirectory :: (Eq rep,Eq md,ICRep fs) => 
+doManifestDirectory :: (Typeable rep,Typeable md,Eq rep,Eq md,ICRep fs) => 
 	FSTree fs -> (md -> ForestI fs Forest_err)
 	-> (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 	-> (FilePath -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
@@ -179,7 +179,7 @@ doManifestDirectory tree collectMDErrors (rep_t,md_t) manifestContent man = do
 	let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
 	manifestContent path (rep,md) man2
 
-doManifestMaybe :: (ForestMD fs md,Eq md,Eq rep,ICRep fs) =>
+doManifestMaybe :: (Typeable rep,Typeable md,ForestMD fs md,Eq md,Eq rep,ICRep fs) =>
 	FSTree fs
 	-> (ForestFSThunkI fs (Maybe rep),ForestFSThunkI fs (Forest_md fs,Maybe md))
 	-> ((rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
@@ -233,13 +233,13 @@ doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 	let man1 = addTestToManifest testm man
 	manifestUnder dta man1
 
-doManifestSimple :: (ForestMD fs imd',Eq imd',Matching a,md' ~ ForestFSThunkI fs imd') =>
+doManifestSimple :: (Typeable imd',ForestMD fs imd',Eq imd',Matching a,md' ~ ForestFSThunkI fs imd') =>
 	FilePath -> ForestI fs a -> FSTree fs -> (rep',md')
 	-> ((rep',md') -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestSimple parentPath matching tree dta manifestUnder man = inside matching >>= \m -> doManifestFocus parentPath m tree dta manifestUnder man
 
-doManifestSimpleWithConstraint :: (ForestMD fs imd',Eq imd',Matching a,md' ~ ForestFSThunkI fs imd') =>
+doManifestSimpleWithConstraint :: (Typeable imd',ForestMD fs imd',Eq imd',Matching a,md' ~ ForestFSThunkI fs imd') =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> ((rep',md') -> ForestI fs Bool)
 	-> (rep',(md',ForestICThunkI fs Bool))

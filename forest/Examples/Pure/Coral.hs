@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.Coral where
+module Examples.Pure.Coral where
 
 import Language.Pads.Padsc hiding (take)
 import Language.Forest.Pure hiding (Entry,Status)

@@ -1,11 +1,10 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.GeneAssociation where
+module Examples.Pure.GeneAssociation where
 import Language.Pads.Padsc
-import Language.Forest.Class hiding (sources)
+import Language.Forest.Pure
 import System.IO.Unsafe (unsafePerformIO)
 import Language.Pads.GenPretty
-import Language.Forest.Graph
 {-
 config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
 (config_rep, config_md) :: (Config_f, Config_f_md) = unsafePerformIO $ parseFile config_file

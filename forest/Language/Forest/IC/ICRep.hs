@@ -91,7 +91,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	
 	-- * IC thunks
 	
-	-- | unevaluated thunks that depend on the filesystem (but not on other thunks) and can be modified, but that does not depend on other thunks
+	-- | unevaluated thunks that depend on the filesystem (but not on other thunks) and can be modified, but that do not depend on other thunks
 	data FSThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
 	
 	eqFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Bool
@@ -126,13 +126,13 @@ type ForestThunk fs mod l = Thunk (mod fs) l (IncForest fs) IORef IO
 type ForestOutput fs mod l = Output (mod fs) l (IncForest fs) IORef IO
 type ForestInput fs mod l = Input (mod fs) l (IncForest fs) IORef IO
 
-fsRef :: (Eq a,FSRep fs,ForestInput fs FSThunk l) => a -> ForestL fs l (ForestFSThunk fs l a)
+fsRef :: (Typeable a,Eq a,FSRep fs,ForestInput fs FSThunk l) => a -> ForestL fs l (ForestFSThunk fs l a)
 fsRef = ref
-fsThunk :: (Eq a,FSRep fs,ForestInput fs FSThunk l) => ForestL fs l a -> ForestL fs l (ForestFSThunk fs l a)
+fsThunk :: (Typeable a,Eq a,FSRep fs,ForestInput fs FSThunk l) => ForestL fs l a -> ForestL fs l (ForestFSThunk fs l a)
 fsThunk = mod
-icThunk :: (Eq a,FSRep fs,ForestOutput fs ICThunk l) => ForestL fs l a -> ForestL fs l (ForestICThunk fs l a)
+icThunk :: (Typeable a,Eq a,FSRep fs,ForestOutput fs ICThunk l) => ForestL fs l a -> ForestL fs l (ForestICThunk fs l a)
 icThunk = thunk
-newHSThunk :: (Eq a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
+newHSThunk :: (Typeable a,Eq a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
 newHSThunk = new
 
 deriving instance Typeable FSThunk

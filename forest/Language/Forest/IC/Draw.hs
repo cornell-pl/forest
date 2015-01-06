@@ -55,11 +55,11 @@ import Language.Forest.IC.FS.NILFS
 
 type ForestDraw fs = Draw (IncForest fs) IORef IO
 
-forestDrawToPDF :: ForestDraw fs a => Proxy fs -> a -> FilePath ->  ForestO fs ()
-forestDrawToPDF fs = drawToPDF (proxyIncForest fs) Proxy Proxy
+forestDrawToPDF :: ForestDraw fs a => String -> Proxy fs -> a -> FilePath ->  ForestO fs ()
+forestDrawToPDF label fs = drawToPDF label (proxyIncForest fs) Proxy Proxy
 
-forestDrawToDot :: ForestDraw fs a => Proxy fs -> a -> FilePath ->  ForestO fs ()
-forestDrawToDot fs = drawToDot (proxyIncForest fs) Proxy Proxy
+forestDrawToDot :: ForestDraw fs a => String -> Proxy fs -> a -> FilePath ->  ForestO fs ()
+forestDrawToDot label fs = drawToDot label (proxyIncForest fs) Proxy Proxy
 
 forestDraw :: ForestDraw fs a => Proxy fs -> a -> ForestO fs DrawDot
 forestDraw fs = draw (proxyIncForest fs) Proxy Proxy

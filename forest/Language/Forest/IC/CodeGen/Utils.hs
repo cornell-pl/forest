@@ -63,7 +63,7 @@ instance (ForestMD fs md,BuildContainer1 c md) => MDContainer fs (c (FilePath,md
 instance (ForestMD fs md,BuildContainer2 c md) => MDContainer fs (c FilePath md) where
 	collect_container_mds = collect_list_mds . toList2
 	
-instance (Eq a,MDContainer fs a) => MDContainer fs (ForestFSThunkI fs a) where
+instance (Typeable a,Eq a,MDContainer fs a) => MDContainer fs (ForestFSThunkI fs a) where
 	collect_container_mds t = collect_container_mds =<< inside (Inc.get t)
 
 merge_list_errors :: (ForestLayer fs l,ForestMD fs md) => [(FilePath,md)] -> ForestL fs l Forest_err

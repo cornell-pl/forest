@@ -64,7 +64,9 @@ import Language.Haskell.TH.Syntax
 -- * Incremental Forest interface
 
 -- (root path,current tree)
-type LoadInfo fs = ForestFSThunk fs Inside (FilePath,FSTree fs) -- we store the root path to avoid forcing the metadata thunk
+type family LoadInfo (ic :: ICMode) (fs :: FS) (args :: *) :: * where
+	LoadInfo ICExpr fs args = ForestFSThunk fs Inside (FilePath,FSTree fs) -- we store the root path to avoid forcing the metadata thunk
+	LoadInfo ICData fs args = (ForestICThunksI fs args,ForestFSThunk fs Inside (FilePath,FSTree fs))
 
 -- we follow a closed-world assumption: the computations of the top-level arguments of a specification cannot be modified; nevertheless, they may depend on modifiables and their values are updated accordingly.
 
@@ -74,22 +76,22 @@ type LoadInfo fs = ForestFSThunk fs Inside (FilePath,FSTree fs) -- we store the 
 class (ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => ICForest (mode :: ICMode) fs args rep md | mode rep -> md, rep -> args  where
 	
 	-- loads a specification at the most recent FS snapshot
-	load :: LiftedICMode mode -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo fs)
+	load :: LiftedICMode mode -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo mode fs args)
 	load mode args path = forestM latestTree >>= \t -> loadTree mode t args path
 	
 	-- loads a specification at a given FS snapshot
-	loadTree :: LiftedICMode mode -> FSTree fs -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo fs)
-	loadTree mode tree margs path = do
-		(rep,md) <- inside $ loadScratch mode Proxy margs path tree Nothing tree getForestMDInTree -- for batch loading we use the same tree and assume that nothing changed
-		loadInfo <- inside $ ref (path,tree)
-		return ((rep,md),loadInfo)
+	loadTree :: LiftedICMode mode -> FSTree fs -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo mode fs args)
+	loadTree mode tree margs path = do undefined
+--		(rep,md) <- inside $ loadScratch mode Proxy margs path tree Nothing tree getForestMDInTree -- for batch loading we use the same tree and assume that nothing changed
+--		loadInfo <- inside $ ref (path,tree)
+--		return ((rep,md),loadInfo)
 	
 	-- incrementally reloads a specification given older data and the most recent FS snapshot
-	reload :: LiftedICMode mode -> FilePath -> ((rep,md),LoadInfo fs) -> ForestO fs ()
+	reload :: LiftedICMode mode -> FilePath -> ((rep,md),LoadInfo mode fs args) -> ForestO fs ()
 	reload mode path info = forestM latestTree >>= \t -> reloadTree mode t Proxy path info
 	
 	-- incrementally reloads a specification given older data and a newer FS snapshot
-	reloadTree :: LiftedICMode mode -> FSTree fs -> Proxy args -> FilePath -> ((rep,md),LoadInfo fs) -> ForestO fs ()
+	reloadTree :: LiftedICMode mode -> FSTree fs -> Proxy args -> FilePath -> ((rep,md),LoadInfo mode fs args) -> ForestO fs ()
 	reloadTree mode newTree proxy path ((rep,md),loadInfo) = debug ("reloading") $ do undefined
 --		(originalPath,originalTree) <- inside $ get loadInfo
 --		treeDelta <- debug ("loadedInfo") $ changesBetween originalTree newTree -- assume that the @FSTreeDelta@ is absolute
@@ -130,7 +132,7 @@ instance ICRep fs => ForestArgs fs () where
 	andSValueDeltas fs args () = Id
 	checkArgs _ _ _ _ = return Valid
 	
-instance (Eq a,ICRep fs) => ForestArgs fs (Arg a) where
+instance (Typeable a,Eq a,ICRep fs) => ForestArgs fs (Arg a) where
 	newArgs fs args m = thunk m
 	deltaArgs fs args = Delta
 	andSValueDeltas fs args d = d
@@ -271,7 +273,7 @@ instance (CopyFSThunks fs l a) => Sat (CopyFSThunksDict fs l a) where
 	dict = CopyFSThunksDict { copyFSThunksDict = copyFSThunks }
 
 -- we make a strict copy by forcing the original thunk
-instance (ForestLayer fs l,Eq a,ForestInput fs FSThunk l) => CopyFSThunks fs l (ForestFSThunk fs l a) where
+instance (Typeable a,ForestLayer fs l,Eq a,ForestInput fs FSThunk l) => CopyFSThunks fs l (ForestFSThunk fs l a) where
 	copyFSThunks _ _ f t = get t >>= ref 
 
 -- change fullpaths

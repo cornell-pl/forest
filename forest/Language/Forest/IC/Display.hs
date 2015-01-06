@@ -48,19 +48,19 @@ instance (Layer l inc r m) => Display l inc r m ManifestEntry where
 
 -- * Display
 	
-instance (MonadLazy (Outside (IncForest fs) r m),Eq a,Display Outside (IncForest fs) r m a,Output (ICThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (ICThunk fs l (IncForest fs) r m a) where
+instance (Typeable a,MonadLazy (Outside (IncForest fs) r m),Eq a,Display Outside (IncForest fs) r m a,Output (ICThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (ICThunk fs l (IncForest fs) r m a) where
 	displaysPrec m rest = forceOutside m >>= \x -> lazily $ displaysPrec x rest
 	{-# INLINE displaysPrec #-}
 
-instance (MonadLazy (Inside (IncForest fs) r m),Eq a,Display Inside (IncForest fs) r m a,Output (ICThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (ICThunk fs Inside (IncForest fs) r m a) where
+instance (Typeable a,MonadLazy (Inside (IncForest fs) r m),Eq a,Display Inside (IncForest fs) r m a,Output (ICThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (ICThunk fs Inside (IncForest fs) r m a) where
 	displaysPrec m rest = force m >>= \x -> lazily $ displaysPrec x rest
 	{-# INLINE displaysPrec #-}
 
-instance (MonadLazy (Outside (IncForest fs) r m),Eq a,Display Outside (IncForest fs) r m a,Input (FSThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (FSThunk fs l (IncForest fs) r m a) where
+instance (Typeable a,MonadLazy (Outside (IncForest fs) r m),Eq a,Display Outside (IncForest fs) r m a,Input (FSThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (FSThunk fs l (IncForest fs) r m a) where
 	displaysPrec m rest = getOutside m >>= \x -> lazily $ displaysPrec x rest
 	{-# INLINE displaysPrec #-}
 
-instance (MonadLazy (Inside (IncForest fs) r m),Eq a,Display Inside (IncForest fs) r m a,Input (FSThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (FSThunk fs Inside (IncForest fs) r m a) where
+instance (Typeable a,MonadLazy (Inside (IncForest fs) r m),Eq a,Display Inside (IncForest fs) r m a,Input (FSThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (FSThunk fs Inside (IncForest fs) r m a) where
 	displaysPrec m rest = get m >>= \x -> lazily $ displaysPrec x rest
 	{-# INLINE displaysPrec #-}
 

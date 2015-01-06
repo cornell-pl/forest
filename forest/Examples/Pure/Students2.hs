@@ -1,14 +1,12 @@
-{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables, ViewPatterns #-}
+{-# LANGUAGE FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables, ViewPatterns #-}
 
-module Examples.Students2 where
+module Examples.Pure.Students2 where
 
 import Language.Pads.Padsc hiding (take)
-import Language.Forest.Class
+import Language.Forest.Pure
 
 import Language.Pads.GenPretty
-import Language.Forest.Auth
-import Language.Forest.Graph
-import Language.Forest.Shell
+import Language.Forest.IO.Shell
 
 import System.FilePath.Posix
 import System.Directory

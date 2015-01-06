@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.CVS where
+module Examples.Pure.CVS where
 
 import Language.Pads.Padsc
-import Language.Forest.Class hiding (Local, Dir, entries)
+import Language.Forest.Pure hiding (Local, Dir, entries)
 import Language.Pads.GenPretty
 
 import System.IO.Unsafe (unsafePerformIO)

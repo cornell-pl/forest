@@ -12,6 +12,7 @@ import Control.Monad
 import Control.Monad.Incremental as IC
 import Data.DeepTypeable
 import Prelude hiding (mod)
+import Data.Typeable
 
 isoComp :: Iso a b -> Iso b c -> Iso a c
 isoComp (Iso to1 from1) (Iso to2 from2) = Iso (to2 . to1) (from1 . from2)
@@ -25,10 +26,10 @@ data LensM m s v = LensM { getM :: m s -> m v, putM :: m s -> m v -> m s }
 lensM :: Monad m => Lens s v -> LensM m s v
 lensM (Lens get put) = LensM (liftM get) (\ms mv -> ms >>= \s -> mv >>= \v -> return $ put s v)
 
-icThunkLensI :: (Eq a,FSRep fs,Output (ICThunk fs) Inside inc r m) => LensM (Inside inc r m) (ICThunk fs Inside inc r m a) a
+icThunkLensI :: (Typeable a,Eq a,FSRep fs,Output (ICThunk fs) Inside inc r m) => LensM (Inside inc r m) (ICThunk fs Inside inc r m a) a
 icThunkLensI = LensM (\mt -> mt >>= force) (\s -> thunk)
 
-fsThunkLensI :: (Eq a,FSRep fs,Input (FSThunk fs) Inside inc r m) => LensM (Inside inc r m) (FSThunk fs Inside inc r m a) a
+fsThunkLensI :: (Typeable a,Eq a,FSRep fs,Input (FSThunk fs) Inside inc r m) => LensM (Inside inc r m) (FSThunk fs Inside inc r m a) a
 fsThunkLensI = LensM (\mt -> mt >>= IC.get) (\s -> mod)
 
 fstLens :: Lens (a,b) a

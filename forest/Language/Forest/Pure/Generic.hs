@@ -87,8 +87,8 @@ class (FSRep fs,Data rep,ForestMD md) => PureForest fs args rep md | rep -> md, 
 	defaultMd :: args -> rep -> FilePath -> ForestM fs md
 
 
-store :: FSRep fs => Manifest fs -> ForestM fs ()
-store = storeManifest
+store :: (PureForest fs args rep md,FSRep fs) => args -> (rep,md) -> ForestM fs ()
+store args dta = manifest args dta >>= storeManifest
 
 listDirs :: Data  md => md -> [FilePath] 
 listDirs = map fullpath . listify (\(r::FileInfo) -> (kind r) `elem` [DirectoryK])

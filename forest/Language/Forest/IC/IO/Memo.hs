@@ -11,7 +11,7 @@ import Data.Dynamic
 --import Control.Monad.IO.Class
 import System.IO.Unsafe
 import System.Mem.Weak
-import System.Mem.WeakKey
+import System.Mem.WeakKey as WeakKey
 import System.Mem.WeakTable (WeakTable(..))
 import System.Mem.WeakTable as WeakTable
 import Language.Forest.IC.Generic
@@ -27,7 +27,7 @@ memoTableForest = unsafePerformIO WeakTable.new
 -- stores data data loaded at a particular tree, including an (optional) argument in the memo table
 memoForest :: (WeakRef (ForestFSThunkI fs),ICRep fs,ForestInput fs FSThunk Inside,Typeable rep,Typeable md,Typeable arg) => FilePath -> (ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg) -> FSTree fs -> ForestI fs ()
 memoForest path (rep,md,arg) tree = do
-	forestM $ forestIO $ WeakTable.insertWithRefKey memoTableForest rep (path,typeOf rep) (toDyn (rep,md,arg),tree) -- use the representation thunk as a key
+	forestM $ forestIO $ WeakTable.insertWithMkWeak memoTableForest (MkWeak $ WeakKey.mkWeakRefKey rep) (path,typeOf rep) (toDyn (rep,md,arg),tree) -- use the representation thunk as a key
 	addUnmemoFSThunk rep $ unmemoForest path (proxyOf rep)
 	addUnmemoFSThunk md $ unmemoForest path (proxyOf rep)
 

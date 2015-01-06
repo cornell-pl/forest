@@ -407,7 +407,7 @@ makeNewNILFSCheckpoint isSS = do
 proxyNILFS :: Proxy NILFS
 proxyNILFS = Proxy
 
-instance (WeakRef r,Memo (L l Adapton r m a)) => Memo (FSThunk NILFS l (IncForest NILFS) r m a) where
+instance (Typeable l,Typeable r,Typeable m,Typeable a,WeakRef r,Memo (L l Adapton r m a)) => Memo (FSThunk NILFS l (IncForest NILFS) r m a) where
 	type Key (FSThunk NILFS l (IncForest NILFS) r m a) = Key (L l Adapton r m a)
 	{-# INLINE memoKey #-}
 	memoKey = memoKey . adaptonThunk
@@ -415,7 +415,7 @@ instance (WeakRef r,Memo (L l Adapton r m a)) => Memo (FSThunk NILFS l (IncFores
 instance Hashable (L l Adapton r m a) => Hashable (FSThunk NILFS l (IncForest NILFS) r m a) where
 	hashWithSalt i = hashWithSalt i . adaptonThunk
 
-instance (WeakRef r,Memo (U l Adapton r m a)) => Memo (ICThunk NILFS l (IncForest NILFS) r m a) where
+instance (Typeable l,Typeable r,Typeable m,Typeable a,WeakRef r,Memo (U l Adapton r m a)) => Memo (ICThunk NILFS l (IncForest NILFS) r m a) where
 	type Key (ICThunk NILFS l (IncForest NILFS) r m a) = Key (U l Adapton r m a)
 	{-# INLINE memoKey #-}
 	memoKey = memoKey . adaptonU

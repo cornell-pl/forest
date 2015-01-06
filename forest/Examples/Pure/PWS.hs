@@ -1,11 +1,13 @@
-{-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.PWS where
+module Examples.Pure.PWS where
 import Language.Pads.Padsc
-import Language.Forest.Class hiding (sources)
 import System.IO.Unsafe (unsafePerformIO)
 import Language.Pads.GenPretty
-import Language.Forest.Graph
+import Language.Forest.Pure hiding (sources,get_modes)
+import System.Posix.Env
+import Data.Maybe
+import Control.Monad
 
 
 [pads| 
@@ -200,6 +202,8 @@ import Language.Forest.Graph
  
 |]
 
+envVar str = fromJust (unsafePerformIO $ (System.Posix.Env.getEnv str))
+
 {- HASKELL HELPER FUNCTIONS -}
 isReadOnly md = get_modes md == "-rw-r--r--"
 
@@ -226,71 +230,93 @@ gcgi_dst     (Config c) = cgi_dst c
 
 {- Loading functions -}
 config_location = "/Users/kfisher/Sites/cgi-bin/PLConfig.PM"
-doLoadWebsite = website_d_load config_location "/Users/kfisher/Sites"
+--doLoadWebsite = website_d_load config_location "/Users/kfisher/Sites"
 
 {- print graph of website -}
 doGraph md =  mdToPDF md "Examples/website.pdf"
           
 users_dir = "/Users/kfisher/Sites/cgi-bin/gen"
-(users'_rep, users'_md) :: (Users_d, Users_d_md) = unsafePerformIO $ load1 ("/Users/kfisher/pads/infer/examples/data", info_rep) users_dir
+users'_repmd :: FSRep fs => ForestM fs (Users_d, Users_d_md)
+users'_repmd = do
+	info_rep <- liftM fst $ info_repmd
+	load ("/Users/kfisher/pads/infer/examples/data", info_rep) users_dir
 
 user_dir = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7"
-(userE_rep, userE_md) :: (User_d, User_d_md) = unsafePerformIO $ load1 ("/Users/kfisher/pads/infer/examples/data", ["ai.3000"]) user_dir
+userE_repmd :: FSRep fs => ForestM fs (User_d, User_d_md)
+userE_repmd = load ("/Users/kfisher/pads/infer/examples/data", ["ai.3000"]) user_dir
 
-graphUserIO = mdToPDF userE_md "Examples/users.pdf"
+--graphUserIO = mdToPDF userE_md "Examples/users.pdf"
 
 example_dir = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7/ai.3000"
-(example_rep, example_md) :: (Example_d, Example_d_md) = unsafePerformIO $ load1 "ai.3000" example_dir
+example_repmd :: FSRep fs => ForestM fs (Example_d, Example_d_md)
+example_repmd = load "ai.3000" example_dir
 
 machine_dir = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7/ai.3000/darwin.i386"
-(machinedep_rep, machinedep_md) :: (MachineDep_d, MachineDep_d_md) = unsafePerformIO $ load1 "ai.3000" machine_dir
+machinedep_repmd :: FSRep fs => ForestM fs (MachineDep_d, MachineDep_d_md)
+machinedep_repmd = load "ai.3000" machine_dir
 
 root_data_dir = "/Users/kfisher/pads/infer/examples/data"
 data_dir_path = "/Users/kfisher/Sites/cgi-bin/gen/id.1192115633.7/data"
-(data_d_rep, data_d_md) :: (Data_d, Data_d_md) = unsafePerformIO $ load1 (root_data_dir, datasources) data_dir_path
+data_d_repmd :: FSRep fs => ForestM fs (Data_d, Data_d_md)
+data_d_repmd = do
+	datasources' <- datasources
+	load (root_data_dir, datasources') data_dir_path
 
 link_path = "Examples/data/Simple/mylink"
-(link_rep,link_md) :: (SymLink_f, SymLink_f_md) = unsafePerformIO $ load1 "quantum" link_path
+link_repmd :: FSRep fs => ForestM fs (SymLink_f, SymLink_f_md)
+link_repmd = load "quantum" link_path
 
 
 info_dir = "/Users/kfisher/Sites"
-(info_rep, info_md) :: (Info_d, Info_d_md) = unsafePerformIO $ load  info_dir
+info_repmd :: FSRep fs => ForestM fs (Info_d, Info_d_md)
+info_repmd = load () info_dir
 
 dataSource_dir = "/Users/kfisher/pads/infer/examples/data"
-(datasource_rep, datasource_md) :: (DataSource_d, DataSource_d_md) = unsafePerformIO $ load1 datasources dataSource_dir
+datasource_repmd :: FSRep fs => ForestM fs (DataSource_d, DataSource_d_md)
+datasource_repmd = datasources >>= flip load dataSource_dir
 
---getStrings (Pstringln (PstringSE s)) = s
 getStrings s = s
 getSources' (SourceNames (SourceNames_f pstrlns)) = map getStrings pstrlns
 
 getSources :: Info_d -> [String]
 getSources info = getSources' (sources info)
 
-datasources :: [String]
-datasources = getSources info_rep
+datasources :: FSRep fs => ForestM fs [String]
+datasources = liftM (getSources . fst) $ info_repmd
 
 
 scripts_dir = "/Users/kfisher/Sites/cgi-bin"
-(scripts_rep, scripts'_md) :: (Scripts_d, Scripts_d_md) = unsafePerformIO $ load  scripts_dir
+scripts_repmd :: FSRep fs => ForestM fs (Scripts_d, Scripts_d_md)
+scripts_repmd = load () scripts_dir
 
 cgi_dir = "/Users/kfisher/Sites/cgi-bin"
-(cgi_rep, cgi_md) :: (Cgi_d, Cgi_d_md) = unsafePerformIO $ load  cgi_dir
+cgi_repmd :: FSRep fs => ForestM fs (Cgi_d, Cgi_d_md)
+cgi_repmd = load () cgi_dir
 
 static_dir = "/Users/kfisher/Sites"
-(static_rep, static_md) :: (Static_d, Static_d_md) = unsafePerformIO $ load  static_dir
+static_repmd :: FSRep fs => ForestM fs (Static_d, Static_d_md)
+static_repmd = load () static_dir
 
 image_dir = "/Users/kfisher/Sites/images"
-(img_rep, img_md) :: (Imgs_d, Imgs_d_md) = unsafePerformIO $ load  image_dir
+img_repmd :: FSRep fs => ForestM fs (Imgs_d, Imgs_d_md)
+img_repmd = load () image_dir
 
 config_file = "/Users/kfisher/Sites/cgi-bin/PLConfig.pm"
-(config_rep, config_md) :: (Config_f, Config_f_md) = unsafePerformIO $ parseFile config_file
-(head_rep, head_md) :: (Header_t, Header_t_md) = unsafePerformIO $ parseFile config_file
+config_repmd :: FSRep fs => ForestM fs (Config_f, Config_f_md)
+config_repmd = forestIO $ parseFile config_file
+head_repmd :: FSRep fs => ForestM fs (Header_t, Header_t_md)
+head_repmd = forestIO $ parseFile config_file
 
 sampleFiles = "/Users/kfisher/Sites/sampleFiles"
-(sample_rep, sample_md) :: (SourceNames_f, SourceNames_f_md) = unsafePerformIO $ parseFile sampleFiles
+sample_repmd :: FSRep fs => ForestM fs (SourceNames_f, SourceNames_f_md)
+sample_repmd = forestIO $ parseFile sampleFiles
 
 userEntries = "/Users/kfisher/Sites/userFile"
-(user_rep, user_md) :: (UserEntries_f, UserEntries_f_md) = unsafePerformIO $ parseFile userEntries
+user_repmd :: FSRep fs => ForestM fs (UserEntries_f, UserEntries_f_md)
+user_repmd = forestIO $ parseFile userEntries
 
 logFiles = "/Users/kfisher/Sites/logFile"
-(logFiles_rep, logFiles_md) :: (LogFile_f, LogFile_f_md) = unsafePerformIO $ parseFile logFiles
+logFiles_repmd :: FSRep fs => ForestM fs (LogFile_f, LogFile_f_md)
+logFiles_repmd = forestIO $ parseFile logFiles
+
+get_modes = modeToModeString . mode

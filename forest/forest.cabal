@@ -126,7 +126,7 @@ Library
   Build-depends: base >= 4, containers, pads-haskell,
                  template-haskell, concurrent-extra, mtl, ref-fd, hashable,
                  haskell-src-meta, 
-                 parsec, adapton >= 0.0.1, syb-with-class-and-effects >= 0.3.7,
+                 parsec, adapton >= 0.0.2, syb-with-class-and-effects >= 0.3.7,
                  regex-compat, directory, process, unix, Glob, system-filepath, canonical-filepath, split,
                  filepath, mainland-pretty, derive >= 2.5.17, time, MissingH,
                  graphviz, fgl, random, text, safe, bytestring, transformers, array, syb, th-orphans

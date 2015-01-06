@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.Universal where
+module Examples.Pure.Universal where
 	
 import Language.Pads.Padsc hiding (numErrors)
 import Data.Maybe
