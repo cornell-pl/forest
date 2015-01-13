@@ -28,8 +28,8 @@ memoTableForest = unsafePerformIO WeakTable.new
 memoForest :: (WeakRef (ForestFSThunkI fs),ICRep fs,ForestInput fs FSThunk Inside,Typeable rep,Typeable md,Typeable arg) => FilePath -> (ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg) -> FSTree fs -> ForestI fs ()
 memoForest path (rep,md,arg) tree = do
 	forestM $ forestIO $ WeakTable.insertWithMkWeak memoTableForest (MkWeak $ WeakKey.mkWeakRefKey rep) (path,typeOf rep) (toDyn (rep,md,arg),tree) -- use the representation thunk as a key
-	addUnmemoFSThunk rep $ unmemoForest path (proxyOf rep)
-	addUnmemoFSThunk md $ unmemoForest path (proxyOf rep)
+--	addUnmemoFSThunk rep $ unmemoForest path (proxyOf rep)
+--	addUnmemoFSThunk md $ unmemoForest path (proxyOf rep)
 
 unmemoForest :: Typeable rep => FilePath -> Proxy rep -> IO ()
 unmemoForest path rep = WeakTable.finalizeEntry memoTableForest (path,typeRep rep)

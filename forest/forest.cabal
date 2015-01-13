@@ -60,8 +60,10 @@ Extra-source-files:  Examples/Pure/CVS.hs,
                      Examples/Pure/Universal.hs,
                      Examples/Pure/Coral.hs,
                      Examples/Pure/Papers2.hs,
+                     Examples/Pure/Beautiful/Account.hs,
                      Examples/IC/Papers2.hs,
                      Examples/IC/Universal.hs
+                     Examples/IC/Beautiful/Account.hs
 
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.2
@@ -88,11 +90,14 @@ Library
                    Language.Forest.IC.FS.LazyFS,
                    Language.Forest.IC.FS.NILFS,
                    Language.Forest.IC.FS.NILFSDiff,
+                   Language.Forest.IC.FS.TxVarFS,
                    Language.Forest.IC.Generic,
                    Language.Forest.IC.ICRep,
                    Language.Forest.IC.IO.Default,
                    Language.Forest.IC.IO.DeltaLoading,
+                   Language.Forest.IC.IO.ZDeltaLoading,
                    Language.Forest.IC.IO.Loading,
+                   Language.Forest.IC.IO.ZLoading,
                    Language.Forest.IC.IO.Memo,
                    Language.Forest.IC.IO.Storing,
                    Language.Forest.IC.MetaData,

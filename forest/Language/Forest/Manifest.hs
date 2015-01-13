@@ -27,6 +27,8 @@ import qualified Prelude
 import Data.IORef
 import Safe
 import Language.Forest.IO.Utils
+import Data.Foldable (foldlM)
+import Control.Monad
 
 -- ** Manifest data types
 
@@ -84,6 +86,17 @@ instance Monoid ManifestEntry where
 	mappend e1 e2 = ManifestEntry (content e1 ++ content e2) (sources e1 ++ sources e2) (status e1 `mappend` status e2)
 
 -- ** manifest validation
+
+-- validates a manifest and compiles a list of errors
+manifestErrors :: FSRep fs => Manifest fs -> ForestM fs [Message]
+manifestErrors man = do
+	let all_tests = tests man ++ map (liftM (status . snd) . detectConflictInEntry (pathRoot man)) (Map.toList (entries man))
+	let doTest res test = do
+		status <- test
+		case status of
+			Invalid msg -> return $ msg:res
+			otherwise -> return res
+	foldlM doTest [] all_tests
 
 -- | Validates a manifest against the filestore tree to which it is supposed to be applied and returns a validated manifest
 -- conflicts only arise from trying to write different content to the same file?

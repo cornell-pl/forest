@@ -19,7 +19,8 @@ import Language.Forest.IC.MetaData
 import Language.Forest.IC.Generic
 import Language.Forest.Errors
 import Language.Forest.IC.FS.FSDelta
-import Control.Monad.Incremental hiding (memo)
+import Data.WithClass.MGenerics.Twins
+import Control.Monad.Incremental as Inc hiding (memo)
 --import Language.Forest.ListDiff
 import Data.IORef
 
@@ -48,7 +49,7 @@ import qualified Control.Exception as CE
 import Data.Data
 import Data.Maybe
 import System.Random
-import Data.Proxy
+import Data.Proxy	
 
 doLoadArgs :: (ForestArgs fs args,Eq rep,Eq md,ICRep fs,imd ~ MDArgs mode md (ForestICThunksI fs args)) => 
 	LiftedICMode mode -> Proxy args -> ForestICThunksI fs args -> ForestI fs (rep,md) -> ForestI fs (rep,imd)
@@ -58,165 +59,156 @@ doLoadArgs mode proxy args load = do
 
 -- | lazy file loading
 -- XXX: Pads errors do not contribute to the Forest error count
-doLoadFile :: (ForestInput fs FSThunk Inside,Eq md,Eq pads,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ICRep fs,Pads pads md) => Proxy pads -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
-doLoadFile repProxy path (oldtree::FSTree fs) df tree getMD = debug ("doLoadFile " ++ show (path,df)) $ do
+doLoadFile :: (ICMemo fs,ForestInput fs FSThunk Inside,Eq md,Eq pads,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ICRep fs,Pads pads md) =>
+	Proxy pads -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
+doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile " ++ show path) $ do
 	let fs = Proxy::Proxy fs
+	let argProxy = Proxy :: Proxy ()
+	let fsrepProxy = Proxy :: Proxy (ForestFSThunkI fs pads)
 	-- default static loading
 	let load_file = do
 		parseThunk <- newHSThunk $ debug ("reading file "++show path) $ forestM $ pathInTree path tree >>= forestIO . parseFile
-		rep_thunk <- checkPathData path tree (getRep $ read parseThunk)
+		rep_thunk <- checkPathData path tree (getRep $ Inc.read parseThunk)
 		md_thunk <- checkPathMeta path tree $ do
 			fmd <- getMD path tree
-			md <- mod $ getMd $ read parseThunk -- to avoid reading the file unless strictly necessary
+			md <- mod $ getMd $ Inc.read parseThunk -- to avoid Inc.reading the file unless strictly necessary
 			return (fmd,md)
-		memo path (rep_thunk,md_thunk,()) tree
 		return (rep_thunk,md_thunk)
 	-- memoized reuse
-	let reuse_same_file = do
-		mb <- lookupmemo path repProxy
-		case mb of
-			Just ((old_rep_thunk,old_md_thunk,()),(==oldtree) -> True) -> debug ("memo hit " ++ show path) $ do
-				rep_thunk <- copyFSThunks fs proxyInside id old_rep_thunk
-				md_thunk <- copyFSThunks fs proxyInside id old_md_thunk
-				memo path (rep_thunk,md_thunk,()) tree -- overrides the old entry
-				return (rep_thunk,md_thunk)
-			Nothing -> load_file
+	let reuse_same_file old_rep old_md = return (old_rep,old_md)
 	-- memoized reuse for moves
-	let reuse_other_file from = do
-		mb <- lookupmemo from repProxy
-		case mb of
-			Just ((old_rep_thunk,old_md_thunk,()),(==oldtree) -> True) -> debug ("memo hit " ++ show from) $ do
-				rep_thunk <- copyFSThunks fs proxyInside id old_rep_thunk
-				fmd' <- getMD path tree
-				md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> ref (fmd',md) -- since the old file may come from another location and/or its attributes may have changed
-				unmemo fs from repProxy
-				memo path (rep_thunk,md_thunk,()) tree
-				return (rep_thunk,md_thunk)
-			Nothing -> load_file
-	case df of
-		(isEmptyFSTreeDeltaNodeMay -> True) -> reuse_same_file
-		Just (FSTreeChg _ _) -> reuse_other_file path
-		Just (FSTreeNew _ (Just from) _) -> reuse_other_file from
-		otherwise -> load_file
+	let reuse_other_file from old_rep_thunk old_md_thunk = do
+			fmd' <- getMD path tree
+			md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> ref (fmd',md) -- since the old file may come from another location and/or its attributes may have changed
+			remMemo fs from fsrepProxy
+			return (old_rep_thunk,md_thunk)
+	oldpath <- oldpath_f path
+	mb <- findMemo argProxy oldpath fsrepProxy 
+	(rep,md) <- case mb of
+		(Just (memo_tree,(),memo_rep,memo_md)) -> debug ("memo hit " ++ show path) $ do
+			df <- forestM $ diffFS memo_tree tree path
+			case df of
+				(isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
+					then reuse_same_file memo_rep memo_md
+					else reuse_other_file oldpath memo_rep memo_md
+				Just (FSTreeChg _ _) -> reuse_other_file path memo_rep memo_md
+				Just (FSTreeNew _ (Just ((==oldpath) -> True)) _) -> reuse_other_file oldpath memo_rep memo_md
+				otherwise -> load_file
+		Nothing -> load_file				
+	
+	addMemo path argProxy () (rep,md) tree
+	return (rep,md)
 
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- XXX: Pads errors do not contribute to the Forest error count
-doLoadFile1 :: (ForestMD fs md,Typeable arg,Eq arg,Eq pads,Eq md,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,FSRep fs,Pads1 arg pads md) => Proxy pads -> arg -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
-doLoadFile1 repProxy arg path (oldtree::FSTree fs) df tree getMD = debug ("doLoadFile1 " ++ show (path,df)) $ do
+doLoadFile1 :: (ICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ForestIs fs arg ~ ForestI fs arg,ForestMD fs md,Typeable arg,Eq arg,Eq pads,Eq md,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,FSRep fs,Pads1 arg pads md) =>
+	Proxy pads -> arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
+doLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
+	let argProxy = Proxy :: Proxy arg
+	let fsrepProxy = Proxy :: Proxy (ForestFSThunkI fs pads)
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
 	let load_file = do
 		parseThunk <- newHSThunk $ debug ("reading file "++show path) $ forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
-		rep_thunk <- checkPathData path tree (getRep $ read parseThunk)
+		rep_thunk <- checkPathData path tree (getRep $ Inc.read parseThunk)
 		md_thunk <- checkPathMeta path tree $ do
 			fmd <- getMD path tree
-			md <- mod $ getMd $ read parseThunk -- to avoid reading the file unless strictly necessary
+			md <- mod $ getMd $ Inc.read parseThunk -- to avoid Inc.reading the file unless strictly necessary
 			return (fmd,md)
-		memo path (rep_thunk,md_thunk,arg) tree
 		return (rep_thunk,md_thunk)
 	-- memoized reuse
-	let reuse_same_file = do
-		mb <- lookupmemo path repProxy
-		case mb of
-			Just ((old_rep_thunk,old_md_thunk,(== arg) -> True),(==oldtree) -> True) -> debug ("memo hit " ++ show path) $ do
-				rep_thunk <- get old_rep_thunk >>= ref
-				md_thunk <- get old_md_thunk >>= ref
-				memo path (rep_thunk,md_thunk,()) tree -- overrides the old entry
-				return (rep_thunk,md_thunk)
-			Nothing -> load_file
+	let reuse_same_file old_rep_thunk old_md_thunk = return (old_rep_thunk,old_md_thunk)
 	-- memoized reuse for moves
-	let reuse_other_file from = do
-		mb <- lookupmemo from repProxy
-		case mb of
-			Just ((old_rep_thunk,old_md_thunk,(== arg) -> True),(==oldtree) -> True) -> debug ("memo hit " ++ show from) $ do --XXX: revise this for thunk arguments!!!
-				rep_thunk <- copyFSThunks fs proxyInside id old_rep_thunk
-				fmd' <- getMD path tree
-				md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> fsRef (fmd',md) -- since the old file may come from another location and/or its attributes may have changed
-				unmemo fs from repProxy
-				memo path (rep_thunk,md_thunk,arg) tree
-				return (rep_thunk,md_thunk)
-			Nothing -> load_file
-	case df of
-		(isEmptyFSTreeDeltaNodeMay -> True) -> reuse_same_file
-		Just (FSTreeChg _ _) -> reuse_other_file path
-		Just (FSTreeNew _ (Just from) _) -> reuse_other_file from
-		otherwise -> load_file
+	let reuse_other_file from old_rep_thunk old_md_thunk = do
+		fmd' <- getMD path tree
+		md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> fsRef (fmd',md) -- since the old file may come from another location and/or its attributes may have changed
+		remMemo fs from fsrepProxy
+		return (old_rep_thunk,md_thunk)
+
+	oldpath <- oldpath_f path
+	mb <- findMemo argProxy oldpath fsrepProxy 
+	(rep,md) <- case mb of
+		(Just (memo_tree,memo_marg,memo_rep,memo_md)) -> do
+			memo_arg <- memo_marg
+			samearg <- geq proxyNoCtx memo_arg arg
+			if samearg
+				then do
+					debug ("memo hit " ++ show path) $ do
+					df <- forestM $ diffFS memo_tree tree path
+					case df of
+						(isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
+							then reuse_same_file memo_rep memo_md
+							else reuse_other_file oldpath memo_rep memo_md
+						Just (FSTreeChg _ _) -> reuse_other_file path memo_rep memo_md
+						Just (FSTreeNew _ (Just ((==oldpath) -> True)) _) -> reuse_other_file oldpath memo_rep memo_md
+						otherwise -> load_file
+				else load_file
+		Nothing -> load_file				
+	
+	addMemo path argProxy (return arg) (rep,md) tree
+	return (rep,md)
 
 -- | compressed archive (tar,gz,zip)
 -- incremental loading is only supported if the specification for the archive's contents is:
 -- 1) closed = does not depend on free variables -- this ensures that specs can be reused locally
--- 2) static = its type contains no @ICThunk@s inside (or more specifically, only constant @ICThunk@s) -- this is due to a limitation that we cannot consistently copy an @ICThunk@ and its dependencies.
--- The copy operation needs to make a deep strict copy of the argument value, to ensure that we are copying the correct state of a @FSThunk@ and its recursively contained @FSThunk@s
-doLoadArchive :: (
-		 MData (CopyFSThunksDict fs Inside) (ForestI fs) rep,MData (CopyFSThunksDict fs Inside) (ForestI fs) md
-		,ForestMD fs md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,FSRep fs,MData NoCtx (ForestI fs) md) =>
+doLoadArchive :: (ICMemo fs,ForestMD fs md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,FSRep fs,MData NoCtx (ForestI fs) md) =>
 	Bool -> Proxy rep
-	-> [ArchiveType] -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs
-	-> (FilePath -> GetForestMD fs -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md))
+	-> [ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
+	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs (rep,md))
 	-> (ForestI fs FilePath -> FilePath -> OldData fs rep md -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md))
 	-> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
-doLoadArchive isClosedAndStatic repProxy exts path oldtree df (tree :: FSTree fs) getMD load loadD = do
+doLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FSTree fs) getMD load loadD = do
+	let fs = Proxy :: Proxy fs
+	let argsProxy = Proxy :: Proxy ()
+	let fsrepProxy = Proxy :: Proxy (ForestFSThunkI fs rep)
 	-- static loading
-	let load_folder = mkThunks tree $ doLoadArchive' exts path oldtree df tree getMD load
-	-- memoized reuse
-	let reuse_same_file = do
-		mb <- lookupmemo path repProxy
-		case mb of
-			Just ((old_rep_thunk,old_md_thunk,()),(==oldtree) -> True) -> debug ("memo hit " ++ show path) $ do
-				memo path (old_rep_thunk,old_md_thunk,()) tree
-				return (old_rep_thunk,old_md_thunk)
-			Nothing -> load_folder
-	-- memoized reuse for moves
-	let reuse_other_file from = do
-		mb <- lookupmemo from repProxy
-		case mb of
-			Just ((old_rep_thunk,old_md_thunk,()),(==oldtree) -> True) -> debug ("memo hit " ++ show from) $ do
-				-- since we are working at the inner layer, we need to copy the old data into new @FSThunk@s
-				-- note that @copyInc@ is strict for lazy @FSThunk@s
-				let updateRelative p = path </> (makeRelative from p)
-				(rep_thunk,md_thunk) <- copyFSThunks (Proxy::Proxy fs) proxyInside updateRelative (old_rep_thunk,old_md_thunk)
-				rep <- get rep_thunk
-				md@(fmd,imd) <- get md_thunk
-				
-				-- compute the difference for the archive's content
-				avfsTree <- forestM $ virtualTree tree
-				avfsOldTree <- forestM $ virtualTree oldtree
-				let fromC = cardinalPath from
-				let pathC = cardinalPath path
-				newdf <- forestM $ focusDiffFSTree oldtree fromC tree pathC
-				
-				-- load incrementally; this is safe because we are modifying fresh modifiables (the copies)
-				unsafeWorld $ do
-					loadD (return fromC) pathC ((rep,imd),getMD) avfsOldTree newdf avfsTree
-					fmd' <- inside $ getMD path tree
-					updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors imd -- like a directory
-					set md_thunk (fmd',imd)
-				memo path (rep_thunk,md_thunk,()) tree
-				return (rep_thunk,md_thunk)
-			Nothing -> load_folder
-	case df of
-		(isEmptyFSTreeDeltaNodeMay -> True) -> reuse_same_file
-		Just (FSTreeChg _ _) -> if isClosedAndStatic then reuse_other_file path else load_folder
-		Just (FSTreeNew _ (Just from) _) -> if isClosedAndStatic then reuse_other_file from else load_folder
-		otherwise -> load_folder
+	let load_folder = mkThunks tree $ doLoadArchive' exts oldpath_f path tree getMD load
+		
+	if isClosed
+		then do
+			oldpath <- oldpath_f path
+			mb <- findMemo argsProxy oldpath fsrepProxy
+			(rep,md) <- case mb of
+				Just (memo_tree,(),memo_rep_thunk,memo_md_thunk) -> do
+					
+					rep <- get memo_rep_thunk
+					md@(fmd,imd) <- get memo_md_thunk
+					
+					avfsTree <- forestM $ virtualTree tree
+					avfsOldTree <- forestM $ virtualTree memo_tree
+					let oldpathC = cardinalPath oldpath
+					let pathC = cardinalPath path
+					archiveDf <- forestM $ focusDiffFSTree memo_tree oldpathC tree pathC
+					
+					unsafeWorld $ do
+						loadD (return oldpathC) pathC ((rep,imd),getForestMDInTree) avfsOldTree archiveDf avfsTree
+						fmd' <- inside $ getForestMDInTree path tree
+						updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors imd -- like a directory
+						set memo_md_thunk (fmd',imd)
+					remMemo fs oldpath repProxy
+					return (memo_rep_thunk,memo_md_thunk)
+				Nothing -> load_folder
+			addMemo path argsProxy () (rep,md) tree
+			return (rep,md)
+		else load_folder
 
 doLoadArchive' :: (ForestMD fs md,MData NoCtx (ForestI fs) rep,ICRep fs,MData NoCtx (ForestI fs) md) =>
-	[ArchiveType] -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs
-	-> (FilePath -> GetForestMD fs -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md))
+	[ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
+	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs (rep,md))
 	-> ForestI fs (rep,(Forest_md fs,md))
-doLoadArchive' exts path oldtree df tree getMD load = checkPath' (Just False) path tree $ checkFileExtension (archiveExtension exts) path $ do
+doLoadArchive' exts oldpath_f path  tree getMD load = checkPath' (Just False) path tree $ checkFileExtension (archiveExtension exts) path $ do
 	fmd <- getMD path tree
 	avfsTree <- forestM $ virtualTree tree
-	(rep,md_arch) <- load (cardinalPath path) getForestMDInTree avfsTree Nothing avfsTree -- since we use the same tree, there is no problem here
+	(rep,md_arch) <- load (cardinalPath path) getForestMDInTree avfsTree
 	fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ get_errors md_arch -- like a directory
 	return (rep,(fmd',md_arch))
 		
-doLoadSymLink :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs FilePath,ForestFSThunkI fs (Forest_md fs, Base_md))
-doLoadSymLink path df tree getMD = mkThunks tree $ doLoadSymLink' path df tree getMD
+doLoadSymLink :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs FilePath,ForestFSThunkI fs (Forest_md fs, Base_md))
+doLoadSymLink path tree getMD = mkThunks tree $ doLoadSymLink' path tree getMD
 
-doLoadSymLink' :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> ForestI fs (FilePath,(Forest_md fs, Base_md))
-doLoadSymLink' path df tree getMD = checkPath' Nothing path tree $ do
+doLoadSymLink' :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (FilePath,(Forest_md fs, Base_md))
+doLoadSymLink' path tree getMD = checkPath' Nothing path tree $ do
 	md <- getMD path tree
 	case symLink (fileInfo md) of
 		Just sym -> return (sym,(md,cleanBasePD))
@@ -237,23 +229,22 @@ doLoadConstraint mode tree pred load = do -- note that constraints do not consid
 	return (rep,mkMDArgs mode md' cond_thunk)
 
 -- changes the current path
-doLoadFocus :: (Matching a,ForestMD fs md) => FilePath -> a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> (FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs (rep,md)) -> ForestI fs (rep,md)
-doLoadFocus path matching oldtree df tree getMD load = do
+doLoadFocus :: (Matching a,ForestMD fs md) => FilePathFilter fs -> FilePath -> a -> FSTree fs -> GetForestMD fs -> (FilePath -> GetForestMD fs -> ForestI fs (rep,md)) -> ForestI fs (rep,md)
+doLoadFocus pathfilter path matching tree getMD load = do
 	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
 	case files of
-		[file] -> doLoadNewPath path file oldtree df tree getMD load
-		files -> doLoadNewPath path (pickFile files) oldtree df tree getMD $ \newpath newdf newgetMD -> do
-			(rep,md) <- load newpath newdf newgetMD
+		[file] -> doLoadNewPath pathfilter path file tree getMD load
+		files -> doLoadNewPath pathfilter path (pickFile files) tree getMD $ \newpath newgetMD -> do
+			(rep,md) <- load newpath newgetMD
 			md' <- if length files == 0
 				then return md -- if there is no match then an error will pop from the recursive load
 				else addMultipleMatchesErrorMDInside newpath files md
 			return (rep,md')
 
-doLoadNewPath :: (ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> GetForestMD fs -> (FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs x) -> ForestI fs x
-doLoadNewPath oldpath file oldtree df tree getMD load = debug ("doLoadNewPath " ++ show (oldpath </> file)) $ do
+doLoadNewPath :: (ICRep fs) => FilePathFilter fs -> FilePath -> FilePath -> FSTree fs -> GetForestMD fs -> (FilePath -> GetForestMD fs -> ForestI fs x) -> ForestI fs x
+doLoadNewPath pathfilter oldpath file tree getMD load = debug ("doLoadNewPath " ++ show (oldpath </> file)) $ do
 	newpath <- forestM $ stepPathInTree tree oldpath file -- changes the old path by a relative path, check the path traversal restrictions specific to each FS instantiation
-	let newdf = focusFSTreeDeltaNodeMayByRelativePath df file -- focusing the tree deltas is important for the skipping conditions to fire for unchanged branches of the FS
-	load newpath newdf getMD
+	load newpath getMD
 
 doLoadDirectory :: (ForestInput fs FSThunk Inside,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,ICRep fs,MData NoCtx (ForestI fs) md)
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
@@ -264,30 +255,30 @@ doLoadDirectory' :: (ICRep fs,ForestInput fs FSThunk Inside,Eq rep,Eq md,MData N
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestI fs rep,ForestI fs (Forest_md fs,md))
 doLoadDirectory' path tree collectMDErrors getMD ifGood = debug ("doLoadDirectory: "++show path) $ do
 	ifGoodThunk <- newHSThunk ifGood
-	let loadData = checkPathData' True path tree $ getRep $ read ifGoodThunk
+	let loadData = checkPathData' True path tree $ getRep $ Inc.read ifGoodThunk
 	let loadMeta = checkPathMeta' True path tree $ do
 		fmd <- getMD path tree
-		mds <- getMd $ read ifGoodThunk
+		mds <- getMd $ Inc.read ifGoodThunk
 		fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ collectMDErrors mds
 		return (fmd',mds)
 	return (loadData,loadMeta)
 
-doLoadMaybe :: (Typeable rep,Typeable md,Eq rep,Eq md,ForestMD fs md) => FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs (Maybe rep),ForestFSThunkI fs (Forest_md fs,Maybe md))
-doLoadMaybe path df tree ifExists = mkThunksM tree $ doLoadMaybe' path df tree ifExists
+doLoadMaybe :: (Typeable rep,Typeable md,Eq rep,Eq md,ForestMD fs md) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs (Maybe rep),ForestFSThunkI fs (Forest_md fs,Maybe md))
+doLoadMaybe pathfilter path tree ifExists = mkThunksM tree $ doLoadMaybe' pathfilter path tree ifExists
 
-doLoadMaybe' :: (Typeable rep,Typeable md,Eq rep,Eq md,ForestMD fs md) => FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestI fs (Maybe rep),ForestI fs (Forest_md fs,Maybe md))
-doLoadMaybe' path df tree ifExists = do
+doLoadMaybe' :: (Typeable rep,Typeable md,Eq rep,Eq md,ForestMD fs md) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestI fs (Maybe rep),ForestI fs (Forest_md fs,Maybe md))
+doLoadMaybe' pathfilter path tree ifExists = do
 	ifExistsThunk <- newHSThunk ifExists
 	let loadData = do
 		exists <- forestM $ doesExistInTree path tree
 		if exists
-			then liftM Just $ getRep $ read ifExistsThunk
+			then liftM Just $ getRep $ Inc.read ifExistsThunk
 			else return Nothing
 	let loadMeta = do
 		exists <- forestM $ doesExistInTree path tree
 		debug ("doLoadMaybe: "++show (path,exists)) $ if exists
 			then do
-				md <- getMd $ read ifExistsThunk
+				md <- getMd $ Inc.read ifExistsThunk
 				fmd <- get_fmd_header md
 				return (fmd,Just md) -- use the same @Forest_md@
 			else do
@@ -297,31 +288,31 @@ doLoadMaybe' path df tree ifExists = do
 
 -- since the focus changes we need to compute the (eventually) previously loaded metadata of the parent node
 doLoadSimple :: (Eq imd',ForestMD fs imd',Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs md', md' ~ ForestFSThunkI fs imd') =>
-	FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
-	-> (FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs (rep',md'))
+	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
+	-> (FilePath -> GetForestMD fs -> ForestI fs (rep',md'))
 	-> ForestI fs (rep',md')
-doLoadSimple path matching oldtree df tree load = matching >>= \m -> doLoadFocus path m oldtree df tree getForestMDInTree load
+doLoadSimple pathfilter path matching tree load = matching >>= \m -> doLoadFocus pathfilter path m tree getForestMDInTree load
 
 -- since the focus changes we need to compute the (eventually) previously loaded metadata of the parent node
 doLoadSimpleWithConstraint :: (Typeable imd',ForestOutput fs ICThunk Inside,Eq imd',ForestMD fs imd',Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs md', md' ~ ForestFSThunkI fs imd') =>
-	LiftedICMode mode -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ((rep',md') -> ForestI fs Bool)
-	-> (FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs (rep',md'))
+	LiftedICMode mode -> FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs -> ((rep',md') -> ForestI fs Bool)
+	-> (FilePath -> GetForestMD fs -> ForestI fs (rep',md'))
 	-> ForestI fs (rep',MDArgs mode md' (ForestICThunkI fs Bool))
-doLoadSimpleWithConstraint mode path matching oldtree df tree pred load = doLoadConstraint mode tree pred $ matching >>= \m -> doLoadFocus path m oldtree df tree getForestMDInTree load
+doLoadSimpleWithConstraint mode pathfilter path matching tree pred load = doLoadConstraint mode tree pred $ matching >>= \m -> doLoadFocus pathfilter path m tree getForestMDInTree load
 
 doLoadCompound :: (Typeable container_rep,Typeable container_md,Eq container_md,Eq container_rep,ForestMD fs (md',FSThunk fs Inside (IncForest fs) IORef IO FileInfo),Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs imd, imd ~ MDArgs mode md' (ForestFSThunkI fs FileInfo)) =>
-	LiftedICMode mode -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	LiftedICMode mode -> FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> ([(FilePath,rep')] -> container_rep) -> ([(FilePath,imd)] -> container_md)
-	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs (rep',md'))
+	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs (rep',md'))
 	-> ForestI fs (ForestFSThunkI fs container_rep,ForestFSThunkI fs container_md)
-doLoadCompound mode path matchingM oldtree df tree buildContainerRep buildContainerMd load = mkThunks tree $ debug ("doLoadCompound: "++show path) $ do
+doLoadCompound mode pathfilter path matchingM tree buildContainerRep buildContainerMd load = mkThunks tree $ debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM
 	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files
 	let filesmetas = zip files metadatas
-	let loadEach (n,n_md) = liftM (n,) $ doLoadFocus path n oldtree df tree (const2 $ return n_md) $ \newpath newdf newGetMD -> do
+	let loadEach (n,n_md) = liftM (n,) $ doLoadFocus pathfilter path n tree (const2 $ return n_md) $ \newpath newGetMD -> do
 		fileInfo_thunk <- ref $ fileInfo n_md
-		(rep',md') <- load n fileInfo_thunk newpath newdf newGetMD
+		(rep',md') <- load n fileInfo_thunk newpath newGetMD
 		return (rep',mkMDArgs mode md' $ fileInfo_thunk)
 	loadlist <- mapM loadEach filesmetas
 	let replist = map (id >< fst) loadlist
@@ -329,12 +320,12 @@ doLoadCompound mode path matchingM oldtree df tree buildContainerRep buildContai
 	return (buildContainerRep replist,buildContainerMd mdlist)
 
 doLoadCompoundWithConstraint :: (Typeable container_rep,Typeable container_md,Eq container_md,Eq container_rep,ForestOutput fs ICThunk Inside,Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs md',imd ~ MDArgs mode md' (ForestFSThunkI fs FileInfo,ForestICThunkI fs Bool) ) =>
-	LiftedICMode mode -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	LiftedICMode mode -> FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> (FilePath -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> ([(FilePath,rep')] -> container_rep) -> ([(FilePath,imd)] -> container_md)
-	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> FSTreeDeltaNodeMay -> GetForestMD fs -> ForestI fs (rep',md'))
+	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs (rep',md'))
 	-> ForestI fs (ForestFSThunkI fs container_rep,ForestFSThunkI fs container_md)
-doLoadCompoundWithConstraint mode path matchingM oldtree df tree pred buildContainerRep buildContainerMd load = mkThunks tree $ debug ("doLoadCompound: "++show path) $ do
+doLoadCompoundWithConstraint mode pathfilter path matchingM tree pred buildContainerRep buildContainerMd load = mkThunks tree $ debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM -- matching expressions are not saved for incremental reuse
 	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files
@@ -346,7 +337,7 @@ doLoadCompoundWithConstraint mode path matchingM oldtree df tree pred buildConta
 	filesmetasInfo <- mapM makeInfo filesmetas
 	filesmetasInfo' <- filterM (force . snd . snd . snd) filesmetasInfo
 	let loadEach (n,(n_md,(t,u))) = do
-		(rep,md) <- doLoadFocus path n oldtree df tree (const2 $ return n_md) $ load n t
+		(rep,md) <- doLoadFocus pathfilter path n tree (const2 $ return n_md) $ load n t
 		return (n,(rep,mkMDArgs mode md (t,u)))
 	loadlist <- mapM loadEach filesmetasInfo'
 	let replist = map (id >< fst) loadlist
@@ -356,13 +347,9 @@ doLoadCompoundWithConstraint mode path matchingM oldtree df tree pred buildConta
 -- ** auxiliary functions
 
 -- tries to pick a file that has been moved
-pickFileNoDelta :: ICRep fs => FilePath -> [FileName] -> FSTreeDeltaNodeMay -> FSTree fs -> ForestI fs FileName
-pickFileNoDelta path' files' df tree' = do
-	let reorderFile xs file' = case focusFSTreeDeltaNodeMayByRelativePath df file' of
-		Just (FSTreeNew _ (Just from) _) -> file' : xs
-		otherwise -> xs ++ [file']
-	let files'' = foldl' reorderFile [] files'
-	return $ pickFile files''
+pickFileNoDelta :: ICRep fs => FilePathFilter fs -> FilePath -> [FileName] -> FSTree fs -> ForestI fs FileName
+pickFileNoDelta pathfilter path' files' tree' = do
+	return $ pickFile files'
 
 checkPathData :: (ICRep fs,ForestInput fs FSThunk Inside,Eq rep,MData NoCtx (ForestI fs) rep) => FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs rep)
 checkPathData path tree ifExists = mod $ checkPathData' False path tree ifExists
@@ -371,8 +358,8 @@ checkPathMeta path tree ifExists = mod $ checkPathMeta' False path tree ifExists
 checkPath :: (ICRep fs,MData NoCtx (ForestI fs) md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
 checkPath path tree ifExists = do
 	ifExistsThunk <- newHSThunk ifExists
-	dataThunk <- checkPathData path tree $ getRep $ read ifExistsThunk
-	metaThunk <- checkPathMeta path tree $ getMd $ read ifExistsThunk
+	dataThunk <- checkPathData path tree $ getRep $ Inc.read ifExistsThunk
+	metaThunk <- checkPathMeta path tree $ getMd $ Inc.read ifExistsThunk
 	return (dataThunk,metaThunk)
 	
 checkPathData' :: (ICRep fs,MData NoCtx (ForestI fs) rep,FSRep fs) => Bool -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep
@@ -415,8 +402,8 @@ checkFileExtension ext path ifExists = do
 mkThunks :: (Typeable rep,Typeable md,ForestInput fs FSThunk Inside,Eq rep,Eq md,ICRep fs) => FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
 mkThunks tree load = do
 	loadThunk <- newHSThunk load
-	dataThunk <- mod $ getRep $ read loadThunk
-	metaThunk <- mod $ getMd $ read loadThunk
+	dataThunk <- mod $ getRep $ Inc.read loadThunk
+	metaThunk <- mod $ getMd $ Inc.read loadThunk
 	return (dataThunk,metaThunk)
 
 mkThunksM :: (Typeable rep,Typeable md,ICRep fs,ForestInput fs FSThunk Inside,Eq rep,Eq md) => FSTree fs -> ForestI fs (ForestI fs rep,ForestI fs md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)

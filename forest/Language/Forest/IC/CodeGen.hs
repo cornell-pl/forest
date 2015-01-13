@@ -137,7 +137,7 @@ genFInst modeName modeT fsName loadM loadDeltaM manifestM defaultM ty_name md_ty
 	let manifest_method = ValD (VarP 'updateManifestScratch) (NormalB manifestM) []
 	let default_method = ValD (VarP 'IC.defaultMd) (NormalB defaultM) []
 
-	let ctx = [ClassP ''Typeable [VarT fsName]
+	let ctx = [ClassP ''Typeable [VarT fsName],ClassP ''ICMemo [VarT fsName]
 			,ClassP ''ForestMD [VarT fsName,(appTyModeFS'' modeT fsName md_ty_name)]
 			,ClassP ''ForestOutput [VarT fsName,ConT ''ICThunk,ConT ''Inside]
 			, (VarT mdName) ` EqualP` mdT

@@ -111,11 +111,6 @@ isEmptyNSValueDelta :: NSValueDelta a -> Bool
 isEmptyNSValueDelta (StableVD Id) = True
 isEmptyNSValueDelta _ = False
 
--- class to traverse to the top-level thunk of a Forest representation, by dropping newtype tags
-class ForestRep rep thunk | rep -> thunk where
-	iso_rep_thunk :: Iso rep thunk
 
-instance ForestRep (ForestFSThunk fs l rep) (ForestFSThunk fs l rep) where
-	iso_rep_thunk = Iso id id
 
 

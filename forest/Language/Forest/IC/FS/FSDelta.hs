@@ -12,15 +12,19 @@ import Data.Set (Set(..))
 import qualified Data.Set as Set
 import System.FilePath.Posix
 import Language.Forest.IO.Utils
-import Language.Forest.FS.FSRep
+--import Language.Forest.FS.FSRep
+import Language.Forest.IO.Shell
+import System.Directory
 import Safe
+
+type OnDisk = FilePath
 
 type FSTreeDeltaNodeMay = Maybe FSTreeDeltaNode
 
 -- filesystem deltas store the modified file content
 data FSTreeDeltaNode = FSTreeNew FSTreeDelta MoveFrom OnDisk -- a new directory or file
 					 | FSTreeChg FSTreeDelta OnDisk -- a directory or file whose metadata has changed
-					 | FSTreeNop FSTreeDelta -- a directory or file that has not have changed
+					 | FSTreeNop FSTreeDelta -- a directory or file that has not changed
 					 | FSTreeRem
 	deriving (Show,Eq,Ord)
 
@@ -36,8 +40,27 @@ data FSDelta = Add FilePath OnDisk
 
 -- * Operations on filesystem deltas
 
-commitFSTreeDelta :: FSTreeDelta -> IO ()
-commitFSTreeDelta = error "For jonathan"
+commitFSTreeDelta :: FilePath -> FSTreeDelta -> IO (Set FilePath)
+commitFSTreeDelta root = Map.foldrWithKey aux (return Set.empty) where
+	aux file td m = do
+		m1 <- commitFSTreeDeltaNode (root </> file) td
+		m2 <- m
+		return $ m1 `Set.union` m2
+
+commitFSTreeDeltaNode :: FilePath -> FSTreeDeltaNode -> IO (Set FilePath)
+commitFSTreeDeltaNode root (FSTreeNew td _ ondisk) = do
+	runShellCommand_ $ "cp -r " ++ show ondisk ++ " " ++ show root
+	xs <- commitFSTreeDelta root td
+	return $ Set.insert root xs
+commitFSTreeDeltaNode root (FSTreeChg td ondisk) = do
+	copyPermissions ondisk root
+	xs <- commitFSTreeDelta root td
+	return $ Set.insert root xs
+commitFSTreeDeltaNode root (FSTreeNop td) = do
+	commitFSTreeDelta root td
+commitFSTreeDeltaNode root FSTreeRem = do
+	runShellCommand_ $ "rm -r " ++ show root
+	return $ Set.singleton root
 
 onDiskWriteMay :: FSTreeDeltaNodeMay -> Maybe OnDisk
 onDiskWriteMay = maybe Nothing onDiskWrite
@@ -48,23 +71,15 @@ onDiskWrite (FSTreeChg _ ondisk) = Just ondisk
 onDiskWrite (FSTreeNop _) = Nothing
 onDiskWrite FSTreeRem = Nothing
 
-fsTreeDeltaWrites :: FSTreeDelta -> Set OnDisk
-fsTreeDeltaWrites = flip Map.foldrWithKey Set.empty $ \path td w2 ->
-	let (b,w1) = fsTreeDeltaNodeWrites td
-	    w12 = Set.union w1 w2
-	in if b then Set.insert path w12 else w12
+fsTreeDeltaWrites :: FilePath -> FSTreeDelta -> Set FilePath
+fsTreeDeltaWrites root td = Map.foldrWithKey aux Set.empty td where
+	aux file td xs = fsTreeDeltaNodeWrites (root </> file) td `Set.union` xs
 
-fsTreeDeltaNodeWrites :: FSTreeDeltaNode -> (Bool,Set OnDisk)
-fsTreeDeltaNodeWrites (FSTreeNew td _ _) = (True,fsTreeDeltaWrites td)
-fsTreeDeltaNodeWrites (FSTreeChg td _) = (True,fsTreeDeltaWrites td)
-fsTreeDeltaNodeWrites (FSTreeNop td) = (False,fsTreeDeltaWrites td)
-fsTreeDeltaNodeWrites FSTreeRem = (True,Set.empty)
-
-fsTreeDeltaNodeMayWritesWithRoot :: FilePath -> FSTreeDeltaNodeMay -> Set OnDisk
-fsTreeDeltaNodeMayWritesWithRoot root Nothing = Set.empty
-fsTreeDeltaNodeMayWritesWithRoot root (Just td) = case fsTreeDeltaNodeWrites td of
-	(True,ws) -> Set.insert root ws
-	(False,ws) -> ws
+fsTreeDeltaNodeWrites :: FilePath -> FSTreeDeltaNode -> Set FilePath
+fsTreeDeltaNodeWrites root (FSTreeNew td _ _) = Set.insert root (fsTreeDeltaWrites root td)
+fsTreeDeltaNodeWrites root (FSTreeChg td _) = Set.insert root (fsTreeDeltaWrites root td)
+fsTreeDeltaNodeWrites root (FSTreeNop td) = fsTreeDeltaWrites root td
+fsTreeDeltaNodeWrites root FSTreeRem = Set.singleton root
 
 childrenFSTreeDeltaNode = fromJustNote "no FSTreeDelta children" . childrenFSTreeDeltaNodeMay
 
@@ -192,3 +207,4 @@ focusFSTreeDeltaByRelativePathMay td relpath = fmap snd $ snd $ findFSTreeDeltaN
 focusFSTreeDeltaNodeMayByRelativePath :: FSTreeDeltaNodeMay -> FilePath -> FSTreeDeltaNodeMay
 focusFSTreeDeltaNodeMayByRelativePath Nothing relpath = Nothing
 focusFSTreeDeltaNodeMayByRelativePath (Just td) relpath = fmap snd $ snd (findFSTreeDeltaNode relpath id $ childrenFSTreeDeltaNode td)
+

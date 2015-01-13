@@ -522,7 +522,7 @@ fstStar (a :*: b) = a
 sndStar (a :*: b) = b
 infixr 5 :*:
 data a :*: b = a :*: b deriving (Typeable,Eq,Show,Ord) -- the forest datatype for pairs of arguments
-newtype Arg a = Arg a
+newtype Arg a = Arg a deriving Typeable
 
 defaultForest_mdWithErrors :: (FSRep fs) => Forest_err -> ForestM fs Forest_md
 defaultForest_mdWithErrors err = return $ Forest_md err forestdefault

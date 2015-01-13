@@ -19,11 +19,14 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.FS.LazyFS
 	, module Language.Forest.IC.FS.NILFS
 	, module Language.Forest.IC.FS.NILFSDiff
+	, module Language.Forest.IC.FS.TxVarFS
 	, module Language.Forest.IC.Generic
 	, module Language.Forest.IC.ICRep
 	, module Language.Forest.IC.IO.Default
 	, module Language.Forest.IC.IO.DeltaLoading
+	, module Language.Forest.IC.IO.ZDeltaLoading
 	, module Language.Forest.IC.IO.Loading
+	, module Language.Forest.IC.IO.ZLoading
 	, module Language.Forest.IC.IO.Memo
 	, module Language.Forest.IC.IO.Storing
 	, module Language.Forest.IC.MetaData
@@ -60,11 +63,14 @@ import Language.Forest.IC.FS.FSDelta
 import Language.Forest.IC.FS.LazyFS
 import Language.Forest.IC.FS.NILFS
 import Language.Forest.IC.FS.NILFSDiff
+import Language.Forest.IC.FS.TxVarFS
 import Language.Forest.IC.Generic
 import Language.Forest.IC.ICRep
 import Language.Forest.IC.IO.Default
 import Language.Forest.IC.IO.DeltaLoading
+import Language.Forest.IC.IO.ZDeltaLoading
 import Language.Forest.IC.IO.Loading
+import Language.Forest.IC.IO.ZLoading
 import Language.Forest.IC.IO.Memo
 import Language.Forest.IC.IO.Storing
 import Language.Forest.IC.MetaData

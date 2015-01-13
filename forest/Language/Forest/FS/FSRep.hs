@@ -5,6 +5,7 @@
 module Language.Forest.FS.FSRep where
 
 import System.Mem.WeakKey
+import Language.Forest.IC.FS.FSDelta
 import Control.Monad
 import Data.Maybe
 import Data.List.Split
@@ -51,14 +52,13 @@ debug str = trace str
 forestCfg :: IORef (ForestCfg fs)
 forestCfg = unsafePerformIO $ newIORef (error "no initial Forest cfg")
 
-type OnDisk = FilePath
-
 -- the kind of possible filesystem instantiations
-data FS = PureFS | TxFS | LazyFS | NILFS deriving Typeable
+data FS = PureFS | TxFS | LazyFS | NILFS | TxVarFS deriving Typeable
 deriving instance Typeable PureFS
 deriving instance Typeable TxFS
 deriving instance Typeable LazyFS
 deriving instance Typeable NILFS
+deriving instance Typeable TxVarFS
 
 deriving instance Typeable ForestM
 
@@ -130,6 +130,8 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 	-- returns a canonical version of a filepath according for a given tree
 	canonalizePathWithTree :: FilePath -> FSTree fs -> ForestM fs FilePath
 	canonalizePathWithTree path tree = flip pathFromTree tree =<< forestIO . canonalizePath =<< pathInTree path tree
+
+	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs FSTreeDeltaNodeMay
 
 ----------
 

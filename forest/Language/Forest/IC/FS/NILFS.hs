@@ -172,14 +172,13 @@ instance FSRep NILFS where
 			then return newpath 
 			else error $ "NILFS incremental loading forbids non-tree-like filesystems" ++ show cpath ++ " " ++ show newpath
 
+	diffFS old new path = undefined --liftM (flip focusFSTreeDeltaByRelativePath path) $ changesBetweenNILFS old new
+
 instance ICRep NILFS where
 	
 	runIncrementalForest = runNILFSForest
 	
 	forestM = inside . NILFSForestI . runNILFSForestM
-
-	changesBetween = changesBetweenNILFS
-	
 	
 	data FSThunk NILFS l inc r m a = NILFSFSThunk { adaptonThunk :: (L l (IncForest NILFS) r m a), unmemoNILFS :: r (IO ()) } -- a set of snapshots on which the FSThunk depends and a lazy Adapton modifiable
 		
@@ -190,17 +189,18 @@ instance ICRep NILFS where
 	
 	newtype HSThunk NILFS l inc r m a = NILFSThunk { unNILFSThunk :: T l inc r m a }
 
-	memo path dta tree = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-		if moves then memoForest path dta tree else return ()
-	unmemo fs path rep = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-		if moves then forestM (forestIO $ unmemoForest path rep) else return ()
-	lookupmemo path rep = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-		if moves then lookupmemoForest path rep else return Nothing
 
-	addUnmemoFSThunk t f = inL $ liftIO $ modifyIORef (unmemoNILFS t) (>> f)
+instance ICMemo NILFS where
+
+--	addMemo path dta tree = do
+--		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
+--		if moves then memoForest path dta tree else return ()
+--	remMemo fs path rep = do
+--		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
+--		if moves then forestM (forestIO $ unmemoForest path rep) else return ()
+--	findMemo path rep = do
+--		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
+--		if moves then lookupmemoForest path rep else return Nothing
 
 instance ForestLayer NILFS l => Thunk (HSThunk NILFS) l (IncForest NILFS) IORef IO where
 	new = liftM NILFSThunk . new
@@ -379,10 +379,10 @@ removeForestData liveSnapshots forestData (NILFSForestConfig moves rootPath fore
 	unmountAVFS
 	return ()
 
-changesBetweenNILFS :: FSTree NILFS -> FSTree NILFS -> ForestO NILFS FSTreeDelta
+changesBetweenNILFS :: FSTree NILFS -> FSTree NILFS -> ForestM NILFS FSTreeDelta
 changesBetweenNILFS tree tree' = do
 	(liveSnapsots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-	td <- inL $ liftIO $ diffNILFS rootPath device (nilfsTreeSnapshot tree) (nilfsTreeSnapshot tree')
+	td <- forestIO $ diffNILFS rootPath device (nilfsTreeSnapshot tree) (nilfsTreeSnapshot tree')
 	let report = "NILFS changes between " ++ show tree ++ " and " ++ show tree' ++ ": " ++ show td
 	debug report $ return td
 

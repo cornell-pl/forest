@@ -113,8 +113,6 @@ instance ICRep LazyFS where
 	forestM = undefined 
 	forestO = undefined
 
-	changesBetween = error "No filesystem versioning support for LazyFS"
-
 	eqFSThunk = error "no equality for NOFSThunk"
 	isUnevaluatedFSThunk = error "isUnevaluatedFSThunk"
 	isUnforcedFSThunk = error "isUnforcedFSThunk"
@@ -125,12 +123,13 @@ instance ICRep LazyFS where
 
 
 	data HSThunk LazyFS l inc r m a = LazyFSHSThunk { unLazyFSHSThunk :: T l inc r m a }
-	
+
+instance ICMemo LazyFS where
+
 	-- no memoization
-	memo _ _ _ = return ()
-	unmemo _ _ _ = return ()
-	lookupmemo _ _ = return Nothing
-	addUnmemoFSThunk t f = return ()
+	addMemo _ _ _ _ _ = return ()
+	remMemo _ _ _ = return ()
+	findMemo _ _ _ = return Nothing
 
 instance ForestLayer LazyFS l => Thunk (HSThunk LazyFS) l (IncForest LazyFS) IORef IO where
 	new = liftM LazyFSHSThunk . new

@@ -52,6 +52,15 @@ import Data.WithClass.Derive.DeepTypeable
 import Language.Haskell.TH.Syntax hiding (Loc(..))
 import Language.Forest.FS.FSRep
 
+-- class to traverse to the top-level thunk of a Forest representation, by dropping newtype tags
+class ForestRep rep thunk | rep -> thunk where
+	iso_rep_thunk :: Iso rep thunk
+
+data Iso a b = Iso { to :: a -> b, from :: b -> a }
+
+instance ForestRep (ForestFSThunk fs l rep) (ForestFSThunk fs l rep) where
+	iso_rep_thunk = Iso id id
+
 -- * Incremental computation
 
 data IncForest (fs :: FS) deriving Typeable
@@ -109,18 +118,41 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	-- | A plain thunk that simply stores a computation; cannot be mutated, and is not incrementally repaired
 	data HSThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
 
-	-- * filesystem modification events, used for incremental loading
-	
-	changesBetween :: FSTree fs -> FSTree fs -> ForestO fs FSTreeDelta
+-- * Value deltas
 
+	-- the type for value modifications
+	data ValueDelta fs a :: *
+	
+	-- value changes since a given FSTree
+	diffValue :: ForestRep rep (ForestFSThunk fs l content) => FSTree fs -> rep -> ForestL fs l (ValueDelta fs rep)
+	
+	isIdValueDelta :: ValueDelta fs a -> Bool
+	idValueDelta :: ValueDelta fs a
+	chgValueDelta :: ValueDelta fs a
+	
+class ICRep fs => ICMemo (fs :: FS) where
+	
 	-- * Forest memoization operations to support incremental loading in the presence of FS moves (dummies if no moves are supported)
-		
-	memo :: (ForestInput fs FSThunk Inside,Typeable rep,Typeable md,Typeable arg) => FilePath -> (ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg) -> FSTree fs -> ForestI fs ()
-	unmemo :: Typeable rep => Proxy fs -> FilePath -> Proxy rep -> ForestI fs ()
-	lookupmemo :: (Typeable rep,Typeable md,Typeable arg) => FilePath -> Proxy rep -> ForestI fs (Maybe ((ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg),FSTree fs))
+--	addMemoFile :: (ForestInput fs FSThunk Inside,Typeable rep,Typeable md,Typeable arg) => FilePath -> (ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg) -> FSTree fs -> ForestI fs ()
+--	remMemoFile :: Typeable rep => Proxy fs -> FilePath -> Proxy rep -> ForestI fs ()
+--	findMemoFile :: (Typeable rep,Typeable md,Typeable arg) => FilePath -> Proxy rep -> ForestI fs (Maybe ((ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg),FSTree fs))
 
 	-- | adds a finalizer to a Forest Input thunk to be run whenever it is modified
-	addUnmemoFSThunk :: ForestLayer fs l => FSThunk fs l (IncForest fs) IORef IO a -> IO () -> ForestL fs l ()
+--	addUnmemoFSThunk :: ForestLayer fs l => FSThunk fs l (IncForest fs) IORef IO a -> IO () -> ForestL fs l ()
+	
+	addMemo :: (Typeable (ForestIs fs args),Typeable rep,Typeable md) => FilePath -> Proxy args -> ForestIs fs args -> (rep,md) -> FSTree fs -> ForestI fs ()
+	remMemo :: Proxy fs -> FilePath -> Proxy rep -> ForestI fs ()
+	findMemo :: Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep,md))
+
+class ICRep fs => ZippedICMemo fs where
+	
+-- adds a path ~ value entry to the consistency table
+	addZippedMemo :: (Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => FilePath -> Proxy args -> ForestIs fs args -> rep -> FSTree fs -> ForestI fs ()
+	remZippedMemo :: Proxy fs -> FilePath -> Proxy rep -> ForestI fs ()
+	-- given a path finds an old entry = (old FSTree,outdated thunks)
+	-- if repairing incrementally, we have to assume that the environment changed
+	findZippedMemo :: Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep))
+	
 
 type ForestThunk fs mod l = Thunk (mod fs) l (IncForest fs) IORef IO
 type ForestOutput fs mod l = Output (mod fs) l (IncForest fs) IORef IO
@@ -165,6 +197,26 @@ instance (Eq a,ForestLayer fs l,ForestThunk fs HSThunk l,MData ctx (ForestL fs l
 	toConstr ctx m = Data.WithClass.MData.dataTypeOf ctx m >>= (return . (flip indexConstr) 1)
 	dataTypeOf ctx x = return ty
 		where ty = mkDataType "Language.Forest.FS.FSRep.HSThunk" [mkConstr ty "HSThunk" [] Prefix]
+
+type family ForestICThunks (fs :: FS) l args :: * where
+	ForestICThunks fs l (a :*: b) = (ForestICThunks fs l a :*: ForestICThunks fs l b)
+	ForestICThunks fs l (Arg a) = ForestICThunk fs l a
+	ForestICThunks fs l () = ()
+type ForestICThunksI fs args = ForestICThunks fs Inside args
+type ForestICThunksO fs args = ForestICThunks fs Outside args
+
+type family ForestLs (fs :: FS) l args :: * where
+	ForestLs fs l (a :*: b) = (ForestLs fs l a :*: ForestLs fs l b)
+	ForestLs fs l (Arg a) = ForestL fs l a
+	ForestLs fs l () = ()
+type ForestOs fs args = ForestLs fs Outside args
+type ForestIs fs args = ForestLs fs Inside args
+type family ForestFSThunks (fs :: FS) l args :: * where
+	ForestFSThunks fs l (a :*: b) = (ForestFSThunks fs l a :*: ForestFSThunks fs l b)
+	ForestFSThunks fs l (Arg a) = ForestFSThunk fs l a
+	ForestFSThunks fs l () = ()
+type ForestFSThunksI fs args = ForestFSThunks fs Inside args
+type ForestFSThunksO fs args = ForestFSThunks fs Outside args
 
 ----------
 
@@ -232,6 +284,8 @@ instance DeepTypeable LazyFS where
 	typeTree (_::Proxy LazyFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.LazyFS") [] []
 instance DeepTypeable NILFS where
 	typeTree (_::Proxy NILFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.NILFS") [] []
+instance DeepTypeable TxVarFS where
+	typeTree (_::Proxy TxVarFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.TxVarFS") [] []
 
 instance DeepTypeable IncForest where
 	typeTree (_::Proxy (IncForest)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.IncForest") [] []
@@ -239,3 +293,14 @@ instance DeepTypeable IncForest where
 instance DeepTypeable fs => DeepTypeable (IncForest fs) where
 	typeTree (_::Proxy (IncForest fs)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.IncForest") [typeTree (Proxy::Proxy fs)] []
 
+type FilePathFilter fs = FilePath -> ForestI fs FilePath
+
+fsTreeDeltaPathFilter :: ICRep fs => FSTreeDeltaNodeMay -> FilePath -> FilePathFilter fs
+fsTreeDeltaPathFilter df root path = if isParentPathOf root path
+	then do
+		let rel = makeRelative root path
+		let td = focusFSTreeDeltaNodeMayByRelativePath df rel
+		case td of
+			Just (FSTreeNew _ (Just from) _) -> return from
+			otherwise -> return path
+	else return path

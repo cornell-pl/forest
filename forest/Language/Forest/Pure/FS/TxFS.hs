@@ -307,11 +307,10 @@ instance FSRep TxFS where
 	pathInTree path TxFSTree = do
 		(reads,td) <- getTxFSChanges
                 currDir <- forestIO $ getCurrentDirectory
-                let a:rest = path
                 let newpath =
-                      if a == '.'
-                      then currDir ++ rest
-                      else a:rest
+                      if head path == '.'
+                      then currDir ++ tail path
+                      else path
 		let td' = focusFSTreeDeltaByRelativePathMay td newpath
 		case onDiskWriteMay td' of
 			Nothing -> do
