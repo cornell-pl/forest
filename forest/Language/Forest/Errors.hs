@@ -33,6 +33,10 @@
 
 
 module Language.Forest.Errors where
+import Language.Forest.IC.PadsInstances
+import Language.Pads.Errors as Pads (ErrInfo)
+import Language.Pads.Source as Pads
+import Language.Pads.MetaData as Pads
 import Text.PrettyPrint.Mainland as PP
 import Data.Data
 import Data.WithClass.MData
@@ -55,6 +59,7 @@ data ErrMsg = ForestError String
             | SystemError Int
             | MultipleMatches FilePath [String]
 			| WrongFileExtension String FilePath
+			| PadsError Pads.ErrInfo
      deriving (Typeable, Data, Show, Eq, Ord)
 
 $( derive makeMData ''ErrMsg )
@@ -62,4 +67,6 @@ $( derive makeMData ''Forest_err )
 $( derive makeDeepTypeable ''ErrMsg )
 $( derive makeDeepTypeable ''Forest_err )
 
+padsError :: Base_md -> Forest_err
+padsError (Base_md { Pads.numErrors = n, errInfo = err }) = Forest_err n (fmap PadsError err)
 

@@ -94,7 +94,8 @@ writeOrRetry t v = writeOrElse t v (Prelude.const retry)
 
 class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep) => ZippedICForest fs args rep | rep -> args  where
 	
-	zload :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
+	zload :: (ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
+	zload args path = forestM latestTree >>= \tree -> zloadScratchMemo Proxy args return path tree getForestMDInTree
 	
 	zloadScratch :: Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
 	
@@ -118,7 +119,17 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	
 	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
-	zmanifest :: Proxy args -> ForestIs fs args -> rep -> ForestM fs (Manifest fs)
+	zupdateManifestScratch :: ForestIs fs args -> FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs)
+--	zupdateManifestScratch proxy args oldtree oldrep man = return man'
+	
+	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> ForestO fs (Manifest fs)
+--	zupdateManifestDelta proxy args oldtree oldrep df newtree dv man = return man'
+	
+	zmanifest :: ForestIs fs args -> rep -> ForestO fs (Manifest fs)
+	zmanifest = zmanifest' Proxy
+	
+	zmanifest' :: Proxy args -> ForestIs fs args -> rep -> ForestO fs (Manifest fs)
+	zmanifest' proxy args rep = forestM latestTree >>= \tree -> forestM (newManifestWith "/" tree) >>= zupdateManifestScratch args tree rep
 
 zstore :: ZippedICForest fs args rep => Proxy args -> ForestIs fs args -> rep -> ForestO fs [Message]
 zstore = undefined

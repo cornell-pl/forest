@@ -52,7 +52,7 @@ import System.Random
 import Data.Proxy	
 
 -- | lazy file loading
--- XXX: Pads errors do not contribute to the Forest error count
+-- Pads errors contribute to the Forest error count
 doZLoadFile :: (ZippedICMemo fs,ForestInput fs FSThunk Inside,Eq md,Eq pads,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ICRep fs,Pads pads md) =>
 	Proxy pads -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs (Forest_md fs,(pads,md)))
 doZLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile " ++ show path) $ do
@@ -62,16 +62,18 @@ doZLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFi
 	-- default static loading
 	let load_file = do
 		rep_thunk <- checkZPath path tree $ do
-			rep <- forestM $ pathInTree path tree >>= forestIO . parseFile
+			rep@(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile
 			fmd <- getMD path tree
-			return (fmd,rep)
+			fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
+			return (fmd',rep)
 		return rep_thunk
 	-- memoized reuse
 	let reuse_same_file old_rep = return old_rep
 	-- memoized reuse for moves
 	let reuse_other_file from old_rep_thunk = do
 			fmd' <- getMD path tree
-			rep_thunk <- get old_rep_thunk >>= \(fmd::Forest_md fs,rep) -> ref (fmd',rep) -- since the old file may come from another location and/or its attributes may have changed
+			fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (liftM (snd . snd) $ Inc.read old_rep_thunk) -- adds the Pads errors
+			rep_thunk <- get old_rep_thunk >>= \(fmd::Forest_md fs,rep) -> ref (fmd'',rep) -- since the old file may come from another location and/or its attributes may have changed
 			remZippedMemo fs from fsrepProxy
 			return rep_thunk
 	oldpath <- oldpath_f path
@@ -94,7 +96,7 @@ doZLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFi
 
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
--- XXX: Pads errors do not contribute to the Forest error count
+-- Pads errors contribute to the Forest error count
 doZLoadFile1 :: (ICRep fs,ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ForestIs fs arg ~ ForestI fs arg,Typeable arg,Eq arg,Eq pads,Eq md,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,FSRep fs,Pads1 arg pads md) =>
 	Proxy pads -> arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs (Forest_md fs,(pads,md)))
 doZLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
@@ -104,16 +106,18 @@ doZLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTre
 	-- default static loading
 	let load_file = do
 		rep_thunk <- checkZPath path tree $ do
-			rep <- forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
+			rep@(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
 			fmd <- getMD path tree
-			return (fmd,rep)
+			fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
+			return (fmd',rep)
 		return rep_thunk
 	-- memoized reuse
 	let reuse_same_file old_rep_thunk = return old_rep_thunk
 	-- memoized reuse for moves
 	let reuse_other_file from old_rep_thunk = do
 		fmd' <- getMD path tree
-		rep_thunk <- get old_rep_thunk >>= \(fmd::Forest_md fs,rep) -> fsRef (fmd',rep) -- since the old file may come from another location and/or its attributes may have changed
+		fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (liftM (snd . snd) $ Inc.read old_rep_thunk) -- adds the Pads errors
+		rep_thunk <- get old_rep_thunk >>= \(fmd::Forest_md fs,rep) -> fsRef (fmd'',rep) -- since the old file may come from another location and/or its attributes may have changed
 		remZippedMemo fs from fsrepProxy
 		return (rep_thunk)
 

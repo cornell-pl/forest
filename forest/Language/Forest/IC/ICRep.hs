@@ -129,7 +129,8 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	isIdValueDelta :: ValueDelta fs a -> Bool
 	idValueDelta :: ValueDelta fs a
 	chgValueDelta :: ValueDelta fs a
-	
+	mapValueDelta :: Proxy fs -> ValueDelta fs a -> ValueDelta fs b
+
 class ICRep fs => ICMemo (fs :: FS) where
 	
 	-- * Forest memoization operations to support incremental loading in the presence of FS moves (dummies if no moves are supported)

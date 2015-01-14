@@ -17,23 +17,37 @@ import System.Directory
 import Language.Forest.IC
 import System.TimeIt
 import Control.Monad.IO.Class
+import Data.WithClass.MData
+import Data.DeepTypeable
+import Control.Monad.Incremental
+
+import Data.WithClass.Derive.DeepTypeable
+import Data.DeriveTH
+import Data.WithClass.Derive.MData
+import System.FilePath.Posix
 
 
 [pads|
- data Account = Account Int
- |]
-
-[idforest|
- type Account_d = Directory 
-             { accs  is [ f :: File Account    | f <- matches (GL "*") ]} 
+	data Account = Account Int
 |]
 
----- Change this to the forest directory to make the example work for you!
-----Hugo: made it a relative path (it is fine as long as we use the Makefile)
---forestDir = "."
---
---accountDir = forestDir ++ "/Examples/Pure/Beautiful/Account"
---
+$( derive makeMData ''Account )
+$( derive makeMData ''Account_imd )
+$( derive makeDeepTypeable ''Account )
+$( derive makeDeepTypeable ''Account_imd )
+
+[iforest|
+	type Account_d = Directory {
+		accs is [ f :: File Account | f <- matches (GL "*") ]
+	} 
+|]
+
+-- Change this to the forest directory to make the example work for you!
+--Hugo: made it a relative path (it is fine as long as we use the Makefile)
+rootDir = "."
+
+accountDir = rootDir </> "Examples/IC/Beautiful/Account"
+
 ---- PURE STUFF:
 --
 --pureWithdraw :: FSRep fs => String -> Int -> ForestM fs ()

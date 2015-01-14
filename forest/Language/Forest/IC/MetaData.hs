@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, StandaloneDeriving, DataKinds, TypeFamilies, TypeOperators, UndecidableInstances, ConstraintKinds, FlexibleContexts, MultiParamTypeClasses, RankNTypes, NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables, DoAndIfThenElse,
+{-# LANGUAGE OverlappingInstances, TupleSections, StandaloneDeriving, DataKinds, TypeFamilies, TypeOperators, UndecidableInstances, ConstraintKinds, FlexibleContexts, MultiParamTypeClasses, RankNTypes, NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables, DoAndIfThenElse,
     TypeSynonymInstances #-}
 
 module Language.Forest.IC.MetaData where
@@ -10,6 +10,7 @@ import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..))
 import qualified Language.Forest.Pure.MetaData as Pure
 import Control.Exception as Exception
 import System.Posix.Files
+import Language.Pads.MetaData as Pads hiding (numErrors)
 import System.Posix.User
 import System.Posix.Types
 import System.FilePath.Posix
@@ -221,7 +222,13 @@ instance (Typeable a,Eq a,ForestMD fs a,ForestInput fs FSThunk Inside,ForestLaye
 		md <- inside (get t)
 		get_fmd_header md
 	replace_fmd_header t f = mod $ get t >>= \v -> replace_fmd_header v f
-	
+
+instance (ForestRep rep a,ForestMD fs a) => ForestMD fs rep where
+	isUnevaluatedMDThunk r = isUnevaluatedMDThunk (to iso_rep_thunk r)
+	isUnforcedMDThunk r = isUnforcedMDThunk (to iso_rep_thunk r)
+	get_fmd_header r = get_fmd_header (to iso_rep_thunk r)
+	replace_fmd_header r f = liftM (from iso_rep_thunk) $ replace_fmd_header (to iso_rep_thunk r) f
+
 -- replaces the content of a stable metadata value with the content of another one
 class ICRep fs => StableMD fs md where
 	overwriteMD :: md -> ForestI fs md -> ForestO fs ()
@@ -238,6 +245,9 @@ instance (Typeable a,Typeable b,Eq a,Eq b,StableMD fs a,StableMD fs b,ForestInpu
 		load <- inside $ fsThunk m
 		overwriteMD t1 $ liftM Pure.fstStar $ get load
 		overwriteMD t2 $ liftM Pure.sndStar $ get load
+
+instance (ForestRep a b,StableMD fs b) => StableMD fs a where
+	overwriteMD r m = overwriteMD (to iso_rep_thunk r) (liftM (to iso_rep_thunk) m)
 
 cleanForestMD :: (ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
 cleanForestMD = do
@@ -330,8 +340,14 @@ addMultipleMatchesErrorMDInside path names md = replace_errors md $ \olderrors -
 updateForestMDErrorsWith :: ForestMD fs md => md -> ForestI fs [Forest_err] -> ForestO fs ()
 updateForestMDErrorsWith md get_errs = modify_errors md $ \err0 -> get_errs >>= \errs -> return $ Pure.updateForestErr err0 errs
 
+updateForestMDErrorsWithPadsMD :: (PadsMD pads_md,ForestMD fs md) => md -> ForestI fs pads_md -> ForestO fs ()
+updateForestMDErrorsWithPadsMD md get_errs = modify_errors md $ \err0 -> get_errs >>= \errs -> return $ Pure.updateForestErr err0 [padsError $ get_md_header errs]
+
 updateForestMDErrorsInsideWith :: ForestMD fs md => md -> ForestI fs [Forest_err] -> ForestI fs md
 updateForestMDErrorsInsideWith md get_errs = replace_errors md $ \err0 -> get_errs >>= \errs -> return $ Pure.updateForestErr err0 errs
+
+updateForestMDErrorsInsideWithPadsMD :: (PadsMD pads_md,ForestMD fs md) => md -> ForestI fs pads_md -> ForestI fs md
+updateForestMDErrorsInsideWithPadsMD md get_errs = replace_errors md $ \err0 -> get_errs >>= \errs -> return $ Pure.updateForestErr err0 [padsError $ get_md_header errs]
 
 replaceForestMDErrorsWith :: ForestMD fs md => md -> ForestI fs [Forest_err] -> ForestO fs ()
 replaceForestMDErrorsWith md get_errs = overwrite_errors md $ do

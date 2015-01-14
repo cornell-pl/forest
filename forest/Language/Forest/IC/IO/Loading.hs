@@ -58,7 +58,7 @@ doLoadArgs mode proxy args load = do
 	return (rep,mkMDArgs mode md args)
 
 -- | lazy file loading
--- XXX: Pads errors do not contribute to the Forest error count
+-- Pads errors contribute to the Forest error count
 doLoadFile :: (ICMemo fs,ForestInput fs FSThunk Inside,Eq md,Eq pads,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ICRep fs,Pads pads md) =>
 	Proxy pads -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
 doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile " ++ show path) $ do
@@ -71,15 +71,17 @@ doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFil
 		rep_thunk <- checkPathData path tree (getRep $ Inc.read parseThunk)
 		md_thunk <- checkPathMeta path tree $ do
 			fmd <- getMD path tree
+			fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (getMd $ Inc.read parseThunk) -- adds the Pads errors
 			md <- mod $ getMd $ Inc.read parseThunk -- to avoid Inc.reading the file unless strictly necessary
-			return (fmd,md)
+			return (fmd',md)
 		return (rep_thunk,md_thunk)
 	-- memoized reuse
 	let reuse_same_file old_rep old_md = return (old_rep,old_md)
 	-- memoized reuse for moves
 	let reuse_other_file from old_rep_thunk old_md_thunk = do
 			fmd' <- getMD path tree
-			md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> ref (fmd',md) -- since the old file may come from another location and/or its attributes may have changed
+			fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (Inc.read =<< liftM snd (Inc.read old_md_thunk)) -- adds the Pads errors
+			md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> ref (fmd'',md) -- since the old file may come from another location and/or its attributes may have changed
 			remMemo fs from fsrepProxy
 			return (old_rep_thunk,md_thunk)
 	oldpath <- oldpath_f path
@@ -114,15 +116,17 @@ doLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree
 		rep_thunk <- checkPathData path tree (getRep $ Inc.read parseThunk)
 		md_thunk <- checkPathMeta path tree $ do
 			fmd <- getMD path tree
+			fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (getMd $ Inc.read parseThunk) -- adds the Pads errors
 			md <- mod $ getMd $ Inc.read parseThunk -- to avoid Inc.reading the file unless strictly necessary
-			return (fmd,md)
+			return (fmd',md)
 		return (rep_thunk,md_thunk)
 	-- memoized reuse
 	let reuse_same_file old_rep_thunk old_md_thunk = return (old_rep_thunk,old_md_thunk)
 	-- memoized reuse for moves
 	let reuse_other_file from old_rep_thunk old_md_thunk = do
 		fmd' <- getMD path tree
-		md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> fsRef (fmd',md) -- since the old file may come from another location and/or its attributes may have changed
+		fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (Inc.read =<< liftM snd (Inc.read old_md_thunk)) -- adds the Pads errors
+		md_thunk <- get old_md_thunk >>= \(fmd::Forest_md fs,md) -> fsRef (fmd'',md) -- since the old file may come from another location and/or its attributes may have changed
 		remMemo fs from fsrepProxy
 		return (old_rep_thunk,md_thunk)
 

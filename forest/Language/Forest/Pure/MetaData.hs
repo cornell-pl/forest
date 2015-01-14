@@ -358,6 +358,9 @@ addMultipleMatchesErrorMD path names md = replace_errors md $ \olderrors ->
 updateForestMDErrorsWith :: ForestMD md => md -> [Forest_err] -> md
 updateForestMDErrorsWith md errs = replace_errors md $ \err0 -> updateForestErr err0 errs
 
+updateForestMDErrorsWithPadsMD :: (PadsMD pads_md,ForestMD md) => md -> pads_md -> md
+updateForestMDErrorsWithPadsMD md pmd = replace_errors md $ \err0 -> updateForestErr err0 [padsError $ get_md_header pmd]
+
 -- replaces the original errors of a @Forest_md@
 replaceForestMDErrorsInsideWith :: ForestMD md => md -> [Forest_err] -> md
 replaceForestMDErrorsInsideWith md errs = replace_errors md $ \err0 -> mergeMDErrors errs

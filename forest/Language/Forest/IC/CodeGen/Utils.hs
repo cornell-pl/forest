@@ -82,6 +82,15 @@ modPredE externalP predE = case externalP of
                in LamE [pat] bodyE            
   otherwise -> error "Forest: Couldn't convert constraint pattern to pattern for meta data.  Use simple pattern."
 
+zmodPredE externalP predE = case externalP of
+  VarP name -> let rep_name = mkName ((nameBase name))  
+                   attP    = VarP (mkName ((nameBase name) ++"_att"))
+                   pat     = TildeP (TupP[VarP name])
+                   initE   = AppE (VarE 'get_fileInfo) (VarE rep_name)
+                   bodyE   = DoE [BindS attP initE,NoBindS predE]      -- let name_att = fileInfo name_md in predE
+               in LamE [pat] bodyE            
+  otherwise -> error "Forest: Couldn't convert constraint pattern to pattern for meta data.  Use simple pattern."
+
 modPredEComp externalP predE = case externalP of
   VarP name -> let attP    = VarP (mkName ((nameBase name) ++"_att_thunk"))
                    pats     = [VarP name, attP]
@@ -105,11 +114,21 @@ genMergeFieldsMDErrors fields = do
 	let mds = map (\(name_md,get_fmd) -> AppE get_fmd $ AppE (VarE name_md) (VarE md)) $ zip names_md gets_fmd
 	return $ LamE [VarP md] $ Pure.appE2 (VarE 'liftM) (VarE 'Pure.mergeMDErrors) $ AppE (VarE 'sequence) $ ListE mds
 
+zgenMergeFieldsMDErrors :: [Field] -> Q TH.Exp
+zgenMergeFieldsMDErrors fields = do
+	let names_md = map (mkName) $ fieldnames fields
+	let gets_fmd = map genMergeFieldMDErrors fields
+	let md = mkName "md"
+	let mds = map (\(name_md,get_fmd) -> AppE get_fmd $ AppE (VarE name_md) (VarE md)) $ zip names_md gets_fmd
+	return $ LamE [VarP md] $ Pure.appE2 (VarE 'liftM) (VarE 'Pure.mergeMDErrors) $ AppE (VarE 'sequence) $ ListE mds
+
 genMergeFieldMDErrors :: Field -> TH.Exp
 genMergeFieldMDErrors (Simple _) = VarE 'get_errors
-genMergeFieldMDErrors (Comp compField) = case tyConNameOpt compField of
-	Nothing -> VarE 'merge_list_errors
-	Just str -> VarE 'merge_container_errors
+genMergeFieldMDErrors (Comp compField) = VarE 'merge_container_errors
+	
+zgenMergeFieldMDErrors :: Field -> TH.Exp
+zgenMergeFieldMDErrors (Simple _) = VarE 'get_errors
+zgenMergeFieldMDErrors (Comp compField) = VarE 'merge_container_errors
 
 modeT :: ICMode -> Type
 modeT = PromotedT . modeN

@@ -36,7 +36,8 @@ module Language.Forest.IC.BaseTypes where
 import Data.DeepTypeable
 import Language.Haskell.TH.Syntax
 import Language.Forest.Pure.Generic
-import Language.Forest.Pure.MetaData
+import Language.Forest.Pure.MetaData hiding (Forest_md)
+import Language.Forest.IC.MetaData 
 import Language.Forest.Quote
 import Language.Forest.Manifest
 import Language.Pads.Padsc 

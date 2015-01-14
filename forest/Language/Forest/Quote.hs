@@ -77,7 +77,10 @@ fquasiquote1IC mb p = QuasiQuoter
 	(fparse1 ICForest p $ IC.make_forest_declarations mb)
 
 make_decls PureForest = Pure.make_forest_declarations
-make_decls ICForest = IC.make_forest_declarations Nothing
+make_decls ICForest = do
+--	unzipped <- IC.make_forest_declarations Nothing
+	zipped <- IC.make_zforest_declarations
+	return $ {-unzipped ++ -} zipped
 
 -- | A quasi-quoter for Forest with pure functional data structures
 forest :: QuasiQuoter

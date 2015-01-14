@@ -9,7 +9,10 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.CodeGen.Default
 	, module Language.Forest.IC.CodeGen.DeltaLoading
 	, module Language.Forest.IC.CodeGen.Loading
-	, module Language.Forest.IC.CodeGen.Storing                   
+	, module Language.Forest.IC.CodeGen.ZDeltaLoading
+	, module Language.Forest.IC.CodeGen.ZLoading
+	, module Language.Forest.IC.CodeGen.Storing  
+	, module Language.Forest.IC.CodeGen.ZStoring                   
 	, module Language.Forest.IC.CodeGen.Utils
 	, module Language.Forest.IC.CodeGen
 	, module Language.Forest.IC.Display
@@ -29,6 +32,7 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.IO.ZLoading
 	, module Language.Forest.IC.IO.Memo
 	, module Language.Forest.IC.IO.Storing
+	, module Language.Forest.IC.IO.ZStoring
 	, module Language.Forest.IC.MetaData
 	, module Language.Forest.IC.PadsInstances
 	, module Language.Forest.IC.ValueDelta
@@ -53,7 +57,10 @@ import Language.Forest.IC.BX
 import Language.Forest.IC.CodeGen.Default
 import Language.Forest.IC.CodeGen.DeltaLoading
 import Language.Forest.IC.CodeGen.Loading
-import Language.Forest.IC.CodeGen.Storing                   
+import Language.Forest.IC.CodeGen.ZDeltaLoading
+import Language.Forest.IC.CodeGen.ZLoading
+import Language.Forest.IC.CodeGen.Storing      
+import Language.Forest.IC.CodeGen.ZStoring                   
 import Language.Forest.IC.CodeGen.Utils
 import Language.Forest.IC.CodeGen
 import Language.Forest.IC.Display
@@ -73,6 +80,7 @@ import Language.Forest.IC.IO.Loading
 import Language.Forest.IC.IO.ZLoading
 import Language.Forest.IC.IO.Memo
 import Language.Forest.IC.IO.Storing
+import Language.Forest.IC.IO.ZStoring
 import Language.Forest.IC.MetaData
 import Language.Forest.IC.PadsInstances
 import Language.Forest.IC.ValueDelta

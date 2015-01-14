@@ -173,21 +173,18 @@ doZLoadDeltaConstraint emptyDArgs dv (rep,getMD) pred loadD = debug ("doLoadDelt
 							modify_errors rep $ \err -> return $ Pure.updateForestErr err [Pure.constraintViolationForestErr]
 							debug ("doLoadDeltaConstraintReturn3: ") $ return Delta
 
----- updates the thunks that keep track of the arguments of a top-level declaration
---doLoadDeltaArgs :: (ForestArgs fs args,Eq rep,Eq md,ICRep fs, imd ~ MDArgs mode md (ForestICThunksI fs args)) =>
---	LiftedICMode mode -> Proxy args -> LoadDeltaArgs mode fs args -> OldData fs rep imd -> FSTree fs
---	-> (ForestICThunksI fs args -> OldData fs rep md -> ForestO fs (SValueDelta rep,SValueDelta md))
---	-> ForestO fs (SValueDelta rep,SValueDelta imd)
---doLoadDeltaArgs LiftedICData proxy (margs,_) (((rep,md),getMD)) (tree' :: FSTree fs) loadD = debug ("doLoadDeltaArgs") $ do
---	arg_thunks <- inside $ newArgs (Proxy :: Proxy fs) proxy margs -- creates new thunks to hold the new expressions
---	(drep,dmd) <- loadD arg_thunks ((rep,md),getMD)
---	return (mapSValueDelta drep,mapSValueDelta dmd) 
---doLoadDeltaArgs LiftedICExpr proxy dargs (((rep,(md,arg_thunks)),getMD)) (tree' :: FSTree fs) loadD = debug ("doLoadDeltaArgs") $ do
---	(drep,dmd) <- loadD arg_thunks ((rep,md),getMD)
---	return (mapSValueDelta drep,mapSValueDelta dmd `prodSValueDelta` andSValueDeltas (Proxy :: Proxy fs) proxy dargs)
---
+-- updates the thunks that keep track of the arguments of a top-level declaration
+doZLoadDeltaArgs :: (ForestArgs fs args,Eq rep,ICRep fs) =>
+	Proxy args -> LoadDeltaArgs ICData fs args -> (rep,GetForestMD fs) -> FSTree fs
+	-> (ForestICThunksI fs args -> (rep,GetForestMD fs) -> ForestO fs (SValueDelta rep))
+	-> ForestO fs (SValueDelta rep)
+doZLoadDeltaArgs proxy (margs,_) ((rep,getMD)) (tree' :: FSTree fs) loadD = debug ("doLoadDeltaArgs") $ do
+	arg_thunks <- inside $ newArgs (Proxy :: Proxy fs) proxy margs -- creates new thunks to hold the new expressions
+	(drep) <- loadD arg_thunks ((rep),getMD)
+	return (mapSValueDelta drep) 
+
 -- This is the only function that accepts inner non-stable @SValueDelta@s to account for nested comprehensions. In all other cases @SValueDelta@s shall always be stable
-doZLoadDeltaDirectory :: (ForestRep rep (ForestFSThunk fs Inside irep),MData NoCtx (ForestI fs) rep,Eq rep,ICRep fs,MData NoCtx (ForestO fs) rep) =>
+doZLoadDeltaDirectory :: (MData NoCtx (ForestI fs) rep,Eq rep,ICRep fs,MData NoCtx (ForestO fs) rep) =>
 	ForestI fs FilePath -> (ForestFSThunkI fs (Forest_md fs,rep),GetForestMD fs) -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,rep))
 	-> (rep -> ForestI fs Forest_err)
@@ -213,7 +210,7 @@ doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectM
 			return Delta
 		(True,True) -> do -- this is the ONLY place where non-stable @SValueDelta@s appear!
 			rep@(fmd,irep) <- inside $ Inc.get rep_thunk
-			idv <- inside $ diffValue oldtree irep
+			let idv = mapValueDelta Proxy dv
 			direp <- loadD idv (irep,getMD) -- load recursively
 			drep <- case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of 
 				(True,True,True) -> do -- if the current path stayed the same and no attributes changed, we can reuse its @Forest_md@ but replace its errors; all the changes are stable
@@ -269,7 +266,7 @@ doZLoadDeltaMaybe mpath (rep_thunk,getMD) path' oldtree df tree' dv load loadD =
 
 -- note that in the implementation we do not incrementalize the path-focusing expressions as they (typically) depend on the FS
 -- changes the current path, the original data already corresponds to the focused path
-doZLoadDeltaFocus :: (Typeable rep,Typeable irep,StableMD fs rep,Eq rep,Eq irep,ForestRep rep (ForestFSThunkI fs irep),Matching a,ForestMD fs rep) =>
+doZLoadDeltaFocus :: (Typeable irep,Eq irep,ForestRep rep (ForestFSThunkI fs irep),Typeable rep,StableMD fs rep,Eq rep,Matching a,ForestMD fs rep) =>
 	ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs rep
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep)
@@ -306,7 +303,7 @@ doZLoadDeltaNewPath moldpath path' file' oldtree df tree' loadD = debug ("doLoad
 	let newdf = focusFSTreeDeltaNodeMayByRelativePath df file' -- focusing the tree deltas is important for the skipping conditions to fire for unchanged branches of the FS
 	debug ("changed FSDelta: " ++ show newdf) $ loadD moldpath newpath' newdf -- load recursively
 
-doZLoadDeltaSimple :: (Typeable irep,StableMD fs rep',ForestMD fs rep',Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,MData NoCtx (ForestO fs) rep') =>
+doZLoadDeltaSimple :: (Typeable irep,Eq irep,ForestRep rep' (ForestFSThunkI fs irep),StableMD fs rep',ForestMD fs rep',Eq rep',Matching a,MData NoCtx (ForestO fs) rep') =>
 	ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep' -> (rep',GetForestMD fs)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep')
 	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (SValueDelta rep'))

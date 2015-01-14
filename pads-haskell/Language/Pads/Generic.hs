@@ -189,3 +189,7 @@ instance Ord a => BuildContainer1 Set a  where
   buildContainer1 = Data.Set.fromList
   toList1         = Data.Set.toList
 
+instance BuildContainer1 [] a  where
+  buildContainer1 = id
+  toList1         = id
+

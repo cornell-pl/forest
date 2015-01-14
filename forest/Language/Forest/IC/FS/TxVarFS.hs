@@ -315,9 +315,9 @@ writeOrElseTxVarFS :: FTK TxVarFS args rep content => rep -> content -> ([Messag
 writeOrElseTxVarFS rep content f = do
 	let t = to iso_rep_thunk rep
 	old_fsversion <- forestM getFSVersionTxVarFS
-	set t content
+	set t content -- automatically increments the FSVersion
 	(args :: ForestIs TxVarFS args) <- forestM $ getFTVArgs rep
-	mani <- forestM $ zmanifest (Proxy :: Proxy args) args rep
+	mani <- zmanifest' (Proxy :: Proxy args) args rep
 	errors <- forestM $ manifestErrors mani
 	if List.null errors
 		then do
@@ -330,7 +330,7 @@ atomicallyTxVarFS :: FTK TxVarFS args rep content => args -> FilePath -> (rep ->
 atomicallyTxVarFS args path stm = initializeTxVarFS try where
 	try = flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ do
 		-- run the tx
-		rep <- inside $ zload (proxyOf args) (monadArgs proxyTxVarFS args) path
+		rep <- inside $ zload (monadArgs proxyTxVarFS args) path
 		x <- stm rep
 		-- tries to commit the current tx, otherwise repairs it incrementally
 		mbsuccess <- validateAndCommitTopTxVarFS True
@@ -455,7 +455,7 @@ validateAndCommitNestedTxVarFS mbException = atomicTxVarFS $ do
 
 -- validates a transaction and places it into the waiting queue for retrying
 validateAndRetryTopTxVarFS :: TxVarFTM (Maybe Lock)
-validateAndRetryTopTxVarFS = do
+validateAndRetryTopTxVarFS = atomicTxVarFS $ do
 	txenv@(timeref,startversion,txlogs@(SCons txlog SNil)) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	-- validates the current and enclosing txs up the tx tree
@@ -579,6 +579,7 @@ extendTxVarFSLog txlog1 txlog2 = forestIO $ do
 type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
 
 -- a register of locks for retrying transactions
+-- these paths should be canonical
 {-# NOINLINE waitingTxs #-}
 waitingTxs :: MVar (Map FilePath WaitQueue)
 waitingTxs = unsafePerformIO $ newMVar Map.empty

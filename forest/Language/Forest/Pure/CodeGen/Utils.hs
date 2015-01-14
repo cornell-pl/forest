@@ -318,6 +318,8 @@ genManName = genUniqueName "manifest"
 genMdName  = genUniqueName "md" 
 genBMdName = genUniqueName "bmd"
 getMDName pname = mkName ((strToUpper pname) ++ "_md")
+getRepTyName pname = mkName ((strToUpper pname) ++ "_rep")
+getRepUnTyName pname = mkName  ("un"++strToUpper pname ++ "_rep")
 
 getStructInnerName name = 
   let str = show name
