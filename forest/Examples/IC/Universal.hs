@@ -33,26 +33,26 @@ home = "/home/hpacheco"
 universal_zip_root = "/media/hpacheco/nilfs/judy1.tar.gz"
 universal_zip_root' = "/media/hpacheco/nilfs/judy2.tar.gz"
 
-universal_zip_Errors :: ICRep fs => ((Universal_zip fs,Universal_zip_md fs),LoadInfo fs) -> ForestO fs ()
-universal_zip_Errors ((rep,md),_) = do
-	err <- get_errors md
-	forestM $ forestIO $ print (numErrors err)
-	forestM $ forestIO $ print (errorMsg err)
-
-universal_zip :: ForestO NILFS ()
-universal_zip = do
-	dta@(repmd::(Universal_zip NILFS,Universal_zip_md NILFS),_) <- load () universal_zip_root
-	universal_zip_Errors dta
-	forestDrawToPDF proxyNILFS repmd $ "/home/hpacheco/1.pdf"
-	 
-	-- reload
-	reload universal_zip_root' dta
-	universal_zip_Errors dta
-	forestDrawToPDF proxyNILFS repmd $ "/home/hpacheco/2.pdf"
-	
-	return ()
-
-universal_zip_NILFS = runIncrementalForest (NILFSForestConfig False "/media/hpacheco/nilfs/" myDir) $ universal_zip
+--universal_zip_Errors :: ICRep fs => ((Universal_zip fs,Universal_zip_md fs),LoadInfo fs) -> ForestO fs ()
+--universal_zip_Errors ((rep,md),_) = do
+--	err <- get_errors md
+--	forestM $ forestIO $ print (numErrors err)
+--	forestM $ forestIO $ print (errorMsg err)
+--
+--universal_zip :: ForestO NILFS ()
+--universal_zip = do
+--	dta@(repmd::(Universal_zip NILFS,Universal_zip_md NILFS),_) <- load () universal_zip_root
+--	universal_zip_Errors dta
+--	forestDrawToPDF proxyNILFS repmd $ "/home/hpacheco/1.pdf"
+--	 
+--	-- reload
+--	reload universal_zip_root' dta
+--	universal_zip_Errors dta
+--	forestDrawToPDF proxyNILFS repmd $ "/home/hpacheco/2.pdf"
+--	
+--	return ()
+--
+--universal_zip_NILFS = runIncrementalForest (NILFSForestConfig False "/media/hpacheco/nilfs/" myDir) $ universal_zip
 --mkPrettyInstance ''Universal_d
 --mkPrettyInstance ''Universal_d_md
 

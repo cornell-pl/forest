@@ -168,3 +168,13 @@ getName x = (Set.singleton x,Set.empty)
 nameVars :: Name -> Set Name
 nameVars = Set.singleton
 
+isClosed :: (a -> Set Name) -> a -> Bool
+isClosed getVars ty =
+	let tyVars = getVars ty
+	in Set.null tyVars
+	
+isClosedExp :: Exp -> Bool
+isClosedExp = isClosed expVars
+
+isClosedForestTy :: ForestTy -> Bool
+isClosedForestTy = isClosed forestTyVars

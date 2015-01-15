@@ -157,7 +157,7 @@ zloadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' dvE = case forestTy of
 		(zloadArchive archtype ty pathFilterE pathE' treeE')
 		(zloadDeltaArchive archtype ty pathE dpathE treeE dfE treeE')
 	SymLink -> zcheckUnevaluated "symlink" treeE' repmdE
-		(zloadSymLink pathE' treeE treeE')
+		(zloadSymLink pathE' treeE')
 		(zloadDeltaSymLink pathE dpathE treeE dfE treeE' dvE)
 	FConstraint pat descTy predE -> zloadDeltaConstraint pat repmdE predE dvE $ \newdvE newrepmdE -> zloadDeltaE descTy pathE treeE newrepmdE dpathE dfE treeE' newdvE	
 	(Directory dirTy) -> zcheckStop "directory" forestTy pathE dpathE repmdE dfE treeE' dvE
@@ -214,10 +214,11 @@ zloadDeltaArchive archtype ty pathE dpathE treeE dfE treeE' dvE repmdE = do
 	let (newDPathE, newDPathP) = genPE newDPathName
 	let (newRepMdE, newRepMdP) = genPE newRepMdName
 	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
-	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP,newdfP,newTreeP']) $ runZEnvQ $ zloadE ty pathFilterE newPathE newTreeE' newGetMDE
+	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP']) $ runZEnvQ $ zloadE ty pathFilterE newPathE newTreeE' newGetMDE
 	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP',newdvP]) $ zloadDeltaE ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE' newdvE
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
-	return $ Pure.appE9 (VarE 'doLoadDeltaArchive) exts pathE dpathE treeE dfE treeE' repmdE rhsE rhsDE
+	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
+	return $ Pure.appE11 (VarE 'doZLoadDeltaArchive) isClosedE exts pathE dpathE treeE dfE treeE' dvE repmdE rhsE rhsDE
 
 zloadDeltaSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> Exp -> TH.Exp -> TH.Exp -> ZDeltaQ TH.Exp
 zloadDeltaSymLink pathE dpathE treeE dfE treeE' dvE repmdE = return $ Pure.appE7 (VarE 'doZLoadDeltaSymLink) pathE dpathE treeE dfE treeE' dvE repmdE
