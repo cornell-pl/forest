@@ -62,42 +62,38 @@ doZManifestFile :: (MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,De
 doZManifestFile tree rep_t man = do
 	(fmd,rep) <- inside $ get rep_t
 	let path = fullpath $ fileInfo fmd
-	canpath <- forestM $ canonalizePathWithTree path tree
-	dskpath <- forestM $ pathInTree canpath tree
 	valid <- isValidMD fmd
 	if valid
 		then do -- for valid data we write it to disk
 			-- the Pads metadata must be valid
 			let testm = liftM (boolStatus "Pads metadata is invalid") $ return $ Pads.numErrors (get_md_header $ snd rep) == 0
-			forestM $ addFileToManifest printFile canpath path rep $ addTestToManifest testm man
+			forestM $ addFileToManifestInTree printFile path tree rep $ addTestToManifest testm man
 		else do
 			-- inconsistent unless the non-stored representation has default data
 			let testDefault = liftM (boolStatus "non-default data for invalid file") $ forestO $ inside $ liftM (==rep) forestdefault
 			let manDefault = addTestToManifest testDefault man
 			isFile <- forestM $ doesFileExistInTree path tree 
 			if isFile -- if the data is invalid and a file exists on disk, we remove it, otherwise we don't change anything
-				then return $ removePathFromManifest canpath path manDefault
+				then forestM $ removePathFromManifestInTree path tree manDefault
 				else return manDefault
 
 doZManifestFile1 :: (MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,DeepTypeable pads,DeepTypeable md,Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => arg -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestFile1 arg tree rep_t man = do
 	(fmd,rep) <- inside $ get rep_t
 	let path = fullpath $ fileInfo fmd
-	canpath <- forestM $ canonalizePathWithTree path tree
-	dskpath <- forestM $ pathInTree canpath tree
 	valid <- isValidMD fmd
 	if valid
 		then do -- for valid data we write it to disk
 			-- the Pads metadata must be valid
 			let testm = liftM (boolStatus "Pads metadata is invalid") $ return $ Pads.numErrors (get_md_header $ snd rep) == 0
-			forestM $ addFileToManifest (printFile1 arg) canpath path rep $ addTestToManifest testm man
+			forestM $ addFileToManifestInTree (printFile1 arg) path tree rep $ addTestToManifest testm man
 		else do
 			-- inconsistent unless the non-stored representation has default data
 			let testDefault = liftM (boolStatus "non-default data for invalid file") $ forestO $ inside $ liftM (==rep) forestdefault
 			let manDefault = addTestToManifest testDefault man
 			isFile <- forestM $ doesFileExistInTree path tree 
 			if isFile -- if the data is invalid and a file exists on disk, we remove it, otherwise we don't change anything
-				then return $ removePathFromManifest canpath path manDefault
+				then forestM $ removePathFromManifestInTree path tree manDefault
 				else return manDefault
 
 doZManifestArchive :: (Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThunk Inside,ICRep fs) =>
@@ -108,15 +104,14 @@ doZManifestArchive :: (Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThun
 doZManifestArchive archTy tree rep_t manifestContents man = do
 	(fmd,rep) <- inside $ get rep_t
 	let path = fullpath $ fileInfo fmd 
-	canpath <- forestM $ canonalizePathWithTree path tree
+	canpath <- forestM $ canonalizeDirectoryInTree path tree
 	dskpath <- forestM $ pathInTree canpath tree
 	let arch_canpath = cardinalPath canpath
 	avfsTree <- forestM $ virtualTree tree
 	
 	archiveDir <- forestM $ forestIO $ getTempPath -- unlogged temporary directory, since we remove it ourselves
 	archiveManifest <- forestM $ newManifestWith arch_canpath tree
-	ori_file <- forestM $ pathInTree canpath tree
-	forestM $ forestIO $ decompressArchive archTy ori_file archiveDir -- decompress the original content, since some may be preserved in the new archive
+	forestM $ forestIO $ decompressArchive archTy dskpath archiveDir -- decompress the original content, since some of it may be preserved in the new archive
 	
 	archiveManifest' <- manifestContents avfsTree rep archiveManifest
 	
@@ -144,13 +139,10 @@ doZManifestSymLink tree rep_t man = do
 	(fmd,(tgt,base_md)) <- inside $ get rep_t
 	let path = fullpath $ fileInfo fmd
 	
-	canpath <- forestM $ canonalizePathWithTree path tree
-	dskpath <- forestM $ pathInTree canpath tree
-	
 	case symLink (fileInfo fmd) of
 		Just sym -> do
 			let testm = liftM (boolStatus "inconsistent SymLink: targets of metadata and content don't match") $ return $ sym == tgt && base_md == cleanBasePD
-			return $ addLinkToManifest canpath path tgt $ addTestToManifest testm man
+			forestM $ addLinkToManifestInTree path tree tgt $ addTestToManifest testm man
 		Nothing -> do
 			let testm = liftM (boolStatus "inconsistent SymLink: targets of metadata and content don't match") $ return $ tgt == "" && base_md == cleanBasePD
 			return $ addTestToManifest testm man
@@ -172,9 +164,7 @@ doZManifestDirectory :: (Typeable rep,Eq rep,ICRep fs) =>
 doZManifestDirectory tree collectMDErrors rep_t manifestContent man = do
 	(fmd,rep) <- inside $ get rep_t
 	let path = fullpath $ fileInfo fmd
-	canpath <- forestM $ canonalizePathWithTree path tree
-	dskpath <- forestM $ pathInTree canpath tree
-	let man1 = addDirToManifest canpath path man -- adds a new directory
+	man1 <- forestM $ addDirToManifestInTree path tree man -- adds a new directory
 	let testm = liftM (boolStatus "inconsistent Directory: top-level and inner metadatas have different validity") $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 	let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
 	manifestContent path rep man2
@@ -197,31 +187,31 @@ doZManifestMaybe tree rep_t manifestContent man = do
 			manifestContent rep man1 -- the path will be added recursively
 		Nothing -> do
 			let path = fullpath $ fileInfo fmd
-			canpath <- forestM $ canonalizePathWithTree path tree
-			dskpath <- forestM $ pathInTree canpath tree
 			let testm = liftM (boolStatus "Nothing value contains non-default metadata") $ forestO $ inside $ liftM (==fmd) $ cleanForestMDwithFile path
 			let man1 = addTestToManifest testm man
-			return $ removePathFromManifest canpath path man1 -- removes the path
+			forestM $ removePathFromManifestInTree path tree man1 -- removes the path
 
 doZManifestFocus :: (ForestMD fs rep,Matching a) =>
 	FilePath -> a -> FSTree fs -> rep
 	-> (rep -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestFocus parentPath matching tree rep manifestUnder man = do
+	
+	-- outside the test so that they are performed over the current tree
+	files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
+	path <- liftM (fullpath . fileInfo) $ get_fmd_header rep
+	fmd <- get_fmd_header rep
+	canPath <- forestM $ canonalizePathWithTree path tree
+	canParentPath <- forestM $ canonalizePathWithTree parentPath tree
+	
+	let name = makeRelative canParentPath canPath
+	isValid <- isValidMD fmd
+	
 	let testm = do
-		tree' <- latestTree
-		files <- Pure.getMatchingFilesInTree parentPath matching tree'
-		path <- forestO $ liftM (fullpath . fileInfo) $ get_fmd_header rep
-		fmd <- forestO $ get_fmd_header rep
-		let name = makeRelative parentPath path
-		isValid <- forestO $ isValidMD fmd
-		canpath <- canonalizePathWithTree path tree'
-		canpath' <- canonalizePathWithTree (parentPath </> name) tree'
 		-- the metadata path must be consistent with the matching expression
 		-- implication because the value may be invalid due to other errors
-		return $ boolStatus "inconsistent matching expression and focus path" $ isValid <= (null (List.delete name files) && (canpath == canpath'))
-	let man1 = addTestToManifest testm man
-	manifestUnder rep man1
+		return $ boolStatus "inconsistent matching expression and focus path" $ isValid <= (length files == 1) && (isParentPathOf canParentPath canPath)
+	manifestUnder rep $ addTestToManifest testm man
 
 doZManifestSimple :: (ForestMD fs rep,Matching a) =>
 	FilePath -> ForestI fs a -> FSTree fs -> rep
@@ -252,7 +242,7 @@ doZManifestCompound parentPath matchingM tree toListRep c_rep manifestUnder man 
 	repinfos' <- inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) reps'
 	
 	let rem_files = old_files \\ new_files -- files to be removed
-	man1 <- forestM $ foldr (\rem_path man0M -> canonalizePathWithTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
+	man1 <- forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
 	let manifestEach (n,(rep',fileInfo_t)) man0M = do
 		man0M >>= doZManifestFocus parentPath n tree rep' (manifestUnder n fileInfo_t)
@@ -278,7 +268,7 @@ doZManifestCompoundWithConstraint parentPath matchingM tree toListRep pred c_rep
 	old_values' <- inside $ filterM (\(n,fmd) -> ref (fileInfo fmd) >>= pred n) $ zip old_files' old_metadatas'
 	let rem_files = map fst old_values'
 	-- and delete them
-	man1 <- forestM $ foldr (\rem_path man0M -> canonalizePathWithTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
+	man1 <- forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
 	let manifestEach (n,(rep',fileInfo_t)) man0M = man0M >>= doZManifestConstraint tree (Prelude.const $ pred n fileInfo_t) rep'
 		(\rep' man -> doZManifestFocus parentPath n tree rep' (manifestUnder n fileInfo_t) man)

@@ -4,7 +4,8 @@ module Examples.IC.Universal where
 import Data.Maybe
 import Data.DeepTypeable
 import Data.IORef
-import Control.Monad.Incremental
+import Control.Monad.Incremental hiding (read)
+import Prelude hiding (read)
 import Language.Haskell.TH.Syntax
 
 import System.IO.Unsafe (unsafePerformIO)
@@ -15,9 +16,12 @@ import System.Directory
 import Data.WithClass.MData
 import System.TimeIt
 import Control.Monad.IO.Class
-import Language.Forest.IC
+import Language.Forest.IC hiding (writeFile)
 import Language.Pads.Padsc (Base_md)
 import qualified Language.Pads.Padsc as Pads
+import Control.Monad.Incremental.Display
+import Data.WithClass.MGenerics.Text
+import Data.List as List
 
 [iforest| type Universal_d = Directory 
              { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
@@ -28,11 +32,45 @@ import qualified Language.Pads.Padsc as Pads
 
 [iforest| type Universal_zip = Gzip (Tar Universal_d) |]
 
-myDir = "/home/hpacheco/Forest"
-home = "/home/hpacheco"
-universal_zip_root = "/media/hpacheco/nilfs/judy1.tar.gz"
-universal_zip_root' = "/media/hpacheco/nilfs/judy2.tar.gz"
+generateTestFolder :: IO ()
+generateTestFolder = do
+	createDirectoryIfMissing True "test"
+	setCurrentDirectory "test"
+	
+	createDirectoryIfMissing True "files"
+	
+	writeFile "files/a.txt" "contentA"
+	writeFile "files/b.txt" "contentB"
+	writeFile "files/c.txt" "contentC"
+	
+	createDirectoryIfMissing True "links"
+	setCurrentDirectory "links"
+	
+	createSymbolicLink "../files/a.txt" "a.txt"
 
+runTest :: IO ()
+runTest = do
+	(original_str,errors) <- atomically () "test" $ \(test_dir :: Universal_d TxVarFS) -> do
+		original_str <- showInc test_dir
+		
+		(test_fmd,test_uni) <- read test_dir
+		
+		let links_dir = fromJust $ List.lookup "links" (directories test_uni)
+		(links_fmd,links_uni) <- read links_dir
+		
+		errors <- writeOrElse links_dir links_uni "" (return . show)
+		
+		return (original_str,errors)
+	putStrLn original_str
+	putStrLn errors
+
+--	writeOrElse :: FTK fs args rep content => rep -> content -> b -> ([Message] -> FTM fs b) -> FTM fs b
+
+--myDir = "/home/hpacheco/Forest"
+--home = "/home/hpacheco"
+--universal_zip_root = "/media/hpacheco/nilfs/judy1.tar.gz"
+--universal_zip_root' = "/media/hpacheco/nilfs/judy2.tar.gz"
+--
 --universal_zip_Errors :: ICRep fs => ((Universal_zip fs,Universal_zip_md fs),LoadInfo fs) -> ForestO fs ()
 --universal_zip_Errors ((rep,md),_) = do
 --	err <- get_errors md

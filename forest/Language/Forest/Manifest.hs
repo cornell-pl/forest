@@ -194,6 +194,11 @@ changeRootOfManifestEntry old_root new_root e = e { sources = map (\n -> makeRel
 boolStatus :: String -> Bool -> Status
 boolStatus msg b = if b then Valid else (Invalid msg)
 
+addFileToManifestInTree :: FSRep fs => (FilePath -> content -> IO ()) -> FilePath -> FSTree fs -> content -> Manifest fs -> ForestM fs (Manifest fs)
+addFileToManifestInTree printContent path tree content man = do
+	canpath <- canonalizeDirectoryInTree path tree
+	addFileToManifest printContent canpath path content man
+
 addFileToManifest :: FSRep fs => (FilePath -> content -> IO ()) -> FilePath -> FilePath -> content -> Manifest fs -> ForestM fs (Manifest fs)
 addFileToManifest printContent canpath path content man = do
 		tmpFile <- tempPath
@@ -207,6 +212,11 @@ addFileToManifest' canpath path tmpFile man = {-debug ("addFileToManifest: "++sh
 		    newEntry = ManifestEntry [Local tmpFile] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
 		in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
 	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
+
+addLinkToManifestInTree :: FSRep fs => FilePath -> FSTree fs -> FilePath -> Manifest fs -> ForestM fs (Manifest fs)
+addLinkToManifestInTree path tree linkPath man = do
+	canpath <- canonalizeDirectoryInTree path tree
+	return $ addLinkToManifest canpath path linkPath man
 	
 addLinkToManifest :: FSRep fs => FilePath -> FilePath -> FilePath -> Manifest fs -> (Manifest fs)
 addLinkToManifest canpath path linkPath man = {-debug ("addLinkToManifest: "++show canpath ++" "++show path) $ -} if (isAbsolute canpath && isValid canpath)
@@ -215,6 +225,11 @@ addLinkToManifest canpath path linkPath man = {-debug ("addLinkToManifest: "++sh
 		    newEntry = ManifestEntry [Link linkPath] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
 		in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
 	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
+
+removePathFromManifestInTree :: FSRep fs => FilePath -> FSTree fs -> Manifest fs -> ForestM fs (Manifest fs)
+removePathFromManifestInTree path tree man = do
+	canpath <- canonalizeDirectoryInTree path tree
+	return $ removePathFromManifest canpath path man
 
 removePathFromManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
 removePathFromManifest canpath path man = {-debug ("removePathFromManifest: "++show canpath ++" "++show path) $ -} if (isAbsolute canpath && isValid canpath)
@@ -226,6 +241,11 @@ removePathFromManifest canpath path man = {-debug ("removePathFromManifest: "++s
 
 addTestToManifest :: FSRep fs => ForestM fs Status -> Manifest fs -> Manifest fs
 addTestToManifest testm man = man { tests = testm : tests man }
+
+addDirToManifestInTree :: FSRep fs => FilePath -> FSTree fs -> Manifest fs -> ForestM fs (Manifest fs)
+addDirToManifestInTree path tree man = do
+	canpath <- canonalizeDirectoryInTree path tree
+	return $ addDirToManifest canpath path man
 
 addDirToManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
 addDirToManifest canpath path man = {-debug ("addDirToManifest: "++show canpath ++" "++show path) $ -} if (isAbsolute canpath && isValid canpath)

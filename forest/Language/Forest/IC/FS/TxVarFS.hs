@@ -14,7 +14,7 @@ import Unsafe.Coerce
 import Language.Forest.IC.ValueDelta
 import Language.Forest.IC.BX
 import System.Mem.WeakKey
-import System.Posix.FileLock as FileLock
+--import System.Posix.FileLock as FileLock
 import Data.Foldable as Foldable
 import Data.Concurrent.Deque.Class as Queue
 import Data.Concurrent.Deque.Reference.DequeInstance
@@ -77,6 +77,7 @@ addRunningTx time = modifyMVarMasked_ runningTxs (\xs -> return $ List.insertBy 
 deleteRunningTx time = modifyMVarMasked_ runningTxs (\xs -> return $ List.delete time xs)
 
 -- a map with commit times of committed transactions and their performed changes
+-- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
 {-# NOINLINE doneTxs #-}
 doneTxs :: MVar (Map UTCTime TxVarFSWrites)
 doneTxs = unsafePerformIO $ newMVar Map.empty
@@ -97,10 +98,9 @@ type TxVarFSEnv = (IORef UTCTime,FSVersion,TxVarFSLogs)
 
 type TxVarFSReads = Set FilePath
 type TxVarFSWrites = Set FilePath
--- changes just as a set of reads and a set of writes
-type TxVarFSChangesFlat = (TxVarFSReads,TxVarFSWrites)
 -- changes as a set of reads and a modification tree
 type TxVarFSChanges = (TxVarFSReads,FSTreeDelta)
+type TxVarFSChangesFlat = (TxVarFSReads,TxVarFSWrites)
 
 -- the FSVersion is initialized differently for each top-level tx and modified on stores. initializing a nested tx does not modify the FSVersion
 type FSVersion = Unique
@@ -129,7 +129,7 @@ setFSVersionTxVarFS new_fsversion = do
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	forestIO $ writeRef txlog (new_fsversion,(reads,writes),tmps)
 
--- only needs to read grom the top-level log
+-- only needs to read from the top-level log
 getTxVarFSChanges :: ForestM TxVarFS TxVarFSChanges
 getTxVarFSChanges = do
 	(starttime,startversion,SCons txlog _) <- Reader.ask
@@ -173,11 +173,12 @@ instance FSRep TxVarFS where
 	data FSTree TxVarFS = TxVarFSTree | VirtualTxVarFSTree deriving Show
 	
 	-- log the modifications
-	deletePath path = forestIO (canonalizePath path) >>= \canpath -> modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Rem canpath)
-	writeFile path ondisk = forestIO (canonalizePath path) >>= \canpath -> modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add canpath ondisk)
-	writeDir path = forestIO (canonalizePath path) >>= \canpath -> modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add canpath path) --XXX:revise this...
-	writeLink path ondisk = forestIO (canonalizePath path) >>= \canpath -> modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add canpath ondisk)
-	writePathMD path ondisk = forestIO (canonalizePath path) >>= \canpath -> modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (ChgAttrs canpath ondisk)
+	-- writes come from manifests only, that have already canonized the paths
+	deletePath path = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Rem path)
+	writeFile path ondisk = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add path ondisk)
+	writeDir path = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add path path) --XXX:revise this...
+	writeLink path linkpath = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (AddLink path linkpath)
+	writePathMD path ondisk = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (ChgAttrs path ondisk)
 	
 	-- registers a new temporary path
 	tempPath = forestIO getTempPath >>= \path -> putTxVarFSTmp path >> return path
@@ -187,15 +188,15 @@ instance FSRep TxVarFS where
 	
 	-- reads from the FS or from the modification log
 	pathInTree path TxVarFSTree = do
-		canpath <- forestIO $ canonalizePath path
+		-- canonize the fullpath for reads
+		canpath <- canonalizePathTxVarFS path
+		-- mark the path as read
+		putTxVarFSRead canpath
 		(reads,td) <- getTxVarFSChanges
 		let td' = focusFSTreeDeltaByRelativePathMay td canpath
 		case onDiskWriteMay td' of
-			Nothing -> do
-                          putTxVarFSRead canpath
-                          return canpath
-			Just ondisk -> do
-                          return ondisk
+			Nothing -> do return canpath
+			Just ondisk -> return ondisk
 	pathInTree path VirtualTxVarFSTree = do
 		ondisk <- pathInTree path TxVarFSTree
 		home <- forestIO $ getHomeDirectory
@@ -203,7 +204,36 @@ instance FSRep TxVarFS where
 		return result
 		
 	stepPathInTree _ path rel = return $ path </> rel
-	canonalizePathWithTree path _ = forestIO $ canonalizePath path
+	canonalizePathWithTree path _ = canonalizePathTxVarFS path
+
+-- canonalizes a path, taking into account the buffered FSTreeDelta and logging reads of followed symlinks
+canonalizePathTxVarFS :: FilePath -> ForestM TxVarFS FilePath
+canonalizePathTxVarFS path = do
+	norm <- normalisePathTxVarFS path
+	let dirs = splitDirectories norm
+	follow "" dirs
+  where
+	follow root [] = return root
+	follow root (".":dirs) = follow root dirs
+	follow root ("..":dirs) = follow (takeDirectory root) dirs
+	follow root (dir:dirs) = do
+		(reads,td) <- getTxVarFSChanges
+		let rootdir = root </> dir
+		let td' = focusFSTreeDeltaByRelativePathMay td rootdir
+		case td' of
+			Just (FSTreeNewLink link) -> do
+				-- mark the symbolic link as read
+				putTxVarFSRead rootdir
+				canLink <- canonalizePathTxVarFS link
+				-- make sure that the link that we follow is an asbolute path; in case it already is, then this performs the identity, e.g., "/a" </> "/b" = "/b"
+				follow (root </> canLink) dirs
+			otherwise -> follow rootdir dirs
+
+normalisePathTxVarFS :: FilePath -> ForestM TxVarFS FilePath
+normalisePathTxVarFS path = do
+	if isRelative path
+		then liftM (normalise . (</> path)) (forestIO getCurrentDirectory)
+		else return $ normalise path
 
 -- ** Incrementality
 
@@ -226,10 +256,15 @@ instance InLayer Inside (IncForest TxVarFS) IORef IO where
 	
 instance ICRep TxVarFS where
 
+	forestM = inside . TxVarFSForestI . runTxVarFSForestM
+	forestO = TxVarFSForestM . runTxVarFSForestO
+
 	-- stores a computation and a concurrent map from @FSVersion@s to computed values
 	newtype FSThunk TxVarFS l inc r m a = TxVarFSThunk (IORef Dynamic,l inc r m a,WeakMap FSVersion a)
 
 	newtype HSThunk TxVarFS l inc r m a = TxVarHSThunk (IORef Dynamic,l inc r m a,WeakMap FSVersion a)
+	
+	newtype ICThunk TxVarFS l inc r m a = TxVarICThunk (l inc r m a)
 
 instance ZippedICMemo TxVarFS where
 
@@ -265,7 +300,11 @@ instance ForestLayer TxVarFS l => Thunk (HSThunk TxVarFS) l (IncForest TxVarFS) 
 			Just v -> return v
 
 instance ForestLayer TxVarFS l => Thunk (ICThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
+	new m = return $ TxVarICThunk m
+	read (TxVarICThunk m) = m
 instance ForestLayer TxVarFS l => Output (ICThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
+	thunk = Inc.new
+	force = Inc.read
 
 instance (ForestLayer TxVarFS l) => Thunk (FSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
 	new m = do
@@ -311,8 +350,8 @@ instance TxICForest TxVarFS where
 readTxVarFS :: FTK TxVarFS args rep content => rep -> TxVarFTM content
 readTxVarFS rep = Inc.getOutside (to iso_rep_thunk rep)
 
-writeOrElseTxVarFS :: FTK TxVarFS args rep content => rep -> content -> ([Message] -> TxVarFTM ()) -> TxVarFTM ()
-writeOrElseTxVarFS rep content f = do
+writeOrElseTxVarFS :: FTK TxVarFS args rep content => rep -> content -> b -> ([Message] -> TxVarFTM b) -> TxVarFTM b
+writeOrElseTxVarFS rep content b f = do
 	let t = to iso_rep_thunk rep
 	old_fsversion <- forestM getFSVersionTxVarFS
 	set t content -- automatically increments the FSVersion
@@ -322,6 +361,7 @@ writeOrElseTxVarFS rep content f = do
 	if List.null errors
 		then do
 			forestM $ storeManifest mani
+			return b
 		else do
 			forestM $ setFSVersionTxVarFS old_fsversion
 			f errors
@@ -333,12 +373,14 @@ atomicallyTxVarFS args path stm = initializeTxVarFS try where
 		rep <- inside $ zload (monadArgs proxyTxVarFS args) path
 		x <- stm rep
 		-- tries to commit the current tx, otherwise repairs it incrementally
-		mbsuccess <- validateAndCommitTopTxVarFS True
-		case mbsuccess of
-			False -> return x
-			True -> throwM InvalidTx
-	catchInvalid InvalidTx = resetTxVarFS try
-	catchRetry BlockedOnRetry = do
+		success <- validateAndCommitTopTxVarFS True
+		if success
+			then return x
+			else debug "throw InvalidTx" $ throwM InvalidTx
+	catchInvalid InvalidTx = debug "InvalidTx" $ do
+		forestM $ forestIO $ threadDelay 2000000
+		resetTxVarFS try
+	catchRetry BlockedOnRetry = debug "BlockedOnRetry" $ do
 		-- if the retry was invoked on an inconsistent state, we incrementally repair and run again, otherwise we place the tx in the waiting queue
 		mbsuccess <- validateAndRetryTopTxVarFS
 		case mbsuccess of
@@ -348,13 +390,14 @@ atomicallyTxVarFS args path stm = initializeTxVarFS try where
 				inL $ liftIO $ Lock.acquire lck
 				resetTxVarFS try
 			Nothing -> resetTxVarFS try
-	catchSome (e::SomeException) = do
+	catchSome (e::SomeException) = debug "SomeException" $ do
 		-- we still need to validate on exceptions, otherwise repair incrementally; transaction-local allocations still get committed
-		mbsuccess <- validateAndCommitTopTxVarFS False
-		case mbsuccess of
-			False -> do
-				throwM e
-			True -> resetTxVarFS try
+		success <- validateAndCommitTopTxVarFS False
+		if success
+			then throwM e
+			else do
+				forestM $ forestIO $ threadDelay 2000000
+				resetTxVarFS try
 
 
 retryTxVarFS :: TxVarFTM a
@@ -535,7 +578,11 @@ checkTxsVarFS env@(SCons txlog txlogs) finished = do
 -- checks if the current txlog is consistent with a sequence of concurrent modifications
 checkTxVarFS :: TxVarFSLog -> [(UTCTime,TxVarFSWrites)] -> ForestM TxVarFS Bool
 checkTxVarFS txlog wrts = liftM List.and $ Prelude.mapM (checkTxVarFS' txlog) wrts where
-	checkTxVarFS' txlog (txtime,paths) = Foldable.foldrM (\path b -> liftM (b &&) $ checkTxVarFSWrite txlog path) True paths
+	checkTxVarFS' txlog (txtime,paths) = do
+		(starttime_ref,startversion,SCons txlog _) <- Reader.ask
+		starttime <- forestIO $ readIORef starttime_ref
+		forestIO $ putStrLn $ "checking " ++ show starttime ++ " against " ++ show txtime
+		Foldable.foldrM (\path b -> liftM (b &&) $ checkTxVarFSWrite txlog path) True paths
 	checkTxVarFSWrite txlog path = do
 		-- we only check for write-read conflicts
 		(reads,_) <- getTxVarFSChangesFlat
@@ -613,23 +660,25 @@ commitTxVarFSLog starttime doWrites txlog = do
 	-- removes temporary files
 	forestIO $ Foldable.mapM_ removeFile tmps
 	return wakes
-	
--- like STM, our txs are:
--- same as transaction repair: within transactions, we use no locks; we use locks for commit
--- 1) disjoint-access parallel: non-overlapping writes done in parallel
--- 2) read-parallel: reads done in parallel
--- runs transaction-specific code atomically in respect to a global state
+
+globalLock :: Lock
+globalLock = unsafePerformIO $ Lock.new
+
 atomicTxVarFS :: TxVarFTM a -> TxVarFTM a
 atomicTxVarFS m = do
-	(read_lcks,write_lcks) <- forestM getTxVarFSChangesFlat
-	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
-	inL $ Foldable.mapM_ waitFileLock read_lcks
-	withFileLocksTxVarFS write_lcks m
+	forestM $ forestIO $ print "entering atomic"
+	x <- withLock globalLock m
+	forestM $ forestIO $ print "left atomic"
+	return x
 
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
-withFileLocksTxVarFS :: Set FilePath -> TxVarFTM a -> TxVarFTM a
-withFileLocksTxVarFS paths = Catch.bracket (inL $ Foldable.foldlM (\xs path -> liftM (:xs) $ FileLock.lock path WriteLock) [] paths) (inL . Foldable.mapM_ FileLock.unlock) . Prelude.const
+withLock :: Lock -> TxVarFTM a -> TxVarFTM a
+withLock = liftA2 Catch.bracket_ (forestM . forestIO . Lock.acquire) (forestM . forestIO . Lock.release)
 
-waitFileLock :: MonadIO m => FilePath -> m ()
-waitFileLock path = liftIO $ Control.Exception.mask_ $ FileLock.lock path WriteLock >>= FileLock.unlock
+---- acquiring the locks in sorted order is essential to avoid deadlocks!
+--withFileLocksTxVarFS :: Set FilePath -> TxVarFTM a -> TxVarFTM a
+--withFileLocksTxVarFS paths = Catch.bracket (inL $ Foldable.foldlM (\xs path -> liftM (:xs) $ FileLock.lock path WriteLock) [] paths) (inL . Foldable.mapM_ FileLock.unlock) . Prelude.const
+--
+--waitFileLock :: MonadIO m => FilePath -> m ()
+--waitFileLock path = liftIO $ Control.Exception.mask_ $ FileLock.lock path WriteLock >>= FileLock.unlock
 

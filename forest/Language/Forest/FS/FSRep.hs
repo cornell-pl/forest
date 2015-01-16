@@ -99,7 +99,7 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 	writeFile :: FilePath -> OnDisk -> ForestM fs ()
 	-- registers the creation of a new empty directory in the filesystem
 	writeDir :: FilePath -> ForestM fs ()
-	-- registers a creation of a symbolic link in the filesystem; receives a target on-disk location that the link points to
+	-- registers a creation of a symbolic link in the filesystem
 	writeLink :: FilePath -> FilePath -> ForestM fs ()
 	-- registers a write to the metadata of a path in the filesystem; receives an on-disk location from which the metadata can be retrieved
 	writePathMD :: FilePath -> OnDisk -> ForestM fs ()
@@ -132,6 +132,13 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 	canonalizePathWithTree path tree = flip pathFromTree tree =<< forestIO . canonalizePath =<< pathInTree path tree
 
 	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs FSTreeDeltaNodeMay
+
+-- canonalizes a filepath, but leaving the filename uncanonized
+canonalizeDirectoryInTree :: FSRep fs => FilePath -> FSTree fs -> ForestM fs FilePath
+canonalizeDirectoryInTree path tree = do
+	let (root,file) = splitFileName path
+	canroot <- canonalizePathWithTree root tree
+	return $ canroot </> file
 
 ----------
 

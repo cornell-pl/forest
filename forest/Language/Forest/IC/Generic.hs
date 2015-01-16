@@ -82,13 +82,13 @@ class TxICForest fs where
 	-- tries to modify a variable
 	-- the write only occurs if validation succeeds
 	-- if the new value is not a consistent view of the FS, an alternative action is run otherwise
-	writeOrElse :: FTK fs args rep content => rep -> content -> ([Message] -> FTM fs ()) -> FTM fs ()
+	writeOrElse :: FTK fs args rep content => rep -> content -> b -> ([Message] -> FTM fs b) -> FTM fs b
 	
 tryWrite :: (TxICForest fs,FTK fs args rep content) => rep -> content -> FTM fs ()
-tryWrite t v = writeOrElse t v (Prelude.const $ return ())
+tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
 	
-writeOrRetry :: (TxICForest fs,FTK fs args rep content) => rep -> content -> FTM fs ()
-writeOrRetry t v = writeOrElse t v (Prelude.const retry)
+writeOrRetry :: (TxICForest fs,FTK fs args rep content) => rep -> content -> b -> FTM fs b
+writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
 
 -- * Zipped Incremental Forest interface
 
