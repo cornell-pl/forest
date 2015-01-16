@@ -103,19 +103,26 @@ accountDir = rootDir </> "Examples/IC/Beautiful/Account"
 --transTransfer :: String -> String -> Int -> IO ()
 --transTransfer from to amount = atomically (do {transWithdraw from amount; transDeposit to amount})
 --
---transWithdraw :: String -> Int -> ForestM TxFS () 
---transWithdraw acc amount = do
---  {
---    (rep,md) :: (Account_d, Account_d_md) <- load () accountDir;
---    case (lookup acc (accs rep)) of
---      Just (Account newbal) -> do 
---        check (amount < 0 || newbal >= amount)
---        let result = map (\ (name, a) -> if name == acc then (acc, (Account $ newbal-amount)) else (name,a)) (accs rep)
---        mani <- manifest () ((Account_d_inner result),md)
---        forestIO $ print (acc ++ " had " ++ show newbal ++ " and changed by " ++ (show (- amount)))
---        store mani
---      _ -> forestIO $ print "The account does not exist"
---  }
+
+tWith :: String -> Int -> IO ()
+tWith acc amount =
+  Language.Forest.IC.atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
+    {
+      content <- Language.Forest.IC.read rep;
+      runIncremental content;
+     -- (Forest_md a c,Account_d_inner b) <- content;
+      --forestM (forestIO $ print (show content))
+    }
+    
+   -- case (lookup acc (accs rep)) of
+   --   Just (Account newbal) -> do 
+   --     check (amount < 0 || newbal >= amount)
+   --     let result = map (\ (name, a) -> if name == acc then (acc, (Account $ newbal-amount)) else (name,a)) (accs rep)
+   --     mani <- manifest () ((Account_d_inner result),md)
+   --     forestIO $ print (acc ++ " had " ++ show newbal ++ " and changed by " ++ (show (- amount)))
+   --     store mani
+   --   _ -> forestIO $ print "The account does not exist"
+
 --
 --transWithdraw2 :: String -> String -> Int -> ForestM TxFS ()
 --transWithdraw2 acc1 acc2 amount = orElse (transWithdraw acc1 amount) (transWithdraw acc2 amount)
