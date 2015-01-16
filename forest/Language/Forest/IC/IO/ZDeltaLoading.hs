@@ -189,7 +189,7 @@ doZLoadDeltaDirectory :: (MData NoCtx (ForestI fs) rep,Eq rep,ICRep fs,MData NoC
 	-> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,rep))
 	-> (rep -> ForestI fs Forest_err)
 	-> (GetForestMD fs -> ForestI fs rep)
-	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (SValueDelta rep))
+	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (NSValueDelta rep))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,rep)))
 doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectMDErrors load loadD = do
 	path <- inside mpath
@@ -208,21 +208,25 @@ doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectM
 				fmd' <- defaultForest_mdWithErrors $ Pure.missingDirForestErr path'
 				return (fmd',rep1)
 			return Delta
-		(True,True) -> do -- this is the ONLY place where non-stable @SValueDelta@s appear!
+		(True,True) -> do -- this is the ONLY place where non-stable @NSValueDelta@s appear!
 			rep@(fmd,irep) <- inside $ Inc.get rep_thunk
 			let idv = mapValueDelta Proxy dv
 			direp <- loadD idv (irep,getMD) -- load recursively
 			drep <- case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of 
 				(True,True,True) -> do -- if the current path stayed the same and no attributes changed, we can reuse its @Forest_md@ but replace its errors; all the changes are stable
 					case direp of
-						Id -> return Id
-						Delta -> debug ("dir1") $ do
+						StableVD Id -> return Id
+						StableVD Delta -> debug ("dir1") $ do
 							replaceForestMDErrorsWith fmd $ liftM (:[]) $ collectMDErrors irep
 							return Delta
---						Modify _ -> error $ "this case should not happen! " ++ show (path',df)
+						Modify f -> do
+							fmd' <- inside $ getMD path' tree'
+							let irep' = applyNSValueDelta direp irep
+							updateForestMDErrorsWith fmd' $ liftM (:[]) $ collectMDErrors irep' -- this forces the value after the update
+							set rep_thunk (fmd',f irep') >> return Delta -- modify the directory thunk, since underlying non-stable changes did not occur inside a modifiable
 				otherwise -> debug ("dir2") $ do -- otherwise we compute a new @Forest_md@ and add new errors; all the changes are stable
 					fmd' <- inside $ getMD path' tree'
-					let irep' = applySValueDelta direp irep
+					let irep' = applyNSValueDelta direp irep
 					updateForestMDErrorsWith fmd' $ liftM (:[]) $ collectMDErrors irep' -- this forces the value after the update
 					set rep_thunk (fmd',irep')
 					return Delta
@@ -304,38 +308,42 @@ doZLoadDeltaNewPath moldpath path' file' oldtree df tree' loadD = debug ("doLoad
 	debug ("changed FSDelta: " ++ show newdf) $ loadD moldpath newpath' newdf -- load recursively
 
 doZLoadDeltaSimple :: (Typeable irep,Eq irep,ForestRep rep' (ForestFSThunkI fs irep),StableMD fs rep',ForestMD fs rep',Eq rep',Matching a,MData NoCtx (ForestO fs) rep') =>
-	ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep' -> (rep',GetForestMD fs)
+	Lens dir_rep rep'
+	-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep')
 	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (SValueDelta rep'))
-	-> ForestO fs (SValueDelta rep')
-doZLoadDeltaSimple mpath path' matchingM oldtree df tree' dv (rep,getMD) load loadD = debug ("doLoadDeltaSimple: "++show path') $ do
+	-> ForestO fs (NSValueDelta dir_rep)
+doZLoadDeltaSimple lens mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) load loadD = debug ("doLoadDeltaSimple: "++show path') $ do
 	matching <- inside $ matchingM
-	let idata = (rep,getForestMDInTree) -- we need to discard any previously loaded forest metadata
-	direp <- doZLoadDeltaFocus mpath path' idata matching oldtree df tree' dv load $ loadD idata 
-	return $ liftSValueDelta direp
+	let irep = BX.get lens dir_rep
+	let idata = (irep,getForestMDInTree) -- we need to discard any previously loaded forest metadata
+	direp <- doZLoadDeltaFocus mpath path' idata matching oldtree df tree' (mapValueDelta Proxy dv) load $ loadD idata 
+	return $ nonstableValueDelta $ liftSValueDelta direp
 
 doZLoadDeltaSimpleWithConstraint :: (Typeable irep,ForestMD fs rep',ForestMD fs irep,StableMD fs rep',ForestOutput fs ICThunk Inside,Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,MData NoCtx (ForestO fs) rep') =>
-	Bool -> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep' -> (rep',GetForestMD fs)
+	Lens dir_rep rep'
+	-> Bool -> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 	-> (rep' -> ForestI fs Bool)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep')
 	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (SValueDelta rep'))
-	-> ForestO fs (SValueDelta rep')
-doZLoadDeltaSimpleWithConstraint emptyDArgs mpath path' matchingM oldtree df tree' dv (irep,getMD) pred load loadD = debug ("doLoadDeltaSimpleWithConstraint: "++show (path')) $ do
+	-> ForestO fs (NSValueDelta dir_rep)
+doZLoadDeltaSimpleWithConstraint lens emptyDArgs mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) pred load loadD = debug ("doLoadDeltaSimpleWithConstraint: "++show (path')) $ do
 	matching <- inside $ matchingM
+	let irep = BX.get lens dir_rep
 	let idata = (irep,getForestMDInTree) -- we need to discard any previously loaded forest metadata
-	direp <- doZLoadDeltaConstraint emptyDArgs dv idata pred $ \dv idata -> doZLoadDeltaFocus mpath path' idata matching oldtree df tree' dv load $ loadD idata 
-	return $ liftSValueDelta direp
+	direp <- doZLoadDeltaConstraint emptyDArgs (mapValueDelta Proxy dv) idata pred $ \dv idata -> doZLoadDeltaFocus mpath path' idata matching oldtree df tree' dv load $ loadD idata 
+	return $ nonstableValueDelta $ liftSValueDelta direp
 
-doZLoadDeltaCompound :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',rep ~ ForestFSThunkI fs container_rep',Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
-		Iso container_rep' list_rep'
-		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> (rep,GetForestMD fs)
+doZLoadDeltaCompound :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
+		Lens dir_rep container_rep' -> Iso container_rep' list_rep'
+		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
 		-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (SValueDelta rep'))
-		-> ForestO fs (SValueDelta rep)
-doZLoadDeltaCompound isoRep mpath path' matchingM oldtree df tree' dv (rep,getMD) load loadD = debug ("doLoadDeltaCompound: "++show (path')) $ do
+		-> ForestO fs (NSValueDelta dir_rep)
+doZLoadDeltaCompound lens isoRep mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) load loadD = debug ("doLoadDeltaCompound: "++show (path')) $ do
 	path <- inside mpath
 	matching <- inside $ matchingM -- matching expressions are always recomputed; since they depend on the FS we cannot incrementally reuse them
-	crep <- inside $ Inc.get rep
+	let crep = BX.get lens dir_rep
 	let oldreplist = to isoRep crep
 	let oldfiles = map fst oldreplist
 	let oldreps = map snd oldreplist
@@ -350,9 +358,9 @@ doZLoadDeltaCompound isoRep mpath path' matchingM oldtree df tree' dv (rep,getMD
 	
 	-- return the new container values and deltas on the directory
 	drep <- case (noDeletions,isIdValueDelta dv,repkind) of
-			(True,True,NoOp) -> return Id -- this is OK because the alignment algorithm is stable
-			(True,True,Stable) -> return Delta
-			otherwise -> set rep (from isoRep repchanges) >> return Delta
+			(True,True,NoOp) -> return $ StableVD Id -- this is OK because the alignment algorithm is stable
+			(True,True,Stable) -> return $ StableVD Delta
+			otherwise -> return $ Modify $ \s -> put lens s (from isoRep repchanges)
 	return $ debug ("doLoadDeltaCompoundReturn: "++show path') drep
 
 -- returns the new values and a boolean indicating whether it has changed
@@ -384,17 +392,17 @@ doZLoadDeltaCompoundFile mpath path' file' (Just rep) oldtree df tree' dv load l
 	let (rep',repkind) = (applySValueDelta drep rep,valueDeltaKind drep `andSValueDeltaKinds` (valueDeltaKind dFileInfo))
 	return (Just (file',rep'),repkind)
 
-doZLoadDeltaCompoundWithConstraint :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',rep ~ ForestFSThunkI fs container_rep',ForestOutput fs ICThunk Inside,Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
-		Iso container_rep' list_rep'
-		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> (rep,GetForestMD fs)
+doZLoadDeltaCompoundWithConstraint :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',ForestOutput fs ICThunk Inside,Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
+		Lens dir_rep container_rep' -> Iso container_rep' list_rep'
+		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
 		-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (SValueDelta rep'))
-		-> ForestO fs (SValueDelta rep)
-doZLoadDeltaCompoundWithConstraint isoRep mpath path' matchingM oldtree df tree' dv (rep,getMD) pred load loadD = debug ("doLoadDeltaCompoundC: "++show (path')) $ do
+		-> ForestO fs (NSValueDelta dir_rep)
+doZLoadDeltaCompoundWithConstraint lens isoRep mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) pred load loadD = debug ("doLoadDeltaCompoundC: "++show (path')) $ do
 	path <- inside mpath
 	matching <- inside matchingM
-	crep <- inside $ Inc.get rep
+	let crep = BX.get lens dir_rep
 	let oldreplist = to isoRep crep
 	let oldfiles = map fst oldreplist
 	let oldreps = map snd oldreplist
@@ -409,9 +417,9 @@ doZLoadDeltaCompoundWithConstraint isoRep mpath path' matchingM oldtree df tree'
 	
 	-- return the new container values and deltas on the directory
 	drep <- case (noDeletions,isIdValueDelta dv,repkind) of
-			(True,True,NoOp) -> return Id -- this is OK because the alignment algorithm is stable
-			(True,True,Stable) -> return Delta
-			otherwise -> set rep (from isoRep repchanges) >> return Delta
+			(True,True,NoOp) -> return $ StableVD Id -- this is OK because the alignment algorithm is stable
+			(True,True,Stable) -> return $ StableVD Delta
+			otherwise -> return $ Modify $ \s -> put lens s (from isoRep repchanges)
 	return $ debug ("doLoadDeltaCompoundCReturn: "++show (path')) drep
 
 -- returns the new values and a boolean indicating whether it has changed

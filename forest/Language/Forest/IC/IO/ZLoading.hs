@@ -289,8 +289,8 @@ doZLoadCompound :: (Typeable container_rep,Eq container_rep,Matching a,MData NoC
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> ([(FilePath,rep')] -> container_rep)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
-	-> ForestI fs (ForestFSThunkI fs container_rep)
-doZLoadCompound pathfilter path matchingM tree buildContainerRep load = fsThunk $ debug ("doLoadCompound: "++show path) $ do
+	-> ForestI fs container_rep
+doZLoadCompound pathfilter path matchingM tree buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM
 	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files
@@ -307,8 +307,8 @@ doZLoadCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,Forest
 	-> (FilePath -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> ([(FilePath,rep')] -> container_rep)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
-	-> ForestI fs (ForestFSThunkI fs container_rep)
-doZLoadCompoundWithConstraint pathfilter path matchingM tree pred buildContainerRep load = fsThunk $ debug ("doLoadCompound: "++show path) $ do
+	-> ForestI fs container_rep
+doZLoadCompoundWithConstraint pathfilter path matchingM tree pred buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM -- matching expressions are not saved for incremental reuse
 	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files

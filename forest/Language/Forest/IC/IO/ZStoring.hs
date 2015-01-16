@@ -232,13 +232,13 @@ doZManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder 
 doZManifestCompound :: (Typeable container_rep,Eq container_rep,ForestMD fs rep',Matching a) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')])
-	-> ForestFSThunkI fs container_rep
+	-> container_rep
 	-> (FileName -> ForestFSThunkI fs FileInfo -> rep' -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestCompound parentPath matchingM tree toListRep c_rep manifestUnder man = do
 	matching <- inside matchingM
 	old_files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
-	(new_files,reps') <- inside $ liftM (unzip . toListRep) $ Inc.read c_rep
+	let (new_files,reps') = unzip $ toListRep c_rep
 	repinfos' <- inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) reps'
 	
 	let rem_files = old_files \\ new_files -- files to be removed
@@ -252,14 +252,14 @@ doZManifestCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,Fo
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')])
 	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
-	-> ForestFSThunkI fs container_rep
+	-> container_rep
 	-> (FileName -> ForestFSThunkI fs FileInfo -> rep' -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestCompoundWithConstraint parentPath matchingM tree toListRep pred c_rep manifestUnder man = do
 	matching <- inside matchingM
 	old_files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
 	
-	(new_files,reps') <- inside $ liftM (unzip . toListRep) $ Inc.read c_rep
+	let (new_files,reps') = unzip $ toListRep c_rep
 	repinfos' <- inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) reps'
 	
 	let old_files' = old_files \\ new_files -- old files that are not in the view

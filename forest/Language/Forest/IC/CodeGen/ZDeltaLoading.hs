@@ -115,7 +115,7 @@ genZLoadDeltaM (untyRep,tyRep) forestTy pat_infos = do
 			thunkNames <- lift $ Pure.genForestTupleNames (length pat_infos) "u"
 			let update (fs,env) = (fs,foldl updateArg env (zip (zip thunkNames dargNames) pat_infos)) where
 				updateArg env ((thunkName,dargName),(pat,ty)) = Map.fromSet insertVar (patPVars pat) `Map.union` env -- left-biased union
-					where insertVar var = (AppE (VarE 'isEmptySValueDelta) (VarE dargName),Just (thunkName,pat))
+					where insertVar var = (AppE (VarE 'isEmptyDelta) (VarE dargName),Just (thunkName,pat))
 				
 			Reader.local update $ do -- adds pattern variable deltas to the env.
 				
@@ -257,7 +257,7 @@ zloadDeltaDirectory dirTy@(Record id fields) pathE treeE dpathE dfE treeE' dvE r
 	let (innerRepMDE,innerRepMDP) = genPE innerRepMDName
 	(drepEs,stmts) <- zloadFieldsDelta fields pathE treeE innerRepMDE dpathE dfE treeE' innerdvE
 	let tyName = mkName id
-	let drepE = mergeFieldDeltas drepEs
+	let drepE = mergeFieldNSDeltas drepEs
 	
 --	let repE = appConE (getStructInnerName tyName) $ map snd repEs
 --	let mdE = appConE (getStructInnerMDName tyName) $ map snd mdEs
@@ -275,7 +275,8 @@ zloadFieldsDelta [] pathE treeE repmdE dpathE dfE treeE' dvE = return ([],[])
 zloadFieldsDelta (field:fields) pathE treeE repmdE dpathE dfE treeE' dvE = do
 	(rep_name,rep_field, stmts_field)  <- zloadFieldDelta field pathE treeE repmdE dpathE dfE treeE' dvE
 	-- updates the delta environment similarly to Forest <x:s1,s2> specifications; adds representation (this) and metadata (this_md) variables to the environment
-	let update (fs,env) = (fs,Map.insert rep_name (AppE (VarE 'isEmptySValueDelta) $ VarE rep_field,Nothing) env)
+	let isEmpty = VarE 'isEmptyDelta
+	let update (fs,env) = (fs,Map.insert rep_name (AppE isEmpty (VarE rep_field),Nothing) env)
 	(reps_fields, stmts_fields) <- Reader.local update $ zloadFieldsDelta fields pathE treeE repmdE dpathE dfE treeE' dvE
 	return (rep_field:reps_fields, stmts_field++stmts_fields)
 
@@ -301,30 +302,35 @@ zloadDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE treeE repm
 	newdvName <- lift $ newName "newdv"
 	let (newdvE,newdvP) = genPE newdvName
 	
+	lensName <- lift $ newName "lens"
+	let (lensE,lensP) = genPE lensName
+	
 	xName <- lift $ newName "x"
 	let (xE,xP) = genPE xName
 	yName <- lift $ newName "y"
 	let (yE,yP) = genPE yName
 	
+	lensRepE <- lift $ buildFieldLens repName
+	
 	let fieldStmt1 = LetS [
 		 ValD xP (NormalB $ AppE (VarE repName) $ AppE (VarE 'fst) repmdE) []
+		,ValD lensP (NormalB lensRepE) []
 		]
 	let fieldStmt2 = LetS [
 		ValD (VarP repName) (NormalB xE) []
 		]
 	
-	let innerrepmdE = TupE [xE,AppE (VarE 'snd) repmdE]
+--	let innerrepmdE = TupE [xE,AppE (VarE 'snd) repmdE]
 
 	(fs,_) <- Reader.ask
-	let fielddvE = Pure.appE2 (VarE 'mapValueDelta) (proxyN fs) dvE
 	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
 	loadContentNoDeltaE <- liftM (LamE [newpathP,fieldrepmdP]) $ runZEnvQ $ zloadE forestTy pathFilterE newpathE treeE' fieldrepmdE
 	loadContentDeltaE <- liftM (LamE [fieldrepmdP,newpathP,newdpathP,newdfP,newdvP]) $ zloadDeltaE forestTy newpathE treeE fieldrepmdE newdpathE newdfE treeE' newdvE
 	loadE <- case predM of
-		Nothing -> return $ Pure.appE10 (VarE 'doZLoadDeltaSimple) pathE dpathE externalE treeE dfE treeE' fielddvE innerrepmdE loadContentNoDeltaE loadContentDeltaE
+		Nothing -> return $ Pure.appE11 (VarE 'doZLoadDeltaSimple) lensE pathE dpathE externalE treeE dfE treeE' dvE repmdE loadContentNoDeltaE loadContentDeltaE
 		Just predE -> do
 			boolE <- isEmptyZDeltaEnvExp predE
-			return $ Pure.appE12 (VarE 'doZLoadDeltaSimpleWithConstraint) boolE pathE dpathE externalE treeE dfE treeE' fielddvE innerrepmdE (zmodPredE (VarP repName) predE) loadContentNoDeltaE loadContentDeltaE
+			return $ Pure.appE13 (VarE 'doZLoadDeltaSimpleWithConstraint) lensE boolE pathE dpathE externalE treeE dfE treeE' dvE repmdE (zmodPredE (VarP repName) predE) loadContentNoDeltaE loadContentDeltaE
 	let loadStmt = BindS (TupP [VarP drepName]) loadE
 	
 	return (repName,drepName,[fieldStmt1,fieldStmt2,loadStmt])
@@ -370,16 +376,21 @@ zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitN
 	let (xE,xP) = genPE xName
 	yName <- lift $ newName "y"
 	let (yE,yP) = genPE yName
+	lensName <- lift $ newName "lens"
+	let (lensE,lensP) = genPE lensName
+	
+	lensRepE <- if insideDirectory
+		then lift $ buildFieldLens repName
+		else return idLensE
 	
 	let fieldStmt1 = LetS [
 		 ValD xP (NormalB $ AppE (VarE repName) $ AppE (VarE 'fst) repmdE) []
+		,ValD lensP (NormalB lensRepE) []
 		]
 	let fieldStmt2 = LetS [
 		ValD (VarP repName) (NormalB xE) []
 		]
-	let fieldStmts = if insideDirectory then [fieldStmt1,fieldStmt2] else []
-	
-	let innerrepmdE = if insideDirectory then TupE [VarE repName,AppE (VarE 'snd) repmdE] else repmdE
+	let fieldStmts = if insideDirectory then [fieldStmt1,fieldStmt2] else [LetS [ValD lensP (NormalB lensRepE) []]]
 	
 	let genE = case generatorG of
 		Explicit expE -> expE
@@ -403,20 +414,19 @@ zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitN
 		
 		-- actual loading
 		(fs,_) <- Reader.ask
-		let update (fs,env) = (fs,Map.insert fileName (Pure.appE2 (VarE 'Pure.isSameFileName) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
+		let update (fs,env) = (fs,Map.insert fileName (Pure.appE2 (VarE 'Pure.isSameFileName) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptyDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
 		let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
-		let fielddvE = Pure.appE2 (VarE 'mapValueDelta) (proxyN fs) dvE
 		Reader.local update $ case predM of
 			Nothing -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,fieldrepmdP]) $ runZEnvQ $ zloadE descTy pathFilterE newpathE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP,newdvP]) $ zloadDeltaE descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE' newdvE
-				let loadActionE = Pure.appE11 (VarE 'doZLoadDeltaCompound) isoE pathE dpathE genE treeE dfE treeE' fielddvE innerrepmdE loadElementE loadElementDeltaE
+				let loadActionE = Pure.appE12 (VarE 'doZLoadDeltaCompound) lensE isoE pathE dpathE genE treeE dfE treeE' dvE repmdE loadElementE loadElementDeltaE
 				let deltasE = BindS (TupP [drepP]) $ loadActionE
 				return (repName,drepName,fieldStmts++[deltasE])
 			Just predE -> forceVarsZDeltaQ predE $ \predE -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,fieldrepmdP]) $ runZEnvQ $ zloadE descTy pathFilterE newpathE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP,newdvP]) $ zloadDeltaE descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE' newdvE
-				let loadActionE = Pure.appE12 (VarE 'doZLoadDeltaCompoundWithConstraint) isoE pathE dpathE genE treeE dfE treeE' fielddvE innerrepmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE
+				let loadActionE = Pure.appE13 (VarE 'doZLoadDeltaCompoundWithConstraint) lensE isoE pathE dpathE genE treeE dfE treeE' dvE repmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE
 				let deltasE = BindS (TupP [drepP]) $ loadActionE
 				return (repName,drepName,fieldStmts++[deltasE])
 
@@ -449,13 +459,13 @@ isEmptyZDeltaEnvField = isEmptyZDeltaEnv fieldPVars
 isEmptyZDeltaEnvExp :: TH.Exp -> ZDeltaQ TH.Exp
 isEmptyZDeltaEnvExp = isEmptyZDeltaEnv expVars
 
-zcheckNoChange :: ForestTy -> TH.Exp -> TH.Exp -> ZDeltaQ TH.Exp -> ZDeltaQ TH.Exp
-zcheckNoChange ty dpathEs dfE m = do
-	cond1 <- isEmptyZDeltaEnvForestTy ty
-	let cond2 = AppE (VarE 'isEmptySValueDelta) dpathEs
-	let cond3 = AppE (VarE 'isEmptyFSTreeDelta) dfE
-	x <- m
-	return $ Pure.appE5 (VarE 'zskipUpdateIf3) (LitE $ StringL "checkNoChange") cond1 cond2 cond3 x
+--zcheckNoChange :: ForestTy -> TH.Exp -> TH.Exp -> ZDeltaQ TH.Exp -> ZDeltaQ TH.Exp
+--zcheckNoChange ty dpathEs dfE m = do
+--	cond1 <- isEmptyZDeltaEnvForestTy ty
+--	let cond2 = AppE (VarE 'isEmptyDelta) dpathEs
+--	let cond3 = AppE (VarE 'isEmptyFSTreeDelta) dfE
+--	x <- m
+--	return $ Pure.appE5 (VarE 'zskipUpdateIf3) (LitE $ StringL "checkNoChange") cond1 cond2 cond3 x
 
 zcheckUnevaluated :: String -> TH.Exp -> TH.Exp -> (TH.Exp -> ZEnvQ TH.Exp) -> (TH.Exp -> ZDeltaQ TH.Exp) -> ZDeltaQ TH.Exp
 zcheckUnevaluated str treeE' repmdE load loadD = do

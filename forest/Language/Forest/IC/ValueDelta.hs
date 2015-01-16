@@ -17,6 +17,14 @@ import Language.Forest.FS.FSRep
 import Data.WithClass.MData
 import Language.Forest.IC.BX
 
+class DeltaClass d where
+	isEmptyDelta :: d v -> Bool
+
+instance DeltaClass SValueDelta where
+	isEmptyDelta = isEmptySValueDelta
+instance DeltaClass NSValueDelta where
+	isEmptyDelta = isEmptyNSValueDelta
+
 -- stable deltas
 data SValueDelta v where
 	Id :: SValueDelta v
@@ -94,13 +102,13 @@ timesSValueDelta Delta Id = Delta
 timesSValueDelta Delta Delta = Delta
 
 
---(>:>) :: NSValueDelta a -> NSValueDelta a -> NSValueDelta a
---StableVD Id >:> d2 = d2
---d1 >:> StableVD Id = d1
---StableVD Delta >:> StableVD Delta = StableVD Delta
---StableVD Delta >:> Modify g = Modify g
---Modify f >:> StableVD Delta = Modify f
---Modify f >:> Modify g = Modify (g . f)
+(>::>) :: NSValueDelta a -> NSValueDelta a -> NSValueDelta a
+StableVD Id >::> d2 = d2
+d1 >::> StableVD Id = d1
+StableVD Delta >::> StableVD Delta = StableVD Delta
+StableVD Delta >::> Modify g = Modify g
+Modify f >::> StableVD Delta = Modify f
+Modify f >::> Modify g = Modify (g . f)
 
 (>:>) :: SValueDelta a -> SValueDelta a -> SValueDelta a
 Id >:> d2 = d2

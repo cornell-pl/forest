@@ -30,7 +30,7 @@ import Data.List as List
              , symLinks     is [ s :: SymLink      | s <- matches (GL "*"), (isJust (symLink s_att)) ]
              } |]
 
-[iforest| type Universal_zip = Gzip (Tar Universal_d) |]
+-- [iforest| type Universal_zip = Gzip (Tar Universal_d) |]
 
 generateTestFolder :: IO ()
 generateTestFolder = do
@@ -58,7 +58,7 @@ runTest = do
 		let links_dir = fromJust $ List.lookup "links" (directories test_uni)
 		(links_fmd,links_uni) <- read links_dir
 		
-		errors <- writeOrElse links_dir links_uni "" (return . show)
+		errors <- writeOrElse links_dir (links_fmd,links_uni) "" (return . show)
 		
 		return (original_str,errors)
 	putStrLn original_str

@@ -98,6 +98,10 @@ data Field = Simple BasicField
            | Comp  CompField
    deriving (Ord, Eq, Data, Typeable, Show)
 
+isSimpleField :: Field -> Bool
+isSimpleField (Simple _) = True
+isSimpleField (Comp _) = False
+
 archiveExtension :: [ArchiveType] -> String
 archiveExtension = foldl1 (\ext1 ext2 -> ext1 ++ "." ++ ext2) . map showArchiveType
 

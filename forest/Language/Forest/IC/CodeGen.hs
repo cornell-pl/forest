@@ -246,7 +246,7 @@ genZRepMDComp fsName (CompField {internalName, tyConNameOpt, descTy, predEOpt, .
 			case arity of 
 				1 -> return (mkStringConTupleTy (mkName str) rng_rep_ty) 
 				2 -> return (mkStringConCurryTy (mkName str) rng_rep_ty) 
-	return (fsthunkTy fsName rep_ty)
+	return (rep_ty)
 	
 genZRepMDCompTy fsName info = do
 	(rep_ty) <- genZRepMDComp fsName info

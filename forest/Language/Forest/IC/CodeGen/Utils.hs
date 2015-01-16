@@ -28,6 +28,10 @@ proxyT ty = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) ty)
 proxyN :: Name -> TH.Exp
 proxyN name = SigE (ConE 'Proxy) (AppT (ConT ''Proxy) $ VarT name)
 
+mergeFieldNSDeltas :: [Name] -> TH.Exp
+mergeFieldNSDeltas [] = Pure.returnExp $ AppE (ConE 'StableVD) $ ConE 'Id
+mergeFieldNSDeltas ds = Pure.appE2 (VarE 'foldl1) (VarE '(>::>)) $ ListE $ map (VarE) ds
+
 mergeFieldDeltas :: [Name] -> TH.Exp
 mergeFieldDeltas [] = Pure.returnExp $ ConE 'Id
 mergeFieldDeltas ds = Pure.appE2 (VarE 'foldl1) (VarE '(>:>)) $ ListE $ map (AppE (VarE 'liftSValueDelta) . VarE) ds
