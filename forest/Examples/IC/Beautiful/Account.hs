@@ -14,17 +14,21 @@ import System.Posix.Files
 import Control.Concurrent
 import Control.Concurrent.Async
 import System.Directory
-import Language.Forest.IC
 import System.TimeIt
 import Control.Monad.IO.Class
 import Data.WithClass.MData
 import Data.DeepTypeable
-import Control.Monad.Incremental
 
 import Data.WithClass.Derive.DeepTypeable
 import Data.DeriveTH
 import Data.WithClass.Derive.MData
 import System.FilePath.Posix
+
+import Control.Monad.Incremental.Display
+import Data.List as List
+import Control.Monad.Incremental hiding (read)
+import Prelude hiding (read)
+import Language.Forest.IC hiding (writeFile)
 
 
 [pads|
@@ -37,8 +41,9 @@ $( derive makeDeepTypeable ''Account )
 $( derive makeDeepTypeable ''Account_imd )
 
 [iforest|
+        type FileAccount = File Account -- Workaround 
 	type Account_d = Directory {
-		accs is [ f :: File Account | f <- matches (GL "*") ]
+		accs is [ f :: FileAccount | f <- matches (GL "*") ]
 	} 
 |]
 
@@ -48,7 +53,150 @@ rootDir = "."
 
 accountDir = rootDir </> "Examples/IC/Beautiful/Account"
 
----- PURE STUFF:
+-- Transactional Stuff
+
+tTrans :: String -> String -> Int -> IO ()
+tTrans from to amount = do
+  (status1,status2) <- atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
+    status1 <- tWithHelp from amount rep
+    status2 <- tWithHelp to (- amount) rep
+    return (status1,status2)                                                                      
+  putStrLn status1
+  putStrLn status2
+
+tWith :: String -> Int -> IO ()
+tWith acc amount = do
+  status <- atomically () accountDir (tWithHelp acc amount)
+  putStrLn status
+
+tWith2 :: String -> String -> Int -> IO ()
+tWith2 acc1 acc2 amount = do
+  status <- atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
+    status <- orElse (tWithHelp acc1 amount rep) (tWithHelp acc2 amount rep)
+    return status
+  putStrLn status
+
+tDepo acc amount = tWith acc (- amount)
+
+-- Transactional Helpers
+
+tWithHelp :: String -> Int -> Account_d TxVarFS -> FTM TxVarFS String
+tWithHelp acc amount rep =
+  do
+    (main_fmd, accdir) <- read rep
+    case lookup acc $ accs accdir of
+      Just account -> do
+        (accfmd,(Account bal,(bmd,accimd)))  <- read account
+        check (amount < 0 || bal >= amount)
+        message <- writeOrElse account (accfmd,(Account (bal - amount),(bmd,accimd)))
+                   (acc ++ " had " ++ show bal ++ " and changed by " ++ show (- amount)) (return . show)
+        return message
+      _ -> return "Failure: The account does not exist"
+
+check :: Bool -> FTM TxVarFS ()
+check True = return ()
+check False = retry
+
+forever :: IO () -> IO ()
+forever act = do
+ act
+ forever act
+
+randomDelay :: IO ()
+randomDelay = do
+ waitTime <- getStdRandom (randomR (1000000, 10000000))
+ threadDelay waitTime
+
+-- Test function
+
+withdrawer = forkIO (forever (do {tWith2 "acc1" "acc2" 100; randomDelay }))
+
+depositer = forkIO (forever (do {tDepo "acc1" 50; randomDelay }))
+
+transferer = forkIO (forever (do {tTrans "acc1" "acc2" 30; randomDelay }))
+
+runTest = do
+ withdrawer
+ depositer
+ transferer
+--
+--
+--
+--
+--
+--
+--
+--
+--
+---- Removes the first account
+--transRemTop :: ForestM TxFS ()
+--transRemTop = do
+--  (rep,md) :: (Account_d, Account_d_md) <- load () accountDir
+--  let x:lst = reverse (accs rep)
+--  let y:mdlst = reverse (accs_md (snd md))
+--  mani <- manifest () ((Account_d_inner lst),((fst md),(Account_d_inner_md mdlst)))
+--  store mani
+--
+---- Changes MetaData
+--transMeta :: ForestM TxFS ()
+--transMeta = do
+--  (rep,md) :: (Account_d, Account_d_md) <- load () accountDir
+--  let (str,(fmd,amd)):mdlst = accs_md (snd md)
+--  let newFmd = fmd {fileInfo = (fileInfo fmd) {kind = UnknownK}} 
+--  let newm = (str,(newFmd,amd))
+----  listPrintt (accs_md (snd md))
+--  mani <- manifest () (rep,((fst md),(Account_d_inner_md (newm:mdlst))))
+--  forestIO $ print "YAY"
+--  store mani
+--
+--
+--
+
+
+
+
+
+---- Random helpers for helping Jonathan figure out Forest
+--
+--listPrintt :: FSRep fs => [(String,(Forest_md,Account_md))] -> ForestM fs ()
+--listPrintt [] = return ()
+--listPrintt ((str,(fmd,amd)):xs) = do
+--  {
+--    forestIO $ putStr (str ++ ": " ++ (show (fileInfo fmd)) ++ "\n" ++ (show amd) ++ "\n");
+--    listPrintt xs
+--  }
+--
+--getAccounts :: FSRep fs => ForestM fs ()
+--getAccounts = do
+--  {
+--    (rep,md) :: (Account_d, Account_d_md) <- load () accountDir;
+--    let err = get_errors md in
+--    do
+--      {
+--        forestIO $ print (numErrors err);
+--        forestIO $ print (errorMsg err)
+--      }
+--  }
+--
+--listPrint :: FSRep fs => [(String,Account)] -> ForestM fs ()
+--listPrint [] = return ()
+--listPrint ((str,Account x):xs) = do
+--  {
+--    forestIO $ print x;
+--    listPrint xs
+--  }
+--countFiles :: FSRep fs => ForestM fs ()
+--countFiles = do
+--    (rep,md) :: (Account_d, Account_d_md) <- load () accountDir
+--    let (Account_d_inner lst) = rep
+--    forestIO $ print $ length lst
+
+
+
+
+
+
+---- OLD PURE STUFF:
 --
 --pureWithdraw :: FSRep fs => String -> Int -> ForestM fs ()
 --pureWithdraw acc amount = do
@@ -98,135 +246,3 @@ accountDir = rootDir </> "Examples/IC/Beautiful/Account"
 --
 --
 --
----- Transactional Stuff
---
---transTransfer :: String -> String -> Int -> IO ()
---transTransfer from to amount = atomically (do {transWithdraw from amount; transDeposit to amount})
---
-
-tWith :: String -> Int -> IO ()
-tWith acc amount =
-  Language.Forest.IC.atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
-    {
-      content <- Language.Forest.IC.read rep;
-      runIncremental content;
-     -- (Forest_md a c,Account_d_inner b) <- content;
-      --forestM (forestIO $ print (show content))
-    }
-    
-   -- case (lookup acc (accs rep)) of
-   --   Just (Account newbal) -> do 
-   --     check (amount < 0 || newbal >= amount)
-   --     let result = map (\ (name, a) -> if name == acc then (acc, (Account $ newbal-amount)) else (name,a)) (accs rep)
-   --     mani <- manifest () ((Account_d_inner result),md)
-   --     forestIO $ print (acc ++ " had " ++ show newbal ++ " and changed by " ++ (show (- amount)))
-   --     store mani
-   --   _ -> forestIO $ print "The account does not exist"
-
---
---transWithdraw2 :: String -> String -> Int -> ForestM TxFS ()
---transWithdraw2 acc1 acc2 amount = orElse (transWithdraw acc1 amount) (transWithdraw acc2 amount)
---
---transDeposit acc amount = transWithdraw acc (- amount)
---
----- Transactional Helpers
---
---check :: Bool -> ForestM TxFS ()
---check True = return ()
---check False = retry
---
---transWith acc amount = atomically (transWithdraw acc amount)
---transWith2 acc1 acc2 amount = atomically (transWithdraw2 acc1 acc2 amount) 
---transDepo acc amount = atomically (transDeposit acc amount)
---
---transTransAcc = transTransfer "acc1" "acc2"
---transWith2Acc = transWith2 "acc1" "acc2"
---
---forever :: IO () -> IO ()
---forever act = do
---  act
---  forever act
---
---randomDelay :: IO ()
---randomDelay = do
---  waitTime <- getStdRandom (randomR (1000000, 10000000))
---  threadDelay waitTime
---
----- Test function
---
---withdrawer = forkIO (forever (do {transWith2Acc 100; randomDelay }))
---
---depositer = forkIO (forever (do {transDepo "acc1" 50; randomDelay }))
---
---transferer = forkIO (forever (do {transTransAcc 30; randomDelay }))
---
---runTest = do
---  withdrawer
---  depositer
---  transferer
---
---
---
---
---
---
---
---
---
----- Removes the first account
---transRemTop :: ForestM TxFS ()
---transRemTop = do
---  (rep,md) :: (Account_d, Account_d_md) <- load () accountDir
---  let x:lst = reverse (accs rep)
---  let y:mdlst = reverse (accs_md (snd md))
---  mani <- manifest () ((Account_d_inner lst),((fst md),(Account_d_inner_md mdlst)))
---  store mani
---
----- Changes MetaData
---transMeta :: ForestM TxFS ()
---transMeta = do
---  (rep,md) :: (Account_d, Account_d_md) <- load () accountDir
---  let (str,(fmd,amd)):mdlst = accs_md (snd md)
---  let newFmd = fmd {fileInfo = (fileInfo fmd) {kind = UnknownK}} 
---  let newm = (str,(newFmd,amd))
-----  listPrintt (accs_md (snd md))
---  mani <- manifest () (rep,((fst md),(Account_d_inner_md (newm:mdlst))))
---  forestIO $ print "YAY"
---  store mani
---
---
---
----- Random helpers for helping Jonathan figure out Forest
---
---listPrintt :: FSRep fs => [(String,(Forest_md,Account_md))] -> ForestM fs ()
---listPrintt [] = return ()
---listPrintt ((str,(fmd,amd)):xs) = do
---  {
---    forestIO $ putStr (str ++ ": " ++ (show (fileInfo fmd)) ++ "\n" ++ (show amd) ++ "\n");
---    listPrintt xs
---  }
---
---getAccounts :: FSRep fs => ForestM fs ()
---getAccounts = do
---  {
---    (rep,md) :: (Account_d, Account_d_md) <- load () accountDir;
---    let err = get_errors md in
---    do
---      {
---        forestIO $ print (numErrors err);
---        forestIO $ print (errorMsg err)
---      }
---  }
---
---listPrint :: FSRep fs => [(String,Account)] -> ForestM fs ()
---listPrint [] = return ()
---listPrint ((str,Account x):xs) = do
---  {
---    forestIO $ print x;
---    listPrint xs
---  }
---countFiles :: FSRep fs => ForestM fs ()
---countFiles = do
---    (rep,md) :: (Account_d, Account_d_md) <- load () accountDir
---    let (Account_d_inner lst) = rep
---    forestIO $ print $ length lst
