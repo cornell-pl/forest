@@ -29,6 +29,7 @@ import Data.List as List
 import Control.Monad.Incremental hiding (read)
 import Prelude hiding (read)
 import Language.Forest.IC hiding (writeFile)
+import Data.ByteString.Char8 as B hiding (putStrLn)
 
 
 -- [pads|
@@ -62,82 +63,63 @@ toyDir = rootDir </> "Examples/IC/Toy/toyex"
 toy1 :: IO ()
 toy1 = do
   str <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
-    (fmd,tdir) <- read rep
-    --(test,test2) <- read tdir
-    -- Store something into b
-    -- Print b
-    --tmp <- showInc tdir
-    --tmp <- showInc rep
-    return "Win"
+    (_,Toy1_d_inner a b) <- read rep
+    (fmd,(Text binit,bmd)) <- read b
+    tryWrite b (fmd,(Text $ B.pack "B declares victory",bmd))
+    (fmd,(Text binit,bmd)) <- read b -- If you do not read, binit doesn't update
+    return $ show binit
   putStrLn str
   
 -- Tests variables escaping transactions - No change
 toy2 :: IO ()
 toy2 = do
-  a <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
-    (fmd,tdir) <- read rep
-    --tmp <- showInc tdir
-    --tmp <- showInc rep
-    return rep
-  -- Arbitrary stuff can happen here
+  (a,aval) <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+    (fmd,Toy1_d_inner a b) <- read rep
+    (fmd,(Text ainit,bmd)) <- read a
+    return (a,show ainit)
+  putStrLn aval
+  putStrLn "Arbitrary things could happen here (but don't)"
   str <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
-    tmp <- showInc a
-    return tmp
+    (fmd,(Text afinal,bmd)) <- read a
+    return $ show afinal
   putStrLn str
 
 -- Tests variables escaping transactions - Change
 toy3 :: IO ()
 toy3 = do
-  a <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
-    (fmd,tdir) <- read rep
-    --tmp <- showInc tdir
-    --tmp <- showInc rep
-    return rep
-  -- Make arbitrary stuff happen here
+  (a,aval) <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+         (fmd,Toy1_d_inner a b) <- read rep
+         (fmd,(Text ainit,bmd)) <- read a
+         return (a,show ainit)
+  putStrLn aval
+  putStrLn "Arbitrary things do happen here"
+  val <- randomNum
+  atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+         (fmd,(_,bmd)) <- read a
+         tryWrite a (fmd,((Text $ B.pack $ show val),bmd))
   str <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
-    tmp <- showInc a
-    return tmp
+         (fmd,(Text afinal,bmd)) <- read a
+         return $ show afinal
   putStrLn str
 
--- Transactional Stuff
+-- Tests variables escaping transactions - Change, without forcing
+toy4 :: IO ()
+toy4 = do
+  a <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+         (fmd,Toy1_d_inner a b) <- read rep
+         return a
+  putStrLn "Arbitrary things do happen here"
+  val <- randomNum
+  atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+         (fmd,Toy1_d_inner c d) <- read rep
+         (fmd,(_,bmd)) <- read c
+         tryWrite c (fmd,((Text $ B.pack $ show val),bmd))
+  str <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+         (fmd,(Text afinal,bmd)) <- read a
+         return $ show afinal
+  putStrLn str
 
--- tTrans :: String -> String -> Int -> IO ()
--- tTrans from to amount = do
---   (status1,status2) <- atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
---     status1 <- tWithHelp from amount rep
---     status2 <- tWithHelp to (- amount) rep
---     return (status1,status2)                                                                      
---   putStrLn status1
---   putStrLn status2
-
--- tWith :: String -> Int -> IO ()
--- tWith acc amount = do
---   status <- atomically () accountDir (tWithHelp acc amount)
---   putStrLn status
-
--- tWith2 :: String -> String -> Int -> IO ()
--- tWith2 acc1 acc2 amount = do
---   status <- atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
---     status <- orElse (tWithHelp acc1 amount rep) (tWithHelp acc2 amount rep)
---     return status
---   putStrLn status
-
--- tDepo acc amount = tWith acc (- amount)
-
--- Transactional Helpers
-
--- tWithHelp :: String -> Int -> Account_d TxVarFS -> FTM TxVarFS String
--- tWithHelp acc amount rep =
---   do
---     (main_fmd, accdir) <- read rep
---     case lookup acc $ accs accdir of
---       Just account -> do
---         (accfmd,(Account bal,(bmd,accimd)))  <- read account
---         check (amount < 0 || bal >= amount)
---         message <- writeOrElse account (accfmd,(Account (bal - amount),(bmd,accimd)))
---                    (acc ++ " had " ++ show bal ++ " and changed by " ++ show (- amount)) (return . show)
---         return message
---       _ -> return "Failure: The account does not exist"
+-- Helpers
 
 check :: Bool -> FTM TxVarFS ()
 check True = return ()
@@ -148,9 +130,13 @@ forever act = do
  act
  forever act
 
+randomNum :: IO Int
+randomNum = do
+  getStdRandom $ randomR (1,100)
+
 randomDelay :: IO ()
 randomDelay = do
- waitTime <- getStdRandom (randomR (1000000, 10000000))
+ waitTime <- getStdRandom $ randomR (1000000, 10000000)
  threadDelay waitTime
 
 --
