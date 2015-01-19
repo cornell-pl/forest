@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.IC.Beautiful.Account where
+module Examples.IC.Toy.Toy where
 
 import System.Random
 

@@ -22,6 +22,7 @@ import Language.Pads.CoreBaseTypes
 import Control.Monad.Lazy
 import Control.Monad.Trans
 import Data.DeepTypeable
+import Data.ByteString.Char8
 
 import Data.IORef
 
@@ -81,6 +82,9 @@ instance (Display l inc r m (ForestFSThunk fs Inside Forest_err)) => Display l i
 		sinfo <- displaysPrec l inc r m (fileInfo fmd) (')':rest)
 		serrs <- displaysPrec l inc r m (errors fmd) (' ':sinfo)
 		return $ "(Forest_md " ++ serrs
+		
+instance Layer l inc r m => Display l inc r m ByteString where
+	displaysPrec l inc r m bstr rest = return $ show bstr ++ rest
 
 instance Layer l inc r m => Display l inc r m FileInfo where
 	displaysPrec l inc r m i rest = return $ show i ++ rest

@@ -61,7 +61,9 @@ runTest = do
 			Just links_dir -> do
 				(links_fmd,links_uni) <- read links_dir
 		
-				errors <- writeOrElse test_dir (test_fmd,test_uni) "" (return . show)
+--				links_uni' = links_uni { symLinks = List.insert ("b.txt",) (symLinks lists_uni) }
+		
+				errors <- writeOrElse links_dir (links_fmd,links_uni) "" (return . show)
 		
 				return errors
 			Nothing -> return "no links"

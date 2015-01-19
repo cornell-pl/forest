@@ -35,7 +35,7 @@ $( derive makeMData ''ErrMsg )
 $( derive makeMData ''ErrInfo )
 $( derive makeMDataAbstract ''Pos )
 $( derive makeMDataAbstract ''Loc )
-$( derive makeMDataAbstract ''Text )
+$( derive makeMData ''Text )
 $( derive makeMData ''Binary )
 
 $( derive makeDeepTypeable ''Base_md )
@@ -43,7 +43,7 @@ $( derive makeDeepTypeable ''ErrMsg )
 $( derive makeDeepTypeable ''ErrInfo )
 $( derive makeDeepTypeableAbstract ''Pos )
 $( derive makeDeepTypeableAbstract ''Loc )
-$( derive makeDeepTypeableAbstract ''Text )
+$( derive makeDeepTypeable ''Text )
 $( derive makeDeepTypeable ''Binary )
 
 instance Memo ByteString where
