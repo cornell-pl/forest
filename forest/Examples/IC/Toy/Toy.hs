@@ -40,10 +40,15 @@ import Language.Forest.IC hiding (writeFile)
 -- $( derive makeDeepTypeable ''Account )
 -- $( derive makeDeepTypeable ''Account_imd )
 
+-- TextFile = File Text
 [iforest|
-	type Toy_d = Directory {
+	type Toy1_d = Directory {
 		a is "a" :: TextFile
               , b is "b" :: TextFile
+	} 
+	type Toy2_d = Directory {
+		c is "a" :: TextFile
+              , d is "a" :: TextFile
 	} 
 |]
 
@@ -53,14 +58,46 @@ rootDir = "."
 
 toyDir = rootDir </> "Examples/IC/Toy/toyex"
 
+-- Tests storing to a variable then printing it
 toy1 :: IO ()
 toy1 = do
-  a <- atomically () toyDir $ \ (rep :: Toy_d TxVarFS) -> do
+  str <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+    (fmd,tdir) <- read rep
+    --(test,test2) <- read tdir
+    -- Store something into b
+    -- Print b
+    --tmp <- showInc tdir
+    --tmp <- showInc rep
+    return "Win"
+  putStrLn str
+  
+-- Tests variables escaping transactions - No change
+toy2 :: IO ()
+toy2 = do
+  a <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
     (fmd,tdir) <- read rep
     --tmp <- showInc tdir
-    tmp <- showInc rep
-    return "tst"
-  putStrLn a
+    --tmp <- showInc rep
+    return rep
+  -- Arbitrary stuff can happen here
+  str <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+    tmp <- showInc a
+    return tmp
+  putStrLn str
+
+-- Tests variables escaping transactions - Change
+toy3 :: IO ()
+toy3 = do
+  a <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+    (fmd,tdir) <- read rep
+    --tmp <- showInc tdir
+    --tmp <- showInc rep
+    return rep
+  -- Make arbitrary stuff happen here
+  str <- atomically () toyDir $ \ (rep :: Toy1_d TxVarFS) -> do
+    tmp <- showInc a
+    return tmp
+  putStrLn str
 
 -- Transactional Stuff
 
