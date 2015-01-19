@@ -8,7 +8,7 @@ module Language.Forest.IC.FS.TxVarFS where
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Cmd
-import Control.Exception
+import Control.Exception as Exception
 import Data.Strict.List
 import Unsafe.Coerce
 import Language.Forest.IC.ValueDelta
@@ -19,6 +19,7 @@ import Data.Foldable as Foldable
 import Data.Concurrent.Deque.Class as Queue
 import Data.Concurrent.Deque.Reference.DequeInstance
 import qualified Control.Concurrent.Map as CMap
+import System.Posix.Files
 
 import Language.Forest.FS.FSRep
 import Control.Applicative
@@ -176,7 +177,10 @@ instance FSRep TxVarFS where
 	-- writes come from manifests only, that have already canonized the paths
 	deletePath path = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Rem path)
 	writeFile path ondisk = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add path ondisk)
-	writeDir path = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add path path) --XXX:revise this...
+	writeDir path = do
+		ondisk <- tempPath
+		forestIO $ createDirectory ondisk
+		modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Add path ondisk)
 	writeLink path linkpath = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (AddLink path linkpath)
 	writePathMD path ondisk = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (ChgAttrs path ondisk)
 	
@@ -189,12 +193,12 @@ instance FSRep TxVarFS where
 	-- reads from the FS or from the modification log
 	pathInTree path TxVarFSTree = do
 		-- canonize the fullpath for reads
-		canpath <- canonalizePathTxVarFS path
+		canpath <- canonalizeDirectoryInTree path TxVarFSTree
 		-- mark the path as read
 		putTxVarFSRead canpath
-		(reads,td) <- getTxVarFSChanges
-		let td' = focusFSTreeDeltaByRelativePathMay td canpath
-		case onDiskWriteMay td' of
+		(_,td) <- getTxVarFSChanges
+		let path_td = focusFSTreeDeltaByRelativePathMay td canpath
+		case onDiskWriteMay path_td of
 			Nothing -> do return canpath
 			Just ondisk -> return ondisk
 	pathInTree path VirtualTxVarFSTree = do
@@ -204,12 +208,38 @@ instance FSRep TxVarFS where
 		return result
 		
 	stepPathInTree _ path rel = return $ path </> rel
+	
+	getDirectoryContentsInTree dir _ = getDirectoryContentsTxVarFS dir
+		
+	doesDirectoryExistInTree path _ = doesExistTxVarFS doesDirectoryExist path
+	doesFileExistInTree path _ = doesExistTxVarFS doesFileExist path
+	doesExistInTree path _ = doesExistTxVarFS (\path -> doesDirectoryExist path >>= \isDir -> if isDir then return True else doesFileExist path) path
+	
 	canonalizePathWithTree path _ = canonalizePathTxVarFS path
+
+getDirectoryContentsTxVarFS :: FilePath -> ForestM TxVarFS [FileName]
+getDirectoryContentsTxVarFS path = do
+	canpath <- canonalizeDirectoryInTree path TxVarFSTree
+	putTxVarFSRead canpath
+	(_,td) <- getTxVarFSChanges
+	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
+	xs <- forestIO $ getContentsFSTreeDeltaNodeMay canpath path_td
+	return xs
+
+doesExistTxVarFS :: (FilePath -> IO Bool) -> FilePath -> ForestM TxVarFS Bool
+doesExistTxVarFS test path = do
+	canpath <- canonalizeDirectoryInTree path TxVarFSTree
+	putTxVarFSRead canpath
+	(_,td) <- getTxVarFSChanges
+	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
+	case path_td of
+		Just (FSTreeNew _ _ diskpath) -> forestIO $ test diskpath
+		otherwise -> forestIO $ test canpath
 
 -- canonalizes a path, taking into account the buffered FSTreeDelta and logging reads of followed symlinks
 canonalizePathTxVarFS :: FilePath -> ForestM TxVarFS FilePath
 canonalizePathTxVarFS path = do
-	norm <- normalisePathTxVarFS path
+	norm <- forestIO $ liftM normalise $ absolutePath path
 	let dirs = splitDirectories norm
 	follow "" dirs
   where
@@ -221,19 +251,27 @@ canonalizePathTxVarFS path = do
 		let rootdir = root </> dir
 		let td' = focusFSTreeDeltaByRelativePathMay td rootdir
 		case td' of
-			Just (FSTreeNewLink link) -> do
+			Just (FSTreeNewLink link _) -> do -- follow buffered links
 				-- mark the symbolic link as read
 				putTxVarFSRead rootdir
-				canLink <- canonalizePathTxVarFS link
-				-- make sure that the link that we follow is an asbolute path; in case it already is, then this performs the identity, e.g., "/a" </> "/b" = "/b"
-				follow (root </> canLink) dirs
-			otherwise -> follow rootdir dirs
-
-normalisePathTxVarFS :: FilePath -> ForestM TxVarFS FilePath
-normalisePathTxVarFS path = do
-	if isRelative path
-		then liftM (normalise . (</> path)) (forestIO getCurrentDirectory)
-		else return $ normalise path
+				canLink <- canonalizePathTxVarFS (root </> link)
+				follow canLink dirs
+			otherwise -> do -- follow FS links
+				e <- forestIO $ Exception.try $ liftM isSymbolicLink (getSymbolicLinkStatus rootdir)
+				case e of
+					Left (e::SomeException) -> follow rootdir dirs
+					Right isLink -> do
+						if isLink
+							then do
+								-- mark the symbolic link as read
+								putTxVarFSRead rootdir
+								e <- forestIO $ Exception.try $ readSymbolicLink rootdir
+								case e of
+									Left (e::SomeException) -> follow rootdir dirs
+									Right p -> do
+										canLink <- canonalizePathTxVarFS (root </> p)
+										follow canLink dirs
+							else follow rootdir dirs
 
 -- ** Incrementality
 
@@ -353,16 +391,21 @@ readTxVarFS rep = Inc.getOutside (to iso_rep_thunk rep)
 writeOrElseTxVarFS :: FTK TxVarFS args rep content => rep -> content -> b -> ([Message] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS rep content b f = do
 	let t = to iso_rep_thunk rep
-	old_fsversion <- forestM getFSVersionTxVarFS
+	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
+	old_fslog <- forestM $ forestIO $ readIORef fslog_ref
 	set t content -- automatically increments the FSVersion
 	(args :: ForestIs TxVarFS args) <- forestM $ getFTVArgs rep
 	mani <- zmanifest' (Proxy :: Proxy args) args rep
+	-- we need to store the errors to the (buffered) FS before validating
+	forestM $ storeManifest mani
+	forestM $ forestIO $ putStrLn "Manifest!"
+	forestM $ forestIO $ print mani
 	errors <- forestM $ manifestErrors mani
 	if List.null errors
-		then do
-			forestM $ storeManifest mani
-			return b
+		then return b
 		else do
+			-- rollback the modifications
+			forestM $ forestIO $ writeIORef fslog_ref old_fslog
 			forestM $ setFSVersionTxVarFS old_fsversion
 			f errors
 
@@ -390,7 +433,7 @@ atomicallyTxVarFS args path stm = initializeTxVarFS try where
 				inL $ liftIO $ Lock.acquire lck
 				resetTxVarFS try
 			Nothing -> resetTxVarFS try
-	catchSome (e::SomeException) = debug "SomeException" $ do
+	catchSome (e::SomeException) = debug ("SomeException "++show e) $ do
 		-- we still need to validate on exceptions, otherwise repair incrementally; transaction-local allocations still get committed
 		success <- validateAndCommitTopTxVarFS False
 		if success
@@ -658,7 +701,7 @@ commitTxVarFSLog starttime doWrites txlog = do
 	-- commits filesystem modifications
 	wakes <- forestIO $ commitFSTreeDelta "" writes
 	-- removes temporary files
-	forestIO $ Foldable.mapM_ removeFile tmps
+	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
 
 globalLock :: Lock

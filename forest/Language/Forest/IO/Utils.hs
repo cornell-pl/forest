@@ -31,6 +31,13 @@ import System.Random
 import Data.Set as Set
 import Data.Proxy
 
+getDirectoryContentsTry :: FilePath -> IO [FilePath]
+getDirectoryContentsTry path = do
+	e <- CE.try $ getDirectoryContents path
+	case e of
+		Left (e::CE.SomeException) -> return []
+		Right contents -> return contents
+
 type FileName = FilePath
 
 prodM :: Monad m => m a -> m b -> m (a,b)
@@ -93,57 +100,27 @@ mapFromJust (Just x:xs) = x : mapFromJust xs
 isParentPathOf :: FilePath -> FilePath -> Bool
 isParentPathOf = isPrefixOf
 
+absolutePath :: FilePath -> IO FilePath
+absolutePath path = if isRelative path then liftM (</> path) getCurrentDirectory else return path
+
 commonParentPath :: FilePath -> FilePath -> FilePath
 commonParentPath path1 path2 = joinPath $ List.map fst $ takeWhile (uncurry (==)) $ zip (splitDirectories path1) (splitDirectories path2)
 
-data GL = GL String
-
-class Matching a where
-	getMatchingFiles :: FilePath -> a -> IO [FilePath]
-	defaultMatch :: a -> [FilePath]
-
-instance Matching [FilePath] where
-	getMatchingFiles _ files = return files
-	defaultMatch files = files
-
-instance Matching FilePath where
-	getMatchingFiles _ file = return [file]
-	defaultMatch file = [file]
-
-instance Matching RE where
-	getMatchingFiles = getMatchingFilesRE
-	defaultMatch re = []
-
-instance Matching GL where
-	getMatchingFiles = getMatchingFilesGlob
-	defaultMatch gl = []
-
-getMatchingFilesRE :: FilePath -> RE -> IO [FilePath]
-getMatchingFilesRE path re = do 
-	files <- getDirectoryContents path
-	let matches = (filterByRegex re files)
-	return matches
+data GL = GL String deriving (Eq,Show)
 
 filterByRegex (RE regStr) candidates = 
   let re = mkRegexWithOpts ('^':regStr++"$") True True
       matchOne str = isJust (matchRegex re str)
   in Prelude.filter matchOne candidates
 
-getMatchingFilesGlob :: FilePath -> GL -> IO [FilePath]
-getMatchingFilesGlob path (GL glob) = do 
-	let gl = compile glob
-	files <- getDirectoryContents path
-	let matches = (Prelude.filter (match gl) files)
-	return matches
-
 compFilter f1 f2 item =  f1 item && f2 item 
 
-getMatchingFilesGlob' :: FilePath -> GL -> IO [FilePath]
-getMatchingFilesGlob' path (GL glob) = do 
-  { let gl = compile glob
-  ; ([matches], unmatches) <- globDir [gl] path
-  ; return matches
-  }
+--getMatchingFilesGlob' :: FilePath -> GL -> IO [FilePath]
+--getMatchingFilesGlob' path (GL glob) = do 
+--  { let gl = compile glob
+--  ; ([matches], unmatches) <- globDir [gl] path
+--  ; return matches
+--  }
 
 infixl 6 ><
 (><) :: (a -> c) -> (b -> d) -> (a,b) -> (c,d)

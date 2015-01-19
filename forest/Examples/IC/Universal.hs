@@ -22,6 +22,7 @@ import qualified Language.Pads.Padsc as Pads
 import Control.Monad.Incremental.Display
 import Data.WithClass.MGenerics.Text
 import Data.List as List
+import Safe
 
 [iforest| type Universal_d = Directory 
              { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
@@ -32,8 +33,8 @@ import Data.List as List
 
 -- [iforest| type Universal_zip = Gzip (Tar Universal_d) |]
 
-generateTestFolder :: IO ()
-generateTestFolder = do
+generateTest :: IO ()
+generateTest = do
 	createDirectoryIfMissing True "test"
 	setCurrentDirectory "test"
 	
@@ -55,11 +56,15 @@ runTest = do
 		
 		(test_fmd,test_uni) <- read test_dir
 		
-		let links_dir = fromJust $ List.lookup "links" (directories test_uni)
-		(links_fmd,links_uni) <- read links_dir
+		let mb_links_dir = List.lookup "links" (directories test_uni)
+		errors <- case mb_links_dir of
+			Just links_dir -> do
+				(links_fmd,links_uni) <- read links_dir
 		
-		errors <- writeOrElse links_dir (links_fmd,links_uni) "" (return . show)
+				errors <- writeOrElse test_dir (test_fmd,test_uni) "" (return . show)
 		
+				return errors
+			Nothing -> return "no links"
 		return (original_str,errors)
 	putStrLn original_str
 	putStrLn errors

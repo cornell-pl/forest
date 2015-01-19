@@ -217,13 +217,13 @@ doManifestMaybe tree (rep_t,md_t) manifestContent defaultContent man = do
 			let man1 = addTestToManifest testm man
 			return $ removePathFromManifest canpath path man1 -- removes the path
 
-doManifestFocus :: (ForestMD fs md,Matching a) =>
+doManifestFocus :: (ForestMD fs md,Matching fs a) =>
 	FilePath -> a -> FSTree fs -> (rep,md)
 	-> ((rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 	let testm = do
-		files <- Pure.getMatchingFilesInTree parentPath matching tree
+		files <- getMatchingFilesInTree parentPath matching tree
 		path <- forestO $ liftM (fullpath . fileInfo) $ get_fmd_header md
 		fmd <- forestO $ get_fmd_header md
 		let name = makeRelative parentPath path
@@ -233,13 +233,13 @@ doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 	let man1 = addTestToManifest testm man
 	manifestUnder dta man1
 
-doManifestSimple :: (Typeable imd',ForestMD fs imd',Eq imd',Matching a,md' ~ ForestFSThunkI fs imd') =>
+doManifestSimple :: (Typeable imd',ForestMD fs imd',Eq imd',Matching fs a,md' ~ ForestFSThunkI fs imd') =>
 	FilePath -> ForestI fs a -> FSTree fs -> (rep',md')
 	-> ((rep',md') -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestSimple parentPath matching tree dta manifestUnder man = inside matching >>= \m -> doManifestFocus parentPath m tree dta manifestUnder man
 
-doManifestSimpleWithConstraint :: (Typeable imd',ForestMD fs imd',Eq imd',Matching a,md' ~ ForestFSThunkI fs imd') =>
+doManifestSimpleWithConstraint :: (Typeable imd',ForestMD fs imd',Eq imd',Matching fs a,md' ~ ForestFSThunkI fs imd') =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> ((rep',md') -> ForestI fs Bool)
 	-> (rep',(md',ForestICThunkI fs Bool))
@@ -249,7 +249,7 @@ doManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder =
 	inside matching >>= \m -> doManifestFocus parentPath m tree dta' manifestUnder man1
 
 -- to enforce consistency while allowing the list to change, we delete all files in the directory that do not match the values
-doManifestCompound :: (ForestMD fs md',Matching a,imd ~ (md',ForestFSThunkI fs FileInfo)) =>
+doManifestCompound :: (ForestMD fs md',Matching fs a,imd ~ (md',ForestFSThunkI fs FileInfo)) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')]) -> (container_md -> [(FilePath,imd)])
 	-> (container_rep,container_md)
@@ -257,7 +257,7 @@ doManifestCompound :: (ForestMD fs md',Matching a,imd ~ (md',ForestFSThunkI fs F
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestCompound parentPath matchingM tree toListRep toListMd (c_rep,c_md) manifestUnder man = do
 	matching <- inside matchingM
-	old_files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
+	old_files <- forestM $ getMatchingFilesInTree parentPath matching tree
 	let reps' = map snd $ toListRep c_rep
 	let (new_files,imds) = unzip $ toListMd c_md
 	let (mds',fileinfos_t) = unzip imds
@@ -269,7 +269,7 @@ doManifestCompound parentPath matchingM tree toListRep toListMd (c_rep,c_md) man
 	let manifestEach ((n,info_t),dta') man0M = man0M >>= doManifestFocus parentPath n tree dta' (manifestUnder n info_t)
 	foldr manifestEach (return man1) (zip (zip new_files fileinfos_t) dtas')
 
-doManifestCompoundWithConstraint :: (ForestMD fs md',Matching a,imd ~ (md',(ForestFSThunkI fs FileInfo,ForestICThunkI fs Bool))) =>
+doManifestCompoundWithConstraint :: (ForestMD fs md',Matching fs a,imd ~ (md',(ForestFSThunkI fs FileInfo,ForestICThunkI fs Bool))) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')]) -> (container_md -> [(FilePath,imd)])
 	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
@@ -278,7 +278,7 @@ doManifestCompoundWithConstraint :: (ForestMD fs md',Matching a,imd ~ (md',(Fore
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestCompoundWithConstraint parentPath matchingM tree toListRep toListMd pred (c_rep,c_md) manifestUnder man = do
 	matching <- inside matchingM
-	old_files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
+	old_files <- forestM $ getMatchingFilesInTree parentPath matching tree
 	
 	let reps' = map snd $ toListRep c_rep
 	let (new_files,imds) = unzip $ toListMd c_md

@@ -56,9 +56,9 @@ doDefaultSymLink tgt path = do
 	let md' = md { fileInfo = (fileInfo md) { symLink = Just tgt } }
 	return (md',cleanBasePD)
 	
-doDefaultFocus :: (FSRep fs,Matching a) => rep -> FilePath -> a -> (FilePath -> ForestM fs md) -> ForestM fs md
+doDefaultFocus :: (FSRep fs,Matching fs a) => rep -> FilePath -> a -> (FilePath -> ForestM fs md) -> ForestM fs md
 doDefaultFocus rep path matching doFocus = do
-	let files = defaultMatch matching
+	files <- defaultMatch Proxy matching
 	let file = pickFile files
 	doFocus (path </> file) 
 

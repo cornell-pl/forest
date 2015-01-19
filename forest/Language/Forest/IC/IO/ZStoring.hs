@@ -128,7 +128,8 @@ doZManifestArchive archTy tree rep_t manifestContents man = do
 		return $ status1 `mappend` status2
 	let man2 = addTestToManifest testm man -- errors in the metadata must be consistent
 	
-	let man3 = addFileToManifest' canpath path archiveFile man2
+	abspath <- forestM $ forestIO $ absolutePath path
+	let man3 = addFileToManifest' canpath abspath archiveFile man2
 	return $ mergeManifests man1 man3
 
 doZManifestSymLink :: ICRep fs =>
@@ -191,35 +192,38 @@ doZManifestMaybe tree rep_t manifestContent man = do
 			let man1 = addTestToManifest testm man
 			forestM $ removePathFromManifestInTree path tree man1 -- removes the path
 
-doZManifestFocus :: (ForestMD fs rep,Matching a) =>
+doZManifestFocus :: (ForestMD fs rep,Matching fs a) =>
 	FilePath -> a -> FSTree fs -> rep
 	-> (rep -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestFocus parentPath matching tree rep manifestUnder man = do
 	
-	-- outside the test so that they are performed over the current tree
-	files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
-	path <- liftM (fullpath . fileInfo) $ get_fmd_header rep
 	fmd <- get_fmd_header rep
-	canPath <- forestM $ canonalizePathWithTree path tree
-	canParentPath <- forestM $ canonalizePathWithTree parentPath tree
-	
-	let name = makeRelative canParentPath canPath
+	let path = fullpath $ fileInfo fmd
+	let name = makeRelative parentPath path
 	isValid <- isValidMD fmd
 	
-	let testm = do
-		-- the metadata path must be consistent with the matching expression
-		-- implication because the value may be invalid due to other errors
-		return $ boolStatus "inconsistent matching expression and focus path" $ isValid <= (length files == 1) && (isParentPathOf canParentPath canPath)
+	let testm = testFocus isValid parentPath name (\file tree -> return True) [name]
 	manifestUnder rep $ addTestToManifest testm man
 
-doZManifestSimple :: (ForestMD fs rep,Matching a) =>
+testFocus :: (FSRep fs,Matching fs a) => Bool -> FilePath -> a -> (FileName -> FSTree fs -> ForestM fs Bool) -> [FileName] -> ForestM fs Status
+testFocus sameSize root matching pred new_files = do
+	tree <- latestTree
+	files <- filterM (flip pred tree) =<< getMatchingFilesInTree root matching tree
+	let testFile (file,new_file) = do
+		canpath <- canonalizePathWithTree (root </> file) tree
+		new_canpath <- canonalizePathWithTree (root </> new_file) tree
+		return $ canpath == new_canpath
+	same <- liftM and $ mapM testFile $ zip (List.sort new_files) (List.sort files)
+	return $ boolStatus ("inconsistent matching expression and focus path " ++ show sameSize ++" "++ root ++" "++ show matching ++" "++ show new_files ++" "++ show files) $ (sameSize <= (length files == length new_files)) && same
+
+doZManifestSimple :: (ForestMD fs rep,Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs -> rep
 	-> (rep -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestSimple parentPath matching tree dta manifestUnder man = inside matching >>= \m -> doZManifestFocus parentPath m tree dta manifestUnder man
 
-doZManifestSimpleWithConstraint :: (ForestMD fs rep,Matching a) =>
+doZManifestSimpleWithConstraint :: (ForestMD fs rep,Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (rep -> ForestI fs Bool)
 	-> rep
@@ -229,7 +233,7 @@ doZManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder 
 	inside matching >>= \m -> doZManifestFocus parentPath m tree dta' manifestUnder man1
 
 -- to enforce consistency while allowing the list to change, we delete all files in the directory that do not match the values
-doZManifestCompound :: (Typeable container_rep,Eq container_rep,ForestMD fs rep',Matching a) =>
+doZManifestCompound :: (Typeable container_rep,Eq container_rep,ForestMD fs rep',Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')])
 	-> container_rep
@@ -237,7 +241,7 @@ doZManifestCompound :: (Typeable container_rep,Eq container_rep,ForestMD fs rep'
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestCompound parentPath matchingM tree toListRep c_rep manifestUnder man = do
 	matching <- inside matchingM
-	old_files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
+	old_files <- forestM $ getMatchingFilesInTree parentPath matching tree
 	let (new_files,reps') = unzip $ toListRep c_rep
 	repinfos' <- inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) reps'
 	
@@ -246,9 +250,11 @@ doZManifestCompound parentPath matchingM tree toListRep c_rep manifestUnder man 
 	
 	let manifestEach (n,(rep',fileInfo_t)) man0M = do
 		man0M >>= doZManifestFocus parentPath n tree rep' (manifestUnder n fileInfo_t)
-	foldr manifestEach (return man1) (zip new_files repinfos')
+	let testm = testFocus True parentPath matching (\file tree -> return True) new_files
+	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_files repinfos')
+	
 
-doZManifestCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,ForestMD fs rep',Matching a) =>
+doZManifestCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,ForestMD fs rep',Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')])
 	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
@@ -257,7 +263,7 @@ doZManifestCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,Fo
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestCompoundWithConstraint parentPath matchingM tree toListRep pred c_rep manifestUnder man = do
 	matching <- inside matchingM
-	old_files <- forestM $ Pure.getMatchingFilesInTree parentPath matching tree
+	old_files <- forestM $ getMatchingFilesInTree parentPath matching tree
 	
 	let (new_files,reps') = unzip $ toListRep c_rep
 	repinfos' <- inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) reps'
@@ -272,6 +278,7 @@ doZManifestCompoundWithConstraint parentPath matchingM tree toListRep pred c_rep
 	
 	let manifestEach (n,(rep',fileInfo_t)) man0M = man0M >>= doZManifestConstraint tree (Prelude.const $ pred n fileInfo_t) rep'
 		(\rep' man -> doZManifestFocus parentPath n tree rep' (manifestUnder n fileInfo_t) man)
-	foldr manifestEach (return man1) (zip new_files repinfos')
+	let testm = testFocus True parentPath matching (\file tree -> forestO $ inside $ getRelForestMDInTree parentPath tree file >>= ref . fileInfo >>= pred file) new_files
+	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_files repinfos')
 
 

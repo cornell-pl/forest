@@ -270,7 +270,7 @@ doZLoadDeltaMaybe mpath (rep_thunk,getMD) path' oldtree df tree' dv load loadD =
 
 -- note that in the implementation we do not incrementalize the path-focusing expressions as they (typically) depend on the FS
 -- changes the current path, the original data already corresponds to the focused path
-doZLoadDeltaFocus :: (Typeable irep,Eq irep,ForestRep rep (ForestFSThunkI fs irep),Typeable rep,StableMD fs rep,Eq rep,Matching a,ForestMD fs rep) =>
+doZLoadDeltaFocus :: (Typeable irep,Eq irep,ForestRep rep (ForestFSThunkI fs irep),Typeable rep,StableMD fs rep,Eq rep,Matching fs a,ForestMD fs rep) =>
 	ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs rep
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep)
@@ -279,7 +279,7 @@ doZLoadDeltaFocus :: (Typeable irep,Eq irep,ForestRep rep (ForestFSThunkI fs ire
 doZLoadDeltaFocus mpath path' olddata matching oldtree df tree' dv load loadD = do
 	let staticLoad getMD = doZLoadFocus (fsTreeDeltaPathFilter df path') path' matching tree' getMD load
 	let deltaLoad (rep,getMD) = do
-		files' <- forestM $ Pure.getMatchingFilesInTree path' matching tree'
+		files' <- forestM $ getMatchingFilesInTree path' matching tree'
 		let mcnewpath = get_fullpath rep -- the old (original) path has been canonalized. this DOES NOT evaluate the metadata thunk, to avoid compromising @skipUnevaluated@
 		case files' of
 			[file'] -> doZLoadDeltaNewPath mcnewpath path' file' oldtree df tree' $ \x y z -> loadD x y z dv
@@ -307,7 +307,7 @@ doZLoadDeltaNewPath moldpath path' file' oldtree df tree' loadD = debug ("doLoad
 	let newdf = focusFSTreeDeltaNodeMayByRelativePath df file' -- focusing the tree deltas is important for the skipping conditions to fire for unchanged branches of the FS
 	debug ("changed FSDelta: " ++ show newdf) $ loadD moldpath newpath' newdf -- load recursively
 
-doZLoadDeltaSimple :: (Typeable irep,Eq irep,ForestRep rep' (ForestFSThunkI fs irep),StableMD fs rep',ForestMD fs rep',Eq rep',Matching a,MData NoCtx (ForestO fs) rep') =>
+doZLoadDeltaSimple :: (Typeable irep,Eq irep,ForestRep rep' (ForestFSThunkI fs irep),StableMD fs rep',ForestMD fs rep',Eq rep',Matching fs a,MData NoCtx (ForestO fs) rep') =>
 	Lens dir_rep rep'
 	-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep')
@@ -320,7 +320,7 @@ doZLoadDeltaSimple lens mpath path' matchingM oldtree df tree' dv (dir_rep,getMD
 	direp <- doZLoadDeltaFocus mpath path' idata matching oldtree df tree' (mapValueDelta Proxy dv) load $ loadD idata 
 	return $ nonstableValueDelta $ liftSValueDelta direp
 
-doZLoadDeltaSimpleWithConstraint :: (Typeable irep,ForestMD fs rep',ForestMD fs irep,StableMD fs rep',ForestOutput fs ICThunk Inside,Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,MData NoCtx (ForestO fs) rep') =>
+doZLoadDeltaSimpleWithConstraint :: (Typeable irep,ForestMD fs rep',ForestMD fs irep,StableMD fs rep',ForestOutput fs ICThunk Inside,Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching fs a,MData NoCtx (ForestO fs) rep') =>
 	Lens dir_rep rep'
 	-> Bool -> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 	-> (rep' -> ForestI fs Bool)
@@ -334,7 +334,7 @@ doZLoadDeltaSimpleWithConstraint lens emptyDArgs mpath path' matchingM oldtree d
 	direp <- doZLoadDeltaConstraint emptyDArgs (mapValueDelta Proxy dv) idata pred $ \dv idata -> doZLoadDeltaFocus mpath path' idata matching oldtree df tree' dv load $ loadD idata 
 	return $ nonstableValueDelta $ liftSValueDelta direp
 
-doZLoadDeltaCompound :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
+doZLoadDeltaCompound :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching fs a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
 		Lens dir_rep container_rep' -> Iso container_rep' list_rep'
 		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
@@ -347,7 +347,7 @@ doZLoadDeltaCompound lens isoRep mpath path' matchingM oldtree df tree' dv (dir_
 	let oldreplist = to isoRep crep
 	let oldfiles = map fst oldreplist
 	let oldreps = map snd oldreplist
-	newfiles <- forestM $ Pure.getMatchingFilesInTree path matching tree'
+	newfiles <- forestM $ getMatchingFilesInTree path matching tree'
 	(newreps,noDeletions) <- forestM $ forestIO $ alignWithLookup newfiles oldfiles oldreps -- alignment by filename; newfiles first for the association list to be sorted by newfile positions
 	
 	-- load each file in the new tree (note that filtering is only done later)
@@ -392,7 +392,7 @@ doZLoadDeltaCompoundFile mpath path' file' (Just rep) oldtree df tree' dv load l
 	let (rep',repkind) = (applySValueDelta drep rep,valueDeltaKind drep `andSValueDeltaKinds` (valueDeltaKind dFileInfo))
 	return (Just (file',rep'),repkind)
 
-doZLoadDeltaCompoundWithConstraint :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',ForestOutput fs ICThunk Inside,Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
+doZLoadDeltaCompoundWithConstraint :: (Typeable rep',Typeable irep,StableMD fs rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',ForestOutput fs ICThunk Inside,Eq rep',Eq irep,ForestRep rep' (ForestFSThunkI fs irep),Matching fs a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
 		Lens dir_rep container_rep' -> Iso container_rep' list_rep'
 		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
@@ -406,7 +406,7 @@ doZLoadDeltaCompoundWithConstraint lens isoRep mpath path' matchingM oldtree df 
 	let oldreplist = to isoRep crep
 	let oldfiles = map fst oldreplist
 	let oldreps = map snd oldreplist
-	newfiles <- forestM $ Pure.getMatchingFilesInTree path matching tree'
+	newfiles <- forestM $ getMatchingFilesInTree path matching tree'
 	(newreps,noDeletions) <- forestM $ forestIO $ alignWithLookup newfiles oldfiles oldreps -- alignment by filename; newfiles first for the association list to be sorted by newfile positions
 	
 	-- load each file in the new tree (note that filtering is only done later)

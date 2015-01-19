@@ -52,6 +52,15 @@ data ManifestEntry =  ManifestEntry
          }  -- the two lists should have the same length
        deriving (Show,Eq,Data,Typeable)
 
+isLinkContent :: Content -> Bool
+isLinkContent (Link _) = True
+isLinkContent _ = False
+
+headContentMay :: [Content] -> Maybe Content
+headContentMay xs = case List.find isLinkContent xs of
+	Nothing -> headMay xs
+	Just link -> Just link
+
 type ManifestTable = Map FilePath ManifestEntry -- paths relative to pathRoot
 
 --should we store the manifest in a top-level thunk?
@@ -100,7 +109,6 @@ manifestErrors man = do
 
 -- | Validates a manifest against the current FSTree and returns a validated manifest
 -- it expects that the current FSTree is the result of applying the manifest changes to the old tree
--- conflicts only arise from trying to write different content to the same file?
 validateManifest :: FSRep fs => Manifest fs -> ForestM fs (Manifest fs)
 validateManifest man = do
 	entries' <- mapM (detectConflictInEntry (pathRoot man)) $ Map.toList (entries man)
@@ -108,32 +116,51 @@ validateManifest man = do
 	return $ man { entries = Map.fromList entries', tests = tests' }
 
 detectConflictInEntry :: FSRep fs => FilePath -> (FilePath,ManifestEntry) -> ForestM fs (FilePath,ManifestEntry)
-detectConflictInEntry pathRoot (dskpath,entry) = do
-	status' <- detectContentConflict pathRoot (zip (content entry) (sources entry))
-	return (dskpath,entry { status = status' })
+detectConflictInEntry pathRoot (dskpath,entry) = if (status entry == Valid)
+	then return (dskpath,entry)
+	else do
+		status' <- detectContentConflict pathRoot dskpath (zip (content entry) (sources entry))
+		return (dskpath,entry { status = status' })
 
-detectContentConflict :: FSRep fs => FilePath -> [(Content,FilePath)] -> ForestM fs Status
-detectContentConflict pathRoot content_fp = case content_fp of
+detectContentConflict :: FSRep fs => FilePath -> FilePath -> [(Content,FilePath)] -> ForestM fs Status
+detectContentConflict pathRoot rel content_fp = case content_fp of
 	[] ->  return Valid
 	[x] -> return Valid
 	(x:y:rest) -> do
-		cxy    <- detectPairConflict pathRoot x y
-		cyrest <- detectContentConflict pathRoot (y:rest)
+		cxy    <- detectPairConflict pathRoot rel x y
+		cyrest <- detectContentConflict pathRoot rel (y:rest)
 		return $ cxy `mappend` cyrest
 		
-detectPairConflict :: FSRep fs => FilePath -> (Content,FilePath) -> (Content,FilePath) -> ForestM fs Status
-detectPairConflict pathRoot (c1,s1) (c2,s2) = case (c1,c2) of
-	(Local fp1,Local fp2) -> do
+detectPairConflict :: FSRep fs => FilePath -> FilePath -> (Content,FilePath) -> (Content,FilePath) -> ForestM fs Status
+detectPairConflict pathRoot rel (c1,s1) (c2,s2) = do
+	let dir = takeDirectory (pathRoot </> rel)
+	let checkFiles fp1 fp2 = do
 		isDifferent <- forestIO $ fileIsDifferent fp1 fp2
 		if isDifferent
 			then return $ Invalid $ "File " ++ pathRoot </> s1 ++ " is in conflict with file " ++ pathRoot </> s2
 			else return Valid
-	(None,None) -> return Valid
-	(Link target1,Link target2) -> if target1 == target2
-		then return Valid
-		else return $ Invalid $ "Link " ++ target1 ++ " clashed with target " ++ target2
-	(Dir,Dir) -> return Valid   --- update this to manage conflicts with contained comprehensions
-	(t1,t2) -> return $ Invalid $ show t1 ++ " is in conflict with "  ++ show t2
+	case (c1,c2) of
+		(Local fp1,Local fp2) -> checkFiles fp1 fp2
+		(None,None) -> return Valid
+		(Link target1,Link target2) -> do
+			tree <- latestTree
+			dest1 <- canonalizePathWithTree (dir </> target1) tree
+			dest2 <- canonalizePathWithTree (dir </> target2) tree
+			if dest1 == dest2
+				then return Valid
+				else return $ Invalid $ "Link " ++ target1 ++ " clashed with target " ++ target2
+		(Dir,Dir) -> return Valid   --- update this to manage conflicts with contained comprehensions
+		(Local fp1,Link target2) -> do
+			tree <- latestTree
+			dest2 <- canonalizePathWithTree (dir </> target2) tree
+			fp2 <- pathInTree dest2 tree
+			checkFiles fp1 fp2
+		(Link target1,Local fp2) -> do
+			tree <- latestTree
+			dest1 <- canonalizePathWithTree (dir </> target1) tree
+			fp1 <- pathInTree dest1 tree
+			checkFiles fp1 fp2
+		otherwise -> return $ Invalid $ show c1 ++ " is in conflict with "  ++ show c2
 
 -- ** manifest storing
 
@@ -160,7 +187,7 @@ storeManifestAt new_root man = do
 storeManifestEntryAt :: FSRep fs => FilePath -> FilePath -> (FilePath,ManifestEntry) -> ForestM fs ()
 storeManifestEntryAt new_root ori_root (rel,e) = do 
 	let newpath = new_root </> rel
-	case headMay (content e) of
+	case headContentMay (content e) of
 		Just (Local tmpFile) -> FSRep.writeFile newpath tmpFile
 		Just (Link linkDest) -> writeLink newpath linkDest
 		Just Dir -> writeDir newpath
@@ -194,10 +221,16 @@ changeRootOfManifestEntry old_root new_root e = e { sources = map (\n -> makeRel
 boolStatus :: String -> Bool -> Status
 boolStatus msg b = if b then Valid else (Invalid msg)
 
+addManifestEntry :: FilePath -> (Status -> ManifestEntry) -> Manifest fs -> Manifest fs
+addManifestEntry path newEntry man = case Map.lookup path (entries man) of
+	Just oldEntry -> man { entries = Map.insert path (oldEntry `mappend` newEntry NotValidated) (entries man) }
+	Nothing -> man { entries = Map.insert path (newEntry Valid) (entries man) }
+
 addFileToManifestInTree :: FSRep fs => (FilePath -> content -> IO ()) -> FilePath -> FSTree fs -> content -> Manifest fs -> ForestM fs (Manifest fs)
 addFileToManifestInTree printContent path tree content man = do
 	canpath <- canonalizeDirectoryInTree path tree
-	addFileToManifest printContent canpath path content man
+	abspath <- forestIO $ absolutePath path
+	addFileToManifest printContent canpath abspath content man
 
 addFileToManifest :: FSRep fs => (FilePath -> content -> IO ()) -> FilePath -> FilePath -> content -> Manifest fs -> ForestM fs (Manifest fs)
 addFileToManifest printContent canpath path content man = do
@@ -206,37 +239,36 @@ addFileToManifest printContent canpath path content man = do
 		return $ addFileToManifest' canpath path tmpFile man
 
 addFileToManifest' :: FSRep fs => FilePath -> FilePath -> FilePath -> Manifest fs -> (Manifest fs)
-addFileToManifest' canpath path tmpFile man = {-debug ("addFileToManifest: "++show canpath ++" "++show path) $ -} if (isAbsolute canpath && isValid canpath)
-	then
-		let updEntry = ManifestEntry [Local tmpFile] [makeRelative (pathRoot man) path] NotValidated
-		    newEntry = ManifestEntry [Local tmpFile] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
-		in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
+addFileToManifest' canpath path tmpFile man = {-debug ("addFileToManifest: "++show canpath ++" "++show path ++" "++ show tmpFile) $ -} if (isAbsolute canpath && isValid canpath)
+	then 
+		let newEntry = ManifestEntry [Local tmpFile] [makeRelative (pathRoot man) path]
+		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
 	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
 
 addLinkToManifestInTree :: FSRep fs => FilePath -> FSTree fs -> FilePath -> Manifest fs -> ForestM fs (Manifest fs)
 addLinkToManifestInTree path tree linkPath man = do
 	canpath <- canonalizeDirectoryInTree path tree
-	return $ addLinkToManifest canpath path linkPath man
+	abspath <- forestIO $ absolutePath path
+	return $ addLinkToManifest canpath abspath linkPath man
 	
 addLinkToManifest :: FSRep fs => FilePath -> FilePath -> FilePath -> Manifest fs -> (Manifest fs)
-addLinkToManifest canpath path linkPath man = {-debug ("addLinkToManifest: "++show canpath ++" "++show path) $ -} if (isAbsolute canpath && isValid canpath)
+addLinkToManifest canpath path linkPath man = {-debug ("addLinkToManifest: "++show canpath ++" "++show path ++" "++ show linkPath) $ -} if (isAbsolute canpath && isValid canpath)
 	then
-		let updEntry = ManifestEntry [Link linkPath] [makeRelative (pathRoot man) path] NotValidated
-		    newEntry = ManifestEntry [Link linkPath] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
-		in  man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
+		let newEntry = ManifestEntry [Link linkPath] [makeRelative (pathRoot man) path]
+		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
 	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
 
 removePathFromManifestInTree :: FSRep fs => FilePath -> FSTree fs -> Manifest fs -> ForestM fs (Manifest fs)
 removePathFromManifestInTree path tree man = do
 	canpath <- canonalizeDirectoryInTree path tree
-	return $ removePathFromManifest canpath path man
+	abspath <- forestIO $ absolutePath path
+	return $ removePathFromManifest canpath abspath man
 
 removePathFromManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
 removePathFromManifest canpath path man = {-debug ("removePathFromManifest: "++show canpath ++" "++show path) $ -} if (isAbsolute canpath && isValid canpath)
 	then
-		let updEntry = ManifestEntry [None] [makeRelative (pathRoot man) path] NotValidated
-		    newEntry = ManifestEntry [None] [makeRelative (pathRoot man) path] Valid -- a single entry is always valid
-		in man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
+		let newEntry = ManifestEntry [None] [makeRelative (pathRoot man) path]
+		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
 	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
 
 addTestToManifest :: FSRep fs => ForestM fs Status -> Manifest fs -> Manifest fs
@@ -245,14 +277,14 @@ addTestToManifest testm man = man { tests = testm : tests man }
 addDirToManifestInTree :: FSRep fs => FilePath -> FSTree fs -> Manifest fs -> ForestM fs (Manifest fs)
 addDirToManifestInTree path tree man = do
 	canpath <- canonalizeDirectoryInTree path tree
-	return $ addDirToManifest canpath path man
+	abspath <- forestIO $ absolutePath path
+	return $ addDirToManifest canpath abspath man
 
 addDirToManifest :: FSRep fs => FilePath -> FilePath -> Manifest fs -> Manifest fs
 addDirToManifest canpath path man = {-debug ("addDirToManifest: "++show canpath ++" "++show path) $ -} if (isAbsolute canpath && isValid canpath)
 	then
-		let updEntry = ManifestEntry [Dir] [makeRelative (pathRoot man) path] NotValidated
-		    newEntry = ManifestEntry [Dir] [makeRelative (pathRoot man) path] Valid
-		in man { entries = Map.insertWith (\y x -> mappend x y) (makeRelative (pathRoot man) canpath) newEntry (entries man) }
+		let newEntry = ManifestEntry [Dir] [makeRelative (pathRoot man) path] 
+		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
 	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
 
 collectManifestErrors :: Manifest fs -> Status

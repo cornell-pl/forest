@@ -530,18 +530,9 @@ newtype Arg a = Arg a deriving Typeable
 defaultForest_mdWithErrors :: (FSRep fs) => Forest_err -> ForestM fs Forest_md
 defaultForest_mdWithErrors err = return $ Forest_md err forestdefault
 
-
 getForestMDInTree :: (FSRep fs) => FilePath -> FSTree fs -> ForestM fs (Forest_md)
 getForestMDInTree path tree = pathInTree path tree >>= getForestMD path
 
 getRelForestMDInTree :: (FSRep fs) => FilePath -> FSTree fs -> FilePath -> ForestM fs (Forest_md)
 getRelForestMDInTree path tree file = getForestMDInTree (path </> file) tree
-
-getMatchingFilesInTree :: (FSRep fs,Matching a) => FilePath -> a -> FSTree fs -> ForestM fs [FilePath]
-getMatchingFilesInTree path a tree = pathInTree path tree >>= forestIO . flip getMatchingFiles a
-
-getMatchingFilesInTreeM :: (FSRep fs,Matching a) => FilePath -> ForestM fs a -> FSTree fs -> ForestM fs [FilePath]
-getMatchingFilesInTreeM path matchingM tree = do
-	matching <- matchingM
-	getMatchingFilesInTree path matching tree
 

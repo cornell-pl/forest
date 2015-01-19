@@ -91,7 +91,7 @@ doLoadConstraint tree pred load = do -- note that constraints do not consider th
 	return (rep,md')
 
 -- changes the current path
-doLoadFocus :: (FSRep fs,Matching a,ForestMD md) => FilePath -> a -> FSTree fs -> GetForestMD fs -> (FilePath -> GetForestMD fs -> ForestM fs (rep,md)) -> ForestM fs (rep,md)
+doLoadFocus :: (FSRep fs,Matching fs a,ForestMD md) => FilePath -> a -> FSTree fs -> GetForestMD fs -> (FilePath -> GetForestMD fs -> ForestM fs (rep,md)) -> ForestM fs (rep,md)
 doLoadFocus path matching tree getMD load = do
 	files <- getMatchingFilesInTree path matching tree
 	case files of
@@ -130,20 +130,20 @@ doLoadMaybe path tree ifExists = do
 			return (Nothing,(fmd,Nothing))
 
 -- since the focus changes we need to compute the (eventually) previously loaded metadata of the parent node
-doLoadSimple :: (FSRep fs,Matching a,Data rep',ForestMD md') =>
+doLoadSimple :: (FSRep fs,Matching fs a,Data rep',ForestMD md') =>
 	FilePath -> a -> FSTree fs
 	-> (FilePath -> GetForestMD fs -> ForestM fs (rep',md'))
 	-> ForestM fs (rep',md')
 doLoadSimple path matching tree load = doLoadFocus path matching tree getForestMDInTree load
 
 -- since the focus changes we need to compute the (eventually) previously loaded metadata of the parent node
-doLoadSimpleWithConstraint :: (Eq md',FSRep fs,Matching a,Data rep',ForestMD md') =>
+doLoadSimpleWithConstraint :: (Eq md',FSRep fs,Matching fs a,Data rep',ForestMD md') =>
 	FilePath -> a -> FSTree fs -> ((rep',md') -> Bool)
 	-> (FilePath -> GetForestMD fs -> ForestM fs (rep',md'))
 	-> ForestM fs (rep',md')
 doLoadSimpleWithConstraint path matching tree pred load = doLoadConstraint tree pred $ doLoadFocus path matching tree getForestMDInTree load
 
-doLoadCompound :: (FSRep fs,Matching a,Data rep',ForestMD md') =>
+doLoadCompound :: (FSRep fs,Matching fs a,Data rep',ForestMD md') =>
 	FilePath -> a -> FSTree fs
 	-> ([(FilePath,rep')] -> container_rep) -> ([(FilePath,md')] -> container_md)
 	-> (FileName -> FileInfo -> FilePath -> GetForestMD fs -> ForestM fs (rep',md'))
@@ -160,7 +160,7 @@ doLoadCompound path matching tree buildContainerRep buildContainerMd load = debu
 	let mdlist = map (id >< snd) loadlist
 	return (buildContainerRep replist,buildContainerMd mdlist)
 
-doLoadCompoundWithConstraint :: (FSRep fs,Matching a,Data rep',ForestMD md') =>
+doLoadCompoundWithConstraint :: (FSRep fs,Matching fs a,Data rep',ForestMD md') =>
 	FilePath -> a -> FSTree fs
 	-> (FilePath -> FileInfo -> Bool)
 	-> ([(FilePath,rep')] -> container_rep) -> ([(FilePath,md')] -> container_md)

@@ -224,9 +224,9 @@ doZLoadConstraint tree pred load = do -- note that constraints do not consider t
 	return rep'
 
 -- changes the current path
-doZLoadFocus :: (Matching a,ForestMD fs rep) => FilePathFilter fs -> FilePath -> a -> FSTree fs -> GetForestMD fs -> (FilePath -> GetForestMD fs -> ForestI fs rep) -> ForestI fs rep
+doZLoadFocus :: (Matching fs a,ForestMD fs rep) => FilePathFilter fs -> FilePath -> a -> FSTree fs -> GetForestMD fs -> (FilePath -> GetForestMD fs -> ForestI fs rep) -> ForestI fs rep
 doZLoadFocus pathfilter path matching tree getMD load = do
-	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
+	files <- forestM $ getMatchingFilesInTree path matching tree
 	case files of
 		[file] -> doZLoadNewPath pathfilter path file tree getMD load
 		files -> doZLoadNewPath pathfilter path (pickFile files) tree getMD $ \newpath newgetMD -> do
@@ -272,27 +272,27 @@ doZLoadMaybe' pathfilter path tree ifExists = do
 			return (fmd,Nothing)
 
 -- since the focus changes we need to compute the (eventually) previously loaded metadata of the parent node
-doZLoadSimple :: (ForestMD fs rep,Matching a,MData NoCtx (ForestI fs) rep) =>
+doZLoadSimple :: (ForestMD fs rep,Matching fs a,MData NoCtx (ForestI fs) rep) =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep)
 	-> ForestI fs rep
 doZLoadSimple pathfilter path matching tree load = matching >>= \m -> doZLoadFocus pathfilter path m tree getForestMDInTree load
 
 -- since the focus changes we need to compute the (eventually) previously loaded metadata of the parent node
-doZLoadSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,Matching a,MData NoCtx (ForestI fs) rep) =>
+doZLoadSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,Matching fs a,MData NoCtx (ForestI fs) rep) =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs -> (rep -> ForestI fs Bool)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep)
 	-> ForestI fs rep
 doZLoadSimpleWithConstraint pathfilter path matching tree pred load = doZLoadConstraint tree pred $ matching >>= \m -> doZLoadFocus pathfilter path m tree getForestMDInTree load
 
-doZLoadCompound :: (Typeable container_rep,Eq container_rep,Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZLoadCompound :: (Typeable container_rep,Eq container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> ([(FilePath,rep')] -> container_rep)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
 	-> ForestI fs container_rep
 doZLoadCompound pathfilter path matchingM tree buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM
-	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
+	files <- forestM $ getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files
 	let filesmetas = zip files metadatas
 	let loadEach (n,n_md) = liftM (n,) $ doZLoadFocus pathfilter path n tree (const2 $ return n_md) $ \newpath newGetMD -> do
@@ -302,7 +302,7 @@ doZLoadCompound pathfilter path matchingM tree buildContainerRep load = debug ("
 	loadlist <- mapM loadEach filesmetas
 	return $ buildContainerRep loadlist
 
-doZLoadCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,ForestOutput fs ICThunk Inside,Matching a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZLoadCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> (FilePath -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> ([(FilePath,rep')] -> container_rep)
@@ -310,7 +310,7 @@ doZLoadCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,Forest
 	-> ForestI fs container_rep
 doZLoadCompoundWithConstraint pathfilter path matchingM tree pred buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
 	matching <- matchingM -- matching expressions are not saved for incremental reuse
-	files <- forestM $ Pure.getMatchingFilesInTree path matching tree
+	files <- forestM $ getMatchingFilesInTree path matching tree
 	metadatas <- mapM (getRelForestMDInTree path tree) files
 	let filesmetas = zip files metadatas
 	let makeInfo (n,fmd) = do

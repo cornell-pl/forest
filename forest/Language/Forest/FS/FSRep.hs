@@ -20,6 +20,8 @@ import System.IO
 import Language.Forest.IO.Shell
 import Language.Forest.IO.Utils
 import Control.Monad.Lazy
+import System.FilePath.Glob
+import Language.Pads.Padsc hiding (numErrors)
 
 import Language.Pads.MetaData hiding (numErrors)
 import Language.Pads.CoreBaseTypes
@@ -143,5 +145,40 @@ canonalizeDirectoryInTree path tree = do
 ----------
 
 
+class (FSRep fs,Show a) => Matching (fs :: FS) a where
+	getMatchingFilesInTree :: FilePath -> a -> FSTree fs -> ForestM fs [FilePath]
+	defaultMatch :: Proxy fs -> a -> ForestM fs [FilePath]
 
+instance FSRep fs => Matching fs [FilePath] where
+	getMatchingFilesInTree _ files _ = return files
+	defaultMatch fs files = return files
 
+instance FSRep fs => Matching fs FilePath where
+	getMatchingFilesInTree _ file _ = return [file]
+	defaultMatch fs file = return [file]
+
+instance FSRep fs => Matching fs RE where
+	getMatchingFilesInTree = getMatchingFilesREInTree
+	defaultMatch fs re = return []
+
+instance FSRep fs => Matching fs GL where
+	getMatchingFilesInTree = getMatchingFilesGlobInTree
+	defaultMatch fs gl = return []
+
+getMatchingFilesREInTree :: FSRep fs => FilePath -> RE -> FSTree fs -> ForestM fs [FilePath]
+getMatchingFilesREInTree path re tree = do 
+	files <- getDirectoryContentsInTree path tree
+	let matches = (filterByRegex re files)
+	return matches
+
+getMatchingFilesGlobInTree :: FSRep fs => FilePath -> GL -> FSTree fs -> ForestM fs [FilePath]
+getMatchingFilesGlobInTree path (GL glob) tree = do 
+	files <- getDirectoryContentsInTree path tree
+	let gl = compile glob
+	let matches = (Prelude.filter (match gl) files)
+	return matches
+
+getMatchingFilesInTreeM :: (FSRep fs,Matching fs a) => FilePath -> ForestM fs a -> FSTree fs -> ForestM fs [FilePath]
+getMatchingFilesInTreeM path matchingM tree = do
+	matching <- matchingM
+	getMatchingFilesInTree path matching tree

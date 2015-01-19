@@ -19,13 +19,13 @@ import System.TimeIt
 import Control.Monad.IO.Class
 import Data.WithClass.MData
 import Data.DeepTypeable
-import Control.Monad.Incremental
+import Control.Monad.Incremental hiding (read)
 
 import Data.WithClass.Derive.DeepTypeable
 import Data.DeriveTH
 import Data.WithClass.Derive.MData
 import System.FilePath.Posix
-
+import Prelude hiding (read)
 
 [pads|
 	data Account = Account Int
@@ -47,6 +47,18 @@ $( derive makeDeepTypeable ''Account_imd )
 rootDir = "."
 
 accountDir = rootDir </> "Examples/IC/Beautiful/Account"
+
+tWith :: String -> Int -> IO ()
+tWith acc amount = do
+  status <- atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
+    (main_fmd, accdir) <- read rep
+    case lookup acc (accs accdir) of
+      Just (account) -> do
+        
+        tst <- read account
+        return "Test" --"Found it, but how do I manipulate it?" --(accfmd,(Account num,bmd,accimd))
+      _ -> return "Failure: The account does not exist"
+  putStrLn status
 
 ---- PURE STUFF:
 --

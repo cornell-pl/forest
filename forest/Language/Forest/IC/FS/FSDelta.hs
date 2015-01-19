@@ -17,6 +17,7 @@ import Language.Forest.IO.Shell
 import System.Directory
 import System.Posix.Files
 import Safe
+import Data.List as List
 
 type OnDisk = FilePath
 
@@ -27,7 +28,7 @@ data FSTreeDeltaNode = FSTreeNew FSTreeDelta MoveFrom OnDisk -- a new directory 
 					 | FSTreeChg FSTreeDelta OnDisk -- a directory or file whose metadata has changed
 					 | FSTreeNop FSTreeDelta -- a directory or file that has not changed
 					 | FSTreeRem
-					 | FSTreeNewLink FilePath -- a new symbolic link to another path from the top-level tree
+					 | FSTreeNewLink FilePath (Maybe OnDisk) -- a new symbolic link to another path from the top-level tree; the on-disk path holds the permissions
 	deriving (Show,Eq,Ord)
 
 type MoveFrom = Maybe FilePath -- move origin
@@ -43,6 +44,30 @@ data FSDelta = Add FilePath OnDisk
 
 -- * Operations on filesystem deltas
 
+getContentsFSTreeDeltaNodeMay :: FilePath -> FSTreeDeltaNodeMay -> IO [FileName]
+getContentsFSTreeDeltaNodeMay root Nothing = getDirectoryContentsTry root
+getContentsFSTreeDeltaNodeMay root (Just td) = getContentsFSTreeDeltaNode root td
+
+getContentsFSTreeDeltaNode :: FilePath -> FSTreeDeltaNode -> IO [FileName]
+getContentsFSTreeDeltaNode root (FSTreeNew tds _ dsk) = do
+	files <- getDirectoryContentsTry dsk
+	let files' = Map.foldrWithKey (\file td xs -> if isFSTreeDeltaNodeRem td then List.delete file xs else file:xs) files tds
+	return $ List.sort $ List.nub files'
+getContentsFSTreeDeltaNode root (FSTreeChg tds _) = do
+	files <- getDirectoryContentsTry root
+	let files' = Map.foldrWithKey (\file td xs -> if isFSTreeDeltaNodeRem td then List.delete file xs else file:xs) files tds
+	return $ List.sort $ List.nub files'
+getContentsFSTreeDeltaNode root (FSTreeNop tds) = do
+	files <- getDirectoryContentsTry root
+	let files' = Map.foldrWithKey (\file td xs -> if isFSTreeDeltaNodeRem td then List.delete file xs else file:xs) files tds
+	return $ List.sort $ List.nub files'
+getContentsFSTreeDeltaNode root FSTreeRem = return []
+getContentsFSTreeDeltaNode root (FSTreeNewLink _ _) = return []
+
+isFSTreeDeltaNodeRem :: FSTreeDeltaNode -> Bool
+isFSTreeDeltaNodeRem FSTreeRem = True
+isFSTreeDeltaNodeRem _ = False
+
 commitFSTreeDelta :: FilePath -> FSTreeDelta -> IO (Set FilePath)
 commitFSTreeDelta root = Map.foldrWithKey aux (return Set.empty) where
 	aux file td m = do
@@ -52,7 +77,10 @@ commitFSTreeDelta root = Map.foldrWithKey aux (return Set.empty) where
 
 commitFSTreeDeltaNode :: FilePath -> FSTreeDeltaNode -> IO (Set FilePath)
 commitFSTreeDeltaNode root (FSTreeNew td _ ondisk) = do
-	runShellCommand_ $ "cp -r " ++ show ondisk ++ " " ++ show root
+	-- remove any data at this path before creating the link
+	runShellCommand_ $ "rm -rf " ++ show root
+	-- copy the new data
+	runShellCommand_ $ "cp -rf " ++ show ondisk ++ " " ++ show root
 	xs <- commitFSTreeDelta root td
 	return $ Set.insert root xs
 commitFSTreeDeltaNode root (FSTreeChg td ondisk) = do
@@ -62,10 +90,18 @@ commitFSTreeDeltaNode root (FSTreeChg td ondisk) = do
 commitFSTreeDeltaNode root (FSTreeNop td) = do
 	commitFSTreeDelta root td
 commitFSTreeDeltaNode root FSTreeRem = do
-	runShellCommand_ $ "rm -r " ++ show root
+	runShellCommand_ $ "rm -rf " ++ show root
 	return $ Set.singleton root
-commitFSTreeDeltaNode root (FSTreeNewLink link) = do
-	createSymbolicLink link root
+commitFSTreeDeltaNode root (FSTreeNewLink link mbondisk) = do
+	-- remove any data at this path before creating the link
+	runShellCommand_ $ "rm -rf " ++ show root
+	-- create a symbolic link
+--	putStrLn $ "creating link " ++ show link ++ " " ++ show root
+	--createSymbolicLink link root
+	runShellCommand_ $ "ln -s " ++ show link ++ " " ++ show root
+--	case mbondisk of
+--		Nothing -> return ()
+--		Just ondisk -> copyPermissions ondisk root
 	return $ Set.singleton root
 
 onDiskWriteMay :: FSTreeDeltaNodeMay -> Maybe OnDisk
@@ -73,10 +109,7 @@ onDiskWriteMay = maybe Nothing onDiskWrite
 
 onDiskWrite :: FSTreeDeltaNode -> Maybe OnDisk
 onDiskWrite (FSTreeNew _ _ ondisk) = Just ondisk
-onDiskWrite (FSTreeChg _ ondisk) = Just ondisk
-onDiskWrite (FSTreeNop _) = Nothing
-onDiskWrite (FSTreeNewLink _) = Nothing
-onDiskWrite FSTreeRem = Nothing
+onDiskWrite _ = Nothing
 
 fsTreeDeltaWrites :: FilePath -> FSTreeDelta -> Set FilePath
 fsTreeDeltaWrites root td = Map.foldrWithKey aux Set.empty td where
@@ -87,6 +120,7 @@ fsTreeDeltaNodeWrites root (FSTreeNew td _ _) = Set.insert root (fsTreeDeltaWrit
 fsTreeDeltaNodeWrites root (FSTreeChg td _) = Set.insert root (fsTreeDeltaWrites root td)
 fsTreeDeltaNodeWrites root (FSTreeNop td) = fsTreeDeltaWrites root td
 fsTreeDeltaNodeWrites root FSTreeRem = Set.singleton root
+fsTreeDeltaNodeWrites root (FSTreeNewLink _ _) = Set.singleton root
 
 childrenFSTreeDeltaNode = fromJustNote "no FSTreeDelta children" . childrenFSTreeDeltaNodeMay
 
@@ -117,11 +151,12 @@ compressFSDeltas xs = appendListToFSTreeDelta xs Map.empty
 appendListToFSTreeDelta :: [FSDelta] -> FSTreeDelta -> FSTreeDelta
 appendListToFSTreeDelta xs t = foldl' (flip appendToFSTreeDelta) t xs
 
-changeFSTreeDeltaNode :: FSTreeDeltaNode -> OnDisk -> FSTreeDeltaNode
-changeFSTreeDeltaNode td@(FSTreeNew tds mv _) dsk = FSTreeNew tds mv dsk
-changeFSTreeDeltaNode td@(FSTreeChg tds _) dsk = FSTreeChg tds dsk
-changeFSTreeDeltaNode td@(FSTreeNop tds) dsk = FSTreeChg tds dsk
-changeFSTreeDeltaNode td@(FSTreeRem) dsk = FSTreeChg Map.empty dsk
+changeAttrsFSTreeDeltaNode :: FSTreeDeltaNode -> OnDisk -> FSTreeDeltaNode
+changeAttrsFSTreeDeltaNode td@(FSTreeNew tds mv _) dsk = FSTreeNew tds mv dsk
+changeAttrsFSTreeDeltaNode td@(FSTreeChg tds _) dsk = FSTreeChg tds dsk
+changeAttrsFSTreeDeltaNode td@(FSTreeNop tds) dsk = FSTreeChg tds dsk
+changeAttrsFSTreeDeltaNode td@(FSTreeRem) dsk = FSTreeChg Map.empty dsk
+changeAttrsFSTreeDeltaNode td@(FSTreeNewLink tgt _) dsk = FSTreeNewLink tgt (Just dsk)
 
 insertFSTreeDelta :: FileName -> FSTreeDeltaNode -> FSTreeDelta -> FSTreeDelta
 insertFSTreeDelta = Map.insert
@@ -139,19 +174,21 @@ removeFSTreeDeltaNode name tds = case lookupFSTreeDelta name tds of
 
 appendToFSTreeDelta :: FSDelta -> FSTreeDelta -> FSTreeDelta
 appendToFSTreeDelta (Add path dsk) td = focusFSTreeDelta path (insertFSTreeDelta (takeFileName path) $ FSTreeNew Map.empty Nothing dsk) td
+appendToFSTreeDelta (AddLink path tgt) td = focusFSTreeDelta path (insertFSTreeDelta (takeFileName path) $ FSTreeNewLink tgt Nothing) td
 appendToFSTreeDelta (Rem path) td = focusFSTreeDelta path (removeFSTreeDeltaNode (takeFileName path)) td
 appendToFSTreeDelta (Move from to dsk) td = case findFSTreeDeltaNode from (removeFSTreeDeltaNode (takeFileName from)) td of
 	(td',Just (_,FSTreeNew tds src dsk)) -> focusFSTreeDelta to (insertFSTreeDelta (takeFileName to) $ FSTreeNew tds src dsk) td'
 	(td',Just (_,childrenFSTreeDeltaNodeMay -> Just tds)) -> focusFSTreeDelta to (insertFSTreeDelta (takeFileName to) $ FSTreeNew tds (Just from) dsk) td
 	otherwise -> focusFSTreeDelta to (insertFSTreeDelta (takeFileName to) $ FSTreeNew Map.empty (Just from) dsk) td
 appendToFSTreeDelta (ChgAttrs path dsk) td = focusFSTreeDelta path (\tds -> case lookupFSTreeDelta (takeFileName path) tds of
-	Just td -> insertFSTreeDelta (takeFileName path) (changeFSTreeDeltaNode td dsk) tds
+	Just td -> insertFSTreeDelta (takeFileName path) (changeAttrsFSTreeDeltaNode td dsk) tds
 	Nothing -> insertFSTreeDelta (takeFileName path) (FSTreeChg Map.empty dsk) tds) td
 	
 updateFSTreeDeltaDir :: (FSTreeDelta -> FSTreeDelta) -> (FSTreeDeltaNode -> FSTreeDeltaNode)
 updateFSTreeDeltaDir upd (FSTreeNew tds moved dsk) = FSTreeNew (upd tds) moved dsk
 updateFSTreeDeltaDir upd (FSTreeChg tds dsk) = FSTreeChg (upd tds) dsk
 updateFSTreeDeltaDir upd (FSTreeNop tds) = FSTreeNop (upd tds)
+updateFSTreeDeltaDir upd td = td
 
 -- finds and updates a delta for a specific filepath when found, returning the new global tree and the local tree before being updated
 findFSTreeDeltaNode :: FilePath -> (FSTreeDelta -> FSTreeDelta) -> FSTreeDelta -> (FSTreeDelta,Maybe (FileName,FSTreeDeltaNode))

@@ -184,7 +184,7 @@ doManifestMaybe tree (rep_mb,(fmd,md_mb)) manifestContent defaultContent man = d
 			let man1 = addTestToManifest testm man
 			return $ removePathFromManifest canpath path man1 -- removes the path
 
-doManifestFocus :: (FSRep fs,ForestMD md,Matching a) =>
+doManifestFocus :: (FSRep fs,ForestMD md,Matching fs a) =>
 	FilePath -> a -> FSTree fs -> (rep,md)
 	-> ((rep,md) -> Manifest fs -> ForestM fs (Manifest fs))
 	-> Manifest fs -> ForestM fs (Manifest fs)
@@ -200,13 +200,13 @@ doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 	let man1 = addTestToManifest testm man
 	manifestUnder dta man1
 
-doManifestSimple :: (FSRep fs,ForestMD md',Matching a) =>
+doManifestSimple :: (FSRep fs,ForestMD md',Matching fs a) =>
 	FilePath -> a -> FSTree fs -> (rep',md')
 	-> ((rep',md') -> Manifest fs -> ForestM fs (Manifest fs))
 	-> Manifest fs -> ForestM fs (Manifest fs)
 doManifestSimple parentPath matching tree dta manifestUnder man = doManifestFocus parentPath matching tree dta manifestUnder man
 
-doManifestSimpleWithConstraint :: (ForestMD md',FSRep fs,Matching a) =>
+doManifestSimpleWithConstraint :: (ForestMD md',FSRep fs,Matching fs a) =>
 	FilePath -> a -> FSTree fs
 	-> ((rep',md') -> Bool)
 	-> (rep',md')
@@ -216,7 +216,7 @@ doManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder =
 	doManifestFocus parentPath matching tree dta' manifestUnder man1
 
 -- to enforce consistency while allowing the list to change, we delete all files in the directory that do not match the values
-doManifestCompound :: (FSRep fs,ForestMD md',Matching a) =>
+doManifestCompound :: (FSRep fs,ForestMD md',Matching fs a) =>
 	FilePath -> a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')]) -> (container_md -> [(FilePath,md')])
 	-> (container_rep,container_md)
@@ -234,7 +234,7 @@ doManifestCompound parentPath matching tree toListRep toListMd (c_rep,c_md) mani
 	let manifestEach (n,dta'@(rep',md')) man0M = man0M >>= doManifestFocus parentPath n tree dta' (manifestUnder n $ fileInfo $ get_fmd_header md')
 	foldr manifestEach (return man1) (zip new_files dtas')
 
-doManifestCompoundWithConstraint :: (FSRep fs,ForestMD md',Matching a) =>
+doManifestCompoundWithConstraint :: (FSRep fs,ForestMD md',Matching fs a) =>
 	FilePath -> a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')]) -> (container_md -> [(FilePath,md')])
 	-> (FileName -> FileInfo -> Bool)

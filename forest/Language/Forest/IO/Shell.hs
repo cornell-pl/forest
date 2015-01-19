@@ -59,10 +59,11 @@ runShellCommand_ cmd = putStrLn ("Running command: "++show cmd) >> system cmd
 
 runShellCommand :: String -> IO String
 runShellCommand cmd = do
-	putStrLn ("Running command: "++show cmd)
+	putStrLn ("Running command: "++ cmd)
 	let process = (shell cmd) { std_out = CreatePipe }
-	(_,Just hout,_,_) <- createProcess process
+	(_,Just hout,_,ph) <- createProcess process
 	result <- hGetContents hout
+	waitForProcess ph
 	return result
 
 removePath :: FilePath -> IO ExitCode
