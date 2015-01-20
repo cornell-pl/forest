@@ -33,6 +33,7 @@
 
 module Language.Forest.IC.Generic   where
 
+import Language.Pads.Padsc hiding (gmapT)
 import Prelude hiding (mod)
 import Data.Monoid
 import Data.WithClass.MData
@@ -62,13 +63,13 @@ import Language.Haskell.TH.Syntax
 import Control.Exception
 
 type FTM fs = ForestO fs
-type FTV fs a = FSThunk fs Inside (IncForest fs) IORef IO a
+type FTV fs a = ForestFSThunkI fs a
 
 type FTK fs args rep content = (Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs content))
 
 class TxICForest fs where
 
-	atomically :: FTK fs args rep content => args -> FilePath -> (rep -> FTM fs b) -> IO b
+	atomically :: FTM fs b -> IO b
 	
 	retry :: FTM fs a
 	
@@ -76,6 +77,8 @@ class TxICForest fs where
 	
 	throw :: Exception e => e -> FTM fs a
 	catch :: Exception e => FTM fs a -> (e -> FTM fs a) -> FTM fs a
+	
+	new :: FTK fs args rep content => args -> FilePath -> FTM fs rep
 	
 	read :: FTK fs args rep content => rep -> FTM fs content
 	
@@ -89,6 +92,9 @@ tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
 	
 writeOrRetry :: (TxICForest fs,FTK fs args rep content) => rep -> content -> b -> FTM fs b
 writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
+
+writeOrShow :: (TxICForest fs,FTK fs args rep content) => rep -> content -> FTM fs String
+writeOrShow t v = writeOrElse t v "" (return . show)
 
 -- * Zipped Incremental Forest interface
 
@@ -120,19 +126,14 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
 	zupdateManifestScratch :: ForestIs fs args -> FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs)
---	zupdateManifestScratch proxy args oldtree oldrep man = return man'
 	
 	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> ForestO fs (Manifest fs)
---	zupdateManifestDelta proxy args oldtree oldrep df newtree dv man = return man'
 	
 	zmanifest :: ForestIs fs args -> rep -> ForestO fs (Manifest fs)
 	zmanifest = zmanifest' Proxy
 	
 	zmanifest' :: Proxy args -> ForestIs fs args -> rep -> ForestO fs (Manifest fs)
 	zmanifest' proxy args rep = forestM latestTree >>= \tree -> forestM (newManifestWith "/" tree) >>= zupdateManifestScratch args tree rep
-
-zstore :: ZippedICForest fs args rep => Proxy args -> ForestIs fs args -> rep -> ForestO fs [Message]
-zstore = undefined
 
 -- * Incremental Forest interface
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE StandaloneDeriving, DeriveDataTypeable, TemplateHaskell #-}
+{-# LANGUAGE ScopedTypeVariables, UndecidableInstances, FlexibleContexts, MultiParamTypeClasses, FlexibleInstances, StandaloneDeriving, DeriveDataTypeable, TemplateHaskell #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -33,6 +33,7 @@
 
 module Language.Forest.Syntax where
 
+import Language.Pads.Padsc
 import Language.Haskell.TH.Instances
 import Data.Typeable
 import Data.Data
@@ -46,6 +47,13 @@ import qualified Data.Set as Set
 import System.FilePath.Posix
 import Data.Char
 
+import Language.Haskell.TH.Syntax
+import Data.WithClass.MData
+import Data.DeepTypeable
+import Data.WithClass.Derive.DeepTypeable
+import Data.DeriveTH
+import Data.WithClass.Derive.MData
+
 -- The mode in which forest is run, which affects parsing
 data ForestMode = PureForest | ICForest deriving (Eq,Show,Typeable,Data)
 
@@ -57,7 +65,7 @@ data ForestTy = Directory DirectoryTy
               | Archive [ArchiveType] ForestTy -- list of archive types, e.g., tar.gz
               | Named String 
               | FMaybe ForestTy
-              | SymLink
+              | FSymLink
               | FConstraint TH.Pat ForestTy TH.Exp    {- pattern bound to underlying type, underlying type, predicate -}
               | Fapp ForestTy [TH.Exp] -- non-empty list of arguments
               | FComp CompField
@@ -149,3 +157,4 @@ fieldname (Comp c) = internalName c
 --deriving instance Ord FunDep
 --deriving instance Ord RuleMatch
 --deriving instance Ord Clause
+

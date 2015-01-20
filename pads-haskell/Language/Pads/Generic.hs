@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, Rank2Types, FlexibleInstances #-}
+{-# LANGUAGE ConstraintKinds, MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, Rank2Types, FlexibleInstances #-}
 
 {-
 ** *********************************************************************
@@ -29,18 +29,18 @@ import System.Posix.Types
 import Foreign.C.Types
 import System.CPUTime
 
+type Pads rep md = Pads1 () rep md
 
-class (Data rep, PadsMD md) => Pads rep md | rep -> md  where
-	def :: rep
-	def = gdef
-	defaultMd :: rep -> md
-	defaultMd _ = myempty
-	parsePP  :: PadsParser (rep,md)
-	printFL :: PadsPrinter (rep,md)
-	defaultRepMd :: (rep,md)
-	defaultRepMd = (rep,md) where
-		rep = def
-		md = defaultMd rep
+def :: Pads rep md => rep
+def = def1 ()
+defaultMd :: Pads rep md => rep -> md
+defaultMd = defaultMd1 ()
+parsePP :: Pads rep md => PadsParser (rep,md)
+parsePP = parsePP1 ()
+printFL :: Pads rep md => PadsPrinter (rep,md)
+printFL = printFL1 ()
+defaultRepMd :: Pads rep md => (rep,md)
+defaultRepMd = defaultRepMd1 ()
 
 parseS   :: Pads rep md => String -> ((rep, md), String) 
 parseS cs = parseStringInput parsePP cs 
@@ -61,7 +61,6 @@ printFile :: Pads rep md => FilePath -> (rep,md) -> IO ()
 printFile filepath r = do
 	let str = printBS r
 	B.writeFile filepath str
-
 
 
 class (Data rep, PadsMD md) => Pads1 arg rep md | rep->md, rep->arg where

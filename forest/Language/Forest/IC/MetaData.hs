@@ -14,6 +14,7 @@ import Language.Pads.MetaData as Pads hiding (numErrors)
 import System.Posix.User
 import System.Posix.Types
 import System.FilePath.Posix
+import Language.Forest.IC.PadsInstances
 import System.Process
 import GHC.IO.Handle
 import Foreign.C.Types
@@ -288,10 +289,11 @@ mergeErrors m1 m2 = case (m1,m2) of
             (Just a, _) -> Just a
             (_, Just b) -> Just b
 
-cleanForestMDwithFile :: (ForestInput fs FSThunk Inside) => FilePath -> ForestI fs (Forest_md fs)
-cleanForestMDwithFile path = do
+cleanForestMDwithFile :: (ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> ForestL fs l (Forest_md fs)
+cleanForestMDwithFile path = inside $ do
+	abspath <- forestM $ forestIO $ absolutePath path
 	fmd <- cleanForestMD
-	return $ fmd { fileInfo = (fileInfo fmd) { fullpath = path } }
+	return $ fmd { fileInfo = (fileInfo fmd) { fullpath = abspath } }
 
 -- | Tests if two metadata values are both valid or invalid
 sameValidity :: (ForestLayer fs l,ForestMD fs md1,ForestMD fs md2) => md1 -> md2 -> ForestL fs l Bool
@@ -479,3 +481,18 @@ $( derive makeDeepTypeable ''(:*:) )
 $( derive makeMData ''(:*:) )
 
 
+newtype SymLink fs = SymLink { unSymLink :: ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md)) } deriving (Eq,Typeable)
+instance ForestRep (SymLink fs) (ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md))) where
+	iso_rep_thunk = Iso unSymLink SymLink
+
+instance (Sat (ctx (SymLink fs)),ICRep fs,MData ctx m (ForestFSThunkI fs (Forest_md fs, (FilePath, Base_md))))
+	=> MData ctx m (SymLink fs) where
+	gfoldl ctx k z (SymLink x1) = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= flip k (return x1)
+	gunfold ctx k z c = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= k
+	toConstr ctx x@(SymLink x1) = Data.WithClass.MData.dataTypeOf ctx x >>= return . flip indexConstr 1
+	dataTypeOf ctx x = return ty
+		where ty = mkDataType "Language.Forest.IC.MetaData.SymLink" [mkConstr ty "SymLink" [] Prefix]	
+
+
+instance (DeepTypeable fs) => DeepTypeable (SymLink fs) where
+	typeTree (_::Proxy (SymLink fs)) = MkTypeTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy fs)] [MkConTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy (ForestFSThunkI fs (Forest_md fs,FilePath,Base_md)))]]

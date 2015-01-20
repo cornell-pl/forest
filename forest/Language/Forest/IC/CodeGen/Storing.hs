@@ -15,7 +15,7 @@ import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..
 import qualified Language.Forest.Pure.MetaData as Pure
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
 import Language.Forest.Errors
-import Language.Forest.IC.Generic
+import Language.Forest.IC.Generic 
 import qualified Language.Forest.Errors as E
 import Language.Forest.Manifest
 import Language.Forest.IC.FS.FSDelta
@@ -109,7 +109,7 @@ manifestE ty treeE dtaE manE = case ty of
 	Fapp (Named f_name) argEs  -> manifestWithArgsE argEs treeE dtaE manE
 	File (file_name, argEOpt) -> manifestFile file_name argEOpt treeE dtaE manE
 	Archive archtype ty         -> manifestArchive archtype ty treeE dtaE manE
-	SymLink         -> manifestSymLink treeE dtaE manE
+	FSymLink         -> manifestSymLink treeE dtaE manE
 	FConstraint p ty pred -> manifestConstraint treeE p pred dtaE manE $ manifestE ty treeE
 	Directory dirTy -> manifestDirectory dirTy treeE dtaE manE
 	FMaybe forestTy -> manifestMaybe forestTy treeE dtaE manE

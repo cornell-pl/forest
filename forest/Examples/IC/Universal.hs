@@ -4,7 +4,7 @@ module Examples.IC.Universal where
 import Data.Maybe
 import Data.DeepTypeable
 import Data.IORef
-import Control.Monad.Incremental hiding (read)
+import Control.Monad.Incremental hiding (new,read)
 import Prelude hiding (read)
 import Language.Haskell.TH.Syntax
 
@@ -18,7 +18,7 @@ import System.TimeIt
 import Control.Monad.IO.Class
 import Language.Forest.IC hiding (writeFile)
 import Language.Pads.Padsc (Base_md)
-import qualified Language.Pads.Padsc as Pads
+import Language.Pads.Padsc as Pads
 import Control.Monad.Incremental.Display
 import Data.WithClass.MGenerics.Text
 import Data.List as List
@@ -51,27 +51,30 @@ generateTest = do
 
 runTest :: IO ()
 runTest = do
-	(original_str,errors) <- atomically () "test" $ \(test_dir :: Universal_d TxVarFS) -> do
+	(original_str,errors) <- atomically $ do
+		test_dir :: Universal_d TxVarFS <- new () "test"
 		original_str <- showInc test_dir
 		
 		(test_fmd,test_uni) <- read test_dir
 		
-		let mb_links_dir = List.lookup "links" (directories test_uni)
-		errors <- case mb_links_dir of
-			Just links_dir -> do
-				(links_fmd,links_uni) <- read links_dir
-		
---				links_uni' = links_uni { symLinks = List.insert ("b.txt",) (symLinks lists_uni) }
-		
-				errors <- writeOrElse links_dir (links_fmd,links_uni) "" (return . show)
-		
-				return errors
-			Nothing -> return "no links"
+--		let mb_links_dir = List.lookup "links" (directories test_uni)
+--		errors <- case mb_links_dir of
+--			Just links_dir -> do
+--				(links_fmd,links_uni) <- read links_dir
+--		
+--				errors <- writeOrShow links_dir (links_fmd,links_uni)
+--		
+--				return errors
+--			Nothing -> return "no links"
+			
+		link_c :: SymLink TxVarFS <- new () "test/links/c.txt"
+		link_c_fmd <- cleanForestMDwithFile "test/links/c.txt"
+		let link_c_fmd' = link_c_fmd { fileInfo = (fileInfo link_c_fmd) { symLink = Just "../files/c.txt" } }
+		errors <- writeOrShow link_c (link_c_fmd',("../files/c.txt",cleanBasePD))
+			
 		return (original_str,errors)
 	putStrLn original_str
 	putStrLn errors
-
---	writeOrElse :: FTK fs args rep content => rep -> content -> b -> ([Message] -> FTM fs b) -> FTM fs b
 
 --myDir = "/home/hpacheco/Forest"
 --home = "/home/hpacheco"

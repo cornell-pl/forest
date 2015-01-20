@@ -21,7 +21,7 @@ import Language.Forest.Syntax as PS
 import Language.Forest.IC.MetaData
 import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..))
 import Language.Forest.Errors
-import Language.Forest.IC.Generic
+import Language.Forest.IC.Generic 
 import qualified Language.Forest.Errors as E
 import Language.Forest.IC.FS.FSDelta
 import System.Directory
@@ -135,7 +135,7 @@ zloadE ty filterPathE pathE treeE getMDE = case ty of
 	Fapp (Named ty_name) argEs  -> zloadWithArgsE ty_name argEs filterPathE pathE treeE getMDE
 	File (file_name, argEOpt) -> zloadFile file_name argEOpt filterPathE pathE treeE getMDE
 	Archive archtype ty         -> zloadArchive archtype ty filterPathE pathE treeE getMDE
-	SymLink         -> zloadSymLink pathE treeE getMDE
+	FSymLink         -> zloadSymLink pathE treeE getMDE
 	FConstraint p ty pred -> zloadConstraint treeE p pred $ zloadE ty filterPathE pathE treeE getMDE
 	Directory dirTy -> zloadDirectory dirTy filterPathE pathE treeE getMDE
 	FMaybe forestTy -> zloadMaybe forestTy filterPathE pathE treeE getMDE

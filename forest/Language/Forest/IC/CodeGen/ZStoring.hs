@@ -114,7 +114,7 @@ zmanifestE ty treeE dtaE manE = case ty of
 	Fapp (Named f_name) argEs  -> zmanifestWithArgsE argEs treeE dtaE manE
 	File (file_name, argEOpt) -> zmanifestFile file_name argEOpt treeE dtaE manE
 	Archive archtype ty         -> zmanifestArchive archtype ty treeE dtaE manE
-	SymLink         -> zmanifestSymLink treeE dtaE manE
+	FSymLink         -> zmanifestSymLink treeE dtaE manE
 	FConstraint p ty pred -> zmanifestConstraint treeE p pred dtaE manE $ zmanifestE ty treeE
 	Directory dirTy -> zmanifestDirectory dirTy treeE dtaE manE
 	FMaybe forestTy -> zmanifestMaybe forestTy treeE dtaE manE

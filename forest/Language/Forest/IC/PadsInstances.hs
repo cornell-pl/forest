@@ -14,6 +14,7 @@ import Language.Pads.Errors
 import Language.Pads.MetaData
 import Language.Pads.Source
 import Language.Pads.CoreBaseTypes
+import Language.Pads.Padsc
 
 
 import Data.DeepTypeable
@@ -87,9 +88,6 @@ instance Memo ErrInfo where
 	type Key ErrInfo = StableName ErrInfo
 	{-# INLINE memoKey #-}
 	memoKey x = (MkWeak $ Weak.mkWeak x,unsafePerformIO $ makeStableName x)
-	
-
-
 
 
 

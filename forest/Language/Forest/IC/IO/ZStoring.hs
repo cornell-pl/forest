@@ -134,10 +134,10 @@ doZManifestArchive archTy tree rep_t manifestContents man = do
 
 doZManifestSymLink :: ICRep fs =>
 	FSTree fs
-	-> ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md))
+	-> SymLink fs
 	-> Manifest fs -> ForestO fs (Manifest fs)
-doZManifestSymLink tree rep_t man = do
-	(fmd,(tgt,base_md)) <- inside $ get rep_t
+doZManifestSymLink tree (SymLink rep_t) man = do
+	(fmd, (tgt,base_md)) <- inside $ get rep_t
 	let path = fullpath $ fileInfo fmd
 	
 	case symLink (fileInfo fmd) of

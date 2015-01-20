@@ -382,8 +382,12 @@ instance TxICForest TxVarFS where
 	orElse = orElseTxVarFS 
 	throw = throwTxVarFS 
 	catch = catchTxVarFS 
+	new = newTxVarFS
 	read = readTxVarFS
 	writeOrElse = writeOrElseTxVarFS
+
+newTxVarFS :: FTK TxVarFS args rep content => args -> FilePath -> TxVarFTM rep
+newTxVarFS args path = inside $ zload (monadArgs proxyTxVarFS args) path
 
 readTxVarFS :: FTK TxVarFS args rep content => rep -> TxVarFTM content
 readTxVarFS rep = Inc.getOutside (to iso_rep_thunk rep)
@@ -409,12 +413,11 @@ writeOrElseTxVarFS rep content b f = do
 			forestM $ setFSVersionTxVarFS old_fsversion
 			f errors
 
-atomicallyTxVarFS :: FTK TxVarFS args rep content => args -> FilePath -> (rep -> TxVarFTM b) -> IO b
-atomicallyTxVarFS args path stm = initializeTxVarFS try where
+atomicallyTxVarFS :: TxVarFTM b -> IO b
+atomicallyTxVarFS stm = initializeTxVarFS try where
 	try = flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ do
 		-- run the tx
-		rep <- inside $ zload (monadArgs proxyTxVarFS args) path
-		x <- stm rep
+		x <- stm
 		-- tries to commit the current tx, otherwise repairs it incrementally
 		success <- validateAndCommitTopTxVarFS True
 		if success

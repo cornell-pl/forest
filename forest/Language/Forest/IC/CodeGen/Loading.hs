@@ -135,7 +135,7 @@ loadE ty filterPathE pathE treeE getMDE = case ty of
 	Fapp (Named ty_name) argEs  -> loadWithArgsE ty_name argEs filterPathE pathE treeE getMDE
 	File (file_name, argEOpt) -> loadFile file_name argEOpt filterPathE pathE treeE getMDE
 	Archive archtype ty         -> loadArchive archtype ty filterPathE pathE treeE getMDE
-	SymLink         -> loadSymLink filterPathE pathE treeE getMDE
+	FSymLink         -> loadSymLink filterPathE pathE treeE getMDE
 	FConstraint p ty pred -> loadConstraint treeE p pred $ loadE ty filterPathE pathE treeE getMDE
 	Directory dirTy -> loadDirectory dirTy filterPathE pathE treeE getMDE
 	FMaybe forestTy -> loadMaybe forestTy filterPathE pathE treeE getMDE

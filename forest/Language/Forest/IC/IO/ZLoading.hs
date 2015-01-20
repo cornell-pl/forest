@@ -97,10 +97,10 @@ doZLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFi
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- Pads errors contribute to the Forest error count
-doZLoadFile1 :: (ICRep fs,ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ForestIs fs arg ~ ForestI fs arg,Typeable arg,Eq arg,Eq pads,Eq md,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,FSRep fs,Pads1 arg pads md) =>
-	Proxy pads -> arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs (Forest_md fs,(pads,md)))
-doZLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
-	let argProxy = Proxy :: Proxy arg
+doZLoadFile1 :: (ICRep fs,ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,Typeable arg,Eq arg,Eq pads,Eq md,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,FSRep fs,Pads1 arg pads md) =>
+	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs (Forest_md fs,(pads,md)))
+doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
+	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	let fsrepProxy = Proxy -- :: Proxy (ForestFSThunkI fs pads)
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
@@ -200,14 +200,14 @@ doZLoadArchive' exts oldpath_f path  tree getMD load = checkZPath' (Just False) 
 	fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ get_errors rep_arch -- like a directory
 	return (fmd',rep_arch)
 		
-doZLoadSymLink :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md)))
-doZLoadSymLink path tree getMD = fsThunk $ doZLoadSymLink' path tree getMD
+doZLoadSymLink :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (SymLink fs)
+doZLoadSymLink path tree getMD = liftM SymLink $ fsThunk $ doZLoadSymLink' path tree getMD
 
 doZLoadSymLink' :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (Forest_md fs,(FilePath,Base_md))
 doZLoadSymLink' path tree getMD = checkZPath' Nothing path tree $ do
 	md <- getMD path tree
 	case symLink (fileInfo md) of
-		Just sym -> return (md,(sym,cleanBasePD))
+		Just sym -> return (md, (sym,cleanBasePD))
 		Nothing -> do
 			md' <- updateForestMDErrorsInsideWith md $ return [Pure.ioExceptionForestErr]
 			return (md', ("",cleanBasePD))

@@ -74,10 +74,10 @@ doZLoadDeltaFile mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 			overwrite rep_thunk $ Inc.get rep_thunk'
 			return Delta
 
-doZLoadDeltaFile1 :: (ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ICMemo fs,ForestIs fs arg ~ ForestI fs arg,ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ForestMD fs md,Eq arg,Typeable arg,Eq pads,Eq md,MData NoCtx (ForestO fs) pads,MData NoCtx (ForestO fs) md,ICRep fs,Pads1 arg pads md)
-	=> Bool -> arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,(pads,md))) -> (ForestFSThunkI fs (Forest_md fs,(pads,md)),GetForestMD fs)
+doZLoadDeltaFile1 :: (ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ICMemo fs,ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ForestMD fs md,Eq arg,Typeable arg,Eq pads,Eq md,MData NoCtx (ForestO fs) pads,MData NoCtx (ForestO fs) md,ICRep fs,Pads1 arg pads md)
+	=> Bool -> Pure.Arg arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,(pads,md))) -> (ForestFSThunkI fs (Forest_md fs,(pads,md)),GetForestMD fs)
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,(pads,md))))
-doZLoadDeltaFile1 isEmptyDArg arg' mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+doZLoadDeltaFile1 isEmptyDArg (Arg arg') mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 	path <- inside mpath
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
 		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> debug "constant1 unchanged" $ return Id
@@ -85,7 +85,7 @@ doZLoadDeltaFile1 isEmptyDArg arg' mpath path' oldtree df tree' dv (rep_thunk,ge
 			modify rep_thunk $ \(_,rep) -> getMD path' tree' >>= \fmd' -> return (fmd',rep)
 			return Delta
 		otherwise -> debug "constant1 changed" $ do
-			rep_thunk' <- inside $ doZLoadFile1 (Proxy::Proxy pads) arg' (fsTreeDeltaPathFilter df path') path' tree' getMD
+			rep_thunk' <- inside $ doZLoadFile1 (Proxy::Proxy pads) (Arg arg') (fsTreeDeltaPathFilter df path') path' tree' getMD
 			overwrite rep_thunk $ Inc.get rep_thunk'
 			return Delta
 
@@ -133,10 +133,10 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 			return Delta
 
 doZLoadDeltaSymLink :: (ForestInput fs FSThunk Inside,ICRep fs)
-	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md)))
-	-> (ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md)),GetForestMD fs)
-	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md))))
-doZLoadDeltaSymLink mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (SymLink fs)
+	-> (SymLink fs,GetForestMD fs)
+	-> ForestO fs (SValueDelta (SymLink fs))
+doZLoadDeltaSymLink mpath path' oldtree df tree' dv (SymLink rep_thunk,getMD) = do
 	path <- inside mpath
 	case (path == path',isIdValueDelta dv,df) of
 		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return Id

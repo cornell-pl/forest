@@ -15,7 +15,7 @@ import qualified Language.Forest.Pure.CodeGen.Utils as Pure
 import Language.Forest.Syntax as PS
 import Language.Forest.Pure.MetaData
 import Language.Forest.Errors
-import Language.Forest.IC.Generic
+import Language.Forest.IC.Generic hiding (SymLink)
 import qualified Language.Forest.Errors as E
 import Language.Forest.IC.FS.FSDelta
 import Data.WithClass.MData
@@ -151,7 +151,7 @@ loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
 	Archive archtype ty -> checkStop (archiveExtension archtype) forestTy pathE dpathE repmdE dfE treeE'
 		(loadArchive archtype ty pathFilterE pathE' treeE')
 		(loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE')
-	SymLink -> checkUnevaluated "symlink" treeE' repmdE
+	FSymLink -> checkUnevaluated "symlink" treeE' repmdE
 		(loadSymLink pathE' treeE treeE')
 		(loadDeltaSymLink pathE dpathE treeE dfE treeE')
 	FConstraint pat descTy predE -> loadDeltaConstraint pat repmdE predE $ \newrepmdE -> loadDeltaE descTy pathE treeE newrepmdE dpathE dfE treeE'	

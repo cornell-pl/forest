@@ -169,7 +169,7 @@ forestTy =   directoryTy
 symLinkTy :: Parser ForestTy 
 symLinkTy = do 
    { reserved "SymLink"
-   ; return SymLink
+   ; return FSymLink
    } <?> "symbolic link type"
 
 

@@ -56,9 +56,9 @@ char_parseM  =
     c <- takeHeadP
     returnClean c
 
-instance Pads Char Base_md where
-  parsePP = char_parseM
-  printFL = char_printFL
+instance Pads1 () Char Base_md where
+  parsePP1 () = char_parseM
+  printFL1 () = char_printFL
 
 char_printFL :: PadsPrinter (Char, md)
 char_printFL (c,bmd) = addString [c] 
@@ -81,9 +81,9 @@ int_parseM =
       then returnClean (digitListToInt isNeg digits)
       else returnError def (E.FoundWhenExpecting (mkStr c) "Int")
 
-instance Pads Int Base_md where
-  parsePP = int_parseM
-  printFL = int_printFL
+instance Pads1 () Int Base_md where
+  parsePP1 () = int_parseM
+  printFL1 () = int_printFL
 
 int_printFL :: PadsPrinter (Int, Base_md)
 int_printFL (i, bmd) = fshow i
@@ -129,9 +129,9 @@ double_parseM =
       then returnClean (read (sign ++digits1++dec++digits2++exp++expSign++digits3))
       else returnError def (E.FoundWhenExpecting (mkStr c) "Double")
 
-instance Pads Double Base_md where
-  parsePP = double_parseM
-  printFL = double_printFL
+instance Pads1 () Double Base_md where
+  parsePP1 () = double_parseM
+  printFL1 () = double_printFL
 
 double_printFL :: PadsPrinter (Double, Base_md)
 double_printFL (d, bmd) = fshow d
@@ -184,9 +184,9 @@ instance Pretty Text where
   ppr (Text str) = text "ASCII"
 
 
-instance Pads Text Base_md where
-  parsePP = text_parseM
-  printFL = text_printFL
+instance Pads1 () Text Base_md where
+  parsePP1 () = text_parseM
+  printFL1 () = text_printFL
 
 
 text_printFL :: PadsPrinter (Text, Base_md)
@@ -207,9 +207,9 @@ binary_parseM = do
 instance Pretty Binary where
   ppr (Binary str) = text "Binary"
 
-instance Pads Binary Base_md where
-  parsePP = binary_parseM
-  printFL = binary_printFL
+instance Pads1 () Binary Base_md where
+  parsePP1 () = binary_parseM
+  printFL1 () = binary_printFL
 
 binary_printFL :: PadsPrinter (Binary, Base_md)
 binary_printFL (Binary bstr, bmd) = addBString bstr
@@ -458,9 +458,9 @@ type Void_md = Base_md
 void_parseM :: PadsParser (Void, Base_md)
 void_parseM = returnClean (Void ())
 
-instance Pads Void Base_md where
-  parsePP = void_parseM
-  printFL = void_printFL
+instance Pads1 () Void Base_md where
+  parsePP1 () = void_parseM
+  printFL1 () = void_printFL
 
 void_printFL :: PadsPrinter (Void,Base_md)
 void_printFL v = nil
@@ -547,4 +547,3 @@ instance Pads1 Int Bytes Bytes_md where
 
 {- Helper functions -}
 mkStr c = "'" ++ [c] ++ "'"
-

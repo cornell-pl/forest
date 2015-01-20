@@ -197,7 +197,7 @@ genRepMDTy fsName ty = case ty of
 	Archive archtype ty              -> do
 		(rep_ty,md_ty) <- genRepMDTy fsName ty
 		return (rep_ty,tyListToTupleTy [ (ConT ''Forest_md),md_ty])
-	SymLink              -> return (ConT ''FilePath,tyListToTupleTy [ (ConT ''Forest_md) , ConT ''Base_md])
+	FSymLink              -> return (ConT ''FilePath,tyListToTupleTy [ (ConT ''Forest_md) , ConT ''Base_md])
 	Named ty_name        -> return (ConT $ getTyName ty_name, ConT $ getMDName ty_name)
 	FConstraint p ty pred -> do
 		(rep_ty,md_ty) <- genRepMDTy fsName ty

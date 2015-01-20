@@ -132,7 +132,7 @@ instance ICMemo LazyFS where
 	findMemo _ _ _ = return Nothing
 
 instance ForestLayer LazyFS l => Thunk (HSThunk LazyFS) l (IncForest LazyFS) IORef IO where
-	new = liftM LazyFSHSThunk . new
+	new = liftM LazyFSHSThunk . Inc.new
 	read (LazyFSHSThunk t) = Inc.read t
 
 instance ForestLayer LazyFS l => Thunk (ICThunk LazyFS) l (IncForest LazyFS) IORef IO where
@@ -144,7 +144,7 @@ instance ForestLayer LazyFS l => Output (ICThunk LazyFS) l (IncForest LazyFS) IO
 	force (LazyFSICThunk t) = forceLazyNonIncU t
 
 instance (Thunk LazyNonIncL l (IncForest LazyFS) IORef IO,ForestLayer LazyFS l) => Thunk (FSThunk LazyFS) l (IncForest LazyFS) IORef IO where
-	new = liftM LazyFSFSThunk . new
+	new = liftM LazyFSFSThunk . Inc.new
 	read (LazyFSFSThunk t) = Inc.read t
 	
 instance (Input LazyNonIncL l (IncForest LazyFS) IORef IO,ForestLayer LazyFS l) => Input (FSThunk LazyFS) l (IncForest LazyFS) IORef IO where

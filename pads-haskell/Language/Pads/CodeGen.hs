@@ -228,17 +228,20 @@ mkMDTuple tys = case mds of
 
 mkPadsInstance :: UString -> [LString] -> Maybe Type -> [Dec]
 mkPadsInstance str args mb@(Nothing)
-  = buildInst mb str args (ConT ''Pads) (VarP 'parsePP) (VarP 'printFL)
+  = buildInst mb str args (ConT ''Pads)
 mkPadsInstance str args mb@(Just ety) 
-  = buildInst mb str args (ConT ''Pads1 `AppT` ety) (VarP 'parsePP1) (VarP 'printFL1)
+  = buildInst mb str args (ConT ''Pads1 `AppT` ety)
 
-buildInst mb str args pads parse print = [InstanceD ctx inst [parsePP_method, printFL_method]]
+buildInst mb str args pads = [InstanceD ctx inst [parsePP_method, printFL_method]]
 	where
+	mbarg = case mb of
+		Nothing -> [TupP []]
+		Just _ -> []
 	inst    = applyT [pads, ty_name, md_ty]
 	ty_name = applyT (ConT (mkName str) : map fst argpairs)
 	md_ty   = applyT (ConT (mkMDName str) : map snd argpairs)
-	parsePP_method = ValD parse (NormalB (applyE (VarE (mkTyParserName str) : [VarE 'parsePP | a <- args]))) []
-	printFL_method = ValD print (NormalB (applyE (VarE (mkTyPrinterName str) : [VarE 'printFL | a <- args]))) []
+	parsePP_method = FunD 'parsePP1 [Clause mbarg (NormalB (applyE (VarE (mkTyParserName str) : [VarE 'parsePP | a <- args]))) []]
+	printFL_method = FunD 'printFL1 [Clause mbarg (NormalB (applyE (VarE (mkTyPrinterName str) : [VarE 'printFL | a <- args]))) []]
 	argpair n = (VarT (mkName n),VarT (mkName $ n++"_md"))
 	argpairs = [argpair a | a <- args]
 	argtyvars = concat [[PlainTV (mkName a), PlainTV (mkName (a++"_md"))] | a <- args]
