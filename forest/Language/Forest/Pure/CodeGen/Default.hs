@@ -87,7 +87,7 @@ defaultE :: ForestTy -> TH.Exp -> TH.Exp -> Q TH.Exp
 defaultE ty repE pathE = case ty of
 	Named f_name               -> defaultWithArgsE [] repE pathE
 	Fapp (Named f_name) argEs  -> defaultWithArgsE argEs repE pathE
-	File (file_name, argEOpt) -> defaultFile file_name argEOpt repE pathE
+	FFile (file_name, argEOpt) -> defaultFile file_name argEOpt repE pathE
 	Archive archtype ty         -> defaultArchive archtype ty repE pathE
 	FSymLink         -> defaultSymLink repE pathE
 	FConstraint p ty pred -> defaultE ty repE pathE

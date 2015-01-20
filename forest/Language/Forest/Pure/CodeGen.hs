@@ -190,7 +190,7 @@ mkStringListTy ty = AppT ListT (tyListToTupleTy [ConT ''String, ty])
 genRepMDTy ::  Name -> ForestTy -> Q (TH.Type, TH.Type)
 genRepMDTy fsName ty = case ty of
 	Directory _          -> error "Forest: Directory declarations must appear at the top level."
-	File (ty_name,arg)   -> do
+	FFile (ty_name,arg)   -> do
 		let repTy = ConT (getTyName ty_name)
 		let mdTy = tyListToTupleTy [ (ConT ''Forest_md), ConT (getMDName ty_name)] 
 		return (repTy,mdTy) 

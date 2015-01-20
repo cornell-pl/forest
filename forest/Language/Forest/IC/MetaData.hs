@@ -485,6 +485,7 @@ mergeJustDefault (Nothing,Nothing) = do
 $( derive makeDeepTypeable ''(:*:) )
 $( derive makeMData ''(:*:) )
 
+type File pads fs = ForestFSThunkI fs (Forest_md fs,(pads,Meta pads))
 
 newtype SymLink fs = SymLink { unSymLink :: ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md)) } deriving (Eq,Typeable)
 instance ForestRep (SymLink fs) (ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md))) where

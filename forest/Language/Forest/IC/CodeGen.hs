@@ -266,7 +266,7 @@ genZRepMDCompTy isTop fsName info = do
 genZRepMDTy :: Bool -> Name -> ForestTy -> Q (TH.Type)
 genZRepMDTy isTop fsName ty = case ty of
 	Directory _          -> error "Forest: Directory declarations must appear at the top level."
-	File (ty_name,arg)   -> do
+	FFile (ty_name,arg)   -> do
 		let repTy = fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), Pure.tyListToTupleTy [ ConT (Pure.getTyName ty_name) , ConT (Pure.getMDName ty_name) ] ] 
 		return repTy 
 	Archive archtype ty              -> do
@@ -404,7 +404,7 @@ mkStringListTy ty = AppT ListT (Pure.tyListToTupleTy [ConT ''String, ty])
 genRepMDTy :: Name -> Name -> ForestTy -> Q (TH.Type, TH.Type)
 genRepMDTy modeName fsName ty = case ty of
 	Directory _          -> error "Forest: Directory declarations must appear at the top level."
-	File (ty_name,arg)   -> do
+	FFile (ty_name,arg)   -> do
 		let repTy = fsthunkTy fsName $ ConT (Pure.getTyName ty_name)
 		let mdTy = fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), fsthunkTy fsName $ ConT (Pure.getMDName ty_name)] 
 		return (repTy,mdTy) 

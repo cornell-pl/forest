@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable #-}
+{-# LANGUAGE TypeFamilies, KindSignatures, NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -39,7 +39,6 @@ instance Data b => PadsMD (Base_md,b) where
   get_md_header (h,b) = h
   replace_md_header (h1,b) h2 = (h2,b)
 
-
 cleanBasePD = Base_md {numErrors = 0, errInfo = Nothing }
 
 
@@ -68,5 +67,7 @@ pprBaseMD Base_md {numErrors=num, errInfo = info}
     case info of
       Nothing -> empty
       Just e -> PP.ppr e
+
+type family Meta (rep :: *) :: *
 
 

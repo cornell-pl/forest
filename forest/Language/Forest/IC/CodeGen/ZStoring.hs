@@ -112,7 +112,7 @@ zmanifestE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestE isTop ty treeE dtaE manE = case ty of
 	Named f_name               -> zmanifestWithArgsE [] treeE dtaE manE
 	Fapp (Named f_name) argEs  -> zmanifestWithArgsE argEs treeE dtaE manE
-	File (file_name, argEOpt) -> zmanifestFile file_name argEOpt treeE dtaE manE
+	FFile (file_name, argEOpt) -> zmanifestFile file_name argEOpt treeE dtaE manE
 	Archive archtype ty         -> zmanifestArchive isTop archtype ty treeE dtaE manE
 	FSymLink         -> zmanifestSymLink treeE dtaE manE
 	FConstraint p ty pred -> zmanifestConstraint treeE p pred dtaE manE $ zmanifestE isTop ty treeE

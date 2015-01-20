@@ -107,7 +107,7 @@ manifestE :: ForestTy -> Exp -> Exp -> Exp -> EnvQ Exp
 manifestE ty treeE dtaE manE = case ty of
 	Named f_name               -> manifestWithArgsE [] treeE dtaE manE
 	Fapp (Named f_name) argEs  -> manifestWithArgsE argEs treeE dtaE manE
-	File (file_name, argEOpt) -> manifestFile file_name argEOpt treeE dtaE manE
+	FFile (file_name, argEOpt) -> manifestFile file_name argEOpt treeE dtaE manE
 	Archive archtype ty         -> manifestArchive archtype ty treeE dtaE manE
 	FSymLink         -> manifestSymLink treeE dtaE manE
 	FConstraint p ty pred -> manifestConstraint treeE p pred dtaE manE $ manifestE ty treeE

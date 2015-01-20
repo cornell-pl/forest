@@ -145,7 +145,7 @@ loadDeltaE :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.E
 loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
 	Named ty_name -> loadDeltaNamed ty_name [] pathE treeE repmdE dpathE dfE treeE'
 	Fapp (Named ty_name) argEs -> loadDeltaNamed ty_name argEs pathE treeE repmdE dpathE dfE treeE'
-	File (file_name, argEOpt) -> checkUnevaluated "file" treeE' repmdE
+	FFile (file_name, argEOpt) -> checkUnevaluated "file" treeE' repmdE
 		(loadFile file_name argEOpt pathFilterE pathE' treeE')
 		(loadDeltaFile forestTy argEOpt pathE treeE dpathE dfE treeE')
 	Archive archtype ty -> checkStop (archiveExtension archtype) forestTy pathE dpathE repmdE dfE treeE'

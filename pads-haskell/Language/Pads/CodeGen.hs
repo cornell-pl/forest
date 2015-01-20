@@ -232,7 +232,7 @@ mkPadsInstance str args mb@(Nothing)
 mkPadsInstance str args mb@(Just ety) 
   = buildInst mb str args (ConT ''Pads1 `AppT` ety)
 
-buildInst mb str args pads = [InstanceD ctx inst [parsePP_method, printFL_method]]
+buildInst mb str args pads = [InstanceD ctx inst [parsePP_method, printFL_method],TySynInstD ''Meta $ TySynEqn [ty_name] meta_ty]
 	where
 	mbarg = case mb of
 		Nothing -> [TupP []]
@@ -240,10 +240,13 @@ buildInst mb str args pads = [InstanceD ctx inst [parsePP_method, printFL_method
 	inst    = applyT [pads, ty_name, md_ty]
 	ty_name = applyT (ConT (mkName str) : map fst argpairs)
 	md_ty   = applyT (ConT (mkMDName str) : map snd argpairs)
+	meta_ty   = applyT (ConT (mkMDName str) : metas)
 	parsePP_method = FunD 'parsePP1 [Clause mbarg (NormalB (applyE (VarE (mkTyParserName str) : [VarE 'parsePP | a <- args]))) []]
 	printFL_method = FunD 'printFL1 [Clause mbarg (NormalB (applyE (VarE (mkTyPrinterName str) : [VarE 'printFL | a <- args]))) []]
 	argpair n = (VarT (mkName n),VarT (mkName $ n++"_md"))
+	meta n = AppT (ConT ''Meta) (VarT $ mkName n)
 	argpairs = [argpair a | a <- args]
+	metas = map meta args
 	argtyvars = concat [[PlainTV (mkName a), PlainTV (mkName (a++"_md"))] | a <- args]
 	
 	

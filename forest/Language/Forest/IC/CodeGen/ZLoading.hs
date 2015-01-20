@@ -133,7 +133,7 @@ zloadE :: Bool -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.E
 zloadE isTop ty filterPathE pathE treeE getMDE = case ty of
 	Named ty_name               -> zloadWithArgsE ty_name [] filterPathE pathE treeE getMDE
 	Fapp (Named ty_name) argEs  -> zloadWithArgsE ty_name argEs filterPathE pathE treeE getMDE
-	File (file_name, argEOpt) -> zloadFile file_name argEOpt filterPathE pathE treeE getMDE
+	FFile (file_name, argEOpt) -> zloadFile file_name argEOpt filterPathE pathE treeE getMDE
 	Archive archtype ty         -> zloadArchive isTop archtype ty filterPathE pathE treeE getMDE
 	FSymLink         -> zloadSymLink pathE treeE getMDE
 	FConstraint p ty pred -> zloadConstraint treeE p pred $ zloadE isTop ty filterPathE pathE treeE getMDE

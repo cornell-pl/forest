@@ -61,7 +61,7 @@ newtype ForestDecl = ForestDecl (String,[TH.Pat], ForestTy)
    deriving (Ord, Eq, Data, Typeable, Show)
 
 data ForestTy = Directory DirectoryTy 
-              | File FileTy 
+              | FFile FileTy 
               | Archive [ArchiveType] ForestTy -- list of archive types, e.g., tar.gz
               | Named String 
               | FMaybe ForestTy

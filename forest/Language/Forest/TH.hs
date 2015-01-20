@@ -116,8 +116,8 @@ getCompFieldExternalName explicitName externalE = case explicitName of
 -- | Gets all the variables used in expressions inside Forest specifications, with care for variables defined by Forest
 forestTyVars :: ForestTy -> Set Name
 forestTyVars (Directory (Record _ fields)) = fieldsVars fields
-forestTyVars (File (s,Nothing)) = Set.empty
-forestTyVars (File (s,Just e)) = expVars e
+forestTyVars (FFile (s,Nothing)) = Set.empty
+forestTyVars (FFile (s,Just e)) = expVars e
 forestTyVars (Archive _ ty) = forestTyVars ty
 forestTyVars (Named s) = Set.empty
 forestTyVars (FMaybe ty) = forestTyVars ty

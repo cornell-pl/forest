@@ -257,7 +257,7 @@ fileBodyTyParens =   parens fileBodyTy
 fileBodyTy :: Parser ForestTy
 fileBodyTy = do { id <- identifier
                 ; arg <- optionMaybe forestArg
-                ; return (File (id, arg))
+                ; return (FFile (id, arg))
                 }
 
 forestArgR :: Parser TH.Exp

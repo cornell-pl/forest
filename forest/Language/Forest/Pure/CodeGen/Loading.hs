@@ -91,7 +91,7 @@ loadE :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> Q TH.Exp
 loadE ty pathE treeE getMDE = case ty of
 	Named f_name               -> loadWithArgsE [] pathE treeE getMDE
 	Fapp (Named f_name) argEs  -> loadWithArgsE argEs pathE treeE getMDE
-	File (file_name, argEOpt) -> loadFile file_name argEOpt pathE treeE getMDE
+	FFile (file_name, argEOpt) -> loadFile file_name argEOpt pathE treeE getMDE
 	Archive archtype ty         -> loadArchive archtype ty pathE treeE getMDE
 	FSymLink         -> loadSymLink pathE treeE getMDE
 	FConstraint p ty pred -> loadConstraint treeE p pred $ loadE ty pathE treeE getMDE

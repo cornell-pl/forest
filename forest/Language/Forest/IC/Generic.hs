@@ -61,11 +61,12 @@ import Language.Forest.IC.MetaData
 import Data.DeepTypeable
 import Language.Haskell.TH.Syntax
 import Control.Exception
+import Language.Forest.Errors
 
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
 
-type FTK fs args rep content = (Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs content))
+type FTK fs args rep content = (ForestMD fs rep,Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs content))
 
 class TxICForest fs where
 
@@ -86,6 +87,9 @@ class TxICForest fs where
 	-- the write only occurs if validation succeeds
 	-- if the new value is not a consistent view of the FS, an alternative action is run otherwise
 	writeOrElse :: FTK fs args rep content => rep -> content -> b -> ([Message] -> FTM fs b) -> FTM fs b
+	
+	validate :: FTK fs args rep content => rep -> FTM fs Forest_err
+	validate = get_errors
 	
 tryWrite :: (TxICForest fs,FTK fs args rep content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())

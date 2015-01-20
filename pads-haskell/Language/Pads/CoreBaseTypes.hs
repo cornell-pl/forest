@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, TemplateHaskell, ScopedTypeVariables, 
+{-# LANGUAGE TypeFamilies, GeneralizedNewtypeDeriving, TemplateHaskell, ScopedTypeVariables, 
              MultiParamTypeClasses, DeriveDataTypeable, TypeSynonymInstances, 
              FlexibleInstances #-}
 
@@ -56,6 +56,7 @@ char_parseM  =
     c <- takeHeadP
     returnClean c
 
+type instance Meta Char = Base_md
 instance Pads1 () Char Base_md where
   parsePP1 () = char_parseM
   printFL1 () = char_printFL
@@ -81,6 +82,7 @@ int_parseM =
       then returnClean (digitListToInt isNeg digits)
       else returnError def (E.FoundWhenExpecting (mkStr c) "Int")
 
+type instance Meta Int = Base_md
 instance Pads1 () Int Base_md where
   parsePP1 () = int_parseM
   printFL1 () = int_printFL
@@ -129,6 +131,7 @@ double_parseM =
       then returnClean (read (sign ++digits1++dec++digits2++exp++expSign++digits3))
       else returnError def (E.FoundWhenExpecting (mkStr c) "Double")
 
+type instance Meta Double = Base_md
 instance Pads1 () Double Base_md where
   parsePP1 () = double_parseM
   printFL1 () = double_printFL
@@ -183,7 +186,7 @@ text_parseM = do
 instance Pretty Text where
   ppr (Text str) = text "ASCII"
 
-
+type instance Meta Text = Base_md
 instance Pads1 () Text Base_md where
   parsePP1 () = text_parseM
   printFL1 () = text_printFL
@@ -207,6 +210,7 @@ binary_parseM = do
 instance Pretty Binary where
   ppr (Binary str) = text "Binary"
 
+type instance Meta Binary = Base_md
 instance Pads1 () Binary Base_md where
   parsePP1 () = binary_parseM
   printFL1 () = binary_printFL
@@ -534,6 +538,7 @@ bytes_printFL :: Int -> PadsPrinter (Bytes, Bytes_md)
 bytes_printFL n (bs, bmd) =
 	addBString bs
 
+type instance Meta Bytes = Bytes_md
 instance Pads1 Int Bytes Bytes_md where
   parsePP1 = bytes_parseM
   printFL1 = bytes_printFL

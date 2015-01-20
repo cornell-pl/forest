@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 module Examples.IC.Beautiful.Account where
 
@@ -41,9 +41,8 @@ $( derive makeDeepTypeable ''Account )
 $( derive makeDeepTypeable ''Account_imd )
 
 [iforest|
-        type FileAccount = File Account -- Workaround 
 	type Account_d = Directory {
-		accs is [ f :: FileAccount | f <- matches (GL "*") ]
+		accs is [ f :: File Account | f <- matches (GL "*") ]
 	} 
 |]
 
@@ -58,7 +57,7 @@ accountDir = rootDir </> "Examples/IC/Beautiful/Account"
 newAcc :: String -> Int -> IO ()
 newAcc name bal = do
   status <- atomically $ do
-    (rep :: FileAccount TxVarFS) <- new () (accountDir </> name)
+    (rep :: File Account TxVarFS) <- new (Arg ()) (accountDir </> name)
     (main_fmd,(_,(bmd,accimd))) <- read rep
     err <- get_errors main_fmd
     case errorMsg err of
