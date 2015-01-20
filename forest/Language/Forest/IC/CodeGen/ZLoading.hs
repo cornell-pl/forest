@@ -7,6 +7,7 @@ import Language.Forest.IC.CodeGen.Loading
 import {-# SOURCE #-} Language.Forest.IC.CodeGen.ZDeltaLoading
 import Language.Forest.IC.IO.Loading
 import Language.Forest.IC.IO.ZLoading
+import qualified Language.Forest.Pure.MetaData as Pure
 
 import Prelude hiding (const,read)
 import Language.Forest.IC.CodeGen.Utils
@@ -144,7 +145,7 @@ zloadE isTop ty filterPathE pathE treeE getMDE = case ty of
 zloadFile :: String -> Maybe TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
 zloadFile fileName Nothing pathFilterE pathE treeE getMDE = do
 	let proxy = proxyFileName fileName
-	return $ Pure.appE5 (VarE 'doZLoadFile) proxy pathFilterE pathE treeE getMDE
+	return $ Pure.appE6 (VarE 'doZLoadFile1) proxy (AppE (ConE 'Pure.Arg) $ TupE []) pathFilterE pathE treeE getMDE
 zloadFile fileName (Just argE) pathFilterE pathE treeE getMDE = do
 	let proxy = proxyFileName fileName
 	return $ Pure.appE6 (VarE 'doZLoadFile1) proxy argE pathFilterE pathE treeE getMDE

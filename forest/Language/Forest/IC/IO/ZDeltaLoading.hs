@@ -59,21 +59,6 @@ import qualified Data.Map as Map
 import Language.Forest.IC.IO.Memo
 import Language.Forest.IC.BX as BX
 
-doZLoadDeltaFile :: (ZippedICMemo fs,ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,Eq pads,Eq md,MData NoCtx (ForestO fs) pads,ICRep fs,Pads pads md,MData NoCtx (ForestO fs) md) =>
-	ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,(pads,md))) -> (ForestFSThunkI fs (Forest_md fs,(pads,md)),GetForestMD fs)
-	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,(pads,md))))
-doZLoadDeltaFile mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
-	path <- inside mpath
-	case (path == path',isIdValueDelta dv,df) of
-		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "constant0 unchanged" $ return Id
-		(True,True,Just (FSTreeChg _ _)) -> debug "constant0 attrs" $ do
-			modify rep_thunk $ \(_,rep) -> getMD path' tree' >>= \fmd' -> return (fmd',rep)
-			return Delta
-		otherwise -> debug "constant0 changed" $ do
-			rep_thunk' <- inside $ doZLoadFile Proxy (fsTreeDeltaPathFilter df path') path' tree' getMD
-			overwrite rep_thunk $ Inc.get rep_thunk'
-			return Delta
-
 doZLoadDeltaFile1 :: (ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,Eq arg,Typeable arg,Eq pads,Eq md,MData NoCtx (ForestO fs) pads,MData NoCtx (ForestO fs) md,ICRep fs,Pads1 arg pads md)
 	=> Bool -> Pure.Arg arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,(pads,md))) -> (ForestFSThunkI fs (Forest_md fs,(pads,md)),GetForestMD fs)
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,(pads,md))))

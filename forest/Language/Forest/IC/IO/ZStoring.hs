@@ -58,25 +58,6 @@ doZManifestArgs :: (ICRep fs,ForestArgs fs args) =>
 doZManifestArgs proxy margs rep manifestContent man = do
 	manifestContent rep man
 
-doZManifestFile :: (MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,DeepTypeable pads,DeepTypeable md,Eq pads,Eq md,ICRep fs,Pads pads md) => FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ForestO fs (Manifest fs)
-doZManifestFile tree rep_t man = do
-	(fmd,rep) <- inside $ get rep_t
-	let path = fullpath $ fileInfo fmd
-	valid <- isValidMD fmd
-	if valid
-		then do -- for valid data we write it to disk
-			-- the Pads metadata must be valid
-			let testm = liftM (boolStatus "Pads metadata is invalid") $ return $ Pads.numErrors (get_md_header $ snd rep) == 0
-			forestM $ addFileToManifestInTree printFile path tree rep $ addTestToManifest testm man
-		else do
-			-- inconsistent unless the non-stored representation has default data
-			let testDefault = liftM (boolStatus "non-default data for invalid file") $ forestO $ inside $ liftM (==rep) forestdefault
-			let manDefault = addTestToManifest testDefault man
-			isFile <- forestM $ doesFileExistInTree path tree 
-			if isFile -- if the data is invalid and a file exists on disk, we remove it, otherwise we don't change anything
-				then forestM $ removePathFromManifestInTree path tree manDefault
-				else return manDefault
-
 doZManifestFile1 :: (MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,DeepTypeable pads,DeepTypeable md,Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => Pure.Arg arg -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestFile1 (Pure.Arg arg) tree rep_t man = do
 	(fmd,rep) <- inside $ get rep_t

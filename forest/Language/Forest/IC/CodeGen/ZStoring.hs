@@ -24,6 +24,7 @@ import System.Directory
 import System.FilePath.Posix
 import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
+import qualified Language.Forest.Pure.MetaData as Pure
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax hiding (lift)
@@ -158,7 +159,7 @@ zmanifestConstraint treeE pat predE dtaE manE manifest = forceVarsZEnvQ predE $ 
 
 zmanifestFile :: String -> Maybe TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
 zmanifestFile fileName Nothing treeE dtaE manE = do
-	return $ Pure.appE3 (VarE 'doZManifestFile) treeE dtaE manE
+	return $ Pure.appE4 (VarE 'doZManifestFile1) (AppE (ConE 'Pure.Arg) $ TupE []) treeE dtaE manE
 zmanifestFile fileName (Just argE) treeE dtaE manE = do
 	return $ Pure.appE4 (VarE 'doZManifestFile1) argE treeE dtaE manE
 

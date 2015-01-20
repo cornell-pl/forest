@@ -50,6 +50,7 @@ import qualified Control.Monad.State as State
 import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.Trans.Class
+import qualified Language.Forest.Pure.MetaData as Pure
 
 -- for each variable name, we store (a boolean that indicates whether its value has NOT changed (changes are ALWAYS stable), the name of a thunk that holds its value, an optional pattern to match against the thunk's value when the variable is used)
 type ZDeltaEnv = Map Name (TH.Exp,Maybe (Name,Pat))
@@ -239,7 +240,8 @@ zloadDeltaMaybe forestTy treeE pathE dpathE dfE treeE' dvE repmdE = do
 
 zloadDeltaFile :: ForestTy -> Maybe TH.Exp -> TH.Exp -> TH.Exp -> Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZDeltaQ TH.Exp
 zloadDeltaFile ty Nothing pathE treeE dpathE dfE treeE' dvE repmdE = do
-	return $ Pure.appE7 (VarE 'doZLoadDeltaFile) pathE dpathE treeE dfE treeE' dvE repmdE
+	condE <- lift $ dataToExpQ (\_ -> Nothing) True
+	return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
 zloadDeltaFile ty (Just argE') pathE treeE dpathE dfE treeE' dvE repmdE = do
 	condE <- isEmptyZDeltaEnvForestTy ty -- note that the variables from the argument delta are included in the delta environment
 	return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE

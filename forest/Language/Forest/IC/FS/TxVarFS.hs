@@ -308,17 +308,18 @@ instance ZippedICMemo TxVarFS where
 
 	addZippedMemo path proxy args rep tree = forestM $ forestIO $ do
 		let (TxVarFSThunk (dyn,_,_)) = to iso_rep_thunk rep
+		putStrLn $ "adding args " ++ show (typeOf rep) ++ " " ++ show (typeOf args)
 		writeIORef dyn (toDyn args)
 		
 	remZippedMemo fs path rep = return ()
 	findZippedMemo args path rep = return Nothing
 
-getFTVArgs :: (FTK TxVarFS args rep content) => rep -> ForestM TxVarFS (ForestIs TxVarFS args)
-getFTVArgs rep = forestIO $ do
+getFTVArgs :: (FTK TxVarFS args rep content) => Proxy args -> rep -> ForestM TxVarFS (ForestIs TxVarFS args)
+getFTVArgs (proxy ::Proxy args) rep = forestIO $ do
 	let (TxVarFSThunk (rdyn,_,_)) = to iso_rep_thunk rep
 	dyn <- readIORef rdyn
 	case fromDynamic dyn of
-		Nothing -> error "should not happen"
+		Nothing -> error $ "should not happen " ++ show (typeOf rep) ++ " " ++ show (typeOf (undefined::args)) ++ " " ++  show (dynTypeRep dyn)
 		Just args -> return args
 	
 
@@ -398,7 +399,7 @@ writeOrElseTxVarFS rep content b f = do
 	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
 	old_fslog <- forestM $ forestIO $ readIORef fslog_ref
 	set t content -- automatically increments the FSVersion
-	(args :: ForestIs TxVarFS args) <- forestM $ getFTVArgs rep
+	(args :: ForestIs TxVarFS args) <- forestM $ getFTVArgs Proxy rep
 	mani <- zmanifest' (Proxy :: Proxy args) args rep
 	-- we need to store the errors to the (buffered) FS before validating
 	forestM $ storeManifest mani

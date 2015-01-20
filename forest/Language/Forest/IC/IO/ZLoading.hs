@@ -49,50 +49,7 @@ import qualified Control.Exception as CE
 import Data.Data
 import Data.Maybe
 import System.Random
-import Data.Proxy	
-
--- | lazy file loading
--- Pads errors contribute to the Forest error count
-doZLoadFile :: (ZippedICMemo fs,ForestInput fs FSThunk Inside,Eq md,Eq pads,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ICRep fs,Pads pads md) =>
-	Proxy pads -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs (Forest_md fs,(pads,md)))
-doZLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile " ++ show path) $ do
-	let fs = Proxy::Proxy fs
-	let argProxy = Proxy :: Proxy ()
-	let fsrepProxy = Proxy
-	-- default static loading
-	let load_file = do
-		rep_thunk <- checkZPath path tree $ do
-			rep@(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile
-			fmd <- getMD path tree
-			fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
-			return (fmd',rep)
-		return rep_thunk
-	-- memoized reuse
-	let reuse_same_file old_rep = return old_rep
-	-- memoized reuse for moves
-	let reuse_other_file from old_rep_thunk = do
-			fmd' <- getMD path tree
-			fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (liftM (snd . snd) $ Inc.read old_rep_thunk) -- adds the Pads errors
-			rep_thunk <- get old_rep_thunk >>= \(fmd::Forest_md fs,rep) -> ref (fmd'',rep) -- since the old file may come from another location and/or its attributes may have changed
-			remZippedMemo fs from fsrepProxy
-			return rep_thunk
-	oldpath <- oldpath_f path
-	mb <- findZippedMemo argProxy oldpath fsrepProxy 
-	rep <- case mb of
-		(Just (memo_tree,(),memo_rep)) -> debug ("memo hit " ++ show path) $ do
-			df <- forestM $ diffFS memo_tree tree path
-			dv <- diffValue memo_tree memo_rep
-			case (isIdValueDelta dv,df) of
-				(True,isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
-					then reuse_same_file memo_rep
-					else reuse_other_file oldpath memo_rep
-				(True,Just (FSTreeChg _ _)) -> reuse_other_file path memo_rep
-				(True,Just (FSTreeNew _ (Just ((==oldpath) -> True)) _)) -> reuse_other_file oldpath memo_rep
-				otherwise -> load_file
-		Nothing -> load_file				
-	
-	addZippedMemo path argProxy () rep tree
-	return rep
+import Data.Proxy
 
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation

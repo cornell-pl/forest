@@ -104,12 +104,12 @@ tWithHelp acc amount rep =
     (main_fmd, accdir) <- read rep
     case lookup acc $ accs accdir of
       Just account -> do
-        (accfmd,(Account bal,(bmd,accimd)))  <- read account
+        (accfmd,(Account bal,account_md)) <- read account
         check (amount < 0 || bal >= amount)
-        message <- writeOrElse account (accfmd,(Account (bal - amount),(bmd,accimd)))
+        message <- writeOrElse account (accfmd,(Account (bal - amount),account_md))
                    (acc ++ " had " ++ show bal ++ " and changed by " ++ show (- amount)) (return . show)
         return message
-      _ -> return "Failure: The account does not exist"
+      otherwise -> return "Failure: The account does not exist"
 
 check :: Bool -> FTM TxVarFS ()
 check True = return ()
