@@ -422,8 +422,8 @@ fsthunkTy fsName ty = Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) ty
 
 instance (Eq arg,MData NoCtx (ForestI fs) arg,MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,MData NoCtx (ForestI fs) md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs (Forest_md fs,(rep,md))) where
 	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
---	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
---	zupdateManifestScratch marg tree rep man = inside marg >>= \arg -> doZManifestFile1 arg tree rep man
+	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
+	zupdateManifestScratch marg tree rep man = inside marg >>= \arg -> doZManifestFile1 (Arg arg) tree rep man
 
 instance (ZippedICMemo fs,ICRep fs) => ZippedICForest fs () (SymLink fs) where
 	zloadScratch proxy args pathfilter path tree getMD = doZLoadSymLink path tree getMD

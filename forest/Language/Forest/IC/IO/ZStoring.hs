@@ -77,8 +77,8 @@ doZManifestFile tree rep_t man = do
 				then forestM $ removePathFromManifestInTree path tree manDefault
 				else return manDefault
 
-doZManifestFile1 :: (MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,DeepTypeable pads,DeepTypeable md,Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => arg -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ForestO fs (Manifest fs)
-doZManifestFile1 arg tree rep_t man = do
+doZManifestFile1 :: (MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,DeepTypeable pads,DeepTypeable md,Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => Pure.Arg arg -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ForestO fs (Manifest fs)
+doZManifestFile1 (Pure.Arg arg) tree rep_t man = do
 	(fmd,rep) <- inside $ get rep_t
 	let path = fullpath $ fileInfo fmd
 	valid <- isValidMD fmd

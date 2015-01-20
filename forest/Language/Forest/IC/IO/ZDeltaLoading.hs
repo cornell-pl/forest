@@ -74,7 +74,7 @@ doZLoadDeltaFile mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 			overwrite rep_thunk $ Inc.get rep_thunk'
 			return Delta
 
-doZLoadDeltaFile1 :: (ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ICMemo fs,ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ForestMD fs md,Eq arg,Typeable arg,Eq pads,Eq md,MData NoCtx (ForestO fs) pads,MData NoCtx (ForestO fs) md,ICRep fs,Pads1 arg pads md)
+doZLoadDeltaFile1 :: (ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,Eq arg,Typeable arg,Eq pads,Eq md,MData NoCtx (ForestO fs) pads,MData NoCtx (ForestO fs) md,ICRep fs,Pads1 arg pads md)
 	=> Bool -> Pure.Arg arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,(pads,md))) -> (ForestFSThunkI fs (Forest_md fs,(pads,md)),GetForestMD fs)
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,(pads,md))))
 doZLoadDeltaFile1 isEmptyDArg (Arg arg') mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
