@@ -105,10 +105,10 @@ genZLoadM rep_name forestTy pat_infos = do
 -}
 genZLoadBody :: TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> Name -> ForestTy -> ZEnvQ TH.Exp
 genZLoadBody filterPathE pathE treeE getMDE repN ty = case ty of 
-	Directory _ -> zloadE ty filterPathE pathE treeE getMDE
-	FConstraint _ (Directory _) _ -> zloadE ty filterPathE pathE treeE getMDE
+	Directory _ -> zloadE True ty filterPathE pathE treeE getMDE
+	FConstraint _ (Directory _) _ -> zloadE True ty filterPathE pathE treeE getMDE
 	otherwise   -> do -- Add type constructor
-		rhsE <- zloadE ty filterPathE pathE treeE getMDE
+		rhsE <- zloadE True ty filterPathE pathE treeE getMDE
 		return $ Pure.appE2 (VarE 'liftM) (ConE repN) rhsE 
 
 -- adds top-level arguments to the metadata
@@ -129,17 +129,17 @@ genZLoadArgE (i,(pat,pat_ty)) treeE forestTy = do
 	let thunkS = BindS thunkP $ AppE (VarE 'icThunk) mE
 	return (mP,[thunkS],thunkE,[thunkName])
 
-zloadE :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
-zloadE ty filterPathE pathE treeE getMDE = case ty of
+zloadE :: Bool -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
+zloadE isTop ty filterPathE pathE treeE getMDE = case ty of
 	Named ty_name               -> zloadWithArgsE ty_name [] filterPathE pathE treeE getMDE
 	Fapp (Named ty_name) argEs  -> zloadWithArgsE ty_name argEs filterPathE pathE treeE getMDE
 	File (file_name, argEOpt) -> zloadFile file_name argEOpt filterPathE pathE treeE getMDE
-	Archive archtype ty         -> zloadArchive archtype ty filterPathE pathE treeE getMDE
+	Archive archtype ty         -> zloadArchive isTop archtype ty filterPathE pathE treeE getMDE
 	FSymLink         -> zloadSymLink pathE treeE getMDE
-	FConstraint p ty pred -> zloadConstraint treeE p pred $ zloadE ty filterPathE pathE treeE getMDE
-	Directory dirTy -> zloadDirectory dirTy filterPathE pathE treeE getMDE
-	FMaybe forestTy -> zloadMaybe forestTy filterPathE pathE treeE getMDE
-	FComp cinfo     -> zloadComp cinfo filterPathE pathE treeE getMDE
+	FConstraint p ty pred -> zloadConstraint treeE p pred $ zloadE isTop ty filterPathE pathE treeE getMDE
+	Directory dirTy -> zloadDirectory isTop dirTy filterPathE pathE treeE getMDE
+	FMaybe forestTy -> zloadMaybe isTop forestTy filterPathE pathE treeE getMDE
+	FComp cinfo     -> zloadComp isTop cinfo filterPathE pathE treeE getMDE
 
 zloadFile :: String -> Maybe TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
 zloadFile fileName Nothing pathFilterE pathE treeE getMDE = do
@@ -172,8 +172,8 @@ zloadSymLink :: TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
 zloadSymLink pathE treeE repmdE = do
   return $ Pure.appE3 (VarE 'doZLoadSymLink) pathE treeE repmdE
 
-zloadArchive :: [ArchiveType] -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
-zloadArchive archtype ty filterPathE pathE treeE getMDE = do
+zloadArchive :: Bool -> [ArchiveType] -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
+zloadArchive isTop archtype ty filterPathE pathE treeE getMDE = do
 	newPathName <- lift $ newName "new_path"
 	newdfName <- lift $ newName "new_df"
 	newdvName <- lift $ newName "new_dv"
@@ -190,19 +190,23 @@ zloadArchive archtype ty filterPathE pathE treeE getMDE = do
 	let (newGetMDE, newGetMDP) = genPE newGetMDName
 	let (newDPathE, newDPathP) = genPE newDPathName
 	let (newRepMdE, newRepMdP) = genPE newRepMdName
-	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP']) $ zloadE ty filterPathE newPathE newTreeE' newGetMDE
+	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP']) $ zloadE False ty filterPathE newPathE newTreeE' newGetMDE
 	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP',newdvP]) $ runZDeltaQ (zloadDeltaE ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE' newdvE)
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
 	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
-	return $ Pure.appE9 (VarE 'doZLoadArchive) isClosedE (ConE 'Proxy) exts filterPathE pathE treeE getMDE rhsE rhsDE
+	if isTop
+		then return $ Pure.appE9 (VarE 'doZLoadArchive) isClosedE (ConE 'Proxy) exts filterPathE pathE treeE getMDE rhsE rhsDE
+		else return $ Pure.appE6 (VarE 'doZLoadArchive') exts filterPathE pathE treeE getMDE rhsE
 
-zloadMaybe :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
-zloadMaybe ty filterPathE pathE treeE getMDE = do 
-   rhsE <- zloadE ty filterPathE pathE treeE getMDE
-   return $ Pure.appE4 (VarE 'doZLoadMaybe) filterPathE pathE treeE rhsE
+zloadMaybe :: Bool -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
+zloadMaybe isTop ty filterPathE pathE treeE getMDE = do 
+	rhsE <- zloadE False ty filterPathE pathE treeE getMDE
+	if isTop
+		then return $ Pure.appE4 (VarE 'doZLoadMaybe) filterPathE pathE treeE rhsE
+		else return $ Pure.appE4 (VarE 'doZLoadMaybeInner) filterPathE pathE treeE rhsE
 
-zloadDirectory :: DirectoryTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
-zloadDirectory dirTy@(Record id fields) filterPathE pathE treeE getMDE = do
+zloadDirectory :: Bool -> DirectoryTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
+zloadDirectory True dirTy@(Record id fields) filterPathE pathE treeE getMDE = do
 	doDirE <- zloadDirectoryContents dirTy filterPathE pathE treeE getMDE
 	collectMDs <- lift $ zgenMergeFieldsMDErrors fields	
 	return $ Pure.appE5 (VarE 'doZLoadDirectory) pathE treeE collectMDs getMDE doDirE
@@ -244,7 +248,7 @@ zloadSimple (internal, isForm, externalE, forestTy, predM) filterPathE pathE tre
 	
 	loadFocusE <- do
 		(fs,_) <- Reader.ask
-		loadContentE <- liftM (LamE [newpathP,newGetMdP]) $ zloadE forestTy filterPathE newpathE treeE newGetMdE
+		loadContentE <- liftM (LamE [newpathP,newGetMdP]) $ zloadE False forestTy filterPathE newpathE treeE newGetMdE
 		case predM of
 			Nothing -> return $ Pure.appE5 (VarE 'doZLoadSimple) filterPathE pathE externalE treeE loadContentE
 			Just pred -> do
@@ -253,8 +257,8 @@ zloadSimple (internal, isForm, externalE, forestTy, predM) filterPathE pathE tre
 	return (repName,[stmt1])
 
 -- | Load a top-level declared comprehension
-zloadComp :: CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
-zloadComp cinfo filterPathE pathE treeE getMDE = do
+zloadComp :: Bool -> CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZEnvQ TH.Exp
+zloadComp True cinfo filterPathE pathE treeE getMDE = do
 	let collectMDs = zgenMergeFieldMDErrors (Comp cinfo)
 	doCompE <- zloadCompContents cinfo filterPathE pathE treeE getMDE
 	return $ Pure.appE5 (VarE 'doZLoadDirectory) pathE treeE collectMDs getMDE doCompE
@@ -300,13 +304,13 @@ zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE d
 		(fs,_) <- Reader.ask
 		Reader.local update $ case predM of
 			Nothing -> do
-				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE descTy filterPathE newpathE treeE newGetMDE
+				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
 				let loadContainerE = Pure.appE6 (VarE 'doZLoadCompound) filterPathE pathE genE treeE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
 				return (repName,[loadContainerS])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
-				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE descTy filterPathE newpathE treeE newGetMDE
+				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
 				let loadContainerE = Pure.appE7 (VarE 'doZLoadCompoundWithConstraint) filterPathE pathE genE treeE (modPredEComp (VarP fileName) predE) buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
 				return (repName,[loadContainerS])

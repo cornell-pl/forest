@@ -230,6 +230,11 @@ instance (ForestRep rep a,ForestMD fs a) => ForestMD fs rep where
 	get_fmd_header r = get_fmd_header (to iso_rep_thunk r)
 	replace_fmd_header r f = liftM (from iso_rep_thunk) $ replace_fmd_header (to iso_rep_thunk r) f
 
+-- we provide this instance just to get errors...
+instance ForestMD fs rep => ForestMD fs (Maybe rep) where
+	get_fmd_header Nothing = inside cleanForestMD
+	get_fmd_header (Just rep) = get_fmd_header rep
+
 -- replaces the content of a stable metadata value with the content of another one
 class ICRep fs => StableMD fs md where
 	overwriteMD :: md -> ForestI fs md -> ForestO fs ()

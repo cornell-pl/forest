@@ -101,8 +101,22 @@ doZManifestArchive :: (Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThun
 	-> ForestFSThunkI fs (Forest_md fs,rep)
 	-> (FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
-doZManifestArchive archTy tree rep_t manifestContents man = do
-	(fmd,rep) <- inside $ get rep_t
+doZManifestArchive archTy tree rep_t manifestContents man = doZManifestArchive' archTy tree rep_t get manifestContents man
+
+doZManifestArchiveInner :: (Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThunk Inside,ICRep fs) =>
+	[ArchiveType] -> FSTree fs 
+	-> (Forest_md fs,rep)
+	-> (FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs))
+	-> Manifest fs -> ForestO fs (Manifest fs)
+doZManifestArchiveInner archTy tree rep_t manifestContents man = doZManifestArchive' archTy tree rep_t return manifestContents man
+
+doZManifestArchive' :: (Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThunk Inside,ICRep fs) =>
+	[ArchiveType] -> FSTree fs 
+	-> toprep -> (toprep -> ForestI fs (Forest_md fs,rep))
+	-> (FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs))
+	-> Manifest fs -> ForestO fs (Manifest fs)
+doZManifestArchive' archTy tree toprep getRep manifestContents man = do
+	(fmd,rep) <- inside $ getRep toprep
 	let path = fullpath $ fileInfo fmd 
 	canpath <- forestM $ canonalizeDirectoryInTree path tree
 	dskpath <- forestM $ pathInTree canpath tree
@@ -175,22 +189,40 @@ doZManifestMaybe :: (Typeable rep,ForestMD fs rep,Eq rep,ICRep fs) =>
 	-> ForestFSThunkI fs (Forest_md fs,Maybe rep)
 	-> (rep -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
-doZManifestMaybe tree rep_t manifestContent man = do
-	(fmd,rep_mb) <- inside $ get rep_t
+doZManifestMaybe tree rep manifestContent man = doZManifestMaybe' tree rep (\t -> get t >>= \(fmd,rep) -> return (Just fmd,rep)) manifestContent man
+
+doZManifestMaybeInner :: (Typeable rep,ForestMD fs rep,Eq rep,ICRep fs) =>
+	FSTree fs
+	-> Maybe rep
+	-> (rep -> Manifest fs -> ForestO fs (Manifest fs))
+	-> Manifest fs -> ForestO fs (Manifest fs)
+doZManifestMaybeInner tree rep manifestContent man = doZManifestMaybe' tree rep (\rep -> return (Nothing,rep)) manifestContent man
+
+doZManifestMaybe' :: (Typeable rep,ForestMD fs rep,Eq rep,ICRep fs) =>
+	FSTree fs
+	-> toprep -> (toprep -> ForestI fs (Maybe (Forest_md fs),Maybe rep))
+	-> (rep -> Manifest fs -> ForestO fs (Manifest fs))
+	-> Manifest fs -> ForestO fs (Manifest fs)
+doZManifestMaybe' tree toprep getRep manifestContent man = do
+	(mb_fmd,rep_mb) <- inside $ getRep toprep
 	case rep_mb of
-		Just rep -> do
-			let testm = do
-				status1 <- liftM (boolStatus "inconsistent Maybe: top-level and inner metadatas have different validity") $ forestO $ sameValidity fmd rep
-				-- the file will be stored recursively, so we just need to guarantee that filepaths match
-				status2 <- liftM (boolStatus "inconsistentMaybe: top-level and inner medatadas have different paths") $ latestTree >>= forestO . sameCanonicalFullPathInTree fmd rep
-				return $ status1 `mappend` status2
-			let man1 = addTestToManifest testm man
-			manifestContent rep man1 -- the path will be added recursively
-		Nothing -> do
-			let path = fullpath $ fileInfo fmd
-			let testm = liftM (boolStatus "Nothing value contains non-default metadata") $ forestO $ inside $ liftM (==fmd) $ cleanForestMDwithFile path
-			let man1 = addTestToManifest testm man
-			forestM $ removePathFromManifestInTree path tree man1 -- removes the path
+		Just rep -> case mb_fmd of
+				Nothing -> manifestContent rep man
+				Just fmd -> do
+					let testm = do
+						status1 <- liftM (boolStatus "inconsistent Maybe: top-level and inner metadatas have different validity") $ forestO $ sameValidity fmd rep
+						-- the file will be stored recursively, so we just need to guarantee that filepaths match
+						status2 <- liftM (boolStatus "inconsistentMaybe: top-level and inner medatadas have different paths") $ latestTree >>= forestO . sameCanonicalFullPathInTree fmd rep
+						return $ status1 `mappend` status2
+					let man1 = addTestToManifest testm man
+					manifestContent rep man1 -- the path will be added recursively
+		Nothing -> case mb_fmd of
+			Nothing -> return man
+			Just fmd -> do
+				let path = fullpath $ fileInfo fmd
+				let testm = liftM (boolStatus "Nothing value contains non-default metadata") $ forestO $ inside $ liftM (==fmd) $ cleanForestMDwithFile path
+				let man1 = addTestToManifest testm man
+				forestM $ removePathFromManifestInTree path tree man1 -- removes the path
 
 doZManifestFocus :: (ForestMD fs rep,Matching fs a) =>
 	FilePath -> a -> FSTree fs -> rep

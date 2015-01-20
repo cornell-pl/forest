@@ -43,6 +43,12 @@ instance Show (NSValueDelta v) where
 	show (StableVD d) = "(StableVD " ++ show d ++ ")"
 	show (Modify f) = "(Modify _)"
 
+maybeNSValueDelta :: NSValueDelta a -> NSValueDelta (Maybe a)
+maybeNSValueDelta (StableVD d) = StableVD $ mapSValueDelta d
+maybeNSValueDelta (Modify f) = Modify $ \mb -> case mb of
+	Nothing -> Nothing
+	Just a -> Just $ f a
+
 mapSValueDelta :: SValueDelta a -> SValueDelta b
 mapSValueDelta Id = Id
 mapSValueDelta Delta = Delta

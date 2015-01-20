@@ -259,6 +259,9 @@ doZLoadDirectory' path tree collectMDErrors getMD ifGood = debug ("doLoadDirecto
 doZLoadMaybe :: (Typeable rep,Eq rep,ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (Forest_md fs,Maybe rep))
 doZLoadMaybe pathfilter path tree ifExists = fsThunk $ doZLoadMaybe' pathfilter path tree ifExists
 
+doZLoadMaybeInner :: (Typeable rep,Eq rep,ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (Maybe rep)
+doZLoadMaybeInner pathfilter path tree ifExists = liftM snd $ doZLoadMaybe' pathfilter path tree ifExists
+
 doZLoadMaybe' :: (Typeable rep,Eq rep,ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (Forest_md fs,Maybe rep)
 doZLoadMaybe' pathfilter path tree ifExists = do
 	exists <- forestM $ doesExistInTree path tree

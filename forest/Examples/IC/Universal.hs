@@ -31,7 +31,7 @@ import Safe
              , symLinks     is [ s :: SymLink      | s <- matches (GL "*"), (isJust (symLink s_att)) ]
              } |]
 
--- [iforest| type Universal_zip = Gzip (Tar Universal_d) |]
+[iforest| type Universal_zip = Maybe (Gzip (Tar Universal_d)) |]
 
 generateTest :: IO ()
 generateTest = do

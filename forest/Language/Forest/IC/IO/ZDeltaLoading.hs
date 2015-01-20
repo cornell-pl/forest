@@ -235,6 +235,33 @@ doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectM
 			overwrite rep_thunk $ doZLoadDirectory' path' tree' collectMDErrors getMD $ load getMD
 			return Delta
 
+doZLoadDeltaMaybeInner :: (ForestRep rep (ForestFSThunk fs Inside irep),Eq rep,MData NoCtx (ForestO fs) rep,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
+	ForestI fs FilePath -> (Maybe rep,GetForestMD fs) -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	-> ValueDelta fs (Maybe rep)
+	-> (GetForestMD fs -> ForestI fs rep)
+	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (NSValueDelta rep))
+	-> ForestO fs (NSValueDelta (Maybe rep))
+doZLoadDeltaMaybeInner mpath (mb_rep,getMD) path' oldtree df tree' dv load loadD = do
+	path <- inside mpath
+	exists <- forestM $ doesExistInTree path oldtree
+	exists' <- forestM $ doesExistInTree path' tree'
+	case (exists,exists') of
+		(False,False) -> do
+			case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of
+				(True,True,True) -> return $ StableVD Id
+				otherwise -> do
+					return $ Modify $ Prelude.const Nothing
+		(True,False) -> do
+			return $ Modify $ Prelude.const Nothing
+		(True,True) -> do
+			irep <- maybe forestdefault return mb_rep
+			idv <- inside $ diffValue oldtree irep
+			direp <- loadD idv (irep,getMD) -- load recursively
+			return $ maybeNSValueDelta direp
+		(False,True) -> do
+			mb_rep' <- inside $ doZLoadMaybeInner (fsTreeDeltaPathFilter df path') path' tree' $ load getMD
+			return $ Modify $ Prelude.const mb_rep'
+
 doZLoadDeltaMaybe :: (ForestRep rep (ForestFSThunk fs Inside irep),Eq rep,MData NoCtx (ForestO fs) rep,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
 	ForestI fs FilePath -> (ForestFSThunkI fs (Forest_md fs,Maybe rep),GetForestMD fs) -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,Maybe rep))
