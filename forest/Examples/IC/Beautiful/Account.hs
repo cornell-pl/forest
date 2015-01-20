@@ -26,7 +26,7 @@ import System.FilePath.Posix
 
 import Control.Monad.Incremental.Display
 import Data.List as List
-import Control.Monad.Incremental hiding (read)
+import Control.Monad.Incremental hiding (read,new)
 import Prelude hiding (read)
 import Language.Forest.IC hiding (writeFile)
 
@@ -55,9 +55,24 @@ accountDir = rootDir </> "Examples/IC/Beautiful/Account"
 
 -- Transactional Stuff
 
+newAcc :: String -> Int -> IO ()
+newAcc name bal = do
+  status <- atomically $ do
+    (rep :: FileAccount TxVarFS) <- new () (accountDir </> name)
+    (main_fmd,(_,(bmd,accimd))) <- read rep
+    err <- get_errors main_fmd
+    case errorMsg err of
+      Just (MissingFile _) -> do
+        my_fmd <- cleanForestMDwithFile (accountDir </> name)
+        status <- writeOrElse rep (my_fmd,(Account bal,(bmd,accimd))) ("Created account " ++ name ++ " and deposited " ++ show bal) (return . show)
+        return status
+      _ -> return "This account appears to already exist."
+  putStrLn status
+
 tTrans :: String -> String -> Int -> IO ()
 tTrans from to amount = do
-  (status1,status2) <- atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
+  (status1,status2) <- atomically $ do
+    (rep :: Account_d TxVarFS) <- new () accountDir
     status1 <- tWithHelp from amount rep
     status2 <- tWithHelp to (- amount) rep
     return (status1,status2)                                                                      
@@ -66,12 +81,16 @@ tTrans from to amount = do
 
 tWith :: String -> Int -> IO ()
 tWith acc amount = do
-  status <- atomically () accountDir (tWithHelp acc amount)
+  status <- atomically $ do
+    rep <- new () accountDir
+    status <- tWithHelp acc amount rep
+    return status
   putStrLn status
 
 tWith2 :: String -> String -> Int -> IO ()
 tWith2 acc1 acc2 amount = do
-  status <- atomically () accountDir $ \ (rep :: Account_d TxVarFS) -> do
+  status <- atomically $ do
+    (rep :: Account_d TxVarFS) <- new () accountDir
     status <- orElse (tWithHelp acc1 amount rep) (tWithHelp acc2 amount rep)
     return status
   putStrLn status
