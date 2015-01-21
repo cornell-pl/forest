@@ -62,16 +62,19 @@ import Language.Forest.IC.BX as BX
 doZLoadDeltaFile1 :: (ZippedICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,Eq arg,Typeable arg,Eq pads,Eq md,MData NoCtx (ForestO fs) pads,MData NoCtx (ForestO fs) md,ICRep fs,Pads1 arg pads md)
 	=> Bool -> Pure.Arg arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,(pads,md))) -> (ForestFSThunkI fs (Forest_md fs,(pads,md)),GetForestMD fs)
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,(pads,md))))
-doZLoadDeltaFile1 isEmptyDArg (Arg arg') mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+doZLoadDeltaFile1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	path <- inside mpath
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
 		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> debug "constant1 unchanged" $ return Id
 		(True,True,True,Just (FSTreeChg _ _)) -> debug "constant1 attrs" $ do
 			modify rep_thunk $ \(_,rep) -> getMD path' tree' >>= \fmd' -> return (fmd',rep)
+			inside $ addZippedMemo path' argProxy (return arg') rep_thunk tree'
 			return Delta
 		otherwise -> debug "constant1 changed" $ do
 			rep_thunk' <- inside $ doZLoadFile1 (Proxy::Proxy pads) (Arg arg') (fsTreeDeltaPathFilter df path') path' tree' getMD
 			overwrite rep_thunk $ Inc.get rep_thunk'
+			inside $ addZippedMemo path' argProxy (return arg') rep_thunk tree'
 			return Delta
 
 doZLoadDeltaArchive :: (ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs
@@ -82,6 +85,7 @@ doZLoadDeltaArchive :: (ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo 
 	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,rep)))
 doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,getMD) load loadD = do
+	let argsProxy = Proxy :: Proxy ()
 	path <- inside mpath
 	case (path == path',isIdValueDelta dv,df) of
 		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> return Id
@@ -90,6 +94,7 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 				fmd' <- getMD path' tree'
 				fmd'' <- updateForestMDErrorsInsideWith fmd' $ liftM (:[]) $ get_errors irep'
 				return (fmd'',irep')
+			inside $ addZippedMemo path' argsProxy () rep_thunk tree'
 			return Delta
 		
 		-- if the archive file has been moved, try to reuse originally loaded archive data
@@ -99,10 +104,9 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 			return Delta
 		
 		-- compute a diff for the archive's content, and continue
-		otherwise -> do	
-			
+		otherwise -> do
 			rep@(fmd,irep) <- Inc.getOutside rep_thunk
-			
+				
 			-- compute the difference for the archive's content
 			avfsTree' <- forestM $ virtualTree tree'
 			avfsOldTree <- forestM $ virtualTree oldtree
@@ -115,7 +119,10 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 			fmd' <- inside $ getMD path tree'
 			updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors irep -- like a directory
 			set rep_thunk (fmd',irep)
+			
+			inside $ addZippedMemo path' argsProxy () rep_thunk tree'
 			return Delta
+				
 
 doZLoadDeltaSymLink :: (ForestInput fs FSThunk Inside,ICRep fs)
 	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (SymLink fs)
@@ -178,7 +185,7 @@ doZLoadDeltaDirectory :: (MData NoCtx (ForestI fs) rep,Eq rep,ICRep fs,MData NoC
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,rep)))
 doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectMDErrors load loadD = do
 	path <- inside mpath
-	exists <- liftM (doesDirectoryExistInMD path) $ get_fmd_header rep_thunk -- to avoid having the old tree materialized, this should be fine with regards to @stopUnevaluated@
+	exists <- forestM $ doesDirectoryExistInTree path oldtree
 	exists' <- forestM $ doesDirectoryExistInTree path' tree'
 	debug ("doLoadDeltaDirectory: " ++ show (path,exists,path',exists')) $ case (exists,exists') of
 		(False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of

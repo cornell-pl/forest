@@ -311,7 +311,6 @@ instance ZippedICMemo TxVarFS where
 		putStrLn $ "adding args " ++ show (typeOf rep) ++ " " ++ show (typeOf args)
 		writeIORef dyn (toDyn args,path)
 		
-	remZippedMemo fs path rep = return ()
 	findZippedMemo args path rep = return Nothing
 
 getFTVArgs :: (FTK TxVarFS args rep content) => Proxy args -> rep -> ForestM TxVarFS (ForestIs TxVarFS args,FilePath)

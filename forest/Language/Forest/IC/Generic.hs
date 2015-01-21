@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, OverlappingInstances, StandaloneDeriving, GADTs, ConstraintKinds, TemplateHaskell, DeriveDataTypeable, UndecidableInstances, TypeOperators, TypeFamilies, DataKinds, KindSignatures, MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, FlexibleInstances, NamedFieldPuns #-}
+{-# LANGUAGE ViewPatterns, TupleSections, OverlappingInstances, StandaloneDeriving, GADTs, ConstraintKinds, TemplateHaskell, DeriveDataTypeable, UndecidableInstances, TypeOperators, TypeFamilies, DataKinds, KindSignatures, MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables, FlexibleContexts, FlexibleInstances, NamedFieldPuns #-}
 {-
 ** *********************************************************************
 *                                                                      *
@@ -116,13 +116,12 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 		oldpath <- pathfilter path
 		mb <- findZippedMemo proxy path proxyRep
 		case mb of
-			Just (memo_tree,memo_args,memo_rep) -> do
+			Just (memo_tree@(isObservableFSTree -> True),memo_args,memo_rep) -> do
 				df <- forestM $ diffFS memo_tree tree path
 				dv <- diffValue memo_tree memo_rep
 				let deltas = (args,deltaArgs fs proxy)
 				-- XXX: how safe is this?
 				unsafeWorld $ zloadDelta proxy deltas (return oldpath) memo_tree (memo_rep,getMD) path df tree dv
-				unless (oldpath==path) $ remZippedMemo fs oldpath proxyRep
 				addZippedMemo path proxy args memo_rep tree
 				return memo_rep
 			Nothing -> zloadScratch proxy args pathfilter path tree getMD

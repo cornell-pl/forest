@@ -75,13 +75,12 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 		fmd' <- getMD path tree
 		fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (liftM (snd . snd) $ Inc.read old_rep_thunk) -- adds the Pads errors
 		rep_thunk <- get old_rep_thunk >>= \(fmd::Forest_md fs,rep) -> fsRef (fmd'',rep) -- since the old file may come from another location and/or its attributes may have changed
-		remZippedMemo fs from fsrepProxy
 		return (rep_thunk)
 
 	oldpath <- oldpath_f path
 	mb <- findZippedMemo argProxy oldpath fsrepProxy 
 	rep <- case mb of
-		(Just (memo_tree,memo_marg,memo_rep)) -> do
+		(Just (memo_tree@(isObservableFSTree -> True),memo_marg,memo_rep)) -> do
 			memo_arg <- memo_marg
 			samearg <- geq proxyNoCtx memo_arg arg
 			if samearg
@@ -123,7 +122,7 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 			oldpath <- oldpath_f path
 			mb <- findZippedMemo argsProxy oldpath fsrepProxy
 			rep <- case mb of
-				Just (memo_tree,(),memo_rep_thunk) -> do
+				Just (memo_tree@(isObservableFSTree -> True),(),memo_rep_thunk) -> do
 	
 					md@(fmd,irep) <- get memo_rep_thunk
 					
@@ -139,7 +138,6 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 						fmd' <- inside $ getForestMDInTree path tree
 						updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors irep -- like a directory
 						set memo_rep_thunk (fmd',irep)
-					remZippedMemo fs oldpath repProxy
 					return memo_rep_thunk
 				Nothing -> load_folder
 			addZippedMemo path argsProxy () rep tree

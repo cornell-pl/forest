@@ -135,6 +135,9 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 
 	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs FSTreeDeltaNodeMay
 
+	--to support delta functions that may not be able to inspect certain old @FSTree@s
+	isObservableFSTree :: FSTree fs -> Bool
+
 -- canonalizes a filepath, but leaving the filename uncanonized
 canonalizeDirectoryInTree :: FSRep fs => FilePath -> FSTree fs -> ForestM fs FilePath
 canonalizeDirectoryInTree path tree = do
