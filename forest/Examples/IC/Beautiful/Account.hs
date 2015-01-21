@@ -57,7 +57,7 @@ accountDir = rootDir </> "Examples/IC/Beautiful/Account"
 newAcc :: String -> Int -> IO ()
 newAcc name bal = do
   status <- atomically $ do
-    (rep :: File Account TxVarFS) <- new (Arg ()) (accountDir </> name)
+    (rep :: File Account TxVarFS) <- new () (accountDir </> name)
     (main_fmd,(_,(bmd,accimd))) <- read rep
     err <- get_errors main_fmd
     case errorMsg err of

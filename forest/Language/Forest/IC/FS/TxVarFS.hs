@@ -383,12 +383,12 @@ instance TxICForest TxVarFS where
 	orElse = orElseTxVarFS 
 	throw = throwTxVarFS 
 	catch = catchTxVarFS 
-	new = newTxVarFS
+	new = newTxVarFS Proxy
 	read = readTxVarFS
 	writeOrElse = writeOrElseTxVarFS
 
-newTxVarFS :: FTK TxVarFS args rep content => args -> FilePath -> TxVarFTM rep
-newTxVarFS args path = inside $ zload (monadArgs proxyTxVarFS args) path
+newTxVarFS :: FTK TxVarFS args rep content => Proxy args -> ForestVs args -> FilePath -> TxVarFTM rep
+newTxVarFS proxy args path = inside $ zload (vmonadArgs proxyTxVarFS proxy args) path
 
 readTxVarFS :: FTK TxVarFS args rep content => rep -> TxVarFTM content
 readTxVarFS rep = Inc.getOutside (to iso_rep_thunk rep)

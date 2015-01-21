@@ -79,7 +79,7 @@ class TxICForest fs where
 	throw :: Exception e => e -> FTM fs a
 	catch :: Exception e => FTM fs a -> (e -> FTM fs a) -> FTM fs a
 	
-	new :: FTK fs args rep content => args -> FilePath -> FTM fs rep
+	new :: FTK fs args rep content => ForestVs args -> FilePath -> FTM fs rep
 	
 	read :: FTK fs args rep content => rep -> FTM fs content
 	
@@ -227,6 +227,7 @@ class (FSRep fs,Typeable args,Typeable (ForestIs fs args)) => ForestArgs fs args
 	andSValueDeltas :: Proxy fs -> Proxy args -> SValueDeltas (ForestICThunksI fs args) -> SValueDelta (ForestICThunksI fs args)
 	checkArgs :: Proxy fs -> Proxy args -> ForestIs fs args -> ForestICThunksI fs args -> ForestO fs Status
 	monadArgs :: Proxy fs -> args -> ForestIs fs args
+	vmonadArgs :: Proxy fs -> Proxy args -> ForestVs args -> ForestIs fs args
 	
 instance ICRep fs => ForestArgs fs () where
 	newArgs fs args () = return ()
@@ -234,6 +235,7 @@ instance ICRep fs => ForestArgs fs () where
 	andSValueDeltas fs args () = Id
 	checkArgs _ _ _ _ = return Valid
 	monadArgs _ () = ()
+	vmonadArgs _ _ () = ()
 	
 instance (Data a,Typeable a,Eq a,ICRep fs) => ForestArgs fs (Arg a) where
 	newArgs fs args m = thunk m
@@ -244,6 +246,7 @@ instance (Data a,Typeable a,Eq a,ICRep fs) => ForestArgs fs (Arg a) where
 		arg' <- inside $ force targ
 		return $ boolStatus (ConflictingArguments) (arg == arg')
 	monadArgs fs (Arg arg) = return arg
+	vmonadArgs fs args arg = return arg
 	
 instance (ICRep fs,ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a :*: b) where
 	newArgs fs (args :: Proxy (a1 :*: a2)) (m1 :*: m2) = do
@@ -257,6 +260,7 @@ instance (ICRep fs,ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a 
 		status2 <- checkArgs fs (Proxy :: Proxy a2) marg2 targ2
 		return $ status1 `mappend` status2
 	monadArgs fs (arg1 :*: arg2) = monadArgs fs arg1 :*: monadArgs fs arg2
+	vmonadArgs fs (args :: Proxy (arg1 :*: arg2)) (arg1 :*: arg2) = vmonadArgs fs (Proxy :: Proxy arg1) arg1 :*: vmonadArgs fs (Proxy :: Proxy arg2) arg2
 
 type family SValueDeltas  args :: * where
 	SValueDeltas (a :*: b) = (SValueDeltas a :*: SValueDeltas b)

@@ -219,6 +219,11 @@ type family ForestFSThunks (fs :: FS) l args :: * where
 type ForestFSThunksI fs args = ForestFSThunks fs Inside args
 type ForestFSThunksO fs args = ForestFSThunks fs Outside args
 
+type family ForestVs args :: * where
+	ForestVs (a :*: b) = (ForestVs a :*: ForestVs b)
+	ForestVs (Arg a) = a
+	ForestVs () = () 
+
 ----------
 
 
