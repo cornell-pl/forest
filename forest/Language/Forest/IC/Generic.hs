@@ -86,7 +86,7 @@ class TxICForest fs where
 	-- tries to modify a variable
 	-- the write only occurs if validation succeeds
 	-- if the new value is not a consistent view of the FS, an alternative action is run otherwise
-	writeOrElse :: FTK fs args rep content => rep -> content -> b -> ([Message] -> FTM fs b) -> FTM fs b
+	writeOrElse :: FTK fs args rep content => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
 	validate :: FTK fs args rep content => rep -> FTM fs Forest_err
 	validate = get_errors
@@ -129,15 +129,15 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	
 	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
-	zupdateManifestScratch :: ForestIs fs args -> FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs)
+	zupdateManifestScratch :: ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs)
 	
-	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> ForestO fs (Manifest fs)
+	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> ForestO fs (Manifest fs)
 	
-	zmanifest :: ForestIs fs args -> rep -> ForestO fs (Manifest fs)
+	zmanifest :: ForestIs fs args -> FilePath -> rep -> ForestO fs (Manifest fs)
 	zmanifest = zmanifest' Proxy
 	
-	zmanifest' :: Proxy args -> ForestIs fs args -> rep -> ForestO fs (Manifest fs)
-	zmanifest' proxy args rep = forestM latestTree >>= \tree -> forestM (newManifestWith "/" tree) >>= zupdateManifestScratch args tree rep
+	zmanifest' :: Proxy args -> ForestIs fs args -> FilePath -> rep -> ForestO fs (Manifest fs)
+	zmanifest' proxy args path rep = forestM latestTree >>= \tree -> forestM (newManifestWith "/" tree) >>= zupdateManifestScratch args path tree rep
 
 -- * Incremental Forest interface
 
@@ -210,10 +210,10 @@ class (Typeable rep,Typeable md,ICMemo fs,ForestArgs fs args,MData NoCtx (Forest
 	loadDelta :: LiftedICMode mode -> Proxy args -> LoadDeltaArgs mode fs args -> ForestI fs FilePath -> FSTree fs -> OldData fs rep md -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md)
 
 	-- | Writes the data to a private Forest on-disk location and generates a manifest file
-	generateManifestScratch :: LiftedICMode mode -> ForestIs fs args -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)
-	generateManifestScratch mode args tree dta = forestM (newManifestWith "/" tree) >>= updateManifestScratch mode args tree dta
+	generateManifestScratch :: LiftedICMode mode -> ForestIs fs args -> FilePath -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)
+	generateManifestScratch mode args path tree dta = forestM (newManifestWith "/" tree) >>= updateManifestScratch mode args path tree dta
 	
-	updateManifestScratch :: LiftedICMode mode -> ForestIs fs args -> FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs)
+	updateManifestScratch :: LiftedICMode mode -> ForestIs fs args -> FilePath -> FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs)
 
 	-- | generates default metadata based on the specification
 	defaultMd :: ForestIs fs args -> rep -> FilePath -> ForestI fs md
@@ -235,14 +235,14 @@ instance ICRep fs => ForestArgs fs () where
 	checkArgs _ _ _ _ = return Valid
 	monadArgs _ () = ()
 	
-instance (Typeable a,Eq a,ICRep fs) => ForestArgs fs (Arg a) where
+instance (Data a,Typeable a,Eq a,ICRep fs) => ForestArgs fs (Arg a) where
 	newArgs fs args m = thunk m
 	deltaArgs fs args = Delta
 	andSValueDeltas fs args d = d
 	checkArgs _ _ marg targ = do
 		arg <- inside $ marg
 		arg' <- inside $ force targ
-		return $ boolStatus "top-level argument mismatch" (arg == arg')
+		return $ boolStatus (ConflictingArguments) (arg == arg')
 	monadArgs fs (Arg arg) = return arg
 	
 instance (ICRep fs,ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a :*: b) where

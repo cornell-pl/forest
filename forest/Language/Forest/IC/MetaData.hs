@@ -320,14 +320,10 @@ sameFullPath md1 md2 = do
 	return $ fullpath (fileInfo fmd1) == fullpath (fileInfo fmd2)
 
 -- | Tests if two metadata values point to the same canonical filepath, in respect to a given tree
-sameCanonicalFullPathInTree :: (ForestLayer fs l,ForestMD fs md1,ForestMD fs md2) => md1 -> md2 -> FSTree fs -> ForestL fs l Bool
-sameCanonicalFullPathInTree md1 md2 tree = do
-	fmd1 <- get_fmd_header md1
-	fmd2 <- get_fmd_header md2
-	let path1 = fullpath (fileInfo fmd1)
-	let path2 = fullpath (fileInfo fmd2)
-	canpath1 <- forestM $ canonalizePathWithTree path1 tree
-	canpath2 <- forestM $ canonalizePathWithTree path2 tree
+sameCanonicalFullPathInTree :: (ICRep fs) => FilePath -> FilePath -> FSTree fs -> ForestM fs Bool
+sameCanonicalFullPathInTree path1 path2 tree = do
+	canpath1 <- canonalizePathWithTree path1 tree
+	canpath2 <- canonalizePathWithTree path2 tree
 	return $ canpath1 == canpath2
 
 addMultipleMatchesErrorMD :: (ForestMD fs md) => FilePath -> [String] -> md -> ForestO fs ()

@@ -146,6 +146,12 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 			return rep
 		else load_folder
 
+doZLoadArchiveInner :: (ForestMD fs rep,MData NoCtx (ForestI fs) rep,ICRep fs) =>
+	[ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
+	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
+	-> ForestI fs rep
+doZLoadArchiveInner exts oldpath_f path  tree getMD load = liftM snd $ doZLoadArchive' exts oldpath_f path  tree getMD load
+
 doZLoadArchive' :: (ForestMD fs rep,MData NoCtx (ForestI fs) rep,ICRep fs) =>
 	[ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)

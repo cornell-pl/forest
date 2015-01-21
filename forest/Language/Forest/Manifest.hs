@@ -1,4 +1,4 @@
-{-# LANGUAGE ConstraintKinds, DeriveDataTypeable, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, FlexibleContexts, StandaloneDeriving, NamedFieldPuns, RecordWildCards #-}
+{-# LANGUAGE GADTs, ConstraintKinds, DeriveDataTypeable, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, FlexibleContexts, StandaloneDeriving, NamedFieldPuns, RecordWildCards #-}
 
 module Language.Forest.Manifest where
 
@@ -29,10 +29,24 @@ import Safe
 import Language.Forest.IO.Utils
 import Data.Foldable (foldlM)
 import Control.Monad
+import Data.Dynamic
 
 -- ** Manifest data types
 
-type Message = String
+data ManifestError =
+	  InvalidPath FilePath -- Manifest paths need to be absolute, and of course, valid
+	| NonExistingPath FilePath -- when a path needs has to exist but doesn't
+	| ExistingPath FilePath -- when a path cannot exist bue does
+	| ConflictingFileContent FilePath Content Content -- different content can't be stored at the same file
+	| ConflictingLink FilePath FilePath (Maybe FilePath) -- filepath, rep target, md target
+	| ConflictingArguments -- the specification arguments are different from the ones stored in the metadata
+	| ConflictingMatching FilePath String [FilePath] [FilePath] -- filepath, matching expression, representation/metadata matches, filesystem matches
+	| ConflictingRepMd -- for non-zipped forest data structures, the representation/metadata trees are not in sync
+	| ConflictingMdValidity -- the validity of the metadata does not match the expected from the data
+	| ConflictingConstraint -- constraint validation differs
+	| ConflictingPath FilePath FilePath -- when the root path does not match the metadata path
+	| ConflictingFileExtensions FilePath [ArchiveType]
+  deriving (Eq,Show,Data,Typeable)
 
 -- Note: should we be checking that permissions and owners are also consistent? For instance, store is not writing the fileinfos stored in memory
 
@@ -42,7 +56,7 @@ data Content = Local FilePath     -- contents are files in temp directory with g
              | None               -- file path should not exist
    deriving (Show, Eq,Data,Typeable)
 
-data Status = Invalid Message | Valid | NotValidated
+data Status = Invalid [ManifestError] | Valid | NotValidated
    deriving (Show, Eq,Data,Typeable)
 
 data ManifestEntry =  ManifestEntry
@@ -86,7 +100,7 @@ instance Monoid Status where
 	mempty = Valid
 	mappend Valid s2 = s2
 	mappend s1 Valid = s1
-	mappend (Invalid m1) (Invalid m2) = Invalid $ m1 ++ "; " ++ m2
+	mappend (Invalid m1) (Invalid m2) = Invalid $ m1 ++ m2
 	mappend NotValidated (Invalid m2) = Invalid m2
 	mappend (Invalid m1) NotValidated = Invalid m1
 
@@ -97,13 +111,13 @@ instance Monoid ManifestEntry where
 -- ** manifest validation
 
 -- validates a manifest and compiles a list of errors
-manifestErrors :: FSRep fs => Manifest fs -> ForestM fs [Message]
+manifestErrors :: FSRep fs => Manifest fs -> ForestM fs [ManifestError]
 manifestErrors man = do
 	let all_tests = tests man ++ map (liftM (status . snd) . detectConflictInEntry (pathRoot man)) (Map.toList (entries man))
 	let doTest res test = do
 		status <- test
 		case status of
-			Invalid msg -> return $ msg:res
+			Invalid msg -> return $ msg++res
 			otherwise -> return res
 	foldlM doTest [] all_tests
 
@@ -137,7 +151,7 @@ detectPairConflict pathRoot rel (c1,s1) (c2,s2) = do
 	let checkFiles fp1 fp2 = do
 		isDifferent <- forestIO $ fileIsDifferent fp1 fp2
 		if isDifferent
-			then return $ Invalid $ "File " ++ pathRoot </> s1 ++ " is in conflict with file " ++ pathRoot </> s2
+			then return $ Invalid [ConflictingFileContent (pathRoot </> rel) c1 c2]
 			else return Valid
 	case (c1,c2) of
 		(Local fp1,Local fp2) -> checkFiles fp1 fp2
@@ -148,7 +162,7 @@ detectPairConflict pathRoot rel (c1,s1) (c2,s2) = do
 			dest2 <- canonalizePathWithTree (dir </> target2) tree
 			if dest1 == dest2
 				then return Valid
-				else return $ Invalid $ "Link " ++ target1 ++ " clashed with target " ++ target2
+				else return $ Invalid [ConflictingFileContent (pathRoot </> rel) c1 c2]
 		(Dir,Dir) -> return Valid   --- update this to manage conflicts with contained comprehensions
 		(Local fp1,Link target2) -> do
 			tree <- latestTree
@@ -160,7 +174,7 @@ detectPairConflict pathRoot rel (c1,s1) (c2,s2) = do
 			dest1 <- canonalizePathWithTree (dir </> target1) tree
 			fp1 <- pathInTree dest1 tree
 			checkFiles fp1 fp2
-		otherwise -> return $ Invalid $ show c1 ++ " is in conflict with "  ++ show c2
+		otherwise -> return $ Invalid [ConflictingFileContent (pathRoot </> rel) c1 c2]
 
 -- ** manifest storing
 
@@ -218,8 +232,8 @@ changeRootOfManifestTable old_root new_root tbl = Map.fromList $ map (\(n,e) -> 
 changeRootOfManifestEntry :: FilePath -> FilePath -> ManifestEntry -> ManifestEntry
 changeRootOfManifestEntry old_root new_root e = e { sources = map (\n -> makeRelative (old_root </> n) new_root) (sources e) }
 
-boolStatus :: String -> Bool -> Status
-boolStatus msg b = if b then Valid else (Invalid msg)
+boolStatus :: ManifestError -> Bool -> Status
+boolStatus msg b = if b then Valid else (Invalid [msg])
 
 addManifestEntry :: FilePath -> (Status -> ManifestEntry) -> Manifest fs -> Manifest fs
 addManifestEntry path newEntry man = case Map.lookup path (entries man) of
@@ -243,7 +257,7 @@ addFileToManifest' canpath path tmpFile man = {-debug ("addFileToManifest: "++sh
 	then 
 		let newEntry = ManifestEntry [Local tmpFile] [makeRelative (pathRoot man) path]
 		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
-	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
+	else addTestToManifest (liftM (boolStatus $ InvalidPath path) $ return False) man
 
 addLinkToManifestInTree :: FSRep fs => FilePath -> FSTree fs -> FilePath -> Manifest fs -> ForestM fs (Manifest fs)
 addLinkToManifestInTree path tree linkPath man = do
@@ -256,7 +270,7 @@ addLinkToManifest canpath path linkPath man = {-debug ("addLinkToManifest: "++sh
 	then
 		let newEntry = ManifestEntry [Link linkPath] [makeRelative (pathRoot man) path]
 		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
-	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
+	else addTestToManifest (liftM (boolStatus $ InvalidPath path) $ return False) man
 
 removePathFromManifestInTree :: FSRep fs => FilePath -> FSTree fs -> Manifest fs -> ForestM fs (Manifest fs)
 removePathFromManifestInTree path tree man = do
@@ -269,7 +283,7 @@ removePathFromManifest canpath path man = {-debug ("removePathFromManifest: "++s
 	then
 		let newEntry = ManifestEntry [None] [makeRelative (pathRoot man) path]
 		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
-	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
+	else addTestToManifest (liftM (boolStatus $ InvalidPath path) $ return False) man
 
 addTestToManifest :: FSRep fs => ForestM fs Status -> Manifest fs -> Manifest fs
 addTestToManifest testm man = man { tests = testm : tests man }
@@ -285,7 +299,7 @@ addDirToManifest canpath path man = {-debug ("addDirToManifest: "++show canpath 
 	then
 		let newEntry = ManifestEntry [Dir] [makeRelative (pathRoot man) path] 
 		in  addManifestEntry (makeRelative (pathRoot man) canpath) newEntry man
-	else addTestToManifest (liftM (boolStatus "invalid path") $ return False) man
+	else addTestToManifest (liftM (boolStatus $ InvalidPath path) $ return False) man
 
 collectManifestErrors :: Manifest fs -> Status
 collectManifestErrors manifest = mconcat (collectErrorsManifestTable (entries manifest))

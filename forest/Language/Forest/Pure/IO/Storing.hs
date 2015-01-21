@@ -97,8 +97,8 @@ doManifestArchive archTy tree (rep,(fmd,md)) manifestContents man = do
 	
 	let testm = do
 		let isValid = isValidMD fmd
-		status1 <- return $ boolStatus "inconsistent Archive: file extension does not match archive type" $ isValid <= ('.' : archiveExtension archTy == takeExtensions path)
-		status2 <- return $ boolStatus "inconsistent Archive: top-level and inner metadatas have different validity" $ sameValidity fmd md
+		status1 <- return $ boolStatus (ConflictingFileExtensions path archTy) $ isValid <= ('.' : archiveExtension archTy == takeExtensions path)
+		status2 <- return $ boolStatus ConflictingMdValidity $ sameValidity fmd md
 		return $ status1 `mappend` status2
 	let man2 = addTestToManifest testm man -- errors in the metadata must be consistent
 	
@@ -117,7 +117,7 @@ doManifestSymLink tree (tgt,(fmd,base_md)) man = do
 	
 	let testm = do
 		let sym = symLink $ fileInfo fmd
-		liftM (boolStatus "inconsistent SymLink: targets of metadata and content don't match") $ return $ sym == Just tgt
+		liftM (boolStatus $ ConflictingLink path tgt sym) $ return $ sym == Just tgt
 	let man1 = addTestToManifest testm man
 	
 	return $ addLinkToManifest canpath path tgt man1
@@ -130,7 +130,7 @@ doManifestConstraint tree pred (rep,md) manifestContent man = do
 	let testm = do
 		if pred (rep,md)
 			then return Valid
-			else return $ boolStatus ("inconsistent Constraint: metadata has different validity from the specification") $ not $ isValidMD md
+			else return $ boolStatus (ConflictingMdValidity) $ not $ isValidMD md
 	let man1 = addTestToManifest testm man
 	manifestContent (rep,md) man
 
@@ -144,7 +144,7 @@ doManifestDirectory tree collectMDErrors (rep,(fmd,md)) manifestContent man = do
 	canpath <- canonalizePathWithTree path tree
 	dskpath <- pathInTree canpath tree
 	let man1 = addDirToManifest canpath path man -- adds a new directory
-	let testm = return $ boolStatus "inconsistent Directory: top-level and inner metadatas have different validity" $ sameValidity' fmd $ collectMDErrors md
+	let testm = return $ boolStatus ConflictingMdValidity $ sameValidity' fmd $ collectMDErrors md
 	let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
 	manifestContent path (rep,md) man2
 
@@ -158,9 +158,9 @@ doManifestMaybe tree (rep_mb,(fmd,md_mb)) manifestContent defaultContent man = d
 	case (rep_mb,md_mb) of
 		(Just rep,Just md) -> do
 			let testm = do
-				status1 <- return $ boolStatus "inconsistent Maybe: top-level and inner metadatas have different validity" $ sameValidity fmd md
+				status1 <- return $ boolStatus ConflictingMdValidity $ sameValidity fmd md
 				-- the file will be stored recursively, so we just need to guarantee that filepaths match
-				status2 <- liftM (boolStatus "inconsistentMaybe: top-level and inner medatadas have different paths") $ sameCanonicalFullPathInTree fmd md tree
+				status2 <- liftM (boolStatus ConflictingMdValidity) $ sameCanonicalFullPathInTree fmd md tree
 				return $ status1 `mappend` status2
 			let man1 = addTestToManifest testm man
 			manifestContent (rep,md) man1 -- the path will be added recursively
@@ -168,19 +168,19 @@ doManifestMaybe tree (rep_mb,(fmd,md_mb)) manifestContent defaultContent man = d
 			let path = fullpath $ fileInfo fmd
 			canpath <- canonalizePathWithTree path tree
 			dskpath <- pathInTree canpath tree
-			let testm = return $ boolStatus "Nothing value contains invalid metadata" $ isValidMD fmd
+			let testm = return $ boolStatus (ConflictingMdValidity) $ isValidMD fmd
 			let man1 = addTestToManifest testm man
 			return $ removePathFromManifest canpath path man1 -- removes the path
 		(Just rep,Nothing) -> do 
 			md <- defaultContent rep (fullpath $ fileInfo fmd)
-			let testm = return (Invalid "inconsistent Maybe values: missing metadata") -- always invalid
+			let testm = return (Invalid [ConflictingRepMd]) -- always invalid
 			let man1 = addTestToManifest testm man
 			manifestContent (rep,md) man1 -- the path will be added recursively
 		(Nothing,Just md) -> do 
 			let path = fullpath $ fileInfo fmd
 			canpath <- canonalizePathWithTree path tree
 			dskpath <- pathInTree canpath tree
-			let testm = return (Invalid $ "inconsistent Maybe values: missing data") -- always invalid
+			let testm = return (Invalid [ConflictingRepMd]) -- always invalid
 			let man1 = addTestToManifest testm man
 			return $ removePathFromManifest canpath path man1 -- removes the path
 
@@ -196,7 +196,7 @@ doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 		let name = makeRelative parentPath path
 		let isValid = isValidMD fmd
 		-- implication because the value may be invalid due to other errors
-		return $ boolStatus "inconsistent matching expression and focus path" ((not $ null (List.delete name files)) <= isValid)
+		return $ boolStatus (ConflictingMatching parentPath (show matching) [name] files) ((not $ null (List.delete name files)) <= isValid)
 	let man1 = addTestToManifest testm man
 	manifestUnder dta man1
 

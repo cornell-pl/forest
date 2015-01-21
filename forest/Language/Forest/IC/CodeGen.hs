@@ -273,7 +273,7 @@ genZRepMDTy isTop fsName ty = case ty of
 		rep_ty <- genZRepMDTy False fsName ty
 		if isTop
 			then return $ fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName),rep_ty]
-			else return $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName),rep_ty]
+			else return $ rep_ty
 	FSymLink              -> return $ AppT (ConT ''SymLink) (VarT fsName)
 	Named ty_name        -> return (Pure.appTyFS fsName $ Pure.getTyName ty_name)
 	FConstraint p ty pred -> genZRepMDTy isTop fsName ty
@@ -426,14 +426,14 @@ uTy fsName ty = Pure.appT2 (ConT ''ForestICThunkI) (VarT fsName) ty
 fsthunkTy :: Name -> TH.Type -> TH.Type
 fsthunkTy fsName ty = Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) ty
 
-instance (Eq arg,MData NoCtx (ForestI fs) arg,MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,MData NoCtx (ForestI fs) md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs (Forest_md fs,(rep,md))) where
+instance (Data arg,Eq arg,MData NoCtx (ForestI fs) arg,MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,MData NoCtx (ForestI fs) md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs (Forest_md fs,(rep,md))) where
 	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
 	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
-	zupdateManifestScratch marg tree rep man = inside marg >>= \arg -> doZManifestFile1 (Arg arg) tree rep man
+	zupdateManifestScratch marg path tree rep man = inside marg >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man
 
 instance (ZippedICMemo fs,ICRep fs) => ZippedICForest fs () (SymLink fs) where
 	zloadScratch proxy args pathfilter path tree getMD = doZLoadSymLink path tree getMD
 	zloadDelta proxy (margs,dargs) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaSymLink mpath path' tree df tree' dv (rep,getMD)
-	zupdateManifestScratch args tree rep man = doZManifestSymLink tree rep man
+	zupdateManifestScratch args path tree rep man = doZManifestSymLink path tree rep man
 
 

@@ -298,9 +298,9 @@ instance ICRep TxVarFS where
 	forestO = TxVarFSForestM . runTxVarFSForestO
 
 	-- stores a computation and a concurrent map from @FSVersion@s to computed values
-	newtype FSThunk TxVarFS l inc r m a = TxVarFSThunk (IORef Dynamic,l inc r m a,WeakMap FSVersion a)
+	newtype FSThunk TxVarFS l inc r m a = TxVarFSThunk (IORef (Dynamic,FilePath),l inc r m a,WeakMap FSVersion a)
 
-	newtype HSThunk TxVarFS l inc r m a = TxVarHSThunk (IORef Dynamic,l inc r m a,WeakMap FSVersion a)
+	newtype HSThunk TxVarFS l inc r m a = TxVarHSThunk (IORef (Dynamic,FilePath),l inc r m a,WeakMap FSVersion a)
 	
 	newtype ICThunk TxVarFS l inc r m a = TxVarICThunk (l inc r m a)
 
@@ -309,23 +309,23 @@ instance ZippedICMemo TxVarFS where
 	addZippedMemo path proxy args rep tree = forestM $ forestIO $ do
 		let (TxVarFSThunk (dyn,_,_)) = to iso_rep_thunk rep
 		putStrLn $ "adding args " ++ show (typeOf rep) ++ " " ++ show (typeOf args)
-		writeIORef dyn (toDyn args)
+		writeIORef dyn (toDyn args,path)
 		
 	remZippedMemo fs path rep = return ()
 	findZippedMemo args path rep = return Nothing
 
-getFTVArgs :: (FTK TxVarFS args rep content) => Proxy args -> rep -> ForestM TxVarFS (ForestIs TxVarFS args)
+getFTVArgs :: (FTK TxVarFS args rep content) => Proxy args -> rep -> ForestM TxVarFS (ForestIs TxVarFS args,FilePath)
 getFTVArgs (proxy ::Proxy args) rep = forestIO $ do
 	let (TxVarFSThunk (rdyn,_,_)) = to iso_rep_thunk rep
-	dyn <- readIORef rdyn
+	(dyn,path) <- readIORef rdyn
 	case fromDynamic dyn of
 		Nothing -> error $ "should not happen " ++ show (typeOf rep) ++ " " ++ show (typeOf (undefined::args)) ++ " " ++  show (dynTypeRep dyn)
-		Just args -> return args
+		Just args -> return (args,path)
 	
 
 instance ForestLayer TxVarFS l => Thunk (HSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
 	new m = do
-		rdyn <- forestM $ forestIO $ newIORef $ toDyn ()
+		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"")
 		tbl <- forestM $ forestIO $ WeakMap.new
 		return $ TxVarHSThunk (rdyn,m,tbl)
 	read (TxVarHSThunk (rdyn,m,tbl)) = do
@@ -347,7 +347,7 @@ instance ForestLayer TxVarFS l => Output (ICThunk TxVarFS) l (IncForest TxVarFS)
 
 instance (ForestLayer TxVarFS l) => Thunk (FSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
 	new m = do
-		rdyn <- forestM $ forestIO $ newIORef $ toDyn ()
+		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"")
 		tbl <- forestM $ forestIO $ WeakMap.new
 		return $ TxVarFSThunk (rdyn,m,tbl)
 	read (TxVarFSThunk (rdyn,m,tbl)) = do
@@ -393,14 +393,14 @@ newTxVarFS args path = inside $ zload (monadArgs proxyTxVarFS args) path
 readTxVarFS :: FTK TxVarFS args rep content => rep -> TxVarFTM content
 readTxVarFS rep = Inc.getOutside (to iso_rep_thunk rep)
 
-writeOrElseTxVarFS :: FTK TxVarFS args rep content => rep -> content -> b -> ([Message] -> TxVarFTM b) -> TxVarFTM b
+writeOrElseTxVarFS :: FTK TxVarFS args rep content => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS rep content b f = do
 	let t = to iso_rep_thunk rep
 	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
 	old_fslog <- forestM $ forestIO $ readIORef fslog_ref
 	set t content -- automatically increments the FSVersion
-	(args :: ForestIs TxVarFS args) <- forestM $ getFTVArgs Proxy rep
-	mani <- zmanifest' (Proxy :: Proxy args) args rep
+	(args :: ForestIs TxVarFS args,path) <- forestM $ getFTVArgs Proxy rep
+	mani <- zmanifest' (Proxy :: Proxy args) args path rep
 	-- we need to store the errors to the (buffered) FS before validating
 	forestM $ storeManifest mani
 	forestM $ forestIO $ putStrLn "Manifest!"
