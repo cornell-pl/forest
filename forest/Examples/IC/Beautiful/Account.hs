@@ -25,7 +25,7 @@ import Data.WithClass.Derive.MData
 import System.FilePath.Posix
 
 import Control.Monad.Incremental.Display
-import Data.List as List
+import Data.List as List hiding (delete)
 import Control.Monad.Incremental hiding (read,new)
 import Prelude hiding (read)
 import Language.Forest.IC hiding (writeFile)
@@ -58,15 +58,22 @@ newAcc :: String -> Int -> IO ()
 newAcc name bal = do
   status <- atomically $ do
     (rep :: File Account TxVarFS) <- new () (accountDir </> name)
-    (main_fmd,(_,(bmd,accimd))) <- read rep
+    (main_fmd,(_,acc_md)) <- read rep
     err <- get_errors main_fmd
     case errorMsg err of
       Just (MissingFile _) -> do
         my_fmd <- cleanForestMDwithFile (accountDir </> name)
-        status <- writeOrElse rep (my_fmd,(Account bal,(bmd,accimd))) ("Created account " ++ name ++ " and deposited " ++ show bal) (return . show)
+        status <- writeOrElse rep (my_fmd,(Account bal,acc_md)) ("Created account " ++ name ++ " and deposited " ++ show bal) (return . show)
         return status
       _ -> return "This account appears to already exist."
   putStrLn status
+
+delAcc :: String -> IO ()
+delAcc name = do
+  atomically $ do
+    (rep :: File Account TxVarFS) <- new () (accountDir </> name)
+    delete rep
+  putStrLn ("Account " ++ name ++ " deleted.")
 
 tTrans :: String -> String -> Int -> IO ()
 tTrans from to amount = do
