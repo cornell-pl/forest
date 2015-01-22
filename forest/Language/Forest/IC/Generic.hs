@@ -33,6 +33,7 @@
 
 module Language.Forest.IC.Generic   where
 
+import Language.Forest.IC.Default
 import Language.Pads.Padsc hiding (gmapT)
 import Prelude hiding (mod)
 import Data.Monoid
@@ -66,7 +67,7 @@ import Language.Forest.Errors
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
 
-type FTK fs args rep content = (ForestMD fs rep,Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs content))
+type FTK fs args rep content = (CopyFSThunks TxVarFS Outside rep,ForestMD fs rep,Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs content))
 
 class TxICForest fs where
 
@@ -90,6 +91,14 @@ class TxICForest fs where
 	
 	validate :: FTK fs args rep content => rep -> FTM fs Forest_err
 	validate = get_errors
+	
+	
+	-- * An attempt to mimic regular filesystem operations, but over Forest specifications
+	
+	-- recursively deletes a variable from the filesystem; should always succeed
+	delete :: FTK fs args rep content => rep -> FTM fs ()
+	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
+	copyOrElse :: FTK fs args rep content => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
 tryWrite :: (TxICForest fs,FTK fs args rep content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
@@ -118,11 +127,11 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 		case mb of
 			Just (memo_tree@(isObservableFSTree -> True),memo_args,memo_rep) -> do
 				df <- forestM $ diffFS memo_tree tree path
-				dv <- diffValue memo_tree memo_rep
+				dv <- diffThunkValue memo_tree memo_rep
 				let deltas = (args,deltaArgs fs proxy)
 				-- XXX: how safe is this?
 				unsafeWorld $ zloadDelta proxy deltas (return oldpath) memo_tree (memo_rep,getMD) path df tree dv
-				addZippedMemo path proxy args memo_rep tree
+				addZippedMemo path proxy args memo_rep (Just tree)
 				return memo_rep
 			Nothing -> zloadScratch proxy args pathfilter path tree getMD
 	
@@ -137,6 +146,17 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	
 	zmanifest' :: Proxy args -> ForestIs fs args -> FilePath -> rep -> ForestO fs (Manifest fs)
 	zmanifest' proxy args path rep = forestM latestTree >>= \tree -> forestM (newManifestWith "/" tree) >>= zupdateManifestScratch args path tree rep
+
+	zdefaultScratch :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
+	
+	zdefaultScratchMemo :: (ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
+	zdefaultScratchMemo proxy args path = do
+		rep <- zdefault args path
+		addZippedMemo path proxy args rep Nothing
+		return rep
+
+	zdefault :: (ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
+	zdefault = zdefaultScratchMemo Proxy
 
 -- * Incremental Forest interface
 
@@ -348,37 +368,7 @@ instance DeepTypeable ICData where
 instance DeepTypeable ICExpr where
 	typeTree (_::Proxy ICExpr) = MkTypeTree (mkName "Language.Forest.IC.Generic.ICExpr") [] []
 
--- * strictly copying @FSThunk@s
 
-class (FSRep fs,ForestLayer fs l) => CopyFSThunks fs l a where
-	copyFSThunks :: Proxy fs -> Proxy l -> (FilePath -> FilePath) -> a -> ForestL fs l a
-
-copyFSThunksProxy :: Proxy fs -> Proxy l -> Proxy (CopyFSThunksDict fs l)
-copyFSThunksProxy fs l = Proxy
-
-data CopyFSThunksDict fs l a = CopyFSThunksDict { copyFSThunksDict :: Proxy fs -> Proxy l -> (FilePath -> FilePath) -> a -> ForestL fs l a }
-
-instance (CopyFSThunks fs l a) => Sat (CopyFSThunksDict fs l a) where
-	dict = CopyFSThunksDict { copyFSThunksDict = copyFSThunks }
-
--- we make a strict copy by forcing the original thunk
-instance (Typeable a,ForestLayer fs l,Eq a,ForestInput fs FSThunk l) => CopyFSThunks fs l (ForestFSThunk fs l a) where
-	copyFSThunks _ _ f t = get t >>= ref 
-
--- change fullpaths
-instance (ForestInput fs FSThunk Inside,ForestLayer fs l) => CopyFSThunks fs l (Forest_md fs) where
-	copyFSThunks _ _ f fmd = do
-		errors' <- inside $ get (errors fmd) >>= ref
-		let fileInfo' = (fileInfo fmd) { fullpath = f (fullpath $ fileInfo fmd) }
-		return $ Forest_md errors' fileInfo'
-
--- just traverse recursively, until there are no more @FSThunks@ inside the type
-instance (ForestLayer fs l,MData (CopyFSThunksDict fs l) (ForestL fs l) a) => CopyFSThunks fs l a where
-	 copyFSThunks fs l f x = do
-		let hasFSThunk (MkTypeTree name _ _) = showName name == "Language.Forest.FS.FSRep.FSThunk"
-		if hasDeepTypeable hasFSThunk (proxyOf x)
-			then gmapT (copyFSThunksProxy fs l) (copyFSThunksDict dict fs l f) x
-			else return x
 
 
 

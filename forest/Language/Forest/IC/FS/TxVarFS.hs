@@ -1,10 +1,11 @@
 
-{-# LANGUAGE ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and no incrementality
 
 module Language.Forest.IC.FS.TxVarFS where
 
+import Language.Forest.IC.Default
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Cmd
@@ -306,20 +307,20 @@ instance ICRep TxVarFS where
 
 instance ZippedICMemo TxVarFS where
 
-	addZippedMemo path proxy args rep tree = forestM $ forestIO $ do
+	addZippedMemo path proxy args rep _ = forestM $ forestIO $ do
 		let (TxVarFSThunk (dyn,_,_)) = to iso_rep_thunk rep
 		putStrLn $ "adding args " ++ show (typeOf rep) ++ " " ++ show (typeOf args)
 		writeIORef dyn (toDyn args,path)
 		
 	findZippedMemo args path rep = return Nothing
 
-getFTVArgs :: (FTK TxVarFS args rep content) => Proxy args -> rep -> ForestM TxVarFS (ForestIs TxVarFS args,FilePath)
+getFTVArgs :: (FTK TxVarFS args rep content) => Proxy args -> rep -> ForestM TxVarFS (Maybe (ForestIs TxVarFS args,FilePath))
 getFTVArgs (proxy ::Proxy args) rep = forestIO $ do
 	let (TxVarFSThunk (rdyn,_,_)) = to iso_rep_thunk rep
 	(dyn,path) <- readIORef rdyn
 	case fromDynamic dyn of
-		Nothing -> error $ "should not happen " ++ show (typeOf rep) ++ " " ++ show (typeOf (undefined::args)) ++ " " ++  show (dynTypeRep dyn)
-		Just args -> return (args,path)
+		Nothing -> return Nothing --error $ "should not happen " ++ show (typeOf rep) ++ " " ++ show (typeOf (undefined::args)) ++ " " ++  show (dynTypeRep dyn)
+		Just args -> return $ Just (args,path)
 	
 
 instance ForestLayer TxVarFS l => Thunk (HSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
@@ -385,6 +386,34 @@ instance TxICForest TxVarFS where
 	new = newTxVarFS Proxy
 	read = readTxVarFS
 	writeOrElse = writeOrElseTxVarFS
+	delete = deleteTxVarFS Proxy
+	copyOrElse = copyOrElseTxVarFS Proxy
+
+deleteTxVarFS :: FTK TxVarFS args rep content => Proxy args -> rep -> TxVarFTM ()
+deleteTxVarFS proxy (rep :: rep) = do
+	mb <- forestM $ getFTVArgs proxy rep
+	case mb of
+		Nothing -> error "tried to write to a variable that is not connected to the FS"
+		Just (args,path) -> do
+			def_rep :: rep <- inside $ zdefaultScratchMemo proxy args path
+			content <- Inc.getOutside $ to iso_rep_thunk def_rep
+			writeOrElseTxVarFS rep content () (error "failed to write")
+
+copyOrElseTxVarFS :: FTK TxVarFS args rep content => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+copyOrElseTxVarFS proxy src tgt b f = do
+	mb_src <- forestM $ getFTVArgs proxy src
+	mb_tgt <- forestM $ getFTVArgs proxy tgt
+	case (mb_src,mb_tgt) of
+		(Just (args_src,path_src),Just (args_tgt,path_tgt)) -> do
+			-- XXX: this may fail if FileInfo paths are canonized...
+			let chgPath path = path_tgt </> (makeRelative path_src path)
+			tgt' <- copyFSThunks proxyTxVarFS proxyOutside chgPath src
+			content' <- Inc.getOutside $ to iso_rep_thunk tgt'
+			writeOrElseTxVarFS tgt content' b f
+		otherwise -> error "tried to write to a variable that is not connected to the FS"
+	
+
+--	copyFSThunks :: Proxy fs -> Proxy l -> (FilePath -> FilePath) -> a -> ForestL fs l a
 
 newTxVarFS :: FTK TxVarFS args rep content => Proxy args -> ForestVs args -> FilePath -> TxVarFTM rep
 newTxVarFS proxy args path = inside $ zload (vmonadArgs proxyTxVarFS proxy args) path
@@ -398,20 +427,26 @@ writeOrElseTxVarFS rep content b f = do
 	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
 	old_fslog <- forestM $ forestIO $ readIORef fslog_ref
 	set t content -- automatically increments the FSVersion
-	(args :: ForestIs TxVarFS args,path) <- forestM $ getFTVArgs Proxy rep
-	mani <- zmanifest' (Proxy :: Proxy args) args path rep
-	-- we need to store the errors to the (buffered) FS before validating
-	forestM $ storeManifest mani
-	forestM $ forestIO $ putStrLn "Manifest!"
-	forestM $ forestIO $ print mani
-	errors <- forestM $ manifestErrors mani
-	if List.null errors
-		then return b
-		else do
-			-- rollback the modifications
-			forestM $ forestIO $ writeIORef fslog_ref old_fslog
-			forestM $ setFSVersionTxVarFS old_fsversion
-			f errors
+	
+	let rollback errors = do -- rollback the modifications
+		forestM $ forestIO $ writeIORef fslog_ref old_fslog
+		forestM $ setFSVersionTxVarFS old_fsversion
+		f errors
+	
+	mb :: (Maybe (ForestIs TxVarFS args,FilePath)) <- forestM $ getFTVArgs Proxy rep
+	case mb of
+		Nothing -> rollback [ConflictingArguments] -- the top-level arguments of a variable don't match the spec
+		Just (args,path) -> do
+			mani <- zmanifest' (Proxy :: Proxy args) args path rep
+			-- we need to store the errors to the (buffered) FS before validating
+			forestM $ storeManifest mani
+			forestM $ forestIO $ putStrLn "Manifest!"
+			forestM $ forestIO $ print mani
+			errors <- forestM $ manifestErrors mani
+			if List.null errors
+				then return b
+				else rollback errors
+					
 
 atomicallyTxVarFS :: TxVarFTM b -> IO b
 atomicallyTxVarFS stm = initializeTxVarFS try where

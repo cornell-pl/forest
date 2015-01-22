@@ -40,6 +40,7 @@ instance Data b => PadsMD (Base_md,b) where
   replace_md_header (h1,b) h2 = (h2,b)
 
 cleanBasePD = Base_md {numErrors = 0, errInfo = Nothing }
+errorBasePD path = Base_md {numErrors = 1, errInfo = Just (E.ErrInfo (E.FileError path path) Nothing) }
 
 
 mergeBaseMDs :: [Base_md] -> Base_md

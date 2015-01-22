@@ -12,6 +12,7 @@ import Language.Forest.IC.ValueDelta
 import Language.Forest.IC.ICRep
 import Language.Pads.Padsc as Pads
 import Language.Forest.IC.MetaData
+import Language.Forest.IC.Default
 import Language.Forest.IC.Generic
 import Language.Forest.IC.IO.Storing
 import Language.Forest.Errors
@@ -59,14 +60,13 @@ doZManifestArgs :: (ICRep fs,ForestArgs fs args) =>
 doZManifestArgs proxy margs rep manifestContent man = do
 	manifestContent rep man
 
-doZManifestFile1 :: (MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,DeepTypeable pads,DeepTypeable md,Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => Pure.Arg arg -> FilePath -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ForestO fs (Manifest fs)
+doZManifestFile1 :: (Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => Pure.Arg arg -> FilePath -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ForestO fs (Manifest fs)
 doZManifestFile1 (Pure.Arg arg) path tree rep_t man = do
-	(fmd,rep) <- inside $ get rep_t
+	(fmd,rep@(pads,bmd)) <- inside $ get rep_t
 	let path_fmd = fullpath $ fileInfo fmd
 	valid <- isValidMD fmd
 	if valid
-		then do -- for valid data we write it to disk
-			-- the Pads metadata must be valid
+		then do
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingMdValidity) $ return $ Pads.numErrors (get_md_header $ snd rep) == 0
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
@@ -74,7 +74,13 @@ doZManifestFile1 (Pure.Arg arg) path tree rep_t man = do
 			forestM $ addFileToManifestInTree (printFile1 arg) path tree rep $ addTestToManifest testm man
 		else do
 			-- inconsistent unless the non-stored representation has default data
-			let testDefault = liftM (boolStatus ConflictingRepMd) $ forestO $ inside $ liftM (==rep) forestdefault
+			let testDefault = do
+				status1 <- liftM (boolStatus ConflictingRepMd) $ forestO $ do
+				 	let exists = doesDirectoryExistInMD path fmd
+					return $ (not exists) || (Pads.numErrors (get_md_header bmd) > 0)
+				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
+				return $ status1 `mappend` status2
+				
 			let manDefault = addTestToManifest testDefault man
 			forestM $ removePathFromManifestInTree path tree manDefault
 
@@ -175,14 +181,27 @@ doZManifestDirectory :: (Typeable rep,Eq rep,ICRep fs) =>
 doZManifestDirectory path tree collectMDErrors rep_t manifestContent man = do
 	(fmd,rep) <- inside $ get rep_t
 	let path_fmd = fullpath $ fileInfo fmd
-	man1 <- forestM $ addDirToManifestInTree path tree man -- adds a new directory
-	let testm = do
-		status1 <- liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
-		status2 <- liftM (boolStatus $ NonExistingPath path) $ latestTree >>= doesDirectoryExistInTree path
-		status3 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
-		return $ status1 `mappend` status2 `mappend` status3
-	let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
-	manifestContent path rep man2
+	
+	let exists = doesDirectoryExistInMD path fmd
+	if exists
+		then do
+			man1 <- forestM $ addDirToManifestInTree path tree man -- adds a new directory
+			let testm = do
+				status1 <- liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
+				status2 <- liftM (boolStatus $ NonExistingPath path) $ latestTree >>= doesDirectoryExistInTree path
+				status3 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
+				return $ status1 `mappend` status2 `mappend` status3
+			let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
+			manifestContent path rep man2
+		else do
+			man1 <- forestM $ removePathFromManifestInTree path tree man -- remove the directory
+			let testm = do
+				status1 <- liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
+				status2 <- liftM (boolStatus $ ExistingPath path) $ latestTree >>= liftM not . doesDirectoryExistInTree path
+				status3 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
+				return $ status1 `mappend` status2 `mappend` status3
+			let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
+			manifestContent path rep man2
 
 doZManifestMaybe :: (Typeable rep,ForestMD fs rep,Eq rep,ICRep fs) =>
 	FilePath -> FSTree fs

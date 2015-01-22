@@ -6,6 +6,7 @@ module Language.Forest.IC.CodeGen.ZStoring where
 import Language.Forest.IC.CodeGen.Utils
 import Control.Monad.Trans
 import Control.Monad.Incremental
+import Language.Forest.IC.CodeGen.ZDefault
 
 import Language.Forest.IC.CodeGen.Default
 import Language.Forest.IC.IO.Storing

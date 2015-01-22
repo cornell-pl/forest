@@ -34,6 +34,7 @@
 
 module Language.Forest.IC.CodeGen where
 
+import Language.Forest.IC.Default
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
 import Language.Forest.IC.ICRep
 import Data.DeepTypeable
@@ -89,6 +90,7 @@ import Language.Forest.IC.CodeGen.Utils
 import Language.Forest.IC.CodeGen.Loading
 import Language.Forest.IC.CodeGen.ZLoading
 import Language.Forest.IC.CodeGen.Default
+import Language.Forest.IC.CodeGen.ZDefault
 import Data.Maybe
 import Language.Forest.IC.CodeGen.DeltaLoading
 import Language.Forest.IC.CodeGen.ZDeltaLoading
@@ -165,9 +167,9 @@ make_zforest_declaration (ForestDecl (id, pats, forestTy)) = do
 	loadM :: TH.Exp <- Reader.runReaderT (genZLoadM ty_name forestTy arg_infos) (fsName,Map.empty)
 	loadDeltaM :: TH.Exp <- Reader.runReaderT (genZLoadDeltaM (unty_name,ty_name) forestTy arg_infos) (fsName,Map.empty)
 	manifestM :: TH.Exp <- Reader.runReaderT (genZManifestM ty_name forestTy arg_infos) (fsName,Map.empty)
---	defaultM :: TH.Exp <- genDefaultM ty_name md_ty_name forestTy arg_infos
+	defaultM :: TH.Exp <- Reader.runReaderT (genZDefaultM ty_name forestTy arg_infos) (fsName,Map.empty)
 	
-	inst <- genZFInst fsName  loadM loadDeltaM manifestM {-defaultM-} ty_name      forestTy arg_infos
+	inst <- genZFInst fsName  loadM loadDeltaM manifestM defaultM ty_name      forestTy arg_infos
 
 	let args_ty = case arg_infos of
 		[] -> TupleT 0
@@ -177,7 +179,7 @@ make_zforest_declaration (ForestDecl (id, pats, forestTy)) = do
 
 	return $ ty_decl:aux_decls++inst++[{-loadDelta_alias,-}proxyArgs_alias]
 
-genZFInst fsName loadM loadDeltaM manifestM {-defaultM-} ty_name forestTy pat_infos = do
+genZFInst fsName loadM loadDeltaM manifestM defaultM ty_name forestTy pat_infos = do
 	repName <- newName "rep"
 	let (inst) = case pat_infos of
 		[] -> (Pure.appT3 (ConT ''ZippedICForest) (VarT fsName) (TupleT 0) (Pure.appTyFS fsName ty_name) )  
@@ -185,12 +187,12 @@ genZFInst fsName loadM loadDeltaM manifestM {-defaultM-} ty_name forestTy pat_in
 	let load_method = ValD (VarP 'zloadScratch) (NormalB loadM) []
 	let loadDelta_method = ValD (VarP 'zloadDelta) (NormalB loadDeltaM) []
 	let manifest_method = ValD (VarP 'zupdateManifestScratch) (NormalB manifestM) []
---	let default_method = ValD (VarP 'IC.defaultMd) (NormalB defaultM) []
+	let default_method = ValD (VarP 'zdefaultScratch) (NormalB defaultM) []
 
 	let ctx = [ClassP ''Typeable [VarT fsName],ClassP ''ZippedICMemo [VarT fsName]
 			]
 	
-	return $ [InstanceD ctx inst [load_method,loadDelta_method,manifest_method{-,default_method-}]]
+	return $ [InstanceD ctx inst [load_method,loadDelta_method,manifest_method,default_method]]
 
 -- * Zipped representation/metadata
 
@@ -426,7 +428,7 @@ uTy fsName ty = Pure.appT2 (ConT ''ForestICThunkI) (VarT fsName) ty
 fsthunkTy :: Name -> TH.Type -> TH.Type
 fsthunkTy fsName ty = Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) ty
 
-instance (Data arg,Eq arg,MData NoCtx (ForestI fs) arg,MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,MData NoCtx (ForestI fs) md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs (Forest_md fs,(rep,md))) where
+instance (MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq arg,MData NoCtx (ForestI fs) arg,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs (Forest_md fs,(rep,md))) where
 	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
 	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
 	zupdateManifestScratch marg path tree rep man = inside marg >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man

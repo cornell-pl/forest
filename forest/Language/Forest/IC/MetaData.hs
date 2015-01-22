@@ -360,46 +360,6 @@ replaceForestMDErrorsWith md get_errs = overwrite_errors md $ do
 replaceForestMDErrorsInsideWith :: ForestMD fs md => md -> ForestI fs [Forest_err] -> ForestI fs md
 replaceForestMDErrorsInsideWith md get_errs = replace_errors md $ \err0 -> get_errs >>= return . Pure.mergeMDErrors
 
-forestdefault :: (ICRep fs,ForestLayer fs l) => GenericB NoCtx (ForestL fs l)
-forestdefault = genericB forestdefault'
-
-genericB :: (forall a. MData NoCtx m a => Proxy NoCtx -> a -> m a) -> GenericB NoCtx m
-genericB gen = gen (Proxy::Proxy NoCtx) (error "genericB")
-
-forestdefault' :: ICRep fs => (forall a. (ICRep fs,MData ctx (ForestL fs l) a) => Proxy ctx -> a -> (ForestL fs l) a)
-forestdefault' ctx a = ext1B ctx (ext2B ctx (general ctx a
-		`extB` char 
-		`extB` int
-		`extB` integer
-		`extB` float 
-		`extB` double 
-		`extB` coff
-		`extB` epochTime
-		`extB` fileMode
-		`extB` byteString)
---		`extB` (thunkFS a)
-		map)
-		(list ctx) where
-	-- Generic case (does not guarantee termination for recursive types)
-	general :: (ICRep fs,MData ctx (ForestL fs l) a) => Proxy ctx -> a -> ForestL fs l a
-	general ctx proxy = Data.WithClass.MData.dataTypeOf ctx proxy >>= \d -> Data.WithClass.MData.fromConstrB ctx (forestdefault' ctx (error "general")) (Data.WithClass.MData.indexConstr d 1)
-	
-	-- Base cases
-	char    = return '\NUL'
-	int     = return 0      :: Monad m => m Int
-	integer = return 0      :: Monad m => m Integer
-	float   = return 0.0    :: Monad m => m Float
-	double  = return 0.0    :: Monad m => m Double
-	coff    = return 0      :: Monad m => m COff
-	epochTime = return 0    :: Monad m => m EpochTime
-	fileMode = return 0     :: Monad m => m FileMode
-	byteString = return B.empty     :: Monad m => m ByteString
-	list :: MData ctx m b => Proxy ctx -> m [b]
-	list ctx   = return []
-	map :: Monad m => m (Map.Map k v)
-	map = return Map.empty
-
-
 instance (ICRep fs,MData ctx m FileInfo,MData ctx m (ForestFSThunkI fs Forest_err),Sat (ctx (Forest_md fs)))
 	=> MData ctx m (Forest_md fs) where
 	gfoldl ctx k z (Forest_md x1 x2) = z (\mx1 -> return $ \mx2 -> mx1 >>= \x1 -> mx2 >>= \x2 -> return $ Forest_md x1 x2) >>= flip k (return x1) >>= flip k (return x2)
@@ -407,12 +367,6 @@ instance (ICRep fs,MData ctx m FileInfo,MData ctx m (ForestFSThunkI fs Forest_er
 	toConstr ctx x@(Forest_md x1 x2) = Data.WithClass.MData.dataTypeOf ctx x >>= return . flip indexConstr 1
 	dataTypeOf ctx x = return ty
 		where ty = mkDataType "Language.Forest.Pure.MetaData.Forest_md" [mkConstr ty "Forest_md" [] Prefix]
-
-defaultForest_mdWithErrors :: (ICRep fs,ForestLayer fs l) => Forest_err -> ForestL fs l (Forest_md fs)
-defaultForest_mdWithErrors err = do
-	errors <- inside $ ref err
-	info <- forestdefault
-	return $ Forest_md errors info
 
 instance Typeable fs => Memo (Forest_md fs) where
 	type Key (Forest_md fs) = StableName (Forest_md fs)
@@ -467,16 +421,6 @@ getForestMDInTree path tree = forestM (pathInTree path tree) >>= getForestMD pat
 
 getRelForestMDInTree :: (ICRep fs,ForestLayer fs l) => FilePath -> FSTree fs -> FilePath -> ForestL fs l (Forest_md fs)
 getRelForestMDInTree path tree file = getForestMDInTree (path </> file) tree
-
-
-mergeJustDefault :: (ICRep fs,ForestLayer fs l,MData NoCtx (ForestL fs l) a,MData NoCtx (ForestL fs l) b) => (Maybe a,Maybe b) -> ForestL fs l (a,b)
-mergeJustDefault (Just x,Just y) = return (x,y)
-mergeJustDefault (Just x,Nothing) = liftM (x,) forestdefault
-mergeJustDefault (Nothing,Just y) = liftM (,y) forestdefault
-mergeJustDefault (Nothing,Nothing) = do
-	x <- forestdefault
-	y <- forestdefault
-	return (x,y)
 
 $( derive makeDeepTypeable ''(:*:) )
 $( derive makeMData ''(:*:) )

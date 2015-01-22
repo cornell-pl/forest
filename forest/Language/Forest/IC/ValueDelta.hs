@@ -19,11 +19,17 @@ import Language.Forest.IC.BX
 
 class DeltaClass d where
 	isEmptyDelta :: d v -> Bool
+	valueDeltaKind :: d v -> ValueDeltaKind
 
 instance DeltaClass SValueDelta where
 	isEmptyDelta = isEmptySValueDelta
+	valueDeltaKind Id = NoOp
+	valueDeltaKind Delta = Stable
+	
 instance DeltaClass NSValueDelta where
 	isEmptyDelta = isEmptyNSValueDelta
+	valueDeltaKind (StableVD d) = valueDeltaKind d
+	valueDeltaKind (Modify f) = NonStable
 
 -- stable deltas
 data SValueDelta v where
@@ -73,23 +79,19 @@ liftSValueDelta :: SValueDelta a -> SValueDelta b
 liftSValueDelta Id = Id
 liftSValueDelta Delta = Delta
 
-data SValueDeltaKind = NoOp | Stable | NonStable
+data ValueDeltaKind = NoOp | Stable | NonStable
 
-andSValueDeltaKinds :: SValueDeltaKind -> SValueDeltaKind -> SValueDeltaKind
-andSValueDeltaKinds NonStable _ = NonStable
-andSValueDeltaKinds _ NonStable = NonStable
-andSValueDeltaKinds Stable _ = Stable
-andSValueDeltaKinds _ Stable = Stable
-andSValueDeltaKinds NoOp NoOp = NoOp
+andValueDeltaKinds :: ValueDeltaKind -> ValueDeltaKind -> ValueDeltaKind
+andValueDeltaKinds NonStable _ = NonStable
+andValueDeltaKinds _ NonStable = NonStable
+andValueDeltaKinds Stable _ = Stable
+andValueDeltaKinds _ Stable = Stable
+andValueDeltaKinds NoOp NoOp = NoOp
 
-valueDeltaKind :: SValueDelta v -> SValueDeltaKind
-valueDeltaKind Id = NoOp
-valueDeltaKind Delta = Stable
-
-mergeCompoundSValueDeltas :: [(Maybe (k,v),SValueDeltaKind)] -> ([(k,v)],SValueDeltaKind)
+mergeCompoundSValueDeltas :: [(Maybe (k,v),ValueDeltaKind)] -> ([(k,v)],ValueDeltaKind)
 mergeCompoundSValueDeltas [] = ([],NoOp)
 mergeCompoundSValueDeltas ((Nothing,NonStable):xs) = let (ds,ks) = mergeCompoundSValueDeltas xs in (ds,NonStable)
-mergeCompoundSValueDeltas ((Just d,k):xs) = let (ds,ks) = mergeCompoundSValueDeltas xs in (d:ds,k `andSValueDeltaKinds` ks)
+mergeCompoundSValueDeltas ((Just d,k):xs) = let (ds,ks) = mergeCompoundSValueDeltas xs in (d:ds,k `andValueDeltaKinds` ks)
 
 makeSValueDelta :: Bool -> SValueDelta v
 makeSValueDelta True = Id

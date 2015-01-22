@@ -39,7 +39,7 @@ data ManifestError =
 	| ExistingPath FilePath -- when a path cannot exist bue does
 	| ConflictingFileContent FilePath Content Content -- different content can't be stored at the same file
 	| ConflictingLink FilePath FilePath (Maybe FilePath) -- filepath, rep target, md target
-	| ConflictingArguments -- the specification arguments are different from the ones stored in the metadata
+	| ConflictingArguments -- the top-level arguments of a variable don't match the specification arguments
 	| ConflictingMatching FilePath String [FilePath] [FilePath] -- filepath, matching expression, representation/metadata matches, filesystem matches
 	| ConflictingRepMd -- for non-zipped forest data structures, the representation/metadata trees are not in sync
 	| ConflictingMdValidity -- the validity of the metadata does not match the expected from the data

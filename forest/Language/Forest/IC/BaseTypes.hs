@@ -33,6 +33,7 @@
 
 module Language.Forest.IC.BaseTypes where
 
+import Language.Forest.IC.Default
 import Data.DeepTypeable
 import Language.Haskell.TH.Syntax
 import Language.Forest.Pure.Generic

@@ -4,6 +4,7 @@
 
 module Language.Forest.IC.IO.Loading where
 
+import Language.Forest.IC.Default
 import Language.Forest.IC.PadsInstances
 import Prelude hiding (const,read,mod)
 import qualified Prelude
@@ -59,7 +60,7 @@ doLoadArgs mode proxy args load = do
 
 -- | lazy file loading
 -- Pads errors contribute to the Forest error count
-doLoadFile :: (ICMemo fs,ForestInput fs FSThunk Inside,Eq md,Eq pads,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,ICRep fs,Pads pads md) =>
+doLoadFile :: (ForestDefault fs Inside pads,ForestDefault fs Inside (Forest_md fs,ForestFSThunkI fs md),ICMemo fs,ForestInput fs FSThunk Inside,Eq md,Eq pads,ICRep fs,Pads pads md) =>
 	Proxy pads -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
 doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile " ++ show path) $ do
 	let fs = Proxy::Proxy fs
@@ -104,7 +105,7 @@ doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFil
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- XXX: Pads errors do not contribute to the Forest error count
-doLoadFile1 :: (ICMemo fs,MData NoCtx (Inside (IncForest fs) IORef IO) arg,ForestIs fs arg ~ ForestI fs arg,ForestMD fs md,Typeable arg,Eq arg,Eq pads,Eq md,MData NoCtx (ForestI fs) pads,MData NoCtx (ForestI fs) md,FSRep fs,Pads1 arg pads md) =>
+doLoadFile1 :: (ICMemo fs,MData NoCtx (ForestI fs) arg,ForestIs fs arg ~ ForestI fs arg,ForestMD fs md,Typeable arg,Eq arg,Eq pads,Eq md,ForestDefault fs Inside pads,ForestDefault fs Inside (Forest_md fs,ForestFSThunkI fs md),FSRep fs,Pads1 arg pads md) =>
 	Proxy pads -> arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
 doLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
 	let argProxy = Proxy :: Proxy arg
@@ -156,7 +157,7 @@ doLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree
 -- | compressed archive (tar,gz,zip)
 -- incremental loading is only supported if the specification for the archive's contents is:
 -- 1) closed = does not depend on free variables -- this ensures that specs can be reused locally
-doLoadArchive :: (ICMemo fs,ForestMD fs md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,FSRep fs,MData NoCtx (ForestI fs) md) =>
+doLoadArchive :: (Typeable rep,Typeable md,ForestDefault fs Inside (rep,(Forest_md fs,md)),ICMemo fs,ForestMD fs md,Eq rep,Eq md,FSRep fs) =>
 	Bool -> Proxy rep
 	-> [ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs (rep,md))
@@ -197,7 +198,7 @@ doLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FSTr
 			return (rep,md)
 		else load_folder
 
-doLoadArchive' :: (ForestMD fs md,MData NoCtx (ForestI fs) rep,ICRep fs,MData NoCtx (ForestI fs) md) =>
+doLoadArchive' :: (ForestDefault fs Inside (rep,(Forest_md fs,md)),ForestMD fs md,ICRep fs) =>
 	[ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs (rep,md))
 	-> ForestI fs (rep,(Forest_md fs,md))
@@ -208,10 +209,10 @@ doLoadArchive' exts oldpath_f path  tree getMD load = checkPath' (Just False) pa
 	fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ get_errors md_arch -- like a directory
 	return (rep,(fmd',md_arch))
 		
-doLoadSymLink :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs FilePath,ForestFSThunkI fs (Forest_md fs, Base_md))
+doLoadSymLink :: (ForestDefault fs Inside (FilePath,(Forest_md fs,Base_md)),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs FilePath,ForestFSThunkI fs (Forest_md fs, Base_md))
 doLoadSymLink path tree getMD = mkThunks tree $ doLoadSymLink' path tree getMD
 
-doLoadSymLink' :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (FilePath,(Forest_md fs, Base_md))
+doLoadSymLink' :: (ForestDefault fs Inside (FilePath,(Forest_md fs,Base_md)),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (FilePath,(Forest_md fs,Base_md))
 doLoadSymLink' path tree getMD = checkPath' Nothing path tree $ do
 	md <- getMD path tree
 	case symLink (fileInfo md) of
@@ -250,12 +251,12 @@ doLoadNewPath pathfilter oldpath file tree getMD load = debug ("doLoadNewPath " 
 	newpath <- forestM $ stepPathInTree tree oldpath file -- changes the old path by a relative path, check the path traversal restrictions specific to each FS instantiation
 	load newpath getMD
 
-doLoadDirectory :: (ForestInput fs FSThunk Inside,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,ICRep fs,MData NoCtx (ForestI fs) md)
+doLoadDirectory :: (Typeable rep,Typeable md,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md),ForestInput fs FSThunk Inside,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,ICRep fs,MData NoCtx (ForestI fs) md)
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 doLoadDirectory path tree collectMDErrors getMD load = mkThunksM tree $ doLoadDirectory' path tree collectMDErrors getMD load
 
 -- the error count of the directory is computed lazily, so that if we only want, e.g., the fileinfo of the directory we don't need to check its contents
-doLoadDirectory' :: (ICRep fs,ForestInput fs FSThunk Inside,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,MData NoCtx (ForestI fs) md)
+doLoadDirectory' :: (Typeable rep,Typeable md,ICRep fs,ForestInput fs FSThunk Inside,Eq rep,Eq md,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md))
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestI fs rep,ForestI fs (Forest_md fs,md))
 doLoadDirectory' path tree collectMDErrors getMD ifGood = debug ("doLoadDirectory: "++show path) $ do
 	ifGoodThunk <- newHSThunk ifGood
@@ -355,53 +356,43 @@ pickFileNoDelta :: ICRep fs => FilePathFilter fs -> FilePath -> [FileName] -> FS
 pickFileNoDelta pathfilter path' files' tree' = do
 	return $ pickFile files'
 
-checkPathData :: (ICRep fs,ForestInput fs FSThunk Inside,Eq rep,MData NoCtx (ForestI fs) rep) => FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs rep)
+checkPathData :: (Typeable rep,ICRep fs,ForestInput fs FSThunk Inside,Eq rep,ForestDefault fs Inside rep) => FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs rep)
 checkPathData path tree ifExists = mod $ checkPathData' False path tree ifExists
-checkPathMeta :: (MData NoCtx (ForestI fs) md,Eq md,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs md -> ForestI fs (ForestFSThunkI fs md)
+checkPathMeta :: (Typeable md,ForestDefault fs Inside md,Eq md,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs md -> ForestI fs (ForestFSThunkI fs md)
 checkPathMeta path tree ifExists = mod $ checkPathMeta' False path tree ifExists
-checkPath :: (ICRep fs,MData NoCtx (ForestI fs) md,Eq rep,Eq md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
+checkPath :: (Typeable rep,Typeable md,ForestDefault fs Inside rep,ForestDefault fs Inside md,ICRep fs,Eq rep,Eq md,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
 checkPath path tree ifExists = do
 	ifExistsThunk <- newHSThunk ifExists
 	dataThunk <- checkPathData path tree $ getRep $ Inc.read ifExistsThunk
 	metaThunk <- checkPathMeta path tree $ getMd $ Inc.read ifExistsThunk
 	return (dataThunk,metaThunk)
 	
-checkPathData' :: (ICRep fs,MData NoCtx (ForestI fs) rep,FSRep fs) => Bool -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep
+checkPathData' :: (ICRep fs,ForestDefault fs Inside rep,FSRep fs) => Bool -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep
 checkPathData' isDir path tree ifExists = do
 	exists <- forestM $ if isDir then doesDirectoryExistInTree path tree else doesFileExistInTree path tree
-	if exists then ifExists else forestdefault
-checkPathMeta' :: (MData NoCtx (ForestI fs) md,ForestMD fs md) => Bool -> FilePath -> FSTree fs -> ForestI fs md -> ForestI fs md
+	if exists then ifExists else forestDefaultValid
+checkPathMeta' :: (ForestDefault fs Inside md,ForestMD fs md) => Bool -> FilePath -> FSTree fs -> ForestI fs md -> ForestI fs md
 checkPathMeta' isDir path tree ifExists = {-debug ("checkPathMeta' "++show path ++ showFSTree tree) $ -} do
-	let (doesExist,missingErr) = if isDir then (doesDirectoryExistInTree,Pure.missingDirForestErr) else (doesFileExistInTree,Pure.missingPathForestErr)
+	let (doesExist,missingErr) = if isDir then (doesDirectoryExistInTree,MissingDirectory) else (doesFileExistInTree,MissingFile)
 	exists <- forestM $ doesExist path tree
 	if exists
 		then ifExists
-		else do
-			def_md <- forestdefault
-			def_md' <- replace_errors def_md $ Prelude.const $ return $ missingErr path
-			return def_md'
-checkPath' :: (MData NoCtx (ForestI fs) md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => Maybe Bool -> FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (rep,md)
+		else forestDefaultInvalid (missingErr path)
+
+checkPath' :: (ForestDefault fs Inside (rep,md),ForestMD fs md) => Maybe Bool -> FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (rep,md)
 checkPath' cond path tree ifExists = {-debug ("checkPath' "++show path ++ showFSTree tree) $ -} do
 	exists <- case cond of
 		Nothing -> forestM $ doesExistInTree path tree
 		Just isDir -> forestM $ if isDir then doesDirectoryExistInTree path tree else doesFileExistInTree path tree
 	if exists
 		then ifExists
-		else do
-			def_rep <- forestdefault
-			def_md <- forestdefault
-			def_md' <- replace_errors def_md $ Prelude.const $ return $ Pure.missingPathForestErr path
-			return (def_rep,def_md')
+		else forestDefaultInvalid (MissingFile path)
 			
-checkFileExtension :: (MData NoCtx (ForestI fs) md,MData NoCtx (ForestI fs) rep,ForestMD fs md) => String -> FilePath -> ForestI fs (rep,md) -> ForestI fs (rep,md)
+checkFileExtension :: (ForestDefault fs Inside (rep,md),ForestMD fs md) => String -> FilePath -> ForestI fs (rep,md) -> ForestI fs (rep,md)
 checkFileExtension ext path ifExists = do
 	if isSuffixOf ext path
 		then ifExists
-		else do
-			def_rep <- forestdefault
-			def_md <- forestdefault
-			def_md' <- replace_errors def_md $ Prelude.const $ return $ Pure.wrongFileExtensionForestErr ext path
-			return (def_rep,def_md')
+		else forestDefaultInvalid (WrongFileExtension ext path)
 
 mkThunks :: (Typeable rep,Typeable md,ForestInput fs FSThunk Inside,Eq rep,Eq md,ICRep fs) => FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
 mkThunks tree load = do

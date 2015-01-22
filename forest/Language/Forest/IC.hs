@@ -6,7 +6,9 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.Auth
 	, module Language.Forest.IC.BaseTypes
 	, module Language.Forest.IC.BX
+	, module Language.Forest.IC.Default
 	, module Language.Forest.IC.CodeGen.Default
+	, module Language.Forest.IC.CodeGen.ZDefault
 	, module Language.Forest.IC.CodeGen.DeltaLoading
 	, module Language.Forest.IC.CodeGen.Loading
 	, module Language.Forest.IC.CodeGen.ZDeltaLoading
@@ -26,6 +28,7 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.Generic
 	, module Language.Forest.IC.ICRep
 	, module Language.Forest.IC.IO.Default
+	, module Language.Forest.IC.IO.ZDefault
 	, module Language.Forest.IC.IO.DeltaLoading
 	, module Language.Forest.IC.IO.ZDeltaLoading
 	, module Language.Forest.IC.IO.Loading
@@ -54,7 +57,9 @@ import Language.Forest.FS.FSRep
 import Language.Forest.IC.Auth
 import Language.Forest.IC.BaseTypes
 import Language.Forest.IC.BX
+import Language.Forest.IC.Default
 import Language.Forest.IC.CodeGen.Default
+import Language.Forest.IC.CodeGen.ZDefault
 import Language.Forest.IC.CodeGen.DeltaLoading
 import Language.Forest.IC.CodeGen.Loading
 import Language.Forest.IC.CodeGen.ZDeltaLoading
@@ -74,6 +79,7 @@ import Language.Forest.IC.FS.TxVarFS
 import Language.Forest.IC.Generic
 import Language.Forest.IC.ICRep
 import Language.Forest.IC.IO.Default
+import Language.Forest.IC.IO.ZDefault
 import Language.Forest.IC.IO.DeltaLoading
 import Language.Forest.IC.IO.ZDeltaLoading
 import Language.Forest.IC.IO.Loading

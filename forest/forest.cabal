@@ -76,8 +76,10 @@ Library
                    Language.Forest.FS.FSRep,
                    Language.Forest.IC.Auth,
                    Language.Forest.IC.BaseTypes,
+                   Language.Forest.IC.Default
                    Language.Forest.IC.BX
                    Language.Forest.IC.CodeGen.Default,
+                   Language.Forest.IC.CodeGen.ZDefault,
                    Language.Forest.IC.CodeGen.DeltaLoading,
                    Language.Forest.IC.CodeGen.ZDeltaLoading,
                    Language.Forest.IC.CodeGen.Loading,
@@ -97,6 +99,7 @@ Library
                    Language.Forest.IC.Generic,
                    Language.Forest.IC.ICRep,
                    Language.Forest.IC.IO.Default,
+                   Language.Forest.IC.IO.ZDefault,
                    Language.Forest.IC.IO.DeltaLoading,
                    Language.Forest.IC.IO.ZDeltaLoading,
                    Language.Forest.IC.IO.Loading,

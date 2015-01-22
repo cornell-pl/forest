@@ -124,7 +124,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	data ValueDelta fs a :: *
 	
 	-- value changes since a given FSTree
-	diffValue :: ForestRep rep (ForestFSThunk fs l content) => FSTree fs -> rep -> ForestL fs l (ValueDelta fs rep)
+	diffThunkValue :: ForestRep rep (ForestFSThunkI fs content) => FSTree fs -> rep -> ForestI fs (ValueDelta fs rep)
 	
 	isIdValueDelta :: ValueDelta fs a -> Bool
 	idValueDelta :: ValueDelta fs a
@@ -148,7 +148,9 @@ class ICRep fs => ICMemo (fs :: FS) where
 class ICRep fs => ZippedICMemo fs where
 	
 	-- adds a consistent path ~ value entry to the consistency table
-	addZippedMemo :: (Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => FilePath -> Proxy args -> ForestIs fs args -> rep -> FSTree fs -> ForestI fs ()
+	-- if no tree is provided, no memoization is done and we just remember the arguments
+	addZippedMemo :: (Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => FilePath -> Proxy args -> ForestIs fs args -> rep -> Maybe (FSTree fs) -> ForestI fs ()
+	
 	-- given a path finds an old entry = (old FSTree,outdated thunks)
 	-- if repairing incrementally, we have to assume that the environment changed
 	findZippedMemo :: Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep))
@@ -309,3 +311,4 @@ fsTreeDeltaPathFilter df root path = if isParentPathOf root path
 			Just (FSTreeNew _ (Just from) _) -> return from
 			otherwise -> return path
 	else return path
+	
