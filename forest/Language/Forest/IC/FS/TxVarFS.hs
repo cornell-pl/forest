@@ -5,6 +5,8 @@
 
 module Language.Forest.IC.FS.TxVarFS where
 
+import Control.Monad.Writer (Writer(..),WriterT(..))
+import qualified Control.Monad.Writer as Writer
 import Language.Forest.IC.Default
 import Control.Monad.Catch
 import Control.Concurrent
@@ -437,9 +439,11 @@ writeOrElseTxVarFS rep content b f = do
 	case mb of
 		Nothing -> rollback [ConflictingArguments] -- the top-level arguments of a variable don't match the spec
 		Just (args,path) -> do
-			mani <- zmanifest' (Proxy :: Proxy args) args path rep
+			(mani,memos) <- Writer.runWriterT $ zmanifest' (Proxy :: Proxy args) args path rep
 			-- we need to store the errors to the (buffered) FS before validating
 			forestM $ storeManifest mani
+			forestM latestTree >>= memos
+			
 			forestM $ forestIO $ putStrLn "Manifest!"
 			forestM $ forestIO $ print mani
 			errors <- forestM $ manifestErrors mani

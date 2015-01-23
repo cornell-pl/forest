@@ -33,8 +33,11 @@
 
 module Language.Forest.IC.Generic   where
 
+import Control.Monad.Trans
+import Control.Monad.Writer (Writer(..),WriterT(..))
+import qualified Control.Monad.Writer as Writer
 import Language.Forest.IC.Default
-import Language.Pads.Padsc hiding (gmapT)
+import Language.Pads.Padsc hiding (gmapT,lift)
 import Prelude hiding (mod)
 import Data.Monoid
 import Data.WithClass.MData
@@ -60,7 +63,7 @@ import Data.WithClass.MGenerics
 import Data.IORef
 import Language.Forest.IC.MetaData
 import Data.DeepTypeable
-import Language.Haskell.TH.Syntax
+import Language.Haskell.TH.Syntax hiding (lift)
 import Control.Exception
 import Language.Forest.Errors
 
@@ -137,26 +140,39 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	
 	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
-	zupdateManifestScratch :: ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> ForestO fs (Manifest fs)
+	zupdateManifestScratch :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> ManifestForestO fs
+	
+	zupdateManifestScratchMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> ManifestForestO fs
+	zupdateManifestScratchMemo proxy args path tree rep man = do
+		man1 <- zupdateManifestScratch proxy args path tree rep man
+		Writer.tell $ inside . addZippedMemo path proxy args rep . Just
+		return man1
 	
 	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> ForestO fs (Manifest fs)
 	
-	zmanifest :: ForestIs fs args -> FilePath -> rep -> ForestO fs (Manifest fs)
+	zmanifest :: ForestIs fs args -> FilePath -> rep -> ManifestForestO fs
 	zmanifest = zmanifest' Proxy
 	
-	zmanifest' :: Proxy args -> ForestIs fs args -> FilePath -> rep -> ForestO fs (Manifest fs)
-	zmanifest' proxy args path rep = forestM latestTree >>= \tree -> forestM (newManifestWith "/" tree) >>= zupdateManifestScratch args path tree rep
+	zmanifest' :: Proxy args -> ForestIs fs args -> FilePath -> rep -> ManifestForestO fs
+	zmanifest' proxy args path rep = lift (forestM latestTree) >>= \tree -> lift (forestM (newManifestWith "/" tree)) >>= zupdateManifestScratch proxy args path tree rep
 
 	zdefaultScratch :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
 	
 	zdefaultScratchMemo :: (ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
 	zdefaultScratchMemo proxy args path = do
-		rep <- zdefault args path
+		rep <- zdefaultScratch proxy args path
 		addZippedMemo path proxy args rep Nothing
 		return rep
 
 	zdefault :: (ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
 	zdefault = zdefaultScratchMemo Proxy
+
+-- returns a manifest and a sequence of memoization actions to be performed after store
+type ManifestForestO fs = WriterT (FSTree fs -> ForestO fs ()) (ForestO fs) (Manifest fs)
+
+instance Monad m => Monoid (m ()) where
+	mempty = return ()
+	mappend f g = f >> g
 
 -- * Incremental Forest interface
 

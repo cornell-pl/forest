@@ -34,7 +34,9 @@
 
 module Language.Forest.IC.CodeGen where
 
+import Control.Monad.Trans
 import Language.Forest.IC.Default
+import Language.Forest.IC.IO.ZDefault
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
 import Language.Forest.IC.ICRep
 import Data.DeepTypeable
@@ -431,11 +433,12 @@ fsthunkTy fsName ty = Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) ty
 instance (MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq arg,MData NoCtx (ForestI fs) arg,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs (Forest_md fs,(rep,md))) where
 	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
 	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
-	zupdateManifestScratch marg path tree rep man = inside marg >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man
+	zupdateManifestScratch proxy marg path tree rep man = lift (inside marg) >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man
+	zdefaultScratch proxy marg path = inside marg >>= \arg -> doZDefaultFile1 (Arg arg) path
 
 instance (ZippedICMemo fs,ICRep fs) => ZippedICForest fs () (SymLink fs) where
 	zloadScratch proxy args pathfilter path tree getMD = doZLoadSymLink path tree getMD
 	zloadDelta proxy (margs,dargs) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaSymLink mpath path' tree df tree' dv (rep,getMD)
-	zupdateManifestScratch args path tree rep man = doZManifestSymLink path tree rep man
-
+	zupdateManifestScratch proxy args path tree rep man = doZManifestSymLink path tree rep man
+	zdefaultScratch proxy args path = doZDefaultSymLink path
 

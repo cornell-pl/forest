@@ -8,6 +8,7 @@ import Control.Monad.Trans
 import Control.Monad.Incremental
 import Language.Forest.IC.CodeGen.ZDefault
 
+import Data.WithClass.MData
 import Language.Forest.IC.CodeGen.Default
 import Language.Forest.IC.IO.Storing
 import Language.Forest.IC.IO.ZStoring
@@ -62,6 +63,7 @@ genZManifestM rep_name forestTy pat_infos = do
 	dtaName    <- lift $ newName "dta"
 	manName    <- lift $ newName "man"
 	pathName <- lift $ newName "path"
+	argsName <- lift $ newName "args"
 	let (pathE,pathP) = genPE pathName
 	let (treeE, treeP) = genPE treeName
 	let (dtaE, dtaP) = genPE dtaName
@@ -71,7 +73,7 @@ genZManifestM rep_name forestTy pat_infos = do
 	case pat_infos of
 		[] -> do
 			core_bodyE <- genZManifestBody pathE treeE dtaE manE rep_name forestTy
-			return $ LamE [TupP [],pathP,treeP,dtaP,manP] core_bodyE
+			return $ LamE [VarP argsName,TupP [],pathP,treeP,dtaP,manP] core_bodyE
 		otherwise -> do
 			(targsP,argThunkNames) <- genZManifestArgsE (zip [1..] pat_infos) forestTy
 			let argsT = Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos
@@ -87,8 +89,8 @@ genZManifestM rep_name forestTy pat_infos = do
 				let (newmanE,newmanP) = genPE newmanName
 				let (newdtaE,newdtaP) = genPE newdtaName
 				core_bodyE <- genZManifestBody pathE treeE newdtaE newmanE rep_name forestTy
-				return $ LamE [margsP,pathP,treeP,VarP dtaName,manP] $ DoE [
-					BindS targsP $ AppE (VarE 'inside) $ Pure.appE3 (VarE 'newArgs) (proxyN fs) proxyArgs margsE,
+				return $ LamE [VarP argsName,margsP,pathP,treeP,VarP dtaName,manP] $ DoE [
+					BindS targsP $ AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE3 (VarE 'newArgs) (proxyN fs) proxyArgs margsE,
 					NoBindS $ Pure.appE5 (VarE 'doZManifestArgs) proxyArgs margsE dtaE (LamE [newdtaP,newmanP] core_bodyE) manE]
 
 genZManifestBody :: Exp -> Exp -> Exp -> Exp -> Name -> ForestTy -> ZEnvQ Exp
@@ -114,8 +116,8 @@ genZManifestArgE (i,(pat,pat_ty)) forestTy = do
 
 zmanifestE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestE isTop ty pathE treeE dtaE manE = case ty of
-	Named f_name               -> zmanifestWithArgsE [] pathE treeE dtaE manE
-	Fapp (Named f_name) argEs  -> zmanifestWithArgsE argEs pathE treeE dtaE manE
+	Named f_name               -> zmanifestWithArgsE f_name [] pathE treeE dtaE manE
+	Fapp (Named f_name) argEs  -> zmanifestWithArgsE f_name argEs pathE treeE dtaE manE
 	FFile (file_name, argEOpt) -> zmanifestFile file_name argEOpt pathE treeE dtaE manE
 	Archive archtype ty         -> zmanifestArchive isTop archtype ty pathE treeE dtaE manE
 	FSymLink         -> zmanifestSymLink pathE treeE dtaE manE
@@ -125,12 +127,14 @@ zmanifestE isTop ty pathE treeE dtaE manE = case ty of
 	FComp cinfo     -> zmanifestComp isTop cinfo pathE treeE dtaE manE
 
 -- they are terminals in the spec
-zmanifestWithArgsE :: [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zmanifestWithArgsE [] pathE treeE dtaE manE = return $ Pure.appE5 (VarE 'zupdateManifestScratch) (TupE []) pathE treeE dtaE manE
-zmanifestWithArgsE argsE pathE treeE dtaE manE = do
+zmanifestWithArgsE :: String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
+zmanifestWithArgsE ty_name [] pathE treeE dtaE manE = do
+	let proxyE = AppE (VarE 'proxyOf) $ TupE []
+	return $ Pure.appE6 (VarE 'zupdateManifestScratchMemo) proxyE (TupE []) pathE treeE dtaE manE
+zmanifestWithArgsE ty_name argsE pathE treeE dtaE manE = do
 	argsE <- mapM (\e -> forceVarsZEnvQ e return) argsE
 	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
-	return $ Pure.appE5 (VarE 'zupdateManifestScratch) tupArgsE pathE treeE dtaE manE
+	return $ Pure.appE6 (VarE 'zupdateManifestScratchMemo) (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE treeE dtaE manE
 
 zmanifestArchive :: Bool -> [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestArchive isTop archtype ty pathE treeE dtaE manE = do
