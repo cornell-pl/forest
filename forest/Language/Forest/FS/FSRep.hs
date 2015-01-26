@@ -133,9 +133,10 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 	canonalizePathWithTree :: FilePath -> FSTree fs -> ForestM fs FilePath
 	canonalizePathWithTree path tree = flip pathFromTree tree =<< forestIO . canonalizePath =<< pathInTree path tree
 
-	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs FSTreeDeltaNodeMay
+	-- it may fail in case it is not possible to compute a difference between the two trees
+	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs (Maybe FSTreeDeltaNodeMay)
 
-	--to support delta functions that may not be able to inspect certain old @FSTree@s
+	--- non-observable @FSTree@s cannot be materialized
 	isObservableFSTree :: FSTree fs -> Bool
 
 -- canonalizes a filepath, but leaving the filename uncanonized

@@ -89,18 +89,19 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 	rep <- case mb of
 		(Just (memo_tree@(isObservableFSTree -> True),memo_marg,memo_rep)) -> do
 			memo_arg <- memo_marg
+			-- deep equality of arguments, since thunks can be arguments and change
 			samearg <- geq proxyNoCtx memo_arg arg
 			if samearg
 				then do
 					debug ("memo hit " ++ show path) $ do
 					df <- forestM $ diffFS memo_tree tree path
-					dv <- diffThunkValue memo_tree memo_rep
+					dv <- diffValueThunk memo_tree memo_rep
 					case (isIdValueDelta dv,df) of
-						(True,isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
+						(True,Just (isEmptyFSTreeDeltaNodeMay -> True)) -> if oldpath==path
 							then reuse_same_file memo_rep
 							else reuse_other_file oldpath memo_rep
-						(True,Just (FSTreeChg _ _)) -> reuse_other_file path memo_rep
-						(True,Just (FSTreeNew _ (Just ((==oldpath) -> True)) _)) -> reuse_other_file oldpath memo_rep
+						(True,Just (Just (FSTreeChg _ _))) -> reuse_other_file path memo_rep
+						(True,Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _))) -> reuse_other_file oldpath memo_rep
 						otherwise -> load_file
 				else load_file
 		Nothing -> load_file				
@@ -111,12 +112,12 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 -- | compressed archive (tar,gz,zip)
 -- incremental loading is only supported if the specification for the archive's contents is:
 -- 1) closed = does not depend on free variables -- this ensures that specs can be reused locally
-doZLoadArchive :: (Typeable rep,ZippedICMemo fs,ForestMD fs rep,Eq rep,FSRep fs) =>
+doZLoadArchive :: (DeltaClass d,Typeable rep,ZippedICMemo fs,ForestMD fs rep,Eq rep,FSRep fs) =>
 	Bool -> Proxy rep
 	-> [ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
 	-> (FilePath -> ForestI fs rep)
-	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep))
+	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> (FSTree fs -> rep -> ForestI fs (ValueDelta fs rep))
 	-> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FSTree fs) getMD loadGood loadBad loadD diffValue = do
@@ -143,7 +144,7 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 					dv <- diffValue memo_tree irep
 					
 					unsafeWorld $ do
-						direp <- loadD (return oldpathC) pathC (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree dv
+						direp <- liftM toNSValueDelta $ loadD (return oldpathC) pathC (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree dv
 						case (oldpath==path,direp) of
 							(True,StableVD _) -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors irep
 							otherwise -> do

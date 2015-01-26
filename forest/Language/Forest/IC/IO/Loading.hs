@@ -91,11 +91,11 @@ doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFil
 		(Just (memo_tree,(),memo_rep,memo_md)) -> debug ("memo hit " ++ show path) $ do
 			df <- forestM $ diffFS memo_tree tree path
 			case df of
-				(isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
+				Just (isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
 					then reuse_same_file memo_rep memo_md
 					else reuse_other_file oldpath memo_rep memo_md
-				Just (FSTreeChg _ _) -> reuse_other_file path memo_rep memo_md
-				Just (FSTreeNew _ (Just ((==oldpath) -> True)) _) -> reuse_other_file oldpath memo_rep memo_md
+				Just (Just (FSTreeChg _ _)) -> reuse_other_file path memo_rep memo_md
+				Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _)) -> reuse_other_file oldpath memo_rep memo_md
 				otherwise -> load_file
 		Nothing -> load_file				
 	
@@ -140,13 +140,13 @@ doLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree
 			if samearg
 				then do
 					debug ("memo hit " ++ show path) $ do
-					df <- forestM $ diffFS memo_tree tree path
-					case df of
-						(isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
+					mb_df <- forestM $ diffFS memo_tree tree path
+					case mb_df of
+						Just (isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
 							then reuse_same_file memo_rep memo_md
 							else reuse_other_file oldpath memo_rep memo_md
-						Just (FSTreeChg _ _) -> reuse_other_file path memo_rep memo_md
-						Just (FSTreeNew _ (Just ((==oldpath) -> True)) _) -> reuse_other_file oldpath memo_rep memo_md
+						Just (Just (FSTreeChg _ _)) -> reuse_other_file path memo_rep memo_md
+						Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _)) -> reuse_other_file oldpath memo_rep memo_md
 						otherwise -> load_file
 				else load_file
 		Nothing -> load_file				

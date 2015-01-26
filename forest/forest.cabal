@@ -107,6 +107,7 @@ Library
                    Language.Forest.IC.IO.Memo,
                    Language.Forest.IC.IO.Storing,
                    Language.Forest.IC.IO.ZStoring,
+                   Language.Forest.IC.IO.ZDeltaStoring,
                    Language.Forest.IC.MetaData,
                    Language.Forest.IC.PadsInstances,
                    Language.Forest.IC.ValueDelta,

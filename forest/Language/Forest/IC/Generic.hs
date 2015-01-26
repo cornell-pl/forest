@@ -85,6 +85,9 @@ class TxICForest fs where
 	
 	new :: FTK fs args rep content => ForestVs args -> FilePath -> FTM fs rep
 	
+	-- gets the arguments bound to a variable
+	args :: FTK fs args rep content => rep -> FTM fs (ForestVs args,FilePath)
+	
 	read :: FTK fs args rep content => rep -> FTM fs content
 	
 	-- tries to modify a variable
@@ -129,31 +132,46 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 		mb <- findZippedMemo proxy path proxyRep
 		case mb of
 			Just (memo_tree@(isObservableFSTree -> True),memo_args,memo_rep) -> do
-				df <- forestM $ diffFS memo_tree tree path
-				dv <- diffThunkValue memo_tree memo_rep
-				let deltas = (args,deltaArgs fs proxy)
-				-- XXX: how safe is this?
-				unsafeWorld $ zloadDelta proxy deltas (return oldpath) memo_tree (memo_rep,getMD) path df tree dv
-				addZippedMemo path proxy args memo_rep (Just tree)
-				return memo_rep
+				mb_df <- forestM $ diffFS memo_tree tree path
+				case mb_df of
+					Just df -> do
+						dv <- diffValueThunk memo_tree memo_rep
+						let deltas = (args,deltaArgs fs proxy)
+						-- XXX: how safe is this?
+						unsafeWorld $ zloadDeltaMemo proxy deltas (return oldpath) memo_tree (memo_rep,getMD) path df tree dv
+						return memo_rep
+					Nothing -> zloadScratch proxy args pathfilter path tree getMD
 			Nothing -> zloadScratch proxy args pathfilter path tree getMD
 	
 	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
-	zupdateManifestScratch :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> ManifestForestO fs
+	zloadDeltaMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
+	zloadDeltaMemo proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = do
+		drep <- zloadDelta proxy (args,dargs) path tree (rep,getMD) path' df tree' dv
+		inside $ addZippedMemo path' proxy args rep (Just tree')
+		return drep
 	
-	zupdateManifestScratchMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> ManifestForestO fs
+	-- returns a manifest and a computation that adds consistent entries to a memotable (to be run only when there are no fatal manifest errors)
+	zupdateManifestScratch :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> WManifestForestO fs
+	
+	zupdateManifestScratchMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> WManifestForestO fs
 	zupdateManifestScratchMemo proxy args path tree rep man = do
 		man1 <- zupdateManifestScratch proxy args path tree rep man
 		Writer.tell $ inside . addZippedMemo path proxy args rep . Just
 		return man1
 	
-	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> ForestO fs (Manifest fs)
+	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> WManifestForestO fs
 	
-	zmanifest :: ForestIs fs args -> FilePath -> rep -> ManifestForestO fs
+	zupdateManifestDeltaMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> WManifestForestO fs
+	zupdateManifestDeltaMemo proxy (margs,dargs) path path' tree rep df tree' dv man = do
+		man1 <- zupdateManifestDelta proxy (margs,dargs) path path' tree rep df tree' dv man
+		Writer.tell $ inside . addZippedMemo path proxy margs rep . Just
+		return man1
+	
+	zmanifest :: ForestIs fs args -> FilePath -> rep -> WManifestForestO fs
 	zmanifest = zmanifest' Proxy
 	
-	zmanifest' :: Proxy args -> ForestIs fs args -> FilePath -> rep -> ManifestForestO fs
+	zmanifest' :: Proxy args -> ForestIs fs args -> FilePath -> rep -> WManifestForestO fs
 	zmanifest' proxy args path rep = lift (forestM latestTree) >>= \tree -> lift (forestM (newManifestWith "/" tree)) >>= zupdateManifestScratch proxy args path tree rep
 
 	zdefaultScratch :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
@@ -168,7 +186,8 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	zdefault = zdefaultScratchMemo Proxy
 
 -- returns a manifest and a sequence of memoization actions to be performed after store
-type ManifestForestO fs = WriterT (FSTree fs -> ForestO fs ()) (ForestO fs) (Manifest fs)
+type WForestO fs a = WriterT (FSTree fs -> ForestO fs ()) (ForestO fs) a
+type WManifestForestO fs = WForestO fs (Manifest fs)
 
 instance Monad m => Monoid (m ()) where
 	mempty = return ()
@@ -229,13 +248,16 @@ class (Typeable rep,Typeable md,ICMemo fs,ForestArgs fs args,MData NoCtx (Forest
 		mb <- findMemo proxy path proxyRep
 		case mb of
 			Just (memo_tree,memo_args,memo_rep,memo_md) -> do
-				df <- forestM $ diffFS memo_tree tree path
-				let deltas = mkLoadDeltaArgs mode fs proxy args (deltaArgs fs proxy)
-				-- XXX: how safe is this?
-				unsafeWorld $ loadDelta mode proxy deltas (return oldpath) memo_tree ((memo_rep,memo_md),getMD) path df tree
-				unless (oldpath==path) $ remMemo fs oldpath proxyRep
-				addMemo path proxy args (memo_rep,memo_md) tree
-				return (memo_rep,memo_md)
+				mb_df <- forestM $ diffFS memo_tree tree path
+				case mb_df of
+					Just df -> do
+						let deltas = mkLoadDeltaArgs mode fs proxy args (deltaArgs fs proxy)
+						-- XXX: how safe is this?
+						unsafeWorld $ loadDelta mode proxy deltas (return oldpath) memo_tree ((memo_rep,memo_md),getMD) path df tree
+						unless (oldpath==path) $ remMemo fs oldpath proxyRep
+						addMemo path proxy args (memo_rep,memo_md) tree
+						return (memo_rep,memo_md)
+					Nothing -> loadScratch mode proxy args oldpathM path tree getMD
 			Nothing -> loadScratch mode proxy args oldpathM path tree getMD
 	
 	-- | incremental load function that considers the original source data and returns a stable delta

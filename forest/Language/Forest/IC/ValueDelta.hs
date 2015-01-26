@@ -20,16 +20,29 @@ import Language.Forest.IC.BX
 class DeltaClass d where
 	isEmptyDelta :: d v -> Bool
 	valueDeltaKind :: d v -> ValueDeltaKind
+	toNSValueDelta :: d v -> NSValueDelta v
+	isStableDelta :: d v -> Bool
+	fromSValueDelta :: SValueDelta v -> d v
+	applyDelta :: d v -> v -> v
 
 instance DeltaClass SValueDelta where
 	isEmptyDelta = isEmptySValueDelta
 	valueDeltaKind Id = NoOp
 	valueDeltaKind Delta = Stable
+	toNSValueDelta = StableVD
+	isStableDelta _ = True
+	fromSValueDelta = id
+	applyDelta = applySValueDelta
 	
 instance DeltaClass NSValueDelta where
 	isEmptyDelta = isEmptyNSValueDelta
 	valueDeltaKind (StableVD d) = valueDeltaKind d
 	valueDeltaKind (Modify f) = NonStable
+	toNSValueDelta = id
+	isStableDelta (StableVD _) = True
+	isStableDelta (Modify f) = False
+	fromSValueDelta = StableVD
+	applyDelta = applyNSValueDelta
 
 -- stable deltas
 data SValueDelta v where

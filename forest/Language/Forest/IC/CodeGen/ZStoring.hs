@@ -184,7 +184,7 @@ zmanifestMaybe isTop ty pathE treeE dtaE manE = do
 	let (newmanE,newmanP) = genPE newmanName
 	let (newrepE,newrepP) = genPE newrepName
 	let (newpathE,newpathP) = genPE newpathName
-	doContentsE <- liftM (LamE [newpathP,newdtaP,newmanP]) $ zmanifestE False ty newpathE treeE newdtaE newmanE
+	doContentsE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestE False ty pathE treeE newdtaE newmanE
 	if isTop
 		then return $ Pure.appE5 (VarE 'doZManifestMaybe) pathE treeE dtaE doContentsE manE
 		else return $ Pure.appE5 (VarE 'doZManifestMaybeInner) pathE treeE dtaE doContentsE manE
@@ -197,7 +197,7 @@ zmanifestDirectory True dirTy@(Record id fields) pathE treeE dtaE manE = do
 	let (newdtaE,newdtaP) = genPE newdtaName
 	let (newmanE,newmanP) = genPE newmanName
 	let (newpathE,newpathP) = genPE newpathName
-	doDirE <- liftM (LamE [newpathP,newdtaP,newmanP]) $ zmanifestDirectoryContents dirTy treeE newpathE newdtaE newmanE
+	doDirE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestDirectoryContents dirTy treeE pathE newdtaE newmanE
 	collectMDs <- lift $ zgenMergeFieldsMDErrors fields	
 	return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doDirE manE
 
@@ -230,7 +230,7 @@ zmanifestComp True cinfo pathE treeE dtaE manE = do
 	let (newpathE,newpathP) = genPE newpathName
 	
 	let collectMDs = zgenMergeFieldMDErrors (Comp cinfo)
-	doCompE <- liftM (LamE [newpathP,newdtaP,newmanP]) $ zmanifestCompContents cinfo treeE newpathE newdtaE newmanE
+	doCompE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestCompContents cinfo treeE pathE newdtaE newmanE
 	return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doCompE manE
 
 zmanifestCompContents :: CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp

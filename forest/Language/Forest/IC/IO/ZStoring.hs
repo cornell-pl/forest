@@ -58,12 +58,12 @@ import Data.Proxy
 doZManifestArgs :: (ICRep fs,ForestArgs fs args) =>
 	Proxy args -> ForestIs fs args
 	-> rep
-	-> (rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestArgs proxy margs rep manifestContent man = do
 	manifestContent rep man
 
-doZManifestFile1 :: (Typeable arg,ZippedICMemo fs,Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => Pure.Arg arg -> FilePath -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> ManifestForestO fs
+doZManifestFile1 :: (Typeable arg,ZippedICMemo fs,Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => Pure.Arg arg -> FilePath -> FSTree fs -> ForestFSThunkI fs (Forest_md fs,(pads,md)) -> Manifest fs -> WManifestForestO fs
 doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	(fmd,rep@(pads,bmd)) <- lift $ inside $ get rep_t
@@ -93,8 +93,8 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 doZManifestArchive :: (ZippedICMemo fs,Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThunk Inside,ICRep fs) =>
 	Bool -> [ArchiveType] -> FilePath -> FSTree fs 
 	-> ForestFSThunkI fs (Forest_md fs,rep)
-	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestArchive isClosed archTy path tree rep_t manifestContents man = do
 	let argsProxy = Proxy :: Proxy ()
 	newman <- doZManifestArchive' archTy path tree rep_t (\t -> get t >>= \(fmd,rep) -> return (Just fmd,rep)) manifestContents man
@@ -104,15 +104,15 @@ doZManifestArchive isClosed archTy path tree rep_t manifestContents man = do
 doZManifestArchiveInner :: (Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThunk Inside,ICRep fs) =>
 	[ArchiveType] -> FilePath -> FSTree fs 
 	-> rep
-	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestArchiveInner archTy path tree rep_t manifestContents man = doZManifestArchive' archTy path tree rep_t (\rep -> return (Nothing,rep)) manifestContents man
 
 doZManifestArchive' :: (Typeable rep,ForestMD fs rep,Eq rep,ForestInput fs FSThunk Inside,ICRep fs) =>
 	[ArchiveType] -> FilePath -> FSTree fs 
 	-> toprep -> (toprep -> ForestI fs (Maybe (Forest_md fs),rep))
-	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestArchive' archTy path tree toprep getRep manifestContents man = do
 	(mb_fmd,rep) <- lift $ inside $ getRep toprep
 	canpath <- lift $ forestM $ canonalizeDirectoryInTree path tree
@@ -131,6 +131,11 @@ doZManifestArchive' archTy path tree toprep getRep manifestContents man = do
 	archiveFile <- lift $ forestM tempPath
 	lift $ forestM $ forestIO $ compressArchive archTy archiveDir archiveFile -- compresses the new data into a new temp file
 	lift $ forestM $ forestIO $ removePath archiveDir -- purges all temporary archive data 
+	
+	-- guarantee that the error thunk is being updated on inner changes 
+	case mb_fmd of
+		Nothing -> return ()
+		Just fmd -> Writer.tell $ Prelude.const $ get_errors_thunk fmd >>= flip overwrite (get_errors rep)
 	
 	let testm = do
 		status1 <- liftM (boolStatus $ NonExistingPath path) $ latestTree >>= doesExistInTree path
@@ -153,7 +158,7 @@ doZManifestArchive' archTy path tree toprep getRep manifestContents man = do
 doZManifestSymLink :: ICRep fs =>
 	FilePath -> FSTree fs
 	-> SymLink fs
-	-> Manifest fs -> ManifestForestO fs
+	-> Manifest fs -> WManifestForestO fs
 doZManifestSymLink path tree (SymLink rep_t) man = do
 	(fmd, (tgt,base_md)) <- lift $ inside $ get rep_t
 	let path_fmd = fullpath $ fileInfo fmd
@@ -175,20 +180,25 @@ doZManifestSymLink path tree (SymLink rep_t) man = do
 -- constraints are a Forest validation feature and don't influence filesystem consistency
 doZManifestConstraint :: ICRep fs =>
 	FSTree fs -> (rep -> ForestI fs Bool) -> rep
-	-> (rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestConstraint tree pred rep manifestContent man = do
 	manifestContent rep man
 
+-- on storing we make sure that the error thunk is a computation on the representation, instead of an arbitrary user-defined value.
+-- we need to preserve this invariant to enable incremental storing
 -- field manifest functions take the directory path
 doZManifestDirectory :: (Typeable rep,Eq rep,ICRep fs) => 
 	FilePath -> FSTree fs -> (rep -> ForestI fs Forest_err)
 	-> ForestFSThunkI fs (Forest_md fs,rep)
-	-> (FilePath -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestDirectory path tree collectMDErrors rep_t manifestContent man = do
 	(fmd,rep) <- lift $ inside $ get rep_t
 	let path_fmd = fullpath $ fileInfo fmd
+	
+	-- guarantee that the error thunk is being updated on inner changes 
+	Writer.tell $ Prelude.const $ get_errors_thunk fmd >>= flip overwrite (collectMDErrors rep)
 	
 	let exists = doesDirectoryExistInMD path fmd
 	if exists
@@ -196,42 +206,46 @@ doZManifestDirectory path tree collectMDErrors rep_t manifestContent man = do
 			man1 <- lift $ forestM $ addDirToManifestInTree path tree man -- adds a new directory
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
-				status2 <- liftM (boolStatus $ NonExistingPath path) $ latestTree >>= doesDirectoryExistInTree path
-				status3 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
-				return $ status1 `mappend` status2 `mappend` status3
+				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
+				return $ status1 `mappend` status2
 			let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
-			manifestContent path rep man2
+			manifestContent rep man2
 		else do
 			man1 <- lift $ forestM $ removePathFromManifestInTree path tree man -- remove the directory
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
-				status2 <- liftM (boolStatus $ ExistingPath path) $ latestTree >>= liftM not . doesDirectoryExistInTree path
-				status3 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
-				return $ status1 `mappend` status2 `mappend` status3
+				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
+				return $ status1 `mappend` status2
 			let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
-			manifestContent path rep man2
+			manifestContent rep man2
 
 doZManifestMaybe :: (Typeable rep,ForestMD fs rep,Eq rep,ICRep fs) =>
 	FilePath -> FSTree fs
 	-> ForestFSThunkI fs (Forest_md fs,Maybe rep)
-	-> (FilePath -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestMaybe path tree rep manifestContent man = doZManifestMaybe' path tree rep (\t -> get t >>= \(fmd,rep) -> return (Just fmd,rep)) manifestContent man
 
 doZManifestMaybeInner :: (Typeable rep,ForestMD fs rep,Eq rep,ICRep fs) =>
 	FilePath -> FSTree fs
 	-> Maybe rep
-	-> (FilePath -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestMaybeInner path tree rep manifestContent man = doZManifestMaybe' path tree rep (\rep -> return (Nothing,rep)) manifestContent man
 
 doZManifestMaybe' :: (Typeable rep,ForestMD fs rep,Eq rep,ICRep fs) =>
 	FilePath -> FSTree fs
 	-> toprep -> (toprep -> ForestI fs (Maybe (Forest_md fs),Maybe rep))
-	-> (FilePath -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestMaybe' path tree toprep getRep manifestContent man = do
 	(mb_fmd,rep_mb) <- lift $ inside $ getRep toprep
+	
+	-- guarantee that the error thunk is being updated on inner changes 
+	case mb_fmd of
+		Nothing -> return ()
+		Just fmd -> Writer.tell $ Prelude.const $ get_errors_thunk fmd >>= flip overwrite (maybe (return cleanForestErr) get_errors rep_mb)
+	
 	case rep_mb of
 		Just rep -> do
 			let testm = do
@@ -245,7 +259,7 @@ doZManifestMaybe' path tree toprep getRep manifestContent man = do
 				status2 <- liftM (boolStatus $ NonExistingPath path) $ latestTree >>= doesExistInTree path
 				return $ status1 `mappend` status2
 			let man1 = addTestToManifest testm man
-			manifestContent path rep man1 -- the path will be added recursively
+			manifestContent rep man1 -- the path will be added recursively
 		Nothing -> do
 			let testm = do
 				status1 <- liftM (boolStatus $ ExistingPath path) $ latestTree >>= liftM not . doesExistInTree path
@@ -257,8 +271,8 @@ doZManifestMaybe' path tree toprep getRep manifestContent man = do
 
 doZManifestFocus :: (ICRep fs,Matching fs a) =>
 	FilePath -> a -> FSTree fs -> rep
-	-> (FilePath -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FilePath -> rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestFocus parentPath matching tree rep manifestUnder man = do
 	files <- lift $ forestM $ getMatchingFilesInTree parentPath matching tree
 	let name = pickFile files
@@ -268,16 +282,16 @@ doZManifestFocus parentPath matching tree rep manifestUnder man = do
 
 doZManifestSimple :: (ICRep fs,Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs -> rep
-	-> (FilePath -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FilePath -> rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestSimple parentPath matching tree dta manifestUnder man = lift (inside matching) >>= \m -> doZManifestFocus parentPath m tree dta manifestUnder man
 
 doZManifestSimpleWithConstraint :: (ICRep fs,Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (rep -> ForestI fs Bool)
 	-> rep
-	-> (FilePath -> rep -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FilePath -> rep -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder = doZManifestConstraint tree pred dta $ \dta' man1 ->
 	lift (inside matching) >>= \m -> doZManifestFocus parentPath m tree dta' manifestUnder man1
 
@@ -286,8 +300,8 @@ doZManifestCompound :: (ForestMD fs rep',Typeable container_rep,Eq container_rep
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')])
 	-> container_rep
-	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestCompound parentPath matchingM tree toListRep c_rep manifestUnder man = do
 	matching <- lift $ inside matchingM
 	old_files <- lift $ forestM $ getMatchingFilesInTree parentPath matching tree
@@ -308,8 +322,8 @@ doZManifestCompoundWithConstraint :: (ForestMD fs rep',Typeable container_rep,Eq
 	-> (container_rep -> [(FilePath,rep')])
 	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> container_rep
-	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> ManifestForestO fs)
-	-> Manifest fs -> ManifestForestO fs
+	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> WManifestForestO fs)
+	-> Manifest fs -> WManifestForestO fs
 doZManifestCompoundWithConstraint parentPath matchingM tree toListRep pred c_rep manifestUnder man = do
 	matching <- lift $ inside matchingM
 	old_files <- lift $ forestM $ getMatchingFilesInTree parentPath matching tree

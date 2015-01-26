@@ -212,8 +212,8 @@ doLoadDeltaDirectory mpath ((rep_thunk,md_thunk),getMD) path' oldtree df tree' c
 				return (fmd',md1)
 			return (Delta,Delta)
 		(True,True) -> do -- this is the ONLY place where non-stable @SValueDelta@s appear!
-			irep <- inside $ Inc.get rep_thunk
-			md@(fmd,imd) <- inside $ Inc.get md_thunk
+			irep <- Inc.getOutside rep_thunk
+			md@(fmd,imd) <- Inc.getOutside md_thunk
 			(direp,dimd) <- loadD ((irep,imd),getMD) -- load recursively
 			drep <- case direp of
 				d -> return $ liftSValueDelta d
@@ -262,8 +262,8 @@ doLoadDeltaMaybe mpath ((rep_thunk,md_thunk),getMD) path' oldtree df tree' load 
 			overwrite md_thunk $ cleanForestMDwithFile path' >>= \fmd' -> return (fmd',Nothing)
 			return (Delta,Delta)
 		(True,True) -> do
-			rep <- inside $ Inc.get rep_thunk
-			md@(fmd,imd) <- inside $ Inc.get md_thunk
+			rep <- Inc.getOutside rep_thunk
+			md@(fmd,imd) <- Inc.getOutside md_thunk
 			repimd <- mergeJustDefault (rep,imd)
 			(direp,dimd) <- loadD (repimd,getMD) -- load recursively
 			overwrite md_thunk $ do
@@ -357,8 +357,8 @@ doLoadDeltaCompound :: 	(Typeable container_rep',Typeable container_md',Eq conta
 doLoadDeltaCompound mode isoRep isoMd mpath path' matchingM oldtree df tree' ((rep,md),getMD) load loadD = debug ("doLoadDeltaCompound: "++show (path')) $ do
 	path <- inside mpath
 	matching <- inside $ matchingM -- matching expressions are always recomputed; since they depend on the FS we cannot incrementally reuse them
-	crep <- inside $ Inc.get rep
-	cmd <- inside $ Inc.get md
+	crep <- Inc.getOutside rep
+	cmd <- Inc.getOutside md
 	let oldreplist = to isoRep crep
 	let oldmdlist = to isoMd cmd 
 	let oldfiles = map fst oldreplist
@@ -422,8 +422,8 @@ doLoadDeltaCompoundWithConstraint :: (Typeable container_rep',Typeable container
 doLoadDeltaCompoundWithConstraint mode isoRep isoMd mpath path' matchingM oldtree df tree' ((rep,md),getMD) pred load loadD = debug ("doLoadDeltaCompoundC: "++show (path')) $ do
 	path <- inside mpath
 	matching <- inside matchingM
-	crep <- inside $ Inc.get rep
-	cmd <- inside $ Inc.get md
+	crep <- Inc.getOutside rep
+	cmd <- Inc.getOutside md
 	let oldreplist = to isoRep crep
 	let oldmdlist = to isoMd cmd 
 	let oldfiles = map fst oldreplist

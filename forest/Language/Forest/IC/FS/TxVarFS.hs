@@ -413,9 +413,6 @@ copyOrElseTxVarFS proxy src tgt b f = do
 			content' <- Inc.getOutside $ to iso_rep_thunk tgt'
 			writeOrElseTxVarFS tgt content' b f
 		otherwise -> error "tried to write to a variable that is not connected to the FS"
-	
-
---	copyFSThunks :: Proxy fs -> Proxy l -> (FilePath -> FilePath) -> a -> ForestL fs l a
 
 newTxVarFS :: FTK TxVarFS args rep content => Proxy args -> ForestVs args -> FilePath -> TxVarFTM rep
 newTxVarFS proxy args path = inside $ zload (vmonadArgs proxyTxVarFS proxy args) path
@@ -442,13 +439,12 @@ writeOrElseTxVarFS rep content b f = do
 			(mani,memos) <- Writer.runWriterT $ zmanifest' (Proxy :: Proxy args) args path rep
 			-- we need to store the errors to the (buffered) FS before validating
 			forestM $ storeManifest mani
-			forestM latestTree >>= memos
 			
 			forestM $ forestIO $ putStrLn "Manifest!"
 			forestM $ forestIO $ print mani
 			errors <- forestM $ manifestErrors mani
 			if List.null errors
-				then return b
+				then forestM latestTree >>= memos >> return b
 				else rollback errors
 					
 

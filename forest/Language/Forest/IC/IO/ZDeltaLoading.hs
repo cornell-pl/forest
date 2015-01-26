@@ -67,7 +67,9 @@ doZLoadDeltaFile1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' oldtre
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	path <- inside mpath
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
-		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> debug "constant1 unchanged" $ return Id
+		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> debug "constant1 unchanged" $ do
+			inside $ addZippedMemo path' argProxy (return arg') rep_thunk (Just tree')
+			return Id
 		(True,True,True,Just (FSTreeChg _ _)) -> debug "constant1 attrs" $ do
 			modify rep_thunk $ \(_,rep) -> getMD path' tree' >>= \fmd' -> return (fmd',rep)
 			inside $ addZippedMemo path' argProxy (return arg') rep_thunk (Just tree')
@@ -78,20 +80,20 @@ doZLoadDeltaFile1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' oldtre
 			inside $ addZippedMemo path' argProxy (return arg') rep_thunk (Just tree')
 			return Delta
 
-doZLoadDeltaArchiveInner :: (Typeable rep,ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs
+doZLoadDeltaArchiveInner :: (DeltaClass d,Typeable rep,ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs
 		,ForestInput fs FSThunk Inside,ForestMD fs rep,Eq rep) =>
 	Bool -> [ArchiveType] -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep
 	-> (rep,GetForestMD fs)
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
 	-> (FilePath -> ForestI fs rep)
-	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep))
+	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> ForestO fs (NSValueDelta rep)
 doZLoadDeltaArchiveInner isClosed exts mpath path' oldtree df tree' dv (rep,getMD) loadGood loadBad loadD = do
 	let argsProxy = Proxy :: Proxy ()
 	path <- inside mpath
 	case (path == path',isIdValueDelta dv,df) of
-		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> return $ StableVD Id
-		(True,True,Just (FSTreeChg _ _)) -> return $ StableVD Id
+		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> return $ fromSValueDelta Id
+		(True,True,Just (FSTreeChg _ _)) -> return $ fromSValueDelta Id
 		
 		-- if the archive file has been moved, try to reuse originally loaded archive data
 		(_,_,Just (FSTreeNew _ (Just from) _)) -> do
@@ -110,30 +112,32 @@ doZLoadDeltaArchiveInner isClosed exts mpath path' oldtree df tree' dv (rep,getM
 			
 			drep <- loadD (return pathC) pathC' (rep,getForestMDInTree) avfsOldTree archiveDf avfsTree' dv
 			fmd' <- inside $ getMD path tree'
-			let rep' = applyNSValueDelta drep rep
+			let rep' = applyDelta drep rep
 			
 			return $ Modify $ Prelude.const rep'
 
-doZLoadDeltaArchive :: (Typeable rep,ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs
+doZLoadDeltaArchive :: (DeltaClass d,Typeable rep,ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs
 		,ForestInput fs FSThunk Inside,ForestMD fs rep,Eq rep) =>
 	Bool -> [ArchiveType] -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,rep))
 	-> (ForestFSThunkI fs (Forest_md fs,rep),GetForestMD fs)
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
 	-> (FilePath -> ForestI fs rep)
-	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep))
+	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> (FSTree fs -> rep -> ForestI fs (ValueDelta fs rep))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,rep)))
 doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,getMD) loadGood loadBad loadD diffValue = do
 	let argsProxy = Proxy :: Proxy ()
 	path <- inside mpath
 	case (path == path',isIdValueDelta dv,df) of
-		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> return Id
+		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> do
+			when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
+			return Id
 		(True,True,Just (FSTreeChg _ _)) -> do
 			modify rep_thunk $ \(_,irep') -> do
 				fmd' <- getMD path' tree'
 				fmd'' <- updateForestMDErrorsInsideWith fmd' $ liftM (:[]) $ get_errors irep'
 				return (fmd'',irep')
-			inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
+			when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
 			return Delta
 		
 		-- if the archive file has been moved, try to reuse originally loaded archive data
@@ -154,7 +158,7 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 			archiveDf <- forestM $ focusDiffFSTree oldtree pathC tree' pathC'
 			
 			archiveDv <- inside $ diffValue oldtree irep
-			direp <- loadD (return pathC) pathC' (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree' archiveDv
+			direp <- liftM toNSValueDelta $ loadD (return pathC) pathC' (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree' archiveDv
 			case (path==path',direp) of
 				(True,StableVD d) -> do
 					replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors irep
@@ -164,7 +168,7 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 					updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors irep' -- like a directory
 					set rep_thunk (fmd',irep')
 			
-			inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
+			when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
 			return Delta
 				
 
@@ -184,23 +188,23 @@ doZLoadDeltaSymLink mpath path' oldtree df tree' dv (SymLink rep_thunk,getMD) = 
 			set rep_thunk rep'
 			return Delta
 
-doZLoadDeltaConstraint :: (ForestMD fs rep,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside) =>
+doZLoadDeltaConstraint :: (DeltaClass d,ForestMD fs rep,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside) =>
 	Bool -> ValueDelta fs rep -> (rep,GetForestMD fs) -> (rep -> ForestI fs Bool)
-	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (NSValueDelta rep))
-	-> ForestO fs (NSValueDelta rep)
+	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (d rep))
+	-> ForestO fs (d rep)
 doZLoadDeltaConstraint emptyDArgs dv (rep,getMD) pred loadD = debug ("doLoadDeltaConstraint: ") $ do
 	direp <- loadD dv (rep,getMD)
-	case (emptyDArgs,isIdValueDelta dv,direp) of
-		(True,True,StableVD Id) -> return $ StableVD Id
+	case (emptyDArgs,isIdValueDelta dv,isEmptyDelta direp) of
+		(True,True,True) -> return direp
 		otherwise -> do
 			cond <- inside $ pred rep
 			if cond
 				then debug ("doLoadDeltaConstraintReturn2: ") $ return direp
 				else do
 					modify_errors rep $ \err -> return $ Pure.updateForestErr err [Pure.constraintViolationForestErr]
-					case direp of
-						StableVD _ -> return $ StableVD Delta
-						otherwise -> return direp
+					if isStableDelta direp
+						then return $ fromSValueDelta Delta 
+						else return direp
 
 -- updates the thunks that keep track of the arguments of a top-level declaration
 doZLoadDeltaArgs :: (ForestArgs fs args,Eq rep,ICRep fs) =>
@@ -212,13 +216,13 @@ doZLoadDeltaArgs proxy (margs,_) ((rep,getMD)) (tree' :: FSTree fs) loadD = debu
 	(drep) <- loadD arg_thunks ((rep),getMD)
 	return (mapSValueDelta drep) 
 
-doZLoadDeltaDirectory :: (Typeable rep,Eq rep,ICRep fs) =>
+doZLoadDeltaDirectory :: (DeltaClass d,Typeable rep,Eq rep,ICRep fs) =>
 	ForestI fs FilePath -> (ForestFSThunkI fs (Forest_md fs,rep),GetForestMD fs) -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,rep))
 	-> (rep -> ForestI fs Forest_err)
 	-> (GetForestMD fs -> ForestI fs rep)
 	-> ForestI fs rep
-	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (NSValueDelta rep))
+	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (d rep))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,rep)))
 doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectMDErrors loadGood loadBad loadD = do
 	path <- inside mpath
@@ -238,9 +242,9 @@ doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectM
 				return (fmd',rep1)
 			return Delta
 		(True,True) -> do
-			rep@(fmd,irep) <- inside $ Inc.get rep_thunk
+			rep@(fmd,irep) <- Inc.getOutside rep_thunk
 			let idv = mapValueDelta Proxy dv
-			direp <- loadD idv (irep,getMD) -- load recursively
+			direp <- liftM toNSValueDelta $ loadD idv (irep,getMD) -- load recursively
 			drep <- case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of 
 				(True,True,True) -> do -- if the current path stayed the same and no attributes changed, we can reuse its @Forest_md@ but replace its errors; all the changes are stable
 					case direp of
@@ -270,11 +274,11 @@ doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df tree' dv collectM
 			overwrite rep_thunk $ doZLoadDirectory' path' tree' collectMDErrors getMD (loadGood getMD) loadBad
 			return Delta
 
-doZLoadDeltaMaybeInner :: (Typeable rep,Eq rep,ForestMD fs rep) =>
+doZLoadDeltaMaybeInner :: (DeltaClass d,Typeable rep,Eq rep,ForestMD fs rep) =>
 	ForestI fs FilePath -> (Maybe rep,GetForestMD fs) -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs (Maybe rep)
 	-> (GetForestMD fs -> ForestI fs rep)
-	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (NSValueDelta rep))
+	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (d rep))
 	-> (FSTree fs -> rep -> ForestI fs (ValueDelta fs rep))
 	-> ForestO fs (NSValueDelta (Maybe rep))
 doZLoadDeltaMaybeInner mpath (mb_rep,getMD) path' oldtree df tree' dv load loadD diffValue = do
@@ -291,24 +295,24 @@ doZLoadDeltaMaybeInner mpath (mb_rep,getMD) path' oldtree df tree' dv load loadD
 			return $ Modify $ Prelude.const Nothing
 		(True,Just irep,True) -> do
 			idv <- inside $ diffValue oldtree irep
-			direp <- loadD idv (irep,getMD) -- load recursively
+			direp <- liftM toNSValueDelta $ loadD idv (irep,getMD) -- load recursively
 			return $ maybeNSValueDelta direp
 		(_,_,True) -> do
 			mb_rep' <- inside $ doZLoadMaybeInner (fsTreeDeltaPathFilter df path') path' tree' $ load getMD
 			return $ Modify $ Prelude.const mb_rep'
 
-doZLoadDeltaMaybe :: (Typeable rep,Eq rep,ForestMD fs rep) =>
+doZLoadDeltaMaybe :: (DeltaClass d,Typeable rep,Eq rep,ForestMD fs rep) =>
 	ForestI fs FilePath -> (ForestFSThunkI fs (Forest_md fs,Maybe rep),GetForestMD fs) -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs (ForestFSThunkI fs (Forest_md fs,Maybe rep))
 	-> (GetForestMD fs -> ForestI fs rep)
-	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (NSValueDelta rep))
+	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (d rep))
 	-> (FSTree fs -> rep -> ForestI fs (ValueDelta fs rep))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Forest_md fs,Maybe rep)))
 doZLoadDeltaMaybe mpath (rep_thunk,getMD) path' oldtree df tree' dv load loadD diffValue = do
 	path <- inside mpath
 	exists <- forestM $ doesExistInTree path oldtree
 	exists' <- forestM $ doesExistInTree path' tree'
-	rep@(fmd,mb_rep) <- inside $ Inc.get rep_thunk
+	rep@(fmd,mb_rep) <- Inc.getOutside rep_thunk
 	case (exists,mb_rep,exists') of
 		(False,Nothing,False) -> do
 			case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of
@@ -321,7 +325,7 @@ doZLoadDeltaMaybe mpath (rep_thunk,getMD) path' oldtree df tree' dv load loadD d
 			return Delta
 		(True,Just irep,True) -> do
 			idv <- inside $ diffValue oldtree irep
-			direp <- loadD idv (irep,getMD) -- load recursively
+			direp <- liftM toNSValueDelta $ loadD idv (irep,getMD) -- load recursively
 			case (path==path',direp) of
 				(True,StableVD direp) -> do -- we don't need to update the maybe thunk
 					replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
@@ -338,12 +342,12 @@ doZLoadDeltaMaybe mpath (rep_thunk,getMD) path' oldtree df tree' dv load loadD d
 
 -- note that in the implementation we do not incrementalize the path-focusing expressions as they (typically) depend on the FS
 -- changes the current path, the original data already corresponds to the focused path
-doZLoadDeltaFocus :: (Eq rep,Matching fs a,ForestMD fs rep) =>
+doZLoadDeltaFocus :: (DeltaClass d,Eq rep,Matching fs a,ForestMD fs rep) =>
 	ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> ValueDelta fs rep
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep)
-	-> (ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep))
-	-> ForestO fs (NSValueDelta rep)
+	-> (ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep -> ForestO fs (d rep))
+	-> ForestO fs (d rep)
 doZLoadDeltaFocus mpath path' (rep,getMD) matching oldtree df tree' dv load loadD = do
 	let staticLoad getMD = doZLoadFocus (fsTreeDeltaPathFilter df path') path' matching tree' getMD load
 	files' <- forestM $ getMatchingFilesInTree path' matching tree'
@@ -356,64 +360,60 @@ doZLoadDeltaFocus mpath path' (rep,getMD) matching oldtree df tree' dv load load
 				drep <- loadD mnewpath newdpath df dv -- changes the delta\
 				if length files' == 0
 					then return drep
-					else case drep of
-						StableVD Id -> return $ StableVD Id
-						StableVD Delta -> do
+					else if isEmptyDelta drep
+						then return drep
+						else do
 							newpath <- inside mnewpath
 							addMultipleMatchesErrorMD newpath files' rep
-							return $ StableVD Delta
-						Modify f -> do
-							newpath <- inside mnewpath
-							addMultipleMatchesErrorMD newpath files' rep
-							return $ Modify f
+							return drep
 
 -- changes the delta
-doZLoadDeltaNewPath :: (ICRep fs) => ForestI fs FilePath -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
-	-> (ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ForestO fs (NSValueDelta rep))
-	-> ForestO fs (NSValueDelta rep)
+doZLoadDeltaNewPath :: (DeltaClass d,ICRep fs) => ForestI fs FilePath -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	-> (ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ForestO fs (d rep))
+	-> ForestO fs (d rep)
 doZLoadDeltaNewPath moldpath path' file' oldtree df tree' loadD = debug ("doLoadDeltaNewPath: "++show (path',file',df)) $ do
 	newpath' <- forestM $ stepPathInTree tree' path' file'
 	let newdf = focusFSTreeDeltaNodeMayByRelativePath df file' -- focusing the tree deltas is important for the skipping conditions to fire for unchanged branches of the FS
 	debug ("changed FSDelta: " ++ show newdf) $ loadD moldpath newpath' newdf -- load recursively
 
-doZLoadDeltaSimple :: (ForestMD fs rep',Eq rep',Matching fs a,MData NoCtx (ForestO fs) rep') =>
+doZLoadDeltaSimple :: (DeltaClass d,ForestMD fs rep',Eq rep',Matching fs a,MData NoCtx (ForestO fs) rep') =>
 	Lens dir_rep rep'
 	-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep')
-	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (NSValueDelta rep'))
+	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (d rep'))
 	-> ForestO fs (NSValueDelta dir_rep)
 doZLoadDeltaSimple lens mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) load loadD = debug ("doLoadDeltaSimple: "++show path') $ do
 	matching <- inside $ matchingM
 	let irep = BX.get lens dir_rep
 	let idata = (irep,getForestMDInTree) -- we need to discard any previously loaded forest metadata
-	direp <- doZLoadDeltaFocus mpath path' idata matching oldtree df tree' (mapValueDelta Proxy dv) load $ loadD idata 
+	direp <- liftM toNSValueDelta $ doZLoadDeltaFocus mpath path' idata matching oldtree df tree' (mapValueDelta Proxy dv) load $ loadD idata 
 	case direp of
 		StableVD d -> return $ StableVD $ liftSValueDelta d
 		otherwise -> return $ Modify $ \s -> BX.put lens s $ applyNSValueDelta direp irep
 
-doZLoadDeltaSimpleWithConstraint :: (ForestMD fs rep',ForestOutput fs ICThunk Inside,Eq rep',Matching fs a,MData NoCtx (ForestO fs) rep') =>
+doZLoadDeltaSimpleWithConstraint :: (DeltaClass d,ForestMD fs rep',ForestOutput fs ICThunk Inside,Eq rep',Matching fs a,MData NoCtx (ForestO fs) rep') =>
 	Lens dir_rep rep'
 	-> Bool -> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 	-> (rep' -> ForestI fs Bool)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep')
-	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (NSValueDelta rep'))
+	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (d rep'))
 	-> ForestO fs (NSValueDelta dir_rep)
 doZLoadDeltaSimpleWithConstraint lens emptyDArgs mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) pred load loadD = debug ("doLoadDeltaSimpleWithConstraint: "++show (path')) $ do
 	matching <- inside $ matchingM
 	let irep = BX.get lens dir_rep
 	let idata = (irep,getForestMDInTree) -- we need to discard any previously loaded forest metadata
-	direp <- doZLoadDeltaConstraint emptyDArgs (mapValueDelta Proxy dv) idata pred $ \dv idata -> doZLoadDeltaFocus mpath path' idata matching oldtree df tree' dv load $ loadD idata 
+	direp <- liftM toNSValueDelta $ doZLoadDeltaConstraint emptyDArgs (mapValueDelta Proxy dv) idata pred $ \dv idata -> doZLoadDeltaFocus mpath path' idata matching oldtree df tree' dv load $ loadD idata 
 	case direp of
 		StableVD d -> do
 			return $ StableVD $ liftSValueDelta d
 		otherwise -> return $ Modify $ \s -> BX.put lens s $ applyNSValueDelta direp irep
 	
 
-doZLoadDeltaCompound :: (Typeable rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',Eq rep',Matching fs a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
+doZLoadDeltaCompound :: (DeltaClass d,Typeable rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',Eq rep',Matching fs a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
 		Lens dir_rep container_rep' -> Iso container_rep' list_rep'
 		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
-		-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (NSValueDelta rep'))
+		-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (d rep'))
 		-> (FSTree fs -> rep' -> ForestI fs (ValueDelta fs rep'))
 		-> ForestO fs (NSValueDelta dir_rep)
 doZLoadDeltaCompound lens isoRep mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) load loadD diffValue = debug ("doLoadDeltaCompound: "++show (path')) $ do
@@ -440,10 +440,10 @@ doZLoadDeltaCompound lens isoRep mpath path' matchingM oldtree df tree' dv (dir_
 	return $ debug ("doLoadDeltaCompoundReturn: "++show path') drep
 
 -- returns the new values and a boolean indicating whether it has changed
-doZLoadDeltaCompoundFile :: (Typeable rep,Eq rep,ForestMD fs rep) => 
+doZLoadDeltaCompoundFile :: (DeltaClass d,Typeable rep,Eq rep,ForestMD fs rep) => 
 	ForestI fs FilePath -> FilePath -> FileName -> Maybe rep -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep)
-	-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep,GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep))
+	-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep,GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> ForestO fs ((Maybe (FileName,rep),ValueDeltaKind))
 doZLoadDeltaCompoundFile mpath path' file' Nothing oldtree df tree' dv load loadD = debug ("doLoadDeltaCompoundFileNothing: "++show (path',file')) $ do
 	-- try to reuse the original metadata (in this case it is not reused)
@@ -463,17 +463,17 @@ doZLoadDeltaCompoundFile mpath path' file' (Just rep) oldtree df tree' dv load l
 			(False,True,True,True) -> get_fmd_header rep >>= \fmd -> return (getForestMDInTree,Id) -- we keep the original data
 			otherwise -> getRelForestMDInTree path' tree' file' >>= \fmd -> set fileInfo_thunk (fileInfo fmd) >> return (const2 $ return fmd,Delta)
 	-- the filename has not changed as long as there was a match in the alignment operation, i.e., doLoadDeltaCompoundFile is called with original data
-	drep <- doZLoadDeltaFocus mpath path' (rep,newGetMD) file' oldtree df tree' dv (load file' fileInfo_thunk) $ loadD file' file' fileInfo_thunk dFileInfo (rep,newGetMD) -- load recursively under a different focus
+	drep <- liftM toNSValueDelta $ doZLoadDeltaFocus mpath path' (rep,newGetMD) file' oldtree df tree' dv (load file' fileInfo_thunk) $ loadD file' file' fileInfo_thunk dFileInfo (rep,newGetMD) -- load recursively under a different focus
 	-- apply the field deltas so that the post-values can be made available in the environment
 	let (rep',repkind) = (applyNSValueDelta drep rep,valueDeltaKind drep `andValueDeltaKinds` (valueDeltaKind dFileInfo))
 	return (Just (file',rep'),repkind)
 
-doZLoadDeltaCompoundWithConstraint :: (Typeable rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',ForestOutput fs ICThunk Inside,Eq rep',Matching fs a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
+doZLoadDeltaCompoundWithConstraint :: (DeltaClass d,Typeable rep',ForestMD fs rep',Typeable container_rep',Eq container_rep',ForestOutput fs ICThunk Inside,Eq rep',Matching fs a,ICRep fs,MData NoCtx (ForestO fs) list_rep',list_rep' ~ [(FileName,rep')]) =>
 		Lens dir_rep container_rep' -> Iso container_rep' list_rep'
 		-> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 		-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
-		-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (NSValueDelta rep'))
+		-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (d rep'))
 		-> (FSTree fs -> rep' -> ForestI fs (ValueDelta fs rep'))
 		-> ForestO fs (NSValueDelta dir_rep)
 doZLoadDeltaCompoundWithConstraint lens isoRep mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) pred load loadD diffValue = debug ("doLoadDeltaCompoundC: "++show (path')) $ do
@@ -500,11 +500,11 @@ doZLoadDeltaCompoundWithConstraint lens isoRep mpath path' matchingM oldtree df 
 	return $ debug ("doLoadDeltaCompoundCReturn: "++show (path')) drep
 
 -- returns the new values and a boolean indicating whether it has changed
-doZLoadDeltaCompoundFileWithConstraint :: (Typeable rep,ForestMD fs rep,ForestOutput fs ICThunk Inside,Eq rep) => 
+doZLoadDeltaCompoundFileWithConstraint :: (DeltaClass d,Typeable rep,ForestMD fs rep,ForestOutput fs ICThunk Inside,Eq rep) => 
 	ForestI fs FilePath -> FilePath -> FileName -> Maybe rep -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep
 	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep)
-	-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep,GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep))
+	-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep,GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> ForestO fs (Maybe (FileName,rep),ValueDeltaKind)
 doZLoadDeltaCompoundFileWithConstraint mpath path' file' Nothing oldtree df tree' dv pred load loadD = debug ("doLoadDeltaCompoundFileNothing: "++show (path',file')) $ do
 	path <- inside mpath
@@ -533,7 +533,7 @@ doZLoadDeltaCompoundFileWithConstraint mpath path' file' (Just rep) oldtree df t
 	cond <- inside $ pred file' fileInfo_thunk
 	if cond
 		then do -- the filename has not changed as long as there was a match in the alignment operation, i.e., doLoadDeltaCompoundFile is called with original data
-			drep <- doZLoadDeltaFocus mpath path' (rep,newGetMD) file' oldtree df tree' dv (load file' fileInfo_thunk) $ loadD file' file' fileInfo_thunk dFileInfo (rep,newGetMD) -- load recursively under a different focus
+			drep <- liftM toNSValueDelta $ doZLoadDeltaFocus mpath path' (rep,newGetMD) file' oldtree df tree' dv (load file' fileInfo_thunk) $ loadD file' file' fileInfo_thunk dFileInfo (rep,newGetMD) -- load recursively under a different focus
 			-- apply the field deltas so that the post-values can be made available in the environment
 			let (rep',repkind) = (applyNSValueDelta drep rep,valueDeltaKind drep `andValueDeltaKinds` (valueDeltaKind dFileInfo)) 
 			return (Just (file',rep'),repkind)

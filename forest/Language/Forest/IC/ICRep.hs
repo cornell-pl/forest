@@ -123,13 +123,17 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	-- the type for value modifications
 	data ValueDelta fs a :: *
 	
-	-- value changes since a given FSTree
-	diffThunkValue :: ForestRep rep (ForestFSThunkI fs content) => FSTree fs -> rep -> ForestI fs (ValueDelta fs rep)
+	-- value changes since a given FSTree. recursive nodifications
+	diffValueThunk :: ForestRep rep (ForestFSThunkI fs content) => FSTree fs -> rep -> ForestI fs (ValueDelta fs rep)
+	diffValueAny :: FSTree fs -> rep -> ForestI fs (ValueDelta fs rep)
 	
 	isIdValueDelta :: ValueDelta fs a -> Bool
 	idValueDelta :: ValueDelta fs a
 	chgValueDelta :: ValueDelta fs a
 	mapValueDelta :: Proxy fs -> ValueDelta fs a -> ValueDelta fs b
+	
+	-- has the content of a thunk been explicitly modified? no recursive modifications
+	diffTopValueThunk :: ForestRep rep (ForestFSThunkI fs content) => FSTree fs -> rep -> ForestI fs Bool
 
 class ICRep fs => ICMemo (fs :: FS) where
 	
@@ -152,6 +156,7 @@ class ICRep fs => ZippedICMemo fs where
 	addZippedMemo :: (Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => FilePath -> Proxy args -> ForestIs fs args -> rep -> Maybe (FSTree fs) -> ForestI fs ()
 	
 	-- given a path finds an old entry = (old FSTree,outdated thunks)
+	-- the old entry needs to match on the filepath, i.e., have been loaded with that path
 	-- if repairing incrementally, we have to assume that the environment changed
 	findZippedMemo :: Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep))
 	

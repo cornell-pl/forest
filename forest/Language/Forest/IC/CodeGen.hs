@@ -45,6 +45,7 @@ import Data.WithClass.Derive.MData
 import Language.Forest.IC.IO.ZLoading
 import Language.Forest.IC.IO.ZDeltaLoading
 import Language.Forest.IC.IO.ZStoring
+import Language.Forest.IC.IO.ZDeltaStoring
 import Data.IORef
 import Data.WithClass.Derive.DeepTypeable
 import Control.Monad.Incremental
@@ -434,11 +435,15 @@ instance (MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq a
 	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
 	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
 	zupdateManifestScratch proxy marg path tree rep man = lift (inside marg) >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man
+	zupdateManifestDelta proxy (marg,darg) path path' tree rep df tree' dv man = lift (inside marg) >>= \arg -> doZDeltaManifestFile1 (isEmptyDelta darg) (Arg arg) path path' tree df tree' rep dv man
 	zdefaultScratch proxy marg path = inside marg >>= \arg -> doZDefaultFile1 (Arg arg) path
 
 instance (ZippedICMemo fs,ICRep fs) => ZippedICForest fs () (SymLink fs) where
 	zloadScratch proxy args pathfilter path tree getMD = doZLoadSymLink path tree getMD
 	zloadDelta proxy (margs,dargs) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaSymLink mpath path' tree df tree' dv (rep,getMD)
 	zupdateManifestScratch proxy args path tree rep man = doZManifestSymLink path tree rep man
+	zupdateManifestDelta proxy (margs,dargs) path path' tree rep df tree' dv man = doZDeltaManifestSymLink path path' tree df tree' rep dv man
 	zdefaultScratch proxy args path = doZDefaultSymLink path
+
+
 

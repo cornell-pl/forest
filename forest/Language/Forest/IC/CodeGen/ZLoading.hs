@@ -180,7 +180,7 @@ zloadArchive isTop archtype ty filterPathE pathE treeE getMDE = do
 	let (newRepMdE, newRepMdP) = genPE newRepMdName
 	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP']) $ zloadE False ty filterPathE newPathE newTreeE' newGetMDE
 	defE <- liftM (LamE [newPathP]) $ zdefaultE False ty newPathE
-	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP',newdvP]) $ runZDeltaQ (zloadDeltaE ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE' newdvE)
+	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP',newdvP]) $ runZDeltaQ (zloadDeltaE False ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE' newdvE)
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
 	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
 	if isTop

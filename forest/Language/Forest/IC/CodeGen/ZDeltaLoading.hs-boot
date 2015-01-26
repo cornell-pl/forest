@@ -20,5 +20,5 @@ runZDeltaQ :: ZDeltaQ a -> ZEnvQ a
 
 runZEnvQ :: ZEnvQ a -> ZDeltaQ a
 
-zloadDeltaE :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZDeltaQ TH.Exp
+zloadDeltaE :: Bool -> ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> ZDeltaQ TH.Exp
 

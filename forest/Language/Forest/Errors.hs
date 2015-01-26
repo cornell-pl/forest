@@ -66,6 +66,8 @@ $( derive makeMData ''Forest_err )
 $( derive makeDeepTypeable ''ErrMsg )
 $( derive makeDeepTypeable ''Forest_err )
 
+cleanForestErr = Forest_err 0 Nothing
+
 padsError :: Base_md -> Forest_err
 padsError (Base_md { Pads.numErrors = n, errInfo = err }) = Forest_err n (fmap PadsError err)
 
