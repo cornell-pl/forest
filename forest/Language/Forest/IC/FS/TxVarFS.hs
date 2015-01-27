@@ -382,7 +382,7 @@ instance TxICForest TxVarFS where
 	
 	atomically = atomicallyTxVarFS
 	retry = retryTxVarFS
-	orElse = orElseTxVarFS 
+	orElse = orElseTxVarFS
 	throw = throwTxVarFS 
 	catch = catchTxVarFS 
 	new = newTxVarFS Proxy
@@ -489,7 +489,7 @@ orElseTxVarFS stm1 stm2 = do1 where
 	try1 = do { x <- stm1; validateAndCommitNestedTxVarFS Nothing; return x }
 	try2 = do { x <- stm2; validateAndCommitNestedTxVarFS Nothing; return x }
 	do1 = startNestedTxVarFS $ try1 `Catch.catches` [Catch.Handler catchRetry1,Catch.Handler catchInvalid,Catch.Handler catchSome]
-	do2 = startNestedTxVarFS $ try2 `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
+	do2 = dropTopTxLog $ startNestedTxVarFS $ try2 `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
 	catchRetry1 BlockedOnRetry = validateAndRetryNestedTxVarFS >> do2
 	catchRetry2 BlockedOnRetry = validateAndRetryNestedTxVarFS >> throwM BlockedOnRetry
 	catchInvalid (e::InvalidTx) = throwM e
@@ -512,7 +512,7 @@ initializeTxVarFS (TxVarFSForestO m) = do
 	mountAVFS -- should succeed even if AVFS is already mounted
 	fsversion <- newUnique
 	txlog <- newIORef (fsversion,(Set.empty,emptyFSTreeDelta),Set.empty)
-	Reader.runReaderT m (starttime,fsversion,SCons txlog SNil)
+	debug ("initializeTxVarFS") $ Reader.runReaderT m (starttime,fsversion,SCons txlog SNil)
 	-- don't unmount AVFS, since multiple parallel txs may be using it
 
 -- resets
@@ -521,7 +521,7 @@ resetTxVarFS m = do
 	now <- inL $ liftIO $ startTxVarFS >>= newIORef
 	fsversion <- inL $ liftIO $ newUnique
 	txlog <- inL $ liftIO $ newIORef (fsversion,(Set.empty,emptyFSTreeDelta),Set.empty)
-	Reader.local (\_ -> (now , fsversion,SCons txlog SNil)) m
+	debug ("resetTxVarFS") $ Reader.local (\_ -> (now , fsversion,SCons txlog SNil)) m
 
 -- we need to acquire a lock, but this should be minimal
 startTxVarFS :: IO UTCTime
@@ -535,7 +535,10 @@ startNestedTxVarFS m = do
 	(starttime,startversion,txlogs@(SCons txlog_parent _)) <- Reader.ask
 	(fsversion,chgs,tmps) <- inL $ readRef txlog_parent
 	txlog_child <- inL $ newRef (fsversion,chgs,tmps)
-	Reader.local (Prelude.const (starttime,startversion,SCons txlog_child txlogs)) m
+	debug ("startNestedTxVarFS ") $ Reader.local (Prelude.const (starttime,startversion,SCons txlog_child txlogs)) m
+
+dropTopTxLog :: TxVarFTM a -> TxVarFTM a
+dropTopTxLog m = Reader.local (\(starttime,startversion,SCons _ txlogs) -> (starttime,startversion,txlogs)) m
 
 -- if an inner tx validation fails, then we throw an @InvalidTx@ exception to retry the whole atomic block
 data InvalidTx = InvalidTx deriving (Typeable)
@@ -548,7 +551,7 @@ instance Exception BlockedOnRetry
 -- returns a bool stating whether the transaction was committed or needs to be incrementally repaired
 -- no exceptions should be raised inside this block
 validateAndCommitTopTxVarFS :: Bool -> TxVarFTM Bool
-validateAndCommitTopTxVarFS doWrites = atomicTxVarFS $ do
+validateAndCommitTopTxVarFS doWrites = atomicTxVarFS "validateAndCommitTopTxVarFS" $ do
 	txenv@(timeref,startversion,txlogs@(SCons txlog SNil)) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
@@ -561,7 +564,7 @@ validateAndCommitTopTxVarFS doWrites = atomicTxVarFS $ do
 			return False
 
 validateAndCommitNestedTxVarFS :: Maybe SomeException -> TxVarFTM ()
-validateAndCommitNestedTxVarFS mbException = atomicTxVarFS $ do
+validateAndCommitNestedTxVarFS mbException = atomicTxVarFS "validateAndCommitNestedTxVarFS" $ do
 	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	case mbException of
@@ -579,7 +582,7 @@ validateAndCommitNestedTxVarFS mbException = atomicTxVarFS $ do
 
 -- validates a transaction and places it into the waiting queue for retrying
 validateAndRetryTopTxVarFS :: TxVarFTM (Maybe Lock)
-validateAndRetryTopTxVarFS = atomicTxVarFS $ do
+validateAndRetryTopTxVarFS = atomicTxVarFS "validateAndRetryTopTxVarFS" $ do
 	txenv@(timeref,startversion,txlogs@(SCons txlog SNil)) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	-- validates the current and enclosing txs up the tx tree
@@ -610,7 +613,7 @@ retryTxVarFSLog lck timeref txlog = do
 -- validates a nested transaction and merges its log with its parent
 -- note that retrying discards the tx's writes
 validateAndRetryNestedTxVarFS :: TxVarFTM ()
-validateAndRetryNestedTxVarFS = atomicTxVarFS $ do
+validateAndRetryNestedTxVarFS = atomicTxVarFS "validateAndRetryNestedTxVarFS" $ do
 	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
@@ -623,7 +626,7 @@ validateAndRetryNestedTxVarFS = atomicTxVarFS $ do
 
 -- validates the current log before catching an exception
 validateCatchTxVarFS :: TxVarFTM ()
-validateCatchTxVarFS = atomicTxVarFS $ do
+validateCatchTxVarFS = atomicTxVarFS "validateCatchTxVarFS" $ do
 	txenv@(timeref,startversion,txlogs) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
@@ -693,15 +696,16 @@ commitNestedTxVarFS doWrites txlog_child txlog_parent = if doWrites
 -- merges a nested txlog with its parent txlog
 mergeTxVarFSLog :: TxVarFSLog -> TxVarFSLog -> ForestM TxVarFS ()
 mergeTxVarFSLog txlog1 txlog2 = forestIO $ do
-	(fsversion,chgs,tmps) <- readRef txlog1
-	writeRef txlog2 (fsversion,chgs,tmps)
+	(fsversion1,chgs1,tmps1) <- readRef txlog1
+	(fsversion2,(reads2,writes2),tmps2) <- readRef txlog2
+	writeRef txlog2 (fsversion1,chgs1,tmps1)
 	
 -- does not commit writes
 extendTxVarFSLog :: TxVarFSLog -> TxVarFSLog -> ForestM TxVarFS ()
 extendTxVarFSLog txlog1 txlog2 = forestIO $ do
 	(fsversion1,(reads1,writes1),tmps1) <- readRef txlog1
 	(fsversion2,(reads2,writes2),tmps2) <- readRef txlog2
-	writeRef txlog2 (fsversion2,(reads1,writes2),tmps1)
+	writeRef txlog2 (fsversion1,(reads1,writes2),tmps1)
 
 -- locks on which retrying transactions will wait
 type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
@@ -745,11 +749,11 @@ commitTxVarFSLog starttime doWrites txlog = do
 globalLock :: Lock
 globalLock = unsafePerformIO $ Lock.new
 
-atomicTxVarFS :: TxVarFTM a -> TxVarFTM a
-atomicTxVarFS m = do
-	forestM $ forestIO $ print "entering atomic"
+atomicTxVarFS :: String -> TxVarFTM a -> TxVarFTM a
+atomicTxVarFS msg m = do
+	forestM $ forestIO $ print $ "entering atomic " ++ msg
 	x <- withLock globalLock m
-	forestM $ forestIO $ print "left atomic"
+	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
@@ -763,3 +767,10 @@ withLock = liftA2 Catch.bracket_ (forestM . forestIO . Lock.acquire) (forestM . 
 --waitFileLock :: MonadIO m => FilePath -> m ()
 --waitFileLock path = liftIO $ Control.Exception.mask_ $ FileLock.lock path WriteLock >>= FileLock.unlock
 
+debugChanges :: String -> TxVarFTM a -> TxVarFTM a
+debugChanges str m = do
+	r <- m
+	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(fsversion,(reads,writes),tmps) <- forestM $ forestIO $ readRef txlog
+	forestM $ forestIO $ putStrLn $ show fsversion ++ " changes!! "++ str ++ " "++ show reads ++ "\n" ++ show writes
+	return r
