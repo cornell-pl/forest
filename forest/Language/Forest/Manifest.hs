@@ -240,16 +240,16 @@ addManifestEntry path newEntry man = case Map.lookup path (entries man) of
 	Just oldEntry -> man { entries = Map.insert path (oldEntry `mappend` newEntry NotValidated) (entries man) }
 	Nothing -> man { entries = Map.insert path (newEntry Valid) (entries man) }
 
-addFileToManifestInTree :: FSRep fs => (FilePath -> content -> IO ()) -> FilePath -> FSTree fs -> content -> Manifest fs -> ForestM fs (Manifest fs)
-addFileToManifestInTree printContent path tree content man = do
+addFileToManifestInTree :: FSRep fs => (FilePath -> IO ()) -> FilePath -> FSTree fs -> Manifest fs -> ForestM fs (Manifest fs)
+addFileToManifestInTree printContent path tree man = do
 	canpath <- canonalizeDirectoryInTree path tree
 	abspath <- forestIO $ absolutePath path
-	addFileToManifest printContent canpath abspath content man
+	addFileToManifest printContent canpath abspath man
 
-addFileToManifest :: FSRep fs => (FilePath -> content -> IO ()) -> FilePath -> FilePath -> content -> Manifest fs -> ForestM fs (Manifest fs)
-addFileToManifest printContent canpath path content man = do
+addFileToManifest :: FSRep fs => (FilePath -> IO ()) -> FilePath -> FilePath -> Manifest fs -> ForestM fs (Manifest fs)
+addFileToManifest printContent canpath path man = do
 		tmpFile <- tempPath
-		forestIO $ printContent tmpFile content -- writes the content to the temporary file
+		forestIO $ printContent tmpFile -- writes the content to the temporary file
 		return $ addFileToManifest' canpath path tmpFile man
 
 addFileToManifest' :: FSRep fs => FilePath -> FilePath -> FilePath -> Manifest fs -> (Manifest fs)

@@ -23,6 +23,7 @@ import Control.Monad.Incremental.Display
 import Data.WithClass.MGenerics.Text
 import Data.List as List
 import Safe
+import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 
 [iforest| type Universal_d = Directory 
              { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
@@ -55,7 +56,7 @@ runTest = do
 		test_dir :: Universal_d TxVarFS <- new () "test"
 		original_str <- showInc test_dir
 		
-		(test_fmd,test_uni) <- read test_dir
+		test_uni <- read test_dir
 		
 --		let mb_links_dir = List.lookup "links" (directories test_uni)
 --		errors <- case mb_links_dir of
@@ -66,11 +67,10 @@ runTest = do
 --		
 --				return errors
 --			Nothing -> return "no links"
-			
+		
 		link_c :: SymLink TxVarFS <- new () "test/links/c.txt"
-		link_c_fmd <- cleanForestMDwithFile "test/links/c.txt"
-		let link_c_fmd' = link_c_fmd { fileInfo = (fileInfo link_c_fmd) { symLink = Just "../files/c.txt" } }
-		errors <- writeOrShow link_c (link_c_fmd',("../files/c.txt",cleanBasePD))
+		let link_c_md = (cleanSymLinkFileInfo "test/links/c.txt" "../files/c.txt",cleanBasePD)
+		errors <- writeOrShow link_c (link_c_md,"../files/c.txt")
 			
 		return (original_str,errors)
 	putStrLn original_str

@@ -149,8 +149,9 @@ zmanifestArchive isTop archtype ty pathE treeE dtaE manE = do
 	
 	manifestContentsE <- liftM (LamE [newPathP,newTreeP,newdtaP,newmanP]) $ zmanifestE False ty newPathE newTreeE newdtaE newmanE
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
+	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
 	if isTop
-		then return $ Pure.appE6 (VarE 'doZManifestArchive) exts pathE treeE dtaE manifestContentsE manE
+		then return $ Pure.appE7 (VarE 'doZManifestArchive) isClosedE exts pathE treeE dtaE manifestContentsE manE
 		else return $ Pure.appE6 (VarE 'doZManifestArchiveInner) exts pathE treeE dtaE manifestContentsE manE
 
 zmanifestSymLink :: Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
@@ -166,7 +167,7 @@ zmanifestConstraint treeE pat predE dtaE manE manifest = forceVarsZEnvQ predE $ 
 	
 	let predFnE = zmodPredE pat predE'
 	manifestAction <- liftM (LamE [newdtaP,newmanP]) $ manifest newdtaE newmanE
-	return $ Pure.appE5 (VarE 'doZManifestConstraint) treeE predFnE dtaE manifestAction manE
+	return $ Pure.appE4 (VarE 'doZManifestConstraint) predFnE dtaE manifestAction manE
 
 zmanifestFile :: String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestFile fileName Nothing pathE treeE dtaE manE = do

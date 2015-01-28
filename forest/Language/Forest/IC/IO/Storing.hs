@@ -70,7 +70,7 @@ doManifestFile tree (rep_t,md_t) man = do
 	valid <- isValidMD fmd
 	if valid
 		then do -- for valid data we write it to disk
-			forestM $ addFileToManifest printFile canpath path (rep,md) man
+			forestM $ addFileToManifest (flip printFile (rep,md)) canpath path man
 		else do
 			isFile <- forestM $ doesFileExistInTree path tree 
 			if isFile -- if the data is invalid and a file exists on disk, we remove it, otherwise we don't change anything
@@ -88,7 +88,7 @@ doManifestFile1 arg tree (rep_t,md_t) man = do
 	valid <- isValidMD fmd
 	if valid
 		then do -- for valid data we write it to disk
-			forestM $ addFileToManifest (printFile1 arg) canpath path (rep,md) man
+			forestM $ addFileToManifest (\p -> printFile1 arg p (rep,md)) canpath path man
 		else do
 			isFile <- forestM $ doesFileExistInTree path tree 
 			if isFile -- if the data is invalid and a file exists on disk, we remove it, otherwise we don't change anything

@@ -242,7 +242,7 @@ zloadDeltaArchive isTop archtype ty pathE dpathE treeE dfE treeE' dvE repmdE = d
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
 	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
 	if isTop
-		then return $ Pure.appE12 (VarE 'doZLoadDeltaArchive) isClosedE exts pathE dpathE treeE dfE treeE' dvE repmdE rhsE defE rhsDE
+		then return $ Pure.appE13 (VarE 'doZLoadDeltaArchive) isClosedE exts pathE dpathE treeE dfE treeE' dvE repmdE rhsE defE rhsDE (zdiffE ty)
 		else return $ Pure.appE12 (VarE 'doZLoadDeltaArchiveInner) isClosedE exts pathE dpathE treeE dfE treeE' dvE repmdE rhsE defE rhsDE
 
 zloadDeltaSymLink :: Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
@@ -353,13 +353,13 @@ zloadDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE treeE repm
 
 	(fs,_) <- Reader.ask
 	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
-	loadContentNoDeltaE <- liftM (LamE [newpathP,fieldrepmdP]) $ runZEnvQ $ zloadE False forestTy pathFilterE newpathE treeE' fieldrepmdE
+--	loadContentNoDeltaE <- liftM (LamE [newpathP,fieldrepmdP]) $ runZEnvQ $ zloadE False forestTy pathFilterE newpathE treeE' fieldrepmdE
 	loadContentDeltaE <- liftM (LamE [fieldrepmdP,newpathP,newdpathP,newdfP,newdvP]) $ zloadDeltaE False forestTy newpathE treeE fieldrepmdE newdpathE newdfE treeE' newdvE
 	loadE <- case predM of
-		Nothing -> return $ Pure.appE11 (VarE 'doZLoadDeltaSimple) lensE pathE dpathE externalE treeE dfE treeE' dvE repmdE loadContentNoDeltaE loadContentDeltaE
+		Nothing -> return $ Pure.appE10 (VarE 'doZLoadDeltaSimple) lensE pathE dpathE externalE treeE dfE treeE' dvE repmdE loadContentDeltaE
 		Just predE -> do
 			boolE <- isEmptyZDeltaEnvExp predE
-			return $ Pure.appE13 (VarE 'doZLoadDeltaSimpleWithConstraint) lensE boolE pathE dpathE externalE treeE dfE treeE' dvE repmdE (zmodPredE (VarP repName) predE) loadContentNoDeltaE loadContentDeltaE
+			return $ Pure.appE12 (VarE 'doZLoadDeltaSimpleWithConstraint) lensE boolE pathE dpathE externalE treeE dfE treeE' dvE repmdE (zmodPredE (VarP repName) predE) loadContentDeltaE
 	let loadStmt = BindS (TupP [VarP drepName]) loadE
 	
 	return (repName,drepName,[fieldStmt1,fieldStmt2,loadStmt])

@@ -33,6 +33,8 @@
 
 module Language.Forest.IC.Generic   where
 
+import Control.Monad.RWS (RWS(..),RWST(..))
+import qualified Control.Monad.RWS as RWS
 import Control.Monad.Trans
 import Control.Monad.Writer (Writer(..),WriterT(..))
 import qualified Control.Monad.Writer as Writer
@@ -66,11 +68,20 @@ import Data.DeepTypeable
 import Language.Haskell.TH.Syntax hiding (lift)
 import Control.Exception
 import Language.Forest.Errors
+import Language.Forest.IC.BX as BX
+
+class ForestContent var content | var -> content where
+	lens_content :: Lens var content
+
+instance ForestContent (Forest_md fs,rep) (FileInfo,rep) where
+	lens_content = Lens (\(fmd,rep) -> (fileInfo fmd,rep)) (\(fmd,rep) (info',rep') -> (fmd { fileInfo = info' },rep'))
+instance ForestContent ((Forest_md fs,bmd),rep) ((FileInfo,bmd),rep) where
+	lens_content = Lens (\((fmd,bmd),rep) -> ((fileInfo fmd,bmd),rep)) (\((fmd,bmd),rep) ((info',bmd'),rep') -> ((fmd { fileInfo = info' },bmd'),rep'))
 
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
 
-type FTK fs args rep content = (CopyFSThunks TxVarFS Outside rep,ForestMD fs rep,Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs content))
+type FTK fs args rep var content = (Eq var,Typeable var,CopyFSThunks TxVarFS Outside rep,ForestMD fs rep,Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent var content)
 
 class TxICForest fs where
 
@@ -83,36 +94,37 @@ class TxICForest fs where
 	throw :: Exception e => e -> FTM fs a
 	catch :: Exception e => FTM fs a -> (e -> FTM fs a) -> FTM fs a
 	
-	new :: FTK fs args rep content => ForestVs args -> FilePath -> FTM fs rep
+	new :: FTK fs args rep var content => ForestVs args -> FilePath -> FTM fs rep
 	
 	-- gets the arguments bound to a variable
-	args :: FTK fs args rep content => rep -> FTM fs (ForestVs args,FilePath)
+	args :: FTK fs args rep var content => rep -> FTM fs (ForestVs args,FilePath)
 	
-	read :: FTK fs args rep content => rep -> FTM fs content
+	read :: FTK fs args rep var content => rep -> FTM fs content
 	
 	-- tries to modify a variable
 	-- the write only occurs if validation succeeds
 	-- if the new value is not a consistent view of the FS, an alternative action is run otherwise
-	writeOrElse :: FTK fs args rep content => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
+	writeOrElse :: FTK fs args rep var content => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
-	validate :: FTK fs args rep content => rep -> FTM fs Forest_err
+	-- read-only Forest error count
+	validate :: FTK fs args rep var content => rep -> FTM fs Forest_err
 	validate = get_errors
 	
 	
 	-- * An attempt to mimic regular filesystem operations, but over Forest specifications
 	
 	-- recursively deletes a variable from the filesystem; should always succeed
-	delete :: FTK fs args rep content => rep -> FTM fs ()
+	delete :: FTK fs args rep var content => rep -> FTM fs ()
 	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
-	copyOrElse :: FTK fs args rep content => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
+	copyOrElse :: FTK fs args rep var content => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
-tryWrite :: (TxICForest fs,FTK fs args rep content) => rep -> content -> FTM fs ()
+tryWrite :: (TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
 	
-writeOrRetry :: (TxICForest fs,FTK fs args rep content) => rep -> content -> b -> FTM fs b
+writeOrRetry :: (TxICForest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
 writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
 
-writeOrShow :: (TxICForest fs,FTK fs args rep content) => rep -> content -> FTM fs String
+writeOrShow :: (TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
 writeOrShow t v = writeOrElse t v "" (return . show)
 
 -- * Zipped Incremental Forest interface
@@ -130,6 +142,12 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 		let proxyRep = Proxy
 		oldpath <- pathfilter path
 		mb <- findZippedMemo proxy path proxyRep
+		
+		let load_scratch = do
+			rep <- zloadScratch proxy args pathfilter path tree getMD
+			inside $ addZippedMemo path proxy args rep (Just tree)
+			return rep
+		
 		case mb of
 			Just (memo_tree@(isObservableFSTree -> True),memo_args,memo_rep) -> do
 				mb_df <- forestM $ diffFS memo_tree tree path
@@ -140,8 +158,8 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 						-- XXX: how safe is this?
 						unsafeWorld $ zloadDeltaMemo proxy deltas (return oldpath) memo_tree (memo_rep,getMD) path df tree dv
 						return memo_rep
-					Nothing -> zloadScratch proxy args pathfilter path tree getMD
-			Nothing -> zloadScratch proxy args pathfilter path tree getMD
+					Nothing -> load_scratch
+			Nothing -> load_scratch
 	
 	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
@@ -152,27 +170,27 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 		return drep
 	
 	-- returns a manifest and a computation that adds consistent entries to a memotable (to be run only when there are no fatal manifest errors)
-	zupdateManifestScratch :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> WManifestForestO fs
+	zupdateManifestScratch :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs
 	
-	zupdateManifestScratchMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> WManifestForestO fs
+	zupdateManifestScratchMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs
 	zupdateManifestScratchMemo proxy args path tree rep man = do
 		man1 <- zupdateManifestScratch proxy args path tree rep man
 		Writer.tell $ inside . addZippedMemo path proxy args rep . Just
 		return man1
 	
-	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> WManifestForestO fs
+	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	
-	zupdateManifestDeltaMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> WManifestForestO fs
+	zupdateManifestDeltaMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	zupdateManifestDeltaMemo proxy (margs,dargs) path path' tree rep df tree' dv man = do
 		man1 <- zupdateManifestDelta proxy (margs,dargs) path path' tree rep df tree' dv man
 		Writer.tell $ inside . addZippedMemo path proxy margs rep . Just
 		return man1
 	
-	zmanifest :: ForestIs fs args -> FilePath -> rep -> WManifestForestO fs
+	zmanifest :: ForestRep rep (ForestFSThunkI fs content) => ForestIs fs args -> FilePath -> rep -> MManifestForestO fs
 	zmanifest = zmanifest' Proxy
 	
-	zmanifest' :: Proxy args -> ForestIs fs args -> FilePath -> rep -> WManifestForestO fs
-	zmanifest' proxy args path rep = lift (forestM latestTree) >>= \tree -> lift (forestM (newManifestWith "/" tree)) >>= zupdateManifestScratch proxy args path tree rep
+	zmanifest' :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> rep -> MManifestForestO fs
+	zmanifest' proxy args path rep = lift (forestM latestTree) >>= \tree -> lift (forestM (newManifestWith "/" tree)) >>= zupdateManifestScratchMemo proxy args path tree rep
 
 	zdefaultScratch :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
 	
@@ -186,8 +204,8 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	zdefault = zdefaultScratchMemo Proxy
 
 -- returns a manifest and a sequence of memoization actions to be performed after store
-type WForestO fs a = WriterT (FSTree fs -> ForestO fs ()) (ForestO fs) a
-type WManifestForestO fs = WForestO fs (Manifest fs)
+type MForestO fs a = RWST Bool (FSTree fs -> ForestO fs ()) () (ForestO fs) a
+type MManifestForestO fs = MForestO fs (Manifest fs)
 
 instance Monad m => Monoid (m ()) where
 	mempty = return ()

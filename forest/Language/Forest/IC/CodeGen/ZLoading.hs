@@ -184,7 +184,7 @@ zloadArchive isTop archtype ty filterPathE pathE treeE getMDE = do
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
 	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
 	if isTop
-		then return $ Pure.appE10 (VarE 'doZLoadArchive) isClosedE (ConE 'Proxy) exts filterPathE pathE treeE getMDE rhsE defE rhsDE
+		then return $ Pure.appE11 (VarE 'doZLoadArchive) isClosedE (ConE 'Proxy) exts filterPathE pathE treeE getMDE rhsE defE rhsDE (zdiffE ty)
 		else return $ Pure.appE7 (VarE 'doZLoadArchiveInner) exts filterPathE pathE treeE getMDE rhsE defE
 
 zloadMaybe :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp

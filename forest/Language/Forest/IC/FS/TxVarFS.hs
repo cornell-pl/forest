@@ -5,6 +5,8 @@
 
 module Language.Forest.IC.FS.TxVarFS where
 
+import Control.Monad.RWS (RWS(..),RWST(..))
+import qualified Control.Monad.RWS as RWS
 import Control.Monad.Writer (Writer(..),WriterT(..))
 import qualified Control.Monad.Writer as Writer
 import Language.Forest.IC.Default
@@ -15,7 +17,7 @@ import Control.Exception as Exception
 import Data.Strict.List
 import Unsafe.Coerce
 import Language.Forest.IC.ValueDelta
-import Language.Forest.IC.BX
+import Language.Forest.IC.BX as BX
 import System.Mem.WeakKey
 --import System.Posix.FileLock as FileLock
 import Data.Foldable as Foldable
@@ -316,7 +318,7 @@ instance ZippedICMemo TxVarFS where
 		
 	findZippedMemo args path rep = return Nothing
 
-getFTVArgs :: (FTK TxVarFS args rep content) => Proxy args -> rep -> ForestM TxVarFS (Maybe (ForestIs TxVarFS args,FilePath))
+getFTVArgs :: (FTK TxVarFS args rep var content) => Proxy args -> rep -> ForestM TxVarFS (Maybe (ForestIs TxVarFS args,FilePath))
 getFTVArgs (proxy ::Proxy args) rep = forestIO $ do
 	let (TxVarFSThunk (rdyn,_,_)) = to iso_rep_thunk rep
 	(dyn,path) <- readIORef rdyn
@@ -327,7 +329,7 @@ getFTVArgs (proxy ::Proxy args) rep = forestIO $ do
 
 instance ForestLayer TxVarFS l => Thunk (HSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
 	new m = do
-		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"")
+		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"--NOFILE--")
 		tbl <- forestM $ forestIO $ WeakMap.new
 		return $ TxVarHSThunk (rdyn,m,tbl)
 	read (TxVarHSThunk (rdyn,m,tbl)) = do
@@ -349,7 +351,7 @@ instance ForestLayer TxVarFS l => Output (ICThunk TxVarFS) l (IncForest TxVarFS)
 
 instance (ForestLayer TxVarFS l) => Thunk (FSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
 	new m = do
-		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"")
+		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"--NOFILE--")
 		tbl <- forestM $ forestIO $ WeakMap.new
 		return $ TxVarFSThunk (rdyn,m,tbl)
 	read (TxVarFSThunk (rdyn,m,tbl)) = do
@@ -367,9 +369,8 @@ instance (ForestLayer TxVarFS l) => Input (FSThunk TxVarFS) l (IncForest TxVarFS
 	mod = Inc.new
 	get = Inc.read
 	set (TxVarFSThunk (rdyn,m,tbl)) v = do
-		forestM incrementFSVersionTxVarFS
-		new_fsversion <- forestM getFSVersionTxVarFS
-		forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) new_fsversion v
+		fsversion <- forestM getFSVersionTxVarFS
+		forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v
 
 -- ** Transactions
 
@@ -391,17 +392,17 @@ instance TxICForest TxVarFS where
 	delete = deleteTxVarFS Proxy
 	copyOrElse = copyOrElseTxVarFS Proxy
 
-deleteTxVarFS :: FTK TxVarFS args rep content => Proxy args -> rep -> TxVarFTM ()
+deleteTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> rep -> TxVarFTM ()
 deleteTxVarFS proxy (rep :: rep) = do
 	mb <- forestM $ getFTVArgs proxy rep
 	case mb of
 		Nothing -> error "tried to write to a variable that is not connected to the FS"
 		Just (args,path) -> do
 			def_rep :: rep <- inside $ zdefaultScratchMemo proxy args path
-			content <- Inc.getOutside $ to iso_rep_thunk def_rep
+			content <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk def_rep
 			writeOrElseTxVarFS rep content () (error "failed to write")
 
-copyOrElseTxVarFS :: FTK TxVarFS args rep content => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+copyOrElseTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 copyOrElseTxVarFS proxy src tgt b f = do
 	mb_src <- forestM $ getFTVArgs proxy src
 	mb_tgt <- forestM $ getFTVArgs proxy tgt
@@ -410,22 +411,23 @@ copyOrElseTxVarFS proxy src tgt b f = do
 			-- XXX: this may fail if FileInfo paths are canonized...
 			let chgPath path = path_tgt </> (makeRelative path_src path)
 			tgt' <- copyFSThunks proxyTxVarFS proxyOutside chgPath src
-			content' <- Inc.getOutside $ to iso_rep_thunk tgt'
+			content' <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk tgt'
 			writeOrElseTxVarFS tgt content' b f
 		otherwise -> error "tried to write to a variable that is not connected to the FS"
 
-newTxVarFS :: FTK TxVarFS args rep content => Proxy args -> ForestVs args -> FilePath -> TxVarFTM rep
+newTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> ForestVs args -> FilePath -> TxVarFTM rep
 newTxVarFS proxy args path = inside $ zload (vmonadArgs proxyTxVarFS proxy args) path
 
-readTxVarFS :: FTK TxVarFS args rep content => rep -> TxVarFTM content
-readTxVarFS rep = Inc.getOutside (to iso_rep_thunk rep)
+readTxVarFS :: FTK TxVarFS args rep var content => rep -> TxVarFTM content
+readTxVarFS rep = liftM (BX.get lens_content) $ Inc.getOutside (to iso_rep_thunk rep)
 
-writeOrElseTxVarFS :: FTK TxVarFS args rep content => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+writeOrElseTxVarFS :: FTK TxVarFS args rep var content => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS rep content b f = do
 	let t = to iso_rep_thunk rep
 	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
 	old_fslog <- forestM $ forestIO $ readIORef fslog_ref
-	set t content -- automatically increments the FSVersion
+	forestM incrementFSVersionTxVarFS
+	modify t $ \s -> return $ BX.put lens_content s content
 	
 	let rollback errors = do -- rollback the modifications
 		forestM $ forestIO $ writeIORef fslog_ref old_fslog
@@ -436,7 +438,7 @@ writeOrElseTxVarFS rep content b f = do
 	case mb of
 		Nothing -> rollback [ConflictingArguments] -- the top-level arguments of a variable don't match the spec
 		Just (args,path) -> do
-			(mani,memos) <- Writer.runWriterT $ zmanifest' (Proxy :: Proxy args) args path rep
+			(mani,_,memos) <- RWS.runRWST (zmanifest' (Proxy :: Proxy args) args path rep) True ()
 			-- we need to store the errors to the (buffered) FS before validating
 			forestM $ storeManifest mani
 			

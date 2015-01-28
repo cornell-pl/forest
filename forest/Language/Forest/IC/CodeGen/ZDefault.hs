@@ -163,8 +163,8 @@ zdefaultArchive isTop archtype ty pathE = do
 	rhsE <- liftM (LamE [newPathP]) $ zdefaultE False ty newPathE
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
 	if isTop
-		then return $ Pure.appE3 (VarE 'doZDefaultArchive) exts pathE rhsE
-		else return $ Pure.appE3 (VarE 'doZDefaultArchiveInner) exts pathE rhsE
+		then return $ Pure.appE2 (VarE 'doZDefaultArchive) pathE rhsE
+		else return $ Pure.appE2 (VarE 'doZDefaultArchiveInner) pathE rhsE
 
 zdefaultMaybe :: Bool -> ForestTy -> Exp -> ZEnvQ Exp
 zdefaultMaybe isTop ty pathE = do 
@@ -176,7 +176,8 @@ zdefaultMaybe isTop ty pathE = do
 zdefaultDirectory :: Bool -> DirectoryTy -> Exp -> ZEnvQ Exp
 zdefaultDirectory True dirTy@(Record id fields) pathE = do
 	doDirE <- zdefaultDirectoryContents dirTy pathE
-	return $ Pure.appE2 (VarE 'doZDefaultDirectory) pathE doDirE
+	collectMDs <- lift $ zgenMergeFieldsMDErrors fields	
+	return $ Pure.appE3 (VarE 'doZDefaultDirectory) pathE collectMDs doDirE
 
 zdefaultDirectoryContents :: DirectoryTy -> Exp -> ZEnvQ Exp
 zdefaultDirectoryContents (Record id fields) pathE = do
@@ -227,7 +228,8 @@ zdefaultSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 zdefaultComp :: Bool -> CompField -> Exp -> ZEnvQ Exp
 zdefaultComp True cinfo pathE = do
 	doCompE <- zdefaultCompContents cinfo pathE
-	return $ Pure.appE2 (VarE 'doZDefaultDirectory) pathE doCompE
+	let collectMDs = zgenMergeFieldMDErrors (Comp cinfo)
+	return $ Pure.appE3 (VarE 'doZDefaultDirectory) pathE collectMDs doCompE
 	
 -- | Load a top-level declared comprehension
 zdefaultCompContents :: CompField -> Exp -> ZEnvQ Exp

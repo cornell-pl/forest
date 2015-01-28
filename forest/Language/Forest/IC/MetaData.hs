@@ -69,11 +69,12 @@ instance (DeepTypeable fs) => DeepTypeable (Forest_md fs) where
 -- it loads the metadata from a physical path on disk, but returns the metadata as if it belonged to an original path alias
 getForestMD :: (ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> FilePath -> ForestL fs l (Forest_md fs)
 getForestMD oripath diskpath = do
+	abspath <- forestM $ forestIO $ absolutePath oripath
 	fdEither <- forestM $ forestIO $ Exception.try $ getFileStatus diskpath
 	case fdEither of
 		Left (e::Exception.SomeException) -> do
 			err <- inside $ mod $ return $ Forest_err { numErrors = 1, errorMsg = Just (ForestIOException (show e)) }
-			return $ Forest_md { errors = err, fileInfo = Pure.mkErrorFileInfo oripath }
+			return $ Forest_md { errors = err, fileInfo = Pure.mkErrorFileInfo abspath }
 		Right fd -> do 
 			let file_ownerID = fileOwner fd
 			ownerEntry    <- forestM $ forestIO $ getUserEntryForID file_ownerID
@@ -84,7 +85,7 @@ getForestMD oripath diskpath = do
 			readTime <- forestM $ forestIO epochTime
 			knd <- forestM $ forestIO $ Pure.fileStatusToKind diskpath fd
 			err <- inside $ mod $ return $ Forest_err { numErrors = 0, errorMsg = Nothing }
-			let info = FileInfo { fullpath = oripath, owner = userName ownerEntry, group = groupName groupEntry, size  = fileSize fd, access_time = accessTime fd, mod_time = modificationTime fd, read_time = readTime, mode     =  fileMode fd, symLink =symLinkOpt, kind  = knd }
+			let info = FileInfo { fullpath = abspath, owner = userName ownerEntry, group = groupName groupEntry, size  = fileSize fd, access_time = accessTime fd, mod_time = modificationTime fd, read_time = readTime, mode     =  fileMode fd, symLink =symLinkOpt, kind  = knd }
 			return $ Forest_md { errors = err, fileInfo = info } 
 
 
@@ -102,7 +103,7 @@ $( derive makeDeepTypeable ''FileInfo )
 
 -- for cases where we want to avoid reading from the filesystme
 doesExistInMD :: FilePath -> Forest_md fs -> Bool
-doesExistInMD path fmd = (fullpath (fileInfo fmd) == path) && (access_time (fileInfo fmd) > 0 || read_time (fileInfo fmd) > 0)
+doesExistInMD path fmd = (fullpath (fileInfo fmd) == path) && (access_time (fileInfo fmd) >= 0 || read_time (fileInfo fmd) >= 0)
 
 doesFileExistInMD :: FilePath -> Forest_md fs -> Bool
 doesFileExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) /= DirectoryK
@@ -288,6 +289,10 @@ ioExceptionForestMD :: (ForestInput fs FSThunk Inside) => ForestI fs (Forest_md 
 ioExceptionForestMD = do
 	err <- mod $ return Pure.ioExceptionForestErr
 	return $ Forest_md { errors = err, fileInfo = Pure.errorFileInfo }
+ioExceptionForestMDwithFile :: (ForestInput fs FSThunk Inside) => FilePath -> ForestI fs (Forest_md fs)
+ioExceptionForestMDwithFile path = do
+	err <- mod $ return Pure.ioExceptionForestErr
+	return $ Forest_md { errors = err, fileInfo = Pure.mkErrorFileInfo path }
 
 mergeErrors m1 m2 = case (m1,m2) of
             (Nothing,Nothing) -> Nothing
@@ -299,6 +304,12 @@ cleanForestMDwithFile path = inside $ do
 	abspath <- forestM $ forestIO $ absolutePath path
 	fmd <- cleanForestMD
 	return $ fmd { fileInfo = (fileInfo fmd) { fullpath = abspath } }
+
+cleanSymLinkForestMDwithFile :: (ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> FilePath -> ForestL fs l (Forest_md fs)
+cleanSymLinkForestMDwithFile path tgt = inside $ do
+	abspath <- forestM $ forestIO $ absolutePath path
+	fmd <- cleanForestMD
+	return $ fmd { fileInfo = (fileInfo fmd) { fullpath = abspath, symLink = Just tgt } }
 
 -- | Tests if two metadata values are both valid or invalid
 sameValidity :: (ForestLayer fs l,ForestMD fs md1,ForestMD fs md2) => md1 -> md2 -> ForestL fs l Bool
@@ -425,13 +436,13 @@ getRelForestMDInTree path tree file = getForestMDInTree (path </> file) tree
 $( derive makeDeepTypeable ''(:*:) )
 $( derive makeMData ''(:*:) )
 
-type File pads fs = ForestFSThunkI fs (Forest_md fs,(pads,Meta pads))
+type File pads fs = ForestFSThunkI fs ((Forest_md fs,Meta pads),pads)
 
-newtype SymLink fs = SymLink { unSymLink :: ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md)) } deriving (Eq,Typeable)
-instance ForestRep (SymLink fs) (ForestFSThunkI fs (Forest_md fs,(FilePath,Base_md))) where
+newtype SymLink fs = SymLink { unSymLink :: ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath) } deriving (Eq,Typeable)
+instance ForestRep (SymLink fs) (ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath)) where
 	iso_rep_thunk = Iso unSymLink SymLink
 
-instance (Sat (ctx (SymLink fs)),ICRep fs,MData ctx m (ForestFSThunkI fs (Forest_md fs, (FilePath, Base_md))))
+instance (Sat (ctx (SymLink fs)),ICRep fs,MData ctx m (ForestFSThunkI fs ((Forest_md fs,Base_md), FilePath)))
 	=> MData ctx m (SymLink fs) where
 	gfoldl ctx k z (SymLink x1) = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= flip k (return x1)
 	gunfold ctx k z c = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= k

@@ -184,7 +184,7 @@ instance Pretty FileMode where
 
 -- for cases where we want to avoid reading from the filesystme
 doesExistInMD :: FilePath -> Forest_md -> Bool
-doesExistInMD path fmd = (fullpath (fileInfo fmd) == path) && (access_time (fileInfo fmd) > 0 || read_time (fileInfo fmd) > 0)
+doesExistInMD path fmd = (fullpath (fileInfo fmd) == path) && (access_time (fileInfo fmd) >= 0 || read_time (fileInfo fmd) >= 0)
 
 doesFileExistInMD :: FilePath -> Forest_md -> Bool
 doesFileExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) /= DirectoryK
@@ -299,6 +299,9 @@ mergeErrors m1 m2 = case (m1,m2) of
             (Nothing,Nothing) -> Nothing
             (Just a, _) -> Just a
             (_, Just b) -> Just b
+
+cleanFileInfo path = fileInfo_def { fullpath = path }
+cleanSymLinkFileInfo path tgt = fileInfo_def { fullpath = path, symLink = Just tgt }
 
 cleanForestMDwithFile :: FilePath -> Forest_md
 cleanForestMDwithFile path =

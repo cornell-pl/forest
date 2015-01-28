@@ -272,7 +272,7 @@ genZRepMDTy :: Bool -> Name -> ForestTy -> Q (TH.Type)
 genZRepMDTy isTop fsName ty = case ty of
 	Directory _          -> error "Forest: Directory declarations must appear at the top level."
 	FFile (ty_name,arg)   -> do
-		let repTy = fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), Pure.tyListToTupleTy [ ConT (Pure.getTyName ty_name) , ConT (Pure.getMDName ty_name) ] ] 
+		let repTy = fsthunkTy fsName $ Pure.tyListToTupleTy [ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName),ConT (Pure.getMDName ty_name)], ConT (Pure.getTyName ty_name) ] 
 		return repTy 
 	Archive archtype ty              -> do
 		rep_ty <- genZRepMDTy False fsName ty
@@ -431,7 +431,7 @@ uTy fsName ty = Pure.appT2 (ConT ''ForestICThunkI) (VarT fsName) ty
 fsthunkTy :: Name -> TH.Type -> TH.Type
 fsthunkTy fsName ty = Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) ty
 
-instance (MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq arg,MData NoCtx (ForestI fs) arg,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs (Forest_md fs,(rep,md))) where
+instance (MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq arg,MData NoCtx (ForestI fs) arg,ZippedICMemo fs,ICRep fs,Eq rep,Eq md,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),rep)) where
 	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
 	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
 	zupdateManifestScratch proxy marg path tree rep man = lift (inside marg) >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man

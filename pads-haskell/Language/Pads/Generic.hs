@@ -95,6 +95,11 @@ printFile1 :: Pads1 arg rep md => arg -> FilePath -> (rep,md) -> IO ()
 printFile1 arg filepath r = do
 	let str = printBS1 arg r
 	B.writeFile filepath str
+printFile1' :: Pads1 arg rep md => arg -> FilePath -> rep -> IO ()
+printFile1' arg filepath r = do
+	md <- defaultMd1 arg r
+	let str = printBS1 arg (r,md)
+	B.writeFile filepath str
 
 
 parseFileWith  :: (Data rep, PadsMD md) => PadsParser (rep,md) -> FilePath -> IO (rep,md)

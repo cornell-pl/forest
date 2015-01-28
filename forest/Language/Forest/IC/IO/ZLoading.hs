@@ -58,7 +58,7 @@ import Data.Proxy
 -- Pads errors contribute to the Forest error count
 doZLoadFile1 :: (ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,Eq pads,Eq md,FSRep fs,Pads1 arg pads md) =>
 	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
-	-> ForestI fs (ForestFSThunkI fs (Forest_md fs,(pads,md)))
+	-> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	let fsrepProxy = Proxy -- :: Proxy (ForestFSThunkI fs pads)
@@ -66,10 +66,10 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 	-- default static loading
 	
 	let fileGood = do
-		rep@(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
+		(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
 		fmd <- getMD path tree
 		fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
-		return (fmd',rep)
+		return ((fmd',md),pads)
 	
 	let fileBad = doZDefaultFile1' (Pure.Arg arg) path
 	
@@ -80,8 +80,8 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 	-- memoized reuse for moves
 	let reuse_other_file from old_rep_thunk = do
 		fmd' <- getMD path tree
-		fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (liftM (snd . snd) $ Inc.read old_rep_thunk) -- adds the Pads errors
-		rep_thunk <- get old_rep_thunk >>= \(fmd::Forest_md fs,rep) -> fsRef (fmd'',rep) -- since the old file may come from another location and/or its attributes may have changed
+		fmd'' <- updateForestMDErrorsInsideWithPadsMD fmd' (liftM (snd . fst) $ Inc.read old_rep_thunk) -- adds the Pads errors
+		rep_thunk <- get old_rep_thunk >>= \((fmd,bmd),rep) -> fsRef ((fmd'',bmd),rep) -- since the old file may come from another location and/or its attributes may have changed
 		return (rep_thunk)
 
 	oldpath <- oldpath_f path
@@ -146,7 +146,10 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 					unsafeWorld $ do
 						direp <- liftM toNSValueDelta $ loadD (return oldpathC) pathC (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree dv
 						case (oldpath==path,direp) of
-							(True,StableVD _) -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors irep
+							(True,StableVD _) -> do
+								fmd' <- inside $ getForestMDInTree path tree
+								replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors fmd'
+								updateForestMDErrorsWith fmd $ liftM (:[]) $ get_errors irep
 							otherwise -> do
 								fmd' <- inside $ getForestMDInTree path tree
 								let irep' = applyNSValueDelta direp irep
@@ -186,16 +189,16 @@ doZLoadArchive' exts oldpath_f path  tree getMD loadGood loadBad = do
 doZLoadSymLink :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (SymLink fs)
 doZLoadSymLink path tree getMD = liftM SymLink $ fsThunk $ doZLoadSymLink' path tree getMD
 
-doZLoadSymLink' :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (Forest_md fs,(FilePath,Base_md))
+doZLoadSymLink' :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs ((Forest_md fs,Base_md),FilePath)
 doZLoadSymLink' path tree getMD = do
 	
 	let linkGood = do
 		md <- getMD path tree
 		case symLink (fileInfo md) of
-			Just sym -> return (md, (sym,cleanBasePD))
+			Just sym -> return ((md,cleanBasePD), sym)
 			Nothing -> do
 				md' <- updateForestMDErrorsInsideWith md $ return [Pure.ioExceptionForestErr]
-				return (md', ("",cleanBasePD))
+				return ((md',cleanBasePD), "")
 				
 	let linkBad = doZDefaultSymLink' path
 		
@@ -245,7 +248,7 @@ doZLoadDirectory' path tree collectMDErrors getMD ifGood ifBad = debug ("doLoadD
 		fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ collectMDErrors rep
 		return (fmd',rep)
 	
-	let dirBad = doZDefaultDirectory' path ifBad
+	let dirBad = doZDefaultDirectory' path collectMDErrors ifBad
 	
 	checkZPath' (Just True) path tree dirGood dirBad
 

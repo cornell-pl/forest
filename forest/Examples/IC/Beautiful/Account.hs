@@ -29,6 +29,7 @@ import Data.List as List hiding (delete)
 import Control.Monad.Incremental hiding (read,new)
 import Prelude hiding (read)
 import Language.Forest.IC hiding (writeFile)
+import Language.Forest.Pure.MetaData (cleanFileInfo)
 
 
 [pads|
@@ -58,12 +59,12 @@ newAcc :: String -> Int -> IO ()
 newAcc name bal = do
   status <- atomically $ do
     (rep :: File Account TxVarFS) <- new () (accountDir </> name)
-    (main_fmd,(_,acc_md)) <- read rep
-    err <- get_errors main_fmd
+    ((main_info,acc_md),_) <- read rep
+    err <- validate rep
     case errorMsg err of
       Just (MissingFile _) -> do
-        my_fmd <- cleanForestMDwithFile (accountDir </> name)
-        status <- writeOrElse rep (my_fmd,(Account bal,acc_md)) ("Created account " ++ name ++ " and deposited " ++ show bal) (return . show)
+        let my_info = cleanFileInfo (accountDir </> name)
+        status <- writeOrElse rep ((my_info,acc_md),Account bal) ("Created account " ++ name ++ " and deposited " ++ show bal) (return . show)
         return status
       _ -> return "This account appears to already exist."
   putStrLn status
@@ -111,9 +112,9 @@ tWithHelp acc amount rep =
     (main_fmd, accdir) <- read rep
     case lookup acc $ accs accdir of
       Just account -> do
-        (accfmd,(Account bal,account_md)) <- read account
+        ((accfmd,account_md),Account bal) <- read account
         check (amount < 0 || bal >= amount)
-        message <- writeOrElse account (accfmd,(Account (bal - amount),account_md))
+        message <- writeOrElse account ((accfmd,account_md),Account (bal - amount))
                    (acc ++ " had " ++ show bal ++ " and changed by " ++ show (- amount)) (return . show)
         return message
       otherwise -> return "Failure: The account does not exist"
