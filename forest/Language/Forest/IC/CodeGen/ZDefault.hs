@@ -123,17 +123,19 @@ zdefaultE isTop ty pathE = case ty of
 	FFile (file_name, argEOpt) -> zdefaultFile file_name argEOpt pathE
 	Archive archtype ty         -> zdefaultArchive isTop archtype ty pathE
 	FSymLink         -> zdefaultSymLink pathE
-	FConstraint p ty pred -> zdefaultConstraint p pred $ zdefaultE isTop ty pathE
+	FConstraint p ty pred -> zdefaultConstraint isTop p pred $ zdefaultE False ty pathE
 	Directory dirTy -> zdefaultDirectory isTop dirTy pathE 
 	FMaybe forestTy -> zdefaultMaybe isTop forestTy pathE 
 	FComp cinfo     -> zdefaultComp isTop cinfo pathE 
 
-zdefaultConstraint :: TH.Pat -> Exp -> ZEnvQ Exp -> ZEnvQ Exp
-zdefaultConstraint pat predE load = forceVarsZEnvQ predE $ \predE' -> do
+zdefaultConstraint :: Bool -> TH.Pat -> Exp -> ZEnvQ Exp -> ZEnvQ Exp
+zdefaultConstraint isTop pat predE load = forceVarsZEnvQ predE $ \predE' -> do
 	(fs,_) <- Reader.ask
 	let predFnE = zmodPredE pat predE'
 	loadAction <- load
-	return $ Pure.appE2 (VarE 'doZDefaultConstraint) predFnE loadAction
+	if isTop
+		then return $ Pure.appE2 (VarE 'doZDefaultConstraint) predFnE loadAction
+		else return $ Pure.appE2 (VarE 'doZDefaultConstraintInner) predFnE loadAction
 
 zdefaultFile :: String -> Maybe Exp -> Exp -> ZEnvQ Exp
 zdefaultFile fileName Nothing pathE = do
@@ -174,10 +176,12 @@ zdefaultMaybe isTop ty pathE = do
 		else return $ AppE (VarE 'doZDefaultMaybeInner) pathE
 
 zdefaultDirectory :: Bool -> DirectoryTy -> Exp -> ZEnvQ Exp
-zdefaultDirectory True dirTy@(Record id fields) pathE = do
+zdefaultDirectory isTop dirTy@(Record id fields) pathE = do
 	doDirE <- zdefaultDirectoryContents dirTy pathE
 	collectMDs <- lift $ zgenMergeFieldsMDErrors fields	
-	return $ Pure.appE3 (VarE 'doZDefaultDirectory) pathE collectMDs doDirE
+	if isTop
+		then return $ Pure.appE3 (VarE 'doZDefaultDirectory) pathE collectMDs doDirE
+		else return $ Pure.appE3 (VarE 'doZDefaultDirectory') pathE collectMDs doDirE
 
 zdefaultDirectoryContents :: DirectoryTy -> Exp -> ZEnvQ Exp
 zdefaultDirectoryContents (Record id fields) pathE = do
@@ -226,10 +230,12 @@ zdefaultSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 
 -- | Load a top-level declared comprehension
 zdefaultComp :: Bool -> CompField -> Exp -> ZEnvQ Exp
-zdefaultComp True cinfo pathE = do
+zdefaultComp isTop cinfo pathE = do
 	doCompE <- zdefaultCompContents cinfo pathE
 	let collectMDs = zgenMergeFieldMDErrors (Comp cinfo)
-	return $ Pure.appE3 (VarE 'doZDefaultDirectory) pathE collectMDs doCompE
+	if isTop
+		then return $ Pure.appE3 (VarE 'doZDefaultDirectory) pathE collectMDs doCompE
+		else return $ Pure.appE3 (VarE 'doZDefaultDirectory') pathE collectMDs doCompE
 	
 -- | Load a top-level declared comprehension
 zdefaultCompContents :: CompField -> Exp -> ZEnvQ Exp

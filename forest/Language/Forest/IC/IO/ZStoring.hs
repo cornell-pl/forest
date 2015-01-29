@@ -203,17 +203,43 @@ doZManifestSymLink path tree (SymLink rep_t) man = debug ("doZManifestSymLink " 
 				return $ status1 `mappend` status2
 			lift $ forestM $ removePathFromManifestInTree path tree $ addTestToManifest testm man
 
-doZManifestConstraint :: (ForestMD fs rep,ICRep fs) =>
+doZManifestConstraint :: (Eq rep,Typeable rep,ForestMD fs rep,ICRep fs) =>
+	(rep -> ForestI fs Bool) -> ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep)
+	-> (rep -> Manifest fs -> MManifestForestO fs)
+	-> Manifest fs -> MManifestForestO fs
+doZManifestConstraint pred t manifestContent man = lift (Inc.getOutside t) >>= \v -> doZManifestConstraintInner pred v manifestContent man
+
+doZManifestConstraintInner :: (ForestMD fs rep,ICRep fs) =>
+	(rep -> ForestI fs Bool) -> (ForestFSThunkI fs Forest_err,rep)
+	-> (rep -> Manifest fs -> MManifestForestO fs)
+	-> Manifest fs -> MManifestForestO fs
+doZManifestConstraintInner pred (err_t,rep) manifestContent man = do
+	isRepairMd <- Reader.ask
+	let testm = do -- constraint errors need to be accounted for
+		if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside $ do
+			err_cond <- predForestErr $ pred rep
+			err_inner <- get_errors rep
+			errors <- Inc.get err_t
+			return $ isValidForestErr errors == isValidForestErr (Pure.mergeForestErrs err_cond err_inner)
+	
+	Writer.tell $ \latest -> do
+		overwrite err_t $ do
+			err_cond <- predForestErr $ pred rep
+			err_inner <- get_errors rep
+			return $ Pure.mergeForestErrs err_cond err_inner
+	
+	manifestContent rep $ addTestToManifest testm man
+
+-- constraint satisfaction is mandatory: the result of loading never contains elements that don't satisfy the filtering constraint
+doZManifestConstraintCompound :: (ForestMD fs rep,ICRep fs) =>
 	(rep -> ForestI fs Bool) -> rep
 	-> (rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-doZManifestConstraint pred rep manifestContent man = do
+doZManifestConstraintCompound pred rep manifestContent man = do
+	isRepairMd <- Reader.ask
 	let testm = do -- constraint errors need to be accounted for
-		liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside $ do
-			cond <- pred rep
-			valid <- liftM ((==0) . numErrors) $ get_errors rep
-			-- valid reps need to satisfy the predicate
-			return $ valid <= cond
+		if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside $ pred rep
+	
 	manifestContent rep $ addTestToManifest testm man
 
 -- on storing we make sure that the error thunk is a computation on the representation, instead of an arbitrary user-defined value.
@@ -224,9 +250,15 @@ doZManifestDirectory :: (Typeable rep,Eq rep,ICRep fs) =>
 	-> ForestFSThunkI fs (Forest_md fs,rep)
 	-> (rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-doZManifestDirectory path tree collectMDErrors rep_t manifestContent man = do
+doZManifestDirectory path tree collectMDErrors rep_t manifestContent man = lift (Inc.getOutside rep_t) >>= \v -> doZManifestDirectoryInner path tree collectMDErrors v manifestContent man
+
+doZManifestDirectoryInner :: (Typeable rep,Eq rep,ICRep fs) => 
+	FilePath -> FSTree fs -> (rep -> ForestI fs Forest_err)
+	-> (Forest_md fs,rep)
+	-> (rep -> Manifest fs -> MManifestForestO fs)
+	-> Manifest fs -> MManifestForestO fs
+doZManifestDirectoryInner path tree collectMDErrors (fmd,rep) manifestContent man = do
 	isRepairMd <- Reader.ask
-	(fmd,rep) <- lift $ inside $ get rep_t
 	let path_fmd = fullpath $ fileInfo fmd
 	
 	let exists = doesDirectoryExistInMD path fmd
@@ -322,10 +354,10 @@ doZManifestSimple parentPath matching tree dta manifestUnder man = lift (inside 
 doZManifestSimpleWithConstraint :: (ForestMD fs rep,ICRep fs,Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (rep -> ForestI fs Bool)
-	-> rep
+	-> (ForestFSThunkI fs Forest_err,rep)
 	-> (FilePath -> rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-doZManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder = doZManifestConstraint pred dta $ \dta' man1 ->
+doZManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder = doZManifestConstraintInner pred dta $ \dta' man1 ->
 	lift (inside matching) >>= \m -> doZManifestFocus parentPath m tree (\p -> manifestUnder p dta') man1
 
 -- to enforce consistency while allowing the list to change, we delete all files in the directory that do not match the values
@@ -372,7 +404,7 @@ doZManifestCompoundWithConstraint parentPath matchingM tree toListRep pred c_rep
 	-- and delete them
 	man1 <- lift $ forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
-	let manifestEach (n,(rep',fileInfo_t)) man0M = man0M >>= doZManifestConstraint (Prelude.const $ pred n fileInfo_t) rep'
+	let manifestEach (n,(rep',fileInfo_t)) man0M = man0M >>= doZManifestConstraintCompound (Prelude.const $ pred n fileInfo_t) rep'
 		(\rep' man -> doZManifestFocus parentPath n tree (\p -> manifestUnder n fileInfo_t p rep') man)
 	let testm = testFocus parentPath matching (\file tree -> forestO $ inside $ getRelForestMDInTree parentPath tree file >>= ref . fileInfo >>= pred file) new_files
 	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_files repinfos')

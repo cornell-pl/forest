@@ -231,7 +231,11 @@ genZRepMDDir hasConstraint fsName (Record _ fields) ty_name pat_infos = do
 	let ty_con       = TH.RecC inner_ty_name reps
 	let inner_ty_decl      = DataD [] inner_ty_name [PlainTV fsName] [ty_con] derives
 	let ty = fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName) , AppT (ConT inner_ty_name) (VarT fsName) ]
-	let ty_decl = mk_TySynD fsName ty_name ty
+	let ty = Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName) , AppT (ConT inner_ty_name) (VarT fsName) ]
+	let ty' = if hasConstraint
+		then fsthunkTy fsName $ Pure.tyListToTupleTy [ fsthunkTy fsName $ ConT ''Forest_err , ty]
+		else fsthunkTy fsName ty
+	let ty_decl = mk_TySynD fsName ty_name ty'
 	if length reps == 0
 		then error ("Error: Directory " ++ (show ty_name) ++ " must contain at least one named field.")
 		else do
@@ -242,7 +246,10 @@ genZRepMDDir hasConstraint fsName (Record _ fields) ty_name pat_infos = do
 genZRepMDField :: Name -> Field -> Q (VST)
 genZRepMDField fsName (Simple (internal, isForm, external, ty, predM)) = do
 	(rep_ty) <- genZRepMDTy False fsName ty
-	return (Pure.getFieldName   internal, TH.NotStrict, rep_ty)
+	let rep_ty' = case predM of
+		Nothing -> rep_ty
+		Just _ -> Pure.tyListToTupleTy [fsthunkTy fsName $ ConT ''Forest_err , rep_ty ]
+	return (Pure.getFieldName   internal, TH.NotStrict, rep_ty')
 genZRepMDField fsName (Comp (info @ CompField {internalName, tyConNameOpt, descTy, ..})) = do
 	(rep_ty) <- genZRepMDComp fsName info
 	return (Pure.getFieldName   internalName, TH.NotStrict, {-fsthunkTy fsName -} rep_ty)
@@ -262,10 +269,10 @@ genZRepMDComp fsName (CompField {internalName, tyConNameOpt, descTy, predEOpt, .
 genZRepMDCompTy :: Bool -> Name -> CompField -> Q Type
 genZRepMDCompTy isTop fsName info = do
 	(rep_ty) <- genZRepMDComp fsName info
-	let rep_ty'  = Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), rep_ty ]   
+	let rep_ty' = Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), rep_ty ]  
 	if isTop
-		then return $ fsthunkTy fsName rep_ty'
-		else return rep_ty
+		then return $ fsthunkTy fsName rep_ty' 
+		else return rep_ty'
 
 {- Generate type and meta-data representations. -}
 genZRepMDTy :: Bool -> Name -> ForestTy -> Q (TH.Type)
@@ -281,7 +288,11 @@ genZRepMDTy isTop fsName ty = case ty of
 			else return $ rep_ty
 	FSymLink              -> return $ AppT (ConT ''SymLink) (VarT fsName)
 	Named ty_name        -> return (Pure.appTyFS fsName $ Pure.getTyName ty_name)
-	FConstraint p ty pred -> genZRepMDTy isTop fsName ty
+	FConstraint p ty pred -> do
+		rep_ty <- genZRepMDTy False fsName ty
+		if isTop
+			then return $ fsthunkTy fsName $ Pure.tyListToTupleTy [fsthunkTy fsName $ ConT ''Forest_err,rep_ty]
+			else return $ Pure.tyListToTupleTy [fsthunkTy fsName $ ConT ''Forest_err,rep_ty]
 	FMaybe ty            -> genZRepMDMaybe isTop fsName ty
 	Fapp ty arg          -> genZRepMDTy isTop fsName ty
 	FComp cinfo          -> genZRepMDCompTy isTop fsName cinfo

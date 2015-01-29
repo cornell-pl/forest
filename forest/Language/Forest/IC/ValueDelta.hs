@@ -15,7 +15,7 @@ import Data.Map (Map(..))
 import qualified Data.Map as Map
 import Language.Forest.FS.FSRep
 import Data.WithClass.MData
-import Language.Forest.IC.BX
+import Language.Forest.IC.BX as BX
 
 class DeltaClass d where
 	isEmptyDelta :: d v -> Bool
@@ -24,6 +24,7 @@ class DeltaClass d where
 	isStableDelta :: d v -> Bool
 	fromSValueDelta :: SValueDelta v -> d v
 	applyDelta :: d v -> v -> v
+	mapDelta :: Lens a b -> d b -> d a
 
 instance DeltaClass SValueDelta where
 	isEmptyDelta = isEmptySValueDelta
@@ -33,6 +34,7 @@ instance DeltaClass SValueDelta where
 	isStableDelta _ = True
 	fromSValueDelta = id
 	applyDelta = applySValueDelta
+	mapDelta _ = mapSValueDelta
 	
 instance DeltaClass NSValueDelta where
 	isEmptyDelta = isEmptyNSValueDelta
@@ -43,6 +45,7 @@ instance DeltaClass NSValueDelta where
 	isStableDelta (Modify f) = False
 	fromSValueDelta = StableVD
 	applyDelta = applyNSValueDelta
+	mapDelta = mapNSValueDelta
 
 -- stable deltas
 data SValueDelta v where
@@ -71,6 +74,10 @@ maybeNSValueDelta (Modify f) = Modify $ \mb -> case mb of
 mapSValueDelta :: SValueDelta a -> SValueDelta b
 mapSValueDelta Id = Id
 mapSValueDelta Delta = Delta
+
+mapNSValueDelta :: Lens a b -> NSValueDelta b -> NSValueDelta a
+mapNSValueDelta l (StableVD d) = StableVD $ mapSValueDelta d
+mapNSValueDelta l (Modify f) = Modify $ \s -> BX.put l s $ f $ BX.get l s
 
 isEmptySValueDelta :: SValueDelta v -> Bool
 isEmptySValueDelta Id = True

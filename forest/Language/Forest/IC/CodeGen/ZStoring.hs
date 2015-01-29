@@ -121,7 +121,7 @@ zmanifestE isTop ty pathE treeE dtaE manE = case ty of
 	FFile (file_name, argEOpt) -> zmanifestFile file_name argEOpt pathE treeE dtaE manE
 	Archive archtype ty         -> zmanifestArchive isTop archtype ty pathE treeE dtaE manE
 	FSymLink         -> zmanifestSymLink pathE treeE dtaE manE
-	FConstraint p ty pred -> zmanifestConstraint treeE p pred dtaE manE $ zmanifestE isTop ty pathE treeE
+	FConstraint p ty pred -> zmanifestConstraint isTop treeE p pred dtaE manE $ zmanifestE False ty pathE treeE
 	Directory dirTy -> zmanifestDirectory isTop dirTy pathE treeE dtaE manE
 	FMaybe forestTy -> zmanifestMaybe isTop forestTy pathE treeE dtaE manE
 	FComp cinfo     -> zmanifestComp isTop cinfo pathE treeE dtaE manE
@@ -158,8 +158,8 @@ zmanifestSymLink :: Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestSymLink pathE treeE dtaE manE = do
   return $ Pure.appE4 (VarE 'doZManifestSymLink) pathE treeE dtaE manE
 
-zmanifestConstraint :: Exp -> TH.Pat -> Exp -> Exp -> Exp -> (Exp -> Exp -> ZEnvQ Exp) -> ZEnvQ Exp
-zmanifestConstraint treeE pat predE dtaE manE manifest = forceVarsZEnvQ predE $ \predE' -> do
+zmanifestConstraint :: Bool -> Exp -> TH.Pat -> Exp -> Exp -> Exp -> (Exp -> Exp -> ZEnvQ Exp) -> ZEnvQ Exp
+zmanifestConstraint isTop treeE pat predE dtaE manE manifest = forceVarsZEnvQ predE $ \predE' -> do
 	newmanName <- lift $ newName "man"
 	let (newmanE,newmanP) = genPE newmanName
 	newdtaName <- lift $ newName "dta"
@@ -167,7 +167,9 @@ zmanifestConstraint treeE pat predE dtaE manE manifest = forceVarsZEnvQ predE $ 
 	
 	let predFnE = zmodPredE pat predE'
 	manifestAction <- liftM (LamE [newdtaP,newmanP]) $ manifest newdtaE newmanE
-	return $ Pure.appE4 (VarE 'doZManifestConstraint) predFnE dtaE manifestAction manE
+	if isTop
+		then return $ Pure.appE4 (VarE 'doZManifestConstraint) predFnE dtaE manifestAction manE
+		else return $ Pure.appE4 (VarE 'doZManifestConstraintInner) predFnE dtaE manifestAction manE
 
 zmanifestFile :: String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestFile fileName Nothing pathE treeE dtaE manE = do
@@ -191,7 +193,7 @@ zmanifestMaybe isTop ty pathE treeE dtaE manE = do
 		else return $ Pure.appE5 (VarE 'doZManifestMaybeInner) pathE treeE dtaE doContentsE manE
 
 zmanifestDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zmanifestDirectory True dirTy@(Record id fields) pathE treeE dtaE manE = do
+zmanifestDirectory isTop dirTy@(Record id fields) pathE treeE dtaE manE = do
 	newdtaName <- lift $ newName "newdta"
 	newmanName <- lift $ newName "newman"
 	newpathName <- lift $ newName "newpath"
@@ -200,7 +202,9 @@ zmanifestDirectory True dirTy@(Record id fields) pathE treeE dtaE manE = do
 	let (newpathE,newpathP) = genPE newpathName
 	doDirE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestDirectoryContents dirTy treeE pathE newdtaE newmanE
 	collectMDs <- lift $ zgenMergeFieldsMDErrors fields	
-	return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doDirE manE
+	if isTop
+		then return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doDirE manE
+		else return $ Pure.appE6 (VarE 'doZManifestDirectoryInner) pathE treeE collectMDs dtaE doDirE manE
 
 zmanifestDirectoryContents :: DirectoryTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestDirectoryContents (Record id fields) treeE parentPathE dtaE manE = do
@@ -222,7 +226,7 @@ zmanifestField field treeE parentPathE dtaE man0E man1P = case field of
 	Comp   c -> zmanifestCompound True c treeE parentPathE dtaE man0E man1P
 
 zmanifestComp :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zmanifestComp True cinfo pathE treeE dtaE manE = do
+zmanifestComp isTop cinfo pathE treeE dtaE manE = do
 	newdtaName <- lift $ newName "newdta"
 	newmanName <- lift $ newName "newman"
 	newpathName <- lift $ newName "newpath"
@@ -232,7 +236,9 @@ zmanifestComp True cinfo pathE treeE dtaE manE = do
 	
 	let collectMDs = zgenMergeFieldMDErrors (Comp cinfo)
 	doCompE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestCompContents cinfo treeE pathE newdtaE newmanE
-	return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doCompE manE
+	if isTop
+		then return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doCompE manE
+		else return $ Pure.appE6 (VarE 'doZManifestDirectoryInner) pathE treeE collectMDs dtaE doCompE manE
 
 zmanifestCompContents :: CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestCompContents cinfo treeE parentPathE dtaE manE = do

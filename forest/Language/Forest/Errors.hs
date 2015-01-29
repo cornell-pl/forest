@@ -68,6 +68,9 @@ $( derive makeDeepTypeable ''Forest_err )
 
 cleanForestErr = Forest_err 0 Nothing
 
+isValidForestErr :: Forest_err -> Bool
+isValidForestErr err = Language.Forest.Errors.numErrors err == 0
+
 padsError :: Base_md -> Forest_err
 padsError (Base_md { Pads.numErrors = n, errInfo = err }) = Forest_err n (fmap PadsError err)
 

@@ -70,6 +70,7 @@ import Control.Exception
 import Language.Forest.Errors
 import Language.Forest.IC.BX as BX
 
+-- hides @Forest_err@ values from the representation type of a variable
 class ForestContent var content | var -> content where
 	lens_content :: Lens var content
 
@@ -77,6 +78,11 @@ instance ForestContent (Forest_md fs,rep) (FileInfo,rep) where
 	lens_content = Lens (\(fmd,rep) -> (fileInfo fmd,rep)) (\(fmd,rep) (info',rep') -> (fmd { fileInfo = info' },rep'))
 instance ForestContent ((Forest_md fs,bmd),rep) ((FileInfo,bmd),rep) where
 	lens_content = Lens (\((fmd,bmd),rep) -> ((fileInfo fmd,bmd),rep)) (\((fmd,bmd),rep) ((info',bmd'),rep') -> ((fmd { fileInfo = info' },bmd'),rep'))
+instance ForestContent (ForestFSThunkI fs Forest_err,rep) rep where
+instance (ForestContent item rep) => ForestContent (Set (FilePath,item)) (Set (FilePath,rep)) where
+instance (ForestContent item rep) => ForestContent ([(FilePath,item)]) ([(FilePath,rep)]) where
+instance (BuildContainer2 c item,ForestContent item rep) => ForestContent (c FilePath item) (c FilePath rep) where
+instance ForestContent rep content => ForestContent (Maybe rep) (Maybe content)
 
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a

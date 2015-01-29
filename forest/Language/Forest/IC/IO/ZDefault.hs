@@ -102,16 +102,19 @@ doZDefaultMaybe' path = do
 	fmd <- cleanForestMDwithFile path
 	return (fmd,Nothing)
 
-doZDefaultConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
-	(rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs rep
-doZDefaultConstraint pred load = do -- note that constraints do not consider the current path
+doZDefaultConstraint :: (Eq rep,Typeable rep,ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
+	(rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep))
+doZDefaultConstraint pred load = fsThunk $ doZDefaultConstraintInner pred load
+
+doZDefaultConstraintInner :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
+	(rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs Forest_err,rep)
+doZDefaultConstraintInner pred load = do -- note that constraints do not consider the current path
 	rep <- load
-	rep' <- replace_errors rep $ \err -> do
-		cond <- pred rep
-		if cond
-			then return err
-			else return $ Pure.updateForestErr err [Pure.constraintViolationForestErr]
-	return rep'
+	err_t <- fsThunk $ do
+		err_cond <- predForestErr $ pred rep
+		err_inner <- get_errors rep
+		return $ Pure.mergeForestErrs err_cond err_inner
+	return (err_t,rep)
 
 doZDefaultFocus :: (ICRep fs,Matching fs a,ForestMD fs rep) => FilePath -> a -> (FilePath -> ForestI fs rep) -> ForestI fs rep
 doZDefaultFocus path matching load = do
@@ -135,8 +138,8 @@ doZDefaultSimple path matching load = matching >>= \m -> doZDefaultFocus path m 
 doZDefaultSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,Matching fs a,MData NoCtx (ForestI fs) rep) =>
 	FilePath -> ForestI fs a -> (rep -> ForestI fs Bool)
 	-> (FilePath -> ForestI fs rep)
-	-> ForestI fs rep
-doZDefaultSimpleWithConstraint path matching pred load = doZDefaultConstraint pred $ matching >>= \m -> doZDefaultFocus path m load
+	-> ForestI fs (ForestFSThunkI fs Forest_err,rep)
+doZDefaultSimpleWithConstraint path matching pred load = doZDefaultConstraintInner pred $ matching >>= \m -> doZDefaultFocus path m load
 
 doZDefaultCompound :: (Typeable container_rep,Eq container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePath -> ForestI fs a

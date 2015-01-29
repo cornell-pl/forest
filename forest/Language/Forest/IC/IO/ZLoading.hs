@@ -204,16 +204,20 @@ doZLoadSymLink' path tree getMD = do
 		
 	checkZPath' Nothing path tree linkGood linkBad
 
-doZLoadConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
-	FSTree fs -> (rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs rep
-doZLoadConstraint tree pred load = do -- note that constraints do not consider the current path
+doZLoadConstraint :: (Eq rep,Typeable rep,ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
+	FSTree fs -> (rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep))
+doZLoadConstraint tree pred load = fsThunk $ doZLoadConstraintInner tree pred load
+
+-- for IC, we need to be able to dissociate the constraint error from the inner errors
+doZLoadConstraintInner :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
+	FSTree fs -> (rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs Forest_err,rep)
+doZLoadConstraintInner tree pred load = do -- note that constraints do not consider the current path
 	rep <- load
-	rep' <- replace_errors rep $ \err -> do
-		cond <- pred rep
-		if cond
-			then return err
-			else return $ Pure.updateForestErr err [Pure.constraintViolationForestErr]
-	return rep'
+	err_t <- fsThunk $ do
+		err_cond <- predForestErr $ pred rep
+		err_inner <- get_errors rep
+		return $ Pure.mergeForestErrs err_cond err_inner
+	return (err_t,rep)
 
 -- changes the current path
 doZLoadFocus :: (Matching fs a,ForestMD fs rep) => FilePathFilter fs -> FilePath -> a -> FSTree fs -> GetForestMD fs -> (FilePath -> GetForestMD fs -> ForestI fs rep) -> ForestI fs rep
@@ -282,8 +286,8 @@ doZLoadSimple pathfilter path matching tree load = matching >>= \m -> doZLoadFoc
 doZLoadSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,Matching fs a,MData NoCtx (ForestI fs) rep) =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs -> (rep -> ForestI fs Bool)
 	-> (FilePath -> GetForestMD fs -> ForestI fs rep)
-	-> ForestI fs rep
-doZLoadSimpleWithConstraint pathfilter path matching tree pred load = doZLoadConstraint tree pred $ matching >>= \m -> doZLoadFocus pathfilter path m tree getForestMDInTree load
+	-> ForestI fs (ForestFSThunkI fs Forest_err,rep)
+doZLoadSimpleWithConstraint pathfilter path matching tree pred load = doZLoadConstraintInner tree pred $ matching >>= \m -> doZLoadFocus pathfilter path m tree getForestMDInTree load
 
 doZLoadCompound :: (Typeable container_rep,Eq container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs

@@ -231,10 +231,12 @@ instance (ForestRep rep a,ForestMD fs a) => ForestMD fs rep where
 	get_fmd_header r = get_fmd_header (to iso_rep_thunk r)
 	replace_fmd_header r f = liftM (from iso_rep_thunk) $ replace_fmd_header (to iso_rep_thunk r) f
 
--- we provide this instance just to get errors...
+-- we provide these instances just to get errors...
 instance ForestMD fs rep => ForestMD fs (Maybe rep) where
 	get_fmd_header Nothing = inside cleanForestMD
 	get_fmd_header (Just rep) = get_fmd_header rep
+instance ICRep fs => ForestMD fs (ForestFSThunkI fs Forest_err,b) where
+	get_fmd_header (err_t,_) = return $ Forest_md err_t Pure.fileInfo_def
 
 -- replaces the content of a stable metadata value with the content of another one
 class ICRep fs => StableMD fs md where
@@ -426,6 +428,11 @@ instance (Memo a,Memo b) => Memo (a :*: b) where
 		where (w1,k1) = memoKey x
 		      (w2,k2) = memoKey y
 
+predForestErr :: ForestLayer fs l => ForestI fs Bool -> ForestL fs l (Forest_err)
+predForestErr m = do
+	cond <- inside m
+	if cond then return cleanForestMDErr else return Pure.constraintViolationForestErr
+	
 
 getForestMDInTree :: (ICRep fs,ForestLayer fs l) => FilePath -> FSTree fs -> ForestL fs l (Forest_md fs)
 getForestMDInTree path tree = forestM (pathInTree path tree) >>= getForestMD path
