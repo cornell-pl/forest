@@ -56,18 +56,6 @@ runTest = do
 		test_dir :: Universal_d TxVarFS <- new () "test"
 		original_str <- showInc test_dir
 		
-		test_uni <- read test_dir
-		
---		let mb_links_dir = List.lookup "links" (directories test_uni)
---		errors <- case mb_links_dir of
---			Just links_dir -> do
---				(links_fmd,links_uni) <- read links_dir
---		
---				errors <- writeOrShow links_dir (links_fmd,links_uni)
---		
---				return errors
---			Nothing -> return "no links"
-		
 		link_c :: SymLink TxVarFS <- new () "test/links/c.txt"
 		let link_c_md = (cleanSymLinkFileInfo "test/links/c.txt" "../files/c.txt",cleanBasePD)
 		errors <- writeOrShow link_c (link_c_md,"../files/c.txt")
