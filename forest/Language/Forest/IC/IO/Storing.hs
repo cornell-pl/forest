@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, FlexibleContexts, ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
+{-# LANGUAGE ConstraintKinds, TupleSections, FlexibleContexts, ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
 
 module Language.Forest.IC.IO.Storing where
 
@@ -59,7 +59,8 @@ doManifestArgs proxy margs (rep,(md,targs)) manifestContent (man::Manifest fs) =
 	let man1 = addTestToManifest (forestO $ checkArgs (Proxy::Proxy fs) proxy margs targs) man
 	manifestContent (rep,md) man1
 
-doManifestFile :: (Eq pads,Eq md,ICRep fs,Pads pads md) => FSTree fs -> (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md)) -> Manifest fs -> ForestO fs (Manifest fs)
+doManifestFile :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) pads,	IncK
+	                        (IncForest fs) (Forest_md fs, ForestFSThunkI fs md),IncK (IncForest fs) md,ICRep fs,Pads pads md) => FSTree fs -> (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md)) -> Manifest fs -> ForestO fs (Manifest fs)
 doManifestFile tree (rep_t,md_t) man = do
 	rep <- inside $ get rep_t
 	(fmd,md_t') <- inside $ get md_t
@@ -77,7 +78,8 @@ doManifestFile tree (rep_t,md_t) man = do
 				then return $ removePathFromManifest canpath path man
 				else return man
 
-doManifestFile1 :: (Eq pads,Eq md,ICRep fs,Pads1 arg pads md) => arg -> FSTree fs -> (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md)) -> Manifest fs -> ForestO fs (Manifest fs)
+doManifestFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) pads,				IncK
+				                        (IncForest fs) (Forest_md fs, ForestFSThunkI fs md),IncK (IncForest fs) md,ICRep fs,Pads1 arg pads md) => arg -> FSTree fs -> (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md)) -> Manifest fs -> ForestO fs (Manifest fs)
 doManifestFile1 arg tree (rep_t,md_t) man = do
 	rep <- inside $ get rep_t
 	(fmd,md_t') <- inside $ get md_t
@@ -95,7 +97,7 @@ doManifestFile1 arg tree (rep_t,md_t) man = do
 				then return $ removePathFromManifest canpath path man
 				else return man
 
-doManifestArchive :: (Typeable rep,Typeable md,ForestMD fs md,Eq rep,Eq md,ForestInput fs FSThunk Inside,ICRep fs) =>
+doManifestArchive :: (IncK (IncForest fs) md,IncK (IncForest fs) rep,IncK (IncForest fs) (Forest_md fs, md),ForestMD fs md,ForestInput fs FSThunk Inside,ICRep fs) =>
 	[ArchiveType] -> FSTree fs 
 	-> (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 	-> (FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
@@ -131,7 +133,7 @@ doManifestArchive archTy tree (rep_t,md_t) manifestContents man = do
 	let man3 = addFileToManifest' canpath path archiveFile man2
 	return $ mergeManifests man1 man3
 
-doManifestSymLink :: ICRep fs =>
+doManifestSymLink :: (IncK (IncForest fs) FilePath,IncK (IncForest fs) (Forest_md fs, Base_md),ICRep fs) =>
 	FSTree fs
 	-> (ForestFSThunkI fs FilePath,ForestFSThunkI fs (Forest_md fs, Base_md))
 	-> Manifest fs -> ForestO fs (Manifest fs)
@@ -151,7 +153,7 @@ doManifestSymLink tree (rep_t,md_t) man = do
 	return $ addLinkToManifest canpath path tgt man1
 
 -- users may have arbitrarily changed the data, so we can't trust that the thunk still computes the correct predicate
-doManifestConstraint :: ICRep fs => FSTree fs -> ((rep,md) -> ForestI fs Bool) -> (rep,(md,ForestICThunkI fs Bool))
+doManifestConstraint :: (IncK (IncForest fs) Bool,ICRep fs) => FSTree fs -> ((rep,md) -> ForestI fs Bool) -> (rep,(md,ForestICThunkI fs Bool))
 	-> ((rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestConstraint tree pred (rep,(md,pred_t)) manifestContent man = do
@@ -162,7 +164,7 @@ doManifestConstraint tree pred (rep,(md,pred_t)) manifestContent man = do
 	let man1 = addTestToManifest testm man
 	manifestContent (rep,md) man1
 
-doManifestDirectory :: (Typeable rep,Typeable md,Eq rep,Eq md,ICRep fs) => 
+doManifestDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) rep,IncK (IncForest fs) (Forest_md fs, md),ICRep fs) => 
 	FSTree fs -> (md -> ForestI fs Forest_err)
 	-> (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 	-> (FilePath -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
@@ -178,7 +180,7 @@ doManifestDirectory tree collectMDErrors (rep_t,md_t) manifestContent man = do
 	let man2 = addTestToManifest testm man1 -- errors in the metadata must be consistent
 	manifestContent path (rep,md) man2
 
-doManifestMaybe :: (Typeable rep,Typeable md,ForestMD fs md,Eq md,Eq rep,ICRep fs) =>
+doManifestMaybe :: (IncK (IncForest fs) (Maybe rep),IncK (IncForest fs) (Forest_md fs, Maybe md),ForestMD fs md,ICRep fs) =>
 	FSTree fs
 	-> (ForestFSThunkI fs (Maybe rep),ForestFSThunkI fs (Forest_md fs,Maybe md))
 	-> ((rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
@@ -241,13 +243,13 @@ testFocus root matching pred new_files = do
 	same <- liftM and $ mapM testFile $ zip (List.sort new_files) (List.sort files)
 	return $ boolStatus (ConflictingMatching root (show matching) new_files files) $ (length files == length new_files) && same
 
-doManifestSimple :: (Typeable imd',ForestMD fs imd',Eq imd',Matching fs a,md' ~ ForestFSThunkI fs imd') =>
+doManifestSimple :: (IncK (IncForest fs) imd',ForestMD fs imd',Matching fs a,md' ~ ForestFSThunkI fs imd') =>
 	FilePath -> ForestI fs a -> FSTree fs -> (rep',md')
 	-> ((rep',md') -> Manifest fs -> ForestO fs (Manifest fs))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestSimple parentPath matching tree dta manifestUnder man = inside matching >>= \m -> doManifestFocus parentPath m tree dta manifestUnder man
 
-doManifestSimpleWithConstraint :: (Typeable imd',ForestMD fs imd',Eq imd',Matching fs a,md' ~ ForestFSThunkI fs imd') =>
+doManifestSimpleWithConstraint :: (IncK (IncForest fs) Bool,IncK (IncForest fs) imd',ForestMD fs imd',Matching fs a,md' ~ ForestFSThunkI fs imd') =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> ((rep',md') -> ForestI fs Bool)
 	-> (rep',(md',ForestICThunkI fs Bool))
@@ -277,7 +279,7 @@ doManifestCompound parentPath matchingM tree toListRep toListMd (c_rep,c_md) man
 	let manifestEach ((n,info_t),dta') man0M = man0M >>= doManifestFocus parentPath n tree dta' (manifestUnder n info_t)
 	foldr manifestEach (return man1) (zip (zip new_files fileinfos_t) dtas')
 
-doManifestCompoundWithConstraint :: (ForestMD fs md',Matching fs a,imd ~ (md',(ForestFSThunkI fs FileInfo,ForestICThunkI fs Bool))) =>
+doManifestCompoundWithConstraint :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Bool,ForestMD fs md',Matching fs a,imd ~ (md',(ForestFSThunkI fs FileInfo,ForestICThunkI fs Bool))) =>
 	FilePath -> ForestI fs a -> FSTree fs
 	-> (container_rep -> [(FilePath,rep')]) -> (container_md -> [(FilePath,imd)])
 	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)

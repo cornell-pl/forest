@@ -67,7 +67,7 @@ instance (DeepTypeable fs) => DeepTypeable (Forest_md fs) where
 
 {- Should raise no exceptions -}
 -- it loads the metadata from a physical path on disk, but returns the metadata as if it belonged to an original path alias
-getForestMD :: (ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> FilePath -> ForestL fs l (Forest_md fs)
+getForestMD :: (IncK (IncForest fs) Forest_err,ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> FilePath -> ForestL fs l (Forest_md fs)
 getForestMD oripath diskpath = do
 	abspath <- forestM $ forestIO $ absolutePath oripath
 	fdEither <- forestM $ forestIO $ Exception.try $ getFileStatus diskpath
@@ -111,7 +111,7 @@ doesFileExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) /= Di
 doesDirectoryExistInMD :: FilePath -> Forest_md fs -> Bool
 doesDirectoryExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) == DirectoryK
 
-forest_md_def :: (ForestInput fs FSThunk Inside,ForestLayer fs l) => ForestL fs l (Forest_md fs)
+forest_md_def :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ForestLayer fs l) => ForestL fs l (Forest_md fs)
 forest_md_def = do
 	err <- inside $ mod $ return Pure.forest_err_def
 	return $ Forest_md err Pure.fileInfo_def
@@ -126,13 +126,12 @@ fmd_symLink :: Forest_md fs -> Maybe FilePath
 fmd_symLink = symLink . fileInfo
 
 -- we need to actually create new thunks to allow the modification to occur at the inner layer
-modify_errors_under :: (Typeable md,Eq md,ForestMD fs md) => ForestFSThunk fs Inside md -> (Forest_err -> ForestI fs Forest_err) -> ForestO fs ()
+modify_errors_under :: (IncK (IncForest fs) md,ForestMD fs md) => ForestFSThunk fs Inside md -> (Forest_err -> ForestI fs Forest_err) -> ForestO fs ()
 modify_errors_under t newerrs = modify t $ \md -> replace_errors md newerrs
 
 {- Meta data type class -}
-class (ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs md where
+class (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs md where
 	isUnevaluatedMDThunk :: ForestLayer fs l => md -> ForestL fs l Bool
-	isUnforcedMDThunk :: ForestLayer fs l => md -> ForestL fs l Bool
 	get_fmd_header :: ForestLayer fs l => md -> ForestL fs l (Forest_md fs)
 	replace_fmd_header :: md -> (Forest_md fs -> ForestI fs (Forest_md fs)) -> ForestI fs md
 	
@@ -189,37 +188,31 @@ class (ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestM
 	get_kind :: ForestLayer fs l => md -> ForestL fs l FileType
 	get_kind md = liftM (kind . fileInfo) (get_fmd_header md)
 
-change_fmd_header :: (Typeable md,Eq md,ICRep fs,ForestInput fs FSThunk Inside,ForestInput fs FSThunk l) => ForestFSThunk fs l (Forest_md fs,md) -> Forest_md fs -> ForestO fs ()
+change_fmd_header :: (IncK (IncForest fs) (Forest_md fs, md),ICRep fs,ForestInput fs FSThunk Inside,ForestInput fs FSThunk l) => ForestFSThunk fs l (Forest_md fs,md) -> Forest_md fs -> ForestO fs ()
 change_fmd_header t fmd' = modify t $ \(fmd,md) -> return (fmd',md)
 
-instance (ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (Forest_md fs) where
+instance (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (Forest_md fs) where
 	isUnevaluatedMDThunk fmd = return False
-	isUnforcedMDThunk fmd = return False
 	get_fmd_header b = return b
 	replace_fmd_header fmd f = f fmd
 
 -- the left side may be a @Forest_md@ and the right side a metadata value
-instance (ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (Forest_md fs,b) where
-	isUnevaluatedMDThunk (fmd,md) = error "isUnforcedMDThunk should never be called for a Forest_md"
-	isUnforcedMDThunk (fmd,md) = error "isUnforcedMDThunk should never be called for a Forest_md"
+instance (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (Forest_md fs,b) where
 	get_fmd_header (a,b) = get_fmd_header a
 	replace_fmd_header (fmd,b) f = replace_fmd_header fmd f >>= \fmd' -> return (fmd',b)
 -- or the left side may be a metadata thunk and the right side a sequence of argument thunks
 instance (ForestMD fs (ForestFSThunk fs l a),Eq a,MData NoCtx (ForestL fs l) b,ForestMD fs a) => ForestMD fs (ForestFSThunk fs l a,b) where
 	isUnevaluatedMDThunk (t,args) = isUnevaluatedMDThunk t
-	isUnforcedMDThunk (t,args) = isUnforcedMDThunk t
 	get_fmd_header (a,b) = get_fmd_header a
 	replace_fmd_header (t,b) f = replace_fmd_header t f >>= \t' -> return (t',b)
 -- when load arguments and Adapton thunks are all mixed together
 instance (ForestMD fs a) => ForestMD fs ((a,b),c) where
 	isUnevaluatedMDThunk ((a,b),c) = isUnevaluatedMDThunk a
-	isUnforcedMDThunk ((a,b),c) = isUnforcedMDThunk a
 	get_fmd_header ((a,b),c) = get_fmd_header a
 	replace_fmd_header ((a,b),c) f = replace_fmd_header a f >>= \a' -> return ((a',b),c)
 
-instance (Typeable a,Eq a,ForestMD fs a,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (ForestFSThunk fs Inside a) where
+instance (IncK (IncForest fs) a,ForestMD fs a,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (ForestFSThunk fs Inside a) where
 	isUnevaluatedMDThunk t = inside $ isUnevaluatedMDThunk t
-	isUnforcedMDThunk t = inside $ isUnforcedFSThunk t
 	get_fmd_header t = do
 		md <- inside (get t)
 		get_fmd_header md
@@ -227,29 +220,28 @@ instance (Typeable a,Eq a,ForestMD fs a,ForestInput fs FSThunk Inside,ForestLaye
 
 instance (ForestRep rep a,ForestMD fs a) => ForestMD fs rep where
 	isUnevaluatedMDThunk r = isUnevaluatedMDThunk (to iso_rep_thunk r)
-	isUnforcedMDThunk r = isUnforcedMDThunk (to iso_rep_thunk r)
 	get_fmd_header r = get_fmd_header (to iso_rep_thunk r)
 	replace_fmd_header r f = liftM (from iso_rep_thunk) $ replace_fmd_header (to iso_rep_thunk r) f
 
 -- we provide these instances just to get errors...
-instance ForestMD fs rep => ForestMD fs (Maybe rep) where
+instance (IncK (IncForest fs) Forest_err,ForestMD fs rep) => ForestMD fs (Maybe rep) where
 	get_fmd_header Nothing = inside cleanForestMD
 	get_fmd_header (Just rep) = get_fmd_header rep
-instance ICRep fs => ForestMD fs (ForestFSThunkI fs Forest_err,b) where
+instance (IncK (IncForest fs) Forest_err,ICRep fs) => ForestMD fs (ForestFSThunkI fs Forest_err,b) where
 	get_fmd_header (err_t,_) = return $ Forest_md err_t Pure.fileInfo_def
 
 -- replaces the content of a stable metadata value with the content of another one
 class ICRep fs => StableMD fs md where
 	overwriteMD :: md -> ForestI fs md -> ForestO fs ()
 
-instance (Typeable a,ICRep fs,Eq a,ForestInput fs FSThunk Inside) => StableMD fs (ForestFSThunk fs Inside a) where
+instance (IncK (IncForest fs) a,ICRep fs,ForestInput fs FSThunk Inside) => StableMD fs (ForestFSThunk fs Inside a) where
 	overwriteMD t m = overwrite t $ get =<< m
-instance (Typeable a,Typeable b,Eq a,Eq b,StableMD fs a,StableMD fs b,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => StableMD fs (a,b) where
+instance (IncK (IncForest fs) (a,b),StableMD fs a,StableMD fs b,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => StableMD fs (a,b) where
 	overwriteMD (t1,t2) m = do
 		load <- inside $ fsThunk m 
 		overwriteMD t1 $ liftM fst $ get load
 		overwriteMD t2 $ liftM snd $ get load
-instance (Typeable a,Typeable b,Eq a,Eq b,StableMD fs a,StableMD fs b,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => StableMD fs (a :*: b) where
+instance (IncK (IncForest fs) (a :*: b),StableMD fs a,StableMD fs b,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => StableMD fs (a :*: b) where
 	overwriteMD (t1 :*: t2) m = do
 		load <- inside $ fsThunk m
 		overwriteMD t1 $ liftM Pure.fstStar $ get load
@@ -258,13 +250,13 @@ instance (Typeable a,Typeable b,Eq a,Eq b,StableMD fs a,StableMD fs b,ForestInpu
 instance (ForestRep a b,StableMD fs b) => StableMD fs a where
 	overwriteMD r m = overwriteMD (to iso_rep_thunk r) (liftM (to iso_rep_thunk) m)
 
-cleanForestMD :: (ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
+cleanForestMD :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
 cleanForestMD = do
 	err <- mod $ return cleanForestMDErr
 	return $ Forest_md { errors = err, fileInfo = Pure.fileInfo_def}
 cleanForestMDErr = Forest_err {numErrors = 0, errorMsg = Nothing }
 
-errorForestMD :: (ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
+errorForestMD :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
 errorForestMD = do
 	err <- mod $ return Pure.errorForestMDErr
 	return $ Forest_md { errors = err, fileInfo = Pure.errorFileInfo}
@@ -283,15 +275,15 @@ systemErrorForestMD i = do
 notDirectoryForestMD path = do
 	err <- mod $ return $ Pure.notDirectoryForestErr path
 	return $ Forest_md {errors = err, fileInfo = Pure.mkErrorFileInfo path}
-constraintViolationForestMD :: (ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
+constraintViolationForestMD :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
 constraintViolationForestMD = do
 	err <- mod $ return Pure.constraintViolationForestErr
 	return $ Forest_md {errors = err, fileInfo = Pure.errorFileInfo}
-ioExceptionForestMD :: (ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
+ioExceptionForestMD :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside) => ForestI fs (Forest_md fs)
 ioExceptionForestMD = do
 	err <- mod $ return Pure.ioExceptionForestErr
 	return $ Forest_md { errors = err, fileInfo = Pure.errorFileInfo }
-ioExceptionForestMDwithFile :: (ForestInput fs FSThunk Inside) => FilePath -> ForestI fs (Forest_md fs)
+ioExceptionForestMDwithFile :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside) => FilePath -> ForestI fs (Forest_md fs)
 ioExceptionForestMDwithFile path = do
 	err <- mod $ return Pure.ioExceptionForestErr
 	return $ Forest_md { errors = err, fileInfo = Pure.mkErrorFileInfo path }
@@ -301,13 +293,13 @@ mergeErrors m1 m2 = case (m1,m2) of
             (Just a, _) -> Just a
             (_, Just b) -> Just b
 
-cleanForestMDwithFile :: (ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> ForestL fs l (Forest_md fs)
+cleanForestMDwithFile :: (IncK (IncForest fs) Forest_err,ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> ForestL fs l (Forest_md fs)
 cleanForestMDwithFile path = inside $ do
 	abspath <- forestM $ forestIO $ absolutePath path
 	fmd <- cleanForestMD
 	return $ fmd { fileInfo = (fileInfo fmd) { fullpath = abspath } }
 
-cleanSymLinkForestMDwithFile :: (ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> FilePath -> ForestL fs l (Forest_md fs)
+cleanSymLinkForestMDwithFile :: (IncK (IncForest fs) Forest_err,ICRep fs,ForestLayer fs l,ForestInput fs FSThunk Inside) => FilePath -> FilePath -> ForestL fs l (Forest_md fs)
 cleanSymLinkForestMDwithFile path tgt = inside $ do
 	abspath <- forestM $ forestIO $ absolutePath path
 	fmd <- cleanForestMD
@@ -365,7 +357,7 @@ updateForestMDErrorsInsideWith md get_errs = replace_errors md $ \err0 -> get_er
 updateForestMDErrorsInsideWithPadsMD :: (PadsMD pads_md,ForestMD fs md) => md -> ForestI fs pads_md -> ForestI fs md
 updateForestMDErrorsInsideWithPadsMD md get_errs = replace_errors md $ \err0 -> get_errs >>= \errs -> return $ Pure.updateForestErr err0 [padsError $ get_md_header errs]
 
-replaceForestMDErrorsWith :: ForestMD fs md => md -> ForestI fs [Forest_err] -> ForestO fs ()
+replaceForestMDErrorsWith :: (IncK (IncForest fs) Forest_err,ForestMD fs md) => md -> ForestI fs [Forest_err] -> ForestO fs ()
 replaceForestMDErrorsWith md get_errs = overwrite_errors md $ do
 	errs <- get_errs
 	return $ Pure.mergeMDErrors errs
@@ -434,10 +426,10 @@ predForestErr m = do
 	if cond then return cleanForestMDErr else return Pure.constraintViolationForestErr
 	
 
-getForestMDInTree :: (ICRep fs,ForestLayer fs l) => FilePath -> FSTree fs -> ForestL fs l (Forest_md fs)
+getForestMDInTree :: (IncK (IncForest fs) Forest_err,ICRep fs,ForestLayer fs l) => FilePath -> FSTree fs -> ForestL fs l (Forest_md fs)
 getForestMDInTree path tree = forestM (pathInTree path tree) >>= getForestMD path
 
-getRelForestMDInTree :: (ICRep fs,ForestLayer fs l) => FilePath -> FSTree fs -> FilePath -> ForestL fs l (Forest_md fs)
+getRelForestMDInTree :: (IncK (IncForest fs) Forest_err,ICRep fs,ForestLayer fs l) => FilePath -> FSTree fs -> FilePath -> ForestL fs l (Forest_md fs)
 getRelForestMDInTree path tree file = getForestMDInTree (path </> file) tree
 
 $( derive makeDeepTypeable ''(:*:) )

@@ -14,7 +14,8 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.CodeGen.ZDeltaLoading
 	, module Language.Forest.IC.CodeGen.ZLoading
 	, module Language.Forest.IC.CodeGen.Storing  
-	, module Language.Forest.IC.CodeGen.ZStoring                   
+	, module Language.Forest.IC.CodeGen.ZStoring    
+	, module Language.Forest.IC.CodeGen.ZDeltaStoring                   
 	, module Language.Forest.IC.CodeGen.Utils
 	, module Language.Forest.IC.CodeGen
 	, module Language.Forest.IC.Display
@@ -25,6 +26,7 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.FS.NILFS
 	, module Language.Forest.IC.FS.NILFSDiff
 	, module Language.Forest.IC.FS.TxVarFS
+	, module Language.Forest.IC.FS.TxICFS
 	, module Language.Forest.IC.Generic
 	, module Language.Forest.IC.ICRep
 	, module Language.Forest.IC.IO.Default
@@ -66,7 +68,8 @@ import Language.Forest.IC.CodeGen.Loading
 import Language.Forest.IC.CodeGen.ZDeltaLoading
 import Language.Forest.IC.CodeGen.ZLoading
 import Language.Forest.IC.CodeGen.Storing      
-import Language.Forest.IC.CodeGen.ZStoring                   
+import Language.Forest.IC.CodeGen.ZStoring    
+import Language.Forest.IC.CodeGen.ZDeltaStoring                   
 import Language.Forest.IC.CodeGen.Utils
 import Language.Forest.IC.CodeGen
 import Language.Forest.IC.Display
@@ -77,6 +80,7 @@ import Language.Forest.IC.FS.LazyFS
 import Language.Forest.IC.FS.NILFS
 import Language.Forest.IC.FS.NILFSDiff
 import Language.Forest.IC.FS.TxVarFS
+import Language.Forest.IC.FS.TxICFS
 import Language.Forest.IC.Generic
 import Language.Forest.IC.ICRep
 import Language.Forest.IC.IO.Default

@@ -3,7 +3,9 @@
 
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and no incrementality
 
-module Language.Forest.IC.FS.TxVarFS where
+module Language.Forest.IC.FS.TxVarFS (
+	TxICForest(..)
+	) where
 
 import Control.Monad.RWS (RWS(..),RWST(..))
 import qualified Control.Monad.RWS as RWS
@@ -70,6 +72,8 @@ import Safe
 import Control.Monad.Catch as Catch
 import System.Mem.Concurrent.WeakMap as WeakMap
 
+type instance IncK (IncForest TxVarFS) a = (Typeable a,Eq a)
+
 proxyTxVarFS = Proxy :: Proxy TxVarFS
 
 -- a list of the starting times of running transactions sorted from newest to oldest (we may two txs with the same starting time)
@@ -99,7 +103,7 @@ type TxVarFSLog = IORef (FSVersion,TxVarFSChanges,Set FilePath)
 -- nested logs for nested transactions
 type TxVarFSLogs = SList TxVarFSLog
 
--- (starttime,nested logs)
+-- (starttime,start fsversion,nested logs)
 type TxVarFSEnv = (IORef UTCTime,FSVersion,TxVarFSLogs)
 
 type TxVarFSReads = Set FilePath
@@ -238,7 +242,7 @@ doesExistTxVarFS test path = do
 	(_,td) <- getTxVarFSChanges
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	case path_td of
-		Just (FSTreeNew _ _ diskpath) -> forestIO $ test diskpath
+		Just (FSTreeNew _ _ diskpath _) -> forestIO $ test diskpath
 		otherwise -> forestIO $ test canpath
 
 -- canonalizes a path, taking into account the buffered FSTreeDelta and logging reads of followed symlinks
@@ -318,6 +322,13 @@ instance ZippedICMemo TxVarFS where
 		
 	findZippedMemo args path rep = return Nothing
 
+argsTxVarFS :: (FTK TxVarFS args rep var content) => Proxy args -> rep -> ForestO TxVarFS (ForestVs args,FilePath)
+argsTxVarFS proxy rep = do
+	mb <- forestM $ getFTVArgs proxy rep
+	case mb of
+		Nothing -> error "should not happen"
+		Just (margs,path) -> liftM (,path) $ inside $ vArgs Proxy proxy margs
+
 getFTVArgs :: (FTK TxVarFS args rep var content) => Proxy args -> rep -> ForestM TxVarFS (Maybe (ForestIs TxVarFS args,FilePath))
 getFTVArgs (proxy ::Proxy args) rep = forestIO $ do
 	let (TxVarFSThunk (rdyn,_,_)) = to iso_rep_thunk rep
@@ -387,6 +398,7 @@ instance TxICForest TxVarFS where
 	throw = throwTxVarFS 
 	catch = catchTxVarFS 
 	new = newTxVarFS Proxy
+	args = argsTxVarFS Proxy
 	read = readTxVarFS
 	writeOrElse = writeOrElseTxVarFS
 	delete = deleteTxVarFS Proxy
@@ -461,7 +473,6 @@ atomicallyTxVarFS stm = initializeTxVarFS try where
 			then return x
 			else debug "throw InvalidTx" $ throwM InvalidTx
 	catchInvalid InvalidTx = debug "InvalidTx" $ do
-		forestM $ forestIO $ threadDelay 2000000
 		resetTxVarFS try
 	catchRetry BlockedOnRetry = debug "BlockedOnRetry" $ do
 		-- if the retry was invoked on an inconsistent state, we incrementally repair and run again, otherwise we place the tx in the waiting queue
@@ -479,7 +490,6 @@ atomicallyTxVarFS stm = initializeTxVarFS try where
 		if success
 			then throwM e
 			else do
-				forestM $ forestIO $ threadDelay 2000000
 				resetTxVarFS try
 
 
@@ -491,7 +501,7 @@ orElseTxVarFS stm1 stm2 = do1 where
 	try1 = do { x <- stm1; validateAndCommitNestedTxVarFS Nothing; return x }
 	try2 = do { x <- stm2; validateAndCommitNestedTxVarFS Nothing; return x }
 	do1 = startNestedTxVarFS $ try1 `Catch.catches` [Catch.Handler catchRetry1,Catch.Handler catchInvalid,Catch.Handler catchSome]
-	do2 = dropTopTxLog $ startNestedTxVarFS $ try2 `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
+	do2 = dropChildTxLog $ startNestedTxVarFS $ try2 `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
 	catchRetry1 BlockedOnRetry = validateAndRetryNestedTxVarFS >> do2
 	catchRetry2 BlockedOnRetry = validateAndRetryNestedTxVarFS >> throwM BlockedOnRetry
 	catchInvalid (e::InvalidTx) = throwM e
@@ -539,8 +549,8 @@ startNestedTxVarFS m = do
 	txlog_child <- inL $ newRef (fsversion,chgs,tmps)
 	debug ("startNestedTxVarFS ") $ Reader.local (Prelude.const (starttime,startversion,SCons txlog_child txlogs)) m
 
-dropTopTxLog :: TxVarFTM a -> TxVarFTM a
-dropTopTxLog m = Reader.local (\(starttime,startversion,SCons _ txlogs) -> (starttime,startversion,txlogs)) m
+dropChildTxLog :: TxVarFTM a -> TxVarFTM a
+dropChildTxLog m = Reader.local (\(starttime,startversion,SCons _ txlogs) -> (starttime,startversion,txlogs)) m
 
 -- if an inner tx validation fails, then we throw an @InvalidTx@ exception to retry the whole atomic block
 data InvalidTx = InvalidTx deriving (Typeable)
@@ -642,11 +652,11 @@ validateCatchTxVarFS = atomicTxVarFS "validateCatchTxVarFS" $ do
 
 unbufferTxVarFSWrites :: ForestM TxVarFS ()
 unbufferTxVarFSWrites = do
-	(starttime,startversion,txlogs) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- Reader.ask
 	let unbufferTxVarFSLog txlog1 = do
 		(fsversion1,(reads1,chgs1),tmps1) <- readRef txlog1
 		writeRef txlog1 (startversion,(reads1,emptyFSTreeDelta),tmps1)
-	forestIO $ Foldable.mapM_ unbufferTxVarFSLog txlogs
+	forestIO $ unbufferTxVarFSLog txlog
 
 validateTxsVarFS :: UTCTime -> TxVarFSLogs -> ForestM TxVarFS Bool
 validateTxsVarFS starttime txlogs = do
@@ -758,7 +768,6 @@ atomicTxVarFS msg m = do
 	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 
--- acquiring the locks in sorted order is essential to avoid deadlocks!
 withLock :: Lock -> TxVarFTM a -> TxVarFTM a
 withLock = liftA2 Catch.bracket_ (forestM . forestIO . Lock.acquire) (forestM . forestIO . Lock.release)
 

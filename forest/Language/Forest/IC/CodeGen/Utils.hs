@@ -1,4 +1,4 @@
-{-# LANGUAGE KindSignatures, ViewPatterns, TemplateHaskell, MultiParamTypeClasses, FlexibleContexts, ConstraintKinds, TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances, KindSignatures, ViewPatterns, TemplateHaskell, MultiParamTypeClasses, FlexibleContexts, ConstraintKinds, TypeSynonymInstances, FlexibleInstances #-}
 
 module Language.Forest.IC.CodeGen.Utils where
 
@@ -57,7 +57,7 @@ buildFieldLens field = do
 	let putE = LamE [rP,fP] $ RecUpdE rE [(field,fE)]
 	return $ Pure.appE2 (ConE 'Lens) getE putE
 	
-class (ICRep fs,ForestInput fs FSThunk Inside) => MDContainer fs md where
+class (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside) => MDContainer fs md where
 	collect_container_mds :: ForestLayer fs l => md -> ForestL fs l [Forest_md fs]
 	merge_container_errors :: ForestLayer fs l => md -> ForestL fs l Forest_err
 	merge_container_errors md = liftM Pure.mergeMDErrors $ mapM get_errors =<< collect_container_mds md
@@ -67,7 +67,7 @@ instance (ForestMD fs md,BuildContainer1 c md) => MDContainer fs (c (FilePath,md
 instance (ForestMD fs md,BuildContainer2 c md) => MDContainer fs (c FilePath md) where
 	collect_container_mds = collect_list_mds . toList2
 	
-instance (Typeable a,Eq a,MDContainer fs a) => MDContainer fs (ForestFSThunkI fs a) where
+instance (IncK (IncForest fs) a,MDContainer fs a) => MDContainer fs (ForestFSThunkI fs a) where
 	collect_container_mds t = collect_container_mds =<< inside (Inc.get t)
 
 merge_list_errors :: (ForestLayer fs l,ForestMD fs md) => [(FilePath,md)] -> ForestL fs l Forest_err

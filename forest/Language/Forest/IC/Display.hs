@@ -49,19 +49,19 @@ instance (Layer l inc r m) => Display l inc r m ManifestEntry where
 
 -- * Display
 	
-instance (Typeable a,MonadLazy (Outside (IncForest fs) r m),Eq a,Display Outside (IncForest fs) r m a,Output (ICThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (ICThunk fs l (IncForest fs) r m a) where
+instance (IncK (IncForest fs) a,MonadLazy (Outside (IncForest fs) r m),Display Outside (IncForest fs) r m a,Output (ICThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (ICThunk fs l (IncForest fs) r m a) where
 	displaysPrec l inc r m t rest = forceOutside t >>= \x -> lazily $ displaysPrec l inc r m x rest
 	{-# INLINE displaysPrec #-}
 
-instance (Typeable a,MonadLazy (Inside (IncForest fs) r m),Eq a,Display Inside (IncForest fs) r m a,Output (ICThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (ICThunk fs Inside (IncForest fs) r m a) where
+instance (IncK (IncForest fs) a,MonadLazy (Inside (IncForest fs) r m),Display Inside (IncForest fs) r m a,Output (ICThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (ICThunk fs Inside (IncForest fs) r m a) where
 	displaysPrec l inc r m t rest = force t >>= \x -> lazily $ displaysPrec l inc r m x rest
 	{-# INLINE displaysPrec #-}
 
-instance (Typeable a,MonadLazy (Outside (IncForest fs) r m),Eq a,Display Outside (IncForest fs) r m a,Input (FSThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (FSThunk fs l (IncForest fs) r m a) where
+instance (IncK (IncForest fs) a,MonadLazy (Outside (IncForest fs) r m),Display Outside (IncForest fs) r m a,Input (FSThunk fs) l (IncForest fs) r m) => Display Outside (IncForest fs) r m (FSThunk fs l (IncForest fs) r m a) where
 	displaysPrec l inc r m t rest = getOutside t >>= \x -> lazily $ displaysPrec l inc r m x rest
 	{-# INLINE displaysPrec #-}
 
-instance (Typeable a,MonadLazy (Inside (IncForest fs) r m),Eq a,Display Inside (IncForest fs) r m a,Input (FSThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (FSThunk fs Inside (IncForest fs) r m a) where
+instance (IncK (IncForest fs) a,MonadLazy (Inside (IncForest fs) r m),Display Inside (IncForest fs) r m a,Input (FSThunk fs) Inside (IncForest fs) r m) => Display Inside (IncForest fs) r m (FSThunk fs Inside (IncForest fs) r m a) where
 	displaysPrec l inc r m t rest = get t >>= \x -> lazily $ displaysPrec l inc r m x rest
 	{-# INLINE displaysPrec #-}
 

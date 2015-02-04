@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds, TemplateHaskell #-}
+
 {-
 ** *********************************************************************
 *                                                                      *
@@ -37,6 +39,7 @@ import Prelude hiding (exp, init)
 import System.IO.Unsafe (unsafePerformIO)
 
 import Language.Haskell.TH
+import Language.Forest.FS.FSRep
 import Language.Forest.IC.Generic
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 
@@ -76,6 +79,12 @@ fquasiquote1IC mb p = QuasiQuoter
 	(error "parse type")
 	(fparse1 ICForest p $ IC.make_forest_declarations mb)
 
+fquasiquote1z fsTys p = QuasiQuoter
+	(error "parse expression")
+	(error "parse pattern")
+	(error "parse type")
+	(fparse1 ICForest p $ flip IC.make_zforest_declarations' (Just fsTys))
+
 make_decls PureForest = Pure.make_forest_declarations
 make_decls ICForest = do
 --	unzipped <- IC.make_forest_declarations Nothing
@@ -88,7 +97,11 @@ forest  = fquasiquote1 PureForest P.forestDecls
 
 -- | A quasi-quoter for Forest with IC-specific data structures
 iforest :: QuasiQuoter
-iforest  = fquasiquote1 ICForest P.forestDecls
+--iforest  = fquasiquote1 ICForest P.forestDecls
+iforest = fquasiquote1z [ConT 'TxVarFS,ConT 'TxICFS] P.forestDecls
+	
+--txforest :: QuasiQuoter
+--txforest = fquasiquote1z (ConT 'TxVarFS) P.forestDecls
 	
 -- | A quasi-quoter for incremental forest with data thunks
 idforest :: QuasiQuoter

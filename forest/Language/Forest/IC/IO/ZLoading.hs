@@ -1,4 +1,4 @@
-{-# LANGUAGE OverlappingInstances, TupleSections, FlexibleContexts, ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
+{-# LANGUAGE ConstraintKinds, OverlappingInstances, TupleSections, FlexibleContexts, ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
 
 
 
@@ -56,12 +56,12 @@ import Data.Proxy
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- Pads errors contribute to the Forest error count
-doZLoadFile1 :: (ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,Eq pads,Eq md,FSRep fs,Pads1 arg pads md) =>
+doZLoadFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
 	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
-	let fsrepProxy = Proxy -- :: Proxy (ForestFSThunkI fs pads)
+	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
 	
@@ -87,7 +87,7 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 	oldpath <- oldpath_f path
 	mb <- findZippedMemo argProxy oldpath fsrepProxy 
 	rep <- case mb of
-		(Just (memo_tree@(isObservableFSTree -> True),memo_marg,memo_rep)) -> do
+		(Just (memo_tree,memo_marg,memo_rep)) -> do
 			memo_arg <- memo_marg
 			-- deep equality of arguments, since thunks can be arguments and change
 			samearg <- geq proxyNoCtx memo_arg arg
@@ -95,13 +95,13 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 				then do
 					debug ("memo hit " ++ show path) $ do
 					df <- forestM $ diffFS memo_tree tree path
-					dv <- diffValueThunk memo_tree memo_rep
+					dv <- unsafeWorld $ diffValueThunk memo_tree memo_rep
 					case (isIdValueDelta dv,df) of
 						(True,Just (isEmptyFSTreeDeltaNodeMay -> True)) -> if oldpath==path
 							then reuse_same_file memo_rep
 							else reuse_other_file oldpath memo_rep
 						(True,Just (Just (FSTreeChg _ _))) -> reuse_other_file path memo_rep
-						(True,Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _))) -> reuse_other_file oldpath memo_rep
+						(True,Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _ _))) -> reuse_other_file oldpath memo_rep
 						otherwise -> load_file
 				else load_file
 		Nothing -> load_file				
@@ -112,27 +112,27 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 -- | compressed archive (tar,gz,zip)
 -- incremental loading is only supported if the specification for the archive's contents is:
 -- 1) closed = does not depend on free variables -- this ensures that specs can be reused locally
-doZLoadArchive :: (DeltaClass d,Typeable rep,ZippedICMemo fs,ForestMD fs rep,Eq rep,FSRep fs) =>
+doZLoadArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,DeltaClass d,ZippedICMemo fs,ForestMD fs rep,FSRep fs) =>
 	Bool -> Proxy rep
 	-> [ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
 	-> (FilePath -> ForestI fs rep)
 	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (d rep))
-	-> (FSTree fs -> rep -> ForestI fs (ValueDelta fs rep))
+	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FSTree fs) getMD loadGood loadBad loadD diffValue = do
 	let fs = Proxy :: Proxy fs
 	let argsProxy = Proxy :: Proxy ()
-	let fsrepProxy = Proxy -- :: Proxy (ForestFSThunkI fs rep)
+	let fsrepProxy = Proxy
 	-- static loading
-	let load_folder = fsThunk $ doZLoadArchive' exts oldpath_f path tree getMD loadGood loadBad
+	let load_folder = fsThunk $ doZLoadArchiveInner exts oldpath_f path tree getMD loadGood loadBad
 		
 	if isClosed
 		then do
 			oldpath <- oldpath_f path
 			mb <- findZippedMemo argsProxy oldpath fsrepProxy
 			rep <- case mb of
-				Just (memo_tree@(isObservableFSTree -> True),(),memo_rep_thunk) -> do
+				Just (memo_tree,(),memo_rep_thunk) -> do
 	
 					md@(fmd,irep) <- get memo_rep_thunk
 					
@@ -141,9 +141,9 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 					let oldpathC = cardinalPath oldpath
 					let pathC = cardinalPath path
 					archiveDf <- forestM $ focusDiffFSTree memo_tree oldpathC tree pathC
-					dv <- diffValue memo_tree irep
 					
 					unsafeWorld $ do
+						dv <- diffValue memo_tree irep
 						direp <- liftM toNSValueDelta $ loadD (return oldpathC) pathC (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree dv
 						case (oldpath==path,direp) of
 							(True,StableVD _) -> do
@@ -161,19 +161,12 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 			return rep
 		else load_folder
 
-doZLoadArchiveInner :: (Eq rep,Typeable rep,ForestMD fs rep,ICRep fs) =>
-	[ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
-	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
-	-> (FilePath -> ForestI fs rep)
-	-> ForestI fs rep
-doZLoadArchiveInner exts oldpath_f path  tree getMD loadGood loadBad = liftM snd $ doZLoadArchive' exts oldpath_f path  tree getMD loadGood loadBad
-
-doZLoadArchive' :: (Eq rep,Typeable rep,ForestMD fs rep,ICRep fs) =>
+doZLoadArchiveInner :: (ForestMD fs rep,ICRep fs) =>
 	[ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
 	-> (FilePath -> ForestI fs rep)
 	-> ForestI fs (Forest_md fs,rep)
-doZLoadArchive' exts oldpath_f path  tree getMD loadGood loadBad = do
+doZLoadArchiveInner exts oldpath_f path  tree getMD loadGood loadBad = do
 	
 	let archGood = do
 		fmd <- getMD path tree
@@ -182,14 +175,14 @@ doZLoadArchive' exts oldpath_f path  tree getMD loadGood loadBad = do
 		fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ get_errors rep_arch -- like a directory
 		return (fmd',rep_arch)
 	
-	let archBad = doZDefaultArchive' path loadBad
+	let archBad = doZDefaultArchiveInner path loadBad
 	
 	checkZPath' (Just False) path tree (checkZFileExtension (archiveExtension exts) path archGood archBad) archBad
 		
-doZLoadSymLink :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (SymLink fs)
+doZLoadSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (SymLink fs)
 doZLoadSymLink path tree getMD = liftM SymLink $ fsThunk $ doZLoadSymLink' path tree getMD
 
-doZLoadSymLink' :: (ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs ((Forest_md fs,Base_md),FilePath)
+doZLoadSymLink' :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs ((Forest_md fs,Base_md),FilePath)
 doZLoadSymLink' path tree getMD = do
 	
 	let linkGood = do
@@ -204,7 +197,7 @@ doZLoadSymLink' path tree getMD = do
 		
 	checkZPath' Nothing path tree linkGood linkBad
 
-doZLoadConstraint :: (Eq rep,Typeable rep,ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
+doZLoadConstraint :: (IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
 	FSTree fs -> (rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep))
 doZLoadConstraint tree pred load = fsThunk $ doZLoadConstraintInner tree pred load
 
@@ -237,12 +230,12 @@ doZLoadNewPath pathfilter oldpath file tree getMD load = debug ("doLoadNewPath "
 	newpath <- forestM $ stepPathInTree tree oldpath file -- changes the old path by a relative path, check the path traversal restrictions specific to each FS instantiation
 	load newpath getMD
 
-doZLoadDirectory :: (Typeable rep,ForestInput fs FSThunk Inside,Eq rep,ICRep fs)
+doZLoadDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, rep),ForestInput fs FSThunk Inside,ICRep fs)
 	=> FilePath -> FSTree fs -> (rep -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs rep -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZLoadDirectory path tree collectMDErrors getMD ifGood ifBad = fsThunk $ doZLoadDirectory' path tree collectMDErrors getMD ifGood ifBad
 
 -- the error count of the directory is computed lazily, so that if we only want, e.g., the fileinfo of the directory we don't need to check its contents
-doZLoadDirectory' :: (ICRep fs,ForestInput fs FSThunk Inside,Eq rep)
+doZLoadDirectory' :: (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside)
 	=> FilePath -> FSTree fs -> (rep -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs rep -> ForestI fs rep -> ForestI fs (Forest_md fs,rep)
 doZLoadDirectory' path tree collectMDErrors getMD ifGood ifBad = debug ("doLoadDirectory: "++show path) $ do
 	
@@ -256,13 +249,13 @@ doZLoadDirectory' path tree collectMDErrors getMD ifGood ifBad = debug ("doLoadD
 	
 	checkZPath' (Just True) path tree dirGood dirBad
 
-doZLoadMaybe :: (Typeable rep,Eq rep,ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (Forest_md fs,Maybe rep))
+doZLoadMaybe :: (IncK (IncForest fs) (Forest_md fs, Maybe rep),ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (Forest_md fs,Maybe rep))
 doZLoadMaybe pathfilter path tree ifExists = fsThunk $ doZLoadMaybe' pathfilter path tree ifExists
 
-doZLoadMaybeInner :: (Typeable rep,Eq rep,ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (Maybe rep)
+doZLoadMaybeInner :: (ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (Maybe rep)
 doZLoadMaybeInner pathfilter path tree ifExists = liftM snd $ doZLoadMaybe' pathfilter path tree ifExists
 
-doZLoadMaybe' :: (Typeable rep,Eq rep,ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (Forest_md fs,Maybe rep)
+doZLoadMaybe' :: (ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (Forest_md fs,Maybe rep)
 doZLoadMaybe' pathfilter path tree ifExists = do
 	exists <- forestM $ doesExistInTree path tree
 	if exists
@@ -289,7 +282,7 @@ doZLoadSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs rep,M
 	-> ForestI fs (ForestFSThunkI fs Forest_err,rep)
 doZLoadSimpleWithConstraint pathfilter path matching tree pred load = doZLoadConstraintInner tree pred $ matching >>= \m -> doZLoadFocus pathfilter path m tree getForestMDInTree load
 
-doZLoadCompound :: (Typeable container_rep,Eq container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZLoadCompound :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> ([(FilePath,rep')] -> container_rep)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
@@ -306,7 +299,7 @@ doZLoadCompound pathfilter path matchingM tree buildContainerRep load = debug ("
 	loadlist <- mapM loadEach filesmetas
 	return $ buildContainerRep loadlist
 
-doZLoadCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZLoadCompoundWithConstraint :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Bool,IncK (IncForest fs) container_rep,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> (FilePath -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> ([(FilePath,rep')] -> container_rep)
@@ -331,7 +324,7 @@ doZLoadCompoundWithConstraint pathfilter path matchingM tree pred buildContainer
 
 ---- ** auxiliary functions
 
-checkZPath :: (Typeable rep,ICRep fs,Eq rep,ForestMD fs rep) => FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs rep)
+checkZPath :: (IncK (IncForest fs) rep,ICRep fs,ForestMD fs rep) => FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs rep)
 checkZPath path tree ifExists ifNotExists = mod $ checkZPath' (Just False) path tree ifExists ifNotExists
 
 checkZPath' :: (ForestMD fs rep) => Maybe Bool -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs rep -> ForestI fs rep

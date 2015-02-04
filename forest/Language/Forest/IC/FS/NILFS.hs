@@ -64,6 +64,8 @@ import Control.Monad.Lazy
 import Control.Monad.Reader (Reader(..),ReaderT(..),MonadReader(..))
 import qualified Control.Monad.Reader as Reader
 
+type instance IncK (IncForest NILFS) a = (Typeable a,Eq a)
+
 instance LiftInc Inside Adapton (IncForest NILFS) IORef IO where
 	liftInc = NILFSForestI . lift
 instance LiftInc Outside Adapton (IncForest NILFS) IORef IO where
@@ -181,8 +183,6 @@ instance ICRep NILFS where
 	forestM = inside . NILFSForestI . runNILFSForestM
 	
 	data FSThunk NILFS l inc r m a = NILFSFSThunk { adaptonThunk :: (L l (IncForest NILFS) r m a), unmemoNILFS :: r (IO ()) } -- a set of snapshots on which the FSThunk depends and a lazy Adapton modifiable
-		
-	isUnforcedFSThunk t = Adapton.isUnforcedL (adaptonThunk t)
 	
 	newtype ICThunk NILFS l inc r m a = NILFSU { adaptonU :: U l (IncForest NILFS) r m a }
 
@@ -273,7 +273,19 @@ instance Input (FSThunk NILFS) Inside (IncForest NILFS) IORef IO where
 		forestM $ forestIO f
 	get = read
 
-instance Thunk (FSThunk 'NILFS) Outside (IncForest 'NILFS) IORef IO where
+instance Thunk U Outside (IncForest NILFS) IORef IO where
+
+instance Output U Outside (IncForest NILFS) IORef IO where
+
+instance Thunk U Inside (IncForest NILFS) IORef IO where
+
+instance Thunk L Inside (IncForest NILFS) IORef IO where
+
+instance Output U Inside (IncForest NILFS) IORef IO where
+
+instance Input L Inside (IncForest NILFS) IORef IO where
+
+instance Thunk (FSThunk 'NILFS) Outside (IncForest NILFS) IORef IO where
 
 instance Input (FSThunk NILFS) Outside (IncForest NILFS) IORef IO where
 

@@ -105,10 +105,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	
 	eqFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Bool
 
-	isUnevaluatedFSThunk :: (ForestLayer fs l,ForestLayer fs l1) => ForestFSThunk fs l1 a -> ForestL fs l Bool
-
-	-- | tests of a @FSThunk@ has been ever forced. This test is important for efficient delta loading, as it allows us to safely stop incremental repair if the thunk has never been inspected.
-	isUnforcedFSThunk :: (ForestLayer fs l,ForestLayer fs l1) => ForestFSThunk fs l1 a -> ForestL fs l Bool
+	isUnevaluatedFSThunk :: (IncK (IncForest fs) a,ForestLayer fs l) => ForestFSThunk fs l a -> ForestL fs l Bool
 
 	-- | incremental computation thunks that depend on @FSThunk@s and cannot be directly modified, but are updated for changes on dependencies
 	data ICThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
@@ -124,8 +121,8 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	data ValueDelta fs a :: *
 	
 	-- value changes since a given FSTree. recursive nodifications
-	diffValueThunk :: ForestRep rep (ForestFSThunkI fs content) => FSTree fs -> rep -> ForestI fs (ValueDelta fs rep)
-	diffValueAny :: FSTree fs -> rep -> ForestI fs (ValueDelta fs rep)
+	diffValueThunk :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
+	diffValueAny :: FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
 	
 	isIdValueDelta :: ValueDelta fs a -> Bool
 	idValueDelta :: ValueDelta fs a
@@ -133,7 +130,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	mapValueDelta :: Proxy fs -> ValueDelta fs a -> ValueDelta fs b
 	
 	-- has the content of a thunk been explicitly modified? no recursive modifications
-	diffTopValueThunk :: ForestRep rep (ForestFSThunkI fs content) => FSTree fs -> rep -> ForestI fs Bool
+	diffTopValueThunk :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
 
 class ICRep fs => ICMemo (fs :: FS) where
 	
@@ -153,32 +150,32 @@ class ICRep fs => ZippedICMemo fs where
 	
 	-- adds a consistent path ~ value entry to the consistency table
 	-- if no tree is provided, no memoization is done and we just remember the arguments
-	addZippedMemo :: (Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => FilePath -> Proxy args -> ForestIs fs args -> rep -> Maybe (FSTree fs) -> ForestI fs ()
+	addZippedMemo :: (IncK (IncForest fs) content,Typeable content,Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => FilePath -> Proxy args -> ForestIs fs args -> rep -> Maybe (FSTree fs) -> ForestI fs ()
 	
 	-- given a path finds an old entry = (old FSTree,outdated thunks)
 	-- the old entry needs to match on the filepath, i.e., have been loaded with that path
 	-- if repairing incrementally, we have to assume that the environment changed
-	findZippedMemo :: Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep))
+	findZippedMemo :: (IncK (IncForest fs) content,Typeable content,Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep))
 	
 
 type ForestThunk fs mod l = Thunk (mod fs) l (IncForest fs) IORef IO
 type ForestOutput fs mod l = Output (mod fs) l (IncForest fs) IORef IO
 type ForestInput fs mod l = Input (mod fs) l (IncForest fs) IORef IO
 
-fsRef :: (Typeable a,Eq a,FSRep fs,ForestInput fs FSThunk l) => a -> ForestL fs l (ForestFSThunk fs l a)
+fsRef :: (IncK (IncForest fs) a,FSRep fs,ForestInput fs FSThunk l) => a -> ForestL fs l (ForestFSThunk fs l a)
 fsRef = ref
-fsThunk :: (Typeable a,Eq a,FSRep fs,ForestInput fs FSThunk l) => ForestL fs l a -> ForestL fs l (ForestFSThunk fs l a)
+fsThunk :: (IncK (IncForest fs) a,FSRep fs,ForestInput fs FSThunk l) => ForestL fs l a -> ForestL fs l (ForestFSThunk fs l a)
 fsThunk = mod
-icThunk :: (Typeable a,Eq a,FSRep fs,ForestOutput fs ICThunk l) => ForestL fs l a -> ForestL fs l (ForestICThunk fs l a)
+icThunk :: (IncK (IncForest fs) a,FSRep fs,ForestOutput fs ICThunk l) => ForestL fs l a -> ForestL fs l (ForestICThunk fs l a)
 icThunk = thunk
-newHSThunk :: (Typeable a,Eq a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
+newHSThunk :: (IncK (IncForest fs) a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
 newHSThunk = new
 
 deriving instance Typeable FSThunk
 deriving instance Typeable ICThunk
 deriving instance Typeable HSThunk
 
-instance (Eq a,ForestLayer fs l,ForestThunk fs FSThunk l,MData ctx (ForestL fs l) a
+instance (IncK (IncForest fs) a,ForestLayer fs l,ForestThunk fs FSThunk l,MData ctx (ForestL fs l) a
 		, Sat (ctx (ForestFSThunk fs l a)),DeepTypeable (ForestFSThunk fs l a)
 		) => MData ctx (ForestL fs l) (ForestFSThunk fs l a) where
 	gfoldl ctx k z t = z new >>= flip k (read t)
@@ -187,7 +184,7 @@ instance (Eq a,ForestLayer fs l,ForestThunk fs FSThunk l,MData ctx (ForestL fs l
 	dataTypeOf ctx x = return ty
 		where ty = mkDataType "Language.Forest.FS.FSRep.FSThunk" [mkConstr ty "FSThunk" [] Prefix]
 		
-instance (Eq a,ForestLayer fs l,ForestThunk fs ICThunk l,MData ctx (ForestL fs l) a
+instance (IncK (IncForest fs) a,ForestLayer fs l,ForestThunk fs ICThunk l,MData ctx (ForestL fs l) a
 		, Sat (ctx (ForestICThunk fs l a)),DeepTypeable (ForestICThunk fs l a)
 		) => MData ctx (ForestL fs l) (ForestICThunk fs l a) where
 	gfoldl ctx k z t = z new >>= flip k (read t)
@@ -196,7 +193,7 @@ instance (Eq a,ForestLayer fs l,ForestThunk fs ICThunk l,MData ctx (ForestL fs l
 	dataTypeOf ctx x = return ty
 		where ty = mkDataType "Language.Forest.FS.FSRep.ICThunk" [mkConstr ty "ICThunk" [] Prefix]
 
-instance (Eq a,ForestLayer fs l,ForestThunk fs HSThunk l,MData ctx (ForestL fs l) a
+instance (IncK (IncForest fs) a,ForestLayer fs l,ForestThunk fs HSThunk l,MData ctx (ForestL fs l) a
 		, Sat (ctx (ForestHSThunk fs l a)),DeepTypeable (ForestHSThunk fs l a)
 		) => MData ctx (ForestL fs l) (ForestHSThunk fs l a) where
 	gfoldl ctx k z t = z new >>= flip k (read t)
@@ -298,6 +295,8 @@ instance DeepTypeable NILFS where
 	typeTree (_::Proxy NILFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.NILFS") [] []
 instance DeepTypeable TxVarFS where
 	typeTree (_::Proxy TxVarFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.TxVarFS") [] []
+instance DeepTypeable TxICFS where
+	typeTree (_::Proxy TxICFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.TxICFS") [] []
 
 instance DeepTypeable IncForest where
 	typeTree (_::Proxy (IncForest)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.IncForest") [] []
@@ -313,7 +312,7 @@ fsTreeDeltaPathFilter df root path = if isParentPathOf root path
 		let rel = makeRelative root path
 		let td = focusFSTreeDeltaNodeMayByRelativePath df rel
 		case td of
-			Just (FSTreeNew _ (Just from) _) -> return from
+			Just (FSTreeNew _ (Just from) _ _) -> return from
 			otherwise -> return path
 	else return path
 	

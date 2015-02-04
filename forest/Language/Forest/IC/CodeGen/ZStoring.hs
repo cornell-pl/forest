@@ -8,6 +8,7 @@ import Control.Monad.Trans
 import Control.Monad.Incremental
 import Language.Forest.IC.CodeGen.ZDefault
 
+import {-# SOURCE #-} Language.Forest.IC.CodeGen.ZDeltaStoring
 import Data.WithClass.MData
 import Language.Forest.IC.CodeGen.Default
 import Language.Forest.IC.IO.Storing
@@ -140,18 +141,29 @@ zmanifestArchive :: Bool -> [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Ex
 zmanifestArchive isTop archtype ty pathE treeE dtaE manE = do
 	newPathName <- lift $ newName "new_path"
 	let (newPathE,newPathP) = genPE newPathName
+	newPathName' <- lift $ newName "new_path'"
+	let (newPathE',newPathP') = genPE newPathName
 	newTreeName <- lift $ newName "new_tree"
 	let (newTreeE, newTreeP) = genPE newTreeName
+	newTreeName' <- lift $ newName "new_tree'"
+	let (newTreeE', newTreeP') = genPE newTreeName'
 	newmanName <- lift $ newName "man"
 	let (newmanE,newmanP) = genPE newmanName
 	newdtaName <- lift $ newName "dta"
 	let (newdtaE,newdtaP) = genPE newdtaName
+	newmanName <- lift $ newName "man"
+	let (newmanE,newmanP) = genPE newmanName
+	newDfName <- lift $ newName "df"
+	let (newDfE,newDfP) = genPE newDfName
+	newdvName <- lift $ newName "dv"
+	let (newdvE,newdvP) = genPE newdvName
 	
 	manifestContentsE <- liftM (LamE [newPathP,newTreeP,newdtaP,newmanP]) $ zmanifestE False ty newPathE newTreeE newdtaE newmanE
+	manifestContentDeltaE <- runZDeltaQ $ liftM (LamE [newPathP,newPathP',newTreeP,newDfP,newTreeP',newdtaP,newdvP,newmanP]) $ zmanifestDeltaE False ty newPathE newPathE' newTreeE newDfE newTreeE' newdtaE newdvE newmanE
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
 	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
 	if isTop
-		then return $ Pure.appE7 (VarE 'doZManifestArchive) isClosedE exts pathE treeE dtaE manifestContentsE manE
+		then return $ Pure.appE9 (VarE 'doZManifestArchive) isClosedE exts pathE treeE dtaE manifestContentsE manifestContentDeltaE (zdiffE ty) manE
 		else return $ Pure.appE6 (VarE 'doZManifestArchiveInner) exts pathE treeE dtaE manifestContentsE manE
 
 zmanifestSymLink :: Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp

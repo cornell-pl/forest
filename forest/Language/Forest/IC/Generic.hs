@@ -39,7 +39,7 @@ import Control.Monad.Trans
 import Control.Monad.Writer (Writer(..),WriterT(..))
 import qualified Control.Monad.Writer as Writer
 import Language.Forest.IC.Default
-import Language.Pads.Padsc hiding (gmapT,lift)
+import Language.Pads.Padsc hiding (gmapT,lift,gmapQr)
 import Prelude hiding (mod)
 import Data.Monoid
 import Data.WithClass.MData
@@ -87,7 +87,7 @@ instance ForestContent rep content => ForestContent (Maybe rep) (Maybe content)
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
 
-type FTK fs args rep var content = (Eq var,Typeable var,CopyFSThunks TxVarFS Outside rep,ForestMD fs rep,Eq content,Typeable content,Typeable (ForestIs TxVarFS args),Typeable rep,Eq rep,ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent var content)
+type FTK fs args rep var content = (IncK (IncForest fs) rep,IncK (IncForest fs) var,IncK (IncForest fs) content,CopyFSThunks fs Outside rep,ForestMD fs rep,Typeable (ForestIs TxVarFS args),ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent var content)
 
 class TxICForest fs where
 
@@ -135,19 +135,19 @@ writeOrShow t v = writeOrElse t v "" (return . show)
 
 -- * Zipped Incremental Forest interface
 
-class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep) => ZippedICForest fs args rep | rep -> args  where
+class (IncK (IncForest fs) Forest_err,ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep) => ZippedICForest fs args rep | rep -> args  where
 	
-	zload :: (ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
+	zload :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
 	zload args path = forestM latestTree >>= \tree -> zloadScratchMemo Proxy args return path tree getForestMDInTree
 	
 	zloadScratch :: Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
 	
-	zloadScratchMemo :: (ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
+	zloadScratchMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
 	zloadScratchMemo proxy args pathfilter path tree getMD = do
 		let fs = Proxy :: Proxy fs
 		let proxyRep = Proxy
 		oldpath <- pathfilter path
-		mb <- findZippedMemo proxy path proxyRep
+		mb <- findZippedMemo proxy oldpath proxyRep
 		
 		let load_scratch = do
 			rep <- zloadScratch proxy args pathfilter path tree getMD
@@ -155,21 +155,21 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 			return rep
 		
 		case mb of
-			Just (memo_tree@(isObservableFSTree -> True),memo_args,memo_rep) -> do
+			Just (memo_tree,memo_args,memo_rep) -> do
 				mb_df <- forestM $ diffFS memo_tree tree path
 				case mb_df of
-					Just df -> do
+					Just df -> unsafeWorld $ do -- XXX: how safe is this?
 						dv <- diffValueThunk memo_tree memo_rep
-						let deltas = (args,deltaArgs fs proxy)
-						-- XXX: how safe is this?
-						unsafeWorld $ zloadDeltaMemo proxy deltas (return oldpath) memo_tree (memo_rep,getMD) path df tree dv
+						ds <- deltaArgs memo_tree proxy memo_args args
+						let deltas = (args,ds)
+						zloadDeltaMemo proxy deltas (return oldpath) memo_tree (memo_rep,getMD) path df tree dv
 						return memo_rep
 					Nothing -> load_scratch
 			Nothing -> load_scratch
 	
 	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
-	zloadDeltaMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
+	zloadDeltaMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	zloadDeltaMemo proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = do
 		drep <- zloadDelta proxy (args,dargs) path tree (rep,getMD) path' df tree' dv
 		inside $ addZippedMemo path' proxy args rep (Just tree')
@@ -178,35 +178,53 @@ class (ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep)
 	-- returns a manifest and a computation that adds consistent entries to a memotable (to be run only when there are no fatal manifest errors)
 	zupdateManifestScratch :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs
 	
-	zupdateManifestScratchMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestScratchMemo :: (IncK (IncForest fs) content,Eq rep,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs
 	zupdateManifestScratchMemo proxy args path tree rep man = do
-		man1 <- zupdateManifestScratch proxy args path tree rep man
-		Writer.tell $ inside . addZippedMemo path proxy args rep . Just
-		return man1
+		let fs = Proxy :: Proxy fs
+		let proxyRep = Proxy
+		mb <- lift $ inside $ findZippedMemo proxy path proxyRep
+		
+		let mani_scratch = do
+			man1 <- zupdateManifestScratch proxy args path tree rep man
+			Writer.tell $ inside . addZippedMemo path proxy args rep . Just
+			return man1
+		
+		case mb of
+			-- the rep needs to be the same
+			Just (memo_tree,memo_args,(== rep) -> True) -> do
+				mb_df <- lift $ forestM $ diffFS memo_tree tree path
+				case mb_df of
+					Just df -> do
+						dv <- lift $ diffValueThunk memo_tree rep
+						ds <- lift $ deltaArgs memo_tree proxy memo_args args
+						let deltas = (args,ds)
+						zupdateManifestDeltaMemo proxy deltas path path memo_tree df tree rep dv man
+					Nothing -> mani_scratch
+			Nothing -> mani_scratch
 	
-	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	
-	zupdateManifestDeltaMemo :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> rep -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
-	zupdateManifestDeltaMemo proxy (margs,dargs) path path' tree rep df tree' dv man = do
-		man1 <- zupdateManifestDelta proxy (margs,dargs) path path' tree rep df tree' dv man
+	zupdateManifestDeltaMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestDeltaMemo proxy (margs,dargs) path path' tree df tree' rep dv man = do
+		man1 <- zupdateManifestDelta proxy (margs,dargs) path path' tree df tree' rep dv man
 		Writer.tell $ inside . addZippedMemo path proxy margs rep . Just
 		return man1
 	
-	zmanifest :: ForestRep rep (ForestFSThunkI fs content) => ForestIs fs args -> FilePath -> rep -> MManifestForestO fs
+	zmanifest :: (IncK (IncForest fs) content,Eq rep,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> rep -> MManifestForestO fs
 	zmanifest = zmanifest' Proxy
 	
-	zmanifest' :: ForestRep rep (ForestFSThunkI fs content) => Proxy args -> ForestIs fs args -> FilePath -> rep -> MManifestForestO fs
+	zmanifest' :: (IncK (IncForest fs) content,Eq rep,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePath -> rep -> MManifestForestO fs
 	zmanifest' proxy args path rep = lift (forestM latestTree) >>= \tree -> lift (forestM (newManifestWith "/" tree)) >>= zupdateManifestScratchMemo proxy args path tree rep
 
 	zdefaultScratch :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
 	
-	zdefaultScratchMemo :: (ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
+	zdefaultScratchMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
 	zdefaultScratchMemo proxy args path = do
 		rep <- zdefaultScratch proxy args path
 		addZippedMemo path proxy args rep Nothing
 		return rep
 
-	zdefault :: (ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
+	zdefault :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
 	zdefault = zdefaultScratchMemo Proxy
 
 -- returns a manifest and a sequence of memoization actions to be performed after store
@@ -229,7 +247,7 @@ type family LoadInfo (ic :: ICMode) (fs :: FS) (args :: *) :: * where
 -- * Automatically generated "not to be seen" Forest class
 
 -- A Class for the types of Forest specifications
-class (Typeable rep,Typeable md,ICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => ICForest (mode :: ICMode) fs args rep md | mode rep -> md, rep -> args  where
+class (IncK (IncForest fs) rep,IncK (IncForest fs) md,IncK (IncForest fs) (rep,md),ICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => ICForest (mode :: ICMode) fs args rep md | mode rep -> md, rep -> args  where
 	
 	load :: LiftedICMode mode -> ForestIs fs args -> FilePath -> ForestO fs (rep,md)
 	load mode args path = liftM fst $ loadFwd mode args path
@@ -263,7 +281,7 @@ class (Typeable rep,Typeable md,ICMemo fs,ForestArgs fs args,MData NoCtx (Forest
 	-- batch non-incremental load (takes a a function on FilePaths to handle moves whenever the old and new values are not in sync)
 	loadScratch :: LiftedICMode mode -> Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
 	
-	loadScratchMemo :: (Typeable (ForestLs fs Inside args)) =>
+	loadScratchMemo :: (Typeable md,Typeable (ForestLs fs Inside args)) =>
 		LiftedICMode mode -> Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
 	loadScratchMemo mode proxy args oldpathM path (tree :: FSTree fs) getMD = do
 		let fs = Proxy :: Proxy fs
@@ -275,9 +293,11 @@ class (Typeable rep,Typeable md,ICMemo fs,ForestArgs fs args,MData NoCtx (Forest
 				mb_df <- forestM $ diffFS memo_tree tree path
 				case mb_df of
 					Just df -> do
-						let deltas = mkLoadDeltaArgs mode fs proxy args (deltaArgs fs proxy)
 						-- XXX: how safe is this?
-						unsafeWorld $ loadDelta mode proxy deltas (return oldpath) memo_tree ((memo_rep,memo_md),getMD) path df tree
+						unsafeWorld $ do
+							ds <- deltaArgs memo_tree proxy memo_args args
+							let deltas = mkLoadDeltaArgs mode fs proxy args ds
+							loadDelta mode proxy deltas (return oldpath) memo_tree ((memo_rep,memo_md),getMD) path df tree
 						unless (oldpath==path) $ remMemo fs oldpath proxyRep
 						addMemo path proxy args (memo_rep,memo_md) tree
 						return (memo_rep,memo_md)
@@ -299,28 +319,53 @@ class (Typeable rep,Typeable md,ICMemo fs,ForestArgs fs args,MData NoCtx (Forest
 	-- | generates default metadata based on the specification
 	defaultMd :: ForestIs fs args -> rep -> FilePath -> ForestI fs md
 
+-- performs a diff on all top-level forest thunks found in a value
+-- returns true if no thunks are found
+class ICRep fs => ForestDiff fs a where
+	forestDiff :: FSTree fs -> a -> ForestO fs Bool
 
+forestDiffProxy :: Proxy fs -> Proxy (ForestDiffDict fs)
+forestDiffProxy _ = Proxy
+
+data ForestDiffDict fs a = ForestDiffDict { forestDiffDict :: FSTree fs -> a -> ForestO fs Bool }
+
+instance (ForestDiff fs a) => Sat (ForestDiffDict fs a) where
+	dict = ForestDiffDict { forestDiffDict = forestDiff }
+
+instance (ICRep fs,IncK (IncForest fs) a,Typeable a,ForestRep (ForestFSThunk fs l a) (ForestFSThunkI fs a)) => ForestDiff fs (ForestFSThunk fs l a) where
+	forestDiff tree t = liftM isIdValueDelta $ diffValueThunk tree t
+
+instance (ICRep fs,MData (ForestDiffDict fs) (ForestO fs) a) => ForestDiff fs a where
+	forestDiff (tree :: FSTree fs) x = do
+		let f t1 t2 = return $ t1 && t2
+		gmapQr (forestDiffProxy (Proxy :: Proxy fs)) f True (forestDiffDict dict tree) x
 
 -- | Class to support variadic Forest functions
 class (FSRep fs,Typeable args,Typeable (ForestIs fs args)) => ForestArgs fs args where
 	newArgs :: Proxy fs -> Proxy args -> ForestIs fs args -> ForestI fs (ForestICThunksI fs args)
-	deltaArgs :: Proxy fs -> Proxy args -> SValueDeltas (ForestICThunksI fs args)
+	deltaArgs :: FSTree fs -> Proxy args -> ForestIs fs args -> ForestIs fs args -> ForestO fs (SValueDeltas (ForestICThunksI fs args))
 	andSValueDeltas :: Proxy fs -> Proxy args -> SValueDeltas (ForestICThunksI fs args) -> SValueDelta (ForestICThunksI fs args)
 	checkArgs :: Proxy fs -> Proxy args -> ForestIs fs args -> ForestICThunksI fs args -> ForestO fs Status
 	monadArgs :: Proxy fs -> args -> ForestIs fs args
 	vmonadArgs :: Proxy fs -> Proxy args -> ForestVs args -> ForestIs fs args
+	vArgs :: Proxy fs -> Proxy args -> ForestIs fs args -> ForestI fs (ForestVs args)
 	
 instance ICRep fs => ForestArgs fs () where
 	newArgs fs args () = return ()
-	deltaArgs fs args = ()
+	deltaArgs tree proxy args args' = return ()
 	andSValueDeltas fs args () = Id
 	checkArgs _ _ _ _ = return Valid
 	monadArgs _ () = ()
 	vmonadArgs _ _ () = ()
+	vArgs _ _ () = return ()
 	
-instance (Data a,Typeable a,Eq a,ICRep fs) => ForestArgs fs (Arg a) where
-	newArgs fs args m = thunk m
-	deltaArgs fs args = Delta
+instance (ForestDiff fs a,Data a,Eq a,IncK (IncForest fs) a,ICRep fs) => ForestArgs fs (Arg a) where
+	newArgs tree args m = thunk m
+	deltaArgs tree proxy marg marg'= do
+		arg <- inside $ marg 
+		arg' <- inside $ marg'
+		isEmpty <- forestDiff tree arg'
+		if (arg == arg' && isEmpty) then return Id else return Delta
 	andSValueDeltas fs args d = d
 	checkArgs _ _ marg targ = do
 		arg <- inside $ marg
@@ -328,13 +373,17 @@ instance (Data a,Typeable a,Eq a,ICRep fs) => ForestArgs fs (Arg a) where
 		return $ boolStatus (ConflictingArguments) (arg == arg')
 	monadArgs fs (Arg arg) = return arg
 	vmonadArgs fs args arg = return arg
+	vArgs fs args m = m
 	
 instance (ICRep fs,ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a :*: b) where
 	newArgs fs (args :: Proxy (a1 :*: a2)) (m1 :*: m2) = do
 		t1 <- newArgs fs (Proxy :: Proxy a1) m1
 		t2 <- newArgs fs (Proxy :: Proxy a2) m2
 		return (t1 :*: t2)
-	deltaArgs fs (args :: Proxy (a1 :*: a2)) = (deltaArgs fs (Proxy :: Proxy a1) :*: deltaArgs fs (Proxy :: Proxy a2))
+	deltaArgs tree (proxy :: Proxy (a1 :*: a2)) (marg1 :*: marg2) (marg1' :*: marg2') = do
+		d1 <- deltaArgs tree (Proxy :: Proxy a1) marg1 marg1'
+		d2 <- deltaArgs tree (Proxy :: Proxy a2) marg2 marg2'
+		return (d1 :*: d2)
 	andSValueDeltas fs (args :: Proxy (a1 :*: a2)) (d1 :*: d2) = andSValueDeltas fs (Proxy :: Proxy a1) d1 `timesSValueDelta` andSValueDeltas fs (Proxy :: Proxy a2) d2
 	checkArgs fs (args :: Proxy (a1 :*: a2)) (marg1 :*: marg2) (targ1 :*: targ2) = do
 		status1 <- checkArgs fs (Proxy :: Proxy a1) marg1 targ1
@@ -342,6 +391,10 @@ instance (ICRep fs,ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a 
 		return $ status1 `mappend` status2
 	monadArgs fs (arg1 :*: arg2) = monadArgs fs arg1 :*: monadArgs fs arg2
 	vmonadArgs fs (args :: Proxy (arg1 :*: arg2)) (arg1 :*: arg2) = vmonadArgs fs (Proxy :: Proxy arg1) arg1 :*: vmonadArgs fs (Proxy :: Proxy arg2) arg2
+	vArgs fs (args :: Proxy (arg1 :*: arg2)) (marg1 :*: marg2) = do
+		arg1 <- vArgs fs (Proxy :: Proxy arg1) marg1
+		arg2 <- vArgs fs (Proxy :: Proxy arg2) marg2
+		return (arg1 :*: arg2)
 
 type family SValueDeltas  args :: * where
 	SValueDeltas (a :*: b) = (SValueDeltas a :*: SValueDeltas b)

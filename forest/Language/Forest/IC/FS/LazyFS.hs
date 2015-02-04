@@ -40,6 +40,7 @@ import Language.Forest.Manifest
 import Data.Time.Clock
 import Safe
 
+type instance IncK (IncForest LazyFS) a = (Eq a,Typeable a)
 
 
 instance Incremental (IncForest LazyFS) IORef IO where
@@ -115,7 +116,6 @@ instance ICRep LazyFS where
 
 	eqFSThunk = error "no equality for NOFSThunk"
 	isUnevaluatedFSThunk = error "isUnevaluatedFSThunk"
-	isUnforcedFSThunk = error "isUnforcedFSThunk"
 	
 	data ICThunk LazyFS l inc r m a = LazyFSICThunk { unLazyFSICThunk :: LazyNonIncU l (IncForest LazyFS) r m a }
 	

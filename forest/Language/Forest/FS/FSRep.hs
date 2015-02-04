@@ -55,12 +55,13 @@ forestCfg :: IORef (ForestCfg fs)
 forestCfg = unsafePerformIO $ newIORef (error "no initial Forest cfg")
 
 -- the kind of possible filesystem instantiations
-data FS = PureFS | TxFS | LazyFS | NILFS | TxVarFS deriving Typeable
+data FS = PureFS | TxFS | LazyFS | NILFS | TxVarFS | TxICFS deriving Typeable
 deriving instance Typeable PureFS
 deriving instance Typeable TxFS
 deriving instance Typeable LazyFS
 deriving instance Typeable NILFS
 deriving instance Typeable TxVarFS
+deriving instance Typeable TxICFS
 
 deriving instance Typeable ForestM
 
@@ -135,9 +136,6 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 
 	-- it may fail in case it is not possible to compute a difference between the two trees
 	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs (Maybe FSTreeDeltaNodeMay)
-
-	--- non-observable @FSTree@s cannot be materialized
-	isObservableFSTree :: FSTree fs -> Bool
 
 -- canonalizes a filepath, but leaving the filename uncanonized
 canonalizeDirectoryInTree :: FSRep fs => FilePath -> FSTree fs -> ForestM fs FilePath

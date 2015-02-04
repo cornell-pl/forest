@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, FlexibleContexts, ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
+{-# LANGUAGE ConstraintKinds, TupleSections, FlexibleContexts, ScopedTypeVariables, GADTs, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances, ViewPatterns #-}
 
 module Language.Forest.IC.IO.ZDefault where
 
@@ -39,14 +39,14 @@ import Control.Monad.Incremental
 import Language.Forest.IC.MetaData
 import Data.WithClass.MData
 
-doZDefaultFile1 :: (Pads1 arg pads md,Typeable arg,Eq pads,Eq md,Typeable pads,Typeable md,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
+doZDefaultFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZDefaultFile1 (Pure.Arg arg :: Pure.Arg arg) path = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	rep_thunk <- fsThunk $ doZDefaultFile1' (Pure.Arg arg) path
 	addZippedMemo path argProxy (return arg) rep_thunk Nothing
 	return rep_thunk
 
-doZDefaultFile1' :: (Pads1 arg pads md,Typeable arg,Eq pads,Eq md,Typeable pads,Typeable md,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
+doZDefaultFile1' :: (IncK (IncForest fs) Forest_err,Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
 doZDefaultFile1' (Pure.Arg arg) path = do
 	let rep = Pure.forestdefault
 	let md = Pads.defaultMd1 arg rep
@@ -54,36 +54,33 @@ doZDefaultFile1' (Pure.Arg arg) path = do
 	fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
 	return $ ((fmd',md),rep)
 
-doZDefaultArchive :: (ForestMD fs rep,Eq rep,Typeable rep,ZippedICMemo fs) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
+doZDefaultArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,ForestMD fs rep,ZippedICMemo fs) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZDefaultArchive path doContent = do
 	let argsProxy = Proxy :: Proxy ()
-	rep_thunk <- fsThunk $ doZDefaultArchive' path doContent
+	rep_thunk <- fsThunk $ doZDefaultArchiveInner path doContent
 	addZippedMemo path argsProxy () rep_thunk Nothing
 	return rep_thunk
 
-doZDefaultArchiveInner :: (ForestMD fs rep,Eq rep,Typeable rep,	Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs rep
-doZDefaultArchiveInner path doContent = doContent (cardinalPath path)
-
-doZDefaultArchive' :: (ForestMD fs rep,Eq rep,Typeable rep,	Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (Forest_md fs,rep)
-doZDefaultArchive' path doContent = do
+doZDefaultArchiveInner :: (ForestMD fs rep,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (Forest_md fs,rep)
+doZDefaultArchiveInner path doContent = do
 	rep <- doContent (cardinalPath path)
 	fmd <- missingPathForestMD path
 	fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ get_errors rep -- like a directory
 	return (fmd',rep)
 
-doZDefaultSymLink :: (ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs (SymLink fs)
+doZDefaultSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs (SymLink fs)
 doZDefaultSymLink path = liftM SymLink $ fsThunk $ doZDefaultSymLink' path
 
-doZDefaultSymLink' :: Input (FSThunk fs) Inside (IncForest fs) IORef IO => FilePath -> ForestI fs ((Forest_md fs,Base_md),FilePath)
+doZDefaultSymLink' :: (IncK (IncForest fs) Forest_err,ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs ((Forest_md fs,Base_md),FilePath)
 doZDefaultSymLink' path = do
 	fmd <- missingPathForestMD path
 	return ((fmd,errorBasePD path),"")
 
-doZDefaultDirectory :: (Eq rep,Typeable rep,ICRep fs,ForestInput fs FSThunk Inside,Eq rep)
+doZDefaultDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, rep),ICRep fs,ForestInput fs FSThunk Inside)
 	=> FilePath -> (rep -> ForestI fs Forest_err) -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZDefaultDirectory path collectMDErrors doContent = fsThunk $ doZDefaultDirectory' path collectMDErrors doContent
 
-doZDefaultDirectory' :: (ICRep fs,ForestInput fs FSThunk Inside,Eq rep)
+doZDefaultDirectory' :: (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside)
 	=> FilePath -> (rep -> ForestI fs Forest_err) -> ForestI fs rep -> ForestI fs (Forest_md fs,rep)
 doZDefaultDirectory' path collectMDErrors doContent = do
 	rep <- doContent
@@ -91,18 +88,18 @@ doZDefaultDirectory' path collectMDErrors doContent = do
 	fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ collectMDErrors rep
 	return (fmd',rep)
 
-doZDefaultMaybe :: (Eq rep,Typeable rep,ICRep fs) => FilePath -> ForestI fs (ForestFSThunkI fs (Forest_md fs,Maybe rep))
+doZDefaultMaybe :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, Maybe rep),ICRep fs) => FilePath -> ForestI fs (ForestFSThunkI fs (Forest_md fs,Maybe rep))
 doZDefaultMaybe path = fsThunk $ doZDefaultMaybe' path
 
 doZDefaultMaybeInner :: (ICRep fs) => FilePath -> ForestI fs (Maybe rep)
 doZDefaultMaybeInner path = return Nothing
 
-doZDefaultMaybe' :: (ICRep fs) => FilePath -> ForestI fs (Forest_md fs,Maybe rep)
+doZDefaultMaybe' :: (IncK (IncForest fs) Forest_err,ICRep fs) => FilePath -> ForestI fs (Forest_md fs,Maybe rep)
 doZDefaultMaybe' path = do
 	fmd <- cleanForestMDwithFile path
 	return (fmd,Nothing)
 
-doZDefaultConstraint :: (Eq rep,Typeable rep,ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
+doZDefaultConstraint :: (IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestOutput fs ICThunk Inside,ForestMD fs rep,MData NoCtx (ForestI fs) rep) =>
 	(rep -> ForestI fs Bool) -> ForestI fs rep -> ForestI fs (ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep))
 doZDefaultConstraint pred load = fsThunk $ doZDefaultConstraintInner pred load
 
@@ -141,7 +138,7 @@ doZDefaultSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs re
 	-> ForestI fs (ForestFSThunkI fs Forest_err,rep)
 doZDefaultSimpleWithConstraint path matching pred load = doZDefaultConstraintInner pred $ matching >>= \m -> doZDefaultFocus path m load
 
-doZDefaultCompound :: (Typeable container_rep,Eq container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZDefaultCompound :: (IncK (IncForest fs) Pure.FileInfo,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePath -> ForestI fs a
 	-> ([(FilePath,rep')] -> container_rep)
 	-> (FileName -> ForestFSThunkI fs Pure.FileInfo -> FilePath -> ForestI fs rep')
@@ -156,7 +153,7 @@ doZDefaultCompound path matchingM buildContainerRep load = debug ("doLoadCompoun
 	loadlist <- mapM loadEach files
 	return $ buildContainerRep loadlist
 
-doZDefaultCompoundWithConstraint :: (Typeable container_rep,Eq container_rep,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZDefaultCompoundWithConstraint :: (IncK (IncForest fs) Pure.FileInfo,IncK (IncForest fs) Bool,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePath -> ForestI fs a
 	-> (FilePath -> ForestFSThunkI fs Pure.FileInfo -> ForestI fs Bool)
 	-> ([(FilePath,rep')] -> container_rep)

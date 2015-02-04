@@ -102,11 +102,11 @@ instance (CopyFSThunks fs l a) => Sat (CopyFSThunksDict fs l a) where
 	dict = CopyFSThunksDict { copyFSThunksDict = copyFSThunks }
 
 -- we make a strict copy by forcing the original thunk
-instance (Typeable a,ForestLayer fs l,Eq a,ForestInput fs FSThunk l) => CopyFSThunks fs l (ForestFSThunk fs l a) where
+instance (IncK (IncForest fs) a,ForestLayer fs l,ForestInput fs FSThunk l) => CopyFSThunks fs l (ForestFSThunk fs l a) where
 	copyFSThunks _ _ f t = get t >>= ref 
 
 -- change fullpaths
-instance (ForestInput fs FSThunk Inside,ForestLayer fs l) => CopyFSThunks fs l (Forest_md fs) where
+instance (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ForestLayer fs l) => CopyFSThunks fs l (Forest_md fs) where
 	copyFSThunks _ _ f fmd = do
 		errors' <- inside $ get (errors fmd) >>= ref
 		let fileInfo' = (fileInfo fmd) { fullpath = f (fullpath $ fileInfo fmd) }
