@@ -122,6 +122,7 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 						(True,Just (isEmptyFSTreeDeltaNodeMay -> True)) -> return man
 						otherwise -> mani_scratch
 				else mani_scratch
+		otherwise -> mani_scratch
 	Writer.tell $ inside . addZippedMemo path argProxy (return arg) rep_t . Just
 	return newman
 
