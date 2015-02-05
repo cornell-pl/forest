@@ -6,7 +6,8 @@
 module Language.Forest.IC.FS.TxVarFS (
 	TxICForest(..)
 	) where
-
+		
+import Control.Monad.Incremental.Display
 import Control.Monad.RWS (RWS(..),RWST(..))
 import qualified Control.Monad.RWS as RWS
 import Control.Monad.Writer (Writer(..),WriterT(..))
@@ -399,22 +400,24 @@ instance TxICForest TxVarFS where
 	catch = catchTxVarFS 
 	new = newTxVarFS Proxy
 	args = argsTxVarFS Proxy
-	read = readTxVarFS
+	read = readTxVarFS Proxy
 	writeOrElse = writeOrElseTxVarFS
 	delete = deleteTxVarFS Proxy
 	copyOrElse = copyOrElseTxVarFS Proxy
 
-deleteTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> rep -> TxVarFTM ()
+deleteTxVarFS :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => Proxy args -> rep -> TxVarFTM ()
 deleteTxVarFS proxy (rep :: rep) = do
 	mb <- forestM $ getFTVArgs proxy rep
 	case mb of
 		Nothing -> error "tried to write to a variable that is not connected to the FS"
 		Just (args,path) -> do
 			def_rep :: rep <- inside $ zdefaultScratchMemo proxy args path
-			content <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk def_rep
-			writeOrElseTxVarFS rep content () (error "failed to write")
+			var <- Inc.getOutside $ to iso_rep_thunk def_rep
+			str <- showInc def_rep
+			forestM $ forestIO $ print str
+			writeOrElseTxVarFS' rep var () (error "failed to write")
 
-copyOrElseTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+copyOrElseTxVarFS :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 copyOrElseTxVarFS proxy src tgt b f = do
 	mb_src <- forestM $ getFTVArgs proxy src
 	mb_tgt <- forestM $ getFTVArgs proxy tgt
@@ -430,16 +433,33 @@ copyOrElseTxVarFS proxy src tgt b f = do
 newTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> ForestVs args -> FilePath -> TxVarFTM rep
 newTxVarFS proxy args path = inside $ zload (vmonadArgs proxyTxVarFS proxy args) path
 
-readTxVarFS :: FTK TxVarFS args rep var content => rep -> TxVarFTM content
-readTxVarFS rep = liftM (BX.get lens_content) $ Inc.getOutside (to iso_rep_thunk rep)
+-- make sure that the computation that is run is a load function
+readTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> rep -> TxVarFTM content
+readTxVarFS proxy (rep :: rep) = do
+	(txargs,path) <- argsTxVarFS proxy rep
+	let (TxVarFSThunk (rdyn,m,tbl)) = to iso_rep_thunk rep
+	fsversion <- forestM getFSVersionTxVarFS
+	mb <- forestM $ forestIO $ WeakMap.lookup tbl fsversion
+	case mb of
+		Nothing -> do
+			(rep' :: rep) <- inside $ zload (vmonadArgs proxyTxVarFS proxy txargs) path
+			v' <- Inc.getOutside (to iso_rep_thunk rep')
+			forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v'
+			return $ BX.get lens_content v'
+		Just v -> return $ BX.get lens_content v
 
-writeOrElseTxVarFS :: FTK TxVarFS args rep var content => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+writeOrElseTxVarFS :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS rep content b f = do
+	var <- Inc.getOutside $ to iso_rep_thunk rep
+	writeOrElseTxVarFS' rep (BX.put lens_content var content) b f
+
+writeOrElseTxVarFS' :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => rep -> var -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+writeOrElseTxVarFS' rep var b f = do
 	let t = to iso_rep_thunk rep
 	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
 	old_fslog <- forestM $ forestIO $ readIORef fslog_ref
 	forestM incrementFSVersionTxVarFS
-	modify t $ \s -> return $ BX.put lens_content s content
+	set t var
 	
 	let rollback errors = do -- rollback the modifications
 		forestM $ forestIO $ writeIORef fslog_ref old_fslog
@@ -450,6 +470,8 @@ writeOrElseTxVarFS rep content b f = do
 	case mb of
 		Nothing -> rollback [ConflictingArguments] -- the top-level arguments of a variable don't match the spec
 		Just (args,path) -> do
+			str <- showInc rep
+			forestM $ forestIO $ putStrLn $ "mani  " ++ show str
 			(mani,_,memos) <- RWS.runRWST (zmanifest' (Proxy :: Proxy args) args path rep) True ()
 			-- we need to store the errors to the (buffered) FS before validating
 			forestM $ storeManifest mani

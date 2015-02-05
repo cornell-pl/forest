@@ -52,7 +52,8 @@ doZDefaultFile1' (Pure.Arg arg) path = do
 	let md = Pads.defaultMd1 arg rep
 	fmd <- missingPathForestMD path
 	fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
-	return $ ((fmd',md),rep)
+	err <- get_errors fmd
+	debug ("doZDefaultFile1 " ++ show err) $ return $ ((fmd',md),rep)
 
 doZDefaultArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,ForestMD fs rep,ZippedICMemo fs) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZDefaultArchive path doContent = do
@@ -72,7 +73,7 @@ doZDefaultSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Fores
 doZDefaultSymLink path = liftM SymLink $ fsThunk $ doZDefaultSymLink' path
 
 doZDefaultSymLink' :: (IncK (IncForest fs) Forest_err,ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs ((Forest_md fs,Base_md),FilePath)
-doZDefaultSymLink' path = do
+doZDefaultSymLink' path = debug ("defaultSymLink "++path) $ do
 	fmd <- missingPathForestMD path
 	return ((fmd,errorBasePD path),"")
 

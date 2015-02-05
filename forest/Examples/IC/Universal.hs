@@ -53,10 +53,10 @@ generateTest = do
 runTest :: IO ()
 runTest = do
 	(original_str,errors) <- atomically $ do
-		test_dir :: Universal_d TxVarFS <- new () "test"
+		test_dir :: Universal_d TxICFS <- new () "test"
 		original_str <- showInc test_dir
 		
-		link_c :: SymLink TxVarFS <- new () "test/links/c.txt"
+		link_c :: SymLink TxICFS <- new () "test/links/c.txt"
 		let link_c_md = (cleanSymLinkFileInfo "test/links/c.txt" "../files/c.txt",cleanBasePD)
 		errors <- writeOrShow link_c (link_c_md,"../files/c.txt")
 			

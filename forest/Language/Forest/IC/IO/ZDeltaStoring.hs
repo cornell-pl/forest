@@ -102,7 +102,7 @@ doZDeltaManifestArchive isClosed archTy path path' tree df tree' arch_rep arch_d
 					status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
-				Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+				Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ get_errors rep
 				return $ addTestToManifest testm man -- errors in the metadata must be consistent
 				
 		(True,True,True) -> do
@@ -134,7 +134,7 @@ doZDeltaManifestArchive isClosed archTy path path' tree df tree' arch_rep arch_d
 					status1 <- if isRepairMd then return Valid else liftM (boolStatus ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
 				
 			let man2 = addTestToManifest testm man -- errors in the metadata must be consistent
 			
@@ -167,7 +167,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 					status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
-				Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+				Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ get_errors rep
 				return $ addTestToManifest testm man -- errors in the metadata must be consistent
 				
 		(True,True,True) -> do
@@ -195,7 +195,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
 				
 			let man2 = addTestToManifest testm man -- errors in the metadata must be consistent
 			
@@ -205,7 +205,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 			return $ mergeManifests man1 man3
 		otherwise -> doZManifestArchiveInner archTy path' tree' (fmd,rep) manifest man
 
-doZDeltaManifestSymLink :: (IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> SymLink fs -> ValueDelta fs (SymLink fs) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> SymLink fs -> ValueDelta fs (SymLink fs) -> Manifest fs -> MManifestForestO fs
 doZDeltaManifestSymLink path path' tree df tree' (SymLink rep_t) dv man = do
 	case (path == path',isIdValueDelta dv,df) of
 		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return man
@@ -291,7 +291,7 @@ doZDeltaManifestDirectory path path' tree df tree' dirrep_t dv collectMDErrors m
 					status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
-				Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
+				Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
 				return $ addTestToManifest testm man -- errors in the metadata must be consistent
 				
 		(True,True,True) -> do
@@ -304,7 +304,7 @@ doZDeltaManifestDirectory path path' tree df tree' dirrep_t dv collectMDErrors m
 					status12 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status11 `mappend` status12
 			idv <- lift $ diffValue tree rep
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ collectMDErrors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ collectMDErrors rep
 			manifestD rep idv $ addTestToManifest testm man
 		otherwise -> doZManifestDirectory path' tree' collectMDErrors dirrep_t manifest man
 
@@ -332,7 +332,7 @@ doZDeltaManifestDirectoryInner path path' tree df tree' (fmd,rep) dv collectMDEr
 					status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
-				Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
+				Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
 				return $ addTestToManifest testm man -- errors in the metadata must be consistent
 				
 		(True,True,True) -> do
@@ -341,7 +341,7 @@ doZDeltaManifestDirectoryInner path path' tree df tree' (fmd,rep) dv collectMDEr
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
 			idv <- lift $ diffValue tree rep
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ collectMDErrors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ collectMDErrors rep
 			manifestD rep idv $ addTestToManifest testm man
 		otherwise -> doZManifestDirectoryInner path' tree' collectMDErrors (fmd,rep) manifest man
 

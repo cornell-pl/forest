@@ -69,6 +69,7 @@ import Language.Haskell.TH.Syntax hiding (lift)
 import Control.Exception
 import Language.Forest.Errors
 import Language.Forest.IC.BX as BX
+import Control.Monad.Incremental.Display
 
 -- hides @Forest_err@ values from the representation type of a variable
 class ForestContent var content | var -> content where
@@ -110,7 +111,7 @@ class TxICForest fs where
 	-- tries to modify a variable
 	-- the write only occurs if validation succeeds
 	-- if the new value is not a consistent view of the FS, an alternative action is run otherwise
-	writeOrElse :: FTK fs args rep var content => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
+	writeOrElse :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
 	-- read-only Forest error count
 	validate :: FTK fs args rep var content => rep -> FTM fs Forest_err
@@ -120,17 +121,17 @@ class TxICForest fs where
 	-- * An attempt to mimic regular filesystem operations, but over Forest specifications
 	
 	-- recursively deletes a variable from the filesystem; should always succeed
-	delete :: FTK fs args rep var content => rep -> FTM fs ()
+	delete :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> FTM fs ()
 	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
-	copyOrElse :: FTK fs args rep var content => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
+	copyOrElse :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
-tryWrite :: (TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
+tryWrite :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
 	
-writeOrRetry :: (TxICForest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
+writeOrRetry :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
 writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
 
-writeOrShow :: (TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
+writeOrShow :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
 writeOrShow t v = writeOrElse t v "" (return . show)
 
 -- * Zipped Incremental Forest interface

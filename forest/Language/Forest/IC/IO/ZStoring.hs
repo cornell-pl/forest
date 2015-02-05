@@ -78,8 +78,8 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 	let mani_scratch = do
 		((fmd,bmd),pads) <- lift $ inside $ get rep_t
 		let path_fmd = fullpath $ fileInfo fmd
-		valid <- lift $ isValidMD fmd
-		newman <- if valid
+		let exists = doesFileExistInMD path fmd && Pads.numErrors (get_md_header bmd) == 0
+		newman <- if exists
 			then do
 				let testm = do
 					status1 <- liftM (boolStatus $ ConflictingMdValidity) $ return $ Pads.numErrors (get_md_header bmd) == 0
@@ -87,7 +87,7 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 					return $ status1 `mappend` status2
 				(man1,printF) <- if repairMd
 					then do
-						Writer.tell $ \latest -> updateForestMDErrorsWithPadsMD fmd (return $ get_md_header bmd) -- adds the Pads errors
+						Writer.tell $ Prelude.const $ replaceForestMDErrorsWithPadsMD fmd (return $ get_md_header bmd) -- adds the Pads errors
 						return (man,\p -> printFile1 arg p (pads,bmd))
 					else return (addTestToManifest testm man,\p -> printFile1 arg p (pads,bmd))
 				lift $ forestM $ addFileToManifestInTree printF path tree man1
@@ -101,7 +101,9 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 					return $ status1 `mappend` status2
 				man1 <- if repairMd
 					then do
-						Writer.tell $ \latest -> updateForestMDErrorsWithPadsMD fmd (return $ get_md_header bmd) -- adds the Pads errors
+						Writer.tell $ Prelude.const $ do
+							replaceForestMDErrorsWith fmd $ return [Pure.missingPathForestErr path]
+							updateForestMDErrorsWithPadsMD fmd (return $ get_md_header bmd) -- adds the Pads errors
 						return man
 					else return $ addTestToManifest testm man
 				lift $ forestM $ removePathFromManifestInTree path tree man1
@@ -182,7 +184,7 @@ doZManifestArchive isClosed archTy path tree toprep manifest manifestD diffValue
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path	
 				return $ status1 `mappend` status2
 			
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
 				
 			let man2 = addTestToManifest testm man -- errors in the metadata must be consistent
 			
@@ -196,7 +198,7 @@ doZManifestArchive isClosed archTy path tree toprep manifest manifestD diffValue
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingPathForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingPathForestErr path `Pure.mergeForestErrs`) $ get_errors rep
 			return $ addTestToManifest testm man1
 
 doZManifestArchiveInner :: (ForestMD fs rep,ForestInput fs FSThunk Inside,ICRep fs) =>
@@ -231,7 +233,7 @@ doZManifestArchiveInner archTy path tree (fmd,rep) manifestContents man = do
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors rep
 			let man2 = addTestToManifest testm man -- errors in the metadata must be consistent
 			
 			abspath <- lift $ forestM $ forestIO $ absolutePath path
@@ -243,29 +245,30 @@ doZManifestArchiveInner archTy path tree (fmd,rep) manifestContents man = do
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingPathForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingPathForestErr path `Pure.mergeForestErrs`) $ get_errors rep
 			return $ addTestToManifest testm man1
 
-doZManifestSymLink :: (IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
+doZManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
 	FilePath -> FSTree fs
 	-> SymLink fs
 	-> Manifest fs -> MManifestForestO fs
-doZManifestSymLink path tree (SymLink rep_t) man = debug ("doZManifestSymLink " ++ show path) $ do
+doZManifestSymLink path tree (SymLink rep_t) man = do
 	((fmd,base_md), tgt) <- lift $ inside $ get rep_t
 	let path_fmd = fullpath $ fileInfo fmd
-	
-	case symLink (fileInfo fmd) of
+	case doesLinkExistInMD path_fmd fmd of
 		Just sym -> do
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingLink path tgt $ Just sym) $ return $ sym == tgt && base_md == cleanBasePD
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [cleanForestErr]
 			lift $ forestM $ addLinkToManifestInTree path tree tgt $ addTestToManifest testm man
 		Nothing -> do
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingLink path tgt Nothing) $ return $ tgt == "" && base_md == cleanBasePD
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [Pure.ioExceptionForestErr]
 			lift $ forestM $ removePathFromManifestInTree path tree $ addTestToManifest testm man
 
 doZManifestConstraint :: (			IncK
@@ -334,7 +337,7 @@ doZManifestDirectoryInner path tree collectMDErrors (fmd,rep) manifestContent ma
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ collectMDErrors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ collectMDErrors rep
 			manifestContent rep $ addTestToManifest testm man1
 		else do
 			man1 <- lift $ forestM $ removePathFromManifestInTree path tree man -- remove the directory
@@ -342,7 +345,7 @@ doZManifestDirectoryInner path tree collectMDErrors (fmd,rep) manifestContent ma
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> updateForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
 			return $ addTestToManifest testm man1
 
 doZManifestMaybe :: (IncK (IncForest fs) (Forest_md fs, Maybe rep),ForestMD fs rep,ICRep fs) =>

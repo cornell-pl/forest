@@ -237,7 +237,7 @@ instance MonadReader TxICFSEnv (ForestM TxICFS) where
 	local f (TxICFSForestM m) = TxICFSForestM $ local f m
 
 instance Show (FSTree TxICFS) where
-	show tree = "FSTreeTxICFS" ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree)
+	show tree = "FSTreeTxICFS " ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree)
 
 instance Ord (FSTree TxICFS) where
 	tree1 <= tree2 = (fsTreeTxId tree1,fsTreeFSVersion tree1,fsTreeVirtual tree1) <= (fsTreeTxId tree2,fsTreeFSVersion tree2,fsTreeVirtual tree2)

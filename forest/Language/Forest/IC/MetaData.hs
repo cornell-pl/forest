@@ -108,6 +108,11 @@ doesExistInMD path fmd = (fullpath (fileInfo fmd) == path) && (access_time (file
 doesFileExistInMD :: FilePath -> Forest_md fs -> Bool
 doesFileExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) /= DirectoryK
 
+doesLinkExistInMD :: FilePath -> Forest_md fs -> Maybe FilePath
+doesLinkExistInMD path fmd = if (doesExistInMD path fmd && kind (fileInfo fmd) /= DirectoryK)
+	then symLink (fileInfo fmd)
+	else Nothing
+
 doesDirectoryExistInMD :: FilePath -> Forest_md fs -> Bool
 doesDirectoryExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) == DirectoryK
 
@@ -350,6 +355,9 @@ updateForestMDErrorsWith md get_errs = modify_errors md $ \err0 -> get_errs >>= 
 
 updateForestMDErrorsWithPadsMD :: (PadsMD pads_md,ForestMD fs md) => md -> ForestI fs pads_md -> ForestO fs ()
 updateForestMDErrorsWithPadsMD md get_errs = modify_errors md $ \err0 -> get_errs >>= \errs -> return $ Pure.updateForestErr err0 [padsError $ get_md_header errs]
+
+replaceForestMDErrorsWithPadsMD :: (PadsMD pads_md,ForestMD fs md) => md -> ForestI fs pads_md -> ForestO fs ()
+replaceForestMDErrorsWithPadsMD md get_errs = modify_errors md $ \err0 -> get_errs >>= \errs -> return $ padsError $ get_md_header errs
 
 updateForestMDErrorsInsideWith :: ForestMD fs md => md -> ForestI fs [Forest_err] -> ForestI fs md
 updateForestMDErrorsInsideWith md get_errs = replace_errors md $ \err0 -> get_errs >>= \errs -> return $ Pure.updateForestErr err0 errs
