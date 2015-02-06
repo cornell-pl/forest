@@ -89,6 +89,8 @@ import Language.Forest.IC
 	} where True
 |]
 
+-- [pads| data Id a = Id a | "Unknown" |]
+
 libraryRE = RE "Library.papers2|Library.papers"
 
 allPaperNames articles books media reports = return []

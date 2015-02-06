@@ -32,6 +32,9 @@ icThunkLensI = LensM (\mt -> mt >>= force) (\s -> thunk)
 fsThunkLensI :: (IncK inc a,FSRep fs,Input (FSThunk fs) Inside inc r m) => LensM (Inside inc r m) (FSThunk fs Inside inc r m a) a
 fsThunkLensI = LensM (\mt -> mt >>= IC.get) (\s -> mod)
 
+idLens :: Lens a a
+idLens = Lens id (curry snd)
+
 fstLens :: Lens (a,b) a
 fstLens = Lens fst (\(x,y) x' -> (x',y))
 
@@ -43,6 +46,12 @@ fstLensM = lensM fstLens
 
 sndLensM :: Monad m => LensM m (a,b) b
 sndLensM = lensM sndLens
+
+prodLens :: Lens a b -> Lens c d -> Lens (a , c) (b , d)
+prodLens l1 l2 = Lens get' put' where
+	get' (x,y) = (Language.Forest.IC.BX.get l1 x,Language.Forest.IC.BX.get l2 y)
+	put' (x,y) (z,w) = (put l1 x z,put l2 y w)	
+
 
 prodFLensM :: Monad m => LensM m a b -> LensM m c d -> LensM m (a :.: c) (b :.: d)
 prodFLensM l1 l2 = LensM get put where

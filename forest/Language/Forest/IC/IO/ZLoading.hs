@@ -302,7 +302,7 @@ doZLoadCompound pathfilter path matchingM tree buildContainerRep load = debug ("
 doZLoadCompoundWithConstraint :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Bool,IncK (IncForest fs) container_rep,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> (FilePath -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
-	-> ([(FilePath,rep')] -> container_rep)
+	-> ([(FileName,rep')] -> container_rep)
 	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
 	-> ForestI fs container_rep
 doZLoadCompoundWithConstraint pathfilter path matchingM tree pred buildContainerRep load = debug ("doLoadCompound: "++show path) $ do

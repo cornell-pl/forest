@@ -71,19 +71,41 @@ import Language.Forest.Errors
 import Language.Forest.IC.BX as BX
 import Control.Monad.Incremental.Display
 
+-- forest errors kind
+data EC = E -- errors
+		| C -- content
+		deriving Typeable
+
+deriving instance Typeable E
+deriving instance Typeable C
+$( derive makeDeepTypeable ''EC )
+
+instance DeepTypeable E where
+	typeTree (_::Proxy E) = MkTypeTree (mkName "Language.Forest.IC.Generic.E") [] []
+instance DeepTypeable C where
+	typeTree (_::Proxy C) = MkTypeTree (mkName "Language.Forest.IC.Generic.C") [] []
+
+
+type family ECMd (ec :: EC) (fs :: FS) (a :: *) where
+	ECMd E fs a = (Forest_md fs,a)
+	ECMd C fs a = (FileInfo,a)
+type family ECErr (ec :: EC) (fs :: FS) (a :: *) where
+	ECErr E fs a = (ForestFSThunkI fs Forest_err,a)
+	ECErr C fs a = a
+
+infoLens = (Lens fileInfo $ \fmd info' -> fmd { fileInfo = info'} ) 
+
 -- hides @Forest_err@ values from the representation type of a variable
 class ForestContent var content | var -> content where
 	lens_content :: Lens var content
-
 instance ForestContent (Forest_md fs,rep) (FileInfo,rep) where
-	lens_content = Lens (\(fmd,rep) -> (fileInfo fmd,rep)) (\(fmd,rep) (info',rep') -> (fmd { fileInfo = info' },rep'))
+	lens_content = prodLens infoLens idLens
 instance ForestContent ((Forest_md fs,bmd),rep) ((FileInfo,bmd),rep) where
-	lens_content = Lens (\((fmd,bmd),rep) -> ((fileInfo fmd,bmd),rep)) (\((fmd,bmd),rep) ((info',bmd'),rep') -> ((fmd { fileInfo = info' },bmd'),rep'))
+	lens_content = prodLens (prodLens infoLens idLens) idLens
 instance ForestContent (ForestFSThunkI fs Forest_err,rep) rep where
-instance (ForestContent item rep) => ForestContent (Set (FilePath,item)) (Set (FilePath,rep)) where
-instance (ForestContent item rep) => ForestContent ([(FilePath,item)]) ([(FilePath,rep)]) where
-instance (BuildContainer2 c item,ForestContent item rep) => ForestContent (c FilePath item) (c FilePath rep) where
-instance ForestContent rep content => ForestContent (Maybe rep) (Maybe content)
+	lens_content = sndLens
+	
+
 
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a

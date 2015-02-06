@@ -45,6 +45,7 @@ import Language.Pads.Padsc
 import Data.WithClass.MData
 import Language.Forest.FS.FSRep
 import Language.Forest.IC.ICRep
+import Language.Forest.IC.Generic
 
 import Data.IORef
 import Control.Monad.Incremental

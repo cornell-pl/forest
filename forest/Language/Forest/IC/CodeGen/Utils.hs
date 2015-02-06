@@ -106,7 +106,13 @@ mk_newTyD fsName (unty_name,ty_name) ty = NewtypeD [] ty_name [PlainTV fsName] c
     where con = RecC ty_name [(unty_name,NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
           derives = [''Typeable,''Eq]
 
+mk_newTyDEC ecName fsName ty_nameEC (unty_name,ty_name) ty = NewtypeD [] ty_nameEC [PlainTV ecName,PlainTV fsName] con derives
+    where con = RecC (ty_name) [(unty_name,NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
+          derives = [''Typeable,''Eq]
+
 mk_TySynD fsName ty_name ty = TySynD ty_name [PlainTV fsName] ty
+mk_TySynDEC ecName fsName ty_name ty = TySynD ty_name [KindedTV ecName (ConT ''EC),KindedTV fsName (ConT ''FS)] ty
+mk_TySynDE fsName ty_name ty = TySynD ty_name [KindedTV fsName (ConT ''FS)] ty
 mk_TySynDMode modeName fsName ty_name ty = TySynD ty_name [KindedTV modeName (ConT ''ICMode),PlainTV fsName] ty
 
 -- generates a function that collects the fields of all the specifications in a directory and returns a list of @Forest_md@s
