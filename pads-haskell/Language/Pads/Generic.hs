@@ -82,6 +82,8 @@ parseBS1 :: Pads1 arg rep md => arg -> B.ByteString -> ((rep, md), B.ByteString)
 parseBS1 arg cs = parseByteStringInput (parsePP1 arg) cs
 
 
+parseString1 :: Pads1 arg rep md => arg-> String -> (rep, md)
+parseString1 arg str = parseStringWith (parsePP1 arg) str
 
 parseFile1 :: Pads1 arg rep md => arg-> FilePath -> IO (rep, md)
 parseFile1 arg file = parseFileWith (parsePP1 arg) file
@@ -96,6 +98,8 @@ printFile1 arg filepath r = do
 	let str = printBS1 arg r
 	B.writeFile filepath str
 
+parseStringWith  :: (Data rep, PadsMD md) => PadsParser (rep,md) -> String -> (rep,md)
+parseStringWith p str = fst $ parseStringInput p str
 
 parseFileWith  :: (Data rep, PadsMD md) => PadsParser (rep,md) -> FilePath -> IO (rep,md)
 parseFileWith p file = do
@@ -172,23 +176,23 @@ myempty = general
 
 
 
-class BuildContainer2 c item where
-  buildContainer2 :: [(FilePath,item)] -> c FilePath item
-  toList2         :: c FilePath item -> [(FilePath,item)]
+class BuildContainer2 c key item where
+  buildContainer2 :: [(key,item)] -> c key item
+  toList2         :: c key item -> [(key,item)]
 
-instance BuildContainer2 Map a  where
+instance Ord key => BuildContainer2 Map key a  where
   buildContainer2 = Data.Map.fromList
   toList2         = Data.Map.toList
 
-class BuildContainer1 c item where
-  buildContainer1 :: [(FilePath,item)] -> c (FilePath, item)
-  toList1         :: c (FilePath, item) ->  [(FilePath,item)]
+class BuildContainer1 c key item where
+  buildContainer1 :: [(key,item)] -> c (key, item)
+  toList1         :: c (key, item) ->  [(key,item)]
 
-instance Ord a => BuildContainer1 Set a  where
+instance (Ord a,Ord key) => BuildContainer1 Set key a  where
   buildContainer1 = Data.Set.fromList
   toList1         = Data.Set.toList
 
-instance BuildContainer1 [] a  where
+instance BuildContainer1 [] key a  where
   buildContainer1 = id
   toList1         = id
 

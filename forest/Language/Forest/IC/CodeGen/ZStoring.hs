@@ -288,7 +288,7 @@ zmanifestSimple (internal, isForm, externalE, forestTy, predM) treeE parentPathE
 	return (repName,bindManS:letRepS)
 
 zmanifestCompound :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> TH.Pat -> ZEnvQ (Name,[Stmt])
-zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) treeE parentPathE dtaE man0E man1P = do
+zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) treeE parentPathE dtaE man0E man1P = do
 	-- variable declarations
 	let repName = mkName internal
 	let (repE,repP) = genPE repName
@@ -312,7 +312,11 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 		Explicit expE -> expE
 		Matches regexpE -> regexpE
 
-	forceVarsZEnvQ genE $ \genE -> do
+	let keyArgE = case generatorTy of
+		Just (key_ty_name,Just argE) -> argE
+		otherwise -> Pure.returnExp $ TupE []
+
+	forceVarsZEnvQ keyArgE $ \keyArgE -> forceVarsZEnvQ genE $ \genE -> do
 		-- optional filtering
 		let fileName = Pure.getCompName explicitName externalE
 		let fileNameAtt = mkName $ nameBase fileName++"_att"
@@ -327,12 +331,12 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 		Reader.local update $ case predM of
 			Nothing -> do
 				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdtaP,newmanP]) $ zmanifestE False descTy newpathE treeE newdtaE newmanE
-				let manifestContainerE = Pure.appE7 (VarE 'doZManifestCompound) parentPathE genE treeE destroyContainerE innerRepE manifestSingleE man0E
+				let manifestContainerE = Pure.appE8 (VarE 'doZManifestCompound) parentPathE genE treeE keyArgE destroyContainerE innerRepE manifestSingleE man0E
 				let bindManS = BindS man1P manifestContainerE
 				return (repName,bindManS:letRepS)
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdtaP,newmanP]) $ zmanifestE False descTy newpathE treeE newdtaE newmanE
-				let manifestContainerE = Pure.appE8 (VarE 'doZManifestCompoundWithConstraint) parentPathE genE treeE destroyContainerE (modPredEComp (VarP fileName) predE) innerRepE manifestSingleE man0E
+				let manifestContainerE = Pure.appE9 (VarE 'doZManifestCompoundWithConstraint) parentPathE genE treeE keyArgE destroyContainerE (modPredEComp (VarP fileName) predE) innerRepE manifestSingleE man0E
 				let bindManS = BindS man1P manifestContainerE
 				return (repName,bindManS:letRepS)

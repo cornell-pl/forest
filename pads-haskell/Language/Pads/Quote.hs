@@ -30,7 +30,7 @@
 -}
 
 module Language.Pads.Quote
-    (pads)
+    (pads,padsDerivation)
     where
 
 import Prelude hiding (exp, init)
@@ -42,21 +42,23 @@ import Language.Haskell.TH.Quote (QuasiQuoter(..))
 import Language.Pads.CodeGen
 import qualified Language.Pads.Parser as P
 
-
 pads :: QuasiQuoter
-pads  = QuasiQuoter (error "parse expression")
+pads = padsDerivation (const $ return [])
+
+padsDerivation :: Derivation -> QuasiQuoter
+padsDerivation derivation = QuasiQuoter (error "parse expression")
                     (error "parse pattern")
                     (error "parse type")
-                    pparse
+                    (pparseDerivation derivation)
 
-pparse :: String -> Q [Dec]
-pparse input = do
+pparseDerivation :: Derivation -> String -> Q [Dec]
+pparseDerivation derivation input = do
     loc <- location
     let fileName = loc_filename loc
     let (line,column) = loc_start loc
     case P.parsePadsDecls fileName line column input of
       Left err -> unsafePerformIO $ fail $ show err
-      Right x  -> make_pads_declarations x
+      Right x  -> make_pads_declarations' derivation x
 
 
 

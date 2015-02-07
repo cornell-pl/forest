@@ -178,18 +178,18 @@ class MDContainer md where
 	merge_container_errors :: md -> Forest_err
 	merge_container_errors md = mergeMDErrors $ map get_errors $ collect_container_mds md
 
-merge_list_errors :: (ForestMD md) => [(FilePath,md)] -> Forest_err
+merge_list_errors :: (ForestMD md) => [(key,md)] -> Forest_err
 merge_list_errors md = mergeMDErrors $ map get_errors $ collect_list_mds md
 
-collect_list_mds :: (ForestMD md) => [(FilePath,md)] -> [Forest_md]
+collect_list_mds :: (ForestMD md) => [(key,md)] -> [Forest_md]
 collect_list_mds = map (get_fmd_header . snd)
 
-instance (ForestMD md,BuildContainer1 c md) => MDContainer (c (FilePath,md)) where
+instance (ForestMD md,BuildContainer1 c key md) => MDContainer (c (key,md)) where
 	collect_container_mds = collect_list_mds . toList1
-instance (ForestMD md,BuildContainer2 c md) => MDContainer (c FilePath md) where
+instance (ForestMD md,BuildContainer2 c key md) => MDContainer (c key md) where
 	collect_container_mds = collect_list_mds . toList2
 
-insertRepMDsList :: (FSRep fs,ForestMD md) => [(String, ForestM fs (rep,md))] -> ForestM fs ([(String,rep)], [(String,md)])
+insertRepMDsList :: (FSRep fs,ForestMD md) => [(key, ForestM fs (rep,md))] -> ForestM fs ([(key,rep)], [(key,md)])
 insertRepMDsList inputs = do 
     let (paths, rep_mdIOs) = unzip inputs
     rep_mds <- sequence rep_mdIOs
@@ -198,12 +198,12 @@ insertRepMDsList inputs = do
     let mdList = zip paths mds
     return (repList, mdList)
 
-insertRepMDsGeneric1 :: (FSRep fs,ForestMD b, BuildContainer1 c a, BuildContainer1 c b) => [(FilePath, ForestM fs (a,b))] -> ForestM fs (c (FilePath, a), c (FilePath, b))
+insertRepMDsGeneric1 :: (FSRep fs,ForestMD b, BuildContainer1 c key a, BuildContainer1 c key b) => [(key, ForestM fs (a,b))] -> ForestM fs (c (key, a), c (key, b))
 insertRepMDsGeneric1 inputs = do 
     (repList, mdList) <- insertRepMDsList inputs
     return (buildContainer1 repList, buildContainer1 mdList)
 
-insertRepMDsGeneric2 :: (FSRep fs,ForestMD b, BuildContainer2 c a, BuildContainer2 c b) => [(FilePath, ForestM fs (a,b))] -> ForestM fs (c FilePath a, c FilePath b)
+insertRepMDsGeneric2 :: (FSRep fs,ForestMD b, BuildContainer2 c key a, BuildContainer2 c key b) => [(key, ForestM fs (a,b))] -> ForestM fs (c key a, c key b)
 insertRepMDsGeneric2 inputs = do 
     (repList, mdList) <- insertRepMDsList inputs
     return (buildContainer2 repList, buildContainer2 mdList)
@@ -353,9 +353,6 @@ mkOptConstraintFun field predM = case predM of
 	Just pred ->
 		let predFnE = modPredE (VarP field) pred
 		in AppE (ConE 'Just) predFnE
-
-isSameFileName :: String -> String -> Bool
-isSameFileName s1 s2 = s1 == s2
 
 anyProxy :: Proxy args
 anyProxy = Proxy

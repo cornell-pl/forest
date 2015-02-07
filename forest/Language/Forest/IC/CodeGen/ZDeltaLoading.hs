@@ -391,7 +391,7 @@ zloadDeltaComp isTop cinfo pathE treeE dpathE dfE treeE' dvE repmdE = do
 		else return $ Pure.appE11 (VarE 'doZLoadDeltaDirectoryInner) pathE repmdE dpathE treeE dfE treeE' dvE collectMDs doCompNoDeltaE defE doCompDeltaE
 
 zloadDeltaCompound :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ (Name,Name, [Stmt])
-zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) pathE treeE repmdE dpathE dfE treeE' dvE = do
+zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) pathE treeE repmdE dpathE dfE treeE' dvE = do
 	-- variable declarataions
 	let repName = mkName internal
 	let mdName = mkName $ internal++"_md"
@@ -434,7 +434,11 @@ zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitN
 		Explicit expE -> expE
 		Matches regexpE -> regexpE
 	
-	forceVarsZDeltaQ genE $ \genE -> do
+	let keyArgE = case generatorTy of
+		Just (key_ty_name,Just argE) -> argE
+		otherwise -> Pure.returnExp $ TupE []
+	
+	forceVarsZDeltaQ keyArgE $ \keyArgE -> forceVarsZDeltaQ genE $ \genE -> do
 		-- optional filtering
 		let fileName = Pure.getCompName explicitName externalE
 		
@@ -452,19 +456,19 @@ zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitN
 		
 		-- actual loading
 		(fs,_) <- Reader.ask
-		let update (fs,env) = (fs,Map.insert fileName (Pure.appE2 (VarE 'Pure.isSameFileName) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptyDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
+		let update (fs,env) = (fs,Map.insert fileName (Pure.appE2 (VarE '(==)) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptyDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
 		let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
 		Reader.local update $ case predM of
 			Nothing -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,fieldrepmdP]) $ runZEnvQ $ zloadE False descTy pathFilterE newpathE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP,newdvP]) $ zloadDeltaE False descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE' newdvE
-				let loadActionE = Pure.appE13 (VarE 'doZLoadDeltaCompound) lensE isoE pathE dpathE genE treeE dfE treeE' dvE repmdE loadElementE loadElementDeltaE (zdiffE descTy)
+				let loadActionE = Pure.appE14 (VarE 'doZLoadDeltaCompound) lensE isoE keyArgE pathE dpathE genE treeE dfE treeE' dvE repmdE loadElementE loadElementDeltaE (zdiffE descTy)
 				let deltasE = BindS (TupP [drepP]) $ loadActionE
 				return (repName,drepName,fieldStmts++[deltasE])
 			Just predE -> forceVarsZDeltaQ predE $ \predE -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,fieldrepmdP]) $ runZEnvQ $ zloadE False descTy pathFilterE newpathE treeE' fieldrepmdE
 				loadElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepmdP,newpathP,newdpathP,newdfP,newdvP]) $ zloadDeltaE False descTy newpathE treeE fieldrepmdE newdpathE newdfE treeE' newdvE
-				let loadActionE = Pure.appE14 (VarE 'doZLoadDeltaCompoundWithConstraint) lensE isoE pathE dpathE genE treeE dfE treeE' dvE repmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE (zdiffE descTy)
+				let loadActionE = Pure.appE15 (VarE 'doZLoadDeltaCompoundWithConstraint) lensE isoE keyArgE pathE dpathE genE treeE dfE treeE' dvE repmdE (modPredEComp (VarP fileName) predE) loadElementE loadElementDeltaE (zdiffE descTy)
 				let deltasE = BindS (TupP [drepP]) $ loadActionE
 				return (repName,drepName,fieldStmts++[deltasE])
 

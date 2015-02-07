@@ -32,9 +32,12 @@
 -}
 
 module Language.Forest.Quote
-    (forest,iforest)
+    (ipads,forest,iforest)
     where
 
+import Data.WithClass.Derive.DeepTypeable
+import Data.WithClass.Derive.MData
+import Data.DeriveTH
 import Prelude hiding (exp, init)
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -46,6 +49,7 @@ import Language.Haskell.TH.Quote (QuasiQuoter(..))
 import Language.Forest.Pure.CodeGen as Pure
 import Language.Forest.IC.CodeGen as IC
 import qualified Language.Forest.Parser as P
+import Language.Pads.Quote as P
 
 import Language.Forest.Syntax
 
@@ -90,6 +94,12 @@ make_decls ICForest = do
 --	unzipped <- IC.make_forest_declarations Nothing
 	zipped <- IC.make_zforest_declarations
 	return $ {-unzipped ++ -} zipped
+
+ipads :: QuasiQuoter
+ipads = P.padsDerivation $ \dec -> do
+	mdata <- deriveFromDec makeMData dec
+	deep <- deriveFromDec makeDeepTypeable dec
+	return $ mdata ++ deep
 
 -- | A quasi-quoter for Forest with pure functional data structures
 forest :: QuasiQuoter

@@ -316,7 +316,7 @@ zmanifestDeltaCompContents cinfo pathE pathE' treeE dfE treeE' repE dvE manE = d
 	return doCompE
 
 zmanifestDeltaCompound :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Pat -> ZDeltaQ (Name,Name, [Stmt])
-zmanifestDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) pathE pathE' treeE dfE treeE' repE dvE manE nextmanP = do
+zmanifestDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) pathE pathE' treeE dfE treeE' repE dvE manE nextmanP = do
 	-- variable declarataions
 	newManName <- lift $ newName "newman"
 	let (newManE,newManP) = genPE newManName
@@ -350,7 +350,11 @@ zmanifestDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt expli
 		Explicit expE -> expE
 		Matches regexpE -> regexpE
 	
-	forceVarsZDeltaQ genE $ \genE -> do
+	let keyArgE = case generatorTy of
+		Just (key_ty_name,Just argE) -> argE
+		otherwise -> Pure.returnExp $ TupE []
+	
+	forceVarsZDeltaQ keyArgE $ \keyArgE -> forceVarsZDeltaQ genE $ \genE -> do
 		-- optional filtering
 		let fileName = Pure.getCompName explicitName externalE
 		
@@ -368,17 +372,17 @@ zmanifestDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt expli
 		
 		-- actual loading
 		(fs,_) <- Reader.ask
-		let update (fs,env) = (fs,Map.insert fileName (Pure.appE2 (VarE 'Pure.isSameFileName) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptyDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
+		let update (fs,env) = (fs,Map.insert fileName (Pure.appE2 (VarE '(==)) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptyDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
 		Reader.local update $ case predM of
 			Nothing -> do
 				manifestElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepP,newdvP,newpathP,newpathP',newdfP,newManP]) $ zmanifestDeltaE False descTy newpathE newpathE' treeE newdfE treeE' fieldrepE newdvE newManE
-				let manifestActionE = Pure.appE13 (VarE 'doZDeltaManifestCompound) lensRepE isoE pathE pathE' genE treeE dfE treeE' repE dvE manifestElementDeltaE (zdiffE descTy) manE
+				let manifestActionE = Pure.appE14 (VarE 'doZDeltaManifestCompound) lensRepE isoE keyArgE pathE pathE' genE treeE dfE treeE' repE dvE manifestElementDeltaE (zdiffE descTy) manE
 				let deltasE = BindS (TupP [nextmanP]) $ manifestActionE
 				return (drepName,repName,[deltasE]++fieldStmts)
 			Just predE -> forceVarsZDeltaQ predE $ \predE -> do
 				manifestElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepP,newdvP,newpathP,newpathP',newdfP,newManP]) $ zmanifestDeltaConstraintCompound predE fieldrepE newdvE newManE $ zmanifestDeltaE False descTy newpathE newpathE' treeE newdfE treeE'
 				boolE <- isEmptyZDeltaEnvForestTy descTy
-				let manifestActionE = Pure.appE14 (VarE 'doZDeltaManifestCompoundWithConstraint) lensRepE isoE pathE pathE' genE treeE dfE treeE' repE dvE (modPredEComp (VarP fileName) predE) manifestElementDeltaE (zdiffE descTy) manE
+				let manifestActionE = Pure.appE15 (VarE 'doZDeltaManifestCompoundWithConstraint) lensRepE isoE keyArgE pathE pathE' genE treeE dfE treeE' repE dvE (modPredEComp (VarP fileName) predE) manifestElementDeltaE (zdiffE descTy) manE
 				let deltasE = BindS (TupP [nextmanP]) $ manifestActionE
 				return (drepName,repName,[deltasE]++fieldStmts)
 

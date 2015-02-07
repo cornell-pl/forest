@@ -58,6 +58,7 @@ import System.Random
 import Data.Proxy
 import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
+import Language.Pads.Generic as Pads
 
 -- updates the thunks that keep track of the arguments of a top-level declaration
 doZDeltaManifestArgs :: (ForestArgs fs args,ICRep fs) =>
@@ -457,64 +458,70 @@ doZDeltaManifestSimpleWithConstraint lens emptyDArgs pred path path' matchingM t
 	let dv = mapValueDelta Proxy dir_dv
 	doZDeltaManifestConstraintInner emptyDArgs pred tree rep dv (\rep dv -> doZDeltaManifestFocus matching path path' tree df tree' $ manifestD rep dv) diffValue man
 
-doZDeltaManifestCompound :: (IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a,list_rep' ~ [(FileName,rep')]) =>
-	Lens dir_rep container_rep' -> Iso container_rep' list_rep'
+doZDeltaManifestCompound :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a,list_rep' ~ [(key,rep')]) =>
+	Lens dir_rep container_rep' -> Iso container_rep' list_rep' -> ForestI fs key_arg
 	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> dir_rep -> ValueDelta fs dir_rep
-	-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
+	-> (key -> key -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep' -> ForestO fs (ValueDelta fs rep'))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestCompound lens isoRep path path' matchingM tree df tree' dir_rep dir_dv manifestD diffValue man = do
-	
+doZDeltaManifestCompound lens isoRep mkeyarg path path' matchingM tree df tree' dir_rep dir_dv manifestD diffValue man = do
+	key_arg <- lift $ inside mkeyarg
 	matching <- lift $ inside $ matchingM
 	
 	current_files <- lift $ forestM $ getMatchingFilesInTree path' matching tree'
 	
 	let crep = BX.get lens dir_rep
 	let newreplist = to isoRep crep
-	let (new_files,newreps) = unzip newreplist
+	let (new_keys,newreps) = unzip newreplist
+	let new_files = map (\key -> Pads.printS1 key_arg (key,Pads.defaultMd1 key_arg key)) new_keys
+	let new_fileskeys = zip new_files new_keys
 	repinfos <- lift $ inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) newreps
 
 	let rem_files = current_files \\ new_files -- files to be removed
 	man1 <- lift $ forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree') (return man) $ map (path' </>) rem_files -- remove deprecated files
 
-	let manifestEach (n,(rep,fileInfo_t)) man0M = do
+	let manifestEach ((n,key),(rep,fileInfo_t)) man0M = do
 		idv <- lift $ diffValue tree rep
-		man0M >>= doZDeltaManifestFocus n path path' tree df tree' (manifestD n n fileInfo_t Delta rep idv)
+		man0M >>= doZDeltaManifestFocus n path path' tree df tree' (manifestD key key fileInfo_t Delta rep idv)
 	let testm = testFocus path' matching (\file tree -> return True) new_files
-	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_files repinfos)
+	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_fileskeys repinfos)
 
-doZDeltaManifestCompoundWithConstraint :: (IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a,list_rep' ~ [(FileName,rep')]) =>
-	Lens dir_rep container_rep' -> Iso container_rep' list_rep'
+doZDeltaManifestCompoundWithConstraint :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a,list_rep' ~ [(key,rep')]) =>
+	Lens dir_rep container_rep' -> Iso container_rep' list_rep' -> ForestI fs key_arg
 	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> dir_rep -> ValueDelta fs dir_rep
-	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
-	-> (FileName -> FileName -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
+	-> (key -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
+	-> (key -> key -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep' -> ForestO fs (ValueDelta fs rep'))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestCompoundWithConstraint lens isoRep path path' matchingM tree df tree' dir_rep dir_dv pred manifestD diffValue man = do
+doZDeltaManifestCompoundWithConstraint lens isoRep mkeyarg path path' matchingM tree df tree' dir_rep dir_dv pred manifestD diffValue man = do
 	
+	key_arg <- lift $ inside mkeyarg
 	matching <- lift $ inside $ matchingM
 	
 	let crep = BX.get lens dir_rep
 	let newreplist = to isoRep crep
-	let (new_files,newreps) = unzip newreplist
+	let (new_keys,newreps) = unzip newreplist
+	let new_files = map (\key -> Pads.printS1 key_arg (key,Pads.defaultMd1 key_arg key)) new_keys
+	let new_fileskeys = zip new_files new_keys
 	repinfos <- lift $ inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) newreps
 
 	current_files <- lift $ forestM $ getMatchingFilesInTree path' matching tree'
 	let current_files' = current_files \\ new_files -- old files that are not in the view
+	let current_fileskeys' = map (\file -> (file,fst $ Pads.parseString1 key_arg file)) current_files'
 	current_metadatas' <- lift $ mapM (getRelForestMDInTree path' tree) current_files'
 	-- we need to check which old files satisfy the predicate
-	current_values' <- lift $ inside $ filterM (\(n,fmd) -> ref (fileInfo fmd) >>= pred n) $ zip current_files' current_metadatas'
-	let rem_files = map fst current_values' -- files to be removed
+	current_values' <- lift $ inside $ filterM (\((n,key),fmd) -> ref (fileInfo fmd) >>= pred key) $ zip current_fileskeys' current_metadatas'
+	let rem_fileskeys = map fst current_values' -- files to be removed
 
-	man1 <- lift $ forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree') (return man) $ map (path' </>) rem_files -- remove deprecated files
+	man1 <- lift $ forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree') (return man) $ map ((path' </>) . fst) rem_fileskeys -- remove deprecated files
 
-	let manifestEach (n,(rep,fileInfo_t)) man0M = do
+	let manifestEach ((n,key),(rep,fileInfo_t)) man0M = do
 		idv <- lift $ diffValue tree rep
-		man0M >>= doZDeltaManifestFocus n path path' tree df tree' (manifestD n n fileInfo_t Delta rep idv)
+		man0M >>= doZDeltaManifestFocus n path path' tree df tree' (manifestD key key fileInfo_t Delta rep idv)
 	let testm = testFocus path' matching (\file tree -> return True) new_files
-	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_files repinfos)
+	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_fileskeys repinfos)
 
 zskipManifestIf :: (IncK (IncForest fs) irep,ForestMD fs rep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),StableMD fs rep) =>
 	Bool -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> rep -> ValueDelta fs rep

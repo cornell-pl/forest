@@ -139,39 +139,43 @@ doZDefaultSimpleWithConstraint :: (ForestOutput fs ICThunk Inside,ForestMD fs re
 	-> ForestI fs (ForestFSThunkI fs Forest_err,rep)
 doZDefaultSimpleWithConstraint path matching pred load = doZDefaultConstraintInner pred $ matching >>= \m -> doZDefaultFocus path m load
 
-doZDefaultCompound :: (IncK (IncForest fs) Pure.FileInfo,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZDefaultCompound :: (Pads1 key_arg key key_md,IncK (IncForest fs) Pure.FileInfo,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePath -> ForestI fs a
-	-> ([(FilePath,rep')] -> container_rep)
-	-> (FileName -> ForestFSThunkI fs Pure.FileInfo -> FilePath -> ForestI fs rep')
+	-> ForestI fs key_arg -> ([(key,rep')] -> container_rep)
+	-> (key -> ForestFSThunkI fs Pure.FileInfo -> FilePath -> ForestI fs rep')
 	-> ForestI fs container_rep
-doZDefaultCompound path matchingM buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
+doZDefaultCompound path matchingM mkeyarg buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
+	key_arg <- mkeyarg
 	matching <- matchingM
 	files <- forestM $ defaultMatch Proxy matching
-	let loadEach n = liftM (n,) $ doZDefaultFocus path n $ \newpath -> do
-		fileInfo_thunk <- ref $ Pure.mkErrorFileInfo (path </> n)
-		rep' <- load n fileInfo_thunk newpath
-		return rep'
+	let loadEach n = do
+		let key = fst $ Pads.parseString1 key_arg n
+		liftM (key,) $ doZDefaultFocus path n $ \newpath -> do
+			fileInfo_thunk <- ref $ Pure.mkErrorFileInfo (path </> n)
+			load key fileInfo_thunk newpath
 	loadlist <- mapM loadEach files
 	return $ buildContainerRep loadlist
 
-doZDefaultCompoundWithConstraint :: (IncK (IncForest fs) Pure.FileInfo,IncK (IncForest fs) Bool,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZDefaultCompoundWithConstraint :: (Pads1 key_arg key key_md,IncK (IncForest fs) Pure.FileInfo,IncK (IncForest fs) Bool,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePath -> ForestI fs a
-	-> (FilePath -> ForestFSThunkI fs Pure.FileInfo -> ForestI fs Bool)
-	-> ([(FilePath,rep')] -> container_rep)
-	-> (FileName -> ForestFSThunkI fs Pure.FileInfo -> FilePath -> ForestI fs rep')
+	-> (key -> ForestFSThunkI fs Pure.FileInfo -> ForestI fs Bool)
+	-> ForestI fs key_arg -> ([(key,rep')] -> container_rep)
+	-> (key -> ForestFSThunkI fs Pure.FileInfo -> FilePath -> ForestI fs rep')
 	-> ForestI fs container_rep
-doZDefaultCompoundWithConstraint path matchingM pred buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
+doZDefaultCompoundWithConstraint path matchingM pred mkeyarg buildContainerRep load = debug ("doLoadCompound: "++show path) $ do
+	key_arg <- mkeyarg
 	matching <- matchingM -- matching expressions are not saved for incremental reuse
 	files <- forestM $ defaultMatch Proxy matching
 	let makeInfo n = do
+		let key = fst $ Pads.parseString1 key_arg n
 		t <- ref $ Pure.mkErrorFileInfo (path </> n) -- we store the @FileInfo@ in a @FSThunk@ to allow incremental evaluation of the constraint expression
-		u <- icThunk $ pred n t --the filename is a constant. during delta loading, whenever it changes we will load from scratch
-		return (n,(t,u))
+		u <- icThunk $ pred key t --the filename is a constant. during delta loading, whenever it changes we will load from scratch
+		return ((n,key),(t,u))
 	filesmetasInfo <- mapM makeInfo files
 	filesmetasInfo' <- filterM (force . snd . snd) filesmetasInfo
-	let loadEach (n,(t,u)) = do
-		rep <- doZDefaultFocus path n $ load n t
-		return (n,rep)
+	let loadEach ((n,key),(t,u)) = do
+		rep <- doZDefaultFocus path n $ load key t
+		return (key,rep)
 	loadlist <- mapM loadEach filesmetasInfo'
 	return (buildContainerRep loadlist)
 

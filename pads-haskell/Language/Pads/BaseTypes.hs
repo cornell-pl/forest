@@ -42,6 +42,7 @@ type StringESC   (p :: (Char, [Char])) = StringPESC <|(False, p)|>
 data PMaybe a = PJust a
               | PNothing Void
 obtain Maybe a from PMaybe a using <|(pm2m,m2pm)|>
+
 |]
 
 pm2m :: Pos -> (PMaybe a, md) -> (Maybe a, md)

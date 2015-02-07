@@ -254,7 +254,7 @@ manifestSimple (internal, isForm, externalE, forestTy, predM) treeE parentPathE 
 	return (repName,mdName,bindManS:letRepS++letMdS)
 
 manifestCompound :: Bool -> CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Pat -> EnvQ (Name,Name,[Stmt])
-manifestCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) treeE parentPathE dtaE man0E man1P = do
+manifestCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) treeE parentPathE dtaE man0E man1P = do
 	-- variable declarations
 	let repName = mkName internal
 	let mdName  = mkName (internal++"_md")

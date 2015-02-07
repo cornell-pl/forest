@@ -57,6 +57,11 @@ import Language.Pads.Syntax
 
 type Parser = Parsec String ForestMode
 
+parsePads :: PadsP.Parser a -> Parser a
+parsePads m = do
+	mode <- getState
+	changeParsecState (const mode) (const ()) m
+
 changeParsecState :: (Functor m,Monad m) => (u -> v) -> (v -> u) -> ParsecT s u m a -> ParsecT s v m a
 changeParsecState forward backward = mkPT . transform . runParsecT where
 	mapState f st = st { PP.stateUser = f (PP.stateUser st) }
@@ -106,18 +111,27 @@ integratePred ty predM = case predM of
 
 -- a regular Haskell expression in parenthesis to which we add a return
 haskellParenthesisExp :: Parser TH.Exp
-haskellParenthesisExp = (do
+haskellParenthesisExp = do
 	mode <- PP.getState
-	str <- parseParentherizedExp
-	case LHM.parseExp str of
-		Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
-		Right expTH -> case mode of
-			PureForest -> return expTH
-			ICForest -> return $ (AppE (VarE 'return))  expTH
-	) <?> "haskell expression"
+	expTH <- haskellParenthesis LHM.parseExp
+	case mode of
+		PureForest -> return expTH
+		ICForest -> return $ (AppE (VarE 'return))  expTH
+	
+haskellParenthesisPat :: Parser TH.Pat
+haskellParenthesisPat = haskellParenthesis LHM.parsePat
 
-parseParentherizedExp :: Parser String
-parseParentherizedExp = do
+haskellParenthesis :: (String -> Either String a) -> Parser a
+haskellParenthesis parse = (do
+	mode <- PP.getState
+	str <- parseParentherized
+	case parse str of
+		Left err    -> unexpected ("Failed to parse Haskell expression: " ++ err)
+		Right a -> return a
+	) <?> "haskell paretherised expression/pattern"
+
+parseParentherized :: Parser String
+parseParentherized = do
 	mode <- getState
 	changeParsecState (const mode) (const (0::Int)) $ do
 	spaces
@@ -145,13 +159,20 @@ literalExp :: Parser TH.Exp
 literalExp = do
 	mode <- PP.getState
 	let literal = changeParsecState (const mode) (const ()) PadsP.literal
-	mode <- PP.getState
 	case mode of
 		PureForest -> literal
 		ICForest -> liftM (AppE (VarE 'return)) literal
 
+literalPat :: Parser TH.Pat
+literalPat = do
+	mode <- PP.getState
+	changeParsecState (const mode) (const ()) PadsP.literalPat
+
 haskellExp :: Parser TH.Exp
 haskellExp = haskellParenthesisExp <|> haskellForestEscapedExp <|> literalExp
+
+haskellPat :: Parser TH.Pat
+haskellPat = haskellParenthesisPat <|> literalPat
 
 forestTy :: Parser ForestTy
 forestTy =   directoryTy
@@ -255,9 +276,12 @@ fileBodyTyParens =   parens fileBodyTy
                  <|> fileBodyTy
 
 fileBodyTy :: Parser ForestTy
-fileBodyTy = do { id <- identifier
+fileBodyTy = liftM FFile padsTy
+
+padsTy :: Parser (String,Maybe TH.Exp)
+padsTy = do { id <- identifier
                 ; arg <- optionMaybe forestArg
-                ; return (FFile (id, arg))
+                ; return (id, arg)
                 }
 
 forestArgR :: Parser TH.Exp
@@ -329,21 +353,20 @@ compTy = do
 
 compForm :: String -> Parser CompField
 compForm internal_name = do
-          { repTyConName <- optionMaybe (identifier)
-          ; reservedOp "["
-          ; explicitFileName <- optionMaybe asPattern
-          ; externalE <- forestArg
-          ; reservedOp "::"
-          ; forest_ty <- forestTy
-          ; reservedOp "|"
-          ; strPat <- manyTill anyChar (reservedOp "<-")  
-          ; generatorP <- case LHM.parsePat strPat of 
-                              Left err    -> unexpected ("Failed to parse Haskell pattern in directory declaration for field "  ++ internal_name ++ ":" ++ err)
-                              Right patTH -> return patTH
-          ; (generatorE, predEOpt) <- compBody
-          ; reservedOp "]"
-          ; return (CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorE predEOpt)
-          }
+	repTyConName <- optionMaybe (identifier)
+	reservedOp "["
+	explicitFileName <- optionMaybe asPattern
+	externalE <- forestArg
+	reservedOp "::"
+	forest_ty <- forestTy
+	reservedOp "|"
+	generatorP <- haskellPat
+	generatorTy <- optionMaybe (reservedOp "::" >> padsTy)
+	reservedOp "<-"
+	(generatorE, predEOpt) <- compBody
+	reservedOp "]"
+	
+	return (CompField internal_name repTyConName explicitFileName externalE forest_ty generatorP generatorTy generatorE predEOpt)
 
 compField :: String -> Parser Field
 compField internal_name = do

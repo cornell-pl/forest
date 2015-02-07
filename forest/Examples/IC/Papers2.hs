@@ -46,35 +46,41 @@ import System.IO.Unsafe
 import System.Mem.StableName
 import System.Mem.Weak as Weak
 import System.Mem.WeakTable as WeakTable
-import Language.Pads.Padsc hiding (numErrors)
+import Language.Pads.Padsc as Pads hiding (numErrors)
 
 import Data.Typeable.Internal
 import Debug.Trace
 import Data.DeepTypeable
 import Language.Haskell.TH.Syntax
 
-import Language.Forest.IC
+import Language.Forest.IC hiding (Id)
+
+[ipads|
+	data Id a = Id a | Unknown "Unknown"
+	type AuthorId = Id String
+	type YearId = Id Integer
+|]
 
 [iforest|
-	type Paper (y :: Maybe Integer) (n :: Maybe String) = BinaryFile where (isPaperOf (fullpath this_att) y n)
+	type Paper (y :: YearId) (a :: AuthorId) = BinaryFile where (isPaperOf (fullpath this_att) y a)
 
-    type Supplemental (y :: Maybe Integer) (n :: Maybe String) = Directory {
-		supplementalFiles is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
+    type Supplemental (y :: YearId) (a :: AuthorId) = Directory {
+		supplementalFiles is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
 	} 
 
-	type Author (y :: Maybe Integer) (n :: Maybe String) = Directory {
-		authorPapers is Map [ p :: Paper y n | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
-	,   supplemental is "Supplemental" :: Maybe (Supplemental y n)
+	type Author (y :: YearId) (a :: AuthorId) = Directory {
+		authorPapers is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
+	,   supplemental is "Supplemental" :: Maybe (Supplemental y a)
 	}
 
-	type Year (y :: Maybe Integer) = Directory {
-		authors is Map [ n :: Author y (getAuthor n) | n <- matches (GL "*"), (not (hidden n)) ]
+	type Year (y :: YearId) = Directory {
+		authors is Map [ a :: Author y a | a :: AuthorId <- matches (GL "*"), (not $ hidden $ show a) ]
 	}
 
-	type Articles = Map [ y :: Year (getYear y) | y <- matches yearRE ] where True
-	type Books    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
-	type Media    = Map [ y :: Year (getYear y) | y <- matches yearRE ]
-	type Reports  = Map [ y :: Year (getYear y) | y <- matches yearRE ]
+	type Articles = Map [ y :: Year y | y :: YearId <- matches yearRE ] where True
+	type Books    = Map [ y :: Year y | y :: YearId <- matches yearRE ]
+	type Media    = Map [ y :: Year y | y :: YearId <- matches yearRE ]
+	type Reports  = Map [ y :: Year y | y :: YearId <- matches yearRE ]
 
 	type Library (articles :: [String]) = Directory {
 		database is "Database.papersdb" :: BinaryFile
@@ -89,8 +95,6 @@ import Language.Forest.IC
 	} where True
 |]
 
--- [pads| data Id a = Id a | "Unknown" |]
-
 libraryRE = RE "Library.papers2|Library.papers"
 
 allPaperNames articles books media reports = return []
@@ -101,8 +105,12 @@ hidden = isPrefixOf "."
 isNotHiddenFile :: String -> FileInfo -> Bool
 isNotHiddenFile p p_att = isFile p_att && not (hidden p)
 
-isPaperOf :: FilePath -> Maybe Integer -> Maybe String -> Bool
-isPaperOf (toLowerString -> file) myear (fmap toLowerString -> mname) = isSuffixOf suffix filename || (isSuffixOf suffix name && isNumberString num)
+fromId :: Id a -> Maybe a
+fromId (Id x) = Just x
+fromId Unknown = Nothing
+
+isPaperOf :: FilePath -> YearId -> AuthorId -> Bool
+isPaperOf (toLowerString -> file) (fromId -> myear) ((fmap toLowerString . fromId) -> mname) = isSuffixOf suffix filename || (isSuffixOf suffix name && isNumberString num)
     where (filename,ext) = splitExtension (takeFileName file)
           (name,num) = splitOnTwoRear "-" filename -- when multiple papers with the same year and author exist
           suffix = foldr1Safe (\x y -> x ++" "++y) (maybeToList (fmap show myear) ++ maybeToList mname)

@@ -318,15 +318,18 @@ genZRepMDField ecName fsName (Comp (info @ CompField {internalName, tyConNameOpt
 	return (Pure.getFieldName   internalName, TH.NotStrict, {-fsthunkTyQ fsName -} rep_ty)
 
 genZRepMDComp :: Name -> Name -> CompField -> GenQ Type
-genZRepMDComp ecName fsName (CompField {internalName, tyConNameOpt, descTy, predEOpt, ..}) = do
+genZRepMDComp ecName fsName (CompField {internalName, tyConNameOpt, descTy, generatorTy, predEOpt, ..}) = do
 	(rng_rep_ty) <- genZRepMDTy False ecName fsName descTy
+	let key_ty = case generatorTy of
+		Just (key_ty_name,key_arg) -> ConT $ Pure.getTyName key_ty_name
+		Nothing -> ConT ''String
 	(rep_ty) <- case tyConNameOpt of 
-		Nothing ->  return (mkStringListTy rng_rep_ty)
+		Nothing ->  return (mkKeyListTy key_ty rng_rep_ty)
 		Just str -> do
 			arity <- lift $ Pure.getTyConArity str
 			case arity of 
-				1 -> return (mkStringConTupleTy (mkName str) rng_rep_ty) 
-				2 -> return (mkStringConCurryTy (mkName str) rng_rep_ty) 
+				1 -> return (mkKeyConTupleTy (mkName str) key_ty rng_rep_ty) 
+				2 -> return (mkKeyConCurryTy (mkName str) key_ty rng_rep_ty) 
 	return (rep_ty)
 	
 genZRepMDCompTy :: Bool -> Name -> Name -> CompField -> GenQ Type
@@ -490,6 +493,10 @@ genRepMDCompTy modeName fsName info = do
 mkStringConTupleTy con ty = AppT (ConT con)  (Pure.tyListToTupleTy [ConT ''String, ty])
 mkStringConCurryTy con ty = AppT (AppT (ConT con) (ConT ''String)) ty
 mkStringListTy ty = AppT ListT (Pure.tyListToTupleTy [ConT ''String, ty])
+
+mkKeyConTupleTy con key ty = AppT (ConT con)  (Pure.tyListToTupleTy [key, ty])
+mkKeyConCurryTy con key ty = AppT (AppT (ConT con) (key)) ty
+mkKeyListTy key ty = AppT ListT (Pure.tyListToTupleTy [key, ty])
 
 
 {- Generate type and meta-data representations. -}

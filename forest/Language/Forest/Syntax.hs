@@ -33,6 +33,7 @@
 
 module Language.Forest.Syntax where
 
+import Language.Pads.Syntax
 import Language.Pads.Padsc
 import Language.Haskell.TH.Instances
 import Data.Typeable
@@ -58,7 +59,7 @@ import Data.WithClass.Derive.MData
 data ForestMode = PureForest | ICForest deriving (Eq,Show,Typeable,Data)
 
 newtype ForestDecl = ForestDecl (String,[TH.Pat], ForestTy)
-   deriving (Ord, Eq, Data, Typeable, Show)
+   deriving ( Eq, Data, Typeable, Show)
 
 data ForestTy = Directory DirectoryTy 
               | FFile FileTy 
@@ -69,16 +70,16 @@ data ForestTy = Directory DirectoryTy
               | FConstraint TH.Pat ForestTy TH.Exp    {- pattern bound to underlying type, underlying type, predicate -}
               | Fapp ForestTy [TH.Exp] -- non-empty list of arguments
               | FComp CompField
-   deriving (Ord, Eq, Data, Typeable, Show)
+   deriving ( Eq, Data, Typeable, Show)
 
 addArchiveTypes :: FilePath -> [ArchiveType] -> FilePath
 addArchiveTypes = foldl (\path -> addExtension path . showArchiveType)
 
 data ArchiveType = Gzip | Tar | Zip | Bzip | Rar
-	deriving (Ord, Eq, Data, Typeable, Show)
+	deriving ( Eq, Data, Typeable, Show)
 
 data DirectoryTy = Record String [Field]
-   deriving (Ord, Eq, Data, Typeable, Show)
+   deriving ( Eq, Data, Typeable, Show)
 
 type FileTy = (String, Maybe TH.Exp) -- type name, expression argument
 
@@ -86,7 +87,7 @@ type FileTy = (String, Maybe TH.Exp) -- type name, expression argument
 type BasicField = (String, Bool, TH.Exp, ForestTy, Maybe TH.Exp)  
 
 data Generator = Explicit TH.Exp | Matches TH.Exp
-    deriving (Ord, Eq, Data, Typeable, Show)
+    deriving ( Eq, Data, Typeable, Show)
 
 data GeneratedPaths a = ExpPaths [FilePath] | MatchPaths a
 
@@ -95,16 +96,18 @@ data CompField = CompField
         , tyConNameOpt :: Maybe String
         , explicitName :: Maybe String
         , externalE    :: TH.Exp
-        , descTy       :: ForestTy
+        , descTy       :: ForestTy -- the Forest type for values of the container
         , generatorP   :: TH.Pat
+		, generatorTy :: Maybe (String,Maybe TH.Exp) -- the Pads type for keys of the container
         , generatorG   :: Generator
         , predEOpt     :: Maybe TH.Exp
         }
-   deriving (Ord, Eq, Data, Typeable, Show)
+   deriving ( Eq, Data, Typeable, Show)
+--[ explicitName :: descTy | generatorP :: <- generatorE , predEOpt ]
 
 data Field = Simple BasicField
            | Comp  CompField
-   deriving (Ord, Eq, Data, Typeable, Show)
+   deriving ( Eq, Data, Typeable, Show)
 
 isSimpleField :: Field -> Bool
 isSimpleField (Simple _) = True

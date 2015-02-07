@@ -370,7 +370,6 @@ digitListToInt isNeg digits = if isNeg then negate raw else raw
   where
     raw = foldl (\a d ->10*a + digitToInt d) 0 digits
 
-
 -------------------------
 
 

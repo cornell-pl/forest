@@ -90,6 +90,31 @@ instance Pads1 () Int Base_md where
 int_printFL :: PadsPrinter (Int, Base_md)
 int_printFL (i, bmd) = fshow i
 
+-----------------------------------------------------------------
+
+--type Integer
+type Integer_md = Base_md
+
+integer_parseM :: PadsParser (Integer,Base_md)
+integer_parseM =
+  handleEOF def "Integer" $
+  handleEOR def "Integer" $ do
+    c <- peekHeadP 
+    let isNeg = (c == '-')
+    when isNeg (takeHeadP >> return ())
+    digits <- satisfy Char.isDigit
+    if not (null digits)
+      then returnClean (toEnum $ digitListToInt isNeg digits)
+      else returnError def (E.FoundWhenExpecting (mkStr c) "Integer")
+
+type instance Meta Integer = Base_md
+instance Pads1 () Integer Base_md where
+  parsePP1 () = integer_parseM
+  printFL1 () = integer_printFL
+
+integer_printFL :: PadsPrinter (Integer, Base_md)
+integer_printFL (i, bmd) = fshow i
+
 
 -----------------------------------------------------------------
 
@@ -170,6 +195,24 @@ digit_printFL :: PadsPrinter (Digit, Base_md)
 digit_printFL (i, bmd) = fshow i
 
 
+-----------------------------------------------------------------
+
+--type String
+type String_md = Base_md
+
+string_parseM :: PadsParser (String, Base_md)
+string_parseM = do
+  document <- getAllBinP
+  returnClean $ show document
+
+type instance Meta String = Base_md
+instance Pads1 () String Base_md where
+  parsePP1 () = string_parseM
+  printFL1 () = string_printFL
+
+
+string_printFL :: PadsPrinter (String, Base_md)
+string_printFL (str, bmd) = addString str
 
 
 -----------------------------------------------------------------
@@ -221,6 +264,7 @@ binary_printFL (Binary bstr, bmd) = addBString bstr
 
 -----------------------------------------------------------------
 
+-- string with end character
 type StringC = String
 type StringC_md = Base_md
 
@@ -239,6 +283,7 @@ stringC_printFL c (str, bmd) = addString str
 
 -----------------------------------------------------------------
 
+-- string of given length
 type StringFW = String
 type StringFW_md = Base_md
 
@@ -260,6 +305,7 @@ stringFW_printFL n (str, bmd)  = addString (take n str)
 
 -----------------------------------------------------------------
 
+-- string with matching expression
 type StringME = String
 type StringME_md = Base_md
 
@@ -301,6 +347,7 @@ stringSE_printFL re (str, bmd) = addString str
 
 -----------------------------------------------------------------
 
+-- string with a predicate
 type StringP = String
 type StringP_md = Base_md
 

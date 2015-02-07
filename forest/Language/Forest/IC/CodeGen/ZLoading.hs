@@ -270,7 +270,7 @@ zloadCompContents cinfo filterPathE pathE treeE getMDE = do
 -- | Load a comprehension inlined inside a @Directory@
 -- if a comprehension is nested inside a directory, we created a top-level metadata thunk for it, otherwise the thunk already exists
 zloadCompound :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ (Name,[Stmt])
-zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) filterPathE pathE treeE getMDE = do
+zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) filterPathE pathE treeE getMDE = do
 	-- variable declarations
 	let repName = mkName internal
 	let mdName  = mkName (internal++"_md")
@@ -286,7 +286,12 @@ zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE d
 		Explicit expE -> expE
 		Matches regexpE -> regexpE
 	
-	forceVarsZEnvQ genE $ \genE -> do
+	let keyArgE = case generatorTy of
+		Just (key_ty_name,Just argE) -> argE
+		otherwise -> Pure.returnExp $ TupE []
+	
+	
+	forceVarsZEnvQ keyArgE $ \keyArgE -> forceVarsZEnvQ genE $ \genE -> do
 		-- optional filtering
 		let fileName = Pure.getCompName explicitName externalE
 		let fileNameAtt = mkName $ nameBase fileName++"_att"
@@ -302,13 +307,13 @@ zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE d
 		Reader.local update $ case predM of
 			Nothing -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
-				let loadContainerE = Pure.appE6 (VarE 'doZLoadCompound) filterPathE pathE genE treeE buildContainerE loadSingleE
+				let loadContainerE = Pure.appE7 (VarE 'doZLoadCompound) filterPathE pathE genE treeE keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
 				return (repName,[loadContainerS])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
-				let loadContainerE = Pure.appE7 (VarE 'doZLoadCompoundWithConstraint) filterPathE pathE genE treeE (modPredEComp (VarP fileName) predE) buildContainerE loadSingleE
+				let loadContainerE = Pure.appE8 (VarE 'doZLoadCompoundWithConstraint) filterPathE pathE genE treeE (modPredEComp (VarP fileName) predE) keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
 				return (repName,[loadContainerS])
 

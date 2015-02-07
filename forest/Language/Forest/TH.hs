@@ -11,6 +11,7 @@ import Control.Monad
 --import Data.Generics.TH
 import Data.Generics
 import Language.Forest.Syntax
+import Language.Pads.Syntax
 	
 -- | Computes the set of external variables used by an arbitrary Haskell expression
 expVars :: Exp -> Set Name
@@ -126,6 +127,9 @@ forestTyVars (FConstraint (VarP name) ty exp) = constraintVars name ty exp
 forestTyVars (Fapp ty exps) = Set.unions (map expVars exps) `Set.union` forestTyVars ty
 --forestTyVars (FComp c) = fieldVars
 
+padsTyVars :: PadsTy -> Set Name
+padsTyVars = everything (Set.union) (mkQ Set.empty expVars)
+
 constraintVars :: Name -> ForestTy -> Exp -> Set Name
 constraintVars name ty exp = (expVars exp `Set.difference` vars) `Set.union` forestTyVars ty
 	where vars = Set.fromList [mkName (nameBase name),mkName (nameBase name++"_md"),mkName (nameBase name++"_att")]
@@ -148,19 +152,21 @@ fieldVars (Simple (internal, isForm, externalE, ty, Nothing)) = (expVars externa
 	where vars = Set.fromList [mkName internal,mkName (internal++"_md")]
 fieldVars (Simple (internal, isForm, externalE, ty, Just pred)) = (expVars externalE `Set.union` constraintVars (mkName internal) ty pred,vars)
 	where vars = Set.fromList [mkName internal,mkName (internal++"_md")]
-fieldVars (Comp (CompField internal tyConNameOpt explicitName externalE ty (VarP name) generatorG Nothing)) = 
-		((expVars externalE `Set.difference` vars) `Set.union` generatorVars generatorG `Set.union` forestTyVars ty,decvars)
+fieldVars (Comp (CompField internal tyConNameOpt explicitName externalE ty (VarP name) generatorTy generatorG Nothing)) = 
+		((expVars externalE `Set.difference` vars) `Set.union` generatorVars generatorG `Set.union` forestTyVars ty `Set.union` genvars,decvars)
 	where
 	externalName = getCompFieldExternalName explicitName externalE
 	vars = Set.fromList [name,mkName (nameBase name++"_att")]
 	decvars = Set.fromList [mkName internal,mkName (internal++"_md")]
-fieldVars (Comp (CompField internal tyConNameOpt explicitName externalE ty (VarP name) generatorG (Just pred))) =
-		((expVars externalE `Set.difference` vars) `Set.union` generatorVars generatorG `Set.union` constraintVars (mkName externalName) ty pred,decvars)
+	genvars = maybe Set.empty (maybe Set.empty expVars . snd) generatorTy
+fieldVars (Comp (CompField internal tyConNameOpt explicitName externalE ty (VarP name) generatorTy generatorG (Just pred))) =
+		((expVars externalE `Set.difference` vars) `Set.union` generatorVars generatorG `Set.union` constraintVars (mkName externalName) ty pred `Set.union` genvars,decvars)
 	where
 	externalName = getCompFieldExternalName explicitName externalE
 	vars = Set.fromList [name,mkName (nameBase name++"_att")]
 	decvars = Set.fromList [mkName internal,mkName (internal++"_md")]
-
+	genvars = maybe Set.empty (maybe Set.empty expVars . snd) generatorTy
+fieldVars f = error $ show f
 
 getName :: Name -> (Set Name,Set Name)
 getName x = (Set.singleton x,Set.empty)

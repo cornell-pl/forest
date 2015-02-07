@@ -62,18 +62,18 @@ class (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside) =>
 	merge_container_errors :: ForestLayer fs l => md -> ForestL fs l Forest_err
 	merge_container_errors md = liftM Pure.mergeMDErrors $ mapM get_errors =<< collect_container_mds md
 
-instance (ForestMD fs md,BuildContainer1 c md) => MDContainer fs (c (FilePath,md)) where
+instance (ForestMD fs md,BuildContainer1 c key md) => MDContainer fs (c (key,md)) where
 	collect_container_mds = collect_list_mds . toList1
-instance (ForestMD fs md,BuildContainer2 c md) => MDContainer fs (c FilePath md) where
+instance (ForestMD fs md,BuildContainer2 c key md) => MDContainer fs (c key md) where
 	collect_container_mds = collect_list_mds . toList2
 	
 instance (IncK (IncForest fs) a,MDContainer fs a) => MDContainer fs (ForestFSThunkI fs a) where
 	collect_container_mds t = collect_container_mds =<< inside (Inc.get t)
 
-merge_list_errors :: (ForestLayer fs l,ForestMD fs md) => [(FilePath,md)] -> ForestL fs l Forest_err
+merge_list_errors :: (ForestLayer fs l,ForestMD fs md) => [(key ,md)] -> ForestL fs l Forest_err
 merge_list_errors md = liftM Pure.mergeMDErrors $ mapM get_errors =<< collect_list_mds md
 
-collect_list_mds :: (ForestLayer fs l,ForestMD fs md) => [(FilePath,md)] -> ForestL fs l [Forest_md fs]
+collect_list_mds :: (ForestLayer fs l,ForestMD fs md) => [(key,md)] -> ForestL fs l [Forest_md fs]
 collect_list_mds = mapM (get_fmd_header . snd)
 
 

@@ -212,7 +212,7 @@ loadCompContents cinfo pathE treeE getMDE = do
 -- | Load a comprehension inlined inside a @Directory@
 -- if a comprehension is nested inside a directory, we created a top-level metadata thunk for it, otherwise the thunk already exists
 loadCompound :: Bool -> CompField -> TH.Exp -> TH.Exp -> TH.Exp -> Q (Name,Name,[Stmt])
-loadCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) pathE treeE getMDE = do
+loadCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP _ generatorG predM) pathE treeE getMDE = do
 	-- variable declarations
 	let repName = mkName internal
 	let mdName  = mkName (internal++"_md")

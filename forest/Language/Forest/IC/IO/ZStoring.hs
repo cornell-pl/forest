@@ -2,6 +2,7 @@
 
 module Language.Forest.IC.IO.ZStoring where
 
+import Language.Pads.Generic as Pads
 import Control.Monad.Trans
 import Control.Monad.Writer (Writer(..),WriterT(..))
 import qualified Control.Monad.Writer as Writer
@@ -429,52 +430,68 @@ doZManifestSimpleWithConstraint parentPath matching tree pred dta manifestUnder 
 	lift (inside matching) >>= \m -> doZManifestFocus parentPath m tree (\p -> manifestUnder p dta') man1
 
 -- to enforce consistency while allowing the list to change, we delete all files in the directory that do not match the values
-doZManifestCompound :: (IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a) =>
+doZManifestCompound :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
-	-> (container_rep -> [(FilePath,rep')])
+	-> ForestI fs key_arg -> (container_rep -> [(key,rep')])
 	-> container_rep
-	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> MManifestForestO fs)
+	-> (key -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-doZManifestCompound parentPath matchingM tree toListRep c_rep manifestUnder man = do
+doZManifestCompound parentPath matchingM tree mkeyarg toListRep c_rep manifestUnder man = do
+	key_arg <- lift $ inside mkeyarg
 	matching <- lift $ inside matchingM
 	old_files <- lift $ forestM $ getMatchingFilesInTree parentPath matching tree
-	let (new_files,reps') = unzip $ toListRep c_rep
+	let (new_keys,reps') = unzip $ toListRep c_rep
+	let new_files = map (\key -> Pads.printS1 key_arg (key,Pads.defaultMd1 key_arg key)) new_keys
+	let new_fileskeys = zip new_files new_keys
 	repinfos' <- lift $ inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) reps'
 	
 	let rem_files = old_files \\ new_files -- files to be removed
 	man1 <- lift $ forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
-	let manifestEach (n,(rep',fileInfo_t)) man0M = do
-		man0M >>= doZManifestFocus parentPath n tree (\p -> manifestUnder n fileInfo_t p rep')
+	let manifestEach ((n,key),(rep',fileInfo_t)) man0M = do
+		man0M >>= doZManifestFocus parentPath n tree (\p -> manifestUnder key fileInfo_t p rep')
 	let testm = testFocus parentPath matching (\file tree -> return True) new_files
-	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_files repinfos')
+	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_fileskeys repinfos')
 	
 
-doZManifestCompoundWithConstraint :: (IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a) =>
+doZManifestCompoundWithConstraint :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
-	-> (container_rep -> [(FilePath,rep')])
-	-> (FileName -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
+	-> ForestI fs key_arg -> (container_rep -> [(key,rep')])
+	-> (key -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> container_rep
-	-> (FileName -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> MManifestForestO fs)
+	-> (key -> ForestFSThunkI fs FileInfo -> FilePath -> rep' -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-doZManifestCompoundWithConstraint parentPath matchingM tree toListRep pred c_rep manifestUnder man = do
+doZManifestCompoundWithConstraint parentPath matchingM tree mkeyarg toListRep pred c_rep manifestUnder man = do
+	key_arg <- lift $ inside mkeyarg
 	matching <- lift $ inside matchingM
 	old_files <- lift $ forestM $ getMatchingFilesInTree parentPath matching tree
 	
-	let (new_files,reps') = unzip $ toListRep c_rep
+	let (new_keys,reps') = unzip $ toListRep c_rep
+	let new_files = map (\key -> Pads.printS1 key_arg (key,Pads.defaultMd1 key_arg key)) new_keys
+	let new_fileskeys = zip new_files new_keys
 	repinfos' <- lift $ inside $ mapM (\rep -> mod (get_fileInfo rep) >>= \fileInfo_t -> return (rep,fileInfo_t)) reps'
 	
 	let old_files' = old_files \\ new_files -- old files that are not in the view
+	let old_fileskeys' = map (\file -> (file,fst $ Pads.parseString1 key_arg file)) old_files'
 	old_metadatas' <- lift $ mapM (getRelForestMDInTree parentPath tree) old_files'
 	-- we need to check which old files satisfy the predicate
-	old_values' <- lift $ inside $ filterM (\(n,fmd) -> ref (fileInfo fmd) >>= pred n) $ zip old_files' old_metadatas'
-	let rem_files = map fst old_values'
+	old_values' <- lift $ inside $ filterM (\((file,key),fmd) -> ref (fileInfo fmd) >>= pred key) $ zip old_fileskeys' old_metadatas'
+	let rem_fileskeys = map fst old_values'
 	-- and delete them
-	man1 <- lift $ forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
+	man1 <- lift $ forestM $ foldr (\rem_path man0M -> man0M >>= removePathFromManifestInTree rem_path tree) (return man) $ map ((parentPath </>) . fst) rem_fileskeys -- remove deprecated files
 	
-	let manifestEach (n,(rep',fileInfo_t)) man0M = man0M >>= doZManifestConstraintCompound (pred n fileInfo_t) rep'
-		(\rep' man -> doZManifestFocus parentPath n tree (\p -> manifestUnder n fileInfo_t p rep') man)
-	let testm = testFocus parentPath matching (\file tree -> forestO $ inside $ getRelForestMDInTree parentPath tree file >>= ref . fileInfo >>= pred file) new_files
-	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_files repinfos')
+	let manifestEach ((n,key),(rep',fileInfo_t)) man0M = man0M >>= doZManifestConstraintCompound (pred key fileInfo_t) rep'
+		(\rep' man -> doZManifestFocus parentPath n tree (\p -> manifestUnder key fileInfo_t p rep') man)
+	let testm = testZFocus key_arg parentPath matching (\(file,key) tree -> forestO $ inside $ getRelForestMDInTree parentPath tree file >>= ref . fileInfo >>= pred key) new_files
+	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_fileskeys repinfos')
 
-
+testZFocus :: (Pads1 key_arg key key_md,FSRep fs,Matching fs a) => key_arg -> FilePath -> a -> ((FileName,key) -> FSTree fs -> ForestM fs Bool) -> [FileName] -> ForestM fs Status
+testZFocus key_arg root matching pred new_files = do
+	tree <- latestTree
+	files <- filterM (\file -> let key = fst (Pads.parseString1 key_arg file) in pred (file,key) tree) =<< getMatchingFilesInTree root matching tree
+	let testFile (new_file,file) = do
+		canpath <- canonalizePathWithTree (root </> file) tree
+		new_canpath <- canonalizePathWithTree (root </> new_file) tree
+		return $ canpath == new_canpath
+	same <- liftM and $ mapM testFile $ zip (List.sort new_files) (List.sort files)
+	return $ boolStatus (ConflictingMatching root (show matching) new_files files) $ (length files == length new_files) && same

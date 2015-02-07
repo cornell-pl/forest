@@ -247,7 +247,7 @@ zdefaultCompContents cinfo pathE = do
 -- | Load a comprehension inlined inside a @Directory@
 -- if a comprehension is nested inside a directory, we created a top-level metadata thunk for it, otherwise the thunk already exists
 zdefaultCompound :: Bool -> CompField -> Exp -> ZEnvQ (Name,[Stmt])
-zdefaultCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) pathE = do
+zdefaultCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) pathE = do
 	-- variable declarations
 	let repName = mkName internal
 	let mdName  = mkName (internal++"_md")
@@ -263,7 +263,11 @@ zdefaultCompound isNested (CompField internal tyConNameOpt explicitName external
 		Explicit expE -> expE
 		Matches regexpE -> regexpE
 	
-	forceVarsZEnvQ genE $ \genE -> do
+	let keyArgE = case generatorTy of
+		Just (key_ty_name,Just argE) -> argE
+		otherwise -> Pure.returnExp $ TupE []
+	
+	forceVarsZEnvQ keyArgE $ \keyArgE -> forceVarsZEnvQ genE $ \genE -> do
 		-- optional filtering
 		let fileName = Pure.getCompName explicitName externalE
 		let fileNameAtt = mkName $ nameBase fileName++"_att"
@@ -279,13 +283,13 @@ zdefaultCompound isNested (CompField internal tyConNameOpt explicitName external
 		Reader.local update $ case predM of
 			Nothing -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP]) $ zdefaultE False descTy newpathE
-				let loadContainerE = Pure.appE4 (VarE 'doZDefaultCompound) pathE genE buildContainerE loadSingleE
+				let loadContainerE = Pure.appE5 (VarE 'doZDefaultCompound) pathE genE keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
 				return (repName,[loadContainerS])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP]) $ zdefaultE False descTy newpathE
-				let loadContainerE = Pure.appE5 (VarE 'doZDefaultCompoundWithConstraint) pathE genE (modPredEComp (VarP fileName) predE) buildContainerE loadSingleE
+				let loadContainerE = Pure.appE6 (VarE 'doZDefaultCompoundWithConstraint) pathE genE (modPredEComp (VarP fileName) predE) keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
 				return (repName,[loadContainerS])
 

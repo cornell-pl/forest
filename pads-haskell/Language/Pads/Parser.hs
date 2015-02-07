@@ -383,6 +383,20 @@ reLiteral = do { reservedOp reMark
                }
 reMark = "'"
 
+literalPat :: Parser Pat 
+literalPat =  fmap (LitP . CharL) (try charLiteral)
+       <|> reLiteralPat
+       <|> fmap (LitP . StringL) stringLiteral
+       <|> fmap (LitP . IntegerL) (try integer)
+       <|> fmap (VarP . mkName . qName) qualLower
+       <|> fmap (flip ConP [] . mkName . qName) qualUpper
+       <?> "Pads literal"
+
+reLiteralPat :: Parser Pat 
+reLiteralPat = do { reservedOp reMark
+               ; str <- manyTill anyChar (reservedOp reMark) 
+               ; return (ConP (mkName "RE") [LitP (StringL str)])
+               }
 
 qualUpper, qualLower :: Parser QString
 qualUpper = try (upper `sepBy1` reservedOp ".")

@@ -32,14 +32,9 @@ import Language.Forest.IC hiding (writeFile)
 import Language.Forest.Pure.MetaData (cleanFileInfo)
 
 
-[pads|
+[ipads|
 	data Account = Account Int
 |]
-
-$( derive makeMData ''Account )
-$( derive makeMData ''Account_imd )
-$( derive makeDeepTypeable ''Account )
-$( derive makeDeepTypeable ''Account_imd )
 
 [iforest|
 	type Account_d = Directory {

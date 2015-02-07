@@ -190,7 +190,7 @@ defaultCompContents cinfo repE pathE = do
 
 -- if a comprehension is nested inside a directory, we created a top-level metadata thunk for it, otherwise the thunk already exists
 defaultCompound :: Bool -> CompField -> TH.Exp -> TH.Exp -> Q (Name,[Stmt])
-defaultCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) parentRepE pathE = do
+defaultCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP _ generatorG predM) parentRepE pathE = do
 	-- variable declarations
 	let repName = mkName internal
 	let mdName  = mkName (internal++"_md")

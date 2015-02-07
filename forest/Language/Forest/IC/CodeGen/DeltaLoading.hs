@@ -341,7 +341,7 @@ loadDeltaComp cinfo pathE treeE dpathE dfE treeE' repmdE = do
 	return $ Pure.appE9 (VarE 'doLoadDeltaDirectory) pathE repmdE dpathE treeE dfE treeE' collectMDs doCompNoDeltaE doCompDeltaE
 
 loadDeltaCompound :: Bool -> CompField -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ (Name,Name,Name,Name, [Stmt])
-loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorG predM) pathE treeE repmdE dpathE dfE treeE' = do
+loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitName externalE descTy generatorP _ generatorG predM) pathE treeE repmdE dpathE dfE treeE' = do
 	-- variable declarataions
 	let repName = mkName internal
 	let mdName = mkName $ internal++"_md"
@@ -406,7 +406,7 @@ loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitNa
 		
 		-- actual loading
 		(mode,fs,_) <- Reader.ask
-		let update (mode,fs,env) = (mode,fs,Map.insert fileName (Pure.appE2 (VarE 'Pure.isSameFileName) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
+		let update (mode,fs,env) = (mode,fs,Map.insert fileName (Pure.appE2 (VarE '(==)) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
 		let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
 		Reader.local update $ case predM of
 			Nothing -> do
