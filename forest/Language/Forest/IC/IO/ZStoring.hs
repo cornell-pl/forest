@@ -77,7 +77,37 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 	let fs = (Proxy::Proxy fs)
 	
 	let mani_scratch = do
-		((fmd,bmd),pads) <- lift $ inside $ get rep_t
+		rep <- lift $ inside $ get rep_t
+		doZManifestFileInner1 (Pure.Arg arg) path tree rep man
+	
+	mb <- lift $ inside $ findZippedMemo argProxy path fsrepProxy 
+	newman <- case mb of
+		(Just (memo_tree,memo_marg,(== rep_t) -> True)) -> do
+			memo_arg <- lift $ inside memo_marg
+			-- deep equality of arguments, since thunks can be arguments and change
+			samearg <- lift $ inside $ geq proxyNoCtx memo_arg arg
+			if samearg
+				then do
+					debug ("memo hit " ++ show path) $ do
+					df <- lift $ forestM $ diffFS memo_tree tree path
+					dv <- lift $ diffValueThunk memo_tree rep_t
+					case (isIdValueDelta dv,df) of
+						(True,Just (isEmptyFSTreeDeltaNodeMay -> True)) -> return man
+						otherwise -> mani_scratch
+				else mani_scratch
+		otherwise -> mani_scratch
+	Writer.tell $ inside . addZippedMemo path argProxy (return arg) rep_t . Just
+	return newman
+
+doZManifestFileInner1 :: (MData NoCtx (ForestI fs) arg,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Typeable arg,ZippedICMemo fs,ICRep fs,Pads1 arg pads md) => Pure.Arg arg -> FilePath -> FSTree fs -> ((Forest_md fs,md),pads) -> Manifest fs -> MManifestForestO fs
+doZManifestFileInner1 (Pure.Arg arg :: Pure.Arg arg) path tree ((fmd,bmd),pads) man = do
+	
+	repairMd <- Reader.ask
+	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let fsrepProxy = Proxy
+	let fs = (Proxy::Proxy fs)
+	
+	let mani_scratch = do
 		let path_fmd = fullpath $ fileInfo fmd
 		let exists = doesFileExistInMD path fmd && Pads.numErrors (get_md_header bmd) == 0
 		newman <- if exists
@@ -110,24 +140,7 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 				lift $ forestM $ removePathFromManifestInTree path tree man1
 		return newman
 	
-	mb <- lift $ inside $ findZippedMemo argProxy path fsrepProxy 
-	newman <- case mb of
-		(Just (memo_tree,memo_marg,(== rep_t) -> True)) -> do
-			memo_arg <- lift $ inside memo_marg
-			-- deep equality of arguments, since thunks can be arguments and change
-			samearg <- lift $ inside $ geq proxyNoCtx memo_arg arg
-			if samearg
-				then do
-					debug ("memo hit " ++ show path) $ do
-					df <- lift $ forestM $ diffFS memo_tree tree path
-					dv <- lift $ diffValueThunk memo_tree rep_t
-					case (isIdValueDelta dv,df) of
-						(True,Just (isEmptyFSTreeDeltaNodeMay -> True)) -> return man
-						otherwise -> mani_scratch
-				else mani_scratch
-		otherwise -> mani_scratch
-	Writer.tell $ inside . addZippedMemo path argProxy (return arg) rep_t . Just
-	return newman
+	mani_scratch
 
 doZManifestArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,ZippedICMemo fs,toprep ~ ForestFSThunkI fs (Forest_md fs,rep),ForestMD fs rep,ForestInput fs FSThunk Inside,ICRep fs) =>
 	Bool -> [ArchiveType] -> FilePath -> FSTree fs 
@@ -251,10 +264,32 @@ doZManifestArchiveInner archTy path tree (fmd,rep) manifestContents man = do
 
 doZManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
 	FilePath -> FSTree fs
-	-> SymLink fs
+	-> ForestFSThunkI fs (SymLinkE fs)
 	-> Manifest fs -> MManifestForestO fs
-doZManifestSymLink path tree (SymLink rep_t) man = do
+doZManifestSymLink path tree (rep_t) man = do
 	((fmd,base_md), tgt) <- lift $ inside $ get rep_t
+	let path_fmd = fullpath $ fileInfo fmd
+	case doesLinkExistInMD path_fmd fmd of
+		Just sym -> do
+			let testm = do
+				status1 <- liftM (boolStatus $ ConflictingLink path tgt $ Just sym) $ return $ sym == tgt && base_md == cleanBasePD
+				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
+				return $ status1 `mappend` status2
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [cleanForestErr]
+			lift $ forestM $ addLinkToManifestInTree path tree tgt $ addTestToManifest testm man
+		Nothing -> do
+			let testm = do
+				status1 <- liftM (boolStatus $ ConflictingLink path tgt Nothing) $ return $ tgt == "" && base_md == cleanBasePD
+				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
+				return $ status1 `mappend` status2
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [Pure.ioExceptionForestErr]
+			lift $ forestM $ removePathFromManifestInTree path tree $ addTestToManifest testm man
+
+doZManifestSymLinkInner :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
+	FilePath -> FSTree fs
+	-> SymLinkE fs
+	-> Manifest fs -> MManifestForestO fs
+doZManifestSymLinkInner path tree ((fmd,base_md), tgt) man = do
 	let path_fmd = fullpath $ fileInfo fmd
 	case doesLinkExistInMD path_fmd fmd of
 		Just sym -> do

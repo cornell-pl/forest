@@ -108,7 +108,7 @@ mk_newTyD fsName (unty_name,ty_name) ty = NewtypeD [] ty_name [PlainTV fsName] c
 
 mk_newTyDEC ecName fsName ty_nameEC (unty_name,ty_name) ty = NewtypeD [] ty_nameEC [PlainTV ecName,PlainTV fsName] con derives
     where con = RecC (ty_name) [(unty_name,NotStrict,ty)]           -- How should we determine whether a type should be Strict or not?
-          derives = [''Typeable,''Eq]
+          derives = [''Typeable,''Eq,''Ord]
 
 mk_TySynD fsName ty_name ty = TySynD ty_name [PlainTV fsName] ty
 mk_TySynDEC ecName fsName ty_name ty = TySynD ty_name [KindedTV ecName (ConT ''EC),KindedTV fsName (ConT ''FS)] ty

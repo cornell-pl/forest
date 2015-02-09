@@ -443,20 +443,46 @@ getRelForestMDInTree path tree file = getForestMDInTree (path </> file) tree
 $( derive makeDeepTypeable ''(:*:) )
 $( derive makeMData ''(:*:) )
 
-type File pads fs = ForestFSThunkI fs ((Forest_md fs,Meta pads),pads)
+-- forest errors kind
+data EC = E -- errors
+		| C -- content
+		deriving Typeable
 
-newtype SymLink fs = SymLink { unSymLink :: ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath) } deriving (Eq,Typeable)
-instance ForestRep (SymLink fs) (ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath)) where
-	iso_rep_thunk = Iso unSymLink SymLink
+deriving instance Typeable E
+deriving instance Typeable C
+$( derive makeDeepTypeable ''EC )
 
-instance (Sat (ctx (SymLink fs)),ICRep fs,MData ctx m (ForestFSThunkI fs ((Forest_md fs,Base_md), FilePath)))
-	=> MData ctx m (SymLink fs) where
-	gfoldl ctx k z (SymLink x1) = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= flip k (return x1)
-	gunfold ctx k z c = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= k
-	toConstr ctx x@(SymLink x1) = Data.WithClass.MData.dataTypeOf ctx x >>= return . flip indexConstr 1
-	dataTypeOf ctx x = return ty
-		where ty = mkDataType "Language.Forest.IC.MetaData.SymLink" [mkConstr ty "SymLink" [] Prefix]	
+instance DeepTypeable E where
+	typeTree (_::Proxy E) = MkTypeTree (mkName "Language.Forest.IC.Generic.E") [] []
+instance DeepTypeable C where
+	typeTree (_::Proxy C) = MkTypeTree (mkName "Language.Forest.IC.Generic.C") [] []
 
 
-instance (DeepTypeable fs) => DeepTypeable (SymLink fs) where
-	typeTree (_::Proxy (SymLink fs)) = MkTypeTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy fs)] [MkConTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy (ForestFSThunkI fs (Forest_md fs,FilePath,Base_md)))]]
+type family ECMd (ec :: EC) (fs :: FS) (a :: *) where
+	ECMd E fs a = (Forest_md fs,a)
+	ECMd C fs a = (FileInfo,a)
+type family ECErr (ec :: EC) (fs :: FS) (a :: *) where
+	ECErr E fs a = (ForestFSThunkI fs Forest_err,a)
+	ECErr C fs a = a
+
+type FileEC pads ec fs = (ECMd ec fs (Meta pads),pads)
+type FileE pads fs = FileEC pads E fs
+type File pads fs = FileEC pads C fs
+
+type SymLinkEC ec fs = (ECMd ec fs Base_md,FilePath)
+type SymLinkE fs = SymLinkEC E fs
+type SymLink fs = SymLinkEC C fs
+--instance ForestRep (SymLink ec fs) (ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath)) where
+--	iso_rep_thunk = Iso unSymLink SymLink
+
+--instance (Sat (ctx (SymLink fs)),ICRep fs,MData ctx m (ForestFSThunkI fs ((Forest_md fs,Base_md), FilePath)))
+--	=> MData ctx m (SymLink fs) where
+--	gfoldl ctx k z (SymLink x1) = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= flip k (return x1)
+--	gunfold ctx k z c = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= k
+--	toConstr ctx x@(SymLink x1) = Data.WithClass.MData.dataTypeOf ctx x >>= return . flip indexConstr 1
+--	dataTypeOf ctx x = return ty
+--		where ty = mkDataType "Language.Forest.IC.MetaData.SymLink" [mkConstr ty "SymLink" [] Prefix]	
+
+
+--instance (DeepTypeable fs) => DeepTypeable (SymLink fs) where
+--	typeTree (_::Proxy (SymLink fs)) = MkTypeTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy fs)] [MkConTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy (ForestFSThunkI fs (Forest_md fs,FilePath,Base_md)))]]

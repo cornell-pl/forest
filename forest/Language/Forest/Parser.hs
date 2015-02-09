@@ -112,12 +112,15 @@ integratePred ty predM = case predM of
 -- a regular Haskell expression in parenthesis to which we add a return
 haskellParenthesisExp :: Parser TH.Exp
 haskellParenthesisExp = do
-	mode <- PP.getState
 	expTH <- haskellParenthesis LHM.parseExp
+	retExp expTH
+
+retExp expTH = do
+	mode <- PP.getState
 	case mode of
 		PureForest -> return expTH
 		ICForest -> return $ (AppE (VarE 'return))  expTH
-	
+
 haskellParenthesisPat :: Parser TH.Pat
 haskellParenthesisPat = haskellParenthesis LHM.parsePat
 
@@ -416,10 +419,12 @@ explicitExternalName internal = do
            
 implicitExternalName :: String -> Parser (Bool, TH.Exp)
 implicitExternalName internal = 
-    if isLowerCase internal then do 
-        { reservedOp "::"
-        ; return (True, TH.LitE (TH.StringL internal))}     
-    else unexpected ("Directory label "++ internal ++" is not a valid Haskell record label.  Use an \"is\" clause to give an explicit external name.")     
+	if isLowerCase internal
+		then do 
+			reservedOp "::"
+			expTH <- retExp $ TH.LitE (TH.StringL internal)
+			return (True,expTH)
+		else unexpected ("Directory label "++ internal ++" is not a valid Haskell record label.  Use an \"is\" clause to give an explicit external name.")     
     
 pathSpec :: Parser TH.Exp
 pathSpec = forestArg

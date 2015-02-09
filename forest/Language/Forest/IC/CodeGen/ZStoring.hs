@@ -119,9 +119,9 @@ zmanifestE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestE isTop ty pathE treeE dtaE manE = case ty of
 	Named f_name               -> zmanifestWithArgsE f_name [] pathE treeE dtaE manE
 	Fapp (Named f_name) argEs  -> zmanifestWithArgsE f_name argEs pathE treeE dtaE manE
-	FFile (file_name, argEOpt) -> zmanifestFile file_name argEOpt pathE treeE dtaE manE
+	FFile (file_name, argEOpt) -> zmanifestFile isTop file_name argEOpt pathE treeE dtaE manE
 	Archive archtype ty         -> zmanifestArchive isTop archtype ty pathE treeE dtaE manE
-	FSymLink         -> zmanifestSymLink pathE treeE dtaE manE
+	FSymLink         -> zmanifestSymLink isTop pathE treeE dtaE manE
 	FConstraint p ty pred -> zmanifestConstraint isTop treeE p pred dtaE manE $ zmanifestE False ty pathE treeE
 	Directory dirTy -> zmanifestDirectory isTop dirTy pathE treeE dtaE manE
 	FMaybe forestTy -> zmanifestMaybe isTop forestTy pathE treeE dtaE manE
@@ -166,9 +166,11 @@ zmanifestArchive isTop archtype ty pathE treeE dtaE manE = do
 		then return $ Pure.appE9 (VarE 'doZManifestArchive) isClosedE exts pathE treeE dtaE manifestContentsE manifestContentDeltaE (zdiffE ty) manE
 		else return $ Pure.appE6 (VarE 'doZManifestArchiveInner) exts pathE treeE dtaE manifestContentsE manE
 
-zmanifestSymLink :: Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zmanifestSymLink pathE treeE dtaE manE = do
-  return $ Pure.appE4 (VarE 'doZManifestSymLink) pathE treeE dtaE manE
+zmanifestSymLink :: Bool -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
+zmanifestSymLink isTop pathE treeE dtaE manE = do
+	if isTop
+		then return $ Pure.appE4 (VarE 'doZManifestSymLink) pathE treeE dtaE manE
+		else return $ Pure.appE4 (VarE 'doZManifestSymLinkInner) pathE treeE dtaE manE
 
 zmanifestConstraint :: Bool -> Exp -> TH.Pat -> Exp -> Exp -> Exp -> (Exp -> Exp -> ZEnvQ Exp) -> ZEnvQ Exp
 zmanifestConstraint isTop treeE pat predE dtaE manE manifest = forceVarsZEnvQ predE $ \predE' -> do
@@ -183,11 +185,15 @@ zmanifestConstraint isTop treeE pat predE dtaE manE manifest = forceVarsZEnvQ pr
 		then return $ Pure.appE4 (VarE 'doZManifestConstraint) predFnE dtaE manifestAction manE
 		else return $ Pure.appE4 (VarE 'doZManifestConstraintInner) predFnE dtaE manifestAction manE
 
-zmanifestFile :: String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zmanifestFile fileName Nothing pathE treeE dtaE manE = do
-	return $ Pure.appE5 (VarE 'doZManifestFile1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE treeE dtaE manE
-zmanifestFile fileName (Just argE) pathE treeE dtaE manE = do
-	return $ Pure.appE5 (VarE 'doZManifestFile1) argE pathE treeE dtaE manE
+zmanifestFile :: Bool -> String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
+zmanifestFile isTop fileName Nothing pathE treeE dtaE manE = do
+	if isTop
+		then return $ Pure.appE5 (VarE 'doZManifestFile1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE treeE dtaE manE
+		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE treeE dtaE manE
+zmanifestFile isTop fileName (Just argE) pathE treeE dtaE manE = do
+	if isTop
+		then return $ Pure.appE5 (VarE 'doZManifestFile1) argE pathE treeE dtaE manE
+		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) argE pathE treeE dtaE manE
 
 zmanifestMaybe :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestMaybe isTop ty pathE treeE dtaE manE = do 

@@ -9,6 +9,8 @@ pureaccount:
 	ghci -ddump-splices -fcontext-stack=60 Examples/Pure/Beautiful/Account.hs
 icaccount:
 	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Beautiful/Account.hs
+ictpcc:
+	ghci -ddump-splices -fcontext-stack=60 Examples/IC/TPCC.hs
 toys:
 	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Toy/Toy.hs
 all:

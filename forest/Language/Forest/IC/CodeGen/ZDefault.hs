@@ -120,9 +120,9 @@ zdefaultE :: Bool -> ForestTy -> Exp -> ZEnvQ Exp
 zdefaultE isTop ty pathE = case ty of
 	Named f_name               -> zdefaultWithArgsE f_name [] pathE
 	Fapp (Named f_name) argEs  -> zdefaultWithArgsE f_name argEs pathE
-	FFile (file_name, argEOpt) -> zdefaultFile file_name argEOpt pathE
+	FFile (file_name, argEOpt) -> zdefaultFile isTop file_name argEOpt pathE
 	Archive archtype ty         -> zdefaultArchive isTop archtype ty pathE
-	FSymLink         -> zdefaultSymLink pathE
+	FSymLink         -> zdefaultSymLink isTop pathE
 	FConstraint p ty pred -> zdefaultConstraint isTop p pred $ zdefaultE False ty pathE
 	Directory dirTy -> zdefaultDirectory isTop dirTy pathE 
 	FMaybe forestTy -> zdefaultMaybe isTop forestTy pathE 
@@ -137,11 +137,15 @@ zdefaultConstraint isTop pat predE load = forceVarsZEnvQ predE $ \predE' -> do
 		then return $ Pure.appE2 (VarE 'doZDefaultConstraint) predFnE loadAction
 		else return $ Pure.appE2 (VarE 'doZDefaultConstraintInner) predFnE loadAction
 
-zdefaultFile :: String -> Maybe Exp -> Exp -> ZEnvQ Exp
-zdefaultFile fileName Nothing pathE = do
-	return $ Pure.appE2 (VarE 'doZDefaultFile1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE
-zdefaultFile fileName (Just argE) pathE = do
-	return $ Pure.appE2 (VarE 'doZDefaultFile1) argE pathE
+zdefaultFile :: Bool -> String -> Maybe Exp -> Exp -> ZEnvQ Exp
+zdefaultFile isTop fileName Nothing pathE = do
+	if isTop
+		then return $ Pure.appE2 (VarE 'doZDefaultFile1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE
+		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE
+zdefaultFile isTop fileName (Just argE) pathE = do
+	if isTop
+		then return $ Pure.appE2 (VarE 'doZDefaultFile1) argE pathE
+		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) argE pathE
 
 zdefaultWithArgsE :: String -> [Exp] -> Exp -> ZEnvQ Exp
 zdefaultWithArgsE ty_name [] pathE = do
@@ -154,9 +158,11 @@ zdefaultWithArgsE ty_name argEs pathE = do
 	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
 	return $ Pure.appE3 (VarE 'zdefaultScratchMemo) (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE
 
-zdefaultSymLink :: Exp -> ZEnvQ Exp
-zdefaultSymLink pathE = do
-  return $ AppE (VarE 'doZDefaultSymLink) pathE
+zdefaultSymLink :: Bool -> Exp -> ZEnvQ Exp
+zdefaultSymLink isTop pathE = do
+	if isTop
+		then return $ AppE (VarE 'doZDefaultSymLink) pathE
+		else return $ AppE (VarE 'doZDefaultSymLinkInner) pathE
 
 zdefaultArchive :: Bool -> [ArchiveType] -> ForestTy -> Exp -> ZEnvQ Exp
 zdefaultArchive isTop archtype ty pathE = do

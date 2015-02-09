@@ -81,6 +81,22 @@ doZLoadDeltaFile1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' oldtre
 			inside $ addZippedMemo path' argProxy (return arg') rep_thunk (Just tree')
 			return Delta
 
+doZLoadDeltaFileInner1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),rept ~ ((Forest_md fs,md),pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md)
+	=> Bool -> Pure.Arg arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
+	-> ForestO fs (NSValueDelta rept)
+doZLoadDeltaFileInner1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	path <- inside mpath
+	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
+		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> debug "constant1 unchanged" $ do
+			return $ StableVD Id
+		(True,True,True,Just (FSTreeChg _ _)) -> debug "constant1 attrs" $ do
+			fmd' <- inside $ getMD path' tree'
+			return $ Modify $ \((_,bmd),rep) -> ((fmd',bmd),rep)
+		otherwise -> debug "constant1 changed" $ do
+			rep' <- inside $ doZLoadFileInner1 (Proxy::Proxy pads) (Arg arg') (fsTreeDeltaPathFilter df path') path' tree' getMD
+			return $ Modify $ Prelude.const rep'
+
 doZLoadDeltaArchiveInner :: (DeltaClass d,ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs
 		,ForestInput fs FSThunk Inside,ForestMD fs rep) =>
 	Bool -> [ArchiveType] -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (Forest_md fs,rep)
@@ -182,10 +198,10 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 				
 
 doZLoadDeltaSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs)
-	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (SymLink fs)
-	-> (SymLink fs,GetForestMD fs)
-	-> ForestO fs (SValueDelta (SymLink fs))
-doZLoadDeltaSymLink mpath path' oldtree df tree' dv (SymLink rep_thunk,getMD) = do
+	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (SymLinkE fs))
+	-> (ForestFSThunkI fs (SymLinkE fs),GetForestMD fs)
+	-> ForestO fs (SValueDelta (ForestFSThunkI fs (SymLinkE fs)))
+doZLoadDeltaSymLink mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 	path <- inside mpath
 	case (path == path',isIdValueDelta dv,df) of
 		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return Id
@@ -193,9 +209,24 @@ doZLoadDeltaSymLink mpath path' oldtree df tree' dv (SymLink rep_thunk,getMD) = 
 			modify rep_thunk $ \((_,bmd),rep) -> getMD path' tree' >>= \fmd' -> return ((fmd',bmd),rep)
 			return Delta
 		otherwise -> debug "symlink changed" $ do
-			rep' <- inside $ doZLoadSymLink' path' tree' getMD
+			rep' <- inside $ doZLoadSymLinkInner path' tree' getMD
 			set rep_thunk rep'
 			return Delta
+
+doZLoadDeltaSymLinkInner :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs)
+	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (SymLinkE fs)
+	-> (SymLinkE fs,GetForestMD fs)
+	-> ForestO fs (NSValueDelta (SymLinkE fs))
+doZLoadDeltaSymLinkInner mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+	path <- inside mpath
+	case (path == path',isIdValueDelta dv,df) of
+		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return $ StableVD Id
+		(True,True,Just (FSTreeChg _ _)) -> do
+			fmd' <- inside $ getMD path' tree'
+			return $ Modify $ \((_,bmd),rep) -> ((fmd',bmd),rep)
+		otherwise -> debug "symlink changed" $ do
+			rep' <- inside $ doZLoadSymLinkInner path' tree' getMD
+			return $ Modify $ Prelude.const rep'
 
 doZLoadDeltaConstraint :: (IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),err_rep ~ ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep),DeltaClass d,ForestMD fs rep,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside) =>
 	Bool -> ValueDelta fs err_rep -> (err_rep,GetForestMD fs) -> (rep -> ForestI fs Bool)

@@ -16,7 +16,7 @@ import System.Directory
 import Data.WithClass.MData
 import System.TimeIt
 import Control.Monad.IO.Class
-import Language.Forest.IC hiding (writeFile)
+import Language.Forest.IC hiding (writeFile,Link)
 import Language.Pads.Padsc (Base_md)
 import Language.Pads.Padsc as Pads
 import Control.Monad.Incremental.Display
@@ -25,14 +25,19 @@ import Data.List as List
 import Safe
 import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 
-[iforest| type Universal_d = Directory 
+[iforest|
+	
+	type Link = SymLink
+	
+	type Universal_d = Directory 
              { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
              , binary_files is [ b :: BinaryFile   | b <- matches (GL "*"), (kind  b_att == BinaryK) ]
              , directories  is [ d :: Universal_d  | d <- matches (GL "*"), (kind  d_att == DirectoryK) ]
-             , symLinks     is [ s :: SymLink      | s <- matches (GL "*"), (isJust (symLink s_att)) ]
-             } |]
+             , symLinks     is [ s :: Link         | s <- matches (GL "*"), (isJust (symLink s_att)) ]
+             }
+|]
 
-[iforest| type Universal_zip = Maybe (Gzip (Tar Universal_d)) |]
+-- [iforest| type Universal_zip = Maybe (Gzip (Tar Universal_d)) |]
 
 generateTest :: IO ()
 generateTest = do
@@ -56,7 +61,7 @@ runTest = do
 		test_dir :: Universal_d TxVarFS <- new () "test"
 		original_str <- showInc test_dir
 		
-		link_c :: SymLink TxVarFS <- new () "test/links/c.txt"
+		link_c :: Link TxVarFS <- new () "test/links/c.txt"
 		let link_c_md = (cleanSymLinkFileInfo "test/links/c.txt" "../files/c.txt",cleanBasePD)
 		errors <- writeOrShow link_c (link_c_md,"../files/c.txt")
 			

@@ -42,12 +42,12 @@ import Data.WithClass.MData
 doZDefaultFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZDefaultFile1 (Pure.Arg arg :: Pure.Arg arg) path = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
-	rep_thunk <- fsThunk $ doZDefaultFile1' (Pure.Arg arg) path
+	rep_thunk <- fsThunk $ doZDefaultFileInner1 (Pure.Arg arg) path
 	addZippedMemo path argProxy (return arg) rep_thunk Nothing
 	return rep_thunk
 
-doZDefaultFile1' :: (IncK (IncForest fs) Forest_err,Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
-doZDefaultFile1' (Pure.Arg arg) path = do
+doZDefaultFileInner1 :: (IncK (IncForest fs) Forest_err,Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
+doZDefaultFileInner1 (Pure.Arg arg) path = do
 	let rep = Pure.forestdefault
 	let md = Pads.defaultMd1 arg rep
 	fmd <- missingPathForestMD path
@@ -69,11 +69,11 @@ doZDefaultArchiveInner path doContent = do
 	fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ get_errors rep -- like a directory
 	return (fmd',rep)
 
-doZDefaultSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs (SymLink fs)
-doZDefaultSymLink path = liftM SymLink $ fsThunk $ doZDefaultSymLink' path
+doZDefaultSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs (ForestFSThunkI fs (SymLinkE fs))
+doZDefaultSymLink path = fsThunk $ doZDefaultSymLinkInner path
 
-doZDefaultSymLink' :: (IncK (IncForest fs) Forest_err,ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs ((Forest_md fs,Base_md),FilePath)
-doZDefaultSymLink' path = debug ("defaultSymLink "++path) $ do
+doZDefaultSymLinkInner :: (IncK (IncForest fs) Forest_err,ICRep fs,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> ForestI fs ((Forest_md fs,Base_md),FilePath)
+doZDefaultSymLinkInner path = debug ("defaultSymLink "++path) $ do
 	fmd <- missingPathForestMD path
 	return ((fmd,errorBasePD path),"")
 

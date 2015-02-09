@@ -235,13 +235,13 @@ gmemoNonRecNILFSU' :: Proxy ctx -> NewGenericQMemoNILFSU ctx Inside (IncForest N
 gmemoNonRecNILFSU' ctx (NewGenericQ f) tbl = NewGenericQ $ \arg -> do
 	let (mkWeak,k) = memoKeyCtx dict ctx $! arg
 	let tyk = (typeRepOf arg,keyDynamicCtx dict ctx (proxyOf arg) k)
-	lkp <- debug ("memo search "++show tyk) $ inL $ liftIO $ WeakTable.lookup tbl tyk
+	lkp <- debug ("memo search ") $ inL $ liftIO $ WeakTable.lookup tbl tyk
 	case lkp of
 		Nothing -> do
 			NILFSU thunk <- f arg
 			inL $ liftIO $ WeakTable.insertWithMkWeak tbl mkWeak tyk thunk
-			debug (show tyk ++" => "++show thunk) $ return $ NILFSU thunk
-		Just thunk -> debug ("memo hit "++show tyk ++ " " ++ show thunk) $ return $ NILFSU thunk
+			debug (" => "++show thunk) $ return $ NILFSU thunk
+		Just thunk -> debug ("memo hit " ++ " " ++ show thunk) $ return $ NILFSU thunk
 
 instance Thunk (FSThunk 'NILFS) Inside (IncForest 'NILFS) IORef IO where
 	newc v = do

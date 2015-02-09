@@ -119,14 +119,18 @@ zmanifestDeltaE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp ->
 zmanifestDeltaE isTop forestTy pathE pathE' treeE dfE treeE' repE dvE manE = case forestTy of
 	Named ty_name -> zmanifestDeltaNamed ty_name [] pathE pathE' treeE dfE treeE' repE dvE manE
 	Fapp (Named ty_name) argEs -> zmanifestDeltaNamed ty_name argEs pathE pathE' treeE dfE treeE' repE dvE manE
-	FFile (file_name, argEOpt) -> zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
-		(zmanifestDeltaFile forestTy argEOpt pathE pathE' treeE dfE treeE')
+	FFile (file_name, argEOpt) -> if isTop
+		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(zmanifestDeltaFile True forestTy argEOpt pathE pathE' treeE dfE treeE')
+		else zmanifestDeltaFile False forestTy argEOpt pathE pathE' treeE dfE treeE' repE dvE manE
 	Archive archtype ty -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
 			(zmanifestDeltaArchive True archtype ty pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaArchive False archtype ty pathE pathE' treeE dfE treeE' repE dvE manE
-	FSymLink -> zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
-		(zmanifestDeltaSymLink pathE pathE' treeE dfE treeE')
+	FSymLink -> if isTop
+		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(zmanifestDeltaSymLink True pathE pathE' treeE dfE treeE')
+		else zmanifestDeltaSymLink False pathE pathE' treeE dfE treeE' repE dvE manE
 	FConstraint pat descTy predE -> zmanifestDeltaConstraint isTop descTy pat predE treeE' repE dvE manE $ \newrepE newdvE newmanE -> zmanifestDeltaE False descTy pathE pathE' treeE dfE treeE' newrepE newdvE newmanE	
 	(Directory dirTy) -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
@@ -189,9 +193,11 @@ zmanifestDeltaArchive isTop archtype ty pathE pathE' treeE dfE treeE' repE dvE m
 		then return $ Pure.appE13 (VarE 'doZDeltaManifestArchive) isClosedE exts pathE pathE' treeE dfE treeE' repE dvE rhsE rhsDE (zdiffE ty) manE
 		else return $ Pure.appE13 (VarE 'doZDeltaManifestArchiveInner) isClosedE exts pathE pathE' treeE dfE treeE' repE dvE rhsE rhsDE (zdiffE ty) manE
 
-zmanifestDeltaSymLink :: Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
-zmanifestDeltaSymLink pathE pathE' treeE dfE treeE' repE dvE manE =
-	return $ Pure.appE8 (VarE 'doZDeltaManifestSymLink) pathE pathE' treeE dfE treeE' repE dvE manE
+zmanifestDeltaSymLink :: Bool -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
+zmanifestDeltaSymLink isTop pathE pathE' treeE dfE treeE' repE dvE manE =
+	if isTop
+		then return $ Pure.appE8 (VarE 'doZDeltaManifestSymLink) pathE pathE' treeE dfE treeE' repE dvE manE
+		else return $ Pure.appE8 (VarE 'doZDeltaManifestSymLinkInner) pathE pathE' treeE dfE treeE' repE dvE manE
 
 zmanifestDeltaMaybe :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zmanifestDeltaMaybe isTop forestTy pathE pathE' treeE dfE treeE' repE dvE manE = do 
@@ -207,13 +213,17 @@ zmanifestDeltaMaybe isTop forestTy pathE pathE' treeE dfE treeE' repE dvE manE =
 		then return $ Pure.appE11 (VarE 'doZDeltaManifestMaybe) pathE pathE' treeE dfE treeE' repE dvE manifestContentE manifestContentDeltaE (zdiffE forestTy) manE
 		else return $ Pure.appE11 (VarE 'doZDeltaManifestMaybeInner) pathE pathE' treeE dfE treeE' repE dvE manifestContentE manifestContentDeltaE (zdiffE forestTy) manE
 
-zmanifestDeltaFile :: ForestTy -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
-zmanifestDeltaFile ty Nothing pathE pathE' treeE dfE treeE' repE dvE manE = do
+zmanifestDeltaFile :: Bool -> ForestTy -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
+zmanifestDeltaFile isTop ty Nothing pathE pathE' treeE dfE treeE' repE dvE manE = do
 	condE <- lift $ dataToExpQ (\_ -> Nothing) True
-	return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE pathE' treeE dfE treeE' repE dvE manE
-zmanifestDeltaFile ty (Just argE') pathE pathE' treeE dfE treeE' repE dvE manE = do
+	if isTop
+		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE pathE' treeE dfE treeE' repE dvE manE
+		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE pathE' treeE dfE treeE' repE dvE manE
+zmanifestDeltaFile isTop ty (Just argE') pathE pathE' treeE dfE treeE' repE dvE manE = do
 	condE <- isEmptyZDeltaEnvForestTy ty -- note that the variables from the argument delta are included in the delta environment
-	return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE argE' pathE pathE' treeE dfE treeE' repE dvE manE
+	if isTop
+		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE argE' pathE pathE' treeE dfE treeE' repE dvE manE
+		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE argE' pathE pathE' treeE dfE treeE' repE dvE manE
 	
 zmanifestDeltaDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zmanifestDeltaDirectory isTop dirTy@(Record id fields) pathE pathE' treeE dfE treeE' repE dvE manE = do

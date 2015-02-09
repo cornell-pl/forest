@@ -93,7 +93,7 @@ data GeneratedPaths a = ExpPaths [FilePath] | MatchPaths a
 
 data CompField = CompField 
         { internalName :: String
-        , tyConNameOpt :: Maybe String
+        , tyConNameOpt :: Maybe String -- container type
         , explicitName :: Maybe String
         , externalE    :: TH.Exp
         , descTy       :: ForestTy -- the Forest type for values of the container

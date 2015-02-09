@@ -282,20 +282,21 @@ genZRepMDDir hasConstraint ecName fsName (Record _ fields) ty_name pat_infos = d
 			mdataInstance_rep <- lift $ deriveFromDec makeMData inner_ty_decl
 			deepTypeableRepInstance <- lift $ deriveFromDec makeDeepTypeable inner_ty_decl
 			forestContent <- mkDirForestContentEC fsName ty_name inner_ty_nameEC fields
-			eqInstance <- lift $ makeForestECEq ecName fsName inner_ty_decl
-			return (ty_declEC, (ty_decl:ty_declC:inner_ty_decl:eqInstance++mdataInstance_rep++deepTypeableRepInstance++forestContent))
+			eqInstance <- lift $ makeForestECClass makeEq ''Eq ecName fsName inner_ty_decl
+			ordInstance <- lift $ makeForestECClass makeOrd ''Ord ecName fsName inner_ty_decl
+			return (ty_declEC, (ty_decl:ty_declC:inner_ty_decl:eqInstance++ordInstance++mdataInstance_rep++deepTypeableRepInstance++forestContent))
 
-makeForestECEq :: Name -> Name -> Dec -> Q [Dec]
-makeForestECEq ecName fsName dec = do
-	[InstanceD ctx ty@(AppT eq (AppT (AppT con ec) fs)) decs] <- deriveFromDec makeEq dec
-	let ctx' = everything (++) (mkQ [] (collectECEqs ec fs)) dec
+makeForestECClass :: Derivation -> Name -> Name -> Name -> Dec -> Q [Dec]
+makeForestECClass drv cls ecName fsName dec = do
+	[InstanceD ctx ty@(AppT eq (AppT (AppT con ec) fs)) decs] <- deriveFromDec drv dec
+	let ctx' = everything (++) (mkQ [] (collectECs ec fs)) dec
 	let ctx'' = ClassP ''ICRep [fs] : ctx'
 	return [InstanceD ctx'' ty decs]
   where
-	collectECEqs :: Type -> Type -> Type -> [Pred]
-	collectECEqs ec fs t@(AppT (AppT (AppT (ConT ((==''ECErr) -> True)) _) _) ity) = [ClassP ''Eq [everywhere (mkT $ replaceECFS ec fs) t]]
-	collectECEqs ec fs t@(AppT (AppT (AppT (ConT ((==''ECMd) -> True)) _) _) ity) = [ClassP ''Eq [everywhere (mkT $ replaceECFS ec fs) t]]
-	collectECEqs ec fs t = []
+	collectECs :: Type -> Type -> Type -> [Pred]
+	collectECs ec fs t@(AppT (AppT (AppT (ConT ((==''ECErr) -> True)) _) _) ity) = [ClassP cls [everywhere (mkT $ replaceECFS ec fs) t]]
+	collectECs ec fs t@(AppT (AppT (AppT (ConT ((==''ECMd) -> True)) _) _) ity) = [ClassP cls [everywhere (mkT $ replaceECFS ec fs) t]]
+	collectECs ec fs t = []
 	replaceECFS :: Type -> Type -> Type -> Type
 	replaceECFS ec fs (VarT ((==ecName) -> True)) = ec
 	replaceECFS ec fs (VarT ((==fsName) -> True)) = fs
@@ -346,15 +347,20 @@ genZRepMDTy isTop ecName fsName ty = case ty of
 	Directory _          -> error "Forest: Directory declarations must appear at the top level."
 	FFile (ty_name,arg)   -> do
 		let con_ty = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT (Pure.getMDName ty_name)
-		repTy <- fsthunkTyQ fsName $ Pure.tyListToTupleTy [ con_ty, ConT (Pure.getTyName ty_name) ] 
-		return repTy 
+		let repTy = Pure.tyListToTupleTy [ con_ty, ConT (Pure.getTyName ty_name) ] 
+		repTy' <- if isTop
+			then fsthunkTyQ fsName repTy
+			else return repTy
+		return repTy' 
 	Archive archtype ty              -> do
 		rep_ty <- genZRepMDTy False ecName fsName ty
 		let con_ty = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) rep_ty
 		if isTop
 			then fsthunkTyQ fsName con_ty
 			else return con_ty
-	FSymLink              -> return $ AppT (ConT ''SymLink) (VarT fsName)
+	FSymLink              -> if isTop
+		then fsthunkTyQ fsName $ Pure.appT2 (ConT ''SymLinkEC) (VarT ecName) (VarT fsName)
+		else return $ Pure.appT2 (ConT ''SymLinkEC) (VarT ecName) (VarT fsName)
 	Named ty_name        -> do
 		argName <- lift $ newName "arg"
 		let ty_nameEC = mkName $ nameBase (Pure.getTyName ty_name) ++ "EC"
@@ -536,19 +542,19 @@ predTy (ClassP n tys) = appConT n tys
 appConT :: Name -> [Type] -> Type
 appConT con = Foldable.foldl' AppT (ConT con)
 
-instance (ForestDiff fs arg,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (ForestFSThunkI fs ((Forest_md fs, md), rep)),IncK (IncForest fs) arg,Eq rep,Eq md,IncK (IncForest fs) ((Forest_md fs, md), rep),MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq arg,MData NoCtx (ForestI fs) arg,ZippedICMemo fs,ICRep fs,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),rep)) where
-	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
-	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
-	zupdateManifestScratch proxy marg path tree rep man = lift (inside marg) >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man
-	zupdateManifestDelta proxy (marg,darg) path path' tree df tree' rep dv man = lift (inside marg) >>= \arg -> doZDeltaManifestFile1 (isEmptyDelta darg) (Arg arg) path path' tree df tree' rep dv man
-	zdefaultScratch proxy marg path = inside marg >>= \arg -> doZDefaultFile1 (Arg arg) path
-
-instance (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (SymLink fs),IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ZippedICMemo fs,ICRep fs) => ZippedICForest fs () (SymLink fs) where
-	zloadScratch proxy args pathfilter path tree getMD = doZLoadSymLink path tree getMD
-	zloadDelta proxy (margs,dargs) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaSymLink mpath path' tree df tree' dv (rep,getMD)
-	zupdateManifestScratch proxy args path tree rep man = doZManifestSymLink path tree rep man
-	zupdateManifestDelta proxy (margs,dargs) path path' tree df tree' rep dv man = doZDeltaManifestSymLink path path' tree df tree' rep dv man
-	zdefaultScratch proxy args path = doZDefaultSymLink path
+--instance (ForestDiff fs arg,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (ForestFSThunkI fs ((Forest_md fs, md), rep)),IncK (IncForest fs) arg,Eq rep,Eq md,IncK (IncForest fs) ((Forest_md fs, md), rep),MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq arg,MData NoCtx (ForestI fs) arg,ZippedICMemo fs,ICRep fs,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),rep)) where
+--	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
+--	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
+--	zupdateManifestScratch proxy marg path tree rep man = lift (inside marg) >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man
+--	zupdateManifestDelta proxy (marg,darg) path path' tree df tree' rep dv man = lift (inside marg) >>= \arg -> doZDeltaManifestFile1 (isEmptyDelta darg) (Arg arg) path path' tree df tree' rep dv man
+--	zdefaultScratch proxy marg path = inside marg >>= \arg -> doZDefaultFile1 (Arg arg) path
+--
+--instance (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (SymLink fs),IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ZippedICMemo fs,ICRep fs) => ZippedICForest fs () (ForestFSSymLinkE fs) where
+--	zloadScratch proxy args pathfilter path tree getMD = doZLoadSymLink path tree getMD
+--	zloadDelta proxy (margs,dargs) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaSymLink mpath path' tree df tree' dv (rep,getMD)
+--	zupdateManifestScratch proxy args path tree rep man = doZManifestSymLink path tree rep man
+--	zupdateManifestDelta proxy (margs,dargs) path path' tree df tree' rep dv man = doZDeltaManifestSymLink path path' tree df tree' rep dv man
+--	zdefaultScratch proxy args path = doZDefaultSymLink path
 
 
 

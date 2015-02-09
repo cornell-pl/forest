@@ -30,6 +30,11 @@ import System.Mem.Weak as Weak
 import System.Mem.WeakTable as WeakTable
 import System.Mem.MemoTable
 import System.Mem.WeakKey
+import Language.Pads.BaseTypes
+import Data.Time
+import Data.Time.Clock.POSIX
+import Data.Hashable
+import Data.Set as Set
 
 $( derive makeMData ''Base_md )
 $( derive makeMData ''ErrMsg )
@@ -38,6 +43,11 @@ $( derive makeMDataAbstract ''Pos )
 $( derive makeMDataAbstract ''Loc )
 $( derive makeMData ''Text )
 $( derive makeMData ''Binary )
+$( derive makeMData ''PMaybe )
+$( derive makeMData ''PMaybe_imd )
+$( derive makeMData ''UTCTime )
+$( derive makeMDataAbstract ''Day )
+instance (Sat (ctx DiffTime),Monad m) => MData ctx m DiffTime
 
 $( derive makeDeepTypeable ''Base_md )
 $( derive makeDeepTypeable ''ErrMsg )
@@ -46,6 +56,35 @@ $( derive makeDeepTypeableAbstract ''Pos )
 $( derive makeDeepTypeableAbstract ''Loc )
 $( derive makeDeepTypeable ''Text )
 $( derive makeDeepTypeable ''Binary )
+$( derive makeDeepTypeable ''PMaybe )
+$( derive makeDeepTypeable ''PMaybe_imd )
+$( derive makeDeepTypeable ''UTCTime )
+$( derive makeDeepTypeableAbstract ''Day )
+$( derive makeDeepTypeableAbstract ''DiffTime )
+
+instance Hashable Day where
+	hashWithSalt i = hashWithSalt i . fromEnum
+	
+instance Hashable DiffTime where
+	hashWithSalt i = hashWithSalt i
+	
+instance Hashable UTCTime where
+	hashWithSalt i = hashWithSalt i . fromEnum . utcTimeToPOSIXSeconds
+
+instance Memo Day where
+	type Key Day = Day
+	{-# INLINE memoKey #-}
+	memoKey d = (MkWeak $ Weak.mkWeak d,d)
+
+instance Memo DiffTime where
+	type Key DiffTime = DiffTime
+	{-# INLINE memoKey #-}
+	memoKey d = (MkWeak $ Weak.mkWeak d,d)
+
+instance Memo UTCTime where
+	type Key UTCTime = UTCTime
+	{-# INLINE memoKey #-}
+	memoKey d = (MkWeak $ Weak.mkWeak d,d)
 
 instance Memo ByteString where
 	type Key ByteString = ByteString

@@ -115,6 +115,53 @@ instance Pads1 () Integer Base_md where
 integer_printFL :: PadsPrinter (Integer, Base_md)
 integer_printFL (i, bmd) = fshow i
 
+-----------------------------------------------------------------
+
+--type Float
+type Float_md = Base_md
+
+float_parseM :: PadsParser (Float,Base_md)
+float_parseM =
+  handleEOF def "Float" $
+  handleEOR def "Float" $ do
+    -- Get leading sign
+    c <- peekHeadP 
+    let isNeg = (c == '-')
+    when isNeg (takeHeadP >> return ())
+    let sign = if isNeg then "-" else ""
+    -- Get digits before any dot
+    digits1 <- satisfy Char.isDigit
+    -- Get optional dot
+    d <- peekHeadP 
+    let hasDot = (d == '.')
+    when hasDot (takeHeadP >> return ())
+    let dec = if hasDot then "." else ""
+    -- Get digits after dot
+    digits2 <- satisfy Char.isDigit
+    -- Get optional exponent marker
+    e <- peekHeadP 
+    let hasExp = (e == 'e')
+    when hasExp (takeHeadP >> return ())
+    let exp = if hasExp then "e" else ""
+    -- Get optional exponent sign
+    es <- peekHeadP 
+    let hasESign = (es == '-')
+    when hasESign (takeHeadP >> return ())
+    let expSign = if hasESign then "-" else ""
+    -- Get digits in the exponent
+    digits3 <- satisfy Char.isDigit
+    -- As long as the double had digits
+    if not (null digits1)
+      then returnClean (read (sign ++digits1++dec++digits2++exp++expSign++digits3))
+      else returnError def (E.FoundWhenExpecting (mkStr c) "Float")
+
+type instance Meta Float = Base_md
+instance Pads1 () Float Base_md where
+  parsePP1 () = float_parseM
+  printFL1 () = float_printFL
+
+float_printFL :: PadsPrinter (Float, Base_md)
+float_printFL (d, bmd) = fshow d
 
 -----------------------------------------------------------------
 
@@ -283,7 +330,7 @@ stringC_printFL c (str, bmd) = addString str
 
 -----------------------------------------------------------------
 
--- string of given length
+-- string of fixed length
 type StringFW = String
 type StringFW_md = Base_md
 
@@ -297,11 +344,29 @@ stringFW_parseM n =
       then returnClean str
       else returnError (stringFW_def n) (E.Insufficient (length str) n)
 
-stringFW_def n = take n (repeat 'X')
+stringFW_def n = replicate n 'X'
 
 stringFW_printFL :: Int -> PadsPrinter (StringFW, Base_md)
 stringFW_printFL n (str, bmd)  = addString (take n str)
 
+-----------------------------------------------------------------
+
+-- string of variable length
+type StringVW = String
+type StringVW_md = Base_md
+
+stringVW_parseM :: Int -> PadsParser (StringVW, Base_md)
+stringVW_parseM 0 = returnClean ""
+stringVW_parseM n =
+  handleEOF (stringVW_def n) "StringVW" $
+  handleEOR (stringVW_def n) "StringVW" $ do
+	str <- takeP n 
+	returnClean str
+
+stringVW_def n = replicate n 'X'
+
+stringVW_printFL :: Int -> PadsPrinter (StringVW, Base_md)
+stringVW_printFL n (str, bmd)  = addString (take n str)
 
 -----------------------------------------------------------------
 

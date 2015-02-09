@@ -121,21 +121,25 @@ zloadE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zloadE isTop ty filterPathE pathE treeE getMDE = case ty of
 	Named ty_name               -> zloadWithArgsE ty_name [] filterPathE pathE treeE getMDE
 	Fapp (Named ty_name) argEs  -> zloadWithArgsE ty_name argEs filterPathE pathE treeE getMDE
-	FFile (file_name, argEOpt) -> zloadFile file_name argEOpt filterPathE pathE treeE getMDE
+	FFile (file_name, argEOpt) -> zloadFile isTop file_name argEOpt filterPathE pathE treeE getMDE
 	Archive archtype ty         -> zloadArchive isTop archtype ty filterPathE pathE treeE getMDE
-	FSymLink         -> zloadSymLink pathE treeE getMDE
+	FSymLink         -> zloadSymLink isTop pathE treeE getMDE
 	FConstraint p ty pred -> zloadConstraint isTop treeE p pred $ zloadE False ty filterPathE pathE treeE getMDE
 	Directory dirTy -> zloadDirectory isTop dirTy filterPathE pathE treeE getMDE
 	FMaybe forestTy -> zloadMaybe isTop forestTy filterPathE pathE treeE getMDE
 	FComp cinfo     -> zloadComp isTop cinfo filterPathE pathE treeE getMDE
 
-zloadFile :: String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zloadFile fileName Nothing pathFilterE pathE treeE getMDE = do
+zloadFile :: Bool -> String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
+zloadFile isTop fileName Nothing pathFilterE pathE treeE getMDE = do
 	let proxy = proxyFileName fileName
-	return $ Pure.appE6 (VarE 'doZLoadFile1) proxy (AppE (ConE 'Pure.Arg) $ TupE []) pathFilterE pathE treeE getMDE
-zloadFile fileName (Just argE) pathFilterE pathE treeE getMDE = do
+	if isTop
+		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy (AppE (ConE 'Pure.Arg) $ TupE []) pathFilterE pathE treeE getMDE
+		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy (AppE (ConE 'Pure.Arg) $ TupE []) pathFilterE pathE treeE getMDE
+zloadFile isTop fileName (Just argE) pathFilterE pathE treeE getMDE = do
 	let proxy = proxyFileName fileName
-	return $ Pure.appE6 (VarE 'doZLoadFile1) proxy argE pathFilterE pathE treeE getMDE
+	if isTop
+		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy argE pathFilterE pathE treeE getMDE
+		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy argE pathFilterE pathE treeE getMDE
 
 -- these are terminals in the spec
 zloadWithArgsE :: String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
@@ -158,9 +162,11 @@ zloadConstraint isTop treeE pat predE load = forceVarsZEnvQ predE $ \predE' -> d
 		then return $ Pure.appE3 (VarE 'doZLoadConstraint) treeE predFnE loadAction
 		else return $ Pure.appE3 (VarE 'doZLoadConstraintInner) treeE predFnE loadAction
 
-zloadSymLink :: Exp -> Exp -> Exp -> ZEnvQ Exp
-zloadSymLink pathE treeE repmdE = do
-  return $ Pure.appE3 (VarE 'doZLoadSymLink) pathE treeE repmdE
+zloadSymLink :: Bool -> Exp -> Exp -> Exp -> ZEnvQ Exp
+zloadSymLink isTop pathE treeE repmdE = do
+	if isTop
+		then return $ Pure.appE3 (VarE 'doZLoadSymLink) pathE treeE repmdE
+		else return $ Pure.appE3 (VarE 'doZLoadSymLinkInner) pathE treeE repmdE
 
 zloadArchive :: Bool -> [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zloadArchive isTop archtype ty filterPathE pathE treeE getMDE = do

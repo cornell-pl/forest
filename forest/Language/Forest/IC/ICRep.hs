@@ -87,6 +87,10 @@ instance ICRep fs => Eq (ForestFSThunk fs l a) where
 	t1 == t2 = eqFSThunk t1 t2
 instance ICRep fs => Eq (ForestICThunk fs l a) where
 	t1 == t2 = eqICThunk t1 t2
+instance ICRep fs => Ord (ForestFSThunk fs l a) where
+	compare t1 t2 = compareFSThunk t1 t2
+instance ICRep fs => Ord (ForestICThunk fs l a) where
+	compare t1 t2 = compareICThunk t1 t2
 
 -- | Class that implements IC-specific operations
 class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput fs ICThunk Outside,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside,ForestInput fs FSThunk Inside,FSRep fs,DeepTypeable fs,Incremental (IncForest fs) IORef IO) => ICRep (fs :: FS) where
@@ -104,6 +108,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	data FSThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
 	
 	eqFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Bool
+	compareFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Ordering
 
 	isUnevaluatedFSThunk :: (IncK (IncForest fs) a,ForestLayer fs l) => ForestFSThunk fs l a -> ForestL fs l Bool
 
@@ -111,6 +116,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	data ICThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
 
 	eqICThunk :: ICThunk fs l inc r m a -> ICThunk fs l inc r m a -> Bool
+	compareICThunk :: ICThunk fs l inc r m a -> ICThunk fs l inc r m a -> Ordering
 
 	-- | A plain thunk that simply stores a computation; cannot be mutated, and is not incrementally repaired
 	data HSThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *

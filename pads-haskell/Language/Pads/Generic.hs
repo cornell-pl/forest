@@ -54,6 +54,9 @@ parseFile file = parseFileWith parsePP file
 printS :: Pads rep md => (rep,md) -> (String)
 printS = S.byteStringToStr . printBS
 
+printRep :: Pads rep md => rep -> String
+printRep = printRep1 ()
+
 printBS :: Pads rep md => (rep,md) -> (B.ByteString)
 printBS r = let f = (printFL r) in f B.empty
 
@@ -63,7 +66,7 @@ printFile filepath r = do
 	B.writeFile filepath str
 
 
-class (Data rep, PadsMD md) => Pads1 arg rep md | rep->md, rep->arg where
+class (Data rep, PadsMD md) => Pads1 arg rep md | rep -> md, rep -> arg where
 	def1 :: arg -> rep
 	def1 =  \_ -> gdef
 	defaultMd1 :: arg -> rep -> md
@@ -90,6 +93,9 @@ parseFile1 arg file = parseFileWith (parsePP1 arg) file
 
 printS1 :: Pads1 arg rep md => arg -> (rep,md) -> (String)
 printS1 arg (rep,md) = S.byteStringToStr (printBS1 arg (rep,md))
+
+printRep1 :: Pads1 arg rep md => arg -> rep -> String
+printRep1 arg rep = printS1 arg (rep,defaultMd1 arg rep)
 
 printBS1 :: Pads1 arg rep md => arg -> (rep,md) -> (B.ByteString)
 printBS1 arg r = let f = (printFL1 arg r) in f B.empty

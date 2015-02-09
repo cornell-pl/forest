@@ -153,9 +153,9 @@ genZLoadDeltaBody proxyE argE pathName treeName repmdName dpathName dfName treeN
 hasTopThunkForestTy :: ForestTy -> Bool
 hasTopThunkForestTy (Named _) = True
 hasTopThunkForestTy (Fapp (Named _) _) = True
-hasTopThunkForestTy (FFile _) = True
+hasTopThunkForestTy (FFile _) = False
 hasTopThunkForestTy (Archive _ _) = False
-hasTopThunkForestTy (FSymLink) = True
+hasTopThunkForestTy (FSymLink) = False
 hasTopThunkForestTy (FConstraint _ ty _) = hasTopThunkForestTy ty
 hasTopThunkForestTy (Directory _) = False
 hasTopThunkForestTy (FMaybe _) = False
@@ -168,17 +168,21 @@ zloadDeltaE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp
 zloadDeltaE isTop forestTy pathE treeE repmdE dpathE dfE treeE' dvE = case forestTy of
 	Named ty_name -> zloadDeltaNamed ty_name [] pathE treeE repmdE dpathE dfE treeE' dvE
 	Fapp (Named ty_name) argEs -> zloadDeltaNamed ty_name argEs pathE treeE repmdE dpathE dfE treeE' dvE
-	FFile (file_name, argEOpt) -> zcheckLoadUnevaluated "file" treeE' repmdE
-		(zloadFile file_name argEOpt pathFilterE pathE' treeE')
-		(zloadDeltaFile forestTy argEOpt pathE treeE dpathE dfE treeE' dvE)
+	FFile (file_name, argEOpt) -> if isTop
+		then zcheckLoadUnevaluated "file" treeE' repmdE
+			(zloadFile True file_name argEOpt pathFilterE pathE' treeE')
+			(zloadDeltaFile True forestTy argEOpt pathE treeE dpathE dfE treeE' dvE)
+		else zloadDeltaFile False forestTy argEOpt pathE treeE dpathE dfE treeE' dvE repmdE
 	Archive archtype ty -> if isTop
 		then zcheckLoadStop (archiveExtension archtype) forestTy pathE dpathE repmdE dfE treeE' dvE
 			(zloadArchive True archtype ty pathFilterE pathE' treeE')
 			(zloadDeltaArchive True archtype ty pathE dpathE treeE dfE treeE')
 		else zloadDeltaArchive False archtype ty pathE dpathE treeE dfE treeE' dvE repmdE
-	FSymLink -> zcheckLoadUnevaluated "symlink" treeE' repmdE
-		(zloadSymLink pathE' treeE')
-		(zloadDeltaSymLink pathE dpathE treeE dfE treeE' dvE)
+	FSymLink -> if isTop
+		then zcheckLoadUnevaluated "symlink" treeE' repmdE
+			(zloadSymLink True pathE' treeE')
+			(zloadDeltaSymLink True pathE dpathE treeE dfE treeE' dvE)
+		else zloadDeltaSymLink False pathE dpathE treeE dfE treeE' dvE repmdE
 	FConstraint pat descTy predE -> zloadDeltaConstraint isTop pat repmdE predE dvE $ \newdvE newrepmdE -> zloadDeltaE False descTy pathE treeE newrepmdE dpathE dfE treeE' newdvE	
 	(Directory dirTy) -> if isTop
 		then zcheckLoadStop "directory" forestTy pathE dpathE repmdE dfE treeE' dvE
@@ -249,8 +253,11 @@ zloadDeltaArchive isTop archtype ty pathE dpathE treeE dfE treeE' dvE repmdE = d
 		then return $ Pure.appE13 (VarE 'doZLoadDeltaArchive) isClosedE exts pathE dpathE treeE dfE treeE' dvE repmdE rhsE defE rhsDE (zdiffE ty)
 		else return $ Pure.appE12 (VarE 'doZLoadDeltaArchiveInner) isClosedE exts pathE dpathE treeE dfE treeE' dvE repmdE rhsE defE rhsDE
 
-zloadDeltaSymLink :: Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
-zloadDeltaSymLink pathE dpathE treeE dfE treeE' dvE repmdE = return $ Pure.appE7 (VarE 'doZLoadDeltaSymLink) pathE dpathE treeE dfE treeE' dvE repmdE
+zloadDeltaSymLink :: Bool -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
+zloadDeltaSymLink isTop pathE dpathE treeE dfE treeE' dvE repmdE = do
+	if isTop
+		then return $ Pure.appE7 (VarE 'doZLoadDeltaSymLink) pathE dpathE treeE dfE treeE' dvE repmdE
+		else return $ Pure.appE7 (VarE 'doZLoadDeltaSymLinkInner) pathE dpathE treeE dfE treeE' dvE repmdE
 
 zloadDeltaMaybe :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zloadDeltaMaybe isTop forestTy treeE pathE dpathE dfE treeE' dvE repmdE = do 
@@ -268,13 +275,17 @@ zloadDeltaMaybe isTop forestTy treeE pathE dpathE dfE treeE' dvE repmdE = do
 		then return $ Pure.appE10 (VarE 'doZLoadDeltaMaybe) pathE repmdE dpathE treeE dfE treeE' dvE loadContentNoDeltaE loadContentDeltaE (zdiffE forestTy)
 		else return $ Pure.appE10 (VarE 'doZLoadDeltaMaybeInner) pathE repmdE dpathE treeE dfE treeE' dvE loadContentNoDeltaE loadContentDeltaE (zdiffE forestTy)
 
-zloadDeltaFile :: ForestTy -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
-zloadDeltaFile ty Nothing pathE treeE dpathE dfE treeE' dvE repmdE = do
+zloadDeltaFile :: Bool -> ForestTy -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
+zloadDeltaFile isTop ty Nothing pathE treeE dpathE dfE treeE' dvE repmdE = do
 	condE <- lift $ dataToExpQ (\_ -> Nothing) True
-	return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
-zloadDeltaFile ty (Just argE') pathE treeE dpathE dfE treeE' dvE repmdE = do
+	if isTop
+		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
+		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
+zloadDeltaFile isTop ty (Just argE') pathE treeE dpathE dfE treeE' dvE repmdE = do
 	condE <- isEmptyZDeltaEnvForestTy ty -- note that the variables from the argument delta are included in the delta environment
-	return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE
+	if isTop
+		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE
+		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE
 	
 zloadDeltaDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zloadDeltaDirectory isTop dirTy@(Record id fields) pathE treeE dpathE dfE treeE' dvE repmdE = do

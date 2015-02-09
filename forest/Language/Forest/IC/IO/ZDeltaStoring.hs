@@ -79,6 +79,15 @@ doZDeltaManifestFile1 isEmptyDArg (Pure.Arg arg) path path' tree df tree' rep_t 
 			return man -- nothing changed
 		otherwise -> doZManifestFile1 (Pure.Arg arg) path' tree' rep_t man
 
+doZDeltaManifestFileInner1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
+	Bool -> Pure.Arg arg -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ((Forest_md fs,md),pads) -> ValueDelta fs (((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestFileInner1 isEmptyDArg (Pure.Arg arg) path path' tree df tree' rep_t dv man = do
+	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
+		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> do -- no conflict tests are issued
+			return man -- nothing changed
+		otherwise -> doZManifestFileInner1 (Pure.Arg arg) path' tree' rep_t man
+
 doZDeltaManifestArchive :: (IncK (IncForest fs) (Forest_md fs, rep),ForestMD fs rep,Typeable rep,ZippedICMemo fs,ICRep fs,toprep ~ ForestFSThunkI fs (Forest_md fs,rep)) =>
 	Bool -> [ArchiveType] -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> toprep -> ValueDelta fs toprep
@@ -206,11 +215,17 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 			return $ mergeManifests man1 man3
 		otherwise -> doZManifestArchiveInner archTy path' tree' (fmd,rep) manifest man
 
-doZDeltaManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> SymLink fs -> ValueDelta fs (SymLink fs) -> Manifest fs -> MManifestForestO fs
-doZDeltaManifestSymLink path path' tree df tree' (SymLink rep_t) dv man = do
+doZDeltaManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestFSThunkI fs (SymLinkE fs) -> ValueDelta fs (ForestFSThunkI fs (SymLinkE fs)) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestSymLink path path' tree df tree' (rep_t) dv man = do
 	case (path == path',isIdValueDelta dv,df) of
 		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return man
-		otherwise -> doZManifestSymLink path' tree' (SymLink rep_t) man
+		otherwise -> doZManifestSymLink path' tree' (rep_t) man
+
+doZDeltaManifestSymLinkInner :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> SymLinkE fs -> ValueDelta fs (SymLinkE fs) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestSymLinkInner path path' tree df tree' (rep_t) dv man = do
+	case (path == path',isIdValueDelta dv,df) of
+		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return man
+		otherwise -> doZManifestSymLinkInner path' tree' (rep_t) man
 
 doZDeltaManifestConstraint :: (IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestMD fs rep,ICRep fs, toprep ~ ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep)) =>
 	Bool -> (rep -> ForestI fs Bool) -> FSTree fs -> toprep -> ValueDelta fs toprep

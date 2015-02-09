@@ -72,7 +72,7 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 		fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
 		return ((fmd',md),pads)
 	
-	let fileBad = doZDefaultFile1' (Pure.Arg arg) path
+	let fileBad = doZDefaultFileInner1 (Pure.Arg arg) path
 	
 	let load_file = checkZPath path tree fileGood fileBad
 	
@@ -109,6 +109,28 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 	
 	addZippedMemo path argProxy (return arg) rep (Just tree)
 	return rep
+
+doZLoadFileInner1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
+	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
+	-> ForestI fs ((Forest_md fs,md),pads)
+doZLoadFileInner1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
+	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let fsrepProxy = Proxy
+	let fs = (Proxy::Proxy fs)
+	-- default static loading
+	
+	let fileGood = do
+		(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
+		fmd <- getMD path tree
+		fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
+		return ((fmd',md),pads)
+	
+	let fileBad = doZDefaultFileInner1 (Pure.Arg arg) path
+	
+	let load_file = checkZPath' (Just False) path tree fileGood fileBad
+	
+	load_file
+
 
 -- | compressed archive (tar,gz,zip)
 -- incremental loading is only supported if the specification for the archive's contents is:
@@ -180,11 +202,11 @@ doZLoadArchiveInner exts oldpath_f path  tree getMD loadGood loadBad = do
 	
 	checkZPath' (Just False) path tree (checkZFileExtension (archiveExtension exts) path archGood archBad) archBad
 		
-doZLoadSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (SymLink fs)
-doZLoadSymLink path tree getMD = liftM SymLink $ fsThunk $ doZLoadSymLink' path tree getMD
+doZLoadSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs (SymLinkE fs))
+doZLoadSymLink path tree getMD = fsThunk $ doZLoadSymLinkInner path tree getMD
 
-doZLoadSymLink' :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs ((Forest_md fs,Base_md),FilePath)
-doZLoadSymLink' path tree getMD = do
+doZLoadSymLinkInner :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs ((Forest_md fs,Base_md),FilePath)
+doZLoadSymLinkInner path tree getMD = do
 	
 	let linkGood = do
 		md <- getMD path tree
@@ -194,7 +216,7 @@ doZLoadSymLink' path tree getMD = do
 				md' <- updateForestMDErrorsInsideWith md $ return [Pure.ioExceptionForestErr]
 				return ((md',cleanBasePD), "")
 				
-	let linkBad = doZDefaultSymLink' path
+	let linkBad = doZDefaultSymLinkInner path
 		
 	checkZPath' Nothing path tree linkGood linkBad
 
