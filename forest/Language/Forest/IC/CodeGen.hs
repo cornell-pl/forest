@@ -46,7 +46,7 @@ import Language.Forest.IC.IO.ZDefault
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
 import Language.Forest.IC.ICRep
 import Data.DeepTypeable
-import Language.Forest.IC.BX
+import Language.Forest.IC.BX as BX
 import Data.WithClass.Derive.MData
 import Language.Forest.IC.IO.ZLoading
 import Language.Forest.IC.IO.ZDeltaLoading
@@ -240,6 +240,7 @@ genZRepMDDecl ecName fsName ty (unty_name,ty_name) pat_infos = case ty of
 		deepTypeableInstance <- lift $ deriveFromDec makeDeepTypeable ty_decECK
 		forestRepInstance <- lift $ mkNewTypeForestRepEC ecName fsName tyNameEC (unty_name,ty_name) rep
 		let tyEC = Pure.appT2 (ConT tyNameEC) (VarT ecName) (VarT fsName)
+		-- identity
 		let forestContentInstance = [InstanceD [] (Pure.appT2 (ConT ''ForestContent) tyEC tyEC) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLens) []]]
 		return (ty_decEC, ty_decC:ty_dec:forestRepInstance:mdataInstance++deepTypeableInstance++forestContentInstance)
 
@@ -285,7 +286,7 @@ genZRepMDDir hasConstraint ecName fsName (Record _ fields) ty_name pat_infos = d
 			let inner_ty_declK = unKind inner_ty_decl
 			mdataInstance_rep <- lift $ deriveFromDec makeMData inner_ty_declK
 			deepTypeableRepInstance <- lift $ deriveFromDec makeDeepTypeable inner_ty_declK
-			forestContent <- mkDirForestContentEC fsName ty_name inner_ty_nameEC fields
+			forestContent <- mkDirForestContentEC fsName ty_name inner_ty_name inner_ty_nameEC fields
 			eqInstance <- lift $ makeForestECClass makeEq ''Eq ecName fsName inner_ty_declK
 			ordInstance <- lift $ makeForestECClass makeOrd ''Ord ecName fsName inner_ty_declK
 			return (ty_declEC, (ty_decl:ty_declC:inner_ty_decl:eqInstance++ordInstance++mdataInstance_rep++deepTypeableRepInstance++forestContent))
@@ -306,9 +307,17 @@ makeForestECClass drv cls ecName fsName dec = do
 	replaceECFS ec fs (VarT ((==fsName) -> True)) = fs
 	replaceECFS ec fs t = t
 
-mkDirForestContentEC :: Name -> Name -> Name -> [Field] -> GenQ [Dec]
-mkDirForestContentEC fsName ty_name inner_ty_name fields = do
-	let dec = InstanceD [] (Pure.appT2 (ConT ''ForestContent) (Pure.appT2 (ConT inner_ty_name) (PromotedT 'E) $ VarT fsName) (Pure.appT2 (ConT inner_ty_name) (PromotedT 'C) $ VarT fsName)) []
+mkDirForestContentEC :: Name -> Name -> Name -> Name -> [Field] -> GenQ [Dec]
+mkDirForestContentEC fsName ty_name inner_ty_name inner_ty_nameEC fields = do
+	let tyE = Pure.appT2 (ConT inner_ty_nameEC) (PromotedT 'E) $ VarT fsName
+	let tyC = Pure.appT2 (ConT inner_ty_nameEC) (PromotedT 'C) $ VarT fsName
+	let (es,map snd -> ps) = Pure.getPEforFields mkName fields
+	let (es',map snd -> ps') = Pure.getPEforFields (mkName . (++"'")) fields
+	let lns_get = LamE [SigP (ConP inner_ty_name ps) tyE] $ SigE (List.foldl AppE (ConE inner_ty_name) $ map (\s -> Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) s) es) tyC
+	let lns_put = LamE [SigP (ConP inner_ty_name ps) tyE,SigP (ConP inner_ty_name ps') tyC] $ SigE (List.foldl AppE (ConE inner_ty_name) $ map (\(s,v) -> Pure.appE3 (VarE 'BX.put) (VarE 'lens_content) s v) $ zip es es') tyE
+	let lns = Pure.appE2 (ConE 'Lens) lns_get lns_put
+	let fun = FunD 'lens_content [Clause [] (NormalB lns) []]
+	let dec = InstanceD [] (Pure.appT2 (ConT ''ForestContent) tyE tyC) [fun]
 	return [dec]
 
 genZRepMDField :: Name -> Name -> Field -> GenQ (VST)

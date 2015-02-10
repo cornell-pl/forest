@@ -102,7 +102,7 @@ doZDeltaManifestArchive isClosed archTy path path' tree df tree' arch_rep arch_d
 	(fmd,rep) <- lift $ Inc.getOutside arch_rep
 	err_t <- lift $ get_errors_thunk fmd
 	let path_fmd = fullpath $ fileInfo fmd
-	let exists_dir = doesFileExistInMD path fmd
+	let exists_dir = doesFileExistInMD fmd
 
 	case (exists,exists_dir,exists') of
 		(False,False,False) -> case (path == path',isIdValueDelta arch_dv,isEmptyTopFSTreeDeltaNodeMay df) of
@@ -167,7 +167,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 	exists' <- lift $ forestM $ doesFileExistInTree path' tree'
 	err_t <- lift $ get_errors_thunk fmd
 	let path_fmd = fullpath $ fileInfo fmd
-	let exists_dir = doesFileExistInMD path fmd
+	let exists_dir = doesFileExistInMD fmd
 
 	case (exists,exists_dir,exists') of
 		(False,False,False) -> case (path == path',isIdValueDelta arch_dv,isEmptyTopFSTreeDeltaNodeMay df) of
@@ -297,7 +297,7 @@ doZDeltaManifestDirectory path path' tree df tree' dirrep_t dv collectMDErrors m
 	(fmd,rep) <- lift $ Inc.getOutside dirrep_t
 	err_t <- lift $ get_errors_thunk fmd
 	let path_fmd = fullpath $ fileInfo fmd
-	let exists_dir = doesDirectoryExistInMD path fmd
+	let exists_dir = doesDirectoryExistInMD fmd
 
 	case (exists,exists_dir,exists') of
 		(False,False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of
@@ -338,7 +338,7 @@ doZDeltaManifestDirectoryInner path path' tree df tree' (fmd,rep) dv collectMDEr
 	exists' <- lift $ forestM $ doesDirectoryExistInTree path' tree'
 	err_t <- lift $ get_errors_thunk fmd
 	let path_fmd = fullpath $ fileInfo fmd
-	let exists_dir = doesDirectoryExistInMD path fmd
+	let exists_dir = doesDirectoryExistInMD fmd
 
 	case (exists,exists_dir,exists') of
 		(False,False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of

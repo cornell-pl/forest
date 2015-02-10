@@ -25,6 +25,7 @@ import Data.Maybe
 import qualified Language.Pads.Source as S
 import qualified Language.Pads.Errors as E
 import qualified Data.ByteString as B  
+import qualified Data.ByteString.Char8 as C
 
 import Language.Pads.PadsPrinter 
 
@@ -250,7 +251,7 @@ type String_md = Base_md
 string_parseM :: PadsParser (String, Base_md)
 string_parseM = do
   document <- getAllBinP
-  returnClean $ show document
+  returnClean $ C.unpack document
 
 type instance Meta String = Base_md
 instance Pads1 () String Base_md where

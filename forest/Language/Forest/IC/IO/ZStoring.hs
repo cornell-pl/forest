@@ -110,7 +110,7 @@ doZManifestFileInner1 (Pure.Arg arg :: Pure.Arg arg) path tree ((fmd,bmd),pads) 
 	
 	let mani_scratch = do
 		let path_fmd = fullpath $ fileInfo fmd
-		let exists = doesFileExistInMD path fmd && Pads.numErrors (get_md_header bmd) == 0
+		let exists = doesFileExistInMD fmd && Pads.numErrors (get_md_header bmd) == 0
 		newman <- if exists
 			then do
 				let testm = do
@@ -127,7 +127,7 @@ doZManifestFileInner1 (Pure.Arg arg :: Pure.Arg arg) path tree ((fmd,bmd),pads) 
 				-- inconsistent unless the non-stored representation has default data
 				let testm = do
 					status1 <- liftM (boolStatus ConflictingRepMd) $ forestO $ do
-					 	let exists = doesFileExistInMD path fmd
+					 	let exists = doesFileExistInMD fmd
 						return $ (not exists) || (Pads.numErrors (get_md_header bmd) > 0)
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
@@ -157,7 +157,7 @@ doZManifestArchive isClosed archTy path tree toprep manifest manifestD diffValue
 	(fmd,rep) <- lift $ Inc.getOutside toprep
 	
 	let path_fmd = fullpath $ fileInfo fmd
-	let exists = doesFileExistInMD path fmd
+	let exists = doesFileExistInMD fmd
 	if exists
 		then do
 			canpath <- lift $ forestM $ canonalizeDirectoryInTree path tree
@@ -224,7 +224,7 @@ doZManifestArchiveInner :: (ForestMD fs rep,ForestInput fs FSThunk Inside,ICRep 
 doZManifestArchiveInner archTy path tree (fmd,rep) manifestContents man = do
 	isRepairMd <- Reader.ask
 	let path_fmd = fullpath $ fileInfo fmd
-	let exists = doesFileExistInMD path fmd
+	let exists = doesFileExistInMD fmd
 	if exists
 		then do
 			canpath <- lift $ forestM $ canonalizeDirectoryInTree path tree
@@ -270,7 +270,7 @@ doZManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Fore
 doZManifestSymLink path tree (rep_t) man = do
 	((fmd,base_md), tgt) <- lift $ Inc.getOutside rep_t
 	let path_fmd = fullpath $ fileInfo fmd
-	case doesLinkExistInMD path_fmd fmd of
+	case doesLinkExistInMD fmd of
 		Just sym -> do
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingLink path tgt $ Just sym) $ return $ sym == tgt && base_md == cleanBasePD
@@ -292,7 +292,7 @@ doZManifestSymLinkInner :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (
 	-> Manifest fs -> MManifestForestO fs
 doZManifestSymLinkInner path tree ((fmd,base_md), tgt) man = do
 	let path_fmd = fullpath $ fileInfo fmd
-	case doesLinkExistInMD path_fmd fmd of
+	case doesLinkExistInMD fmd of
 		Just sym -> do
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingLink path tgt $ Just sym) $ return $ sym == tgt && base_md == cleanBasePD
@@ -365,7 +365,7 @@ doZManifestDirectoryInner path tree collectMDErrors (fmd,rep) manifestContent ma
 	isRepairMd <- Reader.ask
 	let path_fmd = fullpath $ fileInfo fmd
 	
-	let exists = doesDirectoryExistInMD path fmd
+	let exists = doesDirectoryExistInMD fmd
 	if exists
 		then do
 			man1 <- lift $ forestM $ addDirToManifestInTree path tree man -- adds a new directory

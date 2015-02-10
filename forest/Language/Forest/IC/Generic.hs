@@ -137,6 +137,9 @@ class TxICForest fs where
 	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
 	copyOrElse :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
+	unsafeIOToFTM :: ICRep fs => IO a -> FTM fs a
+	unsafeIOToFTM = forestM . forestIO
+	
 tryWrite :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
 	

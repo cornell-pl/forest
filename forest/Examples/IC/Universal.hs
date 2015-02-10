@@ -35,7 +35,7 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
              }
 |]
 
--- [iforest| type Universal_zip = Maybe (Gzip (Tar Universal_d)) |]
+[iforest| type Universal_zip = Maybe (Gzip (Tar Universal_d)) |]
 
 generateTest :: IO ()
 generateTest = do

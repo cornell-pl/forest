@@ -204,7 +204,7 @@ doLoadDeltaDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (For
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs rep),SValueDelta (ForestFSThunkI fs (Forest_md fs,md)))
 doLoadDeltaDirectory mpath ((rep_thunk,md_thunk),getMD) path' oldtree df tree' collectMDErrors load loadD = do
 	path <- inside mpath
-	exists <- liftM (doesDirectoryExistInMD path) $ get_fmd_header md_thunk -- to avoid having the old tree materialized, this should be fine with regards to @stopUnevaluated@
+	exists <- liftM doesDirectoryExistInMD $ get_fmd_header md_thunk -- to avoid having the old tree materialized, this should be fine with regards to @stopUnevaluated@
 	exists' <- forestM $ doesDirectoryExistInTree path' tree'
 	debug ("doLoadDeltaDirectory: " ++ show (path,exists,path',exists')) $ case (exists,exists') of
 		(False,False) -> case (path == path',isEmptyTopFSTreeDeltaNodeMay df) of
@@ -257,7 +257,7 @@ doLoadDeltaMaybe :: (IncK (IncForest fs) (Forest_md fs, Maybe md),IncK (IncFores
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs (Maybe rep)),SValueDelta (ForestFSThunkI fs (Forest_md fs,Maybe md)))
 doLoadDeltaMaybe mpath ((rep_thunk,md_thunk),getMD) path' oldtree df tree' load loadD = do
 	path <- inside mpath
-	exists <- liftM (doesExistInMD path) $ get_fmd_header md_thunk -- to avoid having the old tree materialized. this evaluates the inner thunk as well, so compromises @stopUnevaluated@
+	exists <- liftM doesExistInMD $ get_fmd_header md_thunk -- to avoid having the old tree materialized. this evaluates the inner thunk as well, so compromises @stopUnevaluated@
 	exists' <- forestM $ doesExistInTree path' tree'
 	case (exists,exists') of
 		(False,False) -> do

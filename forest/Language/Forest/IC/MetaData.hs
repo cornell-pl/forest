@@ -102,19 +102,19 @@ $( derive makeDeepTypeable ''FileType )
 $( derive makeDeepTypeable ''FileInfo )
 
 -- for cases where we want to avoid reading from the filesystme
-doesExistInMD :: FilePath -> Forest_md fs -> Bool
-doesExistInMD path fmd = (fullpath (fileInfo fmd) == path) && (access_time (fileInfo fmd) >= 0 || read_time (fileInfo fmd) >= 0)
+doesExistInMD :: Forest_md fs -> Bool
+doesExistInMD fmd = (access_time (fileInfo fmd) >= 0 || read_time (fileInfo fmd) >= 0)
 
-doesFileExistInMD :: FilePath -> Forest_md fs -> Bool
-doesFileExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) /= DirectoryK
+doesFileExistInMD :: Forest_md fs -> Bool
+doesFileExistInMD fmd = doesExistInMD fmd && kind (fileInfo fmd) /= DirectoryK
 
-doesLinkExistInMD :: FilePath -> Forest_md fs -> Maybe FilePath
-doesLinkExistInMD path fmd = if (doesExistInMD path fmd && kind (fileInfo fmd) /= DirectoryK)
+doesLinkExistInMD :: Forest_md fs -> Maybe FilePath
+doesLinkExistInMD fmd = if (doesExistInMD fmd && kind (fileInfo fmd) /= DirectoryK)
 	then symLink (fileInfo fmd)
 	else Nothing
 
-doesDirectoryExistInMD :: FilePath -> Forest_md fs -> Bool
-doesDirectoryExistInMD path fmd = doesExistInMD path fmd && kind (fileInfo fmd) == DirectoryK
+doesDirectoryExistInMD :: Forest_md fs -> Bool
+doesDirectoryExistInMD fmd = doesExistInMD fmd && kind (fileInfo fmd) == DirectoryK
 
 forest_md_def :: (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ForestLayer fs l) => ForestL fs l (Forest_md fs)
 forest_md_def = do

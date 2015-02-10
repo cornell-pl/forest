@@ -119,7 +119,7 @@ doZLoadFileInner1 repProxy arg oldpath path tree getMD = doZLoadFile1' repProxy 
 doZLoadFile1' :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
 	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs ((Forest_md fs,md),pads)
-doZLoadFile1' (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
+doZLoadFile1' (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1' " ++ show path) $ do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)

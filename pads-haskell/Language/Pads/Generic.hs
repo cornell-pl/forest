@@ -42,6 +42,9 @@ printFL = printFL1 ()
 defaultRepMd :: Pads rep md => (rep,md)
 defaultRepMd = defaultRepMd1 ()
 
+parseRep :: Pads rep md => String -> rep
+parseRep cs = fst $ fst $ parseStringInput parsePP cs
+
 parseS   :: Pads rep md => String -> ((rep, md), String) 
 parseS cs = parseStringInput parsePP cs 
 
@@ -77,6 +80,9 @@ class (Data rep, PadsMD md) => Pads1 arg rep md | rep -> md, rep -> arg where
 	defaultRepMd1 arg = (rep,md) where
 		rep = def1 arg
 		md = defaultMd1 arg rep
+
+parseRep1 :: Pads1 arg rep md => arg -> String -> rep
+parseRep1 arg cs = fst $ fst $ parseStringInput (parsePP1 arg) cs
 
 parseS1 :: Pads1 arg rep md => arg -> String -> ((rep, md), String) 
 parseS1 arg cs = parseStringInput (parsePP1 arg) cs

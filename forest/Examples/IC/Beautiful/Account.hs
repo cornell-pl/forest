@@ -38,8 +38,9 @@ import Language.Forest.Pure.MetaData (cleanFileInfo)
 
 [iforest|
 	type Account_d = Directory {
-		accs is [ f :: File Account | f <- matches (GL "*") ]
+		accs is [ f :: AccountFile | f <- matches (GL "*") ]
 	} 
+	type AccountFile = File Account
 |]
 
 -- Change this to the forest directory to make the example work for you!
@@ -53,7 +54,7 @@ accountDir = rootDir </> "Examples/IC/Beautiful/Account"
 newAcc :: String -> Int -> IO ()
 newAcc name bal = do
   status <- atomically $ do
-    (rep :: File Account TxVarFS) <- new () (accountDir </> name)
+    (rep :: AccountFile TxVarFS) <- new () (accountDir </> name)
     ((main_info,acc_md),_) <- read rep
     err <- validate rep
     case errorMsg err of
@@ -67,7 +68,7 @@ newAcc name bal = do
 delAcc :: String -> IO ()
 delAcc name = do
   atomically $ do
-    (rep :: File Account TxVarFS) <- new () (accountDir </> name)
+    (rep :: AccountFile TxVarFS) <- new () (accountDir </> name)
     delete rep
   putStrLn ("Account " ++ name ++ " deleted.")
 
@@ -112,7 +113,7 @@ tWithHelp acc amount rep =
         message <- writeOrElse account ((accfmd,account_md),Account (bal - amount))
                    (acc ++ " had " ++ show bal ++ " and changed by " ++ show (- amount)) (return . show)
         return message
-      otherwise -> return "Failure: The account does not exist"
+      otherwise -> return $ "Failure: The account does not exist in " ++ show (map fst $ accs accdir)
 
 check :: Bool -> FTM TxVarFS ()
 check True = return ()
