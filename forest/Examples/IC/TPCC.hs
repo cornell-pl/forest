@@ -155,9 +155,7 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 		, stockItemData :: VText 50
 	}
 	
-	newtype HistoryTable = HistoryTable ([Line HistoryEntry] terminator EOF)
-	
-	data HistoryEntry = HistoryEntry {
+	data HistoryEntryInfo = HistoryEntryInfo {
 		        historyCustomer :: Id
 		, ',' , historyCustomerDistrict :: Id
 		, ',' , historyCustomerWarehouse :: Id
@@ -171,28 +169,38 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 
 [iforest|
 	type Company = Directory {
-		  warehouses :: Map [ w :: Warehouse | w :: Id <- matches (GL "*") ]
-		, items :: Map [ i :: Item | i :: Id <- matches (GL "*") ]
+		  warehouses :: Warehouses
+		, items :: Items
 		, history :: History
 	}
 	
-	-- since the table has no primary key, we store it to a file
-	type History = File HistoryTable
+	type Warehouses = Map [ w :: Warehouse | w :: Id <- matches (GL "*") ]
+	type Items = Map [ i :: Item | i :: Id <- matches (GL "*") ]
+	
+	type History = [ h :: HistoryEntry | h <- matches (GL "*") ]
+	type HistoryEntry = File HistoryEntryInfo
 
 	type Warehouse = Directory {
 		  warehouseInfo :: File WarehouseInfo
-		, districts :: Map [ d :: District | d :: Id <- matches (GL "*") ]
-		, stock :: Map [ s :: StockItem | s :: Id <- matches (GL "*") ]
+		, districts :: Districts
+		, stock :: Stock
 	}
+	
+	type Districts = Map [ d :: District | d :: Id <- matches (GL "*") ]
+	type Stock = Map [ s :: StockItem | s :: Id <- matches (GL "*") ]
 	
 	type Item = File ItemInfo
 	
 	type District = Directory {
 		  districtInfo :: File DistrictInfo
-		, customers :: Map [ c :: Customer | c :: Id <- matches (GL "*") ]
-		, newOrders :: Set [ no :: NewOrder | no :: Id <- matches (GL "*") ]
-		, orders :: Map [ o :: Order | o :: Id <- matches (GL "*") ]
+		, customers :: Customers
+		, newOrders :: NewOrders
+		, orders :: Orders
 	}
+	
+	type Customers = Map [ c :: Customer | c :: Id <- matches (GL "*") ]
+	type NewOrders = Set [ no :: NewOrder | no :: Id <- matches (GL "*") ]
+	type Orders = Map [ o :: Order | o :: Id <- matches (GL "*") ]
 	
 	type Customer = File CustomerInfo
 	
@@ -200,9 +208,11 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	
 	type Order = Directory {
 		  orderCustomer matches (RE "*.Customer") :: SymLink where (foreignKey orderCustomer_att "../../Customers")
-		, orderLines :: Map [ l :: OrderLine | l :: Id <- matches (GL "*") ]
-		, orderInfo :: File (OrderInfo <| fromIntegral (Map.size $ snd orderLines) |>)
+		, orderLines :: OrderLines
+		, orderInfo :: File (OrderInfo <| liftM (fromIntegral . Map.size . snd) (unsafeWorld $ read orderLines) |>) -- fix this by generalizing transactional reads
 	}
+	
+	type OrderLines = Map [ l :: OrderLine | l :: Id <- matches (GL "*") ]
 	
 	type OrderLine = Directory {
 		  orderLineItem matches (RE "*.Item") :: SymLink where (foreignKey orderLineItem_att "../../../Stock")
@@ -239,8 +249,8 @@ newOrder w_id d_id c_id order = atomically $ do
 	
 	co_var :: Company TxVarFS <- new () "company"
 	(co_md,co) <- read co_var
-	let (ws_md,ws) = warehouses co
-	w_var :: Warehouse TxVarFS <- lookupEntry w_id ws
+	(ws_md,ws) <- read (warehouses co)
+	w_var <- lookupEntry w_id ws
 	(w_md,w) <- read w_var
 	let (w_info_md,w_info) = warehouseInfo w
 	let w_tax = warehouseTax w_info
@@ -249,8 +259,8 @@ newOrder w_id d_id c_id order = atomically $ do
 	-- retrieved, and D_NEXT_O_ID, the next available order number for the district, is retrieved and incremented
 	-- by one.
 	
-	let (ds_md,ds) = districts w
-	d_var :: District TxVarFS <- lookupEntry d_id ds
+	(ds_md,ds) <- read (districts w)
+	d_var <- lookupEntry d_id ds
 	(d_md,d) <- read d_var
 	let (d_info_md,d_info) = districtInfo d
 	let d_tax = districtTax d_info
@@ -261,8 +271,8 @@ newOrder w_id d_id c_id order = atomically $ do
 	-- the customer's discount rate, C_LAST, the customer's last name, and C_CREDIT, the customer's credit status,
 	-- are retrieved.
 	
-	let (cs_md,cs) = customers d
-	c_var :: Customer TxVarFS <- lookupEntry c_id cs
+	(cs_md,cs) <- read (customers d)
+	c_var <- lookupEntry c_id cs
 	(c_md,c)  <- read c_var
 	let c_discount = customerDiscount c
 	let c_last = lastName $ customerName c
@@ -272,7 +282,7 @@ newOrder w_id d_id c_id order = atomically $ do
 	-- new order. O_CARRIER_ID is set to a null value. If the order includes only home order-lines, then
 	-- O_ALL_LOCAL is set to 1, otherwise O_ALL_LOCAL is set to 0.
 	
-	let (os_md,os) = orders d
+	(os_md,os) <- read (orders d)
 	let o_path = fullpath os_md </> printRep d_next_o
 	o_var :: Order TxVarFS <- new () o_path
 	let o_c_path = o_path </> addExtension (printRep c_id) "Customer"
@@ -283,8 +293,10 @@ newOrder w_id d_id c_id order = atomically $ do
 	current_time <- unsafeIOToFTM getCurrentTime
 	let o_info = OrderInfo current_time Nothing o_cnt o_local
 	let o_info_md = (cleanFileInfo $ o_path </> "orderInfo",Pads.defaultMd1 o_cnt o_info)
-	let o_ls = (cleanFileInfo $ o_path </> "orderLines",Map.empty)
-	let o = Order_inner o_c o_ls (o_info_md,o_info)
+	let o_ls_path = o_path </> "orderLines"
+	o_ls_var <- new () o_ls_path
+	writeOrThrow o_ls_var (cleanFileInfo o_ls_path,Map.empty) WriteFailed -- make sure to create the orderLines folder
+	let o = Order_inner o_c o_ls_var (o_info_md,o_info)
 	writeOrThrow o_var (cleanFileInfo o_path,o) WriteFailed
 	
 	-- For each O_OL_CNT item on the order:
@@ -294,7 +306,7 @@ newOrder w_id d_id c_id order = atomically $ do
 		-- The row in the ITEM table with matching I_ID (equals OL_I_ID) is selected and I_PRICE, the price of the
 		-- item, I_NAME, the name of the item, and I_DATA are retrieved.
 	
-		let (is_md,is) = items co
+		(is_md,is) <- read (items co)
 		i_var :: Item TxVarFS <- lookupEntry ol_i_id is
 		(i_md,i) <- read i_var
 		let i_price = itemPrice i
@@ -311,7 +323,7 @@ newOrder w_id d_id c_id order = atomically $ do
 		
 		ol_supply_w_var :: Warehouse TxVarFS <- lookupEntry ol_supply_w_id ws
 		(ol_supply_w_md,ol_supply_w) <- read ol_supply_w_var
-		let (s_md,s) = stock ol_supply_w
+		(s_md,s) <- read (stock ol_supply_w)
 		s_i_var :: StockItem TxVarFS <- lookupEntry ol_i_id s
 		(s_i_md,s_i) <- read s_i_var
 		let s_i_quantity = stockItemQuantity s_i
@@ -382,8 +394,8 @@ payment w_id d_id (c_w_id,c_d_id,c_id_or_last) h_amount = atomically $ do
 	
 	co_var :: Company TxVarFS <- new () "company"
 	(co_md,co) <- read co_var
-	let (ws_md,ws) = warehouses co
-	w_var :: Warehouse TxVarFS <- lookupEntry w_id ws
+	(ws_md,ws) <- read (warehouses co)
+	w_var <- lookupEntry w_id ws
 	(w_md,w) <- read w_var
 	let (w_info_md,w_info) = warehouseInfo w
 	let w_name = warehouseName w_info
@@ -399,8 +411,8 @@ payment w_id d_id (c_w_id,c_d_id,c_id_or_last) h_amount = atomically $ do
 	-- D_STREET_2, D_CITY, D_STATE, and D_ZIP are retrieved and D_YTD, the district's year-to-date balance, is
 	-- increased by H_AMOUNT.
 	
-	let (ds_md,ds) = districts w
-	d_var :: District TxVarFS <- lookupEntry d_id ds
+	(ds_md,ds) <- read (districts w)
+	d_var <- lookupEntry d_id ds
 	(d_md,d) <- read d_var
 	let (d_info_md,d_info) = districtInfo d
 	let d_name = districtName d_info
@@ -414,10 +426,10 @@ payment w_id d_id (c_w_id,c_d_id,c_id_or_last) h_amount = atomically $ do
 	
 	c_w_var <- lookupEntry c_w_id ws
 	(c_w_md,c_w) <- read c_w_var
-	let (c_ds_md,c_ds) = districts c_w
+	(c_ds_md,c_ds) <- read (districts c_w)
 	c_d_var <- lookupEntry c_d_id c_ds
 	(c_d_md,c_d) <- read c_d_var
-	let (cs_md,cs) = customers c_d
+	(cs_md,cs) <- read (customers c_d)
 	(c_id,c_var,(c_md,c)) <- case c_id_or_last of
 	
 		-- Case 1, the customer is selected based on customer number: the row in the CUSTOMER table with matching
@@ -483,11 +495,13 @@ payment w_id d_id (c_w_id,c_d_id,c_id_or_last) h_amount = atomically $ do
 	-- A new row is inserted into the HISTORY table with H_C_ID = C_ID, H_C_D_ID = C_D_ID, H_C_W_ID =
 	-- C_W_ID, H_D_ID = D_ID, and H_W_ID = W_ID.
 	
-	let h_var = history co
-	(h_md,HistoryTable h) <- read h_var
+	let h_path = fullpath co_md </> "history"
+	h_entry_path <- liftM (h_path </>) (unsafeIOToFTM uniqueFileName)
+	h_entry_var :: HistoryEntry TxVarFS <- new () h_entry_path
 	h_date <- unsafeIOToFTM getCurrentTime
-	let h_entry = HistoryEntry c_id c_d_id c_w_id d_id w_id h_date h_amount h_data
-	writeOrThrow h_var (h_md,HistoryTable $ h_entry:h) WriteFailed
+	let h_entry = HistoryEntryInfo c_id c_d_id c_w_id d_id w_id h_date h_amount h_data
+	let h_entry_bmd = Pads.defaultMd h_entry
+	writeOrThrow h_entry_var ((cleanFileInfo h_entry_path,h_entry_bmd),h_entry) WriteFailed
 	
 	let ret_c_data = if (c_credit == "BC") then Just (take 200 c_data') else Nothing
 	return (d_id,c_id,c_d_id,c_w_id,w_loc,d_loc,c_person,c_loc,c_phone,c_since,c_credit,c_credit_lim,c_discount,c_balance',ret_c_data,h_amount,h_date)
@@ -505,13 +519,13 @@ orderStatus w_id d_id c_id_or_last = atomically $ do
 	
 	co_var :: Company TxVarFS <- new () "company"
 	(co_md,co) <- read co_var
-	let (ws_md,ws) = warehouses co
-	w_var :: Warehouse TxVarFS <- lookupEntry w_id ws
+	(ws_md,ws) <- read (warehouses co)
+	w_var <- lookupEntry w_id ws
 	(w_md,w) <- read w_var
-	let (ds_md,ds) = districts w
-	d_var :: District TxVarFS <- lookupEntry d_id ds
+	(ds_md,ds) <- read (districts w)
+	d_var <- lookupEntry d_id ds
 	(d_md,d) <- read d_var
-	let (cs_md,cs) = customers d
+	(cs_md,cs) <- read (customers d)
 	
 	(c_id,c_var,(c_md,c)) <- case c_id_or_last of
 	
@@ -548,7 +562,7 @@ orderStatus w_id d_id c_id_or_last = atomically $ do
 	-- (equals C_ID), and with the largest existing O_ID, is selected. This is the most recent order placed by that
 	-- customer. O_ID, O_ENTRY_D, and O_CARRIER_ID are retrieved.
 	
-	let (os_md,os) = orders d
+	(os_md,os) <- read (orders d)
 	let (o_id,o_var) = Map.findMax os
 	(o_md,o) <- read o_var
 	let (o_info_md,o_info) = orderInfo o
@@ -559,7 +573,7 @@ orderStatus w_id d_id c_id_or_last = atomically $ do
 	-- and OL_O_ID (equals O_ID) are selected and the corresponding sets of OL_I_ID, OL_SUPPLY_W_ID,
 	-- OL_QUANTITY, OL_AMOUNT, and OL_DELIVERY_D are retrieved.
 	
-	let (ols_md,ols) = orderLines o
+	(ols_md,ols) <- read (orderLines o)
 	let viewOrderLine ol_var = do
 		(ol_md,ol) <- read ol_var
 		let (ol_supply_w_md,ol_supply_w_tgt) = orderLineSupplyWarehouse ol
@@ -582,15 +596,15 @@ delivery w_id o_carrier_id = atomically $ do
 	
 	co_var :: Company TxVarFS <- new () "company"
 	(co_md,co) <- read co_var
-	let (ws_md,ws) = warehouses co
-	w_var :: Warehouse TxVarFS <- lookupEntry w_id ws
+	(ws_md,ws) <- read (warehouses co)
+	w_var <- lookupEntry w_id ws
 	(w_md,w) <- read w_var
-	let (ds_md,ds) = districts w
+	(ds_md,ds) <- read (districts w)
 	
 	-- For each of the 10 districts (D_W_ID , D_ID) within that warehouse
 	let deliveryDistrict d_var = do
 		(d_md,d) <- read d_var
-		let (nos_md,nos) = newOrders d
+		(nos_md,nos) <- read (newOrders d)
 	
 		-- The row in the NEW-ORDER table with matching NO_W_ID (equals W_ID) and NO_D_ID (equals D_ID)
 		-- and with the lowest NO_O_ID value is selected. This is the oldest undelivered order of that district.
@@ -602,11 +616,11 @@ delivery w_id o_carrier_id = atomically $ do
 			Just ((no_id,no_var),nos') -> do
 				
 				-- The selected row in the NEW-ORDER table is deleted.
-				writeOrThrow d_var (d_md,d { newOrders = (nos_md,nos') }) WriteFailed
+				writeOrThrow (newOrders d) (nos_md,nos') WriteFailed
 				
 				-- The row in the ORDER table with matching O_W_ID (equals W_ ID), O_D_ID (equals D_ID), and O_ID
 				-- (equals NO_O_ID) is selected, O_C_ID, the customer number, is retrieved, and O_CARRIER_ID is updated.
-				let (os_md,os) = orders d
+				(os_md,os) <- read (orders d)
 				o_var <- lookupEntry no_id os
 				(o_md,o) <- read o_var
 				let (o_c_md,o_c_tgt) = orderCustomer o
@@ -619,7 +633,7 @@ delivery w_id o_carrier_id = atomically $ do
 				-- All rows in the ORDER-LINE table with matching OL_W_ID (equals O_W_ID), OL_D_ID (equals O_D_ID),
 				-- and OL_O_ID (equals O_ID) are selected. All OL_DELIVERY_D, the delivery dates, are updated to the
 				-- current system time as returned by the operating system and the sum of all OL_AMOUNT is retrieved.
-				let (ols_md,ols) = orderLines o
+				(ols_md,ols) <- read (orderLines o)
 				current_time <- unsafeIOToFTM getCurrentTime
 				let updateOrderLine acc ol_var = do
 					(ol_md,ol) <- read ol_var
@@ -634,7 +648,7 @@ delivery w_id o_carrier_id = atomically $ do
 				-- The row in the CUSTOMER table with matching C_W_ID (equals W_ID), C_D_ID (equals D_ID), and C_ID
 				-- (equals O_C_ID) is selected and C_BALANCE is increased by the sum of all order-line amounts
 				-- (OL_AMOUNT) previously retrieved. C_DELIVERY_CNT is incremented by 1.
-				let (cs_md,cs) = customers d
+				(cs_md,cs) <- read (customers d)
 				c_var :: Customer TxVarFS <- lookupEntry o_c_id cs
 				(c_md,c) <- read c_var
 				let c_balance = customerBalance c
@@ -654,10 +668,10 @@ stockLevel w_id d_id threshold = atomically $ do
 	-- The row in the DISTRICT table with matching D_W_ID and D_ID is selected and D_NEXT_O_ID is retrieved. 
 	co_var :: Company TxVarFS <- new () "company"
 	(co_md,co) <- read co_var
-	let (ws_md,ws) = warehouses co
+	(ws_md,ws) <- read (warehouses co)
 	w_var <- lookupEntry w_id ws
 	(w_md,w) <- read w_var
-	let (ds_md,ds) = districts w
+	(ds_md,ds) <- read (districts w)
 	d_var <- lookupEntry d_id ds
 	(d_md,d) <- read d_var
 	let (d_info_md,d_info) = districtInfo d
@@ -667,7 +681,7 @@ stockLevel w_id d_id threshold = atomically $ do
 	-- OL_O_ID (lower than D_NEXT_O_ID and greater than or equal to D_NEXT_O_ID minus 20) are selected.
 	-- They are the items for 20 recent orders of the district. 
 	
-	let (os_md,os) = orders d
+	(os_md,os) <- read (orders d)
 	let os_20 = Map.filterWithKey (\o_id o_var -> (d_next_o_id - 20) <= o_id && o_id < d_next_o_id) os
 	let getOrderLineItems is ol_var = do
 		(ol_md,ol) <- read ol_var
@@ -676,14 +690,14 @@ stockLevel w_id d_id threshold = atomically $ do
 		return $ Set.insert ol_i is
 	let getOrderItems is o_var = do
 		(o_md,o) <- read o_var
-		let (ols_md,ols) = orderLines o
+		(ols_md,ols) <- read (orderLines o)
 		Foldable.foldlM getOrderLineItems is ols
 	is <- Foldable.foldlM getOrderItems Set.empty os_20
 	
 	-- All rows in the STOCK table with matching S_I_ID (equals OL_I_ID) and S_W_ID (equals W_ID) from the list
 	-- of distinct item numbers and with S_QUANTITY lower than threshold are counted (giving low_stock).
 	
-	let (s_md,s) = stock w
+	(s_md,s) <- read (stock w)
 	let getItemStock s_id s_var mxs = do
 		if s_id `Set.member` is
 			then do

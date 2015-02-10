@@ -15,6 +15,8 @@ import System.IO
 import System.Directory
 import Safe
 import Data.Maybe
+import System.Posix.Process
+import Control.Monad.Incremental.Draw
 
 -- gets the physical device on which a path is mounted (linux-specific)
 pathDevice :: String -> IO String
@@ -121,3 +123,11 @@ cardinalPath path = path ++ "#"
 uncardinalPath :: FilePath -> FilePath
 uncardinalPath path@(lastMay -> Just '#') = init path
 uncardinalPath path = path
+
+-- generates a new unique filename by using the current procress id and a uuid
+uniqueFileName :: IO FilePath
+uniqueFileName = do
+	pid <- getProcessID
+	uuid <- nextUUIDSafe
+	return $ show pid ++ show uuid
+

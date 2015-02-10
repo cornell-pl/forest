@@ -134,13 +134,13 @@ zloadFile :: Bool -> String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Ex
 zloadFile isTop fileName Nothing pathFilterE pathE treeE getMDE = do
 	let proxy = proxyFileName fileName
 	if isTop
-		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy (AppE (ConE 'Pure.Arg) $ TupE []) pathFilterE pathE treeE getMDE
-		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy (AppE (ConE 'Pure.Arg) $ TupE []) pathFilterE pathE treeE getMDE
+		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy (Pure.returnExp $ TupE []) pathFilterE pathE treeE getMDE
+		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy (Pure.returnExp $ TupE []) pathFilterE pathE treeE getMDE
 zloadFile isTop fileName (Just argE) pathFilterE pathE treeE getMDE = do
 	let proxy = proxyFileName fileName
 	if isTop
-		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy (AppE (ConE 'Pure.Arg) argE) pathFilterE pathE treeE getMDE
-		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy (AppE (ConE 'Pure.Arg) argE) pathFilterE pathE treeE getMDE
+		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy argE pathFilterE pathE treeE getMDE
+		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy argE pathFilterE pathE treeE getMDE
 
 -- these are terminals in the spec
 zloadWithArgsE :: String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp

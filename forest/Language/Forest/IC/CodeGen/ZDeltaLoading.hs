@@ -280,13 +280,13 @@ zloadDeltaFile :: Bool -> ForestTy -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> E
 zloadDeltaFile isTop ty Nothing pathE treeE dpathE dfE treeE' dvE repmdE = do
 	condE <- lift $ dataToExpQ (\_ -> Nothing) True
 	if isTop
-		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
-		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
+		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE (Pure.returnExp $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
+		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE (Pure.returnExp $ TupE []) pathE dpathE treeE dfE treeE' dvE repmdE
 zloadDeltaFile isTop ty (Just argE') pathE treeE dpathE dfE treeE' dvE repmdE = do
 	condE <- isEmptyZDeltaEnvForestTy ty -- note that the variables from the argument delta are included in the delta environment
 	if isTop
-		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE (AppE (ConE 'Pure.Arg) argE') pathE dpathE treeE dfE treeE' dvE repmdE
-		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE (AppE (ConE 'Pure.Arg) argE') pathE dpathE treeE dfE treeE' dvE repmdE
+		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE
+		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE
 	
 zloadDeltaDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zloadDeltaDirectory isTop dirTy@(Record id fields) pathE treeE dpathE dfE treeE' dvE repmdE = do

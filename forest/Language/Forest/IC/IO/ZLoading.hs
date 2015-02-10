@@ -59,21 +59,22 @@ import Data.Proxy
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- Pads errors contribute to the Forest error count
 doZLoadFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
-	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
+	Proxy pads -> ForestI fs arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
-doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
+doZLoadFile1 (repProxy :: Proxy pads) (marg :: ForestI fs arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
 	
 	let fileGood = do
+		arg <- marg
 		(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
 		fmd <- getMD path tree
 		fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
 		return ((fmd',md),pads)
 	
-	let fileBad = doZDefaultFile1' (Pure.Arg arg) path
+	let fileBad = doZDefaultFile1' marg path
 	
 	let load_file = checkZPath path tree fileGood fileBad
 	
@@ -91,6 +92,7 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 	rep <- case mb of
 		(Just (memo_tree,memo_marg,memo_rep)) -> do
 			memo_arg <- memo_marg
+			arg <- marg
 			-- deep equality of arguments, since thunks can be arguments and change
 			samearg <- geq proxyNoCtx memo_arg arg
 			if samearg
@@ -108,30 +110,31 @@ doZLoadFile1 (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f p
 				else load_file
 		Nothing -> load_file				
 	
-	addZippedMemo path argProxy (return arg) rep (Just tree)
+	addZippedMemo path argProxy marg rep (Just tree)
 	return rep
 
 doZLoadFileInner1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
-	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
+	Proxy pads -> ForestI fs arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs ((Forest_md fs,md),pads)
-doZLoadFileInner1 repProxy arg oldpath path tree getMD = doZLoadFile1' repProxy arg oldpath path tree getMD
+doZLoadFileInner1 repProxy marg oldpath path tree getMD = doZLoadFile1' repProxy marg oldpath path tree getMD
 
 doZLoadFile1' :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
-	Proxy pads -> Pure.Arg arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
+	Proxy pads -> ForestI fs arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs ((Forest_md fs,md),pads)
-doZLoadFile1' (repProxy :: Proxy pads) (Pure.Arg arg :: Pure.Arg arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1' " ++ show path) $ do
+doZLoadFile1' (repProxy :: Proxy pads) (marg :: ForestI fs arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1' " ++ show path) $ do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
 	
 	let fileGood = do
+		arg <- marg
 		(pads,md) <- forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
 		fmd <- getMD path tree
 		fmd' <- updateForestMDErrorsInsideWithPadsMD fmd (return md) -- adds the Pads errors
 		return ((fmd',md),pads)
 	
-	let fileBad = doZDefaultFile1' (Pure.Arg arg) path
+	let fileBad = doZDefaultFile1' marg path
 	
 	let load_file = checkZPath' (Just False) path tree fileGood fileBad
 	

@@ -141,12 +141,12 @@ zdefaultConstraint isTop pat predE load = forceVarsZEnvQ predE $ \predE' -> do
 zdefaultFile :: Bool -> String -> Maybe Exp -> Exp -> ZEnvQ Exp
 zdefaultFile isTop fileName Nothing pathE = do
 	if isTop
-		then return $ Pure.appE2 (VarE 'doZDefaultFile1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE
-		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE
+		then return $ Pure.appE2 (VarE 'doZDefaultFile1) (Pure.returnExp $ TupE []) pathE
+		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) (Pure.returnExp $ TupE []) pathE
 zdefaultFile isTop fileName (Just argE) pathE = do
 	if isTop
-		then return $ Pure.appE2 (VarE 'doZDefaultFile1) (AppE (ConE 'Pure.Arg) argE) pathE
-		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) (AppE (ConE 'Pure.Arg) argE) pathE
+		then return $ Pure.appE2 (VarE 'doZDefaultFile1) argE pathE
+		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) argE pathE
 
 zdefaultWithArgsE :: String -> [Exp] -> Exp -> ZEnvQ Exp
 zdefaultWithArgsE ty_name [] pathE = do

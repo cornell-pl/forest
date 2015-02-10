@@ -218,13 +218,13 @@ zmanifestDeltaFile :: Bool -> ForestTy -> Maybe Exp -> Exp -> Exp -> Exp -> Exp 
 zmanifestDeltaFile isTop ty Nothing pathE pathE' treeE dfE treeE' repE dvE manE = do
 	condE <- lift $ dataToExpQ (\_ -> Nothing) True
 	if isTop
-		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE pathE' treeE dfE treeE' repE dvE manE
-		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE (AppE (ConE 'Pure.Arg) $ TupE []) pathE pathE' treeE dfE treeE' repE dvE manE
+		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE (Pure.returnExp $ TupE []) pathE pathE' treeE dfE treeE' repE dvE manE
+		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE (Pure.returnExp $ TupE []) pathE pathE' treeE dfE treeE' repE dvE manE
 zmanifestDeltaFile isTop ty (Just argE') pathE pathE' treeE dfE treeE' repE dvE manE = do
 	condE <- isEmptyZDeltaEnvForestTy ty -- note that the variables from the argument delta are included in the delta environment
 	if isTop
-		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE (AppE (ConE 'Pure.Arg) argE') pathE pathE' treeE dfE treeE' repE dvE manE
-		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE (AppE (ConE 'Pure.Arg) argE') pathE pathE' treeE dfE treeE' repE dvE manE
+		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE argE' pathE pathE' treeE dfE treeE' repE dvE manE
+		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE argE' pathE pathE' treeE dfE treeE' repE dvE manE
 	
 zmanifestDeltaDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zmanifestDeltaDirectory isTop dirTy@(Record id fields) pathE pathE' treeE dfE treeE' repE dvE manE = do

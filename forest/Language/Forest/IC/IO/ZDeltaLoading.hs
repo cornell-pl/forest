@@ -62,29 +62,29 @@ import Language.Forest.IC.IO.Memo
 import Language.Forest.IC.BX as BX
 
 doZLoadDeltaFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),rept ~ ForestFSThunkI fs ((Forest_md fs,md),pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md)
-	=> Bool -> Pure.Arg arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
+	=> Bool -> ForestI fs arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
 	-> ForestO fs (SValueDelta rept)
-doZLoadDeltaFile1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+doZLoadDeltaFile1 isEmptyDArg (marg' :: ForestI fs arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	path <- inside mpath
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
 		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> debug "constant1 unchanged" $ do
-			inside $ addZippedMemo path' argProxy (return arg') rep_thunk (Just tree')
+			inside $ addZippedMemo path' argProxy marg' rep_thunk (Just tree')
 			return Id
 		(True,True,True,Just (FSTreeChg _ _)) -> debug "constant1 attrs" $ do
 			modify rep_thunk $ \((_,bmd),rep) -> getMD path' tree' >>= \fmd' -> return ((fmd',bmd),rep)
-			inside $ addZippedMemo path' argProxy (return arg') rep_thunk (Just tree')
+			inside $ addZippedMemo path' argProxy marg' rep_thunk (Just tree')
 			return Delta
 		otherwise -> debug "constant1 changed" $ do
-			rep_thunk' <- inside $ doZLoadFile1 (Proxy::Proxy pads) (Arg arg') (fsTreeDeltaPathFilter df path') path' tree' getMD
+			rep_thunk' <- inside $ doZLoadFile1 (Proxy::Proxy pads) marg' (fsTreeDeltaPathFilter df path') path' tree' getMD
 			overwrite rep_thunk $ Inc.get rep_thunk'
-			inside $ addZippedMemo path' argProxy (return arg') rep_thunk (Just tree')
+			inside $ addZippedMemo path' argProxy marg' rep_thunk (Just tree')
 			return Delta
 
 doZLoadDeltaFileInner1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),rept ~ ((Forest_md fs,md),pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md)
-	=> Bool -> Pure.Arg arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
+	=> Bool -> ForestI fs arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
 	-> ForestO fs (NSValueDelta rept)
-doZLoadDeltaFileInner1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
+doZLoadDeltaFileInner1 isEmptyDArg (marg' :: ForestI fs arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	path <- inside mpath
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
@@ -94,7 +94,7 @@ doZLoadDeltaFileInner1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' o
 			fmd' <- inside $ getMD path' tree'
 			return $ Modify $ \((_,bmd),rep) -> ((fmd',bmd),rep)
 		otherwise -> debug "constant1 changed" $ do
-			((fmd',bmd'),rep') <- inside $ doZLoadFile1' (Proxy::Proxy pads) (Arg arg') (fsTreeDeltaPathFilter df path') path' tree' getMD
+			((fmd',bmd'),rep') <- inside $ doZLoadFile1' (Proxy::Proxy pads) marg' (fsTreeDeltaPathFilter df path') path' tree' getMD
 			return $ Modify $ Prelude.const ((fmd',bmd'),rep')
 
 doZLoadDeltaArchiveInner :: (DeltaClass d,ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs

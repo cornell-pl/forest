@@ -189,12 +189,12 @@ zmanifestConstraint isTop treeE pat predE dtaE manE manifest = forceVarsZEnvQ pr
 zmanifestFile :: Bool -> String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestFile isTop fileName Nothing pathE treeE dtaE manE = do
 	if isTop
-		then return $ Pure.appE5 (VarE 'doZManifestFile1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE treeE dtaE manE
-		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE treeE dtaE manE
+		then return $ Pure.appE5 (VarE 'doZManifestFile1) (Pure.returnExp $ TupE []) pathE treeE dtaE manE
+		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) (Pure.returnExp $ TupE []) pathE treeE dtaE manE
 zmanifestFile isTop fileName (Just argE) pathE treeE dtaE manE = do
 	if isTop
-		then return $ Pure.appE5 (VarE 'doZManifestFile1) (AppE (ConE 'Pure.Arg) argE) pathE treeE dtaE manE
-		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) (AppE (ConE 'Pure.Arg) argE) pathE treeE dtaE manE
+		then return $ Pure.appE5 (VarE 'doZManifestFile1) argE pathE treeE dtaE manE
+		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) argE pathE treeE dtaE manE
 
 zmanifestMaybe :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestMaybe isTop ty pathE treeE dtaE manE = do 

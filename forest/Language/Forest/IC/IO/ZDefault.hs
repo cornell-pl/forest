@@ -40,18 +40,19 @@ import Control.Monad.Incremental
 import Language.Forest.IC.MetaData
 import Data.WithClass.MData
 
-doZDefaultFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
-doZDefaultFile1 (Pure.Arg arg :: Pure.Arg arg) path = do
+doZDefaultFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => ForestI fs arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
+doZDefaultFile1 (marg :: ForestI fs arg) path = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
-	rep_thunk <- fsThunk $ doZDefaultFile1' (Pure.Arg arg) path
-	addZippedMemo path argProxy (return arg) rep_thunk Nothing
+	rep_thunk <- fsThunk $ doZDefaultFile1' marg path
+	addZippedMemo path argProxy marg rep_thunk Nothing
 	return rep_thunk
 
-doZDefaultFileInner1 :: (IncK (IncForest fs) Forest_err,Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
-doZDefaultFileInner1 arg path = doZDefaultFile1' arg path
+doZDefaultFileInner1 :: (IncK (IncForest fs) Forest_err,Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => ForestI fs arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
+doZDefaultFileInner1 marg path = doZDefaultFile1' marg path
 
-doZDefaultFile1' :: (IncK (IncForest fs) Forest_err,Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => Pure.Arg arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
-doZDefaultFile1' (Pure.Arg arg) path = do
+doZDefaultFile1' :: (IncK (IncForest fs) Forest_err,Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => ForestI fs arg -> FilePath -> ForestI fs ((Forest_md fs,md),pads)
+doZDefaultFile1' (marg) path = do
+	arg <- marg
 	let rep = Pure.forestdefault
 	let md = Pads.defaultMd1 arg rep
 	fmd <- missingPathForestMD path

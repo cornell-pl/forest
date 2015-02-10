@@ -70,23 +70,23 @@ doZDeltaManifestArgs proxy (margs,_) rep dv manifestD (man :: Manifest fs) = deb
 	manifestD arg_thunks rep dv man
 
 doZDeltaManifestFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
-	Bool -> Pure.Arg arg -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> ValueDelta fs (ForestFSThunkI fs ((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
-doZDeltaManifestFile1 isEmptyDArg (Pure.Arg arg) path path' tree df tree' rep_t dv man = do
+	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> ValueDelta fs (ForestFSThunkI fs ((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestFile1 isEmptyDArg marg path path' tree df tree' rep_t dv man = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
 		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> do -- no conflict tests are issued
-			Writer.tell $ inside . addZippedMemo path' argProxy (return arg) rep_t . Just
+			Writer.tell $ inside . addZippedMemo path' argProxy marg rep_t . Just
 			return man -- nothing changed
-		otherwise -> doZManifestFile1 (Pure.Arg arg) path' tree' rep_t man
+		otherwise -> doZManifestFile1 marg path' tree' rep_t man
 
 doZDeltaManifestFileInner1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
-	Bool -> Pure.Arg arg -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ((Forest_md fs,md),pads) -> ValueDelta fs (((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
-doZDeltaManifestFileInner1 isEmptyDArg (Pure.Arg arg) path path' tree df tree' rep_t dv man = do
+	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ((Forest_md fs,md),pads) -> ValueDelta fs (((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestFileInner1 isEmptyDArg marg path path' tree df tree' rep_t dv man = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
 		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> do -- no conflict tests are issued
 			return man -- nothing changed
-		otherwise -> doZManifestFileInner1 (Pure.Arg arg) path' tree' rep_t man
+		otherwise -> doZManifestFileInner1 marg path' tree' rep_t man
 
 doZDeltaManifestArchive :: (IncK (IncForest fs) (Forest_md fs, rep),ForestMD fs rep,Typeable rep,ZippedICMemo fs,ICRep fs,toprep ~ ForestFSThunkI fs (Forest_md fs,rep)) =>
 	Bool -> [ArchiveType] -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
