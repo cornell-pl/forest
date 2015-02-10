@@ -205,6 +205,9 @@ instance (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside,
 instance (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (Forest_md fs,b) where
 	get_fmd_header (a,b) = get_fmd_header a
 	replace_fmd_header (fmd,b) f = replace_fmd_header fmd f >>= \fmd' -> return (fmd',b)
+instance (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs ((Forest_md fs,bmd),b) where
+	get_fmd_header ((a,bmd),b) = get_fmd_header a
+	replace_fmd_header ((fmd,bmd),b) f = replace_fmd_header fmd f >>= \fmd' -> return ((fmd',bmd),b)
 -- or the left side may be a metadata thunk and the right side a sequence of argument thunks
 instance (ForestMD fs (ForestFSThunk fs l a),Eq a,MData NoCtx (ForestL fs l) b,ForestMD fs a) => ForestMD fs (ForestFSThunk fs l a,b) where
 	isUnevaluatedMDThunk (t,args) = isUnevaluatedMDThunk t
@@ -233,7 +236,11 @@ instance (IncK (IncForest fs) Forest_err,ForestMD fs rep) => ForestMD fs (Maybe 
 	get_fmd_header Nothing = inside cleanForestMD
 	get_fmd_header (Just rep) = get_fmd_header rep
 instance (IncK (IncForest fs) Forest_err,ICRep fs) => ForestMD fs (ForestFSThunkI fs Forest_err,b) where
-	get_fmd_header (err_t,_) = return $ Forest_md err_t Pure.fileInfo_def
+	get_fmd_header (err_t,_) = return $ Forest_md err_t (error "noFileInfo")
+instance (IncK (IncForest fs) Forest_err,ICRep fs) => ForestMD fs (FileInfo,b) where
+	get_fmd_header (info,_) = return $ Forest_md (error "noForest_err") info
+instance (IncK (IncForest fs) Forest_err,ICRep fs) => ForestMD fs ((FileInfo,bmd),b) where
+	get_fmd_header ((info,_),_) = return $ Forest_md (error "noForest_err") info
 
 -- replaces the content of a stable metadata value with the content of another one
 class ICRep fs => StableMD fs md where
@@ -465,24 +472,4 @@ type family ECErr (ec :: EC) (fs :: FS) (a :: *) where
 	ECErr E fs a = (ForestFSThunkI fs Forest_err,a)
 	ECErr C fs a = a
 
-type FileEC pads ec fs = (ECMd ec fs (Meta pads),pads)
-type FileE pads fs = FileEC pads E fs
-type File pads fs = FileEC pads C fs
 
-type SymLinkEC ec fs = (ECMd ec fs Base_md,FilePath)
-type SymLinkE fs = SymLinkEC E fs
-type SymLink fs = SymLinkEC C fs
---instance ForestRep (SymLink ec fs) (ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath)) where
---	iso_rep_thunk = Iso unSymLink SymLink
-
---instance (Sat (ctx (SymLink fs)),ICRep fs,MData ctx m (ForestFSThunkI fs ((Forest_md fs,Base_md), FilePath)))
---	=> MData ctx m (SymLink fs) where
---	gfoldl ctx k z (SymLink x1) = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= flip k (return x1)
---	gunfold ctx k z c = z (\mx1 -> mx1 >>= \x1 -> return $ SymLink x1) >>= k
---	toConstr ctx x@(SymLink x1) = Data.WithClass.MData.dataTypeOf ctx x >>= return . flip indexConstr 1
---	dataTypeOf ctx x = return ty
---		where ty = mkDataType "Language.Forest.IC.MetaData.SymLink" [mkConstr ty "SymLink" [] Prefix]	
-
-
---instance (DeepTypeable fs) => DeepTypeable (SymLink fs) where
---	typeTree (_::Proxy (SymLink fs)) = MkTypeTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy fs)] [MkConTree (mkName "Language.Forest.FS.IC.MetaData.SymLink") [typeTree (Proxy::Proxy (ForestFSThunkI fs (Forest_md fs,FilePath,Base_md)))]]

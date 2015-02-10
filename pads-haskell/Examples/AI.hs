@@ -27,8 +27,6 @@ import System.IO.Unsafe (unsafePerformIO)
 
   data ID = Missing '-' | Id (StringC ' ')
 
--- :set -ddump-splices
-
   type TimeStamp = ('[', Date, ']')   
   type Date = DateFC <|("%d/%h/%Y:%H:%M:%S %z", ']')|>
 

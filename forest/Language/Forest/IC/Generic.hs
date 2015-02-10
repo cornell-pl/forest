@@ -66,7 +66,7 @@ import Data.IORef
 import Language.Forest.IC.MetaData
 import Data.DeepTypeable
 import Language.Haskell.TH.Syntax hiding (lift)
-import Control.Exception
+import Control.Exception (Exception(..))
 import Language.Forest.Errors
 import Language.Forest.IC.BX as BX
 import Control.Monad.Incremental.Display
@@ -76,14 +76,26 @@ infoLens = (Lens fileInfo $ \fmd info' -> fmd { fileInfo = info'} )
 -- hides @Forest_err@ values from the representation type of a variable
 class ForestContent var content | var -> content where
 	lens_content :: Lens var content
-instance ForestContent (Forest_md fs,rep) (FileInfo,rep) where
-	lens_content = prodLens infoLens idLens
-instance ForestContent ((Forest_md fs,bmd),rep) ((FileInfo,bmd),rep) where
-	lens_content = prodLens (prodLens infoLens idLens) idLens
-instance ForestContent (ForestFSThunkI fs Forest_err,rep) rep where
-	lens_content = sndLens
-	
-
+instance ForestContent rep c => ForestContent (Forest_md fs,rep) (FileInfo,c) where
+	lens_content = prodLens infoLens lens_content
+instance ForestContent rep c => ForestContent ((Forest_md fs,bmd),rep) ((FileInfo,bmd),c) where
+	lens_content = prodLens (prodLens infoLens idLens) lens_content
+instance ForestContent rep c => ForestContent (ForestFSThunkI fs Forest_err,rep) c where
+	lens_content = sndLens `compLens` lens_content
+instance ForestContent String String where
+	lens_content = idLens
+instance ForestContent (ForestFSThunkI fs rep) (ForestFSThunkI fs rep) where
+	lens_content = idLens
+instance ForestContent (Map a b) (Map a b) where
+	lens_content = idLens
+instance ForestContent (Set a) (Set a) where
+	lens_content = idLens
+instance ForestContent [a] [a] where
+	lens_content = idLens
+instance ForestContent (Maybe a) (Maybe a) where
+	lens_content = idLens
+instance ForestContent Text Text where
+	lens_content = idLens
 
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
@@ -133,6 +145,9 @@ writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
 
 writeOrShow :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
 writeOrShow t v = writeOrElse t v "" (return . show)
+
+writeOrThrow :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content,Exception e) => rep -> content -> e -> FTM fs ()
+writeOrThrow t v e = writeOrElse t v () (Prelude.const $ throw e)
 
 -- * Zipped Incremental Forest interface
 

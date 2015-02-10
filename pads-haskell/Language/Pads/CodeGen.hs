@@ -54,7 +54,8 @@ genPadsDecl derivation (PadsDeclType name args pat padsTy) = do
 	parseM  <- genPadsParseM name args pat padsTy
 	parseS  <- genPadsParseS name args pat
 	printFL <- genPadsPrintFL name args pat padsTy
-	return $ typeDecs ++ parseM ++ parseS ++ printFL
+	let sigs = mkPadsSignature name args (fmap patType pat)
+	return $ typeDecs ++ parseM ++ parseS ++ printFL ++ sigs
 	
 genPadsDecl derivation (PadsDeclData name args pat padsData derives) = do
 	dataDecs <- mkDataRepMDDecl derivation name args padsData derives
@@ -62,7 +63,8 @@ genPadsDecl derivation (PadsDeclData name args pat padsData derives) = do
 	parseS <- genPadsParseS name args pat
 	printFL <- genPadsDataPrintFL name args pat padsData
 	let instances = mkPadsInstance name args (fmap patType pat)
-	return $ dataDecs ++ parseM ++ parseS ++ printFL ++ instances
+	let sigs = mkPadsSignature name args (fmap patType pat)
+	return $ dataDecs ++ parseM ++ parseS ++ printFL ++ instances ++ sigs
 
 genPadsDecl derivation (PadsDeclNew name args pat branch derives) = do
 	dataDecs <- mkNewRepMDDecl derivation name args branch derives
@@ -70,7 +72,8 @@ genPadsDecl derivation (PadsDeclNew name args pat branch derives) = do
 	parseS <- genPadsParseS name args pat
 	printFL <- genPadsNewPrintFL name args pat branch
 	let instances = mkPadsInstance name args (fmap patType pat)
-	return $ dataDecs ++ parseM ++ parseS ++ printFL ++ instances
+	let sigs = mkPadsSignature name args (fmap patType pat)
+	return $ dataDecs ++ parseM ++ parseS ++ printFL ++ instances ++ sigs
 	
 genPadsDecl derivation (PadsDeclObtain name args padsTy exp) = do
 	let mdDec = mkObtainMDDecl name args padsTy
@@ -97,9 +100,10 @@ patType p = case p of
 mkTyRepMDDecl :: UString -> [UString] -> PadsTy -> [Dec]
 mkTyRepMDDecl name args ty = [repType, mdType]
   where
-    repType = TySynD (mkRepName name) tyArgs (mkRepTy ty)
-    mdType  = TySynD (mkMDName name) tyArgs (mkMDTy ty)
-    tyArgs  = map (PlainTV . mkName) args
+	repType = TySynD (mkRepName name) tyArgs (mkRepTy ty)
+	mdType  = TySynD (mkMDName name) tyArgsMD (mkMDTy ty)
+	tyArgs  = map (PlainTV . mkName) args
+	tyArgsMD  = map (PlainTV . mkName . (++"_md")) args
 
 
 -----------------------------------------------------------
@@ -109,15 +113,16 @@ mkTyRepMDDecl name args ty = [repType, mdType]
 mkDataRepMDDecl :: Derivation -> UString -> [LString] -> PadsData -> [QString] -> Q [Dec]
 mkDataRepMDDecl derivation name args branches ds = do
 	bs <- mapM mkMDUnion bs
-	let imdDecl  = DataD [] (mkIMDName name) tyArgs bs (derive [])
+	let imdDecl  = DataD [] (mkIMDName name) tyArgsMD bs (derive [])
 	derivesData <- derivation dataDecl
 	derivesImd <- derivation imdDecl
 	return $ [dataDecl, mdDecl, imdDecl] ++ derivesData ++ derivesImd
   where
     dataDecl = DataD [] (mkRepName name) tyArgs (map mkRepUnion bs) (derive ds)
-    mdDecl   = TySynD   (mkMDName name)  tyArgs (mkTupleT [ConT ''Base_md, imdApp])
+    mdDecl   = TySynD   (mkMDName name)  tyArgsMD (mkTupleT [ConT ''Base_md, imdApp])
     tyArgs   = map (PlainTV . mkName) args
-    imdApp   = foldl AppT (ConT (mkIMDName name)) (map (VarT . mkName) args)
+    tyArgsMD   = map (PlainTV . mkName . (++"_md")) args
+    imdApp   = foldl AppT (ConT (mkIMDName name)) (map (VarT . mkName . (++"_md")) args)
     bs       = case branches of
                  PUnion bnchs    -> bnchs
                  PSwitch exp pbs -> [b | (p,b) <- pbs]
@@ -151,15 +156,16 @@ derive ds =  map (mkName . qName) ds
 mkNewRepMDDecl :: Derivation -> UString -> [LString] -> BranchInfo -> [QString] -> Q [Dec]
 mkNewRepMDDecl derivation name args branch ds = do
 	bs <- mkMDUnion branch
-	let imdDecl  = NewtypeD [] (mkIMDName name) tyArgs bs (derive [])
+	let imdDecl  = NewtypeD [] (mkIMDName name) tyArgsMD bs (derive [])
 	derivesData <- derivation dataDecl
 	derivesImd <- derivation imdDecl
 	return $ [dataDecl, mdDecl, imdDecl] ++ derivesData ++ derivesImd
   where
     dataDecl = NewtypeD [] (mkRepName name) tyArgs (mkRepUnion branch) (derive ds)
-    mdDecl   = TySynD   (mkMDName name)  tyArgs (mkTupleT [ConT ''Base_md, imdApp])
+    mdDecl   = TySynD   (mkMDName name)  tyArgsMD (mkTupleT [ConT ''Base_md, imdApp])
     tyArgs   = map (PlainTV . mkName) args
-    imdApp   = foldl AppT (ConT (mkIMDName name)) (map (VarT . mkName) args)
+    tyArgsMD   = map (PlainTV . mkName . (++"_md")) args
+    imdApp   = foldl AppT (ConT (mkIMDName name)) (map (VarT . mkName . (++"_md")) args)
 
 
 -----------------------------------------------------------
@@ -170,8 +176,8 @@ mkObtainMDDecl :: UString -> [UString] -> PadsTy -> [Dec]
 mkObtainMDDecl name args ty
   = [mdType]
   where
-    mdType  = TySynD (mkMDName name) tyArgs (mkMDTy ty)
-    tyArgs  = map (PlainTV . mkName) args
+    mdType  = TySynD (mkMDName name) tyArgsMD (mkMDTy ty)
+    tyArgsMD  = map (PlainTV . mkName . (++"_md")) args
 
 
 -----------------------------------------------------------
@@ -215,7 +221,7 @@ mkMDTy ty = case ty of
   PTuple tys              -> mkMDTuple tys
   PExpression _           -> ConT ''Base_md
   PTycon c                -> ConT (mkMDQName c)
-  PTyvar v                -> VarT (mkName v)  
+  PTyvar v                -> VarT (mkName $ v ++ "_md")  
 
 mkMDTuple :: [PadsTy] -> Type
 mkMDTuple tys = case mds of  
@@ -263,6 +269,41 @@ buildInst mb str args pads = [InstanceD ctx inst [parsePP_method, printFL_method
 		Just ety -> appT2 ArrowT ety (padsprinter ty_name md_ty)
 
 	printFL_signature = SigD (mkTyPrinterName str) $ ForallT argtyvars ctx $ foldr (\a t -> let (a_rep,a_md) = argpair a in appT2 ArrowT (padsprinter a_rep a_md) t) printer args
+
+mkPadsSignature :: UString -> [LString] -> Maybe Type -> [Dec]
+mkPadsSignature str args mb@(Nothing)
+  = buildSignature mb str args (ConT ''Pads)
+mkPadsSignature str args mb@(Just ety) 
+  = buildSignature mb str args (ConT ''Pads1 `AppT` ety)
+
+buildSignature mb str args pads = [printFL_signature]
+	where
+	mbarg = case mb of
+		Nothing -> [TupP []]
+		Just _ -> []
+	inst    = applyT [pads, ty_name, md_ty]
+	ty_name = applyT (ConT (mkName str) : map (\(x,y,z) -> y) argpairs)
+	md_ty   = applyT (ConT (mkMDName str) : map (\(x,y,z) -> z) argpairs)
+	meta_ty   = applyT (ConT (mkMDName str) : metas)
+	parsePP_method = FunD 'parsePP1 [Clause mbarg (NormalB (applyE (VarE (mkTyParserName str) : [VarE 'parsePP | a <- args]))) []]
+	printFL_method = FunD 'printFL1 [Clause mbarg (NormalB (applyE (VarE (mkTyPrinterName str) : [VarE 'printFL | a <- args]))) []]
+	argpair n = (VarT (mkName $ n++"_arg"),VarT (mkName n),VarT (mkName $ n++"_md"))
+	meta n = AppT (ConT ''Meta) (VarT $ mkName n)
+	argpairs = [argpair a | a <- args]
+	metas = map meta args
+	argtyvars = concat [[PlainTV (mkName (a++"_arg")),PlainTV (mkName a), PlainTV (mkName (a++"_md"))] | a <- args]
+	
+	
+	--ctx = [ClassP ''Pads1 [arg,r,m] | (arg,r,m) <- argpairs]
+	ctx = concat $ [[ClassP ''Data [r],ClassP ''Data [m]] | (arg,r,m) <- argpairs]
+	
+	padsprinter t t_md = AppT (ConT ''PadsPrinter) $ appT2 (TupleT 2) t t_md
+	
+	printer = case mb of
+		Nothing -> padsprinter ty_name md_ty
+		Just ety -> appT2 ArrowT ety (padsprinter ty_name md_ty)
+
+	printFL_signature = SigD (mkTyPrinterName str) $ ForallT argtyvars ctx $ foldr (\a t -> let (a_arg,a_rep,a_md) = argpair a in appT2 ArrowT (padsprinter a_rep a_md) t) printer args
 
 -----------------------------------------------------------------
 -- GENERATING PARSER DECLARATION FROM TYPE/DATA/NEW DECLARATION
@@ -513,7 +554,7 @@ genPadsDataPrintFL name args patM padsData = do
 genPadsNewPrintFL :: UString -> [LString] -> Maybe Pat -> BranchInfo -> Q [Dec] 
 genPadsNewPrintFL name args patM branch = do 
 	let rm = [mkName "rep", mkName "md"]
-	matches <- genPrintBranchInfo branch
+	matches <- genPrintBranchInfo False branch
 	let body = CaseE (TupE (map VarE rm)) matches
 	return [mkPrinterFunction name args rm patM body]
 
@@ -524,8 +565,8 @@ genPadsObtainPrintFL name args padsTy exp = do
 	return [mkPrinterFunction name args rm Nothing body]
 
 mkPrinterFunction :: UString -> [LString] -> [Name] -> Maybe Pat -> Exp -> Dec
-mkPrinterFunction name args rm patM body
-  = FunD printerName [Clause (printerArgs ++ [TupP (map VarP rm)]) (NormalB body) []]
+mkPrinterFunction name args rm patM body =
+	FunD printerName [Clause (printerArgs ++ [TupP (map VarP rm)]) (NormalB body) []]
   where
 	printerName = mkTyPrinterName name
 	printerArgs = map (VarP . mkTyPrinterVarName) args ++ Maybe.maybeToList patM
@@ -603,7 +644,7 @@ genPrintTuple tys (Just rm) = do
 	let mdPats = map VarP (Maybe.catMaybes mdNamesM)
 	inners <- sequence [genPrintTupleInner t r m | (t,r,m) <- zip3 tys repNamesM mdNamesM, hasRep t]
 	return $ CaseE rm
-                [Match (TupP [TupP (filterByHasRep tys repPats), TupP [WildP, (TupP mdPats)]]) 
+                [Match (TupP [TupP (filterByHasRep tys repPats), TupP [SigP WildP (ConT ''Base_md), (TupP mdPats)]]) 
                        (NormalB (VarE 'concatFL `AppE` ListE inners))
                        []]
 genPrintTuple tys Nothing = do
@@ -644,17 +685,19 @@ genPrintData (PSwitch exp pbs) rm = genPrintSwitch exp pbs rm
 
 genPrintUnion :: [BranchInfo] -> Maybe Exp -> Q Exp
 genPrintUnion bs (Just rm) = do
-	matches <- liftM concat $ mapM genPrintBranchInfo bs
+	let doDef = if length bs > 1 then True else False
+	matches <- liftM concat $ mapM (genPrintBranchInfo doDef) bs
 	return $ CaseE rm matches
 genPrintUnion bs Nothing = do
 	repName <- newName "rep"
 	mdName <- newName "md"
-	matches <- liftM concat $ mapM genPrintBranchInfo bs
+	let doDef = if length bs > 1 then True else False
+	matches <- liftM concat $ mapM (genPrintBranchInfo doDef) bs
 	return $ LamE [TupP [VarP repName,VarP mdName]] $ CaseE (TupE [VarE repName,VarE mdName]) matches
 
-genPrintBranchInfo :: BranchInfo -> Q [Match]
-genPrintBranchInfo (BRecord c fields predM) =  genPrintRecord c fields predM
-genPrintBranchInfo (BConstr c args predM) = genPrintConstr c args predM
+genPrintBranchInfo :: Bool -> BranchInfo -> Q [Match]
+genPrintBranchInfo doDef (BRecord c fields predM) =  genPrintRecord c fields predM
+genPrintBranchInfo doDef (BConstr c args predM) = genPrintConstr doDef c args predM
 
 genPrintRecord :: UString -> [FieldInfo] -> Maybe Exp -> Q [Match]
 genPrintRecord (mkName -> recName) fields predM = do 
@@ -686,8 +729,8 @@ getPEforFields def mkFieldNm fields = do
 	    ps = Maybe.catMaybes pOpts
 	return (es, ps)
 
-genPrintConstr :: String -> [ConstrArg] -> (Maybe Exp) -> Q [Match]
-genPrintConstr (mkName -> recName) args predM = do
+genPrintConstr :: Bool -> String -> [ConstrArg] -> (Maybe Exp) -> Q [Match]
+genPrintConstr doDef (mkName -> recName) args predM = do
 	let fields = map (\c -> (Just "arg",c,Nothing)) args
 	(repEs, repPs) <- getPEforFields (SigE (VarE 'gdef) . mkRepTy) newName fields
 	(mdEs,  mdPs)  <- getPEforFields (SigE (VarE 'myempty) . mkMDTy) newName fields
@@ -701,14 +744,14 @@ genPrintConstr (mkName -> recName) args predM = do
 		return caseBody
 	
 	let repPat = ConP recName (filterByHasRep ptys $ map snd repPs)	
-	let mdPat  = TupP[WildP, ConP (getStructInnerMDName recName) (map snd mdPs)]
+	let mdPat  = TupP[SigP WildP (ConT ''Base_md), ConP (getStructInnerMDName recName) (map snd mdPs)]
 	
 	caseBody <- genBody mdEs
 	let match = Match (TupP [repPat, mdPat]) caseBody []
 	
-	caseBodyDef <- genBody $ replicate (length mdEs) (VarE 'gdef)
+	caseBodyDef <- genBody $ map (\(_,ty) -> SigE (VarE 'gdef) (mkMDTy ty)) args
 	let matchDef = Match (TupP [repPat,WildP]) caseBodyDef []
-	return [match,matchDef]
+	if doDef then return [match,matchDef] else return [match]
 
 genPrintSwitch :: Exp -> [(Pat,BranchInfo)] -> Maybe Exp -> Q Exp
 genPrintSwitch exp pbs rm = genPrintUnion (map snd pbs) rm

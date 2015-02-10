@@ -9,6 +9,7 @@ import {-# SOURCE #-} Language.Forest.IC.CodeGen.ZDeltaLoading
 import Language.Forest.IC.IO.Loading
 import Language.Forest.IC.IO.ZLoading
 import qualified Language.Forest.Pure.MetaData as Pure
+import Language.Forest.IC.BX as BX
 
 import Prelude hiding (const,read)
 import Language.Forest.IC.CodeGen.Utils
@@ -138,8 +139,8 @@ zloadFile isTop fileName Nothing pathFilterE pathE treeE getMDE = do
 zloadFile isTop fileName (Just argE) pathFilterE pathE treeE getMDE = do
 	let proxy = proxyFileName fileName
 	if isTop
-		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy argE pathFilterE pathE treeE getMDE
-		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy argE pathFilterE pathE treeE getMDE
+		then return $ Pure.appE6 (VarE 'doZLoadFile1) proxy (AppE (ConE 'Pure.Arg) argE) pathFilterE pathE treeE getMDE
+		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy (AppE (ConE 'Pure.Arg) argE) pathFilterE pathE treeE getMDE
 
 -- these are terminals in the spec
 zloadWithArgsE :: String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
@@ -213,28 +214,28 @@ zloadDirectory isTop dirTy@(Record id fields) filterPathE pathE treeE getMDE = d
 
 zloadDirectoryContents :: DirectoryTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zloadDirectoryContents (Record id fields) filterPathE pathE treeE getMDE = do
-	(repEs,stmts) <- zloadFields fields filterPathE pathE treeE getMDE
+	(repNs,repEs,stmts) <- zloadFields fields filterPathE pathE treeE getMDE
 	let tyName = mkName id
-	let repE = Pure.appConE (Pure.getStructInnerName tyName) $ map VarE repEs
+	let repE = Pure.appConE (Pure.getStructInnerName tyName) $ map VarE repNs
 	let resultE = TupE [repE]
 	let finalS = NoBindS $ AppE (VarE 'return) resultE
 	let doDirE = DoE $ stmts ++ [finalS]
 	return doDirE
 
-zloadFields :: [Field] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ ([Name],[Stmt])
-zloadFields [] filterPathE pathE treeE getMDE = return ([],[])
+zloadFields :: [Field] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ ([Name],[Name],[Stmt])
+zloadFields [] filterPathE pathE treeE getMDE = return ([],[],[])
 zloadFields (field:fields) filterPathE pathE treeE getMDE = do
-	(rep_field, stmts_field)  <- zloadField field filterPathE pathE treeE getMDE
+	(rep_name,rep_field, stmts_field)  <- zloadField field filterPathE pathE treeE getMDE
 	let update (fs,env) = (fs,Map.insert rep_field Nothing env)
-	(reps_fields, stmts_fields) <- Reader.local update $ zloadFields fields filterPathE pathE treeE getMDE
-	return (rep_field:reps_fields, stmts_field++stmts_fields)
+	(reps_names,reps_fields, stmts_fields) <- Reader.local update $ zloadFields fields filterPathE pathE treeE getMDE
+	return (rep_name:reps_names,rep_field:reps_fields, stmts_field++stmts_fields)
 
-zloadField :: Field -> Exp -> Exp -> Exp -> Exp -> ZEnvQ (Name, [Stmt])
+zloadField :: Field -> Exp -> Exp -> Exp -> Exp -> ZEnvQ (Name,Name, [Stmt])
 zloadField field filterPathE pathE treeE getMDE = case field of
 	Simple s -> zloadSimple s filterPathE pathE treeE getMDE
 	Comp   c -> zloadCompound True c filterPathE pathE treeE getMDE
 
-zloadSimple :: BasicField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ (Name, [Stmt])
+zloadSimple :: BasicField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ (Name,Name, [Stmt])
 zloadSimple (internal, isForm, externalE, forestTy, predM) filterPathE pathE treeE getMDE = do
 	-- variable declarations
 	let repName = mkName internal
@@ -245,6 +246,8 @@ zloadSimple (internal, isForm, externalE, forestTy, predM) filterPathE pathE tre
 	let (newGetMdE,newGetMdP) = genPE newGetMdName
 	newdfName <- lift $ newName "newdf"
 	let (newdfE,newdfP) = genPE newdfName
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
 	
 	loadFocusE <- do
 		(fs,_) <- Reader.ask
@@ -253,8 +256,9 @@ zloadSimple (internal, isForm, externalE, forestTy, predM) filterPathE pathE tre
 			Nothing -> return $ Pure.appE5 (VarE 'doZLoadSimple) filterPathE pathE externalE treeE loadContentE
 			Just pred -> do
 				return $ Pure.appE6 (VarE 'doZLoadSimpleWithConstraint) filterPathE pathE externalE treeE (zmodPredE (VarP repName) pred) loadContentE
-	let stmt1 = BindS (TildeP $ TupP [repP]) loadFocusE
-	return (repName,[stmt1])
+	let stmt1 = BindS (TildeP $ TupP [xP]) loadFocusE
+	let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+	return (xName,repName,[stmt1,stmt2])
 
 -- | Load a top-level declared comprehension
 zloadComp :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
@@ -269,13 +273,13 @@ zloadComp isTop cinfo filterPathE pathE treeE getMDE = do
 -- | Load a top-level declared comprehension
 zloadCompContents :: CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zloadCompContents cinfo filterPathE pathE treeE getMDE = do
-	(_,stmts) <- zloadCompound False cinfo filterPathE pathE treeE getMDE
-	let doCompE = DoE $ init stmts ++ [Pure.unBindS (last stmts)]
+	(xName,_,stmts) <- zloadCompound False cinfo filterPathE pathE treeE getMDE
+	let doCompE = DoE $ init stmts ++ [NoBindS $ Pure.returnExp $ VarE xName]
 	return doCompE
 
 -- | Load a comprehension inlined inside a @Directory@
 -- if a comprehension is nested inside a directory, we created a top-level metadata thunk for it, otherwise the thunk already exists
-zloadCompound :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ (Name,[Stmt])
+zloadCompound :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ (Name,Name,[Stmt])
 zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) filterPathE pathE treeE getMDE = do
 	-- variable declarations
 	let repName = mkName internal
@@ -287,6 +291,8 @@ zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE d
 	let (newpathE,newpathP) = genPE newpathName
 	let (newGetMDE,newGetMDP) = genPE newGetMDName	
 	let (newdfE,newdfP) = genPE newdfName
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
 	
 	let genE = case generatorG of
 		Explicit expE -> expE
@@ -314,12 +320,14 @@ zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE d
 			Nothing -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
 				let loadContainerE = Pure.appE7 (VarE 'doZLoadCompound) filterPathE pathE genE treeE keyArgE buildContainerE loadSingleE
-				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
-				return (repName,[loadContainerS])
+				let loadContainerS = BindS (TupP [xP]) loadContainerE
+				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				return (xName,repName,[loadContainerS,stmt2])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
 				let loadContainerE = Pure.appE8 (VarE 'doZLoadCompoundWithConstraint) filterPathE pathE genE treeE (modPredEComp (VarP fileName) predE) keyArgE buildContainerE loadSingleE
-				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
-				return (repName,[loadContainerS])
+				let loadContainerS = BindS (TupP [xP]) loadContainerE
+				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				return (xName,repName,[loadContainerS,stmt2])
 

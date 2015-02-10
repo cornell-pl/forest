@@ -52,6 +52,10 @@ prodLens l1 l2 = Lens get' put' where
 	get' (x,y) = (Language.Forest.IC.BX.get l1 x,Language.Forest.IC.BX.get l2 y)
 	put' (x,y) (z,w) = (put l1 x z,put l2 y w)	
 
+compLens :: Lens a b -> Lens b c -> Lens a c
+compLens l1 l2 = Lens get' put' where
+	get' = Language.Forest.IC.BX.get l2 . Language.Forest.IC.BX.get l1
+	put' s v = put l1 s (put l2 (Language.Forest.IC.BX.get l1 s) v)
 
 prodFLensM :: Monad m => LensM m a b -> LensM m c d -> LensM m (a :.: c) (b :.: d)
 prodFLensM l1 l2 = LensM get put where

@@ -16,7 +16,7 @@ import System.Directory
 import Data.WithClass.MData
 import System.TimeIt
 import Control.Monad.IO.Class
-import Language.Forest.IC hiding (writeFile,Link)
+import Language.Forest.IC hiding (writeFile)
 import Language.Pads.Padsc (Base_md)
 import Language.Pads.Padsc as Pads
 import Control.Monad.Incremental.Display
@@ -26,8 +26,6 @@ import Safe
 import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 
 [iforest|
-	
-	type Link = SymLink
 	
 	type Universal_d = Directory 
              { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]

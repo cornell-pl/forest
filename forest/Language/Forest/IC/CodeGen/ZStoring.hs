@@ -28,6 +28,7 @@ import System.FilePath.Posix
 import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
 import qualified Language.Forest.Pure.MetaData as Pure
+import Language.Forest.IC.BX as BX
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax hiding (lift)
@@ -192,8 +193,8 @@ zmanifestFile isTop fileName Nothing pathE treeE dtaE manE = do
 		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE treeE dtaE manE
 zmanifestFile isTop fileName (Just argE) pathE treeE dtaE manE = do
 	if isTop
-		then return $ Pure.appE5 (VarE 'doZManifestFile1) argE pathE treeE dtaE manE
-		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) argE pathE treeE dtaE manE
+		then return $ Pure.appE5 (VarE 'doZManifestFile1) (AppE (ConE 'Pure.Arg) argE) pathE treeE dtaE manE
+		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) (AppE (ConE 'Pure.Arg) argE) pathE treeE dtaE manE
 
 zmanifestMaybe :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestMaybe isTop ty pathE treeE dtaE manE = do 
@@ -283,7 +284,7 @@ zmanifestSimple (internal, isForm, externalE, forestTy, predM) treeE parentPathE
 	-- we need to name the variables after the field names
 	varName <- lift $ newName "var"
 	let (varE,varP) = genPE varName
-	let letRepS = [LetS [ValD varP (NormalB innerRepE) []],LetS [ValD repP (NormalB varE) []]]
+	let letRepS = [LetS [ValD varP (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) innerRepE) []],LetS [ValD repP (NormalB varE) []]]
 	
 	manifestFocusE <- do
 		manifestContentE <- liftM (LamE [newpathP,newdtaP,newmanP]) $ zmanifestE False forestTy newpathE treeE newdtaE newmanE
@@ -305,7 +306,7 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 	newpathName <- lift $ newName "newpath"
 	let (newpathE,newpathP) = genPE newpathName
 	
-	let innerRepE = if isNested then AppE repE dtaE else dtaE
+	let innerRepE = Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) $ if isNested then AppE repE dtaE else dtaE
 	
 	-- we need to name the variables after the field names
 --	let letRepS = LetS [ValD repP (NormalB innerRepE) []]

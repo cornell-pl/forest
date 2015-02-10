@@ -3,6 +3,7 @@
 
 module Language.Forest.IC.CodeGen.ZDefault where
 
+import Language.Forest.IC.BX as BX
 import Prelude hiding (const,read)
 import Language.Forest.IC.CodeGen.Utils
 import Language.Forest.IC.IO.Default
@@ -144,8 +145,8 @@ zdefaultFile isTop fileName Nothing pathE = do
 		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) (AppE (ConE 'Pure.Arg) $ TupE []) pathE
 zdefaultFile isTop fileName (Just argE) pathE = do
 	if isTop
-		then return $ Pure.appE2 (VarE 'doZDefaultFile1) argE pathE
-		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) argE pathE
+		then return $ Pure.appE2 (VarE 'doZDefaultFile1) (AppE (ConE 'Pure.Arg) argE) pathE
+		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) (AppE (ConE 'Pure.Arg) argE) pathE
 
 zdefaultWithArgsE :: String -> [Exp] -> Exp -> ZEnvQ Exp
 zdefaultWithArgsE ty_name [] pathE = do
@@ -191,28 +192,28 @@ zdefaultDirectory isTop dirTy@(Record id fields) pathE = do
 
 zdefaultDirectoryContents :: DirectoryTy -> Exp -> ZEnvQ Exp
 zdefaultDirectoryContents (Record id fields) pathE = do
-	(repEs,stmts) <- zdefaultFields fields pathE
+	(repNs,repEs,stmts) <- zdefaultFields fields pathE
 	let tyName = mkName id
-	let repE = Pure.appConE (Pure.getStructInnerName tyName) $ map VarE repEs
+	let repE = Pure.appConE (Pure.getStructInnerName tyName) $ map VarE repNs
 	let resultE = TupE [repE]
 	let finalS = NoBindS $ AppE (VarE 'return) resultE
 	let doDirE = DoE $ stmts ++ [finalS]
 	return doDirE
 
-zdefaultFields :: [Field] -> Exp -> ZEnvQ ([Name],[Stmt])
-zdefaultFields [] pathE = return ([],[])
+zdefaultFields :: [Field] -> Exp -> ZEnvQ ([Name],[Name],[Stmt])
+zdefaultFields [] pathE = return ([],[],[])
 zdefaultFields (field:fields) pathE = do
-	(rep_field, stmts_field)  <- zdefaultField field pathE
+	(rep_name,rep_field, stmts_field)  <- zdefaultField field pathE
 	let update (fs,env) = (fs,Map.insert rep_field Nothing env)
-	(reps_fields, stmts_fields) <- Reader.local update $ zdefaultFields fields pathE
-	return (rep_field:reps_fields, stmts_field++stmts_fields)
+	(reps_names,reps_fields, stmts_fields) <- Reader.local update $ zdefaultFields fields pathE
+	return (rep_name:reps_names,rep_field:reps_fields, stmts_field++stmts_fields)
 
-zdefaultField :: Field -> Exp -> ZEnvQ (Name, [Stmt])
+zdefaultField :: Field -> Exp -> ZEnvQ (Name,Name, [Stmt])
 zdefaultField field pathE = case field of
 	Simple s -> zdefaultSimple s pathE
 	Comp   c -> zdefaultCompound True c pathE
 
-zdefaultSimple :: BasicField -> Exp -> ZEnvQ (Name, [Stmt])
+zdefaultSimple :: BasicField -> Exp -> ZEnvQ (Name,Name, [Stmt])
 zdefaultSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 	-- variable declarations
 	let repName = mkName internal
@@ -223,6 +224,8 @@ zdefaultSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 	let (newGetMdE,newGetMdP) = genPE newGetMdName
 	newdfName <- lift $ newName "newdf"
 	let (newdfE,newdfP) = genPE newdfName
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
 	
 	loadFocusE <- do
 		(fs,_) <- Reader.ask
@@ -231,8 +234,9 @@ zdefaultSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 			Nothing -> return $ Pure.appE3 (VarE 'doZDefaultSimple) pathE externalE loadContentE
 			Just pred -> do
 				return $ Pure.appE4 (VarE 'doZDefaultSimpleWithConstraint) pathE externalE (zmodPredE (VarP repName) pred) loadContentE
-	let stmt1 = BindS (TildeP $ TupP [repP]) loadFocusE
-	return (repName,[stmt1])
+	let stmt1 = BindS (TildeP $ TupP [xP]) loadFocusE
+	let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+	return (xName,repName,[stmt1,stmt2])
 
 -- | Load a top-level declared comprehension
 zdefaultComp :: Bool -> CompField -> Exp -> ZEnvQ Exp
@@ -246,13 +250,13 @@ zdefaultComp isTop cinfo pathE = do
 -- | Load a top-level declared comprehension
 zdefaultCompContents :: CompField -> Exp -> ZEnvQ Exp
 zdefaultCompContents cinfo pathE = do
-	(_,stmts) <- zdefaultCompound False cinfo pathE
-	let doCompE = DoE $ init stmts ++ [Pure.unBindS (last stmts)]
+	(xName,_,stmts) <- zdefaultCompound False cinfo pathE
+	let doCompE = DoE $ stmts ++ [NoBindS $ Pure.returnExp $ VarE xName]
 	return doCompE
 
 -- | Load a comprehension inlined inside a @Directory@
 -- if a comprehension is nested inside a directory, we created a top-level metadata thunk for it, otherwise the thunk already exists
-zdefaultCompound :: Bool -> CompField -> Exp -> ZEnvQ (Name,[Stmt])
+zdefaultCompound :: Bool -> CompField -> Exp -> ZEnvQ (Name,Name,[Stmt])
 zdefaultCompound isNested (CompField internal tyConNameOpt explicitName externalE descTy generatorP generatorTy generatorG predM) pathE = do
 	-- variable declarations
 	let repName = mkName internal
@@ -264,6 +268,8 @@ zdefaultCompound isNested (CompField internal tyConNameOpt explicitName external
 	let (newpathE,newpathP) = genPE newpathName
 	let (newGetMDE,newGetMDP) = genPE newGetMDName	
 	let (newdfE,newdfP) = genPE newdfName
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
 	
 	let genE = case generatorG of
 		Explicit expE -> expE
@@ -290,14 +296,16 @@ zdefaultCompound isNested (CompField internal tyConNameOpt explicitName external
 			Nothing -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP]) $ zdefaultE False descTy newpathE
 				let loadContainerE = Pure.appE5 (VarE 'doZDefaultCompound) pathE genE keyArgE buildContainerE loadSingleE
-				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
-				return (repName,[loadContainerS])
+				let loadContainerS = BindS (TupP [xP]) loadContainerE
+				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				return (xName,repName,[loadContainerS,stmt2])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP]) $ zdefaultE False descTy newpathE
 				let loadContainerE = Pure.appE6 (VarE 'doZDefaultCompoundWithConstraint) pathE genE (modPredEComp (VarP fileName) predE) keyArgE buildContainerE loadSingleE
-				let loadContainerS = BindS (TupP [VarP repName]) loadContainerE
-				return (repName,[loadContainerS])
+				let loadContainerS = BindS (TupP [xP]) loadContainerE
+				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				return (xName,repName,[loadContainerS,stmt2])
 
 				
 		

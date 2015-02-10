@@ -35,6 +35,8 @@ module Language.Forest.Quote
     (ipads,forest,iforest)
     where
 
+import Language.Forest.Pure.CodeGen.Utils as Pure
+import Language.Forest.IC.BX
 import Data.WithClass.Derive.DeepTypeable
 import Data.WithClass.Derive.MData
 import Data.DeriveTH
@@ -97,9 +99,18 @@ make_decls ICForest = do
 
 ipads :: QuasiQuoter
 ipads = P.padsDerivation $ \dec -> do
+	let (n,tyargs) = case dec of
+		DataD _ n tyargs _ _ -> (n,map (VarT . tyVarBndrName) tyargs)
+		NewtypeD _ n tyargs _ _ -> (n,map (VarT . tyVarBndrName) tyargs)
 	mdata <- deriveFromDec makeMData dec
 	deep <- deriveFromDec makeDeepTypeable dec
-	return $ mdata ++ deep
+	let decty = foldl AppT (ConT n) tyargs
+	let forestContent = InstanceD [] (Pure.appT2 (ConT ''ForestContent) decty decty) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLens) []]
+	return $ mdata ++ deep ++ [forestContent]
+
+tyVarBndrName :: TyVarBndr -> Name
+tyVarBndrName (PlainTV n) = n
+tyVarBndrName (KindedTV n t) = n
 
 -- | A quasi-quoter for Forest with pure functional data structures
 forest :: QuasiQuoter

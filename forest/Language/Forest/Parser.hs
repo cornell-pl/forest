@@ -100,14 +100,14 @@ forestDecl = do { reserved "type"
                 ; (id,pats) <- params
                 ; rawty <- forestTy
                 ; predM <- optionMaybe fieldPredicate
-                ; let ty = integratePred rawty predM 
+                ; let ty = integratePred id rawty predM 
                 ; return (ForestDecl(id, pats, replaceName id ty))
                 } <?> "Forest Declaration"
 
-integratePred :: ForestTy -> Maybe TH.Exp -> ForestTy
-integratePred ty predM = case predM of
+integratePred :: String -> ForestTy -> Maybe TH.Exp -> ForestTy
+integratePred id ty predM = case predM of
   Nothing -> ty
-  Just predE -> FConstraint (TH.VarP (mkName "this")) ty predE
+  Just predE -> FConstraint (VarP (mkName "this")) ty predE
 
 -- a regular Haskell expression in parenthesis to which we add a return
 haskellParenthesisExp :: Parser TH.Exp

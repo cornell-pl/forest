@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts, DeriveDataTypeable #-}
 
 {-
 ** *********************************************************************
@@ -16,6 +16,7 @@ import qualified Language.Pads.Source as S
 import qualified Data.List as List
 import Language.Pads.Errors
 import Data.Typeable
+import Language.Pads.MetaData
 import Data.Data
 
 {- Printing Monad -}
@@ -69,11 +70,15 @@ printF q = Prelude.print (B.unpack (q B.empty))
 
 printList' (reps, (_,mds)) printItem printSep printTerm = (concatFL (List.intersperse printSep (map printItem (zip reps mds))) ) +++ printTerm
 
-printList :: (Data r,Data m) => (PadsPrinter (r,m)) -> FList -> FList -> ([r], (b,[m])) -> FList
+printList :: (Data r,Data m) => (PadsPrinter (r,m)) -> FList -> FList -> ([r], (Base_md,[m])) -> FList
 printList printItem printSep printTerm (reps, (_,mds)) = 
    (concatFL (List.intersperse printSep (map printItem (zip reps mds))) )
    +++ printTerm
 
+printListPads :: (Data r,Data (Meta r)) => (PadsPrinter (r,Meta r)) -> FList -> FList -> ([r], (b,[Meta r])) -> FList
+printListPads printItem printSep printTerm (reps, (_,mds)) = 
+   (concatFL (List.intersperse printSep (map printItem (zip reps mds))) )
+   +++ printTerm
 
 {-
 
@@ -107,33 +112,5 @@ intPair_printFL (r,m)
            addString "|" +++
            int_PrintFL (r2,m2)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -}
-
-
-
-
-
-
-
-
-
-
 

@@ -94,8 +94,8 @@ doZLoadDeltaFileInner1 isEmptyDArg (Pure.Arg arg' :: Pure.Arg arg) mpath path' o
 			fmd' <- inside $ getMD path' tree'
 			return $ Modify $ \((_,bmd),rep) -> ((fmd',bmd),rep)
 		otherwise -> debug "constant1 changed" $ do
-			rep' <- inside $ doZLoadFileInner1 (Proxy::Proxy pads) (Arg arg') (fsTreeDeltaPathFilter df path') path' tree' getMD
-			return $ Modify $ Prelude.const rep'
+			((fmd',bmd'),rep') <- inside $ doZLoadFile1' (Proxy::Proxy pads) (Arg arg') (fsTreeDeltaPathFilter df path') path' tree' getMD
+			return $ Modify $ Prelude.const ((fmd',bmd'),rep')
 
 doZLoadDeltaArchiveInner :: (DeltaClass d,ForestRep rep (ForestFSThunkI fs content0),ZippedICMemo fs
 		,ForestInput fs FSThunk Inside,ForestMD fs rep) =>
@@ -197,10 +197,10 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df tree' dv (rep_thunk,get
 			return Delta
 				
 
-doZLoadDeltaSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs)
-	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs (SymLinkE fs))
-	-> (ForestFSThunkI fs (SymLinkE fs),GetForestMD fs)
-	-> ForestO fs (SValueDelta (ForestFSThunkI fs (SymLinkE fs)))
+doZLoadDeltaSymLink :: (sym ~ ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs)
+	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs sym
+	-> (sym,GetForestMD fs)
+	-> ForestO fs (SValueDelta sym)
 doZLoadDeltaSymLink mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 	path <- inside mpath
 	case (path == path',isIdValueDelta dv,df) of
@@ -209,14 +209,14 @@ doZLoadDeltaSymLink mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 			modify rep_thunk $ \((_,bmd),rep) -> getMD path' tree' >>= \fmd' -> return ((fmd',bmd),rep)
 			return Delta
 		otherwise -> debug "symlink changed" $ do
-			rep' <- inside $ doZLoadSymLinkInner path' tree' getMD
+			rep' <- inside $ doZLoadSymLink' path' tree' getMD
 			set rep_thunk rep'
 			return Delta
 
-doZLoadDeltaSymLinkInner :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs)
-	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs (SymLinkE fs)
-	-> (SymLinkE fs,GetForestMD fs)
-	-> ForestO fs (NSValueDelta (SymLinkE fs))
+doZLoadDeltaSymLinkInner :: (sym ~ ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs)
+	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs sym
+	-> (sym,GetForestMD fs)
+	-> ForestO fs (NSValueDelta sym)
 doZLoadDeltaSymLinkInner mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 	path <- inside mpath
 	case (path == path',isIdValueDelta dv,df) of
@@ -228,8 +228,8 @@ doZLoadDeltaSymLinkInner mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 			rep' <- inside $ doZLoadSymLinkInner path' tree' getMD
 			return $ Modify $ Prelude.const rep'
 
-doZLoadDeltaConstraint :: (IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),err_rep ~ ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep),DeltaClass d,ForestMD fs rep,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside) =>
-	Bool -> ValueDelta fs err_rep -> (err_rep,GetForestMD fs) -> (rep -> ForestI fs Bool)
+doZLoadDeltaConstraint :: (ForestContent rep content,IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),err_rep ~ ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep),DeltaClass d,ForestMD fs rep,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside) =>
+	Bool -> ValueDelta fs err_rep -> (err_rep,GetForestMD fs) -> (content -> ForestI fs Bool)
 	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (d rep))
 	-> ForestO fs (SValueDelta err_rep)
 doZLoadDeltaConstraint emptyDArgs dv (t,getMD) pred loadD = do
@@ -241,8 +241,8 @@ doZLoadDeltaConstraint emptyDArgs dv (t,getMD) pred loadD = do
 			modify t $ return . applyNSValueDelta drep
 			return Delta
 
-doZLoadDeltaConstraintInner :: (err_rep ~ (ForestFSThunkI fs Forest_err,rep),DeltaClass d,ForestMD fs rep,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside) =>
-	Bool -> ValueDelta fs err_rep -> (err_rep,GetForestMD fs) -> (rep -> ForestI fs Bool)
+doZLoadDeltaConstraintInner :: (ForestContent rep content,err_rep ~ (ForestFSThunkI fs Forest_err,rep),DeltaClass d,ForestMD fs rep,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside) =>
+	Bool -> ValueDelta fs err_rep -> (err_rep,GetForestMD fs) -> (content -> ForestI fs Bool)
 	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (d rep))
 	-> ForestO fs (d err_rep)
 doZLoadDeltaConstraintInner emptyDArgs dv ((err_t,rep),getMD) pred loadD = debug ("doLoadDeltaConstraint: ") $ do
@@ -251,7 +251,7 @@ doZLoadDeltaConstraintInner emptyDArgs dv ((err_t,rep),getMD) pred loadD = debug
 		(True,True,True) -> return $ mapDelta sndLens direp
 		otherwise -> do
 			overwrite err_t $ do
-				err_cond <- predForestErr $ pred rep
+				err_cond <- predForestErr $ pred $ BX.get lens_content rep
 				err_inner <- get_errors rep
 				return $ Pure.mergeForestErrs err_cond err_inner
 			if isStableDelta direp
@@ -499,10 +499,10 @@ doZLoadDeltaSimple lens mpath path' matchingM oldtree df tree' dv (dir_rep,getMD
 		StableVD d -> return $ StableVD $ liftSValueDelta d
 		otherwise -> return $ Modify $ \s -> BX.put lens s $ applyNSValueDelta direp irep
 
-doZLoadDeltaSimpleWithConstraint :: (err_rep' ~ (ForestFSThunkI fs Forest_err, rep'),DeltaClass d,ForestMD fs rep',ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestO fs) rep') =>
+doZLoadDeltaSimpleWithConstraint :: (ForestContent rep' content',err_rep' ~ (ForestFSThunkI fs Forest_err, rep'),DeltaClass d,ForestMD fs rep',ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestO fs) rep') =>
 	Lens dir_rep err_rep'
 	-> Bool -> ForestI fs FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs dir_rep -> (dir_rep,GetForestMD fs)
-	-> (rep' -> ForestI fs Bool)
+	-> (content' -> ForestI fs Bool)
 	-> ((rep',GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeDeltaNodeMay -> ValueDelta fs rep' -> ForestO fs (d rep'))
 	-> ForestO fs (NSValueDelta dir_rep)
 doZLoadDeltaSimpleWithConstraint lens emptyDArgs mpath path' matchingM oldtree df tree' dv (dir_rep,getMD) pred loadD = debug ("doLoadDeltaSimpleWithConstraint: "++show (path')) $ do

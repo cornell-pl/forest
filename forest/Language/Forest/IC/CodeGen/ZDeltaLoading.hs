@@ -24,6 +24,7 @@ import Language.Forest.IC.FS.FSDelta
 import Data.WithClass.MData
 import System.Directory
 import System.FilePath.Posix
+import Language.Forest.IC.BX as BX
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax hiding (lift)
@@ -284,8 +285,8 @@ zloadDeltaFile isTop ty Nothing pathE treeE dpathE dfE treeE' dvE repmdE = do
 zloadDeltaFile isTop ty (Just argE') pathE treeE dpathE dfE treeE' dvE repmdE = do
 	condE <- isEmptyZDeltaEnvForestTy ty -- note that the variables from the argument delta are included in the delta environment
 	if isTop
-		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE
-		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE argE' pathE dpathE treeE dfE treeE' dvE repmdE
+		then return $ Pure.appE9 (VarE 'doZLoadDeltaFile1) condE (AppE (ConE 'Pure.Arg) argE') pathE dpathE treeE dfE treeE' dvE repmdE
+		else return $ Pure.appE9 (VarE 'doZLoadDeltaFileInner1) condE (AppE (ConE 'Pure.Arg) argE') pathE dpathE treeE dfE treeE' dvE repmdE
 	
 zloadDeltaDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zloadDeltaDirectory isTop dirTy@(Record id fields) pathE treeE dpathE dfE treeE' dvE repmdE = do
@@ -363,7 +364,7 @@ zloadDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE treeE repm
 		,ValD lensP (NormalB lensRepE) []
 		]
 	let fieldStmt2 = LetS [
-		ValD (VarP repName) (NormalB xE) []
+		ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []
 		]
 	
 --	let innerrepmdE = TupE [xE,AppE (VarE 'snd) repmdE]
@@ -437,7 +438,7 @@ zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitN
 		,ValD lensP (NormalB lensRepE) []
 		]
 	let fieldStmt2 = LetS [
-		ValD (VarP repName) (NormalB xE) []
+		ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []
 		]
 	let fieldStmts = if insideDirectory then [fieldStmt1,fieldStmt2] else [LetS [ValD lensP (NormalB lensRepE) []]]
 	

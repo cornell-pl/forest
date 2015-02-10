@@ -98,7 +98,7 @@ import Language.Forest.IC.PadsInstances
 import Language.Forest.IC.ValueDelta
 import Language.Forest.IO.Shell
 import Language.Forest.IO.Utils
-import Language.Forest.Manifest
+import Language.Forest.Manifest hiding (Link)
 import Language.Forest.Quote
 import Language.Forest.Syntax
 import Language.Forest.TH

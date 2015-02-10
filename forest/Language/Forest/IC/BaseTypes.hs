@@ -40,7 +40,7 @@ import Language.Forest.Pure.Generic
 import Language.Forest.Pure.MetaData hiding (Forest_md)
 import Language.Forest.IC.MetaData 
 import Language.Forest.Quote
-import Language.Forest.Manifest
+import Language.Forest.Manifest hiding (Link)
 import Language.Pads.Padsc 
 import Data.WithClass.MData
 import Language.Forest.FS.FSRep
@@ -54,6 +54,7 @@ import Control.Monad.Incremental
   type TextFile   = File Text
   type BinaryFile = File Binary
   type AnyFile    = File Binary
+  type Link       = SymLink
 |]
 
 

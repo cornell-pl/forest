@@ -27,6 +27,7 @@ import qualified Language.Forest.Pure.MetaData as Pure
 import Control.Monad.Incremental as Inc hiding (memo)
 import Data.IORef
 import Data.List as List
+import Language.Forest.IC.BX as BX
 import Language.Forest.IO.Shell
 
 import qualified System.FilePath.Posix
@@ -77,7 +78,7 @@ doZManifestFile1 (Pure.Arg arg :: Pure.Arg arg) path tree rep_t man = do
 	let fs = (Proxy::Proxy fs)
 	
 	let mani_scratch = do
-		rep <- lift $ inside $ get rep_t
+		rep <- lift $ Inc.getOutside rep_t
 		doZManifestFileInner1 (Pure.Arg arg) path tree rep man
 	
 	mb <- lift $ inside $ findZippedMemo argProxy path fsrepProxy 
@@ -264,10 +265,10 @@ doZManifestArchiveInner archTy path tree (fmd,rep) manifestContents man = do
 
 doZManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
 	FilePath -> FSTree fs
-	-> ForestFSThunkI fs (SymLinkE fs)
+	-> ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath)
 	-> Manifest fs -> MManifestForestO fs
 doZManifestSymLink path tree (rep_t) man = do
-	((fmd,base_md), tgt) <- lift $ inside $ get rep_t
+	((fmd,base_md), tgt) <- lift $ Inc.getOutside rep_t
 	let path_fmd = fullpath $ fileInfo fmd
 	case doesLinkExistInMD path_fmd fmd of
 		Just sym -> do
@@ -287,7 +288,7 @@ doZManifestSymLink path tree (rep_t) man = do
 
 doZManifestSymLinkInner :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
 	FilePath -> FSTree fs
-	-> SymLinkE fs
+	-> ((Forest_md fs,Base_md),FilePath)
 	-> Manifest fs -> MManifestForestO fs
 doZManifestSymLinkInner path tree ((fmd,base_md), tgt) man = do
 	let path_fmd = fullpath $ fileInfo fmd
@@ -307,29 +308,28 @@ doZManifestSymLinkInner path tree ((fmd,base_md), tgt) man = do
 			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [Pure.ioExceptionForestErr]
 			lift $ forestM $ removePathFromManifestInTree path tree $ addTestToManifest testm man
 
-doZManifestConstraint :: (			IncK
-			                        (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestMD fs rep,ICRep fs) =>
-	(rep -> ForestI fs Bool) -> ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep)
+doZManifestConstraint :: (ForestContent rep content,IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestMD fs rep,ICRep fs) =>
+	(content -> ForestI fs Bool) -> ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep)
 	-> (rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
 doZManifestConstraint pred t manifestContent man = lift (Inc.getOutside t) >>= \v -> doZManifestConstraintInner pred v manifestContent man
 
-doZManifestConstraintInner :: (ForestMD fs rep,ICRep fs) =>
-	(rep -> ForestI fs Bool) -> (ForestFSThunkI fs Forest_err,rep)
+doZManifestConstraintInner :: (ForestContent rep content,ForestMD fs rep,ICRep fs) =>
+	(content -> ForestI fs Bool) -> (ForestFSThunkI fs Forest_err,rep)
 	-> (rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
 doZManifestConstraintInner pred (err_t,rep) manifestContent man = do
 	isRepairMd <- Reader.ask
 	let testm = do -- constraint errors need to be accounted for
 		if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside $ do
-			err_cond <- predForestErr $ pred rep
+			err_cond <- predForestErr $ pred $ BX.get lens_content rep
 			err_inner <- get_errors rep
 			errors <- Inc.get err_t
 			return $ isValidForestErr errors == isValidForestErr (Pure.mergeForestErrs err_cond err_inner)
 	
 	Writer.tell $ \latest -> do
 		overwrite err_t $ do
-			err_cond <- predForestErr $ pred rep
+			err_cond <- predForestErr $ pred $ BX.get lens_content rep
 			err_inner <- get_errors rep
 			return $ Pure.mergeForestErrs err_cond err_inner
 	
@@ -389,7 +389,7 @@ doZManifestMaybe :: (IncK (IncForest fs) (Forest_md fs, Maybe rep),ForestMD fs r
 	-> ForestFSThunkI fs (Forest_md fs,Maybe rep)
 	-> (rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-doZManifestMaybe path tree rep_t manifestContent man = doZManifestMaybe' path tree rep_t (\t -> get t >>= \(fmd,rep) -> return (Just fmd,rep)) manifestContent man
+doZManifestMaybe path tree rep_t manifestContent man = doZManifestMaybe' path tree rep_t (\t -> Inc.get t >>= \(fmd,rep) -> return (Just fmd,rep)) manifestContent man
 
 doZManifestMaybeInner :: (ForestMD fs rep,ICRep fs) =>
 	FilePath -> FSTree fs
@@ -455,9 +455,9 @@ doZManifestSimple :: (ICRep fs,Matching fs a) =>
 	-> Manifest fs -> MManifestForestO fs
 doZManifestSimple parentPath matching tree dta manifestUnder man = lift (inside matching) >>= \m -> doZManifestFocus parentPath m tree (\p -> manifestUnder p dta) man
 
-doZManifestSimpleWithConstraint :: (ForestMD fs rep,ICRep fs,Matching fs a) =>
+doZManifestSimpleWithConstraint :: (ForestContent rep content,ForestMD fs rep,ICRep fs,Matching fs a) =>
 	FilePath -> ForestI fs a -> FSTree fs
-	-> (rep -> ForestI fs Bool)
+	-> (content -> ForestI fs Bool)
 	-> (ForestFSThunkI fs Forest_err,rep)
 	-> (FilePath -> rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs

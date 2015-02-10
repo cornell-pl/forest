@@ -215,20 +215,20 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 			return $ mergeManifests man1 man3
 		otherwise -> doZManifestArchiveInner archTy path' tree' (fmd,rep) manifest man
 
-doZDeltaManifestSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestFSThunkI fs (SymLinkE fs) -> ValueDelta fs (ForestFSThunkI fs (SymLinkE fs)) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestSymLink :: (sym ~ ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> sym -> ValueDelta fs sym -> Manifest fs -> MManifestForestO fs
 doZDeltaManifestSymLink path path' tree df tree' (rep_t) dv man = do
 	case (path == path',isIdValueDelta dv,df) of
 		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return man
 		otherwise -> doZManifestSymLink path' tree' (rep_t) man
 
-doZDeltaManifestSymLinkInner :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> SymLinkE fs -> ValueDelta fs (SymLinkE fs) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestSymLinkInner :: (sym ~ ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> sym -> ValueDelta fs sym -> Manifest fs -> MManifestForestO fs
 doZDeltaManifestSymLinkInner path path' tree df tree' (rep_t) dv man = do
 	case (path == path',isIdValueDelta dv,df) of
 		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return man
 		otherwise -> doZManifestSymLinkInner path' tree' (rep_t) man
 
-doZDeltaManifestConstraint :: (IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestMD fs rep,ICRep fs, toprep ~ ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep)) =>
-	Bool -> (rep -> ForestI fs Bool) -> FSTree fs -> toprep -> ValueDelta fs toprep
+doZDeltaManifestConstraint :: (ForestContent rep content,IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestMD fs rep,ICRep fs, toprep ~ ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep)) =>
+	Bool -> (content -> ForestI fs Bool) -> FSTree fs -> toprep -> ValueDelta fs toprep
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
@@ -236,8 +236,8 @@ doZDeltaManifestConstraint emptyDArgs pred tree rep_t dv manifestD diffValue man
 	(err_t,rep) <- lift $ Inc.getOutside rep_t
 	doZDeltaManifestConstraintInner emptyDArgs pred tree (err_t,rep) (mapValueDelta Proxy dv) manifestD diffValue man
 
-doZDeltaManifestConstraintInner :: (ForestMD fs rep,ICRep fs, toprep ~ (ForestFSThunkI fs Forest_err,rep)) =>
-	Bool -> (rep -> ForestI fs Bool) -> FSTree fs -> toprep -> ValueDelta fs toprep
+doZDeltaManifestConstraintInner :: (ForestContent rep content,ForestMD fs rep,ICRep fs, toprep ~ (ForestFSThunkI fs Forest_err,rep)) =>
+	Bool -> (content -> ForestI fs Bool) -> FSTree fs -> toprep -> ValueDelta fs toprep
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
@@ -248,7 +248,7 @@ doZDeltaManifestConstraintInner emptyDArgs pred tree (err_t,rep) dv manifestD di
 	
 	Writer.tell $ \latest -> do
 		overwrite err_t $ do
-			err_cond <- predForestErr $ pred rep
+			err_cond <- predForestErr $ pred $ BX.get lens_content rep
 			err_inner <- get_errors rep
 			return $ Pure.mergeForestErrs err_cond err_inner
 	
@@ -257,7 +257,7 @@ doZDeltaManifestConstraintInner emptyDArgs pred tree (err_t,rep) dv manifestD di
 		otherwise -> do
 			let testm = do -- constraint errors need to be accounted for
 				if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside $ do
-					err_cond <- predForestErr $ pred rep
+					err_cond <- predForestErr $ pred $ BX.get lens_content rep
 					err_inner <- get_errors rep
 					errors <- Inc.get err_t
 					return $ isValidForestErr errors == isValidForestErr (Pure.mergeForestErrs err_cond err_inner)
@@ -460,8 +460,8 @@ doZDeltaManifestSimple lens path path' matchingM tree df tree' dir_rep dir_dv ma
 	let dv = mapValueDelta Proxy dir_dv
 	doZDeltaManifestFocus matching path path' tree df tree' (manifestD rep dv) man
 
-doZDeltaManifestSimpleWithConstraint :: (ForestMD fs rep,ICRep fs,Matching fs a,err_rep ~ (ForestFSThunkI fs Forest_err, rep)) => 
-	Lens dir_rep err_rep -> Bool -> (rep -> ForestI fs Bool)
+doZDeltaManifestSimpleWithConstraint :: (ForestContent rep content,ForestMD fs rep,ICRep fs,Matching fs a,err_rep ~ (ForestFSThunkI fs Forest_err, rep)) => 
+	Lens dir_rep err_rep -> Bool -> (content -> ForestI fs Bool)
 	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
 	-> dir_rep -> ValueDelta fs dir_rep
 	-> (rep -> ValueDelta fs rep -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)

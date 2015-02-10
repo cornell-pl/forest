@@ -24,6 +24,7 @@ import Language.Forest.IC.FS.FSDelta
 import Data.WithClass.MData
 import System.Directory
 import System.FilePath.Posix
+import Language.Forest.IC.BX as BX
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax hiding (lift)
@@ -222,8 +223,8 @@ zmanifestDeltaFile isTop ty Nothing pathE pathE' treeE dfE treeE' repE dvE manE 
 zmanifestDeltaFile isTop ty (Just argE') pathE pathE' treeE dfE treeE' repE dvE manE = do
 	condE <- isEmptyZDeltaEnvForestTy ty -- note that the variables from the argument delta are included in the delta environment
 	if isTop
-		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE argE' pathE pathE' treeE dfE treeE' repE dvE manE
-		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE argE' pathE pathE' treeE dfE treeE' repE dvE manE
+		then return $ Pure.appE10 (VarE 'doZDeltaManifestFile1) condE (AppE (ConE 'Pure.Arg) argE') pathE pathE' treeE dfE treeE' repE dvE manE
+		else return $ Pure.appE10 (VarE 'doZDeltaManifestFileInner1) condE (AppE (ConE 'Pure.Arg) argE') pathE pathE' treeE dfE treeE' repE dvE manE
 	
 zmanifestDeltaDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zmanifestDeltaDirectory isTop dirTy@(Record id fields) pathE pathE' treeE dfE treeE' repE dvE manE = do
@@ -281,12 +282,20 @@ zmanifestDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE pathE'
 	let (newdvE,newdvP) = genPE newdvName
 	newManName <- lift $ newName "newman"
 	let (newManE,newManP) = genPE newManName
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
 	
 	lensRepE <- lift $ buildFieldLens repName
+	let innerRepE = Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) $ AppE (VarE repName) repE
 	
 	let fieldStmt1 = LetS [
-		ValD (VarP drepName) (NormalB dvE) []
+		ValD xP (NormalB innerRepE) []
 		]
+	let fieldStmt2 = LetS [
+		ValD (VarP repName) (NormalB xE) []
+		, ValD (VarP drepName) (NormalB dvE) []
+		]
+	let fieldStmts = [fieldStmt1,fieldStmt2]
 
 	(fs,_) <- Reader.ask
 	manifestContentDeltaE <- liftM (LamE [fieldrepP,newdvP,newpathP,newpathP',newdfP,newManP]) $ zmanifestDeltaE False forestTy newpathE newpathE' treeE newdfE treeE' fieldrepE newdvE newManE
@@ -297,7 +306,7 @@ zmanifestDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE pathE'
 			return $ Pure.appE14 (VarE 'doZDeltaManifestSimpleWithConstraint) lensRepE boolE (zmodPredE (VarP repName) predE) pathE pathE' externalE treeE dfE treeE' repE dvE manifestContentDeltaE (zdiffE forestTy) manE
 	let manifestStmt = BindS (TupP [nextmanP]) manifestE
 	
-	return (drepName,repName,[manifestStmt,fieldStmt1])
+	return (drepName,repName,[manifestStmt]++fieldStmts)
 
 zmanifestDeltaComp :: Bool -> CompField -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
 zmanifestDeltaComp isTop cinfo pathE pathE' treeE dfE treeE' repE dvE manE = do
@@ -346,15 +355,22 @@ zmanifestDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt expli
 	let (newdfE,newdfP) = genPE newdfName
 	newdvName <- lift $ newName "newdv"
 	let (newdvE,newdvP) = genPE newdvName
+	xName <- lift $ newName "x"
+	let (xE,xP) = genPE xName
 	
 	lensRepE <- if insideDirectory
 		then lift $ buildFieldLens repName
 		else return idLensE
+	let innerRepE = Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) $ if insideDirectory then AppE (VarE repName) repE else repE
 	
 	let fieldStmt1 = LetS [
-		ValD (VarP repName) (NormalB dvE) []
+		ValD xP (NormalB $ innerRepE) []
 		]
-	let fieldStmts = [fieldStmt1]
+	let fieldStmt2 = LetS [
+		ValD (VarP repName) (NormalB xE) []
+		, ValD (VarP drepName) (NormalB dvE) []
+		]
+	let fieldStmts = [fieldStmt1,fieldStmt2]
 	
 	let genE = case generatorG of
 		Explicit expE -> expE
