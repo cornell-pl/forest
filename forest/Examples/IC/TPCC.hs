@@ -591,8 +591,11 @@ populate w = do
 			
 			let nos_path = d_path </> "newOrders"
 			createDirectoryIfMissing True nos_path
-			let populateNewOrder no_id = return () -- XXX: add new flag
-			mapM_ populateNewOrder [1..900]
+			let populateNewOrder no_id = do
+				let no_tgt = "../Orders" </> show no_id
+				let no_path = nos_path </> show w_id
+				createSymbolicLink no_tgt no_path
+			mapM_ populateNewOrder [2101..3000]
 			
 		mapM_ populateDistrict [1..10]
 		
