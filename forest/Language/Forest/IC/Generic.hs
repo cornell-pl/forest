@@ -100,7 +100,7 @@ instance ForestContent Text Text where
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
 
-type FTK fs args rep var content = (IncK (IncForest fs) rep,IncK (IncForest fs) var,IncK (IncForest fs) content,CopyFSThunks fs Outside rep,ForestMD fs rep,Typeable (ForestIs TxVarFS args),ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent var content)
+type FTK fs args rep var content = (IncK (IncForest fs) var,IncK (IncForest fs) content,CopyFSThunks fs Outside rep,ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent var content)
 
 class TxICForest fs where
 
@@ -118,7 +118,7 @@ class TxICForest fs where
 	-- gets the arguments bound to a variable
 	args :: FTK fs args rep var content => rep -> FTM fs (ForestVs args,FilePath)
 	
-	read :: FTK fs args rep var content => rep -> FTM fs content
+	read :: (ForestLayer fs l,FTK fs args rep var content) => rep -> ForestL fs l content
 	
 	-- tries to modify a variable
 	-- the write only occurs if validation succeeds
@@ -126,7 +126,7 @@ class TxICForest fs where
 	writeOrElse :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
 	-- read-only Forest error count
-	validate :: FTK fs args rep var content => rep -> FTM fs Forest_err
+	validate :: (ForestLayer fs l,FTK fs args rep var content) => rep -> ForestL fs l Forest_err
 	validate = get_errors
 	
 	
@@ -137,8 +137,8 @@ class TxICForest fs where
 	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
 	copyOrElse :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
-	unsafeIOToFTM :: ICRep fs => IO a -> FTM fs a
-	unsafeIOToFTM = forestM . forestIO
+unsafeIOToFTM :: (TxICForest fs,ICRep fs) => IO a -> FTM fs a
+unsafeIOToFTM = forestM . forestIO
 	
 tryWrite :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
@@ -154,7 +154,7 @@ writeOrThrow t v e = writeOrElse t v () (Prelude.const $ throw e)
 
 -- * Zipped Incremental Forest interface
 
-class (IncK (IncForest fs) Forest_err,ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep) => ZippedICForest fs args rep | rep -> args  where
+class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK (IncForest fs) Forest_err,ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep) => ZippedICForest fs args rep | rep -> args  where
 	
 	zload :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
 	zload args path = forestM latestTree >>= \tree -> zloadScratchMemo Proxy args return path tree getForestMDInTree

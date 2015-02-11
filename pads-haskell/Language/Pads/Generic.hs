@@ -68,6 +68,8 @@ printFile filepath r = do
 	let str = printBS r
 	B.writeFile filepath str
 
+printFileRep :: Pads rep md => FilePath -> rep -> IO ()
+printFileRep filepath r = printFile filepath (r,defaultMd r)
 
 class (Data rep, PadsMD md) => Pads1 arg rep md | rep -> md, rep -> arg where
 	def1 :: arg -> rep
@@ -109,6 +111,9 @@ printFile1 :: Pads1 arg rep md => arg -> FilePath -> (rep,md) -> IO ()
 printFile1 arg filepath r = do
 	let str = printBS1 arg r
 	B.writeFile filepath str
+	
+printFileRep1 :: Pads1 arg rep md => arg -> FilePath -> rep -> IO ()
+printFileRep1 arg filepath r = printFile1 arg filepath (r,defaultMd1 arg r)
 
 parseStringWith  :: (Data rep, PadsMD md) => PadsParser (rep,md) -> String -> (rep,md)
 parseStringWith p str = fst $ parseStringInput p str

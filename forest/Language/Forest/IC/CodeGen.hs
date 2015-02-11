@@ -198,7 +198,7 @@ genZFInst :: Maybe [Type] -> Name -> Name -> Exp -> Exp -> Exp -> Exp -> Exp -> 
 genZFInst mb_fsTy ecName fsName loadM loadDeltaM manifestM manifestDeltaM defaultM ty_name forestTy pat_infos ks = do
 	repName <- newName "rep"
 	let tyName = AppT (ConT ty_name) (VarT fsName)
-	let (inst) = case pat_infos of
+	let inst = case pat_infos of
 		[] -> (Pure.appT3 (ConT ''ZippedICForest) (VarT fsName) (TupleT 0) tyName )  
 		otherwise -> (Pure.appT3 (ConT ''ZippedICForest) (VarT fsName) (Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) tyName )
 	let load_method = ValD (VarP 'zloadScratch) (NormalB loadM) []
@@ -209,7 +209,13 @@ genZFInst mb_fsTy ecName fsName loadM loadDeltaM manifestM manifestDeltaM defaul
 	
 	
 	let mkInst mb_ty =
-		let ctx = Set.toList ks ++ [ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FileInfo],ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FilePath],ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''Forest_err],ClassP ''Typeable [VarT fsName],ClassP ''ZippedICMemo [VarT fsName]]
+		let ctx = Set.toList ks ++
+			[ ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),tyName]
+			, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FileInfo]
+			, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FilePath]
+			, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''Forest_err]
+			, ClassP ''Typeable [VarT fsName],ClassP ''ZippedICMemo [VarT fsName]
+			]
 		    instD = InstanceD ctx inst [load_method,loadDelta_method,manifest_method,manifestD_method,default_method]
 		    instD' = SYB.everywhere (SYB.mkT $ \(t::Type) -> if t == VarT ecName then (PromotedT 'E) else t) instD
 		in case mb_ty of

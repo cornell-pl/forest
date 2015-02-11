@@ -323,7 +323,7 @@ instance ZippedICMemo TxVarFS where
 		
 	findZippedMemo args path rep = return Nothing
 
-argsTxVarFS :: (FTK TxVarFS args rep var content) => Proxy args -> rep -> ForestO TxVarFS (ForestVs args,FilePath)
+argsTxVarFS :: (ForestLayer TxVarFS l,FTK TxVarFS args rep var content) => Proxy args -> rep -> ForestL TxVarFS l (ForestVs args,FilePath)
 argsTxVarFS proxy rep = do
 	mb <- forestM $ getFTVArgs proxy rep
 	case mb of
@@ -434,16 +434,16 @@ newTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> ForestVs args ->
 newTxVarFS proxy args path = inside $ zload (vmonadArgs proxyTxVarFS proxy args) path
 
 -- make sure that the computation that is run is a load function
-readTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> rep -> TxVarFTM content
+readTxVarFS :: (ForestLayer TxVarFS l,FTK TxVarFS args rep var content) => Proxy args -> rep -> ForestL TxVarFS l content
 readTxVarFS proxy (rep :: rep) = do
-	(txargs,path) <- argsTxVarFS proxy rep
+	(txargs,path) <- inside $ argsTxVarFS proxy rep
 	let (TxVarFSThunk (rdyn,m,tbl)) = to iso_rep_thunk rep
 	fsversion <- forestM getFSVersionTxVarFS
 	mb <- forestM $ forestIO $ WeakMap.lookup tbl fsversion
 	case mb of
 		Nothing -> do
 			(rep' :: rep) <- inside $ zload (vmonadArgs proxyTxVarFS proxy txargs) path
-			v' <- Inc.getOutside (to iso_rep_thunk rep')
+			v' <- inside $ Inc.get (to iso_rep_thunk rep')
 			forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v'
 			return $ BX.get lens_content v'
 		Just v -> return $ BX.get lens_content v

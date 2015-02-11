@@ -798,19 +798,20 @@ copyOrElseTxICFS proxy src tgt b f = do
 newTxICFS :: FTK TxICFS args rep var content => Proxy args -> ForestVs args -> FilePath -> TxICFTM rep
 newTxICFS proxy args path = inside $ zload (vmonadArgs proxyTxICFS proxy args) path
 
-readTxICFS :: FTK TxICFS args rep var content => Proxy args -> rep -> TxICFTM content
+readTxICFS :: (ForestLayer TxICFS l,FTK TxICFS args rep var content) => Proxy args -> rep -> ForestL TxICFS l content
 readTxICFS proxy rep = do
 	let t = to iso_rep_thunk rep
 	(txargs,path) <- liftM fromJust $ forestM $ getFTVArgsIC proxy rep
 	oldtree <- inside $ treeTxICFSThunk t
 	tree <- forestM latestTree
 	df <- liftM fromJust $ forestM $ diffFS oldtree tree path
-	dv <- diffValueThunk oldtree rep
-	ds <- deltaArgs oldtree proxy txargs txargs
-	let deltas = (txargs,ds)
 	-- load incrementally at the latest tree
-	zloadDeltaMemo proxy deltas (return path) oldtree (rep,getForestMDInTree) path df tree dv
-	liftM (BX.get lens_content) $ Inc.getOutside t
+	inside $ unsafeWorld $ do
+		dv <- diffValueThunk oldtree rep
+		ds <- deltaArgs oldtree proxy txargs txargs
+		let deltas = (txargs,ds)
+		zloadDeltaMemo proxy deltas (return path) oldtree (rep,getForestMDInTree) path df tree dv
+	liftM (BX.get lens_content) $ inside $ Inc.get t
 
 data ManifestConflictTx = ManifestConflictTx [ManifestError] deriving (Show,Eq,Typeable)
 instance Exception ManifestConflictTx
