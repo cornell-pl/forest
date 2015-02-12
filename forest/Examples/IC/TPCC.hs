@@ -4,6 +4,7 @@
 
 module Examples.IC.TPCC where
 
+import Debug.Trace
 import System.Random.Shuffle
 import System.Posix.Files
 import Data.Hashable
@@ -209,10 +210,10 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	
 	type Customer = File CustomerInfo
 	
-	type NewOrder = SymLink where (foreignKey this_att "../Orders")
+	type NewOrder = SymLink where (foreignKey this_att $ parent 1 </> "orders")
 	
 	type Order = Directory {
-		  orderCustomer matches (RE "*.Customer") :: SymLink where (foreignKey orderCustomer_att "../../Customers")
+		  orderCustomer matches (RE "*.customer") :: SymLink where (foreignKey orderCustomer_att $ parent 2 </> "customers")
 		, orderLines :: OrderLines
 		, orderInfo :: File OrderInfo
 	} where <| liftM and $ sequence [consistentOrderLinesCount this,consistentOrderDelivery this] |>
@@ -220,8 +221,8 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	type OrderLines = Map [ l :: OrderLine | l :: Id <- matches (GL "*") ]
 	
 	type OrderLine = Directory {
-		  orderLineItem matches (RE "*.Item") :: SymLink where (foreignKey orderLineItem_att "../../../Stock")
-		, orderLineSupplyWarehouse matches (RE "*.Warehouse") :: SymLink where (foreignKey orderLineSupplyWarehouse_att "../../../../Warehouses")
+		  orderLineItem matches (RE "*.item") :: SymLink where (foreignKey orderLineItem_att $ parent 9 </> "stock")
+		, orderLineSupplyWarehouse matches (RE "*.warehouse") :: SymLink where (foreignKey orderLineSupplyWarehouse_att $ parent 9 </> "warehouses")
 		, orderLineInfo :: File OrderLineInfo
 	}
 	
@@ -231,13 +232,20 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 
 -- * Consistency conditions
 
+parent :: Int -> FilePath
+parent 0 = ""
+parent n = ".." </> parent (pred n)
+
+foreignKey :: FileInfo -> FilePath -> Bool
+foreignKey info path = Just (path </> takeFileName (fullpath info)) == symLink info
+
 --1) Entries in the WAREHOUSE and DISTRICT tables must satisfy the relationship: W_YTD = sum(D_YTD)
 consistentYTD (w_md,w) = do
 	let (w_info_md,w_info) = warehouseInfo w
-	(ds_md,ds) <- read (districts w)
+	ds <- readData (districts w)
 	let w_ytd = warehouseYTD w_info
 	let sumYTDs acc d_var = do
-		(d_md,d) <- read d_var
+		d <- readData d_var
 		let (d_info_md,d_info) = districtInfo d
 		return $ acc + districtYTD d_info
 	ds_ytd <- Foldable.foldlM sumYTDs 0 ds
@@ -250,11 +258,11 @@ consistentYTD (w_md,w) = do
 consistentNextOrder (d_md,d) = do
 	let (d_info_md,d_info) = districtInfo d
 	let d_next_o_id = districtNextOrder d_info
-	(os_md,os) <- read (orders d)
+	os <- readData (orders d)
 	let os_b = case Map.maxViewWithKey os of
 		Nothing -> d_next_o_id - 1 == 0
 		Just ((o_id,_),_) -> d_next_o_id - 1 == o_id
-	(nos_md,nos) <- read (newOrders d)
+	nos <- readData (newOrders d)
 	let nos_b = case Map.maxViewWithKey os of
 		Nothing -> True
 		Just ((no_id,_),_) -> d_next_o_id - 1 == no_id
@@ -275,10 +283,10 @@ consistentNewOrders (nos_md,nos) = do
 -- 5) For any row in the ORDER table, O_CARRIER_ID is set to a null value if and only if there is a corresponding row in
 -- the NEW-ORDER table defined by (O_W_ID, O_D_ID, O_ID) = (NO_W_ID, NO_D_ID, NO_O_ID)
 consistentOrdersNewOrders (d_md,d) = do
-	(os_md,os) <- read (orders d)
-	(nos_md,nos) <- read (newOrders d)
+	os <- readData (orders d)
+	nos <- readData (newOrders d)
 	let testOrder o_id o_var mb = do
-		(o_md,o) <- read o_var
+		o <- readData o_var
 		let (o_info_md,o_info) = orderInfo o
 		case (orderCarrier o_info,List.lookup o_id $ Set.toList nos) of
 			(Nothing,Just _) -> mb
@@ -294,7 +302,7 @@ consistentOrdersNewOrders (d_md,d) = do
 consistentOrderLinesCount (o_md,o) = do
 	let (o_info_md,o_info) = orderInfo o
 	let o_ol_cnt = orderLinesCount o_info
-	(ols_md,ols) <- read (orderLines o)
+	ols <- readData (orderLines o)
 	return $ o_ol_cnt == fromIntegral (Map.size ols)
 
 -- 7) For any row in the ORDER-LINE table, OL_DELIVERY_D is set to a null date/ time if and only if the corresponding
@@ -302,10 +310,10 @@ consistentOrderLinesCount (o_md,o) = do
 -- O_CARRIER_ID set to a null value.
 consistentOrderDelivery (o_md,o) = do
 	let (o_info_md,o_info) = orderInfo o
-	(ols_md,ols) <- read (orderLines o)
+	ols <- readData (orderLines o)
 	let o_carrier_id = orderCarrier o_info
 	let testOL b ol_var = do
-		(ol_md,ol) <- read ol_var
+		ol <- readData ol_var
 		let (ol_info_md,ol_info) = orderLineInfo ol
 		let ol_delivery_d = orderLineDeliveryDate ol_info
 		case (ol_delivery_d,o_carrier_id) of
@@ -318,14 +326,14 @@ consistentOrderDelivery (o_md,o) = do
 -- W_YTD = sum(H_AMOUNT)
 -- for each warehouse defined by (W_ID = H_W_ID).
 consistentWarehouseHistory (co_md,co) = do
-	(ws_md,ws) <- read (warehouses co)
-	(h_md,h) <- read (history co)
+	ws <- readData (warehouses co)
+	h <- readData (history co)
 	let testAmount w_id w_var mb = do
-		(w_md,w) <- read w_var
+		w <- readData w_var
 		let (w_info_md,w_info) = warehouseInfo w
 		let w_ytd = warehouseYTD w_info
 		let sumH i (_,he_var) = do
-			(he_md,he) <- read he_var
+			he <- readData he_var
 			return $ if (historyWarehouse he == w_id) then i + historyAmount he else i
 		sum_h_w_id <- Foldable.foldlM sumH 0 h
 		b <- mb
@@ -336,17 +344,17 @@ consistentWarehouseHistory (co_md,co) = do
 -- D_YTD = sum(H_AMOUNT)
 -- for each district defined by (D_W_ID, D_ID) = (H_W_ID, H_D_ID)
 consistentDistrictHistory (co_md,co) = do
-	(ws_md,ws) <- read (warehouses co)
-	(h_md,h) <- read (history co)
+	ws <- readData (warehouses co)
+	h <- readData (history co)
 	let testWAmount w_id w_var mb = do
-		(w_md,w) <- read w_var
-		(ds_md,ds) <- read (districts w)
+		w <- readData w_var
+		ds <- readData (districts w)
 		let testDAmount d_id d_var mb = do
-			(d_md,d) <- read d_var
+			d <- readData d_var
 			let (d_info_md,d_info) = districtInfo d
 			let d_ytd = districtYTD d_info
 			let sumH i (_,he_var) = do
-				(he_md,he) <- read he_var
+				he <- readData he_var
 				return $ if (historyDistrict he == d_id && historyWarehouse he == w_id) then i + historyAmount he else i
 			sum_h_d_id <- Foldable.foldlM sumH 0 h
 			b <- mb
@@ -362,27 +370,27 @@ consistentDistrictHistory (co_md,co) = do
 -- (O_W_ID, O_D_ID, O_C_ID) = (C_W_ID, C_D_ID, C_ID) and
 -- (OL_DELIVERY_D is not a null value)
 consistentBalance (co_md,co) = do
-	(ws_md,ws) <- read (warehouses co)
-	(h_mh,h) <- read (history co)
+	ws <- readData (warehouses co)
+	h <- readData (history co)
 	let testWarehouse w_id w_var mb = do
-		(w_md,w) <- read w_var
-		(ds_md,ds) <- read (districts w)
+		w <- readData w_var
+		ds <- readData (districts w)
 		let testDistrict d_id d_var mb = do
-			(d_md,d) <- read d_var
-			(cs_md,cs) <- read (customers d)
-			(os_md,os) <- read (orders d)
+			d <- readData d_var
+			cs <- readData (customers d)
+			os <- readData (orders d)
 			let testCustomer c_id c_var mb = do
-				(c_md,c) <- read c_var
+				c <- readData c_var
 				let c_balance = customerBalance c
 				let sumO i o_var = do
-					(o_md,o) <- read o_var
+					o <- readData o_var
 					let (o_c_md,o_c_tgt) = orderCustomer o
 					let o_c_id = parseRep $ takeFileName o_c_tgt
 					if (c_id == o_c_id)
 						then do
-							(ols_md,ols) <- read (orderLines o)
+							ols <- readData (orderLines o)
 							let sumOL i ol_var = do
-								(ol_md,ol) <- read ol_var
+								ol <- readData ol_var
 								let (ol_info_md,ol_info) = orderLineInfo ol
 								case orderLineDeliveryDate ol_info of
 									Nothing -> return i
@@ -391,7 +399,7 @@ consistentBalance (co_md,co) = do
 						else return i
 				c_ol_amount <- Foldable.foldlM sumO 0 os
 				let sumH i (_,he_var) = do
-					(he_md,he) <- read he_var
+					he <- readData he_var
 					return $ if (historyCustomerWarehouse he == w_id && historyCustomerDistrict he == d_id && historyCustomer he == c_id) then i + historyAmount he else i
 				c_h_amount <- Foldable.foldlM sumH 0 h
 				b <- mb
@@ -408,21 +416,21 @@ consistentBalance (co_md,co) = do
 -- C_BALANCE + C_YTD_PAYMENT = sum(OL_AMOUNT)
 -- for any randomly selected customers and where OL_DELIVERY_D is not set to a null date/ time.
 consistentCustomerBalance (d_md,d) = do
-	(cs_md,cs) <- read (customers d)
-	(os_md,os) <- read (orders d)
+	cs <- readData (customers d)
+	os <- readData (orders d)
 	let testCustomer c_id c_var mb = do
-		(c_md,c) <- read c_var
+		c <- readData c_var
 		let c_balance = customerBalance c
 		let c_ytd_payment = customerYTDPayment c
 		let sumOrder i o_var = do
-			(o_md,o) <- read o_var
+			o <- readData o_var
 			let (o_c_md,o_c_tgt) = orderCustomer o
 			let o_c_id = parseRep $ takeFileName o_c_tgt
 			if c_id == o_c_id
 				then do
-					(os_md,os) <- read (orderLines o)
+					os <- readData (orderLines o)
 					let sumOrderLine i ol_var = do
-						(ol_md,ol) <- read ol_var
+						ol <- readData ol_var
 						let (ol_info_md,ol_info) = orderLineInfo ol
 						let ol_amount = orderLineAmount ol_info
 						let ol_delivery_d = orderLineDeliveryDate ol_info
@@ -435,9 +443,6 @@ consistentCustomerBalance (d_md,d) = do
 		b <- mb
 		return $ (c_balance + realToFrac c_ytd_payment == realToFrac sum_c_ols) && b
 	Map.foldrWithKey testCustomer (return True) cs
-
-foreignKey :: FileInfo -> FilePath -> Bool
-foreignKey info path = Just (path </> takeFileName (fullpath info)) == symLink info
 
 -- * Miscellaneous random data generating function
 
@@ -464,7 +469,7 @@ lastNameFromInt n = (dict!!a ++ dict!!b ++ dict!!c) where
 a_string :: (Int,Int) -> IO String
 a_string (x,y) = generate $ do
 	l <- choose (x,y)
-	vectorOf l arbitrary
+	vectorOf l $ choose ('0','z') -- just to avoid random garbage
 
 n_string :: (Int,Int) -> IO String
 n_string (x,y) = generate $ do
@@ -495,8 +500,8 @@ populate w = do
 	createDirectoryIfMissing True ws_path
 	let populateWarehouse w_id = do
 		let w_path = ws_path </> show w_id
-		let w_info_path = ws_path </> "warehouseInfo"
-		createDirectoryIfMissing True w_info_path
+		createDirectoryIfMissing True w_path
+		let w_info_path = w_path </> "warehouseInfo"
 		w_name <- a_string (6,10)
 		w_street1 <- a_string (10,20)
 		w_street2 <- a_string (10,20)
@@ -508,10 +513,11 @@ populate w = do
 		let w_info = WarehouseInfo w_name (Location [w_street1,w_street2] w_city w_state w_zip) w_tax w_ytd
 		Pads.printFileRep w_info_path w_info
 		
-		let ds_path = ws_path </> "districts"
+		let ds_path = w_path </> "districts"
 		createDirectoryIfMissing True ds_path
 		let populateDistrict d_id = do
 			let d_path = ds_path </> show d_id
+			createDirectoryIfMissing True d_path
 			let d_info_path = d_path </> "districtInfo"
 			d_name <- a_string (6,10)
 			d_street1 <- a_string (10,20)
@@ -557,8 +563,10 @@ populate w = do
 			os_c_ids :: [Integer] <- shuffleM [1..3000]
 			let populateOrder (o_id,o_c_id) = do
 				let o_path = os_path </> show o_id
-				let o_c_tgt = "../../Customers" </> show o_c_id
-				let o_c_path = o_path </> addExtension (show o_c_id) "Customer"
+				createDirectoryIfMissing True o_path
+				let o_c_tgt = parent 2 </> "customers" </> show o_c_id
+				let o_c_path = o_path </> addExtension (show o_c_id) "customer"
+				home <- getCurrentDirectory
 				createSymbolicLink o_c_tgt o_c_path
 				
 				let o_info_path = o_path </> "orderInfo"
@@ -571,13 +579,14 @@ populate w = do
 				createDirectoryIfMissing True ols_path
 				let populateOrderLine ol_id = do
 					let ol_path = ols_path </> show ol_id
+					createDirectoryIfMissing True ol_path
 					ol_i_id :: Integer <- generate $ choose (1,100000)
-					let ol_i_tgt = "../../../Stock" </> show ol_i_id
-					let ol_i_path = ol_path </> addExtension (show ol_i_id) "Item"
+					let ol_i_tgt = parent 9 </> "Stock" </> show ol_i_id
+					let ol_i_path = ol_path </> addExtension (show ol_i_id) "item"
 					createSymbolicLink ol_i_tgt ol_i_path
 					
-					let ol_supply_w_tgt = "../../../../Warehouses" </> show w_id
-					let ol_supply_w_path = ol_path </> addExtension (show w_id) "Warehouse"
+					let ol_supply_w_tgt = parent 9 </> "warehouses" </> show w_id
+					let ol_supply_w_path = ol_path </> addExtension (show w_id) "warehouse"
 					createSymbolicLink ol_supply_w_tgt ol_supply_w_path
 					
 					let ol_info_path = ol_path </> "orderLineInfo"
@@ -592,8 +601,8 @@ populate w = do
 			let nos_path = d_path </> "newOrders"
 			createDirectoryIfMissing True nos_path
 			let populateNewOrder no_id = do
-				let no_tgt = "../Orders" </> show no_id
-				let no_path = nos_path </> show w_id
+				let no_tgt = parent 1 </> "orders" </> show no_id
+				let no_path = nos_path </> show no_id
 				createSymbolicLink no_tgt no_path
 			mapM_ populateNewOrder [2101..3000]
 			
@@ -639,7 +648,7 @@ populate w = do
 	
 -- * Transactions
 
-root_db = "company"
+root_db = "../company"
 
 type NewOrderInput = (Id,Id,Id,Map Id (Id,Unsigned_2))
 
@@ -680,10 +689,10 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 	-- retrieved.
 	
 	co_var :: Company TxVarFS <- new () root_db
-	(co_md,co) <- read co_var
-	(ws_md,ws) <- read (warehouses co)
+	co <- readData co_var
+	ws <- readData (warehouses co)
 	w_var <- lookupEntry w_id ws
-	(w_md,w) <- read w_var
+	w <- readData w_var
 	let (w_info_md,w_info) = warehouseInfo w
 	let w_tax = warehouseTax w_info
 	
@@ -691,7 +700,7 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 	-- retrieved, and D_NEXT_O_ID, the next available order number for the district, is retrieved and incremented
 	-- by one.
 	
-	(ds_md,ds) <- read (districts w)
+	ds <- readData (districts w)
 	d_var <- lookupEntry d_id ds
 	(d_md,d) <- read d_var
 	let (d_info_md,d_info) = districtInfo d
@@ -703,9 +712,9 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 	-- the customer's discount rate, C_LAST, the customer's last name, and C_CREDIT, the customer's credit status,
 	-- are retrieved.
 	
-	(cs_md,cs) <- read (customers d)
+	cs <- readData (customers d)
 	c_var <- lookupEntry c_id cs
-	(c_md,c)  <- read c_var
+	c  <- readData c_var
 	let c_discount = customerDiscount c
 	let c_last = lastName $ customerName c
 	let c_credit = customerCredit c
@@ -717,8 +726,8 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 	(os_md,os) <- read (orders d)
 	let o_path = fullpath os_md </> printRep d_next_o
 	o_var :: Order TxVarFS <- new () o_path
-	let o_c_path = o_path </> addExtension (printRep c_id) "Customer"
-	let o_c_path_tgt = o_c_path </> "../../Customers" </> (printRep c_id)
+	let o_c_path = o_path </> addExtension (printRep c_id) "customer"
+	let o_c_path_tgt = o_c_path </> parent 3 </> "customers" </> (printRep c_id)
 	let o_c = ((cleanSymLinkFileInfo o_c_path o_c_path_tgt,cleanBasePD),o_c_path_tgt)
 	let o_local = and $ map ((==w_id) . fst) $ Map.elems order
 	let o_cnt = toEnum $ Map.size order
@@ -738,9 +747,9 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 		-- The row in the ITEM table with matching I_ID (equals OL_I_ID) is selected and I_PRICE, the price of the
 		-- item, I_NAME, the name of the item, and I_DATA are retrieved.
 	
-		(is_md,is) <- read (items co)
+		is <- readData (items co)
 		i_var :: Item TxVarFS <- lookupEntry ol_i_id is
-		(i_md,i) <- read i_var
+		i <- readData i_var
 		let i_price = itemPrice i
 		let i_name = itemName i
 		let i_data = itemData i
@@ -754,8 +763,8 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 		-- S_REMOTE_CNT is incremented by 1.
 		
 		ol_supply_w_var :: Warehouse TxVarFS <- lookupEntry ol_supply_w_id ws
-		(ol_supply_w_md,ol_supply_w) <- read ol_supply_w_var
-		(s_md,s) <- read (stock ol_supply_w)
+		ol_supply_w <- readData ol_supply_w_var
+		s <- readData (stock ol_supply_w)
 		s_i_var :: StockItem TxVarFS <- lookupEntry ol_i_id s
 		(s_i_md,s_i) <- read s_i_var
 		let s_i_quantity = stockItemQuantity s_i
@@ -788,11 +797,11 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 		let ol_path = o_path </> "orderLines" </> printRep ol_i_id
 		ol_var :: OrderLine TxVarFS <- new () ol_path
 		let ol_md = cleanFileInfo ol_path
-		let ol_i_path = ol_path </> addExtension (printRep ol_i_id) "Item"
-		let ol_i_path_tgt = ol_i_path </> "../../../Stock" </> (printRep ol_i_id)
+		let ol_i_path = ol_path </> addExtension (printRep ol_i_id) "item"
+		let ol_i_path_tgt = ol_i_path </> parent 9 </> "stock" </> (printRep ol_i_id)
 		let ol_i = ((cleanSymLinkFileInfo ol_i_path ol_i_path_tgt,cleanBasePD),ol_i_path_tgt)
-		let ol_supply_w_path = ol_path </> addExtension (printRep ol_supply_w_id) "Warehouse"
-		let ol_supply_w_path_tgt = ol_i_path </> "../../../../Warehouses" </> (printRep ol_supply_w_id)
+		let ol_supply_w_path = ol_path </> addExtension (printRep ol_supply_w_id) "warehouse"
+		let ol_supply_w_path_tgt = ol_i_path </> parent 9 </> "warehouses" </> (printRep ol_supply_w_id)
 		let ol_supply_w = ((cleanSymLinkFileInfo ol_supply_w_path ol_supply_w_path_tgt,cleanBasePD),ol_supply_w_path_tgt)
 		let ol_info = OrderLineInfo ol_ix Nothing ol_quantity ol_amount (s_i_dists !! succ (fromEnum d_id))
 		let ol_info_md = (cleanFileInfo $ ol_path </> "orderLineInfo",Pads.defaultMd ol_info)
@@ -844,7 +853,7 @@ payment (w_id,d_id,(c_w_id,c_d_id,c_id_or_last),h_amount) = atomically $ do
 	
 	co_var :: Company TxVarFS <- new () root_db
 	(co_md,co) <- read co_var
-	(ws_md,ws) <- read (warehouses co)
+	ws <- readData (warehouses co)
 	w_var <- lookupEntry w_id ws
 	(w_md,w) <- read w_var
 	let (w_info_md,w_info) = warehouseInfo w
@@ -861,7 +870,7 @@ payment (w_id,d_id,(c_w_id,c_d_id,c_id_or_last),h_amount) = atomically $ do
 	-- D_STREET_2, D_CITY, D_STATE, and D_ZIP are retrieved and D_YTD, the district's year-to-date balance, is
 	-- increased by H_AMOUNT.
 	
-	(ds_md,ds) <- read (districts w)
+	ds <- readData (districts w)
 	d_var <- lookupEntry d_id ds
 	(d_md,d) <- read d_var
 	let (d_info_md,d_info) = districtInfo d
@@ -875,20 +884,20 @@ payment (w_id,d_id,(c_w_id,c_d_id,c_id_or_last),h_amount) = atomically $ do
 	writeOrThrow d_var (d_md,d { districtInfo = (d_info_md,d_info { districtYTD = d_ytd' }) }) WriteFailed
 	
 	c_w_var <- lookupEntry c_w_id ws
-	(c_w_md,c_w) <- read c_w_var
-	(c_ds_md,c_ds) <- read (districts c_w)
+	c_w <- readData c_w_var
+	c_ds <- readData (districts c_w)
 	c_d_var <- lookupEntry c_d_id c_ds
-	(c_d_md,c_d) <- read c_d_var
-	(cs_md,cs) <- read (customers c_d)
-	(c_id,c_var,(c_md,c)) <- case c_id_or_last of
+	c_d <- readData c_d_var
+	cs <- readData (customers c_d)
+	(c_id,c_var,c) <- case c_id_or_last of
 	
 		-- Case 1, the customer is selected based on customer number: the row in the CUSTOMER table with matching
 		-- C_W_ID, C_D_ID and C_ID is selected.
 	
 		Left c_id -> do
 			c_var <- lookupEntry c_id cs
-			(c_md,c) <- read c_var
-			return (c_id,c_var,(c_md,c))
+			c <- readData c_var
+			return (c_id,c_var,c)
 			
 		-- Case 2, the customer is selected based on customer last name: all rows in the CUSTOMER table with
 		-- matching C_W_ID, C_D_ID and C_LAST are selected sorted by C_FIRST in ascending order. Let n be the
@@ -897,10 +906,10 @@ payment (w_id,d_id,(c_w_id,c_d_id,c_id_or_last),h_amount) = atomically $ do
 		
 		Right c_last -> do
 			let sorted_filter_c_last c_id c_var mxs = do
-				(c_md,c) <- read c_var
+				c <- readData c_var
 				let c_name = customerName c
 				if (c_last == lastName c_name)
-					then liftM (List.insert (firstName c_name,(c_id,c_var,(c_md,c)))) mxs
+					then liftM (List.insert (firstName c_name,(c_id,c_var,c))) mxs
 					else mxs
 			sorted_cs <- Map.foldrWithKey sorted_filter_c_last (return []) cs
 			return $ snd $ sorted_cs !! succ (ceiling $ toEnum (length sorted_cs) / 2)
@@ -936,6 +945,7 @@ payment (w_id,d_id,(c_w_id,c_d_id,c_id_or_last),h_amount) = atomically $ do
 		then take 500 $ printRep c_id ++ printRep c_d_id ++ printRep c_w_id ++ printRep d_id ++ printRep w_id ++ printRep h_amount ++ c_data
 		else c_data
 	
+	c_md <- readMeta c_var
 	writeOrThrow c_var (c_md,c { customerBalance = c_balance', customerYTDPayment = c_ytd_payment', customerData = c_data' }) WriteFailed
 	
 	-- H_DATA is built by concatenating W_NAME and D_NAME separated by 4 spaces.
@@ -980,24 +990,24 @@ orderStatus :: OrderStatusInput -> IO OrderStatusOutput
 orderStatus (w_id,d_id,c_id_or_last) = atomically $ do
 	
 	co_var :: Company TxVarFS <- new () root_db
-	(co_md,co) <- read co_var
-	(ws_md,ws) <- read (warehouses co)
+	co <- readData co_var
+	ws <- readData (warehouses co)
 	w_var <- lookupEntry w_id ws
-	(w_md,w) <- read w_var
-	(ds_md,ds) <- read (districts w)
+	w <- readData w_var
+	ds <- readData (districts w)
 	d_var <- lookupEntry d_id ds
-	(d_md,d) <- read d_var
-	(cs_md,cs) <- read (customers d)
+	d <- readData d_var
+	cs <- readData (customers d)
 	
-	(c_id,c_var,(c_md,c)) <- case c_id_or_last of
+	(c_id,c_var,c) <- case c_id_or_last of
 	
 		-- Case 1, the customer is selected based on customer number: the row in the CUSTOMER table with matching
 		-- C_W_ID, C_D_ID, and C_ID is selected.
 		
 		Left c_id -> do
 				c_var <- lookupEntry c_id cs
-				(c_md,c) <- read c_var
-				return (c_id,c_var,(c_md,c))
+				c <- readData c_var
+				return (c_id,c_var,c)
 			
 		-- Case 2, the customer is selected based on customer last name: all rows in the CUSTOMER table with
 		-- matching C_W_ID, C_D_ID and C_LAST are selected sorted by C_FIRST in ascending order. Let n be the
@@ -1005,10 +1015,10 @@ orderStatus (w_id,d_id,c_id_or_last) = atomically $ do
 	
 		Right c_last -> do
 			let sorted_filter_c_last c_id c_var mxs = do
-				(c_md,c) <- read c_var
+				c <- readData c_var
 				let c_name = customerName c
 				if (c_last == lastName c_name)
-					then liftM (List.insert (firstName c_name,(c_id,c_var,(c_md,c)))) mxs
+					then liftM (List.insert (firstName c_name,(c_id,c_var,c))) mxs
 					else mxs
 			sorted_cs <- Map.foldrWithKey sorted_filter_c_last (return []) cs
 			return $ snd $ sorted_cs !! succ (ceiling $ toEnum (length sorted_cs) / 2)
@@ -1024,9 +1034,9 @@ orderStatus (w_id,d_id,c_id_or_last) = atomically $ do
 	-- (equals C_ID), and with the largest existing O_ID, is selected. This is the most recent order placed by that
 	-- customer. O_ID, O_ENTRY_D, and O_CARRIER_ID are retrieved.
 	
-	(os_md,os) <- read (orders d)
+	os <- readData (orders d)
 	let (o_id,o_var) = Map.findMax os
-	(o_md,o) <- read o_var
+	o <- readData o_var
 	let (o_info_md,o_info) = orderInfo o
 	let o_entry_d = orderEntryDate o_info
 	let o_carrier_id = orderCarrier o_info
@@ -1035,9 +1045,9 @@ orderStatus (w_id,d_id,c_id_or_last) = atomically $ do
 	-- and OL_O_ID (equals O_ID) are selected and the corresponding sets of OL_I_ID, OL_SUPPLY_W_ID,
 	-- OL_QUANTITY, OL_AMOUNT, and OL_DELIVERY_D are retrieved.
 	
-	(ols_md,ols) <- read (orderLines o)
+	ols <- readData (orderLines o)
 	let viewOrderLine ol_var = do
-		(ol_md,ol) <- read ol_var
+		ol <- readData ol_var
 		let (ol_supply_w_md,ol_supply_w_tgt) = orderLineSupplyWarehouse ol
 		let ol_supply_w_id = parseRep $ takeFileName ol_supply_w_tgt
 		let (ol_i_md,ol_i_tgt) = orderLineItem ol
@@ -1065,15 +1075,15 @@ delivery :: DeliveryInput -> IO ()
 delivery (w_id,o_carrier_id) = atomically $ do
 	
 	co_var :: Company TxVarFS <- new () root_db
-	(co_md,co) <- read co_var
-	(ws_md,ws) <- read (warehouses co)
+	co <- readData co_var
+	ws <- readData (warehouses co)
 	w_var <- lookupEntry w_id ws
-	(w_md,w) <- read w_var
-	(ds_md,ds) <- read (districts w)
+	w <- readData w_var
+	ds <- readData (districts w)
 	
 	-- For each of the 10 districts (D_W_ID , D_ID) within that warehouse
 	let deliveryDistrict d_var = do
-		(d_md,d) <- read d_var
+		d <- readData d_var
 		(nos_md,nos) <- read (newOrders d)
 	
 		-- The row in the NEW-ORDER table with matching NO_W_ID (equals W_ID) and NO_D_ID (equals D_ID)
@@ -1090,7 +1100,7 @@ delivery (w_id,o_carrier_id) = atomically $ do
 				
 				-- The row in the ORDER table with matching O_W_ID (equals W_ ID), O_D_ID (equals D_ID), and O_ID
 				-- (equals NO_O_ID) is selected, O_C_ID, the customer number, is retrieved, and O_CARRIER_ID is updated.
-				(os_md,os) <- read (orders d)
+				os <- readData (orders d)
 				o_var <- lookupEntry no_id os
 				(o_md,o) <- read o_var
 				let (o_c_md,o_c_tgt) = orderCustomer o
@@ -1103,14 +1113,15 @@ delivery (w_id,o_carrier_id) = atomically $ do
 				-- All rows in the ORDER-LINE table with matching OL_W_ID (equals O_W_ID), OL_D_ID (equals O_D_ID),
 				-- and OL_O_ID (equals O_ID) are selected. All OL_DELIVERY_D, the delivery dates, are updated to the
 				-- current system time as returned by the operating system and the sum of all OL_AMOUNT is retrieved.
-				(ols_md,ols) <- read (orderLines o)
+				ols <- readData (orderLines o)
 				current_time <- unsafeIOToFTM getCurrentTime
 				let updateOrderLine acc ol_var = do
-					(ol_md,ol) <- read ol_var
+					ol <- readData ol_var
 					let (ol_info_md,ol_info) = orderLineInfo ol
 					let ol_amount = orderLineAmount ol_info
 					let ol_info' = ol_info { orderLineDeliveryDate = Just current_time }
 					let ol' = ol { orderLineInfo = (ol_info_md,ol_info') }
+					ol_md <- readMeta ol_var
 					writeOrThrow ol_var (ol_md,ol') WriteFailed
 					return $ acc + ol_amount
 				ols_amount <- Foldable.foldlM updateOrderLine 0 ols
@@ -1118,12 +1129,13 @@ delivery (w_id,o_carrier_id) = atomically $ do
 				-- The row in the CUSTOMER table with matching C_W_ID (equals W_ID), C_D_ID (equals D_ID), and C_ID
 				-- (equals O_C_ID) is selected and C_BALANCE is increased by the sum of all order-line amounts
 				-- (OL_AMOUNT) previously retrieved. C_DELIVERY_CNT is incremented by 1.
-				(cs_md,cs) <- read (customers d)
+				cs <- readData (customers d)
 				c_var :: Customer TxVarFS <- lookupEntry o_c_id cs
-				(c_md,c) <- read c_var
+				c <- readData c_var
 				let c_balance = customerBalance c
 				let c_delivery_cnt = customerDeliveryCount c
 				let c' = c { customerBalance = c_balance + realToFrac ols_amount, customerDeliveryCount = succ c_delivery_cnt }
+				c_md <- readMeta c_var
 				writeOrThrow c_var (c_md,c') WriteFailed
 				
 	Foldable.mapM_ deliveryDistrict ds
@@ -1146,13 +1158,13 @@ stockLevel (w_id,d_id,threshold) = atomically $ do
 	
 	-- The row in the DISTRICT table with matching D_W_ID and D_ID is selected and D_NEXT_O_ID is retrieved. 
 	co_var :: Company TxVarFS <- new () root_db
-	(co_md,co) <- read co_var
-	(ws_md,ws) <- read (warehouses co)
+	co <- readData co_var
+	ws <- readData (warehouses co)
 	w_var <- lookupEntry w_id ws
-	(w_md,w) <- read w_var
-	(ds_md,ds) <- read (districts w)
+	w <- readData w_var
+	ds <- readData (districts w)
 	d_var <- lookupEntry d_id ds
-	(d_md,d) <- read d_var
+	d <- readData d_var
 	let (d_info_md,d_info) = districtInfo d
 	let d_next_o_id = districtNextOrder d_info
 	
@@ -1160,27 +1172,27 @@ stockLevel (w_id,d_id,threshold) = atomically $ do
 	-- OL_O_ID (lower than D_NEXT_O_ID and greater than or equal to D_NEXT_O_ID minus 20) are selected.
 	-- They are the items for 20 recent orders of the district. 
 	
-	(os_md,os) <- read (orders d)
+	os <- readData (orders d)
 	let os_20 = Map.filterWithKey (\o_id o_var -> (d_next_o_id - 20) <= o_id && o_id < d_next_o_id) os
 	let getOrderLineItems is ol_var = do
-		(ol_md,ol) <- read ol_var
+		ol <- readData ol_var
 		let (ol_i_md,ol_i_tgt) = orderLineItem ol
 		let ol_i = parseRep $ takeFileName ol_i_tgt
 		return $ Set.insert ol_i is
 	let getOrderItems is o_var = do
-		(o_md,o) <- read o_var
-		(ols_md,ols) <- read (orderLines o)
+		o <- readData o_var
+		ols <- readData (orderLines o)
 		Foldable.foldlM getOrderLineItems is ols
 	is <- Foldable.foldlM getOrderItems Set.empty os_20
 	
 	-- All rows in the STOCK table with matching S_I_ID (equals OL_I_ID) and S_W_ID (equals W_ID) from the list
 	-- of distinct item numbers and with S_QUANTITY lower than threshold are counted (giving low_stock).
 	
-	(s_md,s) <- read (stock w)
+	s <- readData (stock w)
 	let getItemStock s_id s_var mxs = do
 		if s_id `Set.member` is
 			then do
-				(s_md,s) <- read s_var
+				s <- readData s_var
 				let s_quantity = stockItemQuantity s
 				if s_quantity < threshold
 					then liftM ((s_id,s):) mxs

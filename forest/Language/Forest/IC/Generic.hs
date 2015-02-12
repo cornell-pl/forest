@@ -40,11 +40,11 @@ import Control.Monad.Writer (Writer(..),WriterT(..))
 import qualified Control.Monad.Writer as Writer
 import Language.Forest.IC.Default
 import Language.Pads.Padsc hiding (gmapT,lift,gmapQr)
-import Prelude hiding (mod)
+import Prelude hiding (mod,read)
 import Data.Monoid
 import Data.WithClass.MData
 import Language.Pads.Generic
-import Control.Monad.Incremental
+import Control.Monad.Incremental hiding (read)
 import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),Arg(..),(:*:)(..))
 import qualified Language.Forest.Pure.MetaData as Pure
 import Language.Forest.Manifest
@@ -129,7 +129,6 @@ class TxICForest fs where
 	validate :: (ForestLayer fs l,FTK fs args rep var content) => rep -> ForestL fs l Forest_err
 	validate = get_errors
 	
-	
 	-- * An attempt to mimic regular filesystem operations, but over Forest specifications
 	
 	-- recursively deletes a variable from the filesystem; should always succeed
@@ -142,7 +141,7 @@ unsafeIOToFTM = forestM . forestIO
 	
 tryWrite :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
-	
+
 writeOrRetry :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
 writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
 
@@ -151,6 +150,15 @@ writeOrShow t v = writeOrElse t v "" (return . show)
 
 writeOrThrow :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content,Exception e) => rep -> content -> e -> FTM fs ()
 writeOrThrow t v e = writeOrElse t v () (Prelude.const $ throw e)
+
+-- * Data/Metadata only functions
+-- we don't provide data/metadata only write functions because writeData >> writeMeta would not be the same as write, thus misleading.
+
+readData :: (TxICForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l rep_content
+readData = liftM snd . read
+	
+readMeta :: (TxICForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l md_content
+readMeta = liftM fst . read
 
 -- * Zipped Incremental Forest interface
 

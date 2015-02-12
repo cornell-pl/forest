@@ -24,3 +24,6 @@ clean:
 	find . -name "*.o" -type f -delete
 	find . -name "*.o-boot" -type f -delete 
 	rm -rf dist
+run:
+	ghc --make Run.hs -fcontext-stack=60
+	./Run

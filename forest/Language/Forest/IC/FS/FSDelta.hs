@@ -81,6 +81,7 @@ commitFSTreeDeltaNode root (FSTreeNew td _ ondisk permissions) = do
 	-- remove any data at this path before creating the link
 	runShellCommand_ $ "rm -rf " ++ show root
 	-- copy the new data
+	createDirectoryIfMissing True (takeDirectory root)
 	runShellCommand_ $ "cp -rf " ++ show ondisk ++ " " ++ show root
 	copyPermissions permissions root
 	xs <- commitFSTreeDelta root td
@@ -100,6 +101,7 @@ commitFSTreeDeltaNode root (FSTreeNewLink link mbondisk) = do
 	-- create a symbolic link
 --	putStrLn $ "creating link " ++ show link ++ " " ++ show root
 	--createSymbolicLink link root
+	createDirectoryIfMissing True (takeDirectory root)
 	runShellCommand_ $ "ln -s " ++ show link ++ " " ++ show root
 --	case mbondisk of
 --		Nothing -> return ()
