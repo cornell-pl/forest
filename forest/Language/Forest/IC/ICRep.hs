@@ -43,7 +43,7 @@ import Data.Int
 import Control.Monad.Incremental.Adapton
 import Control.Monad.Incremental.List
 import Control.Monad.Incremental.Generics
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Data.Word
 import Data.Time.Clock
 

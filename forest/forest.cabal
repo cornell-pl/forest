@@ -74,6 +74,9 @@ Library
   Exposed-modules: Data.List.Diff
                    Language.Forest.Errors,
                    Language.Forest.FS.FSRep,
+                   Language.Forest.FS.Diff,
+                   Language.Forest.FS.FSDelta,
+                   Language.Forest.FS.NILFS,
                    Language.Forest.IC.Auth,
                    Language.Forest.IC.BaseTypes,
                    Language.Forest.IC.Default
@@ -91,11 +94,8 @@ Library
                    Language.Forest.IC.CodeGen,
                    Language.Forest.IC.Display,
                    Language.Forest.IC.Draw,
-                   Language.Forest.IC.FS.Diff,
-                   Language.Forest.IC.FS.FSDelta,
                    Language.Forest.IC.FS.LazyFS,
                    Language.Forest.IC.FS.NILFS,
-                   Language.Forest.IC.FS.NILFSDiff,
                    Language.Forest.IC.FS.TxVarFS,
                    Language.Forest.IC.FS.TxICFS,
                    Language.Forest.IC.Generic,

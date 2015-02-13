@@ -21,7 +21,7 @@ import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..))
 import Language.Forest.Errors
 import Language.Forest.IC.Generic
 import qualified Language.Forest.Errors as E
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import System.Directory
 import System.FilePath.Posix
 import Control.Monad.Reader (Reader(..),ReaderT(..))

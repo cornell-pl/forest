@@ -5,7 +5,7 @@
 module Language.Forest.FS.FSRep where
 
 import System.Mem.WeakKey
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Control.Monad
 import Data.Maybe
 import Data.List.Split

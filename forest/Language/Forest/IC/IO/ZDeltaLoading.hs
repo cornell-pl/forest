@@ -15,14 +15,14 @@ import Language.Forest.IC.MetaData
 import Language.Forest.IC.Generic
 import Language.Forest.Errors
 import Language.Forest.IC.ICRep
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import qualified Language.Forest.Pure.MetaData as Pure
 import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
 import Data.List.Diff
 import Data.List as List
 import Data.IORef
 import Prelude hiding (const,read,mod)
-import Language.Forest.IC.FS.Diff
+import Language.Forest.FS.Diff
 import Language.Forest.IO.Shell
 import qualified Prelude
 

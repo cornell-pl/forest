@@ -20,7 +20,7 @@ import Language.Forest.Pure.MetaData
 import Language.Forest.Errors
 import Language.Forest.IC.Generic hiding (SymLink)
 import qualified Language.Forest.Errors as E
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Data.WithClass.MData
 import System.Directory
 import System.FilePath.Posix

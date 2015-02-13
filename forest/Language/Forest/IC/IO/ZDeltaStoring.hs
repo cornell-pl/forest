@@ -12,7 +12,7 @@ import qualified Prelude
 import Language.Forest.IO.Utils
 import Language.Forest.Syntax
 import Language.Forest.IC.BX as BX
-import Language.Forest.IC.FS.Diff
+import Language.Forest.FS.Diff
 import Language.Forest.IC.ValueDelta
 import Language.Forest.IC.ICRep
 import Language.Pads.Padsc hiding (lift,numErrors)
@@ -22,7 +22,7 @@ import Language.Forest.IC.Default
 import Language.Forest.IC.Generic
 import Language.Forest.IC.IO.Storing
 import Language.Forest.Errors
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..))
 import qualified Language.Forest.Pure.MetaData as Pure
 import Control.Monad.Incremental as Inc hiding (memo)

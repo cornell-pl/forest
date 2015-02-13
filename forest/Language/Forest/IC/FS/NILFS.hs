@@ -6,7 +6,7 @@ import qualified Prelude
 import Prelude hiding (read,mod,const)
 import Control.Monad.Incremental.Adapton.Memo
 import Filesystem.Path.CurrentOS hiding (FilePath,concat,(</>))
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Language.Forest.IO.Utils
 --import System.FSNotify
 import Language.Forest.FS.FSRep
@@ -58,7 +58,7 @@ import Control.Monad.Trans
 import Control.Monad.Ref
 import Control.Monad.Incremental as Inc
 import Data.Time.LocalTime
-import Language.Forest.IC.FS.NILFSDiff
+import Language.Forest.FS.NILFS
 import System.Mem.MemoTable
 import Control.Monad.Lazy
 import Control.Monad.Reader (Reader(..),ReaderT(..),MonadReader(..))

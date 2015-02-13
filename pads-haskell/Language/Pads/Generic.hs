@@ -21,8 +21,10 @@ import qualified Data.ByteString as B
 import qualified Control.Exception as CE
 import Data.Data
 import Data.Generics.Aliases (extB, ext1B)
-import Data.Map
-import Data.Set
+import Data.Map (Map(..))
+import qualified Data.Map as Map
+import Data.Set (Set(..))
+import qualified Data.Set as Set
 import Language.Pads.Errors
 
 import System.Posix.Types
@@ -146,7 +148,7 @@ gdef = def_help
              constr = getConstr ty
          in fromConstrB gdef constr 
 
-ext2 :: (Data a, Typeable2 t)
+ext2 :: (Data a, Typeable t)
      => c a
      -> (forall d1 d2. (Data d1, Data d2) => c (t d1 d2))
      -> c a
@@ -154,42 +156,11 @@ ext2 def ext = maybe def id (dataCast2 ext)
 
 newtype B x = B {unB :: x}
 
-ext2B :: (Data a, Typeable2 t)
+ext2B :: (Data a, Typeable t)
       => a
       -> (forall b1 b2. (Data b1, Data b2) => t b1 b2)
       -> a
 ext2B def ext = unB ((B def) `ext2` (B ext))
-
-
-myempty :: forall a. Data a => a
-myempty = general 
-      `extB` char 
-      `extB` int
-      `extB` integer
-      `extB` float 
-      `extB` double 
-      `extB` coff
-      `extB` epochTime
-      `extB` fileMode
-      `ext2B` map
-      `ext1B` list where
-  -- Generic case
-  general :: Data a => a
-  general = fromConstrB myempty (indexConstr (dataTypeOf general) 1)
-  
-  -- Base cases
-  char    = '\NUL'
-  int     = 0      :: Int
-  integer = 0      :: Integer
-  float   = 0.0    :: Float
-  double  = 0.0    :: Double
-  coff    = 0      :: COff
-  epochTime = 0    :: EpochTime
-  fileMode = 0     :: FileMode
-  list :: Data b => [b]
-  list    = []
-  map :: Data.Map.Map k v
-  map = Data.Map.empty
 
 
 
@@ -198,16 +169,16 @@ class BuildContainer2 c key item where
   toList2         :: c key item -> [(key,item)]
 
 instance Ord key => BuildContainer2 Map key a  where
-  buildContainer2 = Data.Map.fromList
-  toList2         = Data.Map.toList
+  buildContainer2 = Map.fromList
+  toList2         = Map.toList
 
 class BuildContainer1 c key item where
   buildContainer1 :: [(key,item)] -> c (key, item)
   toList1         :: c (key, item) ->  [(key,item)]
 
 instance (Ord a,Ord key) => BuildContainer1 Set key a  where
-  buildContainer1 = Data.Set.fromList
-  toList1         = Data.Set.toList
+  buildContainer1 = Set.fromList
+  toList1         = Set.toList
 
 instance BuildContainer1 [] key a  where
   buildContainer1 = id

@@ -68,16 +68,11 @@ printF q = Prelude.print (B.unpack (q B.empty))
 
 --------------------------------------------------
 
-printList' (reps, (_,mds)) printItem printSep printTerm = (concatFL (List.intersperse printSep (map printItem (zip reps mds))) ) +++ printTerm
+printList' (reps, (_,mds)) printItem printSep printTerm = (concatFL (List.intersperse printSep (map printItem (zip reps $ mds ++ repeat myempty))) ) +++ printTerm
 
 printList :: (Data r,Data m) => (PadsPrinter (r,m)) -> FList -> FList -> ([r], (Base_md,[m])) -> FList
 printList printItem printSep printTerm (reps, (_,mds)) = 
-   (concatFL (List.intersperse printSep (map printItem (zip reps mds))) )
-   +++ printTerm
-
-printListPads :: (Data r,Data (Meta r)) => (PadsPrinter (r,Meta r)) -> FList -> FList -> ([r], (b,[Meta r])) -> FList
-printListPads printItem printSep printTerm (reps, (_,mds)) = 
-   (concatFL (List.intersperse printSep (map printItem (zip reps mds))) )
+   (concatFL (List.intersperse printSep (map printItem (zip reps $ mds ++ repeat myempty))) )
    +++ printTerm
 
 {-

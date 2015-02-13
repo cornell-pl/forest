@@ -36,7 +36,7 @@ import qualified Data.Map as Map
 import Data.Set (Set(..))
 import qualified Data.Set as Set
 import Control.Monad.State (State(..),StateT(..),MonadState(..))
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Control.Monad.Trans
 import qualified Control.Monad.State as State
 import Language.Forest.Manifest

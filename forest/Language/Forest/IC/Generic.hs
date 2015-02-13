@@ -48,7 +48,7 @@ import Control.Monad.Incremental hiding (read)
 import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),Arg(..),(:*:)(..))
 import qualified Language.Forest.Pure.MetaData as Pure
 import Language.Forest.Manifest
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import System.FilePath.Posix
 import Data.Map hiding (map)
 import Data.Set hiding (map)

@@ -63,7 +63,7 @@ import qualified Data.Set as Set
 import Control.Monad.State (State(..),StateT(..),MonadState(..))
 import Control.Monad.Reader (Reader(..),ReaderT(..),MonadReader(..))
 import Control.Monad.Reader as Reader
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Control.Monad.Trans
 import qualified Control.Monad.State as State
 import Language.Forest.Manifest

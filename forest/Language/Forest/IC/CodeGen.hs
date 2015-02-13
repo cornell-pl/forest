@@ -63,7 +63,7 @@ import Language.Forest.IC.Generic as IC
 import qualified Language.Forest.Errors as E
 import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
 import Language.Forest.Manifest
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import System.Directory
 import System.FilePath.Posix
 import Data.DeriveTH

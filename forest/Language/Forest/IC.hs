@@ -20,11 +20,8 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.CodeGen
 	, module Language.Forest.IC.Display
 	, module Language.Forest.IC.Draw
-	, module Language.Forest.IC.FS.Diff
-	, module Language.Forest.IC.FS.FSDelta
 	, module Language.Forest.IC.FS.LazyFS
 	, module Language.Forest.IC.FS.NILFS
-	, module Language.Forest.IC.FS.NILFSDiff
 	, module Language.Forest.IC.FS.TxVarFS
 	, module Language.Forest.IC.FS.TxICFS
 	, module Language.Forest.IC.Generic
@@ -74,11 +71,8 @@ import Language.Forest.IC.CodeGen.Utils
 import Language.Forest.IC.CodeGen
 import Language.Forest.IC.Display
 import Language.Forest.IC.Draw
-import Language.Forest.IC.FS.Diff
-import Language.Forest.IC.FS.FSDelta
 import Language.Forest.IC.FS.LazyFS
 import Language.Forest.IC.FS.NILFS
-import Language.Forest.IC.FS.NILFSDiff
 import Language.Forest.IC.FS.TxVarFS
 import Language.Forest.IC.FS.TxICFS
 import Language.Forest.IC.Generic

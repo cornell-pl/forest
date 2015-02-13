@@ -361,13 +361,33 @@ stringVW_parseM 0 = returnClean ""
 stringVW_parseM n =
   handleEOF (stringVW_def n) "StringVW" $
   handleEOR (stringVW_def n) "StringVW" $ do
-	str <- takeP n 
-	returnClean str
+    str <- takeP n 
+    returnClean str
 
 stringVW_def n = replicate n 'X'
 
 stringVW_printFL :: Int -> PadsPrinter (StringVW, Base_md)
 stringVW_printFL n (str, bmd)  = addString (take n str)
+
+---- string of variable length (end if EOR)
+--type StringVW = String
+--type StringVW_md = Base_md
+--
+--stringVW_parseM :: (Bool,Int) -> PadsParser (StringVW, Base_md)
+--stringVW_parseM (endIfEOR,0) = returnClean ""
+--stringVW_parseM (endIfEOR,n) = do
+--	let (doEOF, doEOR) = if endIfEOR then (checkEOF, checkEOR) else (handleEOF, handleEOR)
+--	doEOF "" "StringVW" $ doEOR "" "StringVW" $ do
+--		c1 <- takeHeadP
+--		(rest, rest_md) <- stringVW_parseM (endIfEOR,pred n)
+--		return (c1:rest, rest_md)
+--
+--stringVW_def (endIfEOR,n) = replicate n 'X'
+--
+--stringVW_printFL :: (Bool,Int) -> PadsPrinter (StringVW, Base_md)
+--stringVW_printFL (endIfEOR,n) (str, bmd)  = addString (take n str)
+
+-----------------------------------------------------------------
 
 -----------------------------------------------------------------
 
@@ -431,6 +451,7 @@ stringP_printFL p (str, bmd) = addString str
 
 -----------------------------------------------------------------
 
+-- string predicate with escape condition
 type StringPESC = String
 type StringPESC_md = Base_md
 

@@ -84,11 +84,12 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	type Unsigned_4 = Word8
 	type Unsigned_8 = Word16
 	type DateTime = DateFSE <| ("%Y-%m-%d", RE "$") |>
+
 |]
 
 [ipads|
 	data Location = Location {
-		  locationStreet :: Line ( [ VText 20 | ';' ] length 2)
+		  locationStreet :: Line ([ VText 20 | EOR ] length 2)
 		, locationCity :: Line (VText 20)
 		, locationState :: Line (FText 2)
 		, locationZip :: (FText 9)
@@ -97,7 +98,7 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	data WarehouseInfo = WarehouseInfo {
 		  warehouseName :: Line (VText 10)
 		, warehouseLocation :: Line Location
-		, warehouseTax :: Line Signed_4_4
+		, warehouseTax ::  Line Signed_4_4
 		, warehouseYTD :: Signed_12_2
 	}
 	
@@ -146,15 +147,15 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	}
 	
 	data ItemInfo = ItemInfo {
-		  itemImage :: Line String
+		  itemImage :: Line StringEOR	
 		, itemName :: Line (VText 24)
-		, itemPrice :: Line (Signed_5_2)
+		, itemPrice :: Line Signed_5_2
 		, itemData :: VText 50
 	}
 	
 	data StockItemInfo = StockItemInfo {
 		  stockItemQuantity :: Line Signed_4
-		, stockItemDists :: [ FText 24 | ";" ] length 10
+		, stockItemDists :: Line ([ FText 24 | EOR ] length 10)
 		, stockItemYTD :: Line Unsigned_8
 		, stockItemOrderCount :: Line Unsigned_4
 		, stockItemRemoteCount :: Line Unsigned_4
@@ -469,7 +470,7 @@ lastNameFromInt n = (dict!!a ++ dict!!b ++ dict!!c) where
 a_string :: (Int,Int) -> IO String
 a_string (x,y) = generate $ do
 	l <- choose (x,y)
-	vectorOf l $ choose ('0','z') -- just to avoid random garbage
+	vectorOf l $ arbitrary
 
 n_string :: (Int,Int) -> IO String
 n_string (x,y) = generate $ do
@@ -490,8 +491,13 @@ rnd_zip = liftM (++ "11111") $ n_string (4,4)
 rnd_last :: IO String
 rnd_last = liftM lastNameFromInt $ generate $ choose (0,999)
 
+populateDirectory path = trace ("directory: " ++ show path) $ createDirectoryIfMissing True path
+populateSymLink tgt path = trace ("link: " ++ show path) $ createSymbolicLink tgt path
+populateFile path rep = trace ("file: " ++ show path) $ Pads.printFileRep path rep
+
 populate :: Integer -> IO ()
 populate w = do
+	createDirectoryIfMissing True root_db
 	
 	let h_path = root_db </> "history"
 	createDirectoryIfMissing True h_path
@@ -500,7 +506,7 @@ populate w = do
 	createDirectoryIfMissing True ws_path
 	let populateWarehouse w_id = do
 		let w_path = ws_path </> show w_id
-		createDirectoryIfMissing True w_path
+		populateDirectory w_path
 		let w_info_path = w_path </> "warehouseInfo"
 		w_name <- a_string (6,10)
 		w_street1 <- a_string (10,20)
@@ -511,13 +517,13 @@ populate w = do
 		w_tax <- generate $ choose (0,0.2)
 		let w_ytd = 300000
 		let w_info = WarehouseInfo w_name (Location [w_street1,w_street2] w_city w_state w_zip) w_tax w_ytd
-		Pads.printFileRep w_info_path w_info
+		populateFile w_info_path w_info
 		
 		let ds_path = w_path </> "districts"
-		createDirectoryIfMissing True ds_path
+		populateDirectory ds_path
 		let populateDistrict d_id = do
 			let d_path = ds_path </> show d_id
-			createDirectoryIfMissing True d_path
+			populateDirectory d_path
 			let d_info_path = d_path </> "districtInfo"
 			d_name <- a_string (6,10)
 			d_street1 <- a_string (10,20)
@@ -526,10 +532,10 @@ populate w = do
 			d_state <- l_string (2,2)
 			d_zip <- rnd_zip
 			d_tax <- generate $ choose (0,0.2)
-			Pads.printFileRep d_info_path $ DistrictInfo d_name (Location [d_street1,d_street2] d_city d_state d_zip) d_tax 30000 30001
+			populateFile d_info_path $ DistrictInfo d_name (Location [d_street1,d_street2] d_city d_state d_zip) d_tax 30000 30001
 			
 			let cs_path = d_path </> "customers"
-			createDirectoryIfMissing True cs_path
+			populateDirectory cs_path
 			let cs_ids = [1..3000]
 			cs_oris <- generate $ vectorOf 300 $ elements cs_ids
 			let populateCustomer c_id = do
@@ -548,68 +554,68 @@ populate w = do
 				c_credit <- if c_id `List.elem` cs_oris then return "BC" else return "GC"
 				c_disc <- generate $ choose (0,0.5)
 				c_data <- a_string (300,500)
-				Pads.printFileRep c_path $ CustomerInfo c_name c_loc c_phone c_since c_credit 50000 c_disc (-10) 10 1 0 c_data
+				populateFile c_path $ CustomerInfo c_name c_loc c_phone c_since c_credit 50000 c_disc (-10) 10 1 0 c_data
 				
 				he_id <- uniqueFileName
 				let he_path = h_path </> he_id
 				h_date <- getCurrentTime
 				h_data <- a_string (12,24)
-				Pads.printFileRep he_path $ HistoryEntryInfo c_id d_id w_id d_id w_id h_date 10 h_data
+				populateFile he_path $ HistoryEntryInfo c_id d_id w_id d_id w_id h_date 10 h_data
 			mapM_ populateCustomer cs_ids
 			
 			let os_path = d_path </> "orders"
-			createDirectoryIfMissing True os_path
+			populateDirectory os_path
 			let os_ids = [1..3000]
 			os_c_ids :: [Integer] <- shuffleM [1..3000]
 			let populateOrder (o_id,o_c_id) = do
 				let o_path = os_path </> show o_id
-				createDirectoryIfMissing True o_path
+				populateDirectory o_path
 				let o_c_tgt = parent 2 </> "customers" </> show o_c_id
 				let o_c_path = o_path </> addExtension (show o_c_id) "customer"
 				home <- getCurrentDirectory
-				createSymbolicLink o_c_tgt o_c_path
+				populateSymLink o_c_tgt o_c_path
 				
 				let o_info_path = o_path </> "orderInfo"
 				o_entry_d <- getCurrentTime
 				o_carrier_id <- if o_id < 2101 then liftM Just (generate $ choose (1,10)) else return Nothing
 				o_ol_cnt <- generate $ choose (5,15)
-				Pads.printFileRep o_info_path $ OrderInfo o_entry_d o_carrier_id o_ol_cnt True
+				populateFile o_info_path $ OrderInfo o_entry_d o_carrier_id o_ol_cnt True
 				
 				let ols_path = o_path </> "orderLines"
-				createDirectoryIfMissing True ols_path
+				populateDirectory ols_path
 				let populateOrderLine ol_id = do
 					let ol_path = ols_path </> show ol_id
-					createDirectoryIfMissing True ol_path
+					populateDirectory ol_path
 					ol_i_id :: Integer <- generate $ choose (1,100000)
 					let ol_i_tgt = parent 9 </> "Stock" </> show ol_i_id
 					let ol_i_path = ol_path </> addExtension (show ol_i_id) "item"
-					createSymbolicLink ol_i_tgt ol_i_path
+					populateSymLink ol_i_tgt ol_i_path
 					
 					let ol_supply_w_tgt = parent 9 </> "warehouses" </> show w_id
 					let ol_supply_w_path = ol_path </> addExtension (show w_id) "warehouse"
-					createSymbolicLink ol_supply_w_tgt ol_supply_w_path
+					populateSymLink ol_supply_w_tgt ol_supply_w_path
 					
 					let ol_info_path = ol_path </> "orderLineInfo"
 					let ol_delivery_d = if o_id < 2101 then Just o_entry_d else Nothing
 					ol_amount <- if o_id < 2101 then return 0 else generate $ choose (0.1,9999.99)
 					ol_dist_info <- l_string (24,24)
-					Pads.printFileRep ol_info_path $ OrderLineInfo ol_id ol_delivery_d 5 ol_amount ol_dist_info
+					populateFile ol_info_path $ OrderLineInfo ol_id ol_delivery_d 5 ol_amount ol_dist_info
 				mapM_ populateOrderLine [1..fromIntegral o_ol_cnt]
 				
 			mapM_ populateOrder $ zip os_ids os_c_ids
 			
 			let nos_path = d_path </> "newOrders"
-			createDirectoryIfMissing True nos_path
+			populateDirectory nos_path
 			let populateNewOrder no_id = do
 				let no_tgt = parent 1 </> "orders" </> show no_id
 				let no_path = nos_path </> show no_id
-				createSymbolicLink no_tgt no_path
+				populateSymLink no_tgt no_path
 			mapM_ populateNewOrder [2101..3000]
 			
 		mapM_ populateDistrict [1..10]
 		
-		let s_path = ws_path </> "stock"
-		createDirectoryIfMissing True s_path
+		let s_path = w_path </> "stock"
+		populateDirectory s_path
 		let s_is_ids = [1..100000]
 		s_is_oris <- generate $ vectorOf 10000 $ elements s_is_ids
 		let populateStockItem s_i_id = do
@@ -623,12 +629,12 @@ populate w = do
 					str2 <- a_string (18-l1-8,42-l1)
 					return $ str1 ++ "ORIGINAL" ++ str2
 				else a_string (26,50)
-			Pads.printFileRep s_i_path $ StockItemInfo s_i_quantity s_i_dists 0 0 0 s_i_data
+			populateFile s_i_path $ StockItemInfo s_i_quantity s_i_dists 0 0 0 s_i_data
 		mapM_ populateStockItem s_is_ids
 	mapM_ populateWarehouse [1..w]
 	
 	let is_path = root_db </> "items"
-	createDirectoryIfMissing True is_path
+	populateDirectory is_path
 	let is_ids = [1..100000]
 	is_oris <- generate $ vectorOf 10000 $ elements is_ids
 	let populateItem i_id = do
@@ -643,12 +649,13 @@ populate w = do
 				str2 <- a_string (18-l1-8,42-l1)
 				return $ str1 ++ "ORIGINAL" ++ str2
 			else a_string (26,50)
-		Pads.printFileRep i_path $ ItemInfo i_img i_name i_price i_data
+		populateFile i_path $ ItemInfo i_img i_name i_price i_data
 	mapM_ populateItem is_ids
 	
 -- * Transactions
 
-root_db = "../company"
+--root_db = "../company"
+root_db = "/Volumes/Things/company"
 
 type NewOrderInput = (Id,Id,Id,Map Id (Id,Unsigned_2))
 

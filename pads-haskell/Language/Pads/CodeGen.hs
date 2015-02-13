@@ -636,15 +636,15 @@ intPair_printFL (r,m)
 
 genPrintTuple :: [PadsTy] -> Maybe Exp -> Q Exp
 genPrintTuple tys (Just rm) = do
-	repNamesM <- genNamesforTuple "rep" tys
+	repNamesM <- genNamesforTuple True "rep" tys
 	let repVars = map VarE (Maybe.catMaybes repNamesM)
 	let repPats = map VarP (Maybe.catMaybes repNamesM)
-	mdNamesM  <- genNamesforTuple "md" tys
+	mdNamesM  <- genNamesforTuple False "md" tys
 	let mdVars = map VarE (Maybe.catMaybes mdNamesM)
 	let mdPats = map VarP (Maybe.catMaybes mdNamesM)
-	inners <- sequence [genPrintTupleInner t r m | (t,r,m) <- zip3 tys repNamesM mdNamesM, hasRep t]
+	inners <- sequence [genPrintTupleInner t r m | (t,r,m) <- zip3 tys repNamesM mdNamesM{-, hasRep t-}]
 	return $ CaseE rm
-                [Match (TupP [TupP (filterByHasRep tys repPats), TupP [SigP WildP (ConT ''Base_md), (TupP mdPats)]]) 
+                [Match (TupP [TupP $ filterByHasRep tys repPats, TupP [SigP WildP (ConT ''Base_md), (TupP mdPats)]]) 
                        (NormalB (VarE 'concatFL `AppE` ListE inners))
                        []]
 genPrintTuple tys Nothing = do
@@ -656,12 +656,12 @@ genPrintTuple tys Nothing = do
 filterByHasRep :: [PadsTy] -> [a] -> [a]
 filterByHasRep tys xs = map snd $ filter (hasRep . fst) (zip tys xs)
 
-genNamesforTuple :: String -> [PadsTy] -> Q [Maybe Name]
-genNamesforTuple str tys =
-  sequence [fmap Just (newName str) | ty <- tys]
-    --MD [if hasRep ty then fmap Just (newName str) else return Nothing | ty <- tys]
+genNamesforTuple :: Bool -> String -> [PadsTy] -> Q [Maybe Name]
+genNamesforTuple False str tys = sequence [fmap Just (newName str) | ty <- tys]
+genNamesforTuple True str tys = sequence [if hasRep ty then fmap Just (newName str) else return Nothing | ty <- tys]
 
 genPrintTupleInner t (Just r) (Just m) = genPrintTy t (Just (TupE [VarE r,VarE m])) 
+genPrintTupleInner t Nothing (Just m) = genPrintTy t (Just (TupE [VarE 'gdef,VarE m])) 
 genPrintTupleInner t Nothing Nothing   = genPrintTy t Nothing
 
 genPrintExp :: Exp -> Maybe Exp -> Q Exp

@@ -17,6 +17,9 @@ import Safe
 import Data.Maybe
 import System.Posix.Process
 import Control.Monad.Incremental.Draw
+import Control.Concurrent
+import Data.UUID
+import Data.UUID.V1
 
 -- gets the physical device on which a path is mounted (linux-specific)
 pathDevice :: String -> IO String
@@ -112,7 +115,7 @@ fileIsDifferent :: FilePath -> FilePath -> IO Bool
 fileIsDifferent f1 f2 = do
 	let cmd = "diff " ++ f1 ++ " " ++ f2
 	result <- runShellCommand cmd
-	return $ not $ null result
+	return $ not $ Prelude.null result
 	
 -- adds a cardinal to a file to look inside its content (for AVFS containers)
 cardinalPath :: FilePath -> FilePath
@@ -126,8 +129,13 @@ uncardinalPath path = path
 
 -- generates a new unique filename by using the current procress id and a uuid
 uniqueFileName :: IO FilePath
-uniqueFileName = do
-	pid <- getProcessID
-	uuid <- nextUUIDSafe
-	return $ show pid ++ show uuid
+uniqueFileName = liftM toString $ waitNextUUID 5
 
+waitNextUUID :: Int -> IO UUID
+waitNextUUID i = do
+	mb <- nextUUID
+	case mb of
+		Nothing -> threadDelay i >> nextUUIDSafe
+		Just uuid -> return uuid
+	
+	

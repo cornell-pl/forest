@@ -61,7 +61,7 @@ import qualified Data.Set as Set
 import Control.Monad.State (State(..),StateT(..),MonadState(..))
 import Control.Monad.Reader (Reader(..),ReaderT(..),MonadReader(..))
 import Control.Monad.Reader as Reader
-import Language.Forest.IC.FS.FSDelta
+import Language.Forest.FS.FSDelta
 import Control.Monad.Trans
 import qualified Control.Monad.State as State
 import Language.Forest.Manifest
@@ -313,6 +313,7 @@ instance FSRep TxICFS where
 				let dfs = drop (fsTreeFSVersion oldtree) $ take (fsTreeFSVersion newtree) $ Map.elems tds
 				let df = focusFSTreeDeltaByRelativePathMay (compressFSDeltas $ DList.concat dfs) path
 				return $ Just df
+			-- no sharing among different txs
 			else return Nothing
 
 virtualizeTxICFS path tree = if fsTreeVirtual tree
@@ -715,6 +716,7 @@ instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 		thunk <- forestM $ newTxICThunk m
 		forestM $ bufferTxICFSThunk var thunk
 		return var
+	-- read on the internal thunk
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
 		liftM fst $ readTxICThunk thunk (forestM latestTree)
@@ -726,6 +728,7 @@ instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 		thunk <- forestM $ newTxICThunk m
 		forestM $ bufferTxICFSThunk var thunk
 		return var
+	-- read on the internal thunk
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
 		liftM fst $ readTxICThunk thunk (forestM latestTree)
@@ -798,6 +801,7 @@ copyOrElseTxICFS proxy src tgt b f = do
 newTxICFS :: FTK TxICFS args rep var content => Proxy args -> ForestVs args -> FilePath -> TxICFTM rep
 newTxICFS proxy args path = inside $ zload (vmonadArgs proxyTxICFS proxy args) path
 
+-- read the transactional variable by incrementally repairing its internal thunk to the latest tree
 readTxICFS :: (ForestLayer TxICFS l,FTK TxICFS args rep var content) => Proxy args -> rep -> ForestL TxICFS l content
 readTxICFS proxy rep = do
 	let t = to iso_rep_thunk rep
