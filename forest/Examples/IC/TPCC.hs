@@ -222,8 +222,8 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	type OrderLines = Map [ l :: OrderLine | l :: Id <- matches (GL "*") ]
 	
 	type OrderLine = Directory {
-		  orderLineItem matches (RE "*.item") :: SymLink where (foreignKey orderLineItem_att $ parent 9 </> "stock")
-		, orderLineSupplyWarehouse matches (RE "*.warehouse") :: SymLink where (foreignKey orderLineSupplyWarehouse_att $ parent 9 </> "warehouses")
+		  orderLineItem matches (RE "*.item") :: SymLink where (foreignKey orderLineItem_att $ parent 8 </> "stock")
+		, orderLineSupplyWarehouse matches (RE "*.warehouse") :: SymLink where (foreignKey orderLineSupplyWarehouse_att $ parent 8 </> "warehouses")
 		, orderLineInfo :: File OrderLineInfo
 	}
 	
@@ -587,11 +587,11 @@ populate w = do
 					let ol_path = ols_path </> show ol_id
 					populateDirectory ol_path
 					ol_i_id :: Integer <- generate $ choose (1,100000)
-					let ol_i_tgt = parent 9 </> "Stock" </> show ol_i_id
+					let ol_i_tgt = parent 8 </> "Stock" </> show ol_i_id
 					let ol_i_path = ol_path </> addExtension (show ol_i_id) "item"
 					populateSymLink ol_i_tgt ol_i_path
 					
-					let ol_supply_w_tgt = parent 9 </> "warehouses" </> show w_id
+					let ol_supply_w_tgt = parent 8 </> "warehouses" </> show w_id
 					let ol_supply_w_path = ol_path </> addExtension (show w_id) "warehouse"
 					populateSymLink ol_supply_w_tgt ol_supply_w_path
 					
@@ -805,10 +805,10 @@ newOrder (w_id,d_id,c_id,order) = atomically $ do
 		ol_var :: OrderLine TxVarFS <- new () ol_path
 		let ol_md = cleanFileInfo ol_path
 		let ol_i_path = ol_path </> addExtension (printRep ol_i_id) "item"
-		let ol_i_path_tgt = ol_i_path </> parent 9 </> "stock" </> (printRep ol_i_id)
+		let ol_i_path_tgt = ol_i_path </> parent 8 </> "stock" </> (printRep ol_i_id)
 		let ol_i = ((cleanSymLinkFileInfo ol_i_path ol_i_path_tgt,cleanBasePD),ol_i_path_tgt)
 		let ol_supply_w_path = ol_path </> addExtension (printRep ol_supply_w_id) "warehouse"
-		let ol_supply_w_path_tgt = ol_i_path </> parent 9 </> "warehouses" </> (printRep ol_supply_w_id)
+		let ol_supply_w_path_tgt = ol_i_path </> parent 8 </> "warehouses" </> (printRep ol_supply_w_id)
 		let ol_supply_w = ((cleanSymLinkFileInfo ol_supply_w_path ol_supply_w_path_tgt,cleanBasePD),ol_supply_w_path_tgt)
 		let ol_info = OrderLineInfo ol_ix Nothing ol_quantity ol_amount (s_i_dists !! succ (fromEnum d_id))
 		let ol_info_md = (cleanFileInfo $ ol_path </> "orderLineInfo",Pads.defaultMd ol_info)
