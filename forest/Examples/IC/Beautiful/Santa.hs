@@ -30,14 +30,9 @@ import Control.Monad.Incremental hiding (read,new)
 import Prelude hiding (read)
 import Language.Forest.IC hiding (writeFile)
 
-[pads|
+[ipads|
        data Max = Max Int
 |]
-
-$( derive makeMData ''Max )
-$( derive makeMData ''Max_imd )
-$( derive makeDeepTypeable ''Max )
-$( derive makeDeepTypeable ''Max_imd )
 
 [iforest|
           type MaxFile = File Max
