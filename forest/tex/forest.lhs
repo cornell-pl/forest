@@ -290,6 +290,10 @@ write success theorem: if the current rep is in the image of load, then store su
 	\frac{|r `inSet` (prime r)|}{|r / u `inSet` (prime r)|}
 \end{displaymath}
 
+\begin{align*}
+	|focusF F r `def`| F ||_{|{forall (prime r) (star F (prime r) `inSet` r)}|}
+\end{align*}
+
 \begin{spec}
 	Err a = (M Bool,a)
 \end{spec}
@@ -310,10 +314,10 @@ write success theorem: if the current rep is in the image of load, then store su
 |C| is the external type of content of a variables that users can inspect/modify
 
 \begin{spec}
-	app err a = do { e <- getM a; (aerr,v) <- e; returnM aerr }
+	app err a = doM { e <- getM a; (aerr,v) <- e; returnM aerr }
 	app err (aerr,v) = returnM aerr
 	
-	app valid v = do { aerr <- err v; eerr <- getM aerr; eerr }
+	app valid v = doM { aerr <- err v; eerr <- getM aerr; eerr }
 \end{spec}
 
 |v1 (sim oenv1 oenv2) v2| denotes value equivalence modulo memory addresses, under the given environments.
@@ -329,7 +333,7 @@ $\boxed{|s = M s1|}$
 	\frac{
 	\begin{array}{c}
 		a \notin |dom (oenv)| \quad |aerr `notin` dom oenv| \quad |e = pload eenv r (M s) F | \\
-		|eerr = do { e1 <- getM a; v1 <- e1; valid v1 }|
+		|eerr = doM { e1 <- getM a; v1 <- e1; valid v1 }|
 	\end{array}
 	}{
 		|load oenv eenv r (M s) F (extoenv2 oenv aerr eerr a e) (aerr,a)|
@@ -388,7 +392,7 @@ $\boxed{|s = dpair x s1 s2|}$
 	\begin{array}{c}
 		|load oenv eenv r s1 F oenv1 v1| \\
 		|load oenv1 (exteenv eenv x v1) r s2 F oenv2 v2|\\
-		|eerr = do { b1 <- app valid v1; b2 <- app valid v2; returnM (b1 `and` b2) } |
+		|eerr = doM { b1 <- app valid v1; b2 <- app valid v2; returnM (b1 `and` b2) } |
 	\end{array}
 	}{
 		|load oenv eenv r (dpair x s1 s2) F (extoenv oenv2 aerr eerr) (aerr,(v1,v2))|
@@ -416,7 +420,7 @@ $\boxed{|s = s1?|}$
 \end{displaymath}
 \begin{displaymath}
 	\frac{
-		|r `in` dom F| \quad |aerr `notin` dom (prime oenv)| \quad |load oenv eenv r s F(prime oenv) v|
+		|r `inSet` dom F| \quad |aerr `notin` dom (prime oenv)| \quad |load oenv eenv r s F(prime oenv) v|
 	}{
 		|load oenv eenv r (s?) F (extoenv oenv aerr (app valid v)) (aerr,Just v)|
 	}
@@ -429,8 +433,8 @@ $\boxed{|s = flist s1 x e|}$
 	\begin{array}{c}
 		|aerr `notin` dom oenv| \quad
 		|meval oenv (sem e eenv {tau}) (prime oenv) {t1,..,tk}| \\
-		|meval (prime oenv) (forn 1 i k (do { vi <- pload (exteenv eenv x ti) r s F; returnM (map ti vi) })) (prime2 oenv) vs|\\
-		|eerr = forn 1 i k (do { bi <- app valid vi; returnM (bigwedge bi) } )|
+		|meval (prime oenv) (forn 1 i k (doM { vi <- pload (exteenv eenv x ti) r s F; returnM (map ti vi) })) (prime2 oenv) vs|\\
+		|eerr = forn 1 i k (doM { bi <- app valid (app vs ti); returnM (bigwedge bi) } )|
 	\end{array}
 	}{
 		|load oenv eenv r (flist s x e) F (extoenv (prime2 oenv) aerr eerr) (aerr,vs)|
@@ -551,9 +555,9 @@ $\boxed{|s = flist s1 x e|}$
 \begin{displaymath}
 	\frac{
 	\begin{array}{c}
-		|meval oenv (sem e eenv {tau}) (prime oenv) {t1,...,tk}| \quad |vs = {t1 `mapsto` v1,...,tk `mapsto` vk}| \\
-		|phi = lambda (prime F) (bigwedge ( app phii (prime F) ))|\\
-		|meval (prime oenv) (forn 1 i k (do { (Fi,phii) <- (pstore (exteenv eenv x vi) r s F vi); returnM (F1 `cat` ... `cat` Fk,phi)} )) (prime2 oenv) (prime F) (prime phi)|
+		|meval oenv (sem e eenv {tau}) (prime oenv) ts| \quad |vs = {t1 `mapsto` v1,...,tk `mapsto` vk}| \\
+		|phi = lambda (prime F) (ts = {t1,...,tk} `and` bigwedge ( app phii (prime F) ))|\\
+		|meval (prime oenv) (forn 1 i k (doM { (Fi,phii) <- (pstore (exteenv eenv x vi) r s F vi); returnM (F1 `cat` ... `cat` Fk,phi)} )) (prime2 oenv) (prime F) (prime phi)|
 	\end{array}
 	}{
 		|store oenv eenv r (flist s x e) F (aerr,vs) oenv (prime F) (prime phi)|
@@ -598,12 +602,16 @@ the error information is not stored back to the FS, so the validity predicate ig
 
 \section{Forest Incremental Semantics}
 
+%format dbotv = "{\delta_\bot}_v"
+%format dbotvi = "{\delta_\bot}_{v_i}"
+
 \begin{spec}
 	df ::= addFile r u | addDir r | addLink r (prime r) | rem r | chgAttrs r i | df1 ; df2 | did
 \end{spec}
 
 \begin{spec}
-	dv ::= dM da dv1 | dv1 `otimes` dv2 | map ti dvi | dv1? | did | ddelta
+	dv ::= dM da dv1 | dv1 `otimes` dv2 | map ti dbotvi | dv1? | did | ddelta
+	dbotv ::= bot | dv
 \end{spec}
 
 \begin{spec}
@@ -645,9 +653,8 @@ errors are computed in the background
 	}
 	\quad
 	\frac{
-		|app oenv (a) = e|
 	}{
-		|mset oenv did did a e' oenv a did|
+		|mset oenv did did a e oenv a did|
 	}
 \end{displaymath}
 
@@ -655,28 +662,23 @@ errors are computed in the background
 
 $\boxed{|dload oenv eenv deenv r s F v df dv (prime oenv) (prime v) (prime deltav)|}$
 
-%\begin{displaymath}
-%	\frac{
-%	\begin{array}{c}
-%		\delta_\varepsilon |_{fv(s)} = \emptyset
-%		
-%		|app oenv (a) = e| \quad |meval oenv e (prime oenv) (aerr,v)|\\
-%		|dload (prime oenv) doenv eenv deenv r s F v df dv (prime2 oenv) (prime doenv) (prime v) deltav| \quad |v = prime v|
-%	\end{array}
-%	}{
-%		|dload oenv doenv eenv deenv r (M s) F (aerr,v) df (M (did `otimes` dv)) (prime2 oenv) (prime doenv) a did|
-%	}
-%\end{displaymath}
-%
-%\begin{displaymath}
-%	\frac{
-%	\delta_\varepsilon |_{fv(s)} = \emptyset
-%		\quad
-%		\delta_F \searrow r = \emptyset
-%	}{
-%		\varepsilon ; \delta_\varepsilon ; r ; s \vdash \mathtt{load}_{\Delta}~ (F,v,d)~ \delta_F ~ \emptyset \rhd \key{ret}\; (\emptyset,\emptyset)
-%	}
-%\end{displaymath}
+\begin{displaymath}
+	\frac{
+		\Delta_\varepsilon ||_{fv(s)} = \emptyset
+		\quad
+		|focus df F r = did|
+	}{
+		|dload oenv eenv deenv r s F v df did oenv v did|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		|load oenv eenv r s (df F) (prime oenv) (prime v)|
+	}{
+		|dload oenv eenv deenv r s F v df dv (prime oenv) (prime v) ddelta|
+	}
+\end{displaymath}
 
 $\boxed{|s = M s1|}$
 
@@ -733,30 +735,178 @@ $\boxed{|s = dpair x s1 s2|}$
 	}
 \end{displaymath}
 
-%$\boxed{|s = flist s x e|}$
-%
-%\begin{displaymath}
-%	\frac{
-%	\begin{array}{c}
-%		|meval oenv (sem e eenv {tau}) (prime oenv) {t1,...,tk}| \quad |vs = map ti tk| \\
-%		|meval (prime oenv) (forn 1 i k (do { vi <- pdloadx (exteenv eenv x ti) r s F; returnM (map ti vi) })) (prime2 oenv) vs|\\
-%		|eerr = forn 1 i k (do { bi <- app valid vi; returnM (bigwedge bi) } )|
-%	\end{array}
-%	}{
-%		|dload oenv eenv deenv r (flist s x e) F (aerr,vs) df (daerr `otimes` dvs) (prime oenv) (prime aerr,(prime v1,prime v2)) (deltaaerr `otimes` deltavs)|
-%	}
-%\end{displaymath}
-%
-%\begin{displaymath}
-%	\frac{
-%		|t `inSet` dom (vs)| \quad
-%		|dload oenv eenv deenv r s F (app vs t) df (app dvs t) (prime oenv) v deltav|
-%	}{
-%		|dloadx oenv eenv deenv r s F (t,vs) df dvs (prime oenv) v deltav|
-%	}
-%\end{displaymath}
+$\boxed{|s = P e|}$
+
+\begin{displaymath}
+	\frac{
+		\Delta_\varepsilon ||_{fv(e)} = \emptyset
+	}{
+		|dload oenv eenv deenv r (P e) F v df did oenv v did|
+	}
+\end{displaymath}
+
+$\boxed{|s = s1?|}$
+
+\begin{displaymath}
+	\frac{
+		|r `notin` dom (df F)| \quad
+		|mset oenv daerr dv aerr (returnM True) (prime oenv) (prime aerr) deltaaerr|
+	}{
+		|dload oenv eenv deenv r (s?) F (aerr,Nothing) df (daerr `otimes` dv) (prime oenv) (aerr,Nothing) deltaaerr|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		|r `inSet` dom (df F)| \quad
+		|dload oenv eenv deenv r s F v df dv (prime oenv) (prime v) deltav| \\
+		|mset oenv daerr deltav aerr (app valid (prime v)) (prime oenv) (prime aerr) deltaaerr|
+	\end{array}
+	}{
+		|dload oenv eenv deenv r (s?) F (aerr,Just v) df (daerr `otimes` dv?) (prime oenv) (aerr,Just (prime v)) deltaaerr|
+	}
+\end{displaymath}
+
+$\boxed{|s = flist s x e|}$
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		|meval oenv (sem e eenv {tau}) oenv1 {t1,...,tk}|\\
+		|meval oenv1 (forn 1 i k (doM { (vi,deltavi) <- pdloadx eenv deenv r s F vs df dvs ; returnM (map ti vi,bigwedge deltavi) })) oenv2 (prime vs,deltavs)|\\
+		|mset oenv2 daerr deltavs aerr (forn 1 i k (doM { bi <- app valid (app (prime vs) ti); returnM (bigwedge bi) } )) (prime oenv)(prime aerr) deltaaerr|
+	\end{array}
+	}{
+		|dload oenv eenv deenv r (flist s x e) F (aerr,vs) df (daerr `otimes` dvs) (prime oenv) (prime aerr,prime vs) deltaaerr|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		|t `inSet` dom (vs)| \quad
+		|dload oenv (exteenv eenv x t) (exteenv deenv x did) r s F (app vs t) df (app dvs t) (prime oenv) (prime v) deltav|
+	}{
+		|dloadx oenv eenv deenv r s F (t,vs) df dvs (prime oenv) (prime v) deltav|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		|t `notin` dom (vs)| \quad
+		|load oenv eenv r s (df F) (prime oenv) (prime v)|
+	}{
+		|dloadx oenv eenv deenv r s F (t,vs) df dvs (prime oenv) (prime v) ddelta|
+	}
+\end{displaymath}
 
 $\boxed{|dstore oenv eenv deenv r s F v df dv (prime oenv) (prime F) (prime phi)|}$
+
+\begin{displaymath}
+	\frac{
+		\Delta_\varepsilon ||_{fv(s)} = \emptyset
+		\quad
+		|focus df F r = did| \quad
+		|phi = lambda (prime F) (focusF (prime F) r = focusF F r)|
+	}{
+		|dstore oenv eenv deenv r s F v df did oenv F phi|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		|store oenv eenv r s (df F) v (prime oenv) (prime F) (prime phi)|
+	}{
+		|dstore oenv eenv deenv r s F v df dv (prime oenv) (prime F) (prime phi)|
+	}
+\end{displaymath}
+
+$\boxed{|s = M s1|}$
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		|app oenv (a) = e| \quad |meval oenv e (prime oenv) (aerr,v)|\\
+		|dstore (prime oenv) eenv deenv r s F v df dv (prime2 oenv) (prime F) (prime phi)|
+	\end{array}
+	}{
+		|dstore oenv eenv deenv r (M s) F a df (dM da (daerr `otimes` dv)) (prime2 oenv) (prime F) (prime phi)|
+	}
+\end{displaymath}
+
+$\boxed{|s = e :: s1|}$
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		\Delta_\varepsilon ||_{fv(s)} = \emptyset \quad |meval oenv (sem (r / e) eenv Path) (prime oenv) (prime r)| \\ 
+		|dstore (prime oenv) eenv deenv (prime r) (e :: s) F v df dv (prime2 oenv) (prime F) (prime phi)|
+	\end{array}
+	}{
+		|dstore oenv eenv deenv r (e :: s) F v df dv (prime2 oenv) (prime F) (prime phi)|
+	}
+\end{displaymath}
+
+$\boxed{|s = dpair x s1 s2|}$
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		|dstore oenv eenv deenv r s1 F v1 df dv1 oenv1 (prime F1) (prime phi1)|\\
+		|dstore oenv1 (exteenv eenv x v1) (exteenv deenv x dv1) r s2 F v2 df dv2 oenv2 (prime F2) (prime phi2)|\\
+		|phi = lambda (prime F) (app (prime phi1) (prime F1) `and` app (prime phi2) (prime F2))|
+	\end{array}
+	}{
+		|dstore oenv eenv deenv r (dpair x s1 s2) F (aerr,(v1,v2)) df (daerr `otimes` (dv1 `otimes` dv2)) oenv2 (F1 `cat` F2) phi|
+	}
+\end{displaymath}
+
+$\boxed{|s = P e|}$
+
+\begin{displaymath}
+	\frac{
+		|phi = lambda (prime F) (returnM True)|
+	}{
+		|dstore oenv eenv deenv r (P e) F v df dv oenv F phi|
+	}
+\end{displaymath}
+
+$\boxed{|s = s1?|}$
+
+\begin{displaymath}
+	\frac{
+		|r `notin` dom (df F)| \quad
+		|phi = lambda (prime F) (r `notin` dom (prime F))|
+	}{
+		|dstore oenv eenv deenv r (s?) F (aerr,Nothing) df (daerr `otimes` did) oenv F phi|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		|r `inSet` dom (df F)| \quad
+		|dstore oenv eenv deenv r s F v df dv (prime oenv) F1 phi1| \\
+		|phi = lambda (prime F) (app phi1 (prime F) `and` e `inSet` dom (prime F))|
+	\end{array}
+	}{
+		|dstore oenv eenv deenv r (s?) F (aerr,Just v) df (daerr `otimes` dv?) (prime oenv) F1 phi|
+	}
+\end{displaymath}
+
+$\boxed{|s = flist s x e|}$
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		|meval oenv (sem e eenv {tau}) (prime oenv) ts| \quad |vs = {t1 `mapsto` v1,...,tk `mapsto` vk}| \\
+		|phi = lambda (prime F) (ts = {t1,...,tk} `and` bigwedge ( app phii (prime F) ))|\\
+		|meval oenv1 (forin ti (dom vs) (doM { (Fi,phii) <- pdstore (exteenv eenv x ti) (exteenv deenv x did) r s F (app vs ti) df (app dvs ti) ; returnM (F1 `cat` ... `cat` Fk,phi) })) oenv2 (prime F,prime phi)|
+	\end{array}
+	}{
+		|dstore oenv eenv deenv r (flist s x e) F (aerr,vs) df (daerr `otimes` dvs) oenv2 (prime F) (prime phi)|
+	}
+\end{displaymath}
 
 \begin{theorem}[Incremental Load Soundness]
 	If
