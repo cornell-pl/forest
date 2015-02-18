@@ -295,6 +295,10 @@ write success theorem: if the current rep is in the image of load, then store su
 \end{align*}
 
 \begin{spec}
+	eqUnder F rs (prime F) = forin r rs (focusF F r = focusF (prime F) r)
+\end{spec}
+
+\begin{spec}
 	Err a = (M Bool,a)
 \end{spec}
 
@@ -602,6 +606,12 @@ the error information is not stored back to the FS, so the validity predicate ig
 
 \section{Forest Incremental Semantics}
 
+Note that:
+\begin{itemize}
+	\item We have access to the old filelesystem, since filesystem deltas record the changes to be performed.
+	\item We do not have access to the old environment, since variable deltas record the changes that already occurred.
+\end{itemize}
+
 %format dbotv = "{\delta_\bot}_v"
 %format dbotvi = "{\delta_\bot}_{v_i}"
 
@@ -804,10 +814,13 @@ $\boxed{|dstore oenv eenv deenv r s F v df dv (prime oenv) (prime F) (prime phi)
 
 \begin{displaymath}
 	\frac{
+	\begin{array}{c}
 		\Delta_\varepsilon ||_{fv(s)} = \emptyset
 		\quad
-		|focus df F r = did| \quad
-		|phi = lambda (prime F) (focusF (prime F) r = focusF F r)|
+		|focus df F r = did| \\
+		|sense oenv eenv r s v rs| \quad
+		|phi = lambda (prime F) (eqUnder F rs (prime F))|
+	\end{array}
 	}{
 		|dstore oenv eenv deenv r s F v df did oenv F phi|
 	}
@@ -905,6 +918,64 @@ $\boxed{|s = flist s x e|}$
 	\end{array}
 	}{
 		|dstore oenv eenv deenv r (flist s x e) F (aerr,vs) df (daerr `otimes` dvs) oenv2 (prime F) (prime phi)|
+	}
+\end{displaymath}
+
+$\boxed{|sense oenv eenv r s v rs|}$ ``Sensitivity of a forest specification in respect to a representation''
+
+\begin{displaymath}
+	\frac{
+		|app oenv a = e|  \quad |meval oenv e (prime oenv) v| \quad
+		|sense (prime oenv) eenv r s v rs|
+	}{
+		|sense oenv eenv r (M s) a rs|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		|sense oenv eenv r s v rs|
+	}{
+		|sense oenv eenv r (e :: s) v ({r} `union` rs)|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		|sense oenv eenv r s1 v1 rs1| \quad
+		|sense oenv (exteenv eenv x v1) r s2 v2 rs2|
+	}{
+		|sense oenv eenv r (dpair x s1 s2) (aerr,(v1,v2)) (rs1 `union` rs2)|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+	}{
+		|sense oenv eenv r (P e) v {}|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+	}{
+		|sense oenv eenv r (s?) (aerr,Nothing) {r}|
+	}
+\end{displaymath}
+\begin{displaymath}
+	\frac{
+		|sense oenv eenv r s v rs|
+	}{
+		|sense oenv eenv r (s?) (aerr,Just v) ({r} `union` rs)|
+	}
+\end{displaymath}
+
+\begin{displaymath}
+	\frac{
+		|vs = {t1 `mapsto` v1,...,tk `mapsto` vk}| \quad
+		|forn i 1 k (sense oenv (exteenv eenv x ti) r s vi ri)|
+	}{
+		|sense oenv eenv r (flist s x e) (aerr,vs) (bigunion ri)|
 	}
 \end{displaymath}
 

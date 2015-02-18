@@ -263,7 +263,7 @@ instance FSRep TxICFS where
 		}
 	
 	-- log the modifications
-	-- writes come from manifests only, that have already canonized the paths
+	-- writes come only from manifests, for which we have already canonized the paths
 	deletePath path = modifyTxICFSTreeDeltas (Rem path)
 	writeFile path ondisk = modifyTxICFSTreeDeltas (Add path ondisk)
 	writeDir path = do
@@ -295,7 +295,9 @@ instance FSRep TxICFS where
 			Just ondisk -> ondisk
 		virtualizeTxICFS ondisk tree
 
-	stepPathInTree tree path rel = return $ path </> rel
+	stepPathInTree tree path rel = do
+		dir <- canonalizePathWithTree path tree
+		return $ dir </> rel
 	
 	getDirectoryContentsInTree = getDirectoryContentsTxICFS
 		

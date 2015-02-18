@@ -13,6 +13,7 @@
 %format `notin` = "\notin"
 %format deltavi = "\Delta_{v_i}"
 %format (dom (x)) = "{\mathtt{dom}(" x ")}" 
+%format (sense (o) (e) (r) (s) v (rs)) = "{ " o ";" e ";" r ";" s "\vdash \mathtt{sense}~" v "\Rightarrow " rs " }"
 %format (load (o) (e) (r) (s) f (o1) v) = "{ " o ";" e ";" r ";" s "\vdash \mathtt{load}~" f "\Rightarrow " o1 ";" v " }"
 %format (pload (e) (r) (s) f) = "{ " e ";" r ";" s "\vdash \mathtt{load}~" f " }"
 %format (store (o) (e) (r) (s) f v (o1) (f1) phi1) = "{ " o ";" e ";" r ";" s "\vdash \mathtt{store}~" f "~" v "\Rightarrow " o1 ";(" f1 "," phi1 ") }"
@@ -22,6 +23,8 @@
 %format (pdloadx (e) (de) (r) (s) f v df dv) = "{ " e ";" de ";" r ";" s "\vdash_{x} \mathtt{load}_{\Delta}~" f "~" v "~" df "~" dv " }"
 %format (dstore (o) (e) (de) (r) (s) f v df dv (o1) f1 (phi1)) = "{ " o ";" e ";" de ";" r ";" s "\vdash \mathtt{store}_{\Delta}~" f "~" v "~" df "~" dv " \Rightarrow " o1 ";(" f1 "," phi1 ") }"
 %format (pdstore (e) (de) (r) (s) f v df dv) = "{ " e ";" de ";" r ";" s "\vdash \mathtt{store}_{\Delta}~" f "~" v "~" df "~" dv " }"
+%format rs1 = "{rs}_{1}"
+%format rs2 = "{rs}_{2}"
 %format oenv = "\Theta"
 %format oenv1 = "\Theta_1"
 %format oenv2 = "\Theta_2"
@@ -107,6 +110,8 @@
 %format (app f (v)) = f "(" v ")"
 %format (map k v) = "\{" k "\mapsto" v "\}"
 %format bigwedge = "\bigwedge"
+%format bigunion = "\bigcup"
+%format ri = "r_i"
 %format Fi = "{F_i}"
 %format phii = "{\phi_i}"
 %format u1
@@ -126,6 +131,8 @@
 %format (forall i (e)) = "{\forall\," i ".~" e "}"
 %format tau = "\tau"
 
+\newcommand{\eqUnder}[1]{\ensuremath{\underset{#1} {=}  }}
+%format (eqUnder (f1) r (f2)) = "{" f1 " \eqUnder{" r "}" f2 " }"
 \newcommand{\simtext}[1]{\ensuremath{\stackrel{\text{#1}} {\sim}  }}
 %format (simErr (o1) (o2)) = "{_{" o1 "}\!\!\simtext{err}_{ " o2 " }}"
 %format (sim (o1) (o2)) = "{_{" o1 "}\!\!\simtext{}_{ " o2 " }}"
