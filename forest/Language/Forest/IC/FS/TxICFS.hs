@@ -443,10 +443,10 @@ diffValueThunkTxICFS isTop oldtree rep = do
 		uid <- forestM $ forestIO $ readRef $ txICId thunk
 		(buff :: BuffTxICThunk Inside content) <- forestM $ bufferedTxICThunk thunk
 		if isTop
-			then do
+			then return $ ValueDeltaTxICFS $ oldtree == buffTxICTree buff
+			else do
 				newtree <- inside $ buffTxICDeltaTree buff
 				return $ ValueDeltaTxICFS $ oldtree == newtree
-			else return $ ValueDeltaTxICFS $ oldtree == buffTxICTree buff
 	
 -- arguments passed to transactional variables
 type TxICArgs = (Dynamic,FilePath)
@@ -586,6 +586,7 @@ readTxICThunk t mtree = do
 			stone <- forestM $ forestIO $ newIORef ()
 			let dta' = TxICThunkForce a stone
 			uid <- forestM $ forestIO $ readRef $ txICId t
+			-- add current thunk as a parent of its content thunks
 			deltatree <- addTxICParent Proxy stone uid mtree a
 			return (buff { buffTxICData = dta', buffTxICDeltaTree = deltatree },(a,deltatree))
 		TxICThunkForce a stone -> return (buff,(a,mtree))
@@ -605,6 +606,7 @@ changeTxICThunkM uid f = do
 	bufferTxICThunk'' uid dyn'
 	return b
 
+-- strict variable write (value)
 writeTxICThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => TxICThunk l a -> a -> ForestO TxICFS ()
 writeTxICThunk var a = do
 	newtree <- forestM getNextFSTree
@@ -612,17 +614,22 @@ writeTxICThunk var a = do
 		stone <- forestM $ forestIO $ newIORef ()
 		let dta' = TxICThunkForce a stone
 		uid <- forestM $ forestIO $ readRef $ txICId var
+		-- mark the written thunk as a parent to its content thunks
 		_ <- addTxICParent Proxy stone uid (return newtree) a
+		-- dirty the parents of the written thunk
 		forestM $ dirtyTxICParents newtree (buffTxICParents buff)
 		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = return newtree },())
 	outside $ changeTxICThunk var set
 
+-- lazy variable write (expression)
 overwriteTxICThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => TxICThunk l a -> l (IncForest TxICFS) IORef IO a -> ForestO TxICFS ()
 overwriteTxICThunk var ma = do
 	newtree <- forestM getNextFSTree
 	let set buff = do
 		let dta' = TxICThunkComp ma
+		-- dirty the parents of the written thunk
 		forestM $ dirtyTxICParents newtree (buffTxICParents buff)
+		-- whenever we want to know the latest modification for the written thunk, we have to force a read and check its content thunks
 		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = join $ liftM snd $ readTxICThunk var (return newtree) },())
 	outside $ changeTxICThunk var set
 	

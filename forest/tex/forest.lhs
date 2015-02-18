@@ -273,6 +273,23 @@ write success theorem: if the current rep is in the image of load, then store su
 
 \section {Forest Semantics}
 
+\begin{align*}
+	&|(star F (r/u)) = | \left\{
+	\begin{array}{ll}
+		|star F (prime r)| & \quad \text{if}~ |app F ((star F r) / u) = (i,Link (prime r))| \\
+		|(star F r) / u| & \quad \text{otherwise}
+	\end{array} \right. \\
+	&|(star F cpath) = cpath|
+\end{align*}
+
+\begin{displaymath}
+	\frac{}{|r `inSet` cpath|}
+	\quad
+	\frac{}{|r `inSet` r|}
+	\quad
+	\frac{|r `inSet` (prime r)|}{|r / u `inSet` (prime r)|}
+\end{displaymath}
+
 \begin{spec}
 	Err a = (M Bool,a)
 \end{spec}
@@ -457,7 +474,7 @@ $\boxed{|s = k|}$
 \begin{displaymath}
 	 |storek Dir eenv F r (i,{u1,...,un})| \left\{
 	\begin{array}{ll}
-		|returnM (extF F r (i,Link (prime r)),lambda (prime F) ( app (prime F) (r) = (i,Dir {u1,...,un}) ))| & \quad \text{if}~ |i `neq` iinvalid| \\
+		|returnM (extF F r (i,Dir {u1,...,un}),lambda (prime F) ( app (prime F) (r) = (i,Dir {u1,...,un}) ))| & \quad \text{if}~ |i `neq` iinvalid| \\
 		|returnM (extF F r bot,lambda (prime F) (app (prime F) (r) `neq` (_,Dir _)))| & \quad \text{if}~ |i = iinvalid `and` app F (r) = (_,Dir _)| \\
 		|returnM (F,lambda (prime F) (app (prime F) (r) `neq` (_,Dir _)))| & \quad \text{if}~ |i = iinvalid `and` app F (r) `neq` (_,Dir _)|
 	\end{array} \right.
@@ -491,11 +508,11 @@ $\boxed{|s = dpair x s1 s2|}$
 	\frac{
 	\begin{array}{c}
 		|store oenv eenv r s1 F v1 oenv1 F1 phi1|\\
-		|store oenv1 (exteenv eenv x v1) r s2 F1 v2 oenv2 F2 phi2|\\
+		|store oenv1 (exteenv eenv x v1) r s2 F v2 oenv2 F2 phi2|\\
 		|phi = lambda (prime F) (app phi1 (prime F)) `and` (app phi2 (prime F))|
 	\end{array}
 	}{
-		|store oenv eenv r (dpair x s1 s2) F (aerr,(v1,v2)) oenv2 F2 phi|
+		|store oenv eenv r (dpair x s1 s2) F (aerr,(v1,v2)) oenv2 (F1 `cat` F2) phi|
 	}
 \end{displaymath}
 
@@ -534,13 +551,12 @@ $\boxed{|s = flist s1 x e|}$
 \begin{displaymath}
 	\frac{
 	\begin{array}{c}
-		|app F (r) = (i,_)| \quad |F0 = extF F r ((i,Dir {}))|\\
-		|meval oenv (sem e eenv {tau}) (prime oenv) {t1,...,tk}| \quad |vs = map ti tk| \\
+		|meval oenv (sem e eenv {tau}) (prime oenv) {t1,...,tk}| \quad |vs = {t1 `mapsto` v1,...,tk `mapsto` vk}| \\
 		|phi = lambda (prime F) (bigwedge ( app phii (prime F) ))|\\
-		|meval (prime oenv) (forn 1 i k (do { (Fi,phii) <- (pstore (exteenv eenv x vi) r s F0 vi); returnM (F1 `cat` ... `cat` Fk,phi)} )) (prime2 oenv) (prime F) (prime phi)|
+		|meval (prime oenv) (forn 1 i k (do { (Fi,phii) <- (pstore (exteenv eenv x vi) r s F vi); returnM (F1 `cat` ... `cat` Fk,phi)} )) (prime2 oenv) (prime F) (prime phi)|
 	\end{array}
 	}{
-		|store oenv eenv r (flist s1 x e) F (aerr,vs) oenv (prime F) (prime phi)|
+		|store oenv eenv r (flist s x e) F (aerr,vs) oenv (prime F) (prime phi)|
 	}
 \end{displaymath}
 
@@ -575,40 +591,92 @@ weaker in that we don't track consistency of inner validation variables; equalit
 
 the error information is not stored back to the FS, so the validity predicate ignores it.
 
+%\begin{lemma}[Load Non-Sharing]
+%	All the memory addresses (of error and forest thunks) found by fully evaluating a the value in the result of load are distinct.
+%	So that for a spec |dpair x ("a" :: M s) ("b" :: M s)| we never have |loadDelta (a,a) did|.
+%\end{lemma}
+
 \section{Forest Incremental Semantics}
+
+\begin{spec}
+	df ::= addFile r u | addDir r | addLink r (prime r) | rem r | chgAttrs r i | df1 ; df2 | did
+\end{spec}
+
+\begin{spec}
+	dv ::= dM da dv1 | dv1 `otimes` dv2 | map ti dvi | dv1? | did | ddelta
+\end{spec}
+
+\begin{spec}
+	deltav ::= did | ddelta
+\end{spec}
+
+\begin{spec}
+	(focus ((addFile (prime r) u)) F r) `def`			if (star F (prime r)) `inSet` (star F r) then addFile (prime r) u else did
+	(focus ((addDir (prime r))) F r) `def`				if (star F (prime r)) `inSet` (star F r) then addDir (prime r) else did
+	(focus ((addLink (prime r) (prime2 r))) F r) `def` 	if (star F (prime r)) `inSet` (star F r) then addLink (prime r) (prime2 r) else did
+	(focus ((rem (prime r))) F r) `def` 				if (star F (prime r)) `inSet` (star F r) then rem (prime r) else did
+	(focus ((chgAttrs (prime r) i)) F r) `def` 			if (star F (prime r)) `inSet` (star F r) then chgAttrs (prime r) i else did
+	(focus (df1 ; df2) F r) `def` (focus df1 F r) ; focus df2 F1 r where F1 = ((focus df1 F r)) F
+	(focus did F r) `def` did
+\end{spec}
+
+
+\begin{spec}
+	 darrow v oenv dv (prime v) (prime oenv)
+\end{spec}
+the value delta maps |v| to |v'|
 
 monadic expressions only read from the store and perform new allocations; they can't modify existing addresses.
 
 For any expression application |e oenv = (prime oenv,v)|, we have |oenv = oenv `intersection` prime oenv|.
 
-errors are computed in the background, 
-
-
-We keep a log of variables that have been modified incrementally. instead of modifying a variable twice, we create a new one.
+errors are computed in the background
 
 \begin{displaymath}
 	\frac{
 		|(prime a) `notin` dom(oenv)|
 	}{
-		|mset oenv doenv a e (extoenv oenv (prime a) e) doenv (prime a) ddelta|
+		|mset oenv da deltae a e (extoenv oenv (prime a) e) (prime a) ddelta|
 	}
 	\quad
 	\frac{
-		|a `notin` doenv|
 	}{
-		|mset oenv doenv a e (extoenv oenv a e) (doenv `union` {a}) a ddelta|
+		|mset oenv did deltae a e (extoenv oenv a e) a ddelta|
 	}
 	\quad
 	\frac{
-		|a `notin` doenv| \quad |app oenv (a) = e| \quad |e = e'|
+		|app oenv (a) = e|
 	}{
-		|mset oenv doenv a e' oenv doenv a did|
+		|mset oenv did did a e' oenv a did|
 	}
 \end{displaymath}
 
 
 
-$\boxed{|dload oenv doenv eenv deenv r s F v df dv (prime oenv) (prime doenv) (prime v) (prime deltav)|}$
+$\boxed{|dload oenv eenv deenv r s F v df dv (prime oenv) (prime v) (prime deltav)|}$
+
+%\begin{displaymath}
+%	\frac{
+%	\begin{array}{c}
+%		\delta_\varepsilon |_{fv(s)} = \emptyset
+%		
+%		|app oenv (a) = e| \quad |meval oenv e (prime oenv) (aerr,v)|\\
+%		|dload (prime oenv) doenv eenv deenv r s F v df dv (prime2 oenv) (prime doenv) (prime v) deltav| \quad |v = prime v|
+%	\end{array}
+%	}{
+%		|dload oenv doenv eenv deenv r (M s) F (aerr,v) df (M (did `otimes` dv)) (prime2 oenv) (prime doenv) a did|
+%	}
+%\end{displaymath}
+%
+%\begin{displaymath}
+%	\frac{
+%	\delta_\varepsilon |_{fv(s)} = \emptyset
+%		\quad
+%		\delta_F \searrow r = \emptyset
+%	}{
+%		\varepsilon ; \delta_\varepsilon ; r ; s \vdash \mathtt{load}_{\Delta}~ (F,v,d)~ \delta_F ~ \emptyset \rhd \key{ret}\; (\emptyset,\emptyset)
+%	}
+%\end{displaymath}
 
 $\boxed{|s = M s1|}$
 
@@ -616,10 +684,10 @@ $\boxed{|s = M s1|}$
 	\frac{
 	\begin{array}{c}
 		|app oenv (a) = e| \quad |meval oenv e (prime oenv) (aerr,v)|\\
-		|dload (prime oenv) doenv eenv deenv r s F v df dv (prime2 oenv) (prime doenv) (prime v) deltav| \quad |v = prime v|
+		|dload (prime oenv) eenv deenv r s F v df dv (prime2 oenv) (prime v) deltav| \quad |v = prime v|
 	\end{array}
 	}{
-		|dload oenv doenv eenv deenv r (M s) F a df (M (did `otimes` dv)) (prime2 oenv) (prime doenv) a did|
+		|dload oenv eenv deenv r (M s) F a df (dM did (did `otimes` dv)) (prime2 oenv) a did|
 	}
 \end{displaymath}
 
@@ -627,14 +695,27 @@ $\boxed{|s = M s1|}$
 	\frac{
 	\begin{array}{c}
 		|app oenv (a) = e| \quad |meval oenv e (prime oenv) (aerr,v)|\\
-		|dload (prime oenv) doenv eenv deenv r s F v df dv oenv1 doenv1 (prime v) deltav|\\
+		|dload (prime oenv) eenv deenv r s F v df dv oenv1 (prime v) deltav|\\
 
-		|mset oenv1 doenv1 aerr (valid (prime v)) oenv2 doenv2 (prime aerr) deltaaerr|\\
-		|mset oenv2 doenv2 a (returnM (prime aerr,prime v)) oenv3 doenv3 (prime a) deltaa|
+		|mset oenv1 daerr deltav aerr (valid (prime v)) oenv2 (prime aerr) deltaaerr|\\
+		|mset oenv2 da deltaaerr a (returnM (prime aerr,prime v)) oenv3 (prime a) deltaa|
 		
 	\end{array}
 	}{
-		|dload oenv doenv eenv deenv r (M s) F a df (M (daerr `otimes` dv)) oenv3 doenv3 (prime a) deltaa|
+		|dload oenv eenv deenv r (M s) F a df (dM da (daerr `otimes` dv)) oenv3 (prime a) deltaa|
+	}
+\end{displaymath}
+
+$\boxed{|s = e :: s1|}$
+
+\begin{displaymath}
+	\frac{
+	\begin{array}{c}
+		\Delta_\varepsilon ||_{fv(s)} = \emptyset \quad |meval oenv (sem (r / e) eenv Path) (prime oenv) (prime r)| \\ 
+		|dload (prime oenv) eenv deenv (prime r) (e :: s) F v df dv (prime2 oenv) (prime v) deltav|
+	\end{array}
+	}{
+		|dload oenv eenv deenv r (e :: s) F v df dv (prime2 oenv) (prime v) deltav|
 	}
 \end{displaymath}
 
@@ -643,40 +724,82 @@ $\boxed{|s = dpair x s1 s2|}$
 \begin{displaymath}
 	\frac{
 	\begin{array}{c}
-		|dload oenv doenv eenv deenv r s1 F v1 df dv1 oenv1 doenv1 (prime v1) deltav1|\\
-		|dload oenv1 doenv1 (exteenv eenv x (prime v1)) (exteenv deenv x deltav1) r s2 F v2 df dv2 oenv2 doenv2 (prime v2) deltav2|\\
-		|mset oenv2 doenv2 aerr (doM {b1 <- valid (prime v1); b2 <- valid (prime v2); returnM (b1 `and` b2) }) (prime oenv) (prime doenv) (prime aerr) deltaaerr|
+		|dload oenv eenv deenv r s1 F v1 df dv1 oenv1 (prime v1) deltav1|\\
+		|dload oenv1 (exteenv eenv x (prime v1)) (exteenv deenv x deltav1) r s2 F v2 df dv2 oenv2 (prime v2) deltav2|\\
+		|mset oenv2 daerr (deltav1 `and` deltav2) aerr (doM {b1 <- valid (prime v1); b2 <- valid (prime v2); returnM (b1 `and` b2) }) (prime oenv)(prime aerr) deltaaerr|
 	\end{array}
 	}{
-		|dload oenv doenv eenv deenv r (dpair x s1 s2) F (aerr,(v1,v2)) df (daerr `otimes` (dv1 `otimes` dv2)) (prime oenv) (prime doenv) (prime aerr,(prime v1,prime v2)) (deltaaerr `otimes` (deltav1 `otimes` deltav2))|
+		|dload oenv eenv deenv r (dpair x s1 s2) F (aerr,(v1,v2)) df (daerr `otimes` (dv1 `otimes` dv2)) (prime oenv) (prime aerr,(prime v1,prime v2)) deltaaerr|
 	}
 \end{displaymath}
 
-$\boxed{|dstore oenv doenv eenv deenv r s F v df dv (prime oenv) (prime doenv) (prime F) (prime phi)|}$
+%$\boxed{|s = flist s x e|}$
+%
+%\begin{displaymath}
+%	\frac{
+%	\begin{array}{c}
+%		|meval oenv (sem e eenv {tau}) (prime oenv) {t1,...,tk}| \quad |vs = map ti tk| \\
+%		|meval (prime oenv) (forn 1 i k (do { vi <- pdloadx (exteenv eenv x ti) r s F; returnM (map ti vi) })) (prime2 oenv) vs|\\
+%		|eerr = forn 1 i k (do { bi <- app valid vi; returnM (bigwedge bi) } )|
+%	\end{array}
+%	}{
+%		|dload oenv eenv deenv r (flist s x e) F (aerr,vs) df (daerr `otimes` dvs) (prime oenv) (prime aerr,(prime v1,prime v2)) (deltaaerr `otimes` deltavs)|
+%	}
+%\end{displaymath}
+%
+%\begin{displaymath}
+%	\frac{
+%		|t `inSet` dom (vs)| \quad
+%		|dload oenv eenv deenv r s F (app vs t) df (app dvs t) (prime oenv) v deltav|
+%	}{
+%		|dloadx oenv eenv deenv r s F (t,vs) df dvs (prime oenv) v deltav|
+%	}
+%\end{displaymath}
+
+$\boxed{|dstore oenv eenv deenv r s F v df dv (prime oenv) (prime F) (prime phi)|}$
 
 \begin{theorem}[Incremental Load Soundness]
 	If
 	\begin{align*}
-		|load oenv eenv r s F (prime oenv) v|\\
-		|dload (prime oenv) (prime doenv) (prime eenv) deenv r s F v df dv (prime2 oenv) (prime2 doenv) (prime v) deltav|\\
-		|load (prime oenv) (prime eenv) r s (df F) (prime3 oenv) (prime2 v)|
+		|load oenv eenv r s F1 oenv1 v1|\\
+		|darrow v1 oenv1 dv1 (prime v1) oenv2|\\
+		|dload oenv2 (prime eenv) deenv r s F1 (prime v1) df1 dv1 oenv3 v2 deltav1p|\\
+		|load oenv1 (prime eenv) r s (df1 F1) oenv4 v3|
 	\end{align*}
-	then |(prime v) (simErr (prime2 oenv) (prime3 oenv)) (prime2 v)| and |(app valid (prime v)) (simErr (prime2 oenv) (prime3 oenv)) (app valid (prime2 v))|.
+	then |v2 (simErr oenv3 oenv4) v3| and |(app valid v2) (simErr oenv3 oenv4) (app valid v3)|.
 \end{theorem}
 
+\begin{displaymath}
+\xymatrix@@R=.7cm@@C=2cm{
+	|F1| \ar@@{=>}[ddr]^{\mathtt{load}_\Delta}  \ar@@{~>}[d]_{|df1|} \ar[r]^{\mathtt{load}} & |v1| \ar@@{~>}[d]^{|dv1|} \\
+	|F2| \ar[d]_{|id|} & |prime v1| \ar@@{~>}[d]^{|deltav1p|} \\
+	|F2| \ar[r]^{\mathtt{load}} & |v2|
+}
+\end{displaymath}
+
 \begin{lemma}[Incremental Load Stability]
-	|dload oenv did eenv deenv r (M s) F a df da (prime oenv) (prime doenv) a deltaa|
+	|dload oenv eenv deenv r (M s) F a df (dM did dv) (prime oenv) a deltaa|
 \end{lemma}
 
 \begin{theorem}[Incremental Store Soundness]
 	If
 	\begin{align*}
-		|store oenv eenv r s F v (prime oenv) (prime F) (prime phi)|\\
-		|dstore (prime oenv) (prime doenv) (prime eenv) deenv r s (prime F) v df dv (prime2 oenv) (prime2 doenv) (prime2 F) (prime2 phi)|\\
-		|store (prime oenv) (prime eenv) r s (df (prime F)) (dv v) (prime3 oenv) (prime3 F) (prime3 phi)|
+		|store oenv eenv r s F v1 oenv1 F1 phi1|\\
+		|darrow v1 oenv1 dv1 v2 oenv2|\\
+		|dstore oenv2 (prime eenv) deenv r s F1 v2 df1 dv1 oenv3 F2 phi2|\\
+		|store oenv2 (prime eenv) r s (df1 F1) v2 oenv4 F3 phi3|
 	\end{align*}
-	then |prime2 F = prime3 F| and |app (prime2 phi) (prime2 F) = app (prime3 phi) (prime3 phi)|.
+	then |F2 = F3| and |app phi2 F2 = app phi3 F3|.
 \end{theorem}
+
+\begin{displaymath}
+\xymatrix@@R=.7cm@@C=2cm{
+	|F| \ar@@{~>}[d]_{} & |v1| \ar@@{->}[d]^{|id|} \ar@@{->}[dl]^{\mathtt{store}} \\
+	|F1| \ar@@{~>}[d]_{|df1|} \ar[r]_{\mathtt{load}} & |v1| \ar@@{~>}[d]^{|dv1|} \ar@@{=>}[ddl]_{\mathtt{store}_\Delta} \\
+	|prime F1| \ar@@{~>}[d]_{} & |v2| \ar@@{->}[d]^{|id|} \ar@@{->}[dl]^{\mathtt{store}} \\
+	|F2| \ar[r]_{\mathtt{load}} & |v2|
+}
+\end{displaymath}
 
 \end{document}
 
