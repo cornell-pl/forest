@@ -110,22 +110,25 @@
 \section{Introduction}
 
 transactional use cases:
-batch changes on group of files (process all the files in a directory)
-software upgrade (rollback)
-concurrent file access (multiple processes writing to the same log file)
+batch changes on group of files (process all the files in a directory),
+software upgrade (rollback),
+concurrent file access (multiple processes writing to the same log file),
 filesystem as a database (ACID guarantees)
 
 transactional filesystems
-\url{http://www.fuzzy.cz/en/articles/transactional-file-systems}
-\url{http://www.fsl.cs.sunysb.edu/docs/valor/valor_fast2009.pdf}
+\url{http://www.fuzzy.cz/en/articles/transactional-file-systems}\\
+\url{http://www.fsl.cs.sunysb.edu/docs/valor/valor_fast2009.pdf}\\
 \url{http://www.fsl.cs.sunysb.edu/docs/amino-tos06/amino.pdf}
 
 
 
 libraries for transactional file operations:
-\url{http://commons.apache.org/proper/commons-transaction/file/index.html}
-\url{https://xadisk.java.net/}
+\url{http://commons.apache.org/proper/commons-transaction/file/index.html}\\
+\url{https://xadisk.java.net/}\\
 \url{https://transactionalfilemgr.codeplex.com/}
+
+Specific use cases:
+LHC
 
 tx file-level operations (copy,create,delete,move,write)
 schema somehow equivalent to using the unstructured universal Forest representation
@@ -172,13 +175,13 @@ arbitrary pure code
 
 \subsection{Transactional variables}
 
-the forest programming style draws no distinction between data represented on disk and in memory.
+The forest programming style draws no distinction between data represented on disk and in memory.
 
 The transactional forest compiler generates several Haskell types and functions from every forest type declaration, aggregated as an instance of the |TxForest| class:
 
-programmers can manipulate in-memory representations as if they were working on the filestore itself.
+Programmers can manipulate in-memory representations as if they were working on the filestore itself.
 
-each user-declared forest type |ty| corresponds to a transactional variable that holds a representation of type |rep|.
+Each user-declared forest type |ty| corresponds to a transactional variable that holds a representation of type |rep|.
 
 \begin{spec}
 	class TxForest args ty rep where
@@ -187,20 +190,23 @@ each user-declared forest type |ty| corresponds to a transactional variable that
 		writeOrElse		:: ty -> rep -> b -> (WriteErrors -> FTM fs b) -> FTM fs b
 \end{spec}
 
-|new| creates a new forest transactional variable for the specification found in |TxForest| context, with arbitrary arguments and a root path.
-|read| the associated fragment of the filesytem into an in-memory representation data structure.
-Users can manipulate these structures as they would in regular Haskell programs, and eventually perform FS modifications by writing new representation to a transactional variable. writes may fail if the provided data is not a faithful representation of the filestore for the specification under consideration.
+|new| creates a new forest transactional variable for the specification found in the |TxForest| context, with arbitrary arguments and a root path.
+|read| reads the associated fragment of the filesytem into an in-memory representation data structure.
+Users can manipulate these structures as they would in regular Haskell programs, and eventually perform FS modifications by writing a new representation to a transactional variable. writes may fail if the provided data is not a faithful representation of the filestore for the specification under consideration.
 
-|WriteErrors| have nothing to do with transactional errors and account for the inconsistencies that can arise when programmer attempt to write an erroneous in-memory representation to the filestore.
-e.g., attempting to write conflicting data to the same file. more on this later in sec...
+|WriteErrors| have nothing to do with transactional errors and account for the inconsistencies that can arise when a programmer attempts to write an erroneous in-memory representation to the filestore. For example, attempting to write conflicting data to the same file or a text file to a specification of a directory structure. 
+%more on this later in sec...
 
-the rep of a variable may itself contain other variables. simple programming example.
+The rep of a variable may contain other variables. For example, a directory containing a list of other Forest types. TODO: write a simple programming example.
 
-Notice that we can have multiple variables (with possibly different specs) ``connected'' to the same fragment of a filesystem.
-this can cause inter
+Notice that we can have multiple variables (possibly with different specs) ``connected'' to the same fragment of a filesystem. This can cause WriteErrors, as noted above, and the values of the two will be interdependent. However, variables only depend on each other within a transaction, not across transactions (until a transaction is committed that is). 
 
-we have sort of a mismatch: transactional variables per type declaration VS fileinfo per directory/file.
-the justification is that, since forest always fills default data for inexisting paths, the fileinfo actually determines whether a directory/file exists or not in the real FS. e.g., to delete a file we need to mark its fileinfo as invalid, and to create a file we need to define clean valid fileinfo for it.
+NOTE: Not sure what this fragment of a sentence meant Hugo: this can cause inter
+
+NOTE: I kind of see what you're trying to say below Hugo (explaining why we need fileinfo I guess?), but the first line doesn't really make sense.
+
+We have a sort of mismatch: Transactional variables for type declarations VS fileinfo for directories/files.
+Since forest always fills in default data for non-existing paths, the fileinfo actually determines whether a directory/file exists or not in the real FS. E.g. to delete a file we need to mark its fileinfo as invalid, and to create a file we need to define clean, valid fileinfo for it.
 
 \subsection{Validation}
 
