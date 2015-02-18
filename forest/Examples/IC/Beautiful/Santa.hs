@@ -69,17 +69,6 @@ Main
 - !inactive (this is where inactive reindeers and elves go)
 -}
 
-{-
-
-Need to know:
-- How to delete files
-- How to move files
-
-Curious:
-- So all the parts of the record need to have different names even between records? Because it defines functions?
-
--}
-
 type GroupID = FilePath
 type GateID = FilePath
 
