@@ -128,7 +128,9 @@ libraries for transactional file operations:
 \url{https://transactionalfilemgr.codeplex.com/}
 
 Specific use cases:
-LHC
+LHC\\
+Network logs\\
+Dan's scientific data
 
 tx file-level operations (copy,create,delete,move,write)
 schema somehow equivalent to using the unstructured universal Forest representation
@@ -146,9 +148,16 @@ a forest description defines a structured representation of a semi-structured fi
 \section{Forest Transactions}
 
 The key goal of this paper is to make Forest~\cite{Forest} transactional.
-As an embedded DSL in Haskell, we borrow the elegant software transactional memory (STM) interface from its host language.
+As an embedded DSL in Haskell, we borrow the elegant software transactional memory (STM~\cite{STM}) interface from its host language.
+
+In the rest of this section, we will first be describing our variation of the STM interface (\ref{subsec:composable}).
+We then introduce transactional variables, which is the abstraction we present to programmers to facilitate
+transactional programming (\ref{subsec:tvars}). We briefly touch on how we let programmers easily check
+that the filesystem looks as specified (before and after modification) (\ref{subsec:validation}), then 
+finish by describing our version of some standard filesystem operations (\ref{subsec:fsops}).
 
 \subsection{Composable transactions}
+\label{subsec:composable}
 
 software transactional memory building blocks
 
@@ -171,9 +180,24 @@ software transactional memory building blocks
 Complex transactions can be defined by composing |FTM| actions, and run |atomically| as an |IO| action.
 In Haskell, |IO| is the type of non-revocable I/O operations, including reading/writing to files.
 
+All of the reads in a transaction are logged and when |retry| is called,
+it blocks until another transaction writes to a file from the read log before restarting the
+transaction from scratch.
+
+|orElse| allows the programmer to try multiple nested transactions until one goes through.
+It tries the first transaction and if it calls |retry|, it tries the second. If that one calls
+|retry|, |orElse| retries the entire transaction. If either of the transactions finish, it instead
+continues on to the statement after the |orElse|.
+By nesting |orElse|s one can try arbitrarily many transactions.
+
+|throw| and |catch| work much like normal throw and catch statements.
+%NOTE by JD to Hugo: I'm not sure of the differences here. Please expand. Also fix what I wrote above if
+%you get a chance.
+
 arbitrary pure code
 
 \subsection{Transactional variables}
+\label{subsec:tvars}
 
 The forest programming style draws no distinction between data represented on disk and in memory.
 
@@ -197,18 +221,20 @@ Users can manipulate these structures as they would in regular Haskell programs,
 |WriteErrors| have nothing to do with transactional errors and account for the inconsistencies that can arise when a programmer attempts to write an erroneous in-memory representation to the filestore. For example, attempting to write conflicting data to the same file or a text file to a specification of a directory structure. 
 %more on this later in sec...
 
-The rep of a variable may contain other variables such as a directory containing a list of other Forest types. TODO by Hugo: write a simple programming example.
+The rep of a variable may contain other variables such as a directory containing a list of other Forest types. 
+%TODO by Hugo: write a simple programming example.
 
 Notice that we can have multiple variables (possibly with different specs) ``connected'' to the same fragment of a filesystem. This can cause WriteErrors, as noted above, and the values of the two will be interdependent. However, variables only depend on each other within a transaction, not across transactions (until a transaction is committed that is). 
 
-NOTE by JD: Not sure what this fragment of a sentence meant Hugo: this can cause inter
+%NOTE by JD to HUGO: Not sure what this fragment of a sentence meant: this can cause inter
 
-NOTE by JD: I kind of see what you're trying to say below Hugo (explaining why we need fileinfo I guess?), but the first line doesn't really make sense.
+%NOTE by JD to HUGO: I kind of see what you're trying to say below (explaining why we need fileinfo I guess?), but the first line doesn't really make sense.
 
 We have a sort of mismatch: Transactional variables for type declarations VS fileinfo for directories/files.
 Since forest always fills in default data for non-existing paths, the fileinfo actually determines whether a directory/file exists or not in the real FS. E.g. to delete a file we need to mark its fileinfo as invalid, and to create a file we need to define clean, valid fileinfo for it.
 
 \subsection{Validation}
+\label{subsec:validation}
 
 Validation helps programmers detect inconsistencies between the data they are trying to write to the filesystem and the constraints they have specified through Forest. In order to detect these sorts of errors, which we allow them to make should they care to, we provide a validate function, returning all such errors.
 
@@ -219,12 +245,13 @@ Validation helps programmers detect inconsistencies between the data they are tr
 \end{spec}
 
 \subsection{Standard filesystem operations}
+\label{subsec:fsops}
 
 \begin{spec}
 rm :: TxForest args ty rep => ty -> FTM ()
 \end{spec}
 
-NOTE by JD: Does rm actually remove a filepath or a specification? Or are these practically the same in this case (which would mean that if you only specify part of what's in a folder, the unspecified parts would be removed using this command)?
+%NOTE by JD to Hugo: Does rm actually remove a filepath or a specification? Or are these practically the same in this case (which would mean that if you only specify part of what's in a folder, the unspecified parts would be removed using this command)?
 
 This command lets the programmer remove a filepath by writing invalid fileinfo and default data to it.
 In order to avoid a loss of information, the default data needs to be precisely the data that is generated by forest.
@@ -240,7 +267,7 @@ While copying a single file by hand is simple (read, copy the contents, update t
 copying a directory is significantly more cumbersome because we have to recursively copy each child variable and update its fileinfo accordingly.
 Therefore, we provide this primitive operation. It may fail because the data that we are trying to write may not be consistent with the specification for the target arguments and path. For example, a specification with a boolean argument that loads file x or y, with source argument True and target argument False.
 
-NOTE by JD: Not sure I quite understand the example of where it may fail Hugo.
+%NOTE by JD to Hugo: Not sure I quite understand the example of where it may fail Hugo.
 
 \section{Implementation}
 
