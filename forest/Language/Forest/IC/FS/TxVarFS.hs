@@ -16,6 +16,7 @@ import Language.Forest.IC.Default
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Cmd
+import System.Mem.Weak as Weak
 import Control.Exception as Exception
 import Data.Strict.List
 import Unsafe.Coerce
@@ -568,7 +569,7 @@ startNestedTxVarFS :: TxVarFTM a -> TxVarFTM a
 startNestedTxVarFS m = do
 	(starttime,startversion,txlogs@(SCons txlog_parent _)) <- Reader.ask
 	(fsversion,chgs,tmps) <- inL $ readRef txlog_parent
-	txlog_child <- inL $ newRef (fsversion,chgs,tmps)
+	txlog_child <- inL $ newRef (fsversion,chgs,tmps) -- copy the parent's status; we will append modifications to it
 	debug ("startNestedTxVarFS ") $ Reader.local (Prelude.const (starttime,startversion,SCons txlog_child txlogs)) m
 
 dropChildTxLog :: TxVarFTM a -> TxVarFTM a
@@ -780,18 +781,47 @@ commitTxVarFSLog starttime doWrites txlog = do
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
 
-globalLock :: Lock
-globalLock = unsafePerformIO $ Lock.new
+--globalLock :: Lock
+--globalLock = unsafePerformIO $ Lock.new
+
+type FLock = MVar ()
+
+newFLock = newMVar ()
+waitFLock mv = Exception.mask_ $ takeMVar mv >> putMVar mv ()
+acquireFLock = takeMVar
+releaseFLock mv = do
+	b <- tryPutMVar mv ()
+	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
+
+fileLocks :: CMap.Map FilePath (Weak FLock)
+fileLocks = unsafePerformIO $ CMap.empty
+
+-- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
+fileLock :: FilePath -> IO FLock
+fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.delete path fileLocks) fileLocks
 
 atomicTxVarFS :: String -> TxVarFTM a -> TxVarFTM a
 atomicTxVarFS msg m = do
+	-- get the changes of the innermost txlog
+	(reads,writes) <- forestM getTxVarFSChangesFlat
+	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
+	waitFileLocks reads
 	forestM $ forestIO $ print $ "entering atomic " ++ msg
-	x <- withLock globalLock m
+	x <- withFileLocks writes m
 	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 
-withLock :: Lock -> TxVarFTM a -> TxVarFTM a
-withLock = liftA2 Catch.bracket_ (forestM . forestIO . Lock.acquire) (forestM . forestIO . Lock.release)
+waitFileLocks :: Set FilePath -> TxVarFTM ()
+waitFileLocks = inL . liftIO . Foldable.mapM_ (waitFLock <=< fileLock) . Set.toAscList
+
+-- acquiring the locks in sorted order is essential to avoid deadlocks!
+withFileLocks :: Set FilePath -> TxVarFTM a -> TxVarFTM a
+withFileLocks paths m = do
+	lcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList paths
+	liftA2 Catch.bracket_ (inL . liftIO . Foldable.mapM_ acquireFLock) (inL . liftIO . Foldable.mapM_ releaseFLock) lcks m
+
+--withLock :: Lock -> TxVarFTM a -> TxVarFTM a
+--withLock = liftA2 Catch.bracket_ (forestM . forestIO . Lock.acquire) (forestM . forestIO . Lock.release)
 
 ---- acquiring the locks in sorted order is essential to avoid deadlocks!
 --withFileLocksTxVarFS :: Set FilePath -> TxVarFTM a -> TxVarFTM a

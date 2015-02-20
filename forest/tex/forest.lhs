@@ -87,11 +87,11 @@
 %\titlebanner{banner above paper title}        % These are ignored unless
 %\preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{TxForest: Composable Transactions over Filestores}
+\title{TxForest: Composable Memory Transactions over Filestores}
 
 \authorinfo{Forest Team}
            {Cornell, TUFTS}
-           {hpacheco@@cs.cornell.edu}
+           {forest@@cs.cornell.edu}
 \maketitle
 
 \begin{abstract}
@@ -109,31 +109,34 @@
 
 \section{Introduction}
 
-transactional use cases:
-batch changes on group of files (process all the files in a directory),
+Databases are a long-standing, effective technology for storing structured and semi-structured data. Using a database has many benefits, including transactions and access to rich set of data manipulation languages and toolkits.
+
+downsides: heavy legacy, relational model is not always adequate
+
+cheaper and simpler alternative: store data directly as a collection of files, directories and symbolic links in a traditional filesystem.
+
+examples of filesystems as databases
+
+filesystems fall short for a number of reasons
+
+Forest~\cite{forest} made a solid step into solving this, by offering an integrated programming environment for specifying and managing filestores.
+
+Although promising, the old Forest suffered two essential shortcomings:
+\begin{itemize}
+	\item It did not offer the level of transparency of a typical DBMS. Users don't get to believe that they are working directly on the database (filesystem). they explicitly issue load/store calls, and instead manipulate in-memory representations and the filesystem independently. offline synchronization.
+	\item It provided no transactional guarantees. transactions are nice: prevent concurrency and failure problems. successful transactions are guaranteed to run in serial order and failing transactions rollback as if they never occurred. rely on extra programmers' to avoid the hazards of concurrent updates. different hacks and tricks like creating lock files and storing data in temporary locations, that severely increase the complexity of the applications. writing concurrent programs is notoriously hard to get right. even more in the presence of laziness (original forest used the generally unsound Haskell lazy I/O)
+\end{itemize}
+
+
+transactional filesystem use cases:
+
+a directory has a group of files that must be processed and deleted and having the aggregate result written to another file.
+
 software upgrade (rollback),
-concurrent file access (multiple processes writing to the same log file),
-filesystem as a database (ACID guarantees)
 
-transactional filesystems
-\url{http://www.fuzzy.cz/en/articles/transactional-file-systems}\\
-\url{http://www.fsl.cs.sunysb.edu/docs/valor/valor_fast2009.pdf}\\
-\url{http://www.fsl.cs.sunysb.edu/docs/amino-tos06/amino.pdf}
+concurrent file access (beautiful account example?)
 
 
-
-libraries for transactional file operations:
-\url{http://commons.apache.org/proper/commons-transaction/file/index.html}\\
-\url{https://xadisk.java.net/}\\
-\url{https://transactionalfilemgr.codeplex.com/}
-
-Specific use cases:
-LHC
-
-tx file-level operations (copy,create,delete,move,write)
-schema somehow equivalent to using the unstructured universal Forest representation
-
-but what about data manipulation: transactional maps,etc?
 
 \section{Examples}
 
@@ -143,9 +146,33 @@ the forest description types
 
 a forest description defines a structured representation of a semi-structured filestore.
 
+each Forest declaraction is interpreted as:
+an expected on-disk shape of a filesystem fragment
+a transactional variable
+an ordinary Haskell type for the in-memory representation that represents the content of a variable
+
+two expression quotations: non-monadic |(e)| vs monadic |<||e||>|
+
+
 \section{Forest Transactions}
 
-The key goal of this paper is to make Forest~\cite{Forest} transactional.
+The key goal of this paper is to provide a transactional interface for the Forest description language.
+
+premise: as rich a programming experience as with original Forest
+
+unlike many existing transactional systems/libraries for file systems (and not)
+
+limited set of operations that can be (safely) performed within a transaction.
+
+haskell programmers can traverse, query and manipulate forest data 
+
+this greatly facilitates the 
+
+We now present the design of Transactional Forest (TxForest for short).
+
+As an embedded domain-specific language in Haskell, the inspiration is the widely popular \texttt{STM} library
+
+
 As an embedded DSL in Haskell, we borrow the elegant software transactional memory (STM) interface from its host language.
 
 \subsection{Composable transactions}
@@ -172,6 +199,12 @@ Complex transactions can be defined by composing |FTM| actions, and run |atomica
 In Haskell, |IO| is the type of non-revocable I/O operations, including reading/writing to files.
 
 arbitrary pure code
+
+``internal concurrency between threads interacting through memory [...] we do not consider here the questions of external interaction through storage systems or databases''
+
+this is precisely where we deviate from original STM
+
+a forest variable is (conceptually) a path in the file system
 
 \subsection{Transactional variables}
 
@@ -220,6 +253,8 @@ Validation helps programmers detect inconsistencies between the data they are tr
 
 \subsection{Standard filesystem operations}
 
+not a problem of expressiveness, for convenience
+
 \begin{spec}
 rm :: TxForest args ty rep => ty -> FTM ()
 \end{spec}
@@ -230,6 +265,10 @@ This command lets the programmer remove a filepath by writing invalid fileinfo a
 In order to avoid a loss of information, the default data needs to be precisely the data that is generated by forest.
 If we are removing a directory, we need to make sure that its content is the empty list; a non-existing directory with content inside is not a valid snapshot of a FS, but a valid haskell value nonetheless.
 This is cumbersome to do manually for arbitrary specs that touch multiple files/directories, which is why we provide this primitive operation that generates the appropriate default data and performs the removal.
+
+\subsection{Lazy Forest I/O}
+
+
 
 \begin{spec}
 cpOrElse :: TxForest args ty rep => ty -> ty -> b -> ([WriteErrors] -> FTM fs b) -> FTM fs b
@@ -249,6 +288,15 @@ NOTE by JD: Not sure I quite understand the example of where it may fail Hugo.
 
 \subsection{Transactional Forest}
 
+(this is important since we write to canonical paths, whose canonicalization may depend on concurrent writes...)
+
+lock-free lazy acquire
+acquire ownership. only one tx can acquire an object at a time.
+global total order on variables, acquire variables in sorted order
+the analogous in txforest would be per-filepath locks, what does nto work out-of-the-box in the presence of symbolic links
+
+the identity of a filepath is not unique (different paths point to the same physical address) nor stable (equivalence depends on on the current filesystem).
+
 transactional semantics of STM: we log reads/writes to the filesystem instead of variables. global lock, no equality check on validation.
 load/store semantics of Forest with thunks, explicit laziness
 
@@ -266,15 +314,43 @@ write success theorem: if the current rep is in the image of load, then store su
 
 \subsection{Incremental Transactional Forest}
 
+problem with 1st approach: ic loading: two variables over the same file; read spec1, write spec2, read spec1 (our simple cache mechanism fails to prevent recomputation)
+laziness problem with 1st approach: ic storing: read variable (child variables are lazy), write variable (will recursively store everything); instead of no-op!
 
+
+exploit DSL information to have incrementality
 
 \subsection{Log-structured Transactional Forest}
+
+problem with 2nd approach: tx1 reads a variable; tx2 reads the same variable
+
+exploit (DSL info +) FS support to have incrementality
+
+read-only transactions require no synchronization
 
 \section{Evaluation}
 
 \section{Related Work}
 
+
+transactional filesystems (user-space vs kernel-space)
+\url{http://www.fuzzy.cz/en/articles/transactional-file-systems}\\
+\url{http://www.fsl.cs.sunysb.edu/docs/valor/valor_fast2009.pdf}\\
+\url{http://www.fsl.cs.sunysb.edu/docs/amino-tos06/amino.pdf}
+
+libraries for transactional file operations:
+\url{http://commons.apache.org/proper/commons-transaction/file/index.html}\\
+\url{https://xadisk.java.net/}\\
+\url{https://transactionalfilemgr.codeplex.com/}
+
+tx file-level operations (copy,create,delete,move,write)
+schema somehow equivalent to using the unstructured universal Forest representation
+
+but what about data manipulation: transactional maps,etc?
+
 \section{Conclusions}
+
+transactional variables do not descend to the content of files. pads specs are read/written in bulk. e.g., append line to log file. extend pads.
 
 \bibliographystyle{abbrvnat}
 \bibliography{forest}
@@ -340,7 +416,7 @@ write success theorem: if the current rep is in the image of load, then store su
 
 |v1 (simErr oenv1 oenv2) v2| denotes value equivalence (ignoring error information) modulo memory addresses, under the given environments.
 
-$\boxed{|load oenv eenv r s F (prime oenv) v|}$
+$\boxed{|load oenv eenv r s F (prime oenv) v|}$ ``Under heap |oenv| and environment |eenv|, load the specification |s| for filesystem |F| at path |r| and yield a representation |v|.''
 
 $\boxed{|s = M s1|}$
 
@@ -456,7 +532,7 @@ $\boxed{|s = flist s1 x e|}$
 	}
 \end{displaymath}
 
-$\boxed{|store oenv eenv r s F v (prime oenv) (prime F) (prime phi)|}$
+$\boxed{|store oenv eenv r s F v (prime oenv) (prime F) (prime phi)|}$ ``Under heap |oenv| and environment |eenv|, store the representation |v| for the specification |s| on filesystem |F| at path |r| and yield an updated filesystem |prime F| and a validation function |prime phi|.''
 
 $\boxed{|s = M s1|}$
 
@@ -681,7 +757,7 @@ errors are computed in the background
 
 
 
-$\boxed{|dload oenv eenv deenv r s F v df dv (prime oenv) (prime v) (prime deltav)|}$
+$\boxed{|dload oenv eenv deenv r s F v df dv (prime oenv) (prime v) (prime deltav)|}$ ``Under heap |oenv|, environment |eenv| and delta environment |deenv|, incrementally load the specification |s| for the original filesystem |F| and original representation |v|, given filesystem changes |df| and representation changes |dv|, to yield an updated representation |prime v| with changes |prime deltav|.
 
 \begin{displaymath}
 	\frac{
@@ -821,7 +897,7 @@ $\boxed{|s = flist s x e|}$
 	}
 \end{displaymath}
 
-$\boxed{|dstore oenv eenv deenv r s F v df dv (prime oenv) (prime F) (prime phi)|}$
+$\boxed{|dstore oenv eenv deenv r s F v df dv (prime oenv) (prime F) (prime phi)|}$ ``Under heap |oenv|, environment |eenv| and delta environment |deenv|, store the representation |v| for the specification |s| on filesystem |F| at path |r|, given filesystem changes |df| and representation changes |dv|, and yield an updated filesystem |prime F| and a filesystem validation function |prime phi|.''
 
 \begin{displaymath}
 	\frac{

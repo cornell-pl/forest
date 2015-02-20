@@ -15,6 +15,7 @@ import Language.Forest.IC.Default
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Process
+import System.Mem.Weak as Weak
 import Control.Exception as Exception
 import Data.Strict.List
 import Unsafe.Coerce
@@ -1210,16 +1211,38 @@ commitTxICFSLog starttime doWrites txlog = do
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
 
-globalLockTxIC :: Lock
-globalLockTxIC = unsafePerformIO $ Lock.new
+type FLock = MVar ()
+
+newFLock = newMVar ()
+waitFLock mv = Exception.mask_ $ takeMVar mv >> putMVar mv ()
+acquireFLock = takeMVar
+releaseFLock mv = do
+	b <- tryPutMVar mv ()
+	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
+
+fileLocks :: CMap.Map FilePath (Weak FLock)
+fileLocks = unsafePerformIO $ CMap.empty
+
+-- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
+fileLock :: FilePath -> IO FLock
+fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.delete path fileLocks) fileLocks
 
 atomicTxICFS :: String -> TxICFTM a -> TxICFTM a
 atomicTxICFS msg m = do
+	-- get the changes of the innermost txlog
+	(reads,writes) <- forestM getTxICFSChangesFlat
+	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
+	waitFileLocks reads
 	forestM $ forestIO $ print $ "entering atomic " ++ msg
-	x <- withLockTxIC globalLockTxIC m
+	x <- withFileLocks writes m
 	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 
+waitFileLocks :: Set FilePath -> TxICFTM ()
+waitFileLocks = inL . liftIO . Foldable.mapM_ (waitFLock <=< fileLock) . Set.toAscList
+
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
-withLockTxIC :: Lock -> TxICFTM a -> TxICFTM a
-withLockTxIC = liftA2 Catch.bracket_ (forestM . forestIO . Lock.acquire) (forestM . forestIO . Lock.release)
+withFileLocks :: Set FilePath -> TxICFTM a -> TxICFTM a
+withFileLocks paths m = do
+	lcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList paths
+	liftA2 Catch.bracket_ (inL . liftIO . Foldable.mapM_ acquireFLock) (inL . liftIO . Foldable.mapM_ releaseFLock) lcks m
