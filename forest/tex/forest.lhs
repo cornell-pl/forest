@@ -136,6 +136,11 @@ software upgrade (rollback),
 
 concurrent file access (beautiful account example?)
 
+Specific use cases:
+LHC\\
+Network logs\\
+Dan's scientific data
+
 
 
 \section{Examples}
@@ -158,41 +163,17 @@ two expression quotations: non-monadic |(e)| vs monadic |<||e||>|
 
 The Forest description language introduced in the previous section describes how to specify the expected shape of a filestore as an allegorical Haskell type, independently from the concrete programming artifacts that are used to manipulate such filestores.
 We now focus on the key goal of this paper: the design of the Transactional Forest interface.
-As we shall see, TxForest (for short) offers an elegant and powerful abstraction to concurrently manipulate structured filestores.
 
-%In the same spirit of the original non-transactional Forest~\cite{forest} interface.
-%
-%
-%improves over the original non-transactional Forest interface while retaining the same spirit, in that programmers can traverse, query and manipulate forest data using the rich support for generic tools
-%
-%As a starting point, 
-%
-%
-%Unlike many existing transactional systems and libraries, that offer a limited set of operations that can be (safely) performed and combiend within a transaction, 
-%
-%TxForest intends to provide transactional 
-%
-%Additionally, we want to do so without compromising the rich programming style previously offered by the original non-transactional Forest~\cite{forest} interface.
-%
-%As an initial premise, 
-%
-%purely functional data structures and computations
-%
-%premise: as rich a programming experience as with original Forest
-%
-%unlike many existing transactional systems (for file systems or not)
-%
-%limited set of operations that can be (safely) performed and combined within a transaction.
-%
-%the rich toolbox available to an Haskell programmer and use it on forest
-%
-%haskell programmers can traverse, query and manipulate forest data 
-%
-%this greatly facilitates the 
+As we shall see, TxForest (for short) offers an elegant and powerful abstraction to concurrently manipulate structured filestores.
+We first describe general-purpose transactional facilities~(\ref{subsec:composable}).
+We then introduce the kind of transactional variables that programmers can explicitly read from and write to when interacting with the filestores~(\ref{subsec:tvars}).
+We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(\ref{subsec:validation}), and introduce analogous of standard file system operations over filestores~(\ref{subsec:fsops}).
+We finish by ...~(\ref{subsec:lazy}).
 
 \subsection{Composable transactions}
+\label{subsec:composable}
 
-As an embedded domain-specific language in Haskell, the inspiration for TxForest is the widely popular \emph{software transactional memory} (\texttt{STM}) library, that provides a small set of highly composable operations to define the key facilities of a transaction. We now explain the intuition of each one of these mechanisms, cast in the context of TxForest.
+As an embedded domain-specific language in Haskell, the inspiration for TxForest is the widely popular \emph{software transactional memory} (\texttt{STM}) Haskell library, that provides a small set of highly composable operations to define the key facilities of a transaction. We now explain the intuition of each one of these mechanisms, cast in the context of TxForest.
 
 \paragraph{Running transactions}
 
@@ -221,13 +202,17 @@ To allow a transaction to \emph{block} on a resource, TxForest provides a single
 retry :: FTM a
 \end{spec}
 Conceptually, |retry| cancels the current transaction, without emitting any errors, and schedules it to be retried at a later time.
-An efficient implementation waits for some of the shared filestore fragments read by the transaction to be updated before retrying.
+Since each transaction logs all the reads/writes that it performs on a filestore, an efficient implementation waits for another transaction to update the shared filestore fragments read by the blocked transaction before retrying.
 
 Using |retry| we can define a pattern for conditional transactions that wait on a condition to be verified before performing an action:
 \begin{spec}
 wait :: FTM Bool -> FTM a -> FTM a
 wait b c a = do { b <- p ; if b then retry else a }
 \end{spec}
+
+All of the reads in a transaction are logged and when |retry| is called,
+it blocks until another transaction writes to a file from the read log before restarting the
+transaction from scratch.
 
 \paragraph{Composing transactions}
 
@@ -270,20 +255,31 @@ Programmers can prevent the transaction from being aborted, and its effects disc
 	catch tryRead (\FileNotFound -> return ...default...) tryRead
 \end{spec}
 
-\subsection{Transactional variables}
+%In the same spirit of the original non-transactional Forest~\cite{forest} interface.
+%improves over the original non-transactional Forest interface while retaining the same spirit, in that programmers can traverse, query and manipulate forest data using the rich support for generic tools
+%Unlike many existing transactional systems and libraries, that offer a limited set of operations that can be (safely) performed and combiend within a transaction, 
+%Additionally, we want to do so without compromising the rich programming style previously offered by the original non-transactional Forest~\cite{forest} interface.
+%purely functional data structures and computations
+%premise: as rich a programming experience as with original Forest
+%the rich toolbox available to an Haskell programmer and use it on forest
+%haskell programmers can traverse, query and manipulate forest data 
+%this greatly facilitates the
 
-|FTM a| denotes a transactional action that returns a value of type |a|.
-Complex transactions can be defined by composing |FTM| actions, and run |atomically| as an |IO| action.
+\subsection{Transactional variables}
+\label{subsec:tvars}
+
+Up until now, we have interact with a filestore.
 
 arbitrary pure code
 
-``internal concurrency between threads interacting through memory [...] we do not consider here the questions of external interaction through storage systems or databases''
+
+``we study internal concurrency between threads interacting through memory in a single process; we do not consider here the questions of external interaction through storage systems or databases''
 
 this is precisely where we deviate from original STM
 
 a forest variable is (conceptually) a path in the file system
 
-Up until now, we have only seen how to compose individual transactions, but not how to do anythign meaningful with shared data!
+
 
 The forest programming style draws no distinction between data represented on disk and in memory.
 
@@ -307,18 +303,20 @@ Users can manipulate these structures as they would in regular Haskell programs,
 |WriteErrors| have nothing to do with transactional errors and account for the inconsistencies that can arise when a programmer attempts to write an erroneous in-memory representation to the filestore. For example, attempting to write conflicting data to the same file or a text file to a specification of a directory structure. 
 %more on this later in sec...
 
-The rep of a variable may contain other variables such as a directory containing a list of other Forest types. TODO by Hugo: write a simple programming example.
+The rep of a variable may contain other variables such as a directory containing a list of other Forest types. 
+%TODO by Hugo: write a simple programming example.
 
 Notice that we can have multiple variables (possibly with different specs) ``connected'' to the same fragment of a filesystem. This can cause WriteErrors, as noted above, and the values of the two will be interdependent. However, variables only depend on each other within a transaction, not across transactions (until a transaction is committed that is). 
 
-NOTE by JD: Not sure what this fragment of a sentence meant Hugo: this can cause inter
+%NOTE by JD to HUGO: Not sure what this fragment of a sentence meant: this can cause inter
 
-NOTE by JD: I kind of see what you're trying to say below Hugo (explaining why we need fileinfo I guess?), but the first line doesn't really make sense.
+%NOTE by JD to HUGO: I kind of see what you're trying to say below (explaining why we need fileinfo I guess?), but the first line doesn't really make sense.
 
 We have a sort of mismatch: Transactional variables for type declarations VS fileinfo for directories/files.
 Since forest always fills in default data for non-existing paths, the fileinfo actually determines whether a directory/file exists or not in the real FS. E.g. to delete a file we need to mark its fileinfo as invalid, and to create a file we need to define clean, valid fileinfo for it.
 
 \subsection{Validation}
+\label{subsec:validation}
 
 Validation helps programmers detect inconsistencies between the data they are trying to write to the filesystem and the constraints they have specified through Forest. In order to detect these sorts of errors, which we allow them to make should they care to, we provide a validate function, returning all such errors.
 
@@ -329,6 +327,7 @@ Validation helps programmers detect inconsistencies between the data they are tr
 \end{spec}
 
 \subsection{Standard filesystem operations}
+\label{subsec:fsops}
 
 not a problem of expressiveness, for convenience
 
@@ -336,16 +335,12 @@ not a problem of expressiveness, for convenience
 rm :: TxForest args ty rep => ty -> FTM ()
 \end{spec}
 
-NOTE by JD: Does rm actually remove a filepath or a specification? Or are these practically the same in this case (which would mean that if you only specify part of what's in a folder, the unspecified parts would be removed using this command)?
+%NOTE by JD to Hugo: Does rm actually remove a filepath or a specification? Or are these practically the same in this case (which would mean that if you only specify part of what's in a folder, the unspecified parts would be removed using this command)?
 
 This command lets the programmer remove a filepath by writing invalid fileinfo and default data to it.
 In order to avoid a loss of information, the default data needs to be precisely the data that is generated by forest.
 If we are removing a directory, we need to make sure that its content is the empty list; a non-existing directory with content inside is not a valid snapshot of a FS, but a valid haskell value nonetheless.
 This is cumbersome to do manually for arbitrary specs that touch multiple files/directories, which is why we provide this primitive operation that generates the appropriate default data and performs the removal.
-
-\subsection{Lazy Forest I/O}
-
-
 
 \begin{spec}
 cpOrElse :: TxForest args ty rep => ty -> ty -> b -> ([WriteErrors] -> FTM fs b) -> FTM fs b
@@ -356,7 +351,11 @@ While copying a single file by hand is simple (read, copy the contents, update t
 copying a directory is significantly more cumbersome because we have to recursively copy each child variable and update its fileinfo accordingly.
 Therefore, we provide this primitive operation. It may fail because the data that we are trying to write may not be consistent with the specification for the target arguments and path. For example, a specification with a boolean argument that loads file x or y, with source argument True and target argument False.
 
-NOTE by JD: Not sure I quite understand the example of where it may fail Hugo.
+%NOTE by JD to Hugo: Not sure I quite understand the example of where it may fail Hugo.
+
+\subsection{Lazy Forest I/O}
+
+
 
 \section{Implementation}
 
