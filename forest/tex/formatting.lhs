@@ -112,6 +112,7 @@
 %format bigwedge = "\bigwedge"
 %format bigunion = "\bigcup"
 %format ri = "r_i"
+%format not = "not"
 %format Fi = "{F_i}"
 %format phii = "{\phi_i}"
 %format u1

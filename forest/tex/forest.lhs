@@ -124,7 +124,7 @@ Forest~\cite{forest} made a solid step into solving this, by offering an integra
 Although promising, the old Forest suffered two essential shortcomings:
 \begin{itemize}
 	\item It did not offer the level of transparency of a typical DBMS. Users don't get to believe that they are working directly on the database (filesystem). they explicitly issue load/store calls, and instead manipulate in-memory representations and the filesystem independently. offline synchronization.
-	\item It provided no transactional guarantees. transactions are nice: prevent concurrency and failure problems. successful transactions are guaranteed to run in serial order and failing transactions rollback as if they never occurred. rely on extra programmers' to avoid the hazards of concurrent updates. different hacks and tricks like creating lock files and storing data in temporary locations, that severely increase the complexity of the applications. writing concurrent programs is notoriously hard to get right. even more in the presence of laziness (original forest used the generally unsound Haskell lazy I/O)
+	\item It provided none of the transactional guarantees familiar from databases. transactions are nice: prevent concurrency and failure problems. successful transactions are guaranteed to run in serial order and failing transactions rollback as if they never occurred. rely on extra programmers' to avoid the hazards of concurrent updates. different hacks and tricks like creating lock files and storing data in temporary locations, that severely increase the complexity of the applications. writing concurrent programs is notoriously hard to get right. even more in the presence of laziness (original forest used the generally unsound Haskell lazy I/O)
 \end{itemize}
 
 
@@ -156,47 +156,124 @@ two expression quotations: non-monadic |(e)| vs monadic |<||e||>|
 
 \section{Forest Transactions}
 
-The key goal of this paper is to provide a transactional interface for the Forest description language.
+The Forest description language introduced in the previous section describes how to specify the expected shape of a filestore as an allegorical Haskell type, independently from the concrete programming artifacts that are used to manipulate such filestores.
+We now focus on the key goal of this paper: the design of the Transactional Forest interface.
+As we shall see, TxForest (for short) offers an elegant and powerful abstraction to concurrently manipulate structured filestores.
 
-premise: as rich a programming experience as with original Forest
-
-unlike many existing transactional systems/libraries for file systems (and not)
-
-limited set of operations that can be (safely) performed within a transaction.
-
-haskell programmers can traverse, query and manipulate forest data 
-
-this greatly facilitates the 
-
-We now present the design of Transactional Forest (TxForest for short).
-
-As an embedded domain-specific language in Haskell, the inspiration is the widely popular \texttt{STM} library
-
-
-As an embedded DSL in Haskell, we borrow the elegant software transactional memory (STM) interface from its host language.
+%In the same spirit of the original non-transactional Forest~\cite{forest} interface.
+%
+%
+%improves over the original non-transactional Forest interface while retaining the same spirit, in that programmers can traverse, query and manipulate forest data using the rich support for generic tools
+%
+%As a starting point, 
+%
+%
+%Unlike many existing transactional systems and libraries, that offer a limited set of operations that can be (safely) performed and combiend within a transaction, 
+%
+%TxForest intends to provide transactional 
+%
+%Additionally, we want to do so without compromising the rich programming style previously offered by the original non-transactional Forest~\cite{forest} interface.
+%
+%As an initial premise, 
+%
+%purely functional data structures and computations
+%
+%premise: as rich a programming experience as with original Forest
+%
+%unlike many existing transactional systems (for file systems or not)
+%
+%limited set of operations that can be (safely) performed and combined within a transaction.
+%
+%the rich toolbox available to an Haskell programmer and use it on forest
+%
+%haskell programmers can traverse, query and manipulate forest data 
+%
+%this greatly facilitates the 
 
 \subsection{Composable transactions}
 
-software transactional memory building blocks
+As an embedded domain-specific language in Haskell, the inspiration for TxForest is the widely popular \emph{software transactional memory} (\texttt{STM}) library, that provides a small set of highly composable operations to define the key facilities of a transaction. We now explain the intuition of each one of these mechanisms, cast in the context of TxForest.
 
+\paragraph{Running transactions}
+
+In TxForest, one runs a transaction by calling an |atomic| function with type:\footnote{For the original \texttt{STM} interface, substitute |FTM| by |STM|~\cite{HaskellSTM}.}
 \begin{spec}
-	-- running transactions
-	atomically	:: FTM a -> IO a
-	
-	-- blocking
-	retry		:: FTM a
-	
-	-- nested transactions
-	orElse		:: FTM a -> FTM a -> FTM a
-	
-	-- exceptions
-	throw		:: Exception e => e -> FTM a
-	catch 		:: Exception e => FTM a -> (e -> FTM a) -> FTM a
+	atomic :: FTM a -> IO a
 \end{spec}
+It receives a forest memory transaction, of type |FTM a|, and produces an |IO a| action that executes the transaction atomically with respect to all other concurrent transactions, returning a result of type |a|.
+In the pure functional language Haskell, |FTM| and |IO| are called monads. Different monads are typically used to characterize different classes of computational effects.
+|IO| is the primitive Haskell monad for performing irrevocable I/O actions, including reading/writing to files or to mutable references, managing threads, etc.
+For example, the Haskell prelude functions:
+\begin{spec}
+	getChar :: IO Char
+	putChar :: Char -> IO ()
+\end{spec}
+respectively read a character from the standard input and write a single character to the standard output.
+
+Conversely, our |FTM| monad denotes computations that are tentative, in the sense that they happen inside the scope of a transaction and can always be rolled back.
+As we shall in the remainder of this section, these consist of STM-like transactional combinators, file system operations on Forest filestores, or arbitrary pure functions.
+Note that, being |FTM| and |IO| different types, the Haskell type system effectively prevents non-transactional actions to be run inside a transaction. This is a valuable guarantee, and one that is not commonly found in transactional libraries for mainstream programming languages without a very expressive type system.
+
+\paragraph{Blocking transactions}
+
+To allow a transaction to \emph{block} on a resource, TxForest provides a single |retry| operation with type:
+\begin{spec}
+retry :: FTM a
+\end{spec}
+Conceptually, |retry| cancels the current transaction, without emitting any errors, and schedules it to be retried at a later time.
+An efficient implementation waits for some of the shared filestore fragments read by the transaction to be updated before retrying.
+
+Using |retry| we can define a pattern for conditional transactions that wait on a condition to be verified before performing an action:
+\begin{spec}
+wait :: FTM Bool -> FTM a -> FTM a
+wait b c a = do { b <- p ; if b then retry else a }
+\end{spec}
+
+\paragraph{Composing transactions}
+
+Multiple transactions can be sequentially composed via the standard |do| notation. For example, we can write:
+\begin{spec}
+	do { x <- ftm1; fmt2 x }
+\end{spec}
+to run a transaction |ftm1 : FTM a| and pass its result to a transaction |ftm2 :: a -> FTM b|. Since the whole computation is itself a transaction, it will be performed indivisibly inside an |atomic| block.
+
+We can also compose transactions as \emph{alternatives}, using the |orElse| primitive:
+\begin{spec}
+	orElse :: FTM a -> FTM a -> FTM a
+\end{spec}
+This combinator performs a left-biased choice: if first runs transaction |ftm1|, tries |fmt2| if |ftm1| retries, and the whole action retries if |ftm2| retries.
+It can be useful, for example, to read either one of two files depending on the current configuration of the file system.
+
+Note that |orElse| provides an elegant mechanism to define nested transactions. At any point inside a larger transaction, we can tentatively perform a transaction |ftm1|, and rollback to the beginning (of the nested transaction) to try an alternative |ftm2| in case |fmt1| retries:
+\begin{spec}
+do { ... ; orElse ftm1 ftm2; ... }
+\end{spec}
+
+\paragraph{Exceptions}
+
+The last general-purpose feature of |FTM| transactions are \emph{exceptions}. In Haskell, both built-in and user-defined exceptions are used to signal error conditions. We can |throw| and |catch| exceptions in the |FTM| monad in the same way as the |IO| monad:
+\begin{spec}
+	throw :: Exception e => e -> FTM a
+	catch :: Exception e => FTM a -> (e -> FTM a) -> FTM a
+\end{spec}
+
+For instance, a TxForest user may define a new |FileNotFound| exception and write the following pseudo-code:
+\begin{spec}
+tryRead = do
+	{ exists <- ...find file...
+	; if (not exists) then throw FileNotFound else return ()
+	; ...read file... }
+\end{spec}
+If the file in question is not found, then a |FileNotFound| exception is thrown, aborting the current |atomic| block (and hence the file is never read).
+Programmers can prevent the transaction from being aborted, and its effects discarded, by catching exceptions inside the transaction, e.g.:
+\begin{spec}
+	catch tryRead (\FileNotFound -> return ...default...) tryRead
+\end{spec}
+
+\subsection{Transactional variables}
 
 |FTM a| denotes a transactional action that returns a value of type |a|.
 Complex transactions can be defined by composing |FTM| actions, and run |atomically| as an |IO| action.
-In Haskell, |IO| is the type of non-revocable I/O operations, including reading/writing to files.
 
 arbitrary pure code
 
@@ -206,7 +283,7 @@ this is precisely where we deviate from original STM
 
 a forest variable is (conceptually) a path in the file system
 
-\subsection{Transactional variables}
+Up until now, we have only seen how to compose individual transactions, but not how to do anythign meaningful with shared data!
 
 The forest programming style draws no distinction between data represented on disk and in memory.
 
