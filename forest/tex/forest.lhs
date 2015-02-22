@@ -145,6 +145,18 @@ Dan's scientific data
 
 \section{Examples}
 
+\begin{figure}
+\begin{spec}
+[pads| data Balance = Balance Int |]
+
+[forest|
+	type Accounts = [ a :: Account | a <- matches (GL "*") ]
+	type Account = File Balance
+|]
+\end{spec}
+\label{fig:accounts}
+\end{figure}
+
 \section{The Forest Language}
 
 the forest description types
@@ -166,9 +178,8 @@ We now focus on the key goal of this paper: the design of the Transactional Fore
 
 As we shall see, TxForest (for short) offers an elegant and powerful abstraction to concurrently manipulate structured filestores.
 We first describe general-purpose transactional facilities~(\ref{subsec:composable}).
-We then introduce the kind of transactional variables that programmers can explicitly read from and write to when interacting with the filestores~(\ref{subsec:tvars}).
-We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(\ref{subsec:validation}), and introduce analogous of standard file system operations over filestores~(\ref{subsec:fsops}).
-We finish by ...~(\ref{subsec:lazy}).
+We then introduce transactional forest variables that allow programmers to interact with filestores~(\ref{subsec:tvars}).
+We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(\ref{subsec:validation}), and finish by introducing analogous of standard file system operations over filestores~(\ref{subsec:fsops}).
 
 \subsection{Composable transactions}
 \label{subsec:composable}
@@ -259,45 +270,57 @@ Programmers can prevent the transaction from being aborted, and its effects disc
 %improves over the original non-transactional Forest interface while retaining the same spirit, in that programmers can traverse, query and manipulate forest data using the rich support for generic tools
 %Unlike many existing transactional systems and libraries, that offer a limited set of operations that can be (safely) performed and combiend within a transaction, 
 %Additionally, we want to do so without compromising the rich programming style previously offered by the original non-transactional Forest~\cite{forest} interface.
-%purely functional data structures and computations
 %premise: as rich a programming experience as with original Forest
 %the rich toolbox available to an Haskell programmer and use it on forest
 %haskell programmers can traverse, query and manipulate forest data 
-%this greatly facilitates the
 
 \subsection{Transactional variables}
 \label{subsec:tvars}
 
-Up until now, we have interact with a filestore.
+We have seen how to build transactions from smaller transactional blocks, but we still haven't seen concrete operations to manipulate \emph{shared data}, a fundamental piece of any transactional mechanism.
+In vanilla Haskell STM, communication between threads is done via shared mutable memory cells called \emph{transactional variables}.
+For a transaction to log all memory effects, transactional variables can only be explicitly created, read from or written to using specific transactional operations. Nevertheless, programmers are welcome to perform many arbitrary pure functional computations to manipulate their content; since these don't have side-effects, they don't ever need to be logged or rolled back.
 
-arbitrary pure code
-
-
-``we study internal concurrency between threads interacting through memory in a single process; we do not consider here the questions of external interaction through storage systems or databases''
-
-this is precisely where we deviate from original STM
-
-a forest variable is (conceptually) a path in the file system
-
-
-
-The forest programming style draws no distinction between data represented on disk and in memory.
-
-The transactional forest compiler generates several Haskell types and functions from every forest type declaration, aggregated as an instance of the |TxForest| class:
-
-Programmers can manipulate in-memory representations as if they were working on the filestore itself.
-
-Each user-declared forest type |ty| corresponds to a transactional variable that holds a representation of type |rep|.
-
+In the context of TxForest, shared data is not stored in-memory but on the filestore. It is illuminating to quote~\cite{HaskellSTM}:
+\begin{quote}
+``We study internal concurrency between threads interacting through memory [...]; we do not consider here the questions of external interaction through storage systems or databases.''
+\end{quote}
+We consider precisely the question of external interaction with a file system.
+Two transactions may communicate, e.g., by reading from or writing to the same file or possibly a list of files within a directory.
+To facilitate this interaction, the TxForest compiler generates an instance of the |TxForest| type class (and corresponding types) for each Forest declaration:
 \begin{spec}
-	class TxForest args ty rep where
-		new				:: args -> FilePath -> FTM fs ty
-		read			:: ty -> FTM rep
-		writeOrElse		:: ty -> rep -> b -> (WriteErrors -> FTM fs b) -> FTM fs b
+class TxForest args ty rep | ty -> rep, ty -> args where
+	new             ::  args -> FilePath -> FTM fs ty
+	read            ::  ty -> FTM rep
+	writeOrElse     ::  ty -> rep -> b
+	                -> (Manifest -> FTM fs b) ->  FTM fs b
 \end{spec}
+In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. The representation type |rep| is a plain Haskell type that holds the content of a transactional variable.
 
-|new| creates a new forest transactional variable for the specification found in the |TxForest| context, with arbitrary arguments and a root path.
-|read| reads the associated fragment of the filesytem into an in-memory representation data structure.
+The transactional forest programing style draws no distinction between data on the file system and in-memory.
+Anywhere inside a transaction, users can declare a |new| transactional variable of type |ty|, with argument data pertaining to the forest declaration and rooted at the argument path in the file system.
+This operation does not have any effect on the file system, and just establishes the schema to which a filestore should conform.
+
+Users can |read| the contents of a transactional variable to obtain an Haskell value of type |rep|.
+Consider reading the description in Figure~\ref{fig:accounts}:
+\begin{spec}
+	do
+		accs :: Accounts <- new () "/var/db/accounts"
+		accs_rep <- read accs
+		...
+\end{spec}
+In the background, this is done by lazily traversing the directories, files and symbolic links mentioned in the forest description, stopping as soon as other transactional variables are encountered. The above snippet reads the accounts directory and generates a list of transactional variables, one per account.
+Developers can control the degree of laziness in a forest description by controlling the granularity of Forest declarations.
+For instance, if we have inlined each account in the description in Figure~\ref{fig:accounts}:
+\begin{spec}
+[forest|
+	type Accounts = [ a :: File Balance | a <- matches (GL "*") ]
+|]
+\end{spec}
+then |read accs| would also read the file content of each individual account inside the accounts directory.
+
+
+
 Users can manipulate these structures as they would in regular Haskell programs, and eventually perform FS modifications by writing a new representation to a transactional variable. writes may fail if the provided data is not a faithful representation of the filestore for the specification under consideration.
 
 |WriteErrors| have nothing to do with transactional errors and account for the inconsistencies that can arise when a programmer attempts to write an erroneous in-memory representation to the filestore. For example, attempting to write conflicting data to the same file or a text file to a specification of a directory structure. 
@@ -352,9 +375,6 @@ copying a directory is significantly more cumbersome because we have to recursiv
 Therefore, we provide this primitive operation. It may fail because the data that we are trying to write may not be consistent with the specification for the target arguments and path. For example, a specification with a boolean argument that loads file x or y, with source argument True and target argument False.
 
 %NOTE by JD to Hugo: Not sure I quite understand the example of where it may fail Hugo.
-
-\subsection{Lazy Forest I/O}
-
 
 
 \section{Implementation}
