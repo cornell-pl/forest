@@ -115,6 +115,7 @@
 %format not = "not"
 %format Fi = "{F_i}"
 %format phii = "{\phi_i}"
+%format default = "default"
 %format u1
 %format e2
 %format Fk = "{F_k}"

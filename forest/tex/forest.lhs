@@ -296,7 +296,8 @@ tryRead = do
 If the file in question is not found, then a |FileNotFound| exception is thrown, aborting the current |atomic| block (and hence the file is never read).
 Programmers can prevent the transaction from being aborted, and its effects discarded, by catching exceptions inside the transaction, e.g.:
 \begin{spec}
-	catch tryRead (\FileNotFound -> return ...default...) tryRead
+	catch tryRead
+		(\FileNotFound -> return ...default...) tryRead
 \end{spec}
 
 \subsection{Transactional variables}
