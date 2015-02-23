@@ -206,54 +206,56 @@ instance TxForest () Account ((FileInfo,Balance_md),Balance) where ...
 The Forest description language introduced in the previous section describes how to specify the expected shape of a filestore as an allegorical Haskell type, independently from the concrete programming artifacts that are used to manipulate such filestores.
 We now focus on the key goal of this paper: the design of the Transactional Forest interface.
 
-As we shall see, TxForest (for short) offers an elegant and powerful abstraction to concurrently manipulate structured filestores.
-We first describe general-purpose transactional facilities~(\ref{subsec:composable}).
-We then introduce transactional forest variables that allow programmers to interact with filestores~(\ref{subsec:tvars}).
-We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(\ref{subsec:validation}), and finish by introducing filestore-analogous versions of standard file system operations~(\ref{subsec:fsops}).
+As we shall see, TxForest (for short) offers an elegant and powerful abstraction for concurrently manipulating structured filestores.
+We first describe general-purpose transactional facilities~(Section~\ref{subsec:composable}).
+We then introduce transactional forest variables that allow programmers to interact with filestores~(Section~\ref{subsec:tvars}).
+We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(Section~\ref{subsec:validation}), and finish by introducing analogues of standard file system operations over filestores~(Section~\ref{subsec:fsops}).
 
 \subsection{Composable transactions}
 \label{subsec:composable}
 
-As an embedded domain-specific language in Haskell, the inspiration for TxForest is the widely popular \emph{software transactional memory} (\texttt{STM}) Haskell library, that provides a small set of highly composable operations to define the key facilities of a transaction. We now explain the intuition of each one of these mechanisms, cast in the context of TxForest.
+As an embedded domain-specific language in Haskell, the inspiration for TxForest is the widely popular \emph{software transactional memory} (\texttt{STM}) Haskell library, that provides a small set of composable operations to define the key components of a transaction. We now explain the intuition of each one of these mechanisms, cast in the context of TxForest.
 
 \paragraph{Running transactions}
 
-In TxForest, one runs a transaction by calling an |atomic| function with type:\footnote{For the original \texttt{STM} interface, substitute |FTM| by |STM|~\cite{HaskellSTM}.}
+In TxForest, one runs a transaction by calling the |atomic| function with type:\footnote{For the original \texttt{STM} interface~\cite{HaskellSTM}, substitute |FTM| by |STM|.}
 \begin{spec}
 	atomic :: FTM a -> IO a
 \end{spec}
 It receives a forest memory transaction, of type |FTM a|, and produces an |IO a| action that executes the transaction atomically with respect to all other concurrent transactions, returning a result of type |a|.
 In the pure functional language Haskell, |FTM| and |IO| are called monads. Different monads are typically used to characterize different classes of computational effects.
 |IO| is the primitive Haskell monad for performing irrevocable I/O actions, including reading/writing to files or to mutable references, managing threads, etc.
-For example, the Haskell prelude functions:
+For example, consider the Haskell prelude functions:
 \begin{spec}
 	getChar :: IO Char
 	putChar :: Char -> IO ()
 \end{spec}
-respectively read a character from the standard input and write a single character to the standard output.
+These respectively read a character from the standard input and write a character to the standard output.
 
 Conversely, our |FTM| monad denotes computations that are tentative, in the sense that they happen inside the scope of a transaction and can always be rolled back.
-As we shall in the remainder of this section, these consist of STM-like transactional combinators, file system operations on Forest filestores, or arbitrary pure functions.
-Note that, being |FTM| and |IO| different types, the Haskell type system effectively prevents non-transactional actions to be run inside a transaction. This is a valuable guarantee, and one that is not commonly found in transactional libraries for mainstream programming languages without a very expressive type system.
+As we discuss in the remainder of this section, these consist of STM-like transactional combinators, file system operations on Forest filestores, or arbitrary pure functions.
+Note that, since |FTM| and |IO| are different types, the Haskell type system effectively prevents non-transactional actions from being run inside of a transaction. This is a valuable guarantee and one that is not commonly found in transactional libraries for mainstream programming languages lacking a very expressive type system.
 
 \paragraph{Blocking transactions}
 
-To allow a transaction to \emph{block} on a resource, TxForest provides a single |retry| operation with type:
+To allow a transaction to \emph{block} on a resource, TxForest provides a |retry| operation with type:
 \begin{spec}
 retry :: FTM a
 \end{spec}
 Conceptually, |retry| cancels the current transaction, without emitting any errors, and schedules it to be retried at a later time.
 Since each transaction logs all the reads/writes that it performs on a filestore, an efficient implementation waits for another transaction to update the shared filestore fragments read by the blocked transaction before retrying.
 
-Using |retry| we can define a pattern for conditional transactions that wait on a condition to be verified before performing an action:
+Using |retry| we can define a pattern for conditional transactions that waits on a condition to be verified before performing an action:
 \begin{spec}
 wait :: FTM Bool -> FTM a -> FTM a
-wait b c a = do { b <- p ; if b then retry else a }
+wait p a = do { b <- p ; if b then retry else a }
 \end{spec}
+Note that |wait| does not require a cycle; the transactional semantics handles consecutive retries.
 
-All of the reads in a transaction are logged and when |retry| is called,
-it blocks until another transaction writes to a file from the read log before restarting the
-transaction from scratch.
+%NOTE by Jonathan: Not sure his is necessary anymore given your description above Hugo.
+%All of the reads in a transaction are logged and when |retry| is called,
+%it blocks until another transaction writes to a file from the read log before restarting the
+%transaction from scratch.
 
 \paragraph{Composing transactions}
 
@@ -261,16 +263,17 @@ Multiple transactions can be sequentially composed via the standard |do| notatio
 \begin{spec}
 	do { x <- ftm1; fmt2 x }
 \end{spec}
-to run a transaction |ftm1 : FTM a| and pass its result to a transaction |ftm2 :: a -> FTM b|. Since the whole computation is itself a transaction, it will be performed indivisibly inside an |atomic| block.
+This runs a transaction |ftm1 : FTM a| and passes its result to a transaction |ftm2 :: a -> FTM b|. Since the whole computation is itself a transaction, it will be performed indivisibly inside an |atomic| block.
 
 We can also compose transactions as \emph{alternatives}, using the |orElse| primitive:
 \begin{spec}
 	orElse :: FTM a -> FTM a -> FTM a
 \end{spec}
-This combinator performs a left-biased choice: it first runs transaction |ftm1|, tries |fmt2| if |ftm1| retries, and the whole action retries if |ftm2| retries.
-It can be useful, for example, to read either one of two files depending on the current configuration of the file system.
+This combinator performs a left-biased choice: It first runs transaction |ftm1|, tries |ftm2| if |ftm1| retries, and the whole transaction retries if |ftm2| retries.
+%ToDo by Jonathan: Make sure it's the whole transaction, not just the action. Apparently orElse semantics are a bit funky.
+For example, it might be used to read either one of two files depending on the current configuration of the file system.
 
-Note that |orElse| provides an elegant mechanism to define nested transactions. At any point inside a larger transaction, we can tentatively perform a transaction |ftm1|, and rollback to the beginning (of the nested transaction) to try an alternative |ftm2| in case |fmt1| retries:
+Note that |orElse| provides an elegant mechanism for nested transactions. At any point inside a larger transaction, we can tentatively perform a transaction |ftm1| and rollback to the beginning (of the nested transaction) to try |ftm2| in case |ftm1| retries:
 \begin{spec}
 do { ... ; orElse ftm1 ftm2; ... }
 \end{spec}
@@ -303,7 +306,7 @@ We have seen how to build transactions from smaller transactional blocks, but we
 In vanilla Haskell STM, communication between threads is done via shared mutable memory cells called \emph{transactional variables}.
 For a transaction to log all memory effects, transactional variables can only be explicitly created, read from or written to using specific transactional operations. Nevertheless, Haskell programmers can traverse, query and manipulate the content of transactional variables using the rich language of purely functional computations; since these don't have side-effects, they don't ever need to be logged or rolled back.
 
-In the context of TxForest, shared data is not stored in-memory but on the filestore. It is illuminating to quote~\cite{HaskellSTM}:
+In the context of TxForest, shared data is not stored in-memory, but instead on the filestore. It is illuminating to quote the STM paper~\cite{HaskellSTM}:
 \begin{quote}
 ``We study internal concurrency between threads interacting through memory [...]; we do not consider here the questions of external interaction through storage systems or databases.''
 \end{quote}
@@ -317,12 +320,12 @@ class TxForest args ty rep | ty -> rep, ty -> args where
 	writeOrElse     ::  ty -> rep -> b
 	                -> (Manifest -> FTM fs b) ->  FTM fs b
 \end{spec}
-In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. The representation type |rep| is a plain Haskell type that holds the content of a transactional variable. The representation type closely follows the declared Forest type, with additional file-content metadata for directories, files and symbolic links; directories have representation of type |(FileInfo,dir_rep)| and basic types have representation of type |((FileInfo,base_md),base_rep)|, for base representation |base_rep| and metadata |based_md|.
+In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. The representation type |rep| is a plain Haskell type that holds the content of a transactional variable. The representation type closely follows the declared Forest type, with additional file-content metadata for directories, files and symbolic links; directories have representations of type |(FileInfo,dir_rep)| and basic types have representations of type |((FileInfo,base_md),base_rep)|, for base representation |base_rep| and metadata |base_md|.
 
 \paragraph{Creation}
-The transactional forest programing style draws no distinction between data on the file system and in-memory.
+The transactional forest programming style makes no distinction between data on the file system and in-memory.
 Anywhere inside a transaction, users can declare a |new| transactional variable, with argument data pertaining to the forest declaration and rooted at the argument path in the file system.
-This operation does not have any effect on the file system, and just establishes the schema to which a filestore should conform.
+This operation does not have any effect on the file system and just establishes the schema to which a filestore should conform.
 
 \paragraph{Reading}
 Users can |read| data from a filestore by reading the contents of a transactional variable.
@@ -336,24 +339,25 @@ do
 	return balance
 \end{spec}
 The corresponding generated Haskell functions and types appear in Figure~\ref{fig:accountsHaskell}.
-In the background, this is done by lazily traversing the directories, files and symbolic links mentioned in the top-level forest description. The second line reads the accounts directory and generates a list of accounts, that can be manipulated with standard list operations to find the respective account.
-An account is itself a transactional variable, that can be read in the same way. Note that the file holding the balance of |"account1"| is only read in the fourth line.
+In the background, this is done by lazily traversing the directories, files and symbolic links mentioned in the top-level forest description. The second line reads the account directory and generates a list of accounts, which can be manipulated with standard list operations to find the desired account.
+An account is itself a transactional variable, which can be read in the same way. Note that the file holding the balance of |"account1"| is only read in the fourth line.
 The type signatures elucidate the type of each transactional variable.
+%NOTE by JD to Hugo: What type signatures?
 
 Programmers can control the degree of laziness in a forest description by adjusting the granularity of Forest declarations.
-For instance, if we have chosen to inline the type of |Account| in the description as:
+For instance, if we have chosen to inline the type of |Account| in the description as follows:
 \begin{spec}
 [forest|
 	type Accounts = [ a :: File Balance | a <- matches (GL "*") ]
 |]
 \end{spec}
-then reading the accounts directory would also read the file content of all accounts, since the balance of each account would not be encapsulated behind a transactional variable.
+Then reading the accounts directory would also read the file content of all accounts, since the balance of each account would not be encapsulated behind a transactional variable (as in Figure~\ref{fig:accounts}.
 
 \paragraph{Writing}
 Users can modify a filestore by writing new content to a transactional variable.
-The |writeOrElse| function accepts additional arguments to handle possible conflicts, that arise due to data dependencies in the Forest description that cannot be statically checked by the type system -- if these dependencies are not met, the data is not a valid representation of a filestore.
+The |writeOrElse| function accepts additional arguments to handle possible conflicts, which may arise due to data dependencies in the Forest description that cannot be statically checked by the type system. If these dependencies are not met, the data is not a valid representation of a filestore.
 If the write succeeds, the file system is updated with the new data and a default value of type |b| is returned.
-If the write fails, a user-supplied alternate function is executed instead; users are replied with a |Manifest| describing the tentative modifications to the file system and a report of the inconsistencies.
+If the write fails, a user-supplied alternate function is executed instead. The function takes a |Manifest| describing the tentative modifications to the file system and a report of the inconsistencies.
 We can easily define more convenient derived forms of |writeOrElse|:
 \begin{spec}
 -- optional write
@@ -366,7 +370,7 @@ writeOrRetry t v = writeOrElse t v () (const retry)
 writeOrThrow :: (TxForest args ty rep,Exception e) => ty -> rep -> () -> e -> FTM ()
 writeOrThrow t v e = writeOrElse t v () (const (throw e))
 \end{spec}
-A typical example of an inconsistent representation is when a Forest description refers to the same file twice and the user attempts to write distinct file content in each occurrence. For instance, in the universal description of Figure~\ref{fig:universal} a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
+A typical example of an inconsistent representation is when a Forest description refers to the same file twice and the user attempts to write distinct file content in each occurrence. For instance, in the universal description in Figure~\ref{fig:universal}, a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
 
 Writes take immediate effect on the (transactional snapshot of the) filestore, meaning that any subsequent |read| will see the performed modifications. Within a transaction, there can be multiple variables (possibly of different types) connected to the same fragment of a file system. Consider the following example with two accounts pointing to the same file path:
 \begin{spec}
@@ -381,8 +385,8 @@ By incrementing the balance of |acc2|, we are implicitly incrementing the balanc
 \subsection{Validation}
 \label{subsec:validation}
 
-As Forest lays a structured view on top a semi-structured file system, a filestore does not need to conform perfectly to an associated Forest description.
-Behind the scenes, TxForest lazily computes a summary of such discrepencies. These may flag, for example, that a mandatory file does not exist or an arbitrarily complex user-defined Forest constraint is not satisfied.
+As Forest lays a structured view on top of a semi-structured file system, a filestore does not need to conform perfectly to an associated Forest description.
+Behind the scenes, TxForest lazily computes a summary of such discrepancies. These may flag, for example, that a mandatory file does not exist or an arbitrarily complex user-defined Forest constraint is not satisfied.
 Validation is not performed unless explicitly demanded by the user. At any point, a user can |validate| a transactional variable and its underlying filestore:
 \begin{spec}	
 	validate :: TxForest args ty rep => ty -> FTM ForestErr
@@ -411,26 +415,26 @@ validRead ty = do
 To better understand the TxForest interface, we now discuss how to perform common operations on a Forest filestore.
 
 \paragraph{Creation/Deletion}
-Given that validation errors are not fatal, a |read| always returns a (nevertheless valid) representation. For example, if a user tries to read the balance of an inexistent account:
+Given that validation errors are not fatal, a |read| always returns a representation. For example, if a user tries to read the balance of a non-existent account:
 \begin{spec}
 do
 	badAcc :: Account <- new () "/var/db/accounts/account"
 	(acc_info,Balance balance) <- read badAcc
 \end{spec}
 then |acc_info| will hold invalid file information and |balance| a default value (implemented as |0| for |Int| values).
-Perhaps less intuitive is how to create a new account; we create a new variable (that if read would hold default data) and write new valid file information and an arbitrary balance:
+Perhaps less intuitive is how to create a new account; we create a new variable (that if read would hold default data) and write new valid file information and some balance:
 \begin{spec}
 newAccount path balance = do
 	newAcc :: Account <- new () path
 	tryWrite newAcc (validFileInfo path,Balance balance)
 \end{spec}
-Deleting an account is dual; we write invalid file information and the default balance to the corresponding variable:
+Deleting an account is dual to creating one; we write invalid file information and the default balance to the corresponding variable:
 \begin{spec}
-delAcccount acc = do
+delAccount acc = do
 	tryWrite acc (invalidFile,Balance 0)
 \end{spec}
-The takeaway lesson is that the |FileInfo| metadata actually determines whether a directory, file or symbolic link exists or not in the file system, since we cannot infer that from the data alone (e.g., an empty account has the same balance has an inexistent account).
-This also reveals less obvious data dependencies: for valid paths the |fullpath| in the metadata must match the path to which the representation corresponds in the description, and for invalid paths the representation data must match the Forest-generated default data.
+The takeaway lesson is that the |FileInfo| metadata actually determines whether a directory, file or symbolic link exists or not in the file system, since we cannot infer that from the data alone (e.g., an empty account has the same balance as a non-existent account).
+This also reveals less obvious data dependencies: For valid paths the |fullpath| in the metadata must match the path to which the representation corresponds in the description, and for invalid paths the representation data must match the Forest-generated default data.
 Since this can become cumbersome to ensure manually, we provide a general function that conveniently removes a filestore, named after the POSIX \verb|rm| operation:
 \begin{spec}
 rm :: TxForest args ty rep => ty -> FTM ()
@@ -448,21 +452,22 @@ copyAccount srcpath tgtpath = do
 \end{spec}
 The pattern is to create a variable for each path, and copy the content with an updated |fullpath|.
 Copying a directory of accounts follows the same pattern but is more complicated, in that we also have to recursively copy underlying accounts and update all the metadata accordingly.
-Therefore, we provide an analogous to the POSIX \verb|cp| operation that attempts to copy the content of a filestore into another:
+Therefore, we provide an analogue to the POSIX \verb|cp| operation that attempts to copy the content of a representation into another:
 \begin{spec}
 cpOrElse  ::  TxForest args ty rep => ty -> ty -> b
           ->  (Manifest -> rep -> FTM fs b) -> FTM fs b
 \end{spec}
 Unlike |rm|, |copyOrElse| is only a best-effort operation that may fail due to arbitrarily complex data dependencies in the Forest description. Such dependencies necessarily hold in the source representation for the source arguments but may not for the target arguments.
-Similarly to |writeOrElse|, we provide |tryCopy|, |copyOrRetry| and |copyAndThrow| operations with the expected type signatures.
+Similarly to |writeOrElse|, we provide |tryCopy|, |copyOrRetry| and |copyOrThrow| operations with the expected type signatures.
 
 For an example of what might go wrong while copying, consider the following description for accounts parameterized by a template name:
 \begin{spec}
-	[forest|
-		type NameAccounts (acc :: String) = [ a :: Account | a <- matches (GL (acc ++ "*")) ]
-	|]
+[forest|
+	type NamedAccounts (acc :: String) =
+		[ a :: Account | a <- matches (GL (acc ++ "*")) ]
+|]
 \end{spec}
-This specification has an implicit data dependency that all the account files listed in the in-memory representation have name matching the Glob pattern.
+This specification has an implicit data dependency that all the account files listed in the in-memory representation have names matching the Glob pattern.
 Thus, trying to copy between filestores with different templates would effectively fail, as in:
 \begin{spec}
 do
@@ -474,7 +479,7 @@ do
 \section{Implementation}
 
 We now delve into how Transactional Forest can be efficiently implemented.
-The current implementation is available from the project website (\url{forestproj.org) and is done completely in Haskell.
+The current implementation is available from the project website (\url{forestproj.org}) and is done completely in Haskell.
 
 
 
