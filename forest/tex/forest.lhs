@@ -145,18 +145,6 @@ Dan's scientific data
 
 \section{Examples}
 
-\begin{figure}
-\begin{spec}
-[pads| data Balance = Balance Int |]
-
-[forest|
-	type Accounts = [ a :: Account | a <- matches (GL "*") ]
-	type Account = File Balance
-|]
-\end{spec}
-\label{fig:accounts}
-\end{figure}
-
 \section{The Forest Language}
 
 the forest description types
@@ -170,6 +158,48 @@ an ordinary Haskell type for the in-memory representation that represents the co
 
 two expression quotations: non-monadic |(e)| vs monadic |<||e||>|
 
+|FileInfo| for directories/files/symlinks.
+
+\begin{figure}
+\begin{spec}
+[pads| data Balance = Balance Int |]
+
+[forest|
+	type Accounts = [ a :: Account | a <- matches (GL "*") ]
+	type Account = File Balance
+|]
+\end{spec}
+\label{fig:accounts}
+\end{figure}
+
+\begin{figure}
+\begin{spec}
+
+data Balance = ...
+type Balance_md = ...
+
+data Accounts
+instance TxForest () Accounts (FileInfo,[(FilePath,Account)]) where ...
+
+data Account
+instance TxForest () Account ((FileInfo,Balance_md),Balance) where ...
+\end{spec}
+\label{fig:accountsHaskell}
+\end{figure}
+
+\begin{figure}
+\begin{spec}
+[forest|
+	type Universal_d = Directory 
+             { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
+             , binary_files is [ b :: BinaryFile   | b <- matches (GL "*"), (kind  b_att == BinaryK) ]
+             , directories  is [ d :: Universal_d  | d <- matches (GL "*"), (kind  d_att == DirectoryK) ]
+             , symlinks     is [ s :: Link         | s <- matches (GL "*"), (isJust (symLink s_att)) ]
+             }
+|]
+\end{spec}
+\label{fig:universal}
+\end{figure}
 
 \section{Forest Transactions}
 
@@ -266,20 +296,12 @@ Programmers can prevent the transaction from being aborted, and its effects disc
 	catch tryRead (\FileNotFound -> return ...default...) tryRead
 \end{spec}
 
-%In the same spirit of the original non-transactional Forest~\cite{forest} interface.
-%improves over the original non-transactional Forest interface while retaining the same spirit, in that programmers can traverse, query and manipulate forest data using the rich support for generic tools
-%Unlike many existing transactional systems and libraries, that offer a limited set of operations that can be (safely) performed and combiend within a transaction, 
-%Additionally, we want to do so without compromising the rich programming style previously offered by the original non-transactional Forest~\cite{forest} interface.
-%premise: as rich a programming experience as with original Forest
-%the rich toolbox available to an Haskell programmer and use it on forest
-%haskell programmers can traverse, query and manipulate forest data 
-
 \subsection{Transactional variables}
 \label{subsec:tvars}
 
 We have seen how to build transactions from smaller transactional blocks, but we still haven't seen concrete operations to manipulate \emph{shared data}, a fundamental piece of any transactional mechanism.
 In vanilla Haskell STM, communication between threads is done via shared mutable memory cells called \emph{transactional variables}.
-For a transaction to log all memory effects, transactional variables can only be explicitly created, read from or written to using specific transactional operations. Nevertheless, programmers are welcome to perform many arbitrary pure functional computations to manipulate their content; since these don't have side-effects, they don't ever need to be logged or rolled back.
+For a transaction to log all memory effects, transactional variables can only be explicitly created, read from or written to using specific transactional operations. Nevertheless, Haskell programmers can traverse, query and manipulate the content of transactional variables using the rich language of purely functional computations; since these don't have side-effects, they don't ever need to be logged or rolled back.
 
 In the context of TxForest, shared data is not stored in-memory but on the filestore. It is illuminating to quote~\cite{HaskellSTM}:
 \begin{quote}
@@ -295,48 +317,66 @@ class TxForest args ty rep | ty -> rep, ty -> args where
 	writeOrElse     ::  ty -> rep -> b
 	                -> (Manifest -> FTM fs b) ->  FTM fs b
 \end{spec}
-In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. The representation type |rep| is a plain Haskell type that holds the content of a transactional variable.
+In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. The representation type |rep| is a plain Haskell type that holds the content of a transactional variable. The representation type closely follows the declared Forest type, with additional file-content metadata for directories, files and symbolic links; directories have representation of type |(FileInfo,dir_rep)| and basic types have representation of type |((FileInfo,base_md),base_rep)|, for base representation |base_rep| and metadata |based_md|.
 
+\paragraph{Creation}
 The transactional forest programing style draws no distinction between data on the file system and in-memory.
-Anywhere inside a transaction, users can declare a |new| transactional variable of type |ty|, with argument data pertaining to the forest declaration and rooted at the argument path in the file system.
+Anywhere inside a transaction, users can declare a |new| transactional variable, with argument data pertaining to the forest declaration and rooted at the argument path in the file system.
 This operation does not have any effect on the file system, and just establishes the schema to which a filestore should conform.
 
-Users can |read| the contents of a transactional variable to obtain an Haskell value of type |rep|.
-Consider reading the description in Figure~\ref{fig:accounts}:
+\paragraph{Reading}
+Users can |read| data from a filestore by reading the contents of a transactional variable.
+Imagine that we want to retrieve the balance of a particular account from a directory of accounts as specified in Figure~\ref{fig:accounts}:
 \begin{spec}
-	do
-		accs :: Accounts <- new () "/var/db/accounts"
-		accs_rep <- read accs
-		...
+do
+	accs :: Accounts <- new () "/var/db/accounts"
+	(accs_info,accs_rep) <- read accs
+	let acc1 :: Account = fromJust (lookup "account1" accs_rep)
+	((acc1_info,acc1_md),Balance balance) <- read acc1
+	return balance
 \end{spec}
-In the background, this is done by lazily traversing the directories, files and symbolic links mentioned in the forest description, stopping as soon as other transactional variables are encountered. The above snippet reads the accounts directory and generates a list of transactional variables, one per account.
-Developers can control the degree of laziness in a forest description by controlling the granularity of Forest declarations.
-For instance, if we have inlined each account in the description in Figure~\ref{fig:accounts}:
+The corresponding generated Haskell functions and types appear in Figure~\ref{fig:accountsHaskell}.
+In the background, this is done by lazily traversing the directories, files and symbolic links mentioned in the top-level forest description. The second line reads the accounts directory and generates a list of accounts, that can be manipulated with standard list operations to find the respective account.
+An account is itself a transactional variable, that can be read in the same way. Note that the file holding the balance of |"account1"| is only read in the fourth line.
+The type signatures elucidate the type of each transactional variable.
+
+Programmers can control the degree of laziness in a forest description by adjusting the granularity of Forest declarations.
+For instance, if we have chosen to inline the type of |Account| in the description as:
 \begin{spec}
 [forest|
 	type Accounts = [ a :: File Balance | a <- matches (GL "*") ]
 |]
 \end{spec}
-then |read accs| would also read the file content of each individual account inside the accounts directory.
+then reading the accounts directory would also read the file content of all accounts, since the balance of each account would not be encapsulated behind a transactional variable.
 
+\paragraph{Writing}
+Users can modify a filestore by writing new content to a transactional variable.
+The |writeOrElse| function accepts additional arguments to handle possible conflicts, that arise due to data dependencies in the Forest description that cannot be statically checked by the type system.
+If the write succeeds, the file system is updated with the new data and a default value of type |b| is returned.
+If the write fails, a user-supplied alternate function is executed instead; users are replied with a |Manifest| describing the tentative modifications to the file system and a report of the inconsistencies.
+We can easily define more convenient derived forms of |writeOrElse|:
+\begin{spec}
+-- optional write
+tryWrite :: TxForest args ty rep => ty -> rep -> FTM ()
+tryWrite t v = writeOrElse t v () (const (return ()))
+-- write or restart the transaction
+writeOrRetry :: TxForest args ty rep => ty -> rep -> b -> FTM b
+writeOrRetry t v b = writeOrElse t v b (const retry)
+-- write or yield an error
+writeOrThrow :: (TxForest args ty rep,Exception e) => ty -> rep -> e -> FTM ()
+writeOrThrow t v e = writeOrElse t v () (const (throw e))
+\end{spec}
+A typical example of an inconsistent representation is when a Forest description refers to the same file twice and the user attempts to write distinct data in each occurrence -- there is no filestore that reflects the same information. For instance, in the universal description of Figure~\ref{fig:universal} a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
 
-
-Users can manipulate these structures as they would in regular Haskell programs, and eventually perform FS modifications by writing a new representation to a transactional variable. writes may fail if the provided data is not a faithful representation of the filestore for the specification under consideration.
-
-|WriteErrors| have nothing to do with transactional errors and account for the inconsistencies that can arise when a programmer attempts to write an erroneous in-memory representation to the filestore. For example, attempting to write conflicting data to the same file or a text file to a specification of a directory structure. 
-%more on this later in sec...
-
-The rep of a variable may contain other variables such as a directory containing a list of other Forest types. 
-%TODO by Hugo: write a simple programming example.
-
-Notice that we can have multiple variables (possibly with different specs) ``connected'' to the same fragment of a filesystem. This can cause WriteErrors, as noted above, and the values of the two will be interdependent. However, variables only depend on each other within a transaction, not across transactions (until a transaction is committed that is). 
-
-%NOTE by JD to HUGO: Not sure what this fragment of a sentence meant: this can cause inter
-
-%NOTE by JD to HUGO: I kind of see what you're trying to say below (explaining why we need fileinfo I guess?), but the first line doesn't really make sense.
-
-We have a sort of mismatch: Transactional variables for type declarations VS fileinfo for directories/files.
-Since forest always fills in default data for non-existing paths, the fileinfo actually determines whether a directory/file exists or not in the real FS. E.g. to delete a file we need to mark its fileinfo as invalid, and to create a file we need to define clean, valid fileinfo for it.
+Writes take immediate effect on the (transactional snapshot of the) filestore, meaning that any subsequent |read| will see the performed modifications. Within a transaction, there can be multiple variables (possibly of different types) connected to the same fragment of a file system. Consider the following example with two accounts pointing to the same file path:
+\begin{spec}
+	acc1 :: Account <- new () "/var/db/accounts/account"
+	acc2 :: Account <- new () "/var/db/accounts/account"
+	(acc_md,Balance balance) <- read acc1
+	tryWrite acc2 (acc_md,Balance (balance + 1)) 
+	(acc_md',Balance balance') <- read acc1
+\end{spec}
+By incrementing the balance of |acc2|, we are implicitly incrementing the balance of |acc1| (if the write succeeds, then |balance' = balance + 1|).
 
 \subsection{Validation}
 \label{subsec:validation}
@@ -351,6 +391,8 @@ Validation helps programmers detect inconsistencies between the data they are tr
 
 \subsection{Standard filesystem operations}
 \label{subsec:fsops}
+
+Since forest always fills in default data for non-existing paths, the fileinfo actually determines whether a directory/file exists or not in the real FS. E.g. to delete a file we need to mark its fileinfo as invalid, and to create a file we need to define clean, valid fileinfo for it.
 
 not a problem of expressiveness, for convenience
 
