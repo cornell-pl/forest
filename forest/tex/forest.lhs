@@ -351,7 +351,7 @@ then reading the accounts directory would also read the file content of all acco
 
 \paragraph{Writing}
 Users can modify a filestore by writing new content to a transactional variable.
-The |writeOrElse| function accepts additional arguments to handle possible conflicts, that arise due to data dependencies in the Forest description that cannot be statically checked by the type system.
+The |writeOrElse| function accepts additional arguments to handle possible conflicts, that arise due to data dependencies in the Forest description that cannot be statically checked by the type system -- if these dependencies are not met, the data is not a valid representation of a filestore.
 If the write succeeds, the file system is updated with the new data and a default value of type |b| is returned.
 If the write fails, a user-supplied alternate function is executed instead; users are replied with a |Manifest| describing the tentative modifications to the file system and a report of the inconsistencies.
 We can easily define more convenient derived forms of |writeOrElse|:
@@ -360,13 +360,13 @@ We can easily define more convenient derived forms of |writeOrElse|:
 tryWrite :: TxForest args ty rep => ty -> rep -> FTM ()
 tryWrite t v = writeOrElse t v () (const (return ()))
 -- write or restart the transaction
-writeOrRetry :: TxForest args ty rep => ty -> rep -> b -> FTM b
-writeOrRetry t v b = writeOrElse t v b (const retry)
+writeOrRetry :: TxForest args ty rep => ty -> rep -> () -> FTM ()
+writeOrRetry t v = writeOrElse t v () (const retry)
 -- write or yield an error
-writeOrThrow :: (TxForest args ty rep,Exception e) => ty -> rep -> e -> FTM ()
+writeOrThrow :: (TxForest args ty rep,Exception e) => ty -> rep -> () -> e -> FTM ()
 writeOrThrow t v e = writeOrElse t v () (const (throw e))
 \end{spec}
-A typical example of an inconsistent representation is when a Forest description refers to the same file twice and the user attempts to write distinct data in each occurrence -- there is no filestore that reflects the same information. For instance, in the universal description of Figure~\ref{fig:universal} a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
+A typical example of an inconsistent representation is when a Forest description refers to the same file twice and the user attempts to write distinct file content in each occurrence. For instance, in the universal description of Figure~\ref{fig:universal} a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
 
 Writes take immediate effect on the (transactional snapshot of the) filestore, meaning that any subsequent |read| will see the performed modifications. Within a transaction, there can be multiple variables (possibly of different types) connected to the same fragment of a file system. Consider the following example with two accounts pointing to the same file path:
 \begin{spec}
@@ -381,43 +381,82 @@ By incrementing the balance of |acc2|, we are implicitly incrementing the balanc
 \subsection{Validation}
 \label{subsec:validation}
 
-Validation helps programmers detect inconsistencies between the data they are trying to write to the filesystem and the constraints they have specified through Forest. In order to detect these sorts of errors, which we allow them to make should they care to, we provide a validate function, returning all such errors.
-
-%forest dependencies and constraints that can not be statically checked
-
+As Forest lays a structured view on top a semi-structured file system, a filestore does not need to conform perfectly to an associated Forest description.
+Behind the scenes, TxForest lazily computes a summary of such discrepencies. These may flag, for example, that a mandatory file does not exist or an arbitrarily complex user-defined Forest constraint is not satisfied.
+Validation is not performed unless explicitly demanded by the user. At any point, a user can |validate| a transactional variable and its underlying filestore:
+\begin{spec}	
+	validate :: TxForest args ty rep => ty -> FTM ForestErr
+\end{spec}
+The returned |ForestErr| reports a top-level error count and the topmost error message:
 \begin{spec}
-	validate :: TxForest args ty rep => ty -> FTM ValidationErrors
+	data ForestErr = ForestErr
+		{  numErrors  :: Int
+		,  errorMsg   :: Maybe ErrMsg }
 \end{spec}
 
-\subsection{Standard filesystem operations}
+We can always make validation mandatory and validation errors fatal by encapsulating any error inside a |ForestError| exception:
+\begin{spec}
+validRead :: TxForest args ty rep => ty -> FTM rep
+validRead ty = do
+	rep <- read ty
+	err <- validate ty
+	if numErrors err == 0
+		then return rep
+		else throw (ForestError err)
+\end{spec}
+
+\subsection{Standard file system operations}
 \label{subsec:fsops}
 
-Since forest always fills in default data for non-existing paths, the fileinfo actually determines whether a directory/file exists or not in the real FS. E.g. to delete a file we need to mark its fileinfo as invalid, and to create a file we need to define clean, valid fileinfo for it.
+To better understand the TxForest interface, we now discuss how to perform common operations on a Forest filestore.
 
-not a problem of expressiveness, for convenience
-
+\paragraph{Creation/Deletion}
+Given that validation errors are not fatal, a |read| always returns a (nevertheless valid) representation. For example, if a user tries to read the balance of an inexistent account:
+\begin{spec}
+do
+	badAcc :: Account <- new () "/var/db/accounts/account"
+	(acc_info,Balance balance) <- read badAcc
+\end{spec}
+then |acc_info| will hold invalid file information and |balance| a default value (implemented as |0| for |Int| values).
+Perhaps less intuitive is how to create a new account; we create a new variable (that if read would hold default data) and write new valid file information and an arbitrary balance:
+\begin{spec}
+newAccount path balance = do
+	newAcc :: Account <- new () path
+	tryWrite newAcc (validFileInfo path,Balance balance)
+\end{spec}
+Deleting an account is dual; we write invalid file information and the default balance to the corresponding variable:
+\begin{spec}
+delAcccount acc = do
+	tryWrite acc (invalidFile,Balance 0)
+\end{spec}
+The takeaway lesson is that the |FileInfo| metadata actually determines whether a directory, file or symbolic link exists or not in the file system, since we cannot infer that from the data alone (e.g., an empty account has the same balance has an inexistent account).
+This also reveals a less obvious data dependency: for valid paths the |fullpath| must match the path to which the representation corresponds in the description, and for invalid paths the representation data must match the Forest-generated default data.
+Since this can become cumbersome to ensure manually, we provide a general function that conveniently removes a filestore, named after the POSIX \verb|rm| operation:
 \begin{spec}
 rm :: TxForest args ty rep => ty -> FTM ()
 \end{spec}
 
-%NOTE by JD to Hugo: Does rm actually remove a filepath or a specification? Or are these practically the same in this case (which would mean that if you only specify part of what's in a folder, the unspecified parts would be removed using this command)?
+\paragraph{Copying}
 
-This command lets the programmer remove a filepath by writing invalid fileinfo and default data to it.
-In order to avoid a loss of information, the default data needs to be precisely the data that is generated by forest.
-If we are removing a directory, we need to make sure that its content is the empty list; a non-existing directory with content inside is not a valid snapshot of a FS, but a valid haskell value nonetheless.
-This is cumbersome to do manually for arbitrary specs that touch multiple files/directories, which is why we provide this primitive operation that generates the appropriate default data and performs the removal.
+copy a filestore into 
+
+arbitrarily complex data dependencies 
 
 \begin{spec}
-cpOrElse :: TxForest args ty rep => ty -> ty -> b -> ([WriteErrors] -> FTM fs b) -> FTM fs b
+cpOrElse :: TxForest args ty rep => ty -> ty -> b -> (Manifest -> rep -> FTM fs b) -> FTM fs b
+\end{spec}
+
+\begin{spec}
+[forest|
+	type Accounts (acc :: String) = [ a :: Account | a <-= matches (GL (acc ++ "*")) ]
+	}
+|]
 \end{spec}
 
 This command lets the programmer copy a forest specification.
 While copying a single file by hand is simple (read, copy the contents, update the fileinfo, write),
 copying a directory is significantly more cumbersome because we have to recursively copy each child variable and update its fileinfo accordingly.
 Therefore, we provide this primitive operation. It may fail because the data that we are trying to write may not be consistent with the specification for the target arguments and path. For example, a specification with a boolean argument that loads file x or y, with source argument True and target argument False.
-
-%NOTE by JD to Hugo: Not sure I quite understand the example of where it may fail Hugo.
-
 
 \section{Implementation}
 
