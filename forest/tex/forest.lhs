@@ -430,7 +430,7 @@ delAcccount acc = do
 	tryWrite acc (invalidFile,Balance 0)
 \end{spec}
 The takeaway lesson is that the |FileInfo| metadata actually determines whether a directory, file or symbolic link exists or not in the file system, since we cannot infer that from the data alone (e.g., an empty account has the same balance has an inexistent account).
-This also reveals a less obvious data dependency: for valid paths the |fullpath| must match the path to which the representation corresponds in the description, and for invalid paths the representation data must match the Forest-generated default data.
+This also reveals less obvious data dependencies: for valid paths the |fullpath| in the metadata must match the path to which the representation corresponds in the description, and for invalid paths the representation data must match the Forest-generated default data.
 Since this can become cumbersome to ensure manually, we provide a general function that conveniently removes a filestore, named after the POSIX \verb|rm| operation:
 \begin{spec}
 rm :: TxForest args ty rep => ty -> FTM ()
@@ -438,25 +438,38 @@ rm :: TxForest args ty rep => ty -> FTM ()
 
 \paragraph{Copying}
 
-copy a filestore into 
-
-arbitrarily complex data dependencies 
-
+A user can copy an account from a source path to a target path as follows:
 \begin{spec}
-cpOrElse :: TxForest args ty rep => ty -> ty -> b -> (Manifest -> rep -> FTM fs b) -> FTM fs b
+copyAccount srcpath tgtpath = do
+	src :: Account <- new () srcpath
+	tgt :: Account <- new () tgtpath
+	(info,balance) <- read src
+	tryWrite tgt (info { fullpath = tgtpath },balance)
 \end{spec}
-
+The pattern is to create a variable for each path, and copy the content with an updated |fullpath|.
+Copying a directory of accounts follows the same pattern but is more complicated, in that we also have to recursively copy underlying accounts and update all the metadata accordingly.
+Therefore, we provide an analogous the POSIX \verb|cp| operation that attempts to copy a filestore into another:
 \begin{spec}
-[forest|
-	type Accounts (acc :: String) = [ a :: Account | a <-= matches (GL (acc ++ "*")) ]
-	}
-|]
+cpOrElse  ::  TxForest args ty rep => ty -> ty -> b
+          ->  (Manifest -> rep -> FTM fs b) -> FTM fs b
 \end{spec}
+Unlike |rm|, |copyOrElse| is only a best-effort operation that may fail due to arbitrarily complex data dependencies in the Forest description. Such dependencies necessarily hold in the source representation for the source arguments but may not for the target arguments.
+Similarly to |writeOrElse|, we provide |tryCopy|, |copyOrRetry| and |copyAndThrow| operations with the expected type signatures.
 
-This command lets the programmer copy a forest specification.
-While copying a single file by hand is simple (read, copy the contents, update the fileinfo, write),
-copying a directory is significantly more cumbersome because we have to recursively copy each child variable and update its fileinfo accordingly.
-Therefore, we provide this primitive operation. It may fail because the data that we are trying to write may not be consistent with the specification for the target arguments and path. For example, a specification with a boolean argument that loads file x or y, with source argument True and target argument False.
+For an example of what might go wrong while copying, consider the following description for accounts parameterized by a template name:
+\begin{spec}
+	[forest|
+		type NameAccounts (acc :: String) = [ a :: Account | a <- matches (GL (acc ++ "*")) ]
+	|]
+\end{spec}
+This specification has an implicit data dependency that all the account files listed in the in-memory representation have name matching the Glob pattern.
+Thus, trying to copy between filestores with different templates would effectively fail, as in:
+\begin{spec}
+do
+	src :: Accounts <- new "account" "/var/db/accounts"
+	tgt :: Accounts <- new "acc" "/var/db/accs"
+	tryCopy src tgt 
+\end{spec}
 
 \section{Implementation}
 
