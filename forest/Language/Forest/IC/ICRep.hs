@@ -312,13 +312,13 @@ instance DeepTypeable fs => DeepTypeable (IncForest fs) where
 
 type FilePathFilter fs = FilePath -> ForestI fs FilePath
 
-fsTreeDeltaPathFilter :: ICRep fs => FSTreeDeltaNodeMay -> FilePath -> FilePathFilter fs
-fsTreeDeltaPathFilter df root path = if isParentPathOf root path
+fsTreeDPathFilter :: ICRep fs => Proxy fs -> FSTreeD fs -> FilePath -> FilePathFilter fs
+fsTreeDPathFilter fs df root path = if isParentPathOf root path
 	then do
 		let rel = makeRelative root path
-		let td = focusFSTreeDeltaNodeMayByRelativePath df rel
+		let td = focusFSTreeD fs df root rel path
 		case td of
-			Just (FSTreeNew _ (Just from) _ _) -> return from
+			(isMoveFSTreeD fs -> Just from) -> return from
 			otherwise -> return path
 	else return path
 	

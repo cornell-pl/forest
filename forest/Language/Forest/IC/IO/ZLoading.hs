@@ -101,11 +101,11 @@ doZLoadFile1 (repProxy :: Proxy pads) (marg :: ForestI fs arg) oldpath_f path (t
 					df <- forestM $ diffFS memo_tree tree path
 					dv <- unsafeWorld $ diffValueThunk memo_tree memo_rep
 					case (isIdValueDelta dv,df) of
-						(True,Just (isEmptyFSTreeDeltaNodeMay -> True)) -> if oldpath==path
+						(True,Just (isEmptyFSTreeD fs -> True)) -> if oldpath==path
 							then reuse_same_file memo_rep
 							else reuse_other_file oldpath memo_rep
-						(True,Just (Just (FSTreeChg _ _))) -> reuse_other_file path memo_rep
-						(True,Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _ _))) -> reuse_other_file oldpath memo_rep
+						(True,Just (isChgFSTreeD fs -> True)) -> reuse_other_file path memo_rep
+						(True,Just (isMoveFSTreeD fs -> Just oldpath)) -> reuse_other_file oldpath memo_rep
 						otherwise -> load_file
 				else load_file
 		Nothing -> load_file				
@@ -149,7 +149,7 @@ doZLoadArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,DeltaCla
 	-> [ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs rep)
 	-> (FilePath -> ForestI fs rep)
-	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (d rep))
+	-> (ForestI fs FilePath -> FilePath -> (rep,GetForestMD fs) -> FSTree fs -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FSTree fs) getMD loadGood loadBad loadD diffValue = do
@@ -172,7 +172,7 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 					avfsOldTree <- forestM $ virtualTree memo_tree
 					let oldpathC = cardinalPath oldpath
 					let pathC = cardinalPath path
-					archiveDf <- forestM $ focusDiffFSTree memo_tree oldpathC tree pathC
+					archiveDf <- forestM $ focusDiffFSTreeD memo_tree oldpathC tree pathC
 					
 					unsafeWorld $ do
 						dv <- diffValue memo_tree irep

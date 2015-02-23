@@ -70,32 +70,35 @@ doZDeltaManifestArgs proxy (margs,_) rep dv manifestD (man :: Manifest fs) = deb
 	manifestD arg_thunks rep dv man
 
 doZDeltaManifestFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
-	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> ValueDelta fs (ForestFSThunkI fs ((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
-doZDeltaManifestFile1 isEmptyDArg marg path path' tree df tree' rep_t dv man = do
+	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> ValueDelta fs (ForestFSThunkI fs ((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestFile1 isEmptyDArg marg path path' (tree :: FSTree fs) df tree' rep_t dv man = do
+	let fs = Proxy :: Proxy fs
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
-		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> do -- no conflict tests are issued
+		(True,True,True,(isEmptyFSTreeD fs -> True)) -> do -- no conflict tests are issued
 			Writer.tell $ inside . addZippedMemo path' argProxy marg rep_t . Just
 			return man -- nothing changed
 		otherwise -> doZManifestFile1 marg path' tree' rep_t man
 
 doZDeltaManifestFileInner1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
-	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ((Forest_md fs,md),pads) -> ValueDelta fs (((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
-doZDeltaManifestFileInner1 isEmptyDArg marg path path' tree df tree' rep_t dv man = do
+	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ((Forest_md fs,md),pads) -> ValueDelta fs (((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestFileInner1 isEmptyDArg marg path path' (tree :: FSTree fs) df tree' rep_t dv man = do
+	let fs = Proxy :: Proxy fs
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
-		(True,True,True,(isEmptyFSTreeDeltaNodeMay -> True)) -> do -- no conflict tests are issued
+		(True,True,True,(isEmptyFSTreeD fs -> True)) -> do -- no conflict tests are issued
 			return man -- nothing changed
 		otherwise -> doZManifestFileInner1 marg path' tree' rep_t man
 
 doZDeltaManifestArchive :: (IncK (IncForest fs) (Forest_md fs, rep),ForestMD fs rep,Typeable rep,ZippedICMemo fs,ICRep fs,toprep ~ ForestFSThunkI fs (Forest_md fs,rep)) =>
-	Bool -> [ArchiveType] -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	Bool -> [ArchiveType] -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> toprep -> ValueDelta fs toprep
 	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs)
-	-> (FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
+	-> (FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestArchive isClosed archTy path path' tree df tree' arch_rep arch_dv manifest manifestD diffValue man = do
+doZDeltaManifestArchive isClosed archTy path path' (tree :: FSTree fs) df tree' arch_rep arch_dv manifest manifestD diffValue man = do
+	let fs = Proxy :: Proxy fs
 	isRepairMd <- Reader.ask
 	exists <- lift $ forestM $ doesFileExistInTree path tree
 	exists' <- lift $ forestM $ doesFileExistInTree path' tree'
@@ -105,7 +108,7 @@ doZDeltaManifestArchive isClosed archTy path path' tree df tree' arch_rep arch_d
 	let exists_dir = doesFileExistInMD fmd
 
 	case (exists,exists_dir,exists') of
-		(False,False,False) -> case (path == path',isIdValueDelta arch_dv,isEmptyTopFSTreeDeltaNodeMay df) of
+		(False,False,False) -> case (path == path',isIdValueDelta arch_dv,isEmptyTopFSTreeD fs df) of
 			(True,True,True) -> return man
 			otherwise -> do
 				let testm = do
@@ -155,13 +158,14 @@ doZDeltaManifestArchive isClosed archTy path path' tree df tree' arch_rep arch_d
 		otherwise -> doZManifestArchive isClosed archTy path' tree' arch_rep manifest manifestD diffValue man
 
 doZDeltaManifestArchiveInner :: (IncK (IncForest fs) (Forest_md fs, rep),ForestMD fs rep,Typeable rep,ZippedICMemo fs,ICRep fs,toprep ~ (Forest_md fs,rep)) =>
-	Bool -> [ArchiveType] -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	Bool -> [ArchiveType] -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> toprep -> ValueDelta fs toprep
 	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs)
-	-> (FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
+	-> (FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) arch_dv manifest manifestD diffValue man = do
+doZDeltaManifestArchiveInner isClosed archTy path path' (tree :: FSTree fs) df tree' (fmd,rep) arch_dv manifest manifestD diffValue man = do
+	let fs = Proxy :: Proxy fs
 	isRepairMd <- Reader.ask
 	exists <- lift $ forestM $ doesFileExistInTree path tree
 	exists' <- lift $ forestM $ doesFileExistInTree path' tree'
@@ -170,7 +174,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 	let exists_dir = doesFileExistInMD fmd
 
 	case (exists,exists_dir,exists') of
-		(False,False,False) -> case (path == path',isIdValueDelta arch_dv,isEmptyTopFSTreeDeltaNodeMay df) of
+		(False,False,False) -> case (path == path',isIdValueDelta arch_dv,isEmptyTopFSTreeD fs df) of
 			(True,True,True) -> return man
 			otherwise -> do
 				let testm = do
@@ -191,7 +195,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 			archiveManifest <- lift $ forestM $ newManifestWith arch_canpath' tree'
 			lift $ forestM $ forestIO $ CE.onException (decompressArchive archTy dskpath' archiveDir') (createDirectoryIfMissing True archiveDir') -- decompress the original content, since some of it may be preserved in the new archive
 			
-			archiveDf <- lift $ forestM $ focusDiffFSTree tree arch_canpath' tree' arch_canpath'
+			archiveDf <- lift $ forestM $ focusDiffFSTreeD tree arch_canpath' tree' arch_canpath'
 			dv <- lift $ diffValue tree rep
 			archiveManifest' <- manifestD arch_canpath' arch_canpath' avfsTree archiveDf avfsTree' rep dv archiveManifest		
 			
@@ -215,16 +219,18 @@ doZDeltaManifestArchiveInner isClosed archTy path path' tree df tree' (fmd,rep) 
 			return $ mergeManifests man1 man3
 		otherwise -> doZManifestArchiveInner archTy path' tree' (fmd,rep) manifest man
 
-doZDeltaManifestSymLink :: (sym ~ ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> sym -> ValueDelta fs sym -> Manifest fs -> MManifestForestO fs
-doZDeltaManifestSymLink path path' tree df tree' (rep_t) dv man = do
+doZDeltaManifestSymLink :: (sym ~ ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> sym -> ValueDelta fs sym -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestSymLink path path' tree df (tree' :: FSTree fs) (rep_t) dv man = do
+	let fs = Proxy :: Proxy fs
 	case (path == path',isIdValueDelta dv,df) of
-		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return man
+		(True,True,isEmptyFSTreeD fs -> True) -> debug "symlink unchanged" $ return man
 		otherwise -> doZManifestSymLink path' tree' (rep_t) man
 
-doZDeltaManifestSymLinkInner :: (sym ~ ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> sym -> ValueDelta fs sym -> Manifest fs -> MManifestForestO fs
-doZDeltaManifestSymLinkInner path path' tree df tree' (rep_t) dv man = do
+doZDeltaManifestSymLinkInner :: (sym ~ ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) => FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> sym -> ValueDelta fs sym -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestSymLinkInner path path' tree df (tree' :: FSTree fs) (rep_t) dv man = do
+	let fs = Proxy :: Proxy fs
 	case (path == path',isIdValueDelta dv,df) of
-		(True,True,isEmptyFSTreeDeltaNodeMay -> True) -> debug "symlink unchanged" $ return man
+		(True,True,isEmptyFSTreeD fs -> True) -> debug "symlink unchanged" $ return man
 		otherwise -> doZManifestSymLinkInner path' tree' (rep_t) man
 
 doZDeltaManifestConstraint :: (ForestContent rep content,IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestMD fs rep,ICRep fs, toprep ~ ForestFSThunkI fs (ForestFSThunkI fs Forest_err,rep)) =>
@@ -283,14 +289,15 @@ doZDeltaManifestConstraintCompound emptyDArgs pred rep dv manifestD man = do
 
 -- assumes that, before any changes occured, the original error thunk was computing the sum of the errors of the inner representation.
 doZDeltaManifestDirectory :: (IncK (IncForest fs) Forest_err,Typeable rep,IncK (IncForest fs) (Forest_md fs, rep),ICRep fs,dirrep ~ ForestFSThunkI fs (Forest_md fs,rep)) => 
-	FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> dirrep -> ValueDelta fs dirrep
 	-> (rep -> ForestI fs Forest_err)
 	-> (rep -> Manifest fs -> MManifestForestO fs)
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestDirectory path path' tree df tree' dirrep_t dv collectMDErrors manifest manifestD diffValue man = do
+doZDeltaManifestDirectory path path' tree df (tree' :: FSTree fs) dirrep_t dv collectMDErrors manifest manifestD diffValue man = do
+	let fs = Proxy :: Proxy fs
 	isRepairMd <- Reader.ask
 	exists <- lift $ forestM $ doesDirectoryExistInTree path tree
 	exists' <- lift $ forestM $ doesDirectoryExistInTree path' tree'
@@ -300,7 +307,7 @@ doZDeltaManifestDirectory path path' tree df tree' dirrep_t dv collectMDErrors m
 	let exists_dir = doesDirectoryExistInMD fmd
 
 	case (exists,exists_dir,exists') of
-		(False,False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of
+		(False,False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeD fs df) of
 			(True,True,True) -> return man
 			otherwise -> do
 				let testm = do
@@ -325,14 +332,15 @@ doZDeltaManifestDirectory path path' tree df tree' dirrep_t dv collectMDErrors m
 		otherwise -> doZManifestDirectory path' tree' collectMDErrors dirrep_t manifest man
 
 doZDeltaManifestDirectoryInner :: (IncK (IncForest fs) Forest_err,Typeable rep,IncK (IncForest fs) (Forest_md fs, rep),ICRep fs,dirrep ~ (Forest_md fs,rep)) => 
-	FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> dirrep -> ValueDelta fs dirrep
 	-> (rep -> ForestI fs Forest_err)
 	-> (rep -> Manifest fs -> MManifestForestO fs)
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestDirectoryInner path path' tree df tree' (fmd,rep) dv collectMDErrors manifest manifestD diffValue man = do
+doZDeltaManifestDirectoryInner path path' tree df (tree' :: FSTree fs) (fmd,rep) dv collectMDErrors manifest manifestD diffValue man = do
+	let fs = Proxy :: Proxy fs
 	isRepairMd <- Reader.ask
 	exists <- lift $ forestM $ doesDirectoryExistInTree path tree
 	exists' <- lift $ forestM $ doesDirectoryExistInTree path' tree'
@@ -341,7 +349,7 @@ doZDeltaManifestDirectoryInner path path' tree df tree' (fmd,rep) dv collectMDEr
 	let exists_dir = doesDirectoryExistInMD fmd
 
 	case (exists,exists_dir,exists') of
-		(False,False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of
+		(False,False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeD fs df) of
 			(True,True,True) -> return man
 			otherwise -> do
 				let testm = do
@@ -363,12 +371,13 @@ doZDeltaManifestDirectoryInner path path' tree df tree' (fmd,rep) dv collectMDEr
 
 -- assumes that, before any changes occured, the original error thunk was computing the sum of the errors of the inner representation.
 doZDeltaManifestMaybe :: (Typeable rep,IncK (IncForest fs) (Forest_md fs, Maybe rep),ForestMD fs rep,ICRep fs,mbrep ~ ForestFSThunkI fs (Forest_md fs,Maybe rep)) =>
-	FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> mbrep -> ValueDelta fs mbrep
+	FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> mbrep -> ValueDelta fs mbrep
 	-> (rep -> Manifest fs -> MManifestForestO fs) -- inner store function
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs) -- inner incremental store function
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestMaybe path path' tree df tree' mbrep_t dv manifest manifestD diffValue man = do
+doZDeltaManifestMaybe path path' tree df (tree' :: FSTree fs) mbrep_t dv manifest manifestD diffValue man = do
+	let fs = Proxy :: Proxy fs
 	isRepairMd <- Reader.ask
 	exists <- lift $ forestM $ doesExistInTree path tree
 	exists' <- lift $ forestM $ doesExistInTree path' tree'
@@ -381,7 +390,7 @@ doZDeltaManifestMaybe path path' tree df tree' mbrep_t dv manifest manifestD dif
 	
 	case (exists,mb_rep,exists') of
 		(False,Nothing,False) -> do
-			case (path == path',isIdValueDelta dv,isEmptyTopFSTreeDeltaNodeMay df) of
+			case (path == path',isIdValueDelta dv,isEmptyTopFSTreeD fs df) of
 				(True,True,True) -> do
 					let testm = liftM (boolStatus $ ExistingPath path) $ latestTree >>= liftM not . doesExistInTree path
 					return $ addTestToManifest testm man
@@ -409,7 +418,7 @@ doZDeltaManifestMaybe path path' tree df tree' mbrep_t dv manifest manifestD dif
 			
 -- assumes that, before any changes occured, the original error thunk was computing the sum of the errors of the inner representation.
 doZDeltaManifestMaybeInner :: (ForestMD fs rep,ICRep fs) =>
-	FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> Maybe rep -> ValueDelta fs (Maybe rep)
+	FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> Maybe rep -> ValueDelta fs (Maybe rep)
 	-> (rep -> Manifest fs -> MManifestForestO fs) -- inner store function
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs) -- inner incremental store function
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
@@ -430,11 +439,11 @@ doZDeltaManifestMaybeInner path path' tree df tree' mb_rep dv manifest manifestD
 		otherwise -> doZManifestMaybeInner path' tree' mb_rep manifest man			
 
 doZDeltaManifestFocus :: (Matching fs a,ICRep fs) => 
-	a -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
-	-> (FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
+	a -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
+	-> (FilePath -> FilePath -> FSTreeD fs -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestFocus matching path path' tree df tree' manifestD man = do
-	
+doZDeltaManifestFocus matching path path' tree df (tree' :: FSTree fs) manifestD man = do
+	let fs = Proxy :: Proxy fs
 	files <- lift $ forestM $ getMatchingFilesInTree path matching tree
 	let name = pickFile files
 	child_path <- lift $ forestM $ stepPathInTree tree path name
@@ -444,15 +453,15 @@ doZDeltaManifestFocus matching path path' tree df tree' manifestD man = do
 	let testm = testFocus path' name' (\file tree -> return True) [name']
 	child_path' <- lift $ forestM $ stepPathInTree tree' path' name'
 	
-	let newdf = focusFSTreeDeltaNodeMayByRelativePath df name'
+	let newdf = focusFSTreeD fs df name'
 	
 	manifestD child_path child_path' newdf $ addTestToManifest testm man
 
 doZDeltaManifestSimple :: (ICRep fs,Matching fs a) => 
 	Lens dir_rep rep
-	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> dir_rep -> ValueDelta fs dir_rep
-	-> (rep -> ValueDelta fs rep -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
+	-> (rep -> ValueDelta fs rep -> FilePath -> FilePath -> FSTreeD fs -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
 doZDeltaManifestSimple lens path path' matchingM tree df tree' dir_rep dir_dv manifestD man = do
 	matching <- lift $ inside matchingM
@@ -462,9 +471,9 @@ doZDeltaManifestSimple lens path path' matchingM tree df tree' dir_rep dir_dv ma
 
 doZDeltaManifestSimpleWithConstraint :: (ForestContent rep content,ForestMD fs rep,ICRep fs,Matching fs a,err_rep ~ (ForestFSThunkI fs Forest_err, rep)) => 
 	Lens dir_rep err_rep -> Bool -> (content -> ForestI fs Bool)
-	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> dir_rep -> ValueDelta fs dir_rep
-	-> (rep -> ValueDelta fs rep -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
+	-> (rep -> ValueDelta fs rep -> FilePath -> FilePath -> FSTreeD fs -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
 doZDeltaManifestSimpleWithConstraint lens emptyDArgs pred path path' matchingM tree df tree' dir_rep dir_dv manifestD diffValue man = do
@@ -475,9 +484,9 @@ doZDeltaManifestSimpleWithConstraint lens emptyDArgs pred path path' matchingM t
 
 doZDeltaManifestCompound :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a,list_rep' ~ [(key,rep')]) =>
 	Lens dir_rep container_rep' -> Iso container_rep' list_rep' -> ForestI fs key_arg
-	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> dir_rep -> ValueDelta fs dir_rep
-	-> (key -> key -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
+	-> (key -> key -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeD fs -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep' -> ForestO fs (ValueDelta fs rep'))
 	-> Manifest fs -> MManifestForestO fs
 doZDeltaManifestCompound lens isoRep mkeyarg path path' matchingM tree df tree' dir_rep dir_dv manifestD diffValue man = do
@@ -504,15 +513,16 @@ doZDeltaManifestCompound lens isoRep mkeyarg path path' matchingM tree df tree' 
 
 doZDeltaManifestCompoundWithConstraint :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,ForestMD fs rep',Matching fs a,list_rep' ~ [(key,rep')]) =>
 	Lens dir_rep container_rep' -> Iso container_rep' list_rep' -> ForestI fs key_arg
-	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs
+	-> FilePath -> FilePath -> ForestI fs a -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> dir_rep -> ValueDelta fs dir_rep
 	-> (key -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
-	-> (key -> key -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> Manifest fs -> MManifestForestO fs)
+	-> (key -> key -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> rep' -> ValueDelta fs rep' -> FilePath -> FilePath -> FSTreeD fs -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep' -> ForestO fs (ValueDelta fs rep'))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestCompoundWithConstraint lens isoRep mkeyarg path path' matchingM tree df tree' dir_rep dir_dv pred manifestD diffValue man = do
+doZDeltaManifestCompoundWithConstraint lens isoRep mkeyarg path path' matchingM (tree :: FSTree fs) df tree' dir_rep dir_dv pred manifestD diffValue man = do
 	
 	key_arg <- lift $ inside mkeyarg
+	let fs = Proxy :: Proxy fs
 	matching <- lift $ inside $ matchingM
 	
 	let crep = BX.get lens dir_rep
@@ -539,11 +549,12 @@ doZDeltaManifestCompoundWithConstraint lens isoRep mkeyarg path path' matchingM 
 	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_fileskeys repinfos)
 
 zskipManifestIf :: (IncK (IncForest fs) irep,ForestMD fs rep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),StableMD fs rep) =>
-	Bool -> FilePath -> FilePath -> FSTreeDeltaNodeMay -> rep -> ValueDelta fs rep
+	Bool -> FilePath -> FilePath -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> Manifest fs -> MManifestForestO fs
-zskipManifestIf isEmptyEnv path path' df rep dv manifestD man = do
-	if (isEmptyEnv && isIdValueDelta dv && path == path' && isEmptyFSTreeDeltaNodeMay df)
+zskipManifestIf isEmptyEnv path path' df (tree' :: FSTree fs) rep dv manifestD man = do
+	let fs = Proxy :: Proxy fs
+	if (isEmptyEnv && isIdValueDelta dv && path == path' && isEmptyFSTreeD fs df)
 		then return man
 		else manifestD rep dv man
 

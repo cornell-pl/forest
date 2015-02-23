@@ -308,16 +308,16 @@ instance FSRep TxICFS where
 	
 	canonalizePathWithTree = canonalizePathTxICFS
 
-	diffFS oldtree newtree path = do
-		if fsTreeTxId oldtree == fsTreeTxId newtree
-			then do
-				(starttime,txid,deltas,txlogs) <- Reader.ask
-				tds <- forestIO $ readRef deltas
-				let dfs = drop (fsTreeFSVersion oldtree) $ take (fsTreeFSVersion newtree) $ Map.elems tds
-				let df = focusFSTreeDeltaByRelativePathMay (compressFSDeltas $ DList.concat dfs) path
-				return $ Just df
-			-- no sharing among different txs
-			else return Nothing
+--	diffFS oldtree newtree path = do
+--		if fsTreeTxId oldtree == fsTreeTxId newtree
+--			then do
+--				(starttime,txid,deltas,txlogs) <- Reader.ask
+--				tds <- forestIO $ readRef deltas
+--				let dfs = drop (fsTreeFSVersion oldtree) $ take (fsTreeFSVersion newtree) $ Map.elems tds
+--				df <- forestIO $ focusFSGraphDeltaByRelativePathMay (compressFSDeltasAsGraph $ DList.concat dfs) path
+--				return $ Just df
+--			-- no sharing among different txs
+--			else return Nothing
 
 virtualizeTxICFS path tree = if fsTreeVirtual tree
 	then liftM (</> ".avfs" </> makeRelative "/" path) (forestIO getHomeDirectory)

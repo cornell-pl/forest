@@ -453,7 +453,7 @@ zcheckManifestStop ty pathE pathE' dfE treeE' repE dvE manE manifestD = do
 	let (newdvE,newdvP) = genPE newdvName
 	cond1 <- isEmptyZDeltaEnvForestTy ty
 	x <- manifestD newRepE newdvE newManE
-	return $ Pure.appE8 (VarE 'zskipManifestIf) cond1 pathE pathE' dfE repE dvE (LamE [newRepP,newdvP,newManP] x) manE
+	return $ Pure.appE9 (VarE 'zskipManifestIf) cond1 pathE pathE' dfE treeE' repE dvE (LamE [newRepP,newdvP,newManP] x) manE
 
 
 

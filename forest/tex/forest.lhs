@@ -209,7 +209,7 @@ We now focus on the key goal of this paper: the design of the Transactional Fore
 As we shall see, TxForest (for short) offers an elegant and powerful abstraction to concurrently manipulate structured filestores.
 We first describe general-purpose transactional facilities~(\ref{subsec:composable}).
 We then introduce transactional forest variables that allow programmers to interact with filestores~(\ref{subsec:tvars}).
-We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(\ref{subsec:validation}), and finish by introducing analogous of standard file system operations over filestores~(\ref{subsec:fsops}).
+We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(\ref{subsec:validation}), and finish by introducing filestore-analogous versions of standard file system operations~(\ref{subsec:fsops}).
 
 \subsection{Composable transactions}
 \label{subsec:composable}
@@ -267,7 +267,7 @@ We can also compose transactions as \emph{alternatives}, using the |orElse| prim
 \begin{spec}
 	orElse :: FTM a -> FTM a -> FTM a
 \end{spec}
-This combinator performs a left-biased choice: if first runs transaction |ftm1|, tries |fmt2| if |ftm1| retries, and the whole action retries if |ftm2| retries.
+This combinator performs a left-biased choice: it first runs transaction |ftm1|, tries |fmt2| if |ftm1| retries, and the whole action retries if |ftm2| retries.
 It can be useful, for example, to read either one of two files depending on the current configuration of the file system.
 
 Note that |orElse| provides an elegant mechanism to define nested transactions. At any point inside a larger transaction, we can tentatively perform a transaction |ftm1|, and rollback to the beginning (of the nested transaction) to try an alternative |ftm2| in case |fmt1| retries:
@@ -473,10 +473,19 @@ do
 
 \section{Implementation}
 
+We now delve into how Transactional Forest can be efficiently implemented.
+The current implementation is available from the project website (\url{forestproj.org) and is done completely in Haskell.
+
+
+
+increasing levels of incremental support, and added complexity.
+
 %read-only vs read-write: we only allow read-only expressions in Forest specifications.
 %we need to have data/medata under the same variable because we issue stores on variable writes: writeData rep >> writeMeta md /= write (rep,md)
 
 \subsection{Transactional Forest}
+
+\emph{optimistic concurrency control}
 
 (this is important since we write to canonical paths, whose canonicalization may depend on concurrent writes...)
 
@@ -519,6 +528,10 @@ exploit (DSL info +) FS support to have incrementality
 read-only transactions require no synchronization
 
 \section{Evaluation}
+
+although Haskell is a great language laboratory, we are already paying a severe performance overhead if efficiency is the only concern.
+
+even the Haskell STM is implemented in C
 
 \section{Related Work}
 

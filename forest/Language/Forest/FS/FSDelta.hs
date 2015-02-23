@@ -19,6 +19,7 @@ import System.Posix.Files
 import Safe
 import Data.List as List
 import Data.DList as DList
+import Data.IORef
 
 type OnDisk = FilePath
 
@@ -41,7 +42,6 @@ data FSDelta = Add FilePath OnDisk
 			 | Rem FilePath
 			 | Move FilePath FilePath OnDisk
 			 | ChgAttrs FilePath OnDisk
-	deriving (Show,Eq,Ord)
 
 -- * Operations on filesystem deltas
 

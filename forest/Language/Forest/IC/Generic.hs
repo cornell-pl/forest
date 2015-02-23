@@ -194,9 +194,9 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 					Nothing -> load_scratch
 			Nothing -> load_scratch
 	
-	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
+	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	
-	zloadDeltaMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
+	zloadDeltaMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
 	zloadDeltaMemo proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = do
 		drep <- zloadDelta proxy (args,dargs) path tree (rep,getMD) path' df tree' dv
 		inside $ addZippedMemo path' proxy args rep (Just tree')
@@ -229,9 +229,9 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 					Nothing -> mani_scratch
 			Nothing -> mani_scratch
 	
-	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	
-	zupdateManifestDeltaMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestDeltaMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	zupdateManifestDeltaMemo proxy (margs,dargs) path path' tree df tree' rep dv man = do
 		man1 <- zupdateManifestDelta proxy (margs,dargs) path path' tree df tree' rep dv man
 		Writer.tell $ inside . addZippedMemo path proxy margs rep . Just
@@ -335,7 +335,7 @@ class (IncK (IncForest fs) rep,IncK (IncForest fs) md,IncK (IncForest fs) (rep,m
 	-- expects the old data to be consistent with the old path and the old tree
 	-- invariant: the FSTreeDelta is always relative to the updated root filepath
 	-- the original root path is given as a computation (possibly over the original data), so that we can delay its evaluation
-	loadDelta :: LiftedICMode mode -> Proxy args -> LoadDeltaArgs mode fs args -> ForestI fs FilePath -> FSTree fs -> OldData fs rep md -> FilePath -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md)
+	loadDelta :: LiftedICMode mode -> Proxy args -> LoadDeltaArgs mode fs args -> ForestI fs FilePath -> FSTree fs -> OldData fs rep md -> FilePath -> FSTreeD fs -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md)
 
 	-- | Writes the data to a private Forest on-disk location and generates a manifest file
 	generateManifestScratch :: LiftedICMode mode -> ForestIs fs args -> FilePath -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)

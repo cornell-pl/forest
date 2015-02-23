@@ -134,8 +134,17 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 	canonalizePathWithTree :: FilePath -> FSTree fs -> ForestM fs FilePath
 	canonalizePathWithTree path tree = flip pathFromTree tree =<< forestIO . canonalizePath =<< pathInTree path tree
 
+	type FSTreeD fs :: *
+
+	isEmptyFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
+	isEmptyTopFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
+	isChgFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
+	isMoveFSTreeD :: Proxy fs -> FSTreeD fs -> Maybe FilePath
+	focusDiffFSTreeD :: FSTree fs -> FilePath -> FSTree fs -> FilePath -> ForestM fs (FSTreeD fs)
+	focusFSTreeD :: Proxy fs -> FSTreeD fs -> FilePath -> FileName -> FilePath -> FSTreeD fs
+
 	-- it may fail in case it is not possible to compute a difference between the two trees
-	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs (Maybe FSTreeDeltaNodeMay)
+	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs (Maybe (FSTreeD fs))
 
 -- canonalizes a filepath, but leaving the filename uncanonized
 canonalizeDirectoryInTree :: FSRep fs => FilePath -> FSTree fs -> ForestM fs FilePath

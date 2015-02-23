@@ -94,7 +94,7 @@ doZManifestFile1 (marg :: ForestI fs arg) path tree rep_t man = do
 					df <- lift $ forestM $ diffFS memo_tree tree path
 					dv <- lift $ diffValueThunk memo_tree rep_t
 					case (isIdValueDelta dv,df) of
-						(True,Just (isEmptyFSTreeDeltaNodeMay -> True)) -> return man
+						(True,Just (isEmptyFSTreeD fs -> True)) -> return man
 						otherwise -> mani_scratch
 				else mani_scratch
 		otherwise -> mani_scratch
@@ -149,7 +149,7 @@ doZManifestArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,Zipp
 	Bool -> [ArchiveType] -> FilePath -> FSTree fs 
 	-> toprep
 	-> (FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs)
-	-> (FilePath -> FilePath -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
+	-> (FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
 doZManifestArchive isClosed archTy path tree toprep manifest manifestD diffValue man = do
@@ -180,7 +180,7 @@ doZManifestArchive isClosed archTy path tree toprep manifest manifestD diffValue
 						Just (memo_tree,(),(== toprep) -> True) -> do
 							md@(fmd,irep) <- lift $ Inc.getOutside toprep
 							avfsOldTree <- lift $ forestM $ virtualTree memo_tree
-							archiveDf <- lift $ forestM $ focusDiffFSTree memo_tree arch_canpath tree arch_canpath
+							archiveDf <- lift $ forestM $ focusDiffFSTreeD memo_tree arch_canpath tree arch_canpath
 							dv <- lift $ diffValue memo_tree irep
 							manifestD arch_canpath arch_canpath avfsOldTree archiveDf avfsTree irep dv archiveManifest
 						Nothing -> mani_scratch

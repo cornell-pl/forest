@@ -93,11 +93,11 @@ doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFil
 		(Just (memo_tree,(),memo_rep,memo_md)) -> debug ("memo hit " ++ show path) $ do
 			df <- forestM $ diffFS memo_tree tree path
 			case df of
-				Just (isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
+				Just (isEmptyFSTreeD fs -> True) -> if oldpath==path
 					then reuse_same_file memo_rep memo_md
 					else reuse_other_file oldpath memo_rep memo_md
-				Just (Just (FSTreeChg _ _)) -> reuse_other_file path memo_rep memo_md
-				Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _ _)) -> reuse_other_file oldpath memo_rep memo_md
+				Just (isChgFSTreeD fs -> True) -> reuse_other_file path memo_rep memo_md
+				Just (isMoveFSTreeD fs -> Just oldpath) -> reuse_other_file oldpath memo_rep memo_md
 				otherwise -> load_file
 		Nothing -> load_file				
 	
@@ -146,11 +146,11 @@ doLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree
 					debug ("memo hit " ++ show path) $ do
 					mb_df <- forestM $ diffFS memo_tree tree path
 					case mb_df of
-						Just (isEmptyFSTreeDeltaNodeMay -> True) -> if oldpath==path
+						Just (isEmptyFSTreeD fs -> True) -> if oldpath==path
 							then reuse_same_file memo_rep memo_md
 							else reuse_other_file oldpath memo_rep memo_md
-						Just (Just (FSTreeChg _ _)) -> reuse_other_file path memo_rep memo_md
-						Just (Just (FSTreeNew _ (Just ((==oldpath) -> True)) _ _)) -> reuse_other_file oldpath memo_rep memo_md
+						Just (isChgFSTreeD fs -> True) -> reuse_other_file path memo_rep memo_md
+						Just (isMoveFSTreeD fs -> Just oldpath) -> reuse_other_file oldpath memo_rep memo_md
 						otherwise -> load_file
 				else load_file
 		Nothing -> load_file				
@@ -166,7 +166,7 @@ doLoadArchive :: (IncK (IncForest fs) (Forest_md fs, md),
 	Bool -> Proxy rep
 	-> [ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestI fs (rep,md))
-	-> (ForestI fs FilePath -> FilePath -> OldData fs rep md -> FSTree fs -> FSTreeDeltaNodeMay -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md))
+	-> (ForestI fs FilePath -> FilePath -> OldData fs rep md -> FSTree fs -> FSTreeD fs -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md))
 	-> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 doLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FSTree fs) getMD load loadD = do
 	let fs = Proxy :: Proxy fs
@@ -189,7 +189,7 @@ doLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FSTr
 					avfsOldTree <- forestM $ virtualTree memo_tree
 					let oldpathC = cardinalPath oldpath
 					let pathC = cardinalPath path
-					archiveDf <- forestM $ focusDiffFSTree memo_tree oldpathC tree pathC
+					archiveDf <- forestM $ focusDiffFSTreeD memo_tree oldpathC tree pathC
 					
 					unsafeWorld $ do
 						loadD (return oldpathC) pathC ((rep,imd),getForestMDInTree) avfsOldTree archiveDf avfsTree
