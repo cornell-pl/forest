@@ -448,7 +448,7 @@ copyAccount srcpath tgtpath = do
 \end{spec}
 The pattern is to create a variable for each path, and copy the content with an updated |fullpath|.
 Copying a directory of accounts follows the same pattern but is more complicated, in that we also have to recursively copy underlying accounts and update all the metadata accordingly.
-Therefore, we provide an analogous the POSIX \verb|cp| operation that attempts to copy a filestore into another:
+Therefore, we provide an analogous to the POSIX \verb|cp| operation that attempts to copy the content of a filestore into another:
 \begin{spec}
 cpOrElse  ::  TxForest args ty rep => ty -> ty -> b
           ->  (Manifest -> rep -> FTM fs b) -> FTM fs b
