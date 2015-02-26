@@ -76,7 +76,7 @@ Library
   
   -- Packages needed in order to build this package.
   Build-depends: base >= 4, containers, pads-haskell,
-                 template-haskell, 
+                 template-haskell, th-orphans,
                  haskell-src-meta, 
                  parsec, syb,
                  regex-compat, directory, process, unix, Glob,

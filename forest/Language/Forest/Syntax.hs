@@ -34,8 +34,8 @@
 module Language.Forest.Syntax where
 
 import Data.Generics
-import Language.Haskell.TH  as TH 
-import Language.Haskell.TH.Instances.Lift
+import Language.Haskell.TH  as TH
+import Language.Haskell.TH.Instances
 
 newtype ForestDecl = ForestDecl (String, Maybe TH.Pat, ForestTy)
    deriving (Ord, Eq, Data, Typeable, Show)

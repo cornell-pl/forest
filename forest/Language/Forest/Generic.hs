@@ -56,7 +56,7 @@ class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
  load1 :: arg -> FilePath -> IO(rep, md)
  generateManifest1 :: arg -> (rep,md) -> IO Manifest
  fdef1 :: arg -> rep
- fdef1 = \s->myempty
+ fdef1 = \s-> myempty
  updateManifest1 :: arg -> (rep,md) -> Manifest -> IO Manifest
 
 class File rep md where

@@ -36,7 +36,7 @@ import Language.Forest.Forestc
 import System.Directory
 import System.IO
 import System.IO.Unsafe
-import System.Cmd
+import System.Process
 import System.FilePath.Posix
 import Data.List
 

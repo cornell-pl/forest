@@ -17,11 +17,11 @@ version :: Version
 version = Version {versionBranch = [1,0,2], versionTags = []}
 bindir, libdir, datadir, libexecdir, sysconfdir :: FilePath
 
-bindir     = "/Users/hpacheco/.cabal/bin"
-libdir     = "/Users/hpacheco/.cabal/lib/x86_64-osx-ghc-7.6.3/forest-1.0.2"
-datadir    = "/Users/hpacheco/.cabal/share/x86_64-osx-ghc-7.6.3/forest-1.0.2"
-libexecdir = "/Users/hpacheco/.cabal/libexec"
-sysconfdir = "/Users/hpacheco/.cabal/etc"
+bindir     = "/Users/hpacheco/Library/Haskell/bin"
+libdir     = "/Users/hpacheco/Library/Haskell/ghc-7.8.3-x86_64/lib/forest-1.0.2"
+datadir    = "/Users/hpacheco/Library/Haskell/share/ghc-7.8.3-x86_64/forest-1.0.2"
+libexecdir = "/Users/hpacheco/Library/Haskell/libexec"
+sysconfdir = "/Users/hpacheco/Library/Haskell/etc"
 
 getBinDir, getLibDir, getDataDir, getLibexecDir, getSysconfDir :: IO FilePath
 getBinDir = catchIO (getEnv "forest_bindir") (\_ -> return bindir)

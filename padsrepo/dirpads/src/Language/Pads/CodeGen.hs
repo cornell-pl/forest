@@ -823,9 +823,7 @@ genBMdName = genUniqueName "bmd"
 getMDName pname = case M.lookup pname baseTypesMap of
          Nothing -> mkName ((strToUpper pname) ++ "_md")
          Just _ -> ''Base_md                  -- Built-in base type        
-getStructInnerMDName name = 
-  let str = show name
-  in mkName (str++"_inner_md")
+getStructInnerMDName name = let str = show name in mkName (str++"_inner_md")
 getFieldMDName str = mkName (str++"_md")
 getFieldName str = mkName str
 

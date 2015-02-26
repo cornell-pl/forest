@@ -1,10 +1,10 @@
-{-# LANGUAGE NamedFieldPuns, RecordWildCards #-}
+{-# LANGUAGE FlexibleContexts, NamedFieldPuns, RecordWildCards #-}
 
 module Language.Forest.Writing where
 
 import System.Directory
 import System.FilePath.Posix
-import System.Cmd
+import System.Process
 import System.IO
 
 import Language.Forest.MetaData

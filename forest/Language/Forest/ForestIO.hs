@@ -1,6 +1,6 @@
 {- XXX  add error checking to all calls to system; wrap with failure -}
 
-{-# LANGUAGE ScopedTypeVariables, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances #-}
+{-# LANGUAGE FlexibleContexts, ScopedTypeVariables, FlexibleInstances,MultiParamTypeClasses,UndecidableInstances #-}
 
 {-
 ** *********************************************************************
