@@ -525,6 +525,28 @@ laziness problem with 1st approach: ic storing: read variable (child variables a
 
 exploit DSL information to have incrementality
 
+%storeDelta is always run with a top-level modification
+
+%invariant: there is a consistent (FS,value) pair to start with; in our implementation that is not the case; loadDelta can be more general, we only check for differences between the values and the FS, and any whose version does not match the old FS is guaranteedly repaired, be it an older value or a more recent value.
+%optimization for ic storing: since we can only change one variable at once, we admit side-effects
+%react immediately to one variable update at a time
+%akin to reactive environments like spreadsheets: we only write a variable/cell at a time, and that change is propagated to all dependent cells (via the FS)
+%when stopping, we know that no write to the FS is required, but data dependencies may be violated (leading to a write failure). instead, we allow the write to go through without a deep sensibility check; side-effects
+
+%\begin{spec}
+%[forest| type Dup = Directory {
+%	  file1 is "file" :: TextFile
+%	, file2 is "file" :: TextFile
+%} |]
+%
+%read dup
+%write file2
+%write dup (file1,file2')
+%read file1
+%\end{spec}
+
+%file1 will get updated
+
 \subsection{Log-structured Transactional Forest}
 
 problem with 2nd approach: tx1 reads a variable; tx2 reads the same variable
@@ -588,6 +610,10 @@ transactional variables do not descend to the content of files. pads specs are r
 
 \begin{align*}
 	|focusF F r `def`| F ||_{|{forall (prime r) (star F (prime r) `inSet` r)}|}
+\end{align*}
+
+\begin{align*}
+	|starIn r1 F r2 = forin r r1 ((star F r) `inSet` (star F r2))|
 \end{align*}
 
 \begin{spec}
@@ -925,11 +951,11 @@ Note that:
 \end{spec}
 
 \begin{spec}
-	(focus ((addFile (prime r) u)) F r) `def`			if (star F (prime r)) `inSet` (star F r) then addFile (prime r) u else did
-	(focus ((addDir (prime r))) F r) `def`				if (star F (prime r)) `inSet` (star F r) then addDir (prime r) else did
-	(focus ((addLink (prime r) (prime2 r))) F r) `def` 	if (star F (prime r)) `inSet` (star F r) then addLink (prime r) (prime2 r) else did
-	(focus ((rem (prime r))) F r) `def` 				if (star F (prime r)) `inSet` (star F r) then rem (prime r) else did
-	(focus ((chgAttrs (prime r) i)) F r) `def` 			if (star F (prime r)) `inSet` (star F r) then chgAttrs (prime r) i else did
+	(focus (addFile (prime r) u) F r) `def`			if (starIn (prime r) F r) then addFile (prime r) u else did
+	(focus (addDir (prime r)) F r) `def`				if (starIn (prime r) F r) then addDir (prime r) else did
+	(focus (addLink (prime r) (prime2 r)) F r) `def` 	if (starIn (prime r) F r) then addLink (prime r) (prime2 r) else did
+	(focus (rem (prime r)) F r) `def` 				if (starIn (prime r) F r) then rem (prime r) else did
+	(focus (chgAttrs (prime r) i) F r) `def` 			if (starIn (prime r) F r) then chgAttrs (prime r) i else did
 	(focus (df1 ; df2) F r) `def` (focus df1 F r) ; focus df2 F1 r where F1 = ((focus df1 F r)) F
 	(focus did F r) `def` did
 \end{spec}

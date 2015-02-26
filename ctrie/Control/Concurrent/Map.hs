@@ -26,6 +26,7 @@ module Control.Concurrent.Map
 	, lookupOrInsert
     , insert
     , delete
+	, deleteIf
 
       -- * Query
     , lookup
@@ -216,7 +217,6 @@ newINode h1 k1 v1 h2 k2 v2 lev
             EQ -> do inode' <- newINode h1 k1 v1 h2 k2 v2 (nextLevel lev)
                      newIORef $ CNode bmp $ A.singleton (INode inode')
 
-
 -- | /O(log n)/. Remove the given key and its associated value from the map,
 -- if present.
 delete :: (Eq k, Hashable k) => k -> Map k v -> IO ()
@@ -255,6 +255,46 @@ delete k (Map root) = go0
                     unlessM (fst <$> casIORef inode ticket col') go0
 
 {-# INLINABLE delete #-}
+
+-- | /O(log n)/. Remove the given key and its associated value from the map,
+-- if present.
+deleteIf :: (Eq k, Hashable k) => k -> (v -> IO Bool) -> Map k v -> IO ()
+deleteIf k f (Map root) = go0
+    where
+        h = hash k
+        go0 = go 0 undefined root
+        go lev parent inode = do
+            ticket <- readForCAS inode
+            case peekTicket ticket of
+                CNode bmp arr -> do
+                    let m = mask h lev
+                        i = sparseIndex bmp m
+                    if bmp .&. m == 0
+                        then return ()  -- not found
+                        else case A.index arr i of
+                            SNode (S k2 v)
+                                | k == k2 -> do
+                                    b <- f v
+                                    when b $ do
+                                    	let arr' = A.delete i (popCount bmp) arr
+                                    	    cn'  = CNode (bmp `xor` m) arr'
+                                    	    cn'' = contract lev cn'
+                                    	unlessM (fst <$> casIORef inode ticket cn'') go0
+                                    	whenM (isTomb <$> readIORef inode) $
+                                    	    cleanParent parent inode h (prevLevel lev)
+                                | otherwise -> return ()  -- not found
+
+                            INode inode2 -> go (nextLevel lev) inode inode2
+
+                Tomb _ -> clean parent (prevLevel lev) >> go0
+
+                Collision arr -> do
+                    let arr' = filter (\(S k2 _) -> k2 /= k) $ arr
+                        col' | [s] <- arr' = Tomb s
+                             | otherwise   = Collision arr'
+                    unlessM (fst <$> casIORef inode ticket col') go0
+
+{-# INLINABLE deleteIf #-}
 
 -----------------------------------------------------------------------
 -- * Query

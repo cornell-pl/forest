@@ -116,6 +116,7 @@
 %format Fi = "{F_i}"
 %format phii = "{\phi_i}"
 %format default = "default"
+%format (starIn r1 f r2) = "{" r1 "\in^{*}_{" f "}" r2 "}"
 %format u1
 %format e2
 %format Fk = "{F_k}"
@@ -132,6 +133,8 @@
 %format (forin i rng (e)) = "{\forall\," i "\in " rng ".~" e "}"
 %format (forall i (e)) = "{\forall\," i ".~" e "}"
 %format tau = "\tau"
+%format r1
+%format r2
 
 \newcommand{\eqUnder}[1]{\ensuremath{\underset{#1} {=}  }}
 %format (eqUnder (f1) r (f2)) = "{" f1 " \eqUnder{" r "}" f2 " }"
@@ -148,6 +151,6 @@
 %format (chgAttrs r i) = "{\mathtt{chgAttrs}(" r "," i ")}"
 %format df1 = "{\delta_{F_1}}"
 %format df2 = "{\delta_{F_2}}"
-%format (focus d f r) = "{" d "\!\!\searrow_{" f "}\!" r "}"
+%format (focus d f r) = "{" d "\!\searrow_{" f "}\!" r "}"
 %format (focusF f r) = "{" f "\!\!\searrow\!" r "}"
 %format (star f (r)) = "{" f "^{*}(" r ")}"

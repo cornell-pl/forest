@@ -12,11 +12,13 @@ import Language.Forest.IC.CodeGen.ZStoring
 import Language.Haskell.TH.Quote
 import Language.Forest.IC.IO.ZDeltaLoading
 import Language.Forest.IC.CodeGen.ZDeltaLoading
+import Language.Forest.IC.CodeGen.ZLoading
 import Language.Forest.IC.IO.ZDeltaStoring
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
 
 import Language.Forest.Syntax as PS
 import Language.Forest.Pure.MetaData
+import qualified Language.Forest.IC.MetaData as IC
 import Language.Forest.Errors
 import Language.Forest.IC.Generic hiding (SymLink)
 import qualified Language.Forest.Errors as E
@@ -122,29 +124,46 @@ zmanifestDeltaE isTop forestTy pathE pathE' treeE dfE treeE' repE dvE manE = cas
 	Fapp (Named ty_name) argEs -> zmanifestDeltaNamed ty_name argEs pathE pathE' treeE dfE treeE' repE dvE manE
 	FFile (file_name, argEOpt) -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(\newtreeE -> zloadFile True file_name argEOpt filterPathE pathE' newtreeE getMDE)
+			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaFile True forestTy argEOpt (Pure.returnExp pathE) treeE' pathE' newdfE newtreeE newdvE newrepmdE)
 			(zmanifestDeltaFile True forestTy argEOpt pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaFile False forestTy argEOpt pathE pathE' treeE dfE treeE' repE dvE manE
 	Archive archtype ty -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(\newtreeE -> zloadArchive True archtype ty filterPathE pathE' newtreeE getMDE)	
+			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaArchive True archtype ty (Pure.returnExp pathE) pathE' treeE' newdfE newtreeE newdvE newrepmdE)
 			(zmanifestDeltaArchive True archtype ty pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaArchive False archtype ty pathE pathE' treeE dfE treeE' repE dvE manE
 	FSymLink -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(\newtreeE -> zloadSymLink True pathE' newtreeE getMDE)	
+			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaSymLink True (Pure.returnExp pathE) pathE' treeE' newdfE newtreeE newdvE newrepmdE)
 			(zmanifestDeltaSymLink True pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaSymLink False pathE pathE' treeE dfE treeE' repE dvE manE
-	FConstraint pat descTy predE -> zmanifestDeltaConstraint isTop descTy pat predE treeE' repE dvE manE $ \newrepE newdvE newmanE -> zmanifestDeltaE False descTy pathE pathE' treeE dfE treeE' newrepE newdvE newmanE	
+	FConstraint pat descTy predE -> zmanifestDeltaConstraint isTop descTy pat predE treeE repE dvE manE
+		(\newrepE newmanE -> zmanifestE False descTy pathE' treeE' newrepE newmanE)
+		(\newrepE newdvE newmanE -> zmanifestDeltaE False descTy pathE pathE' treeE dfE treeE' newrepE newdvE newmanE)
 	(Directory dirTy) -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(\newtreeE -> zloadDirectory True dirTy filterPathE pathE' newtreeE getMDE)	
+			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaDirectory True dirTy (Pure.returnExp pathE) treeE' pathE' newdfE newtreeE newdvE newrepmdE)
 			(zmanifestDeltaDirectory True dirTy pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaDirectory False dirTy pathE pathE' treeE dfE treeE' repE dvE manE
 	FMaybe descTy -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(\newtreeE -> zloadMaybe True descTy filterPathE pathE' newtreeE getMDE)	
+			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaMaybe True descTy treeE' (Pure.returnExp pathE) pathE' newdfE newtreeE newdvE newrepmdE)
 			(zmanifestDeltaMaybe True descTy pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaMaybe False descTy pathE pathE' treeE dfE treeE' repE dvE manE
 	FComp cinfo     -> if isTop
 		then  zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(\newtreeE -> zloadComp True cinfo filterPathE pathE' newtreeE getMDE)	
+			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaComp True cinfo (Pure.returnExp pathE) treeE' pathE' newdfE newtreeE newdvE newrepmdE)
 			(zmanifestDeltaComp True cinfo pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaComp False cinfo pathE pathE' treeE dfE treeE' repE dvE manE
+  where
+	getMDE = VarE 'IC.getForestMDInTree
+	filterPathE = Pure.constExp $ Pure.returnExp pathE'
 
 -- terminals in the spec
 zmanifestDeltaNamed :: String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp
@@ -300,7 +319,7 @@ zmanifestDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE pathE'
 	(fs,_) <- Reader.ask
 	manifestContentDeltaE <- liftM (LamE [fieldrepP,newdvP,newpathP,newpathP',newdfP,newManP]) $ zmanifestDeltaE False forestTy newpathE newpathE' treeE newdfE treeE' fieldrepE newdvE newManE
 	manifestE <- case predM of
-		Nothing -> return $ Pure.appE11 (VarE 'doZDeltaManifestSimple) lensRepE pathE pathE' externalE treeE dfE treeE' repE dvE manifestContentDeltaE manE
+		Nothing -> return $ Pure.appE12 (VarE 'doZDeltaManifestSimple) lensRepE pathE pathE' externalE treeE dfE treeE' repE dvE manifestContentDeltaE (zdiffE forestTy) manE
 		Just predE -> do
 			boolE <- isEmptyZDeltaEnvExp predE
 			return $ Pure.appE14 (VarE 'doZDeltaManifestSimpleWithConstraint) lensRepE boolE (zmodPredE (VarP repName) predE) pathE pathE' externalE treeE dfE treeE' repE dvE manifestContentDeltaE (zdiffE forestTy) manE
@@ -406,14 +425,14 @@ zmanifestDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt expli
 				let deltasE = BindS (TupP [nextmanP]) $ manifestActionE
 				return (drepName,repName,[deltasE]++fieldStmts)
 			Just predE -> forceVarsZDeltaQ predE $ \predE -> do
-				manifestElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepP,newdvP,newpathP,newpathP',newdfP,newManP]) $ zmanifestDeltaConstraintCompound predE fieldrepE newdvE newManE $ zmanifestDeltaE False descTy newpathE newpathE' treeE newdfE treeE'
+				manifestElementDeltaE <- liftM (LamE [fileNameP,dfileNameP,VarP fileNameAttThunk,dfileNameAttP,fieldrepP,newdvP,newpathP,newpathP',newdfP,newManP]) $ zmanifestDeltaConstraintCompound predE treeE fieldrepE newdvE newManE $ zmanifestDeltaE False descTy newpathE newpathE' treeE newdfE treeE'
 				boolE <- isEmptyZDeltaEnvForestTy descTy
 				let manifestActionE = Pure.appE15 (VarE 'doZDeltaManifestCompoundWithConstraint) lensRepE isoE keyArgE pathE pathE' genE treeE dfE treeE' repE dvE (modPredEComp (VarP fileName) predE) manifestElementDeltaE (zdiffE descTy) manE
 				let deltasE = BindS (TupP [nextmanP]) $ manifestActionE
 				return (drepName,repName,[deltasE]++fieldStmts)
 
-zmanifestDeltaConstraintCompound :: Exp -> Exp -> Exp -> Exp -> (Exp -> Exp -> Exp -> ZDeltaQ Exp) -> ZDeltaQ Exp
-zmanifestDeltaConstraintCompound predE repE dvE manE manifest = forceVarsZDeltaQ predE $ \predE -> do
+zmanifestDeltaConstraintCompound :: Exp -> Exp -> Exp -> Exp -> Exp -> (Exp -> Exp -> Exp -> ZDeltaQ Exp) -> ZDeltaQ Exp
+zmanifestDeltaConstraintCompound predE treeE repE dvE manE manifest = forceVarsZDeltaQ predE $ \predE -> do
 	(fs,_) <- Reader.ask
 	newRepName <- lift $ newName "newrep"
 	newdvName <- lift $ newName "newdv"
@@ -426,8 +445,8 @@ zmanifestDeltaConstraintCompound predE repE dvE manE manifest = forceVarsZDeltaQ
 	boolE <- isEmptyZDeltaEnvExp predE
 	return $ Pure.appE6 (VarE 'doZDeltaManifestConstraintCompound) boolE predE repE dvE (LamE [newRepP,newdvP,newManP] manifestAction) manE
 
-zmanifestDeltaConstraint :: Bool -> ForestTy -> TH.Pat -> Exp -> Exp -> Exp -> Exp -> Exp -> (Exp -> Exp -> Exp -> ZDeltaQ Exp) -> ZDeltaQ Exp
-zmanifestDeltaConstraint isTop ty pat predE treeE' repE dvE manE manifest = forceVarsZDeltaQ predE $ \predE -> do
+zmanifestDeltaConstraint :: Bool -> ForestTy -> TH.Pat -> Exp -> Exp -> Exp -> Exp -> Exp -> (Exp -> Exp -> ZEnvQ Exp) -> (Exp -> Exp -> Exp -> ZDeltaQ Exp) -> ZDeltaQ Exp
+zmanifestDeltaConstraint isTop ty pat predE treeE repE dvE manE manifest manifestD = forceVarsZDeltaQ predE $ \predE -> do
 	(fs,_) <- Reader.ask
 	newRepName <- lift $ newName "newrep"
 	newdvName <- lift $ newName "newdv"
@@ -437,23 +456,30 @@ zmanifestDeltaConstraint isTop ty pat predE treeE' repE dvE manE manifest = forc
 	let (newManE,newManP) = genPE newManName
 	
 	let predFnE = zmodPredE pat predE
-	manifestAction <- manifest newRepE newdvE newManE
+	manifestE <- runZEnvQ $ liftM (LamE [newRepP,newManP]) $ manifest newRepE newManE
+	manifestDeltaE <- liftM (LamE [newRepP,newdvP,newManP]) $ manifestD newRepE newdvE newManE
 	boolE <- isEmptyZDeltaEnvExp predE
 	if isTop
-		then return $ Pure.appE8 (VarE 'doZDeltaManifestConstraint) boolE predFnE treeE' repE dvE (LamE [newRepP,newdvP,newManP] manifestAction) (zdiffE ty) manE
-		else return $ Pure.appE7 (VarE 'doZDeltaManifestConstraintInner) boolE predFnE treeE' repE dvE (LamE [newRepP,newdvP,newManP] manifestAction) manE
+		then return $ Pure.appE9 (VarE 'doZDeltaManifestConstraint) boolE predFnE treeE repE dvE manifestE manifestDeltaE (zdiffE ty) manE
+		else return $ Pure.appE7 (VarE 'doZDeltaManifestConstraintInner) boolE predFnE treeE repE dvE manifestDeltaE manE
 
-zcheckManifestStop :: ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> (Exp -> Exp -> Exp -> ZDeltaQ Exp) -> ZDeltaQ Exp
-zcheckManifestStop ty pathE pathE' dfE treeE' repE dvE manE manifestD = do
+zcheckManifestStop :: ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> (Exp -> ZEnvQ Exp) -> (Exp -> Exp -> Exp -> Exp -> ZDeltaQ Exp) -> (Exp -> Exp -> Exp -> ZDeltaQ Exp) -> ZDeltaQ Exp
+zcheckManifestStop ty pathE pathE' dfE treeE' repE dvE manE load loadD manifestD = do
+	newTreeName <- lift $ newName "newtree"
+	let (newTreeE,newTreeP) = genPE newTreeName
 	newRepName <- lift $ newName "rep"
 	let (newRepE,newRepP) = genPE newRepName
 	newManName <- lift $ newName "man"
 	let (newManE,newManP) = genPE newManName
 	newdvName <- lift $ newName "dv"
 	let (newdvE,newdvP) = genPE newdvName
+	newDfName <- lift $ newName "df"
+	let (newDfE,newDfP) = genPE newDfName
 	cond1 <- isEmptyZDeltaEnvForestTy ty
-	x <- manifestD newRepE newdvE newManE
-	return $ Pure.appE9 (VarE 'zskipManifestIf) cond1 pathE pathE' dfE treeE' repE dvE (LamE [newRepP,newdvP,newManP] x) manE
+	loadE <- runZEnvQ $ liftM (LamE [newTreeP]) $ load newTreeE
+	loadDeltaE <- liftM (LamE [newDfP,newTreeP,newdvP,newRepP]) $ loadD newDfE newTreeE newdvE newRepE
+	manifestDeltaE <- liftM (LamE [newRepP,newdvP,newManP]) $ manifestD newRepE newdvE newManE
+	return $ Pure.appE11 (VarE 'zskipManifestIf) cond1 pathE pathE' dfE treeE' repE dvE loadE loadDeltaE manifestDeltaE manE
 
 
 

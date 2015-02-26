@@ -19,7 +19,8 @@ isoComp (Iso to1 from1) (Iso to2 from2) = Iso (to2 . to1) (from1 . from2)
 
 data Lens s v = Lens { get :: s -> v, put :: s -> v -> s }
 
-
+isoLens :: Iso a b -> Lens a b
+isoLens iso = Lens (to iso) (\s -> from iso)
 
 data LensM m s v = LensM { getM :: m s -> m v, putM :: m s -> m v -> m s }
 

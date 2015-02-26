@@ -126,7 +126,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	-- the type for value modifications
 	data ValueDelta fs a :: *
 	
-	-- value changes since a given FSTree. recursive nodifications
+	-- has the content of a thunk changed? value changes since a given FSTree. recursive nodifications
 	diffValueThunk :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
 	diffValueAny :: FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
 	
@@ -135,8 +135,14 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	chgValueDelta :: ValueDelta fs a
 	mapValueDelta :: Proxy fs -> ValueDelta fs a -> ValueDelta fs b
 	
-	-- has the content of a thunk been explicitly modified? no recursive modifications
+	-- has the content of a thunk been explicitly modified? ignores recursive modifications
 	diffTopValueThunk :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
+
+	-- sometimes a better approximation of a value diff
+	diffValueBelow :: ValueDelta fs a -> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)) -> FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
+	diffValueBelow dv diffV tree rep = if isIdValueDelta dv
+		then return idValueDelta
+		else diffV tree rep
 
 class ICRep fs => ICMemo (fs :: FS) where
 	

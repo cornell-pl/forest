@@ -367,7 +367,7 @@ instance (ForestLayer TxVarFS l) => Thunk (FSThunk TxVarFS) l (IncForest TxVarFS
 		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"--NOFILE--")
 		tbl <- forestM $ forestIO $ WeakMap.new
 		return $ TxVarFSThunk (rdyn,m,tbl)
-	read (TxVarFSThunk (rdyn,m,tbl)) = do
+	read (TxVarFSThunk (rdyn,m,tbl)) = do -- always reads from the latest file system version
 		fsversion <- forestM getFSVersionTxVarFS
 		mb <- forestM $ forestIO $ WeakMap.lookup tbl fsversion
 		case mb of
@@ -434,7 +434,7 @@ copyOrElseTxVarFS proxy src tgt b f = do
 newTxVarFS :: FTK TxVarFS args rep var content => Proxy args -> ForestVs args -> FilePath -> TxVarFTM rep
 newTxVarFS proxy args path = inside $ zload (vmonadArgs proxyTxVarFS proxy args) path
 
--- make sure that the computation that is run is a load function
+-- make sure that the computation that is run is a load function (because of default loading)
 readTxVarFS :: (ForestLayer TxVarFS l,FTK TxVarFS args rep var content) => Proxy args -> rep -> ForestL TxVarFS l content
 readTxVarFS proxy (rep :: rep) = do
 	(txargs,path) <- inside $ argsTxVarFS proxy rep
@@ -454,6 +454,7 @@ writeOrElseTxVarFS rep content b f = do
 	var <- Inc.getOutside $ to iso_rep_thunk rep
 	writeOrElseTxVarFS' rep (BX.put lens_content var content) b f
 
+-- does not change the inner computation; just sets the cached fsversion forward
 writeOrElseTxVarFS' :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => rep -> var -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS' rep var b f = do
 	let t = to iso_rep_thunk rep
@@ -798,7 +799,7 @@ fileLocks = unsafePerformIO $ CMap.empty
 
 -- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
 fileLock :: FilePath -> IO FLock
-fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.delete path fileLocks) fileLocks
+fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.deleteIf path (liftM isNothing . Weak.deRefWeak) fileLocks) fileLocks
 
 atomicTxVarFS :: String -> TxVarFTM a -> TxVarFTM a
 atomicTxVarFS msg m = do

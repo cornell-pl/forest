@@ -44,7 +44,7 @@ import Prelude hiding (mod,read)
 import Data.Monoid
 import Data.WithClass.MData
 import Language.Pads.Generic
-import Control.Monad.Incremental hiding (read)
+import Control.Monad.Incremental as Inc hiding (read)
 import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),Arg(..),(:*:)(..))
 import qualified Language.Forest.Pure.MetaData as Pure
 import Language.Forest.Manifest
@@ -164,12 +164,12 @@ readMeta = liftM fst . read
 
 class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK (IncForest fs) Forest_err,ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep) => ZippedICForest fs args rep | rep -> args  where
 	
-	zload :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
+	zload :: (Eq rep,IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => ForestIs fs args -> FilePath -> ForestI fs rep
 	zload args path = forestM latestTree >>= \tree -> zloadScratchMemo Proxy args return path tree getForestMDInTree
 	
 	zloadScratch :: Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
 	
-	zloadScratchMemo :: (IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
+	zloadScratchMemo :: (Eq rep,IncK (IncForest fs) content,Typeable content,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
 	zloadScratchMemo proxy args pathfilter path tree getMD = do
 		let fs = Proxy :: Proxy fs
 		let proxyRep = Proxy

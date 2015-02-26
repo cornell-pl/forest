@@ -142,31 +142,33 @@ genLoadDeltaBody proxyE argE pathName treeName repmdName dpathName dfName treeNa
 			return $ Pure.appE2 (VarE 'liftM) (InfixE (Just isoE) (VarE '(><)) (Just $ VarE 'id)) rhsE
 
 loadDeltaE :: ForestTy -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
-loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = case forestTy of
-	Named ty_name -> loadDeltaNamed ty_name [] pathE treeE repmdE dpathE dfE treeE'
-	Fapp (Named ty_name) argEs -> loadDeltaNamed ty_name argEs pathE treeE repmdE dpathE dfE treeE'
-	FFile (file_name, argEOpt) -> checkUnevaluated "file" treeE' repmdE
-		(loadFile file_name argEOpt pathFilterE pathE' treeE')
-		(loadDeltaFile forestTy argEOpt pathE treeE dpathE dfE treeE')
-	Archive archtype ty -> checkStop (archiveExtension archtype) forestTy pathE dpathE repmdE dfE treeE'
-		(loadArchive archtype ty pathFilterE pathE' treeE')
-		(loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE')
-	FSymLink -> checkUnevaluated "symlink" treeE' repmdE
-		(loadSymLink pathE' treeE treeE')
-		(loadDeltaSymLink pathE dpathE treeE dfE treeE')
-	FConstraint pat descTy predE -> loadDeltaConstraint pat repmdE predE $ \newrepmdE -> loadDeltaE descTy pathE treeE newrepmdE dpathE dfE treeE'	
-	(Directory dirTy) -> checkStop "directory" forestTy pathE dpathE repmdE dfE treeE'
-		(loadDirectory dirTy pathFilterE pathE' treeE')
-		(loadDeltaDirectory dirTy pathE treeE dpathE dfE treeE')
-	FMaybe descTy -> checkStop "maybe" forestTy pathE dpathE repmdE dfE treeE'
-		(loadMaybe descTy pathFilterE pathE' treeE')
-		(loadDeltaMaybe descTy treeE pathE dpathE dfE treeE')
-	FComp cinfo     -> checkStop "compound" forestTy pathE dpathE repmdE dfE treeE'
-		(loadComp cinfo pathFilterE pathE' treeE')
-		(loadDeltaComp cinfo pathE treeE dpathE dfE treeE')
+loadDeltaE forestTy pathE treeE repmdE dpathE dfE treeE' = do
+	(mode,fs,_) <- Reader.ask
+	let pathFilterE = Pure.appE3 (VarE 'fsTreeDPathFilter) (VarE fs) dfE dpathE
+	case forestTy of
+		Named ty_name -> loadDeltaNamed ty_name [] pathE treeE repmdE dpathE dfE treeE'
+		Fapp (Named ty_name) argEs -> loadDeltaNamed ty_name argEs pathE treeE repmdE dpathE dfE treeE'
+		FFile (file_name, argEOpt) -> checkUnevaluated "file" treeE' repmdE
+			(loadFile file_name argEOpt pathFilterE pathE' treeE')
+			(loadDeltaFile forestTy argEOpt pathE treeE dpathE dfE treeE')
+		Archive archtype ty -> checkStop (archiveExtension archtype) forestTy pathE dpathE repmdE dfE treeE'
+			(loadArchive archtype ty pathFilterE pathE' treeE')
+			(loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE')
+		FSymLink -> checkUnevaluated "symlink" treeE' repmdE
+			(loadSymLink pathE' treeE treeE')
+			(loadDeltaSymLink pathE dpathE treeE dfE treeE')
+		FConstraint pat descTy predE -> loadDeltaConstraint pat repmdE predE $ \newrepmdE -> loadDeltaE descTy pathE treeE newrepmdE dpathE dfE treeE'	
+		(Directory dirTy) -> checkStop "directory" forestTy pathE dpathE repmdE dfE treeE'
+			(loadDirectory dirTy pathFilterE pathE' treeE')
+			(loadDeltaDirectory dirTy pathE treeE dpathE dfE treeE')
+		FMaybe descTy -> checkStop "maybe" forestTy pathE dpathE repmdE dfE treeE'
+			(loadMaybe descTy pathFilterE pathE' treeE')
+			(loadDeltaMaybe descTy treeE pathE dpathE dfE treeE')
+		FComp cinfo     -> checkStop "compound" forestTy pathE dpathE repmdE dfE treeE'
+			(loadComp cinfo pathFilterE pathE' treeE')
+			(loadDeltaComp cinfo pathE treeE dpathE dfE treeE')
   where pathE' = dpathE
         getMDE = AppE (VarE 'snd) repmdE
-        pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
 
 -- terminals in the spec
 loadDeltaNamed :: String -> [TH.Exp] -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> TH.Exp -> DeltaQ TH.Exp
@@ -192,6 +194,7 @@ loadDeltaNamed ty_name argEs pathE treeE repmdE dpathE dfE treeE' = do
 
 loadDeltaArchive :: [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Exp -> Exp -> Exp -> DeltaQ Exp
 loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE' repmdE = do
+	(mode,fs,_) <- Reader.ask
 	newPathName <- lift $ newName "new_path"
 	newdfName <- lift $ newName "new_df"
 	newTreeName <- lift $ newName "new_tree"
@@ -206,7 +209,7 @@ loadDeltaArchive archtype ty pathE dpathE treeE dfE treeE' repmdE = do
 	let (newGetMDE, newGetMDP) = genPE newGetMDName
 	let (newDPathE, newDPathP) = genPE newDPathName
 	let (newRepMdE, newRepMdP) = genPE newRepMdName
-	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
+	let pathFilterE = Pure.appE3 (VarE 'fsTreeDPathFilter) (VarE fs) dfE dpathE
 	rhsE <- liftM (LamE [newPathP,newGetMDP,newTreeP,newdfP,newTreeP']) $ runEnvQ $ loadE ty pathFilterE newPathE newTreeE' newGetMDE
 	rhsDE <- liftM (LamE [newPathP,newDPathP,newRepMdP,newTreeP,newdfP,newTreeP']) $ loadDeltaE ty newPathE newTreeE newRepMdE newDPathE newdfE newTreeE'
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
@@ -222,7 +225,8 @@ loadDeltaMaybe forestTy treeE pathE dpathE dfE treeE' repmdE = do
 	newGetMDName <- lift $ newName "newgetMD"
 	let (newGetMDE,newGetMDP) = genPE newGetMDName
 	let pathE' = dpathE
-	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
+	(mode,fs,_) <- Reader.ask
+	let pathFilterE = Pure.appE3 (VarE 'fsTreeDPathFilter) (VarE fs) dfE dpathE
 	loadContentNoDeltaE <- liftM (LamE [newGetMDP]) $ runEnvQ $ loadE forestTy pathFilterE pathE' treeE' newGetMDE
 	loadContentDeltaE <- liftM (LamE [newrepmdP]) $ loadDeltaE forestTy pathE treeE newrepmdE dpathE dfE treeE'
 	return $ Pure.appE8 (VarE 'doLoadDeltaMaybe) pathE repmdE dpathE treeE dfE treeE' loadContentNoDeltaE loadContentDeltaE
@@ -247,12 +251,13 @@ loadDeltaDirectory dirTy@(Record id fields) pathE treeE dpathE dfE treeE' repmdE
 	let tyName = mkName id
 	let drepE = mergeFieldDeltas drepEs
 	let dmdE = mergeFieldDeltas dmdEs
+	(mode,fs,_) <- Reader.ask
 	
 --	let repE = appConE (getStructInnerName tyName) $ map snd repEs
 --	let mdE = appConE (getStructInnerMDName tyName) $ map snd mdEs
 --	let resultE = TupE [repE,mdE]
 	let finalS = NoBindS $ Pure.returnExp $ TupE [drepE,dmdE] --Pure.appE2 (VarE 'tupM) drepE dmdE
-	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
+	let pathFilterE = Pure.appE3 (VarE 'fsTreeDPathFilter) (VarE fs) dfE dpathE
 	doDirNoDeltaE <- liftM (LamE [innerGetMDP]) $ runEnvQ $ loadDirectoryContents dirTy pathFilterE pathE' treeE' innerGetMDE
 	let doDirDeltaE = LamE [innerRepMDP] $ DoE $ stmts ++ [finalS]
 	collectMDs <- lift $ genMergeFieldsMDErrors fields	
@@ -313,7 +318,7 @@ loadDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE treeE repmd
 	
 --	let innerrepmdE = AppE (UInfixE (AppE (VarE 'Inc.get) lensRepE) (VarE '(><)) (AppE (VarE 'Inc.get) lensMdE)) repmdE
 	(mode,fs,_) <- Reader.ask
-	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
+	let pathFilterE = Pure.appE3 (VarE 'fsTreeDPathFilter) (VarE fs) dfE dpathE
 	loadContentNoDeltaE <- liftM (LamE [newpathP,fieldrepmdP]) $ runEnvQ $ loadE forestTy pathFilterE newpathE treeE' fieldrepmdE
 	loadContentDeltaE <- liftM (LamE [fieldrepmdP,newpathP,newdpathP,newdfP]) $ loadDeltaE forestTy newpathE treeE fieldrepmdE newdpathE newdfE treeE'
 	loadE <- case predM of
@@ -334,8 +339,9 @@ loadDeltaComp cinfo pathE treeE dpathE dfE treeE' repmdE = do
 	let getMDE = AppE (VarE 'snd) repmdE
 	let pathE' = dpathE
 	(_,_,_,_,stmts) <- loadDeltaCompound False cinfo pathE treeE newrepmdE dpathE dfE treeE'
+	(mode,fs,_) <- Reader.ask
 	let collectMDs = genMergeFieldMDErrors (Comp cinfo)
-	let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
+	let pathFilterE = Pure.appE3 (VarE 'fsTreeDPathFilter) (VarE fs) dfE dpathE
 	doCompNoDeltaE <- liftM (LamE [newGetMDP]) $ runEnvQ $ loadCompContents cinfo pathFilterE pathE' treeE' newGetMDE
 	let doCompDeltaE = LamE [newrepmdP] $ DoE $ init stmts ++ [Pure.unBindS $ last stmts]
 	return $ Pure.appE9 (VarE 'doLoadDeltaDirectory) pathE repmdE dpathE treeE dfE treeE' collectMDs doCompNoDeltaE doCompDeltaE
@@ -407,7 +413,7 @@ loadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitNa
 		-- actual loading
 		(mode,fs,_) <- Reader.ask
 		let update (mode,fs,env) = (mode,fs,Map.insert fileName (Pure.appE2 (VarE '(==)) fileNameE dfileNameE,Nothing) $ Map.insert fileNameAtt (AppE (VarE 'isEmptySValueDelta) dfileNameAttE,Just (fileNameAttThunk,VarP fileNameAtt)) env)
-		let pathFilterE = Pure.appE2 (VarE 'fsTreeDeltaPathFilter) dfE dpathE
+		let pathFilterE = Pure.appE3 (VarE 'fsTreeDPathFilter) (VarE fs) dfE dpathE
 		Reader.local update $ case predM of
 			Nothing -> do
 				loadElementE <- liftM (LamE [fileNameP,VarP fileNameAttThunk,newpathP,fieldrepmdP]) $ runEnvQ $ loadE descTy pathFilterE newpathE treeE' fieldrepmdE

@@ -137,6 +137,7 @@ class (Typeable fs,MonadLazy (ForestM fs),Eq (FSTree fs),Show (FSTree fs)) => FS
 	type FSTreeD fs :: *
 
 	isEmptyFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
+	emptyFSTreeD :: Proxy fs -> FSTreeD fs
 	isEmptyTopFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
 	isChgFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
 	isMoveFSTreeD :: Proxy fs -> FSTreeD fs -> Maybe FilePath

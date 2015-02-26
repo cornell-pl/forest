@@ -308,6 +308,27 @@ instance FSRep TxICFS where
 	
 	canonalizePathWithTree = canonalizePathTxICFS
 
+	type FSTreeD TxICFS = (FSTreeDeltaNodeMay,FSTreeDeltaNodeMay) -- (a delta focused on the current path,the global delta from the root)
+
+--	type FSTreeD fs :: *
+--
+--	isEmptyFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
+--	isEmptyTopFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
+--	isChgFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
+--	isMoveFSTreeD :: Proxy fs -> FSTreeD fs -> Maybe FilePath
+--	focusDiffFSTreeD :: FSTree fs -> FilePath -> FSTree fs -> FilePath -> ForestM fs (FSTreeD fs)
+
+	-- we assume that all paths are canonized
+	focusFSTreeD fs (local_df,global_df) path file pathfile = do
+		if path `isParentPathOf` pathfile
+			-- descent on the current path
+			then (focusFSTreeDeltaNodeMayByRelativePath local_df file,global_df)
+			-- symlinks may jump to parents of the current path
+			else (focusFSTreeDeltaNodeMayByRelativePath global_df pathfile,global_df)
+
+--	-- it may fail in case it is not possible to compute a difference between the two trees
+--	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs (Maybe (FSTreeD fs))
+
 --	diffFS oldtree newtree path = do
 --		if fsTreeTxId oldtree == fsTreeTxId newtree
 --			then do
@@ -726,7 +747,7 @@ instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 		thunk <- forestM $ newTxICThunk m
 		forestM $ bufferTxICFSThunk var thunk
 		return var
-	-- read on the internal thunk
+	-- read on the internal thunk, not on the latest filesystem
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
 		liftM fst $ readTxICThunk thunk (forestM latestTree)
@@ -738,7 +759,7 @@ instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 		thunk <- forestM $ newTxICThunk m
 		forestM $ bufferTxICFSThunk var thunk
 		return var
-	-- read on the internal thunk
+	-- read on the internal thunk, not on the latest filesystem
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
 		liftM fst $ readTxICThunk thunk (forestM latestTree)
@@ -832,25 +853,38 @@ instance Exception ManifestConflictTx
 
 writeOrElseTxICFS :: FTK TxICFS args rep var content => rep -> content -> b -> ([ManifestError] -> TxICFTM b) -> TxICFTM b
 writeOrElseTxICFS rep content b f = do
-	
-	let tryWrite = do
-		let t = to iso_rep_thunk rep
-		modify t $ \s -> return $ BX.put lens_content s content
+
+	let t = to iso_rep_thunk rep
 		
-		mb :: (Maybe (ForestIs TxICFS args,FilePath)) <- forestM $ getFTVArgsIC Proxy rep
-		case mb of
-			Nothing -> throwTxICFS $ ManifestConflictTx [ConflictingArguments] -- the top-level arguments of a variable don't match the spec
-			Just (txargs,path) -> do
-				let proxy = Proxy :: Proxy args
-				oldtree <- inside $ treeTxICFSThunk t
-				tree <- forestM latestTree
-				df <- liftM fromJust $ forestM $ diffFS oldtree tree path
-				dv <- diffValueThunk oldtree rep
-				ds <- deltaArgs oldtree proxy txargs txargs
-				let deltas = (txargs,ds)
-				-- store incrementally at the latest tree
+	mb :: (Maybe (ForestIs TxICFS args,FilePath)) <- forestM $ getFTVArgsIC Proxy rep
+	case mb of
+		Nothing -> error "writeOrElseTxICFS: should not happen" -- the top-level arguments of a variable don't match the spec
+		Just (txargs,path) -> do
+			let proxy = Proxy :: Proxy args
+			oldtree <- inside $ treeTxICFSThunk t
+			tree <- forestM latestTree
+			df <- liftM fromJust $ forestM $ diffFS oldtree tree path
+			dv <- diffValueThunk oldtree rep
+			ds <- deltaArgs oldtree proxy txargs txargs
+			let deltas = (txargs,ds)
+			
+			-- update the value to the latest filesystem (since some variables may be outdated due to modifications to other descriptions)
+			-- this is necessary because the store function reads the content from the inner thunks, that are not necessarily in sync with the latest filesystem
+			-- skipping this step would eventually overwrite user modifications with older values!!
+			zloadDeltaMemo proxy deltas (return path) oldtree (rep,getForestMDInTree) path df tree dv
+			
+			let tryWrite = do
+				-- write the new content
+				modify t $ \s -> return $ BX.put lens_content s content
+				
+				-- compute new value deltas for the write
+				newdv <- diffValueThunk tree rep
+				newds <- deltaArgs tree proxy txargs txargs
+				let newdeltas = (txargs,newds)
+				
+				-- store incrementally at the latest tree (there are no filesystem modifications, since have only c hanged the value since loadDelta)
 				man <- forestM $ newManifestWith "/" tree
-				(mani,_,memos) <- RWS.runRWST (zupdateManifestDeltaMemo proxy deltas path path oldtree df tree rep dv man) True ()
+				(mani,_,memos) <- RWS.runRWST (zupdateManifestDeltaMemo proxy newdeltas path path tree (emptyFSTreeD proxyTxICFS) tree rep newdv man) True ()
 				-- we need to store the errors to the (buffered) FS before validating
 				forestM $ storeManifest mani
 				-- commit the pending modifications
@@ -862,8 +896,7 @@ writeOrElseTxICFS rep content b f = do
 				if List.null errors
 					then forestM latestTree >>= memos >> return b
 					else throwTxICFS $ ManifestConflictTx errors
-					
-	catchTxICFS tryWrite (\(ManifestConflictTx errors) -> f errors)
+			catchTxICFS tryWrite (\(ManifestConflictTx errors) -> f errors)
 					
 atomicallyTxICFS :: TxICFTM b -> IO b
 atomicallyTxICFS stm = initializeTxICFS try where
@@ -1225,7 +1258,7 @@ fileLocks = unsafePerformIO $ CMap.empty
 
 -- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
 fileLock :: FilePath -> IO FLock
-fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.delete path fileLocks) fileLocks
+fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.deleteIf path (liftM isNothing . Weak.deRefWeak) fileLocks) fileLocks
 
 atomicTxICFS :: String -> TxICFTM a -> TxICFTM a
 atomicTxICFS msg m = do
