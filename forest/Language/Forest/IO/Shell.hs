@@ -117,6 +117,11 @@ fileIsDifferent f1 f2 = do
 	result <- runShellCommand cmd
 	return $ not $ Prelude.null result
 	
+allSymLinksUnder :: FilePath -> IO [(String,String)]
+allSymLinksUnder path = do
+	xs <- runShellCommand $ "find " ++ path ++ " -type l -exec ls -l {} \\; | awk '{print $9, $11}'"
+	return $ map (\s -> let [src,tgt] = words s in (src,tgt)) $ lines xs
+	
 -- adds a cardinal to a file to look inside its content (for AVFS containers)
 cardinalPath :: FilePath -> FilePath
 cardinalPath path@(lastMay -> Just '#') = path
@@ -138,4 +143,7 @@ waitNextUUID i = do
 		Nothing -> threadDelay i >> nextUUIDSafe
 		Just uuid -> return uuid
 	
+
+
+
 	

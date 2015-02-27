@@ -140,11 +140,28 @@ emptyFSTreeDelta = Map.empty
 isEmptyFSTreeDelta :: FSTreeDelta -> Bool
 isEmptyFSTreeDelta = Map.null
 
+isEmptyTopFSTreeDelta :: FSTreeDelta -> Bool
+isEmptyTopFSTreeDelta tds = case (Map.toList tds) of
+	[] -> True
+	[(_,FSTreeNop td)] -> True
+	otherwise -> False
+
+isChgFSTreeDelta :: FSTreeDelta -> Bool
+isChgFSTreeDelta tds = case (Map.toList tds) of
+	[(_,FSTreeChg td _)] -> True
+	otherwise -> False
+
+isMoveFSTreeDelta :: FSTreeDelta -> Maybe FilePath
+isMoveFSTreeDelta tds = case (Map.toList tds) of
+	[(_,FSTreeNew td (Just from) _ _)] -> Just from
+	otherwise -> Nothing
+
 isEmptyFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Bool
 isEmptyFSTreeDeltaNodeMay = isNothing
 
 isEmptyTopFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Bool
 isEmptyTopFSTreeDeltaNodeMay Nothing = True
+isEmptyTopFSTreeDeltaNodeMay (Just (FSTreeNop td)) = True
 isEmptyTopFSTreeDeltaNodeMay _ = False
 
 -- ** Compression
@@ -156,6 +173,9 @@ compressFSDeltas xs = appendListToFSTreeDelta xs Map.empty
 
 appendListToFSTreeDelta :: FSDeltas -> FSTreeDelta -> FSTreeDelta
 appendListToFSTreeDelta xs t = foldl' (flip appendToFSTreeDelta) t (DList.toList xs)
+
+appendListToFSTreeSym :: FSDeltas -> FSTreeSym -> FSTreeSym
+appendListToFSTreeSym xs t = foldl' (flip appendToFSTreeSym) t (DList.toList xs)
 
 changeAttrsFSTreeDeltaNode :: FSTreeDeltaNode -> OnDisk -> FSTreeDeltaNode
 changeAttrsFSTreeDeltaNode td@(FSTreeNew tds mv file _) dsk = FSTreeNew tds mv file dsk
@@ -179,16 +199,21 @@ removeFSTreeDeltaNode name tds = case lookupFSTreeDelta name tds of
 	Nothing -> insertFSTreeDelta name FSTreeRem tds
 
 appendToFSTreeDelta :: FSDelta -> FSTreeDelta -> FSTreeDelta
-appendToFSTreeDelta (Add path dsk) td = focusFSTreeDelta path (insertFSTreeDelta (takeFileName path) $ FSTreeNew Map.empty Nothing dsk dsk) td
-appendToFSTreeDelta (AddLink path tgt) td = focusFSTreeDelta path (insertFSTreeDelta (takeFileName path) $ FSTreeNewLink tgt Nothing) td
-appendToFSTreeDelta (Rem path) td = focusFSTreeDelta path (removeFSTreeDeltaNode (takeFileName path)) td
+appendToFSTreeDelta (Add path dsk) td = transformFSTreeDelta (takeDirectory path) (insertFSTreeDelta (takeFileName path) $ FSTreeNew Map.empty Nothing dsk dsk) td
+appendToFSTreeDelta (AddLink path tgt) td = transformFSTreeDelta (takeDirectory path) (insertFSTreeDelta (takeFileName path) $ FSTreeNewLink tgt Nothing) td
+appendToFSTreeDelta (Rem path) td = transformFSTreeDelta (takeDirectory path) (removeFSTreeDeltaNode (takeFileName path)) td
 appendToFSTreeDelta (Move from to dsk) td = case findFSTreeDeltaNode from (removeFSTreeDeltaNode (takeFileName from)) td of
-	(td',Just (_,FSTreeNew tds src dsk dsk2)) -> focusFSTreeDelta to (insertFSTreeDelta (takeFileName to) $ FSTreeNew tds src dsk dsk2) td'
-	(td',Just (_,childrenFSTreeDeltaNodeMay -> Just tds)) -> focusFSTreeDelta to (insertFSTreeDelta (takeFileName to) $ FSTreeNew tds (Just from) dsk dsk) td
-	otherwise -> focusFSTreeDelta to (insertFSTreeDelta (takeFileName to) $ FSTreeNew Map.empty (Just from) dsk dsk) td
-appendToFSTreeDelta (ChgAttrs path dsk) td = focusFSTreeDelta path (\tds -> case lookupFSTreeDelta (takeFileName path) tds of
+	(td',Just (_,FSTreeNew tds src dsk dsk2)) -> transformFSTreeDelta (takeDirectory to) (insertFSTreeDelta (takeFileName to) $ FSTreeNew tds src dsk dsk2) td'
+	(td',Just (_,childrenFSTreeDeltaNodeMay -> Just tds)) -> transformFSTreeDelta (takeDirectory to) (insertFSTreeDelta (takeFileName to) $ FSTreeNew tds (Just from) dsk dsk) td
+	otherwise -> transformFSTreeDelta (takeDirectory to) (insertFSTreeDelta (takeFileName to) $ FSTreeNew Map.empty (Just from) dsk dsk) td
+appendToFSTreeDelta (ChgAttrs path dsk) td = transformFSTreeDelta (takeDirectory path) (\tds -> case lookupFSTreeDelta (takeFileName path) tds of
 	Just td -> insertFSTreeDelta (takeFileName path) (changeAttrsFSTreeDeltaNode td dsk) tds
 	Nothing -> insertFSTreeDelta (takeFileName path) (FSTreeChg Map.empty dsk) tds) td
+	
+appendToFSTreeSym :: FSDelta -> FSTreeSym -> FSTreeSym
+appendToFSTreeSym (AddLink path tgt) = transformFSTreeSym path (Map.insert (takeFileName path) (FSTreeSymLink tgt))
+appendToFSTreeSym (Rem path) = transformFSTreeSym path (Map.delete (takeFileName path))
+appendToFSTreeSym d = id
 	
 updateFSTreeDeltaDir :: (FSTreeDelta -> FSTreeDelta) -> (FSTreeDeltaNode -> FSTreeDeltaNode)
 updateFSTreeDeltaDir upd (FSTreeNew tds moved dsk dsk2) = FSTreeNew (upd tds) moved dsk dsk2
@@ -216,20 +241,48 @@ updateFSTreeDeltaNodeChildren (FSTreeNop tds) tds' = FSTreeNop tds'
 updateFSTreeDeltaNodeChildren td tds = td
 
 -- applies a tree delta transformation under the parent directory of a given filepath
-focusFSTreeDelta :: FilePath -> (FSTreeDelta -> FSTreeDelta) -> (FSTreeDelta -> FSTreeDelta)
-focusFSTreeDelta path ifFound tds = case splitDirectories (takeDirectory path) of
+transformFSTreeDelta :: FilePath -> (FSTreeDelta -> FSTreeDelta) -> (FSTreeDelta -> FSTreeDelta)
+transformFSTreeDelta path ifFound tds = case splitDirectories path of
 	[] -> ifFound tds
-	parent -> focusFSTreeDelta' parent ifFound tds
+	parent -> transformFSTreeDelta' parent ifFound tds
+  where
+	transformFSTreeDelta' :: [FileName] -> (FSTreeDelta -> FSTreeDelta) -> FSTreeDelta -> FSTreeDelta
+	transformFSTreeDelta' [] upd tds = tds
+	transformFSTreeDelta' [name] upd tds = case lookupFSTreeDelta name tds of
+		Just td -> insertFSTreeDelta name (updateFSTreeDeltaDir upd td) tds
+		Nothing -> insertFSTreeDelta name (updateFSTreeDeltaDir upd $ FSTreeNop Map.empty) tds
+	transformFSTreeDelta' (name:path) upd tds = case lookupFSTreeDelta name tds of
+		Just td -> let children' = transformFSTreeDelta' path upd (childrenFSTreeDeltaNode td)
+		           in insertFSTreeDelta name (updateFSTreeDeltaNodeChildren td children') tds
+		Nothing -> insertFSTreeDelta name (FSTreeNop (transformFSTreeDelta' path upd Map.empty)) tds
 
-focusFSTreeDelta' :: [FileName] -> (FSTreeDelta -> FSTreeDelta) -> FSTreeDelta -> FSTreeDelta
-focusFSTreeDelta' [] upd tds = tds
-focusFSTreeDelta' [name] upd tds = case lookupFSTreeDelta name tds of
-	Just td -> insertFSTreeDelta name (updateFSTreeDeltaDir upd td) tds
-	Nothing -> insertFSTreeDelta name (updateFSTreeDeltaDir upd $ FSTreeNop Map.empty) tds
-focusFSTreeDelta' (name:path) upd tds = case lookupFSTreeDelta name tds of
-	Just td -> let children' = focusFSTreeDelta' path upd (childrenFSTreeDeltaNode td)
-	           in insertFSTreeDelta name (updateFSTreeDeltaNodeChildren td children') tds
-	Nothing -> insertFSTreeDelta name (FSTreeNop (focusFSTreeDelta' path upd Map.empty)) tds
+-- applies a tree delta transformation under the parent directory of a given filepath
+transformFSTreeSym :: FilePath -> (FSTreeSym -> FSTreeSym) -> (FSTreeSym -> FSTreeSym)
+transformFSTreeSym path ifFound root_ts = case splitDirectories path of
+	[] -> ifFound root_ts
+	parent -> transformFSTreeSym' "" parent ifFound root_ts
+  where
+	transformFSTreeSym' :: FilePath -> [FileName] -> (FSTreeSym -> FSTreeSym) -> FSTreeSym -> FSTreeSym
+	transformFSTreeSym' root [] upd ts = ts
+	transformFSTreeSym' root [name] upd ts = case Map.lookup name ts of
+		Just tsn -> Map.insert name (updateFSTreeSymDir (root </> name) root_ts upd tsn) ts
+		Nothing -> Map.insert name (updateFSTreeSymDir (root </> name) root_ts upd $ FSTreeSymFileDir Map.empty) ts
+	transformFSTreeSym' root (name:names) upd ts = case Map.lookup name ts of
+		Just tsn -> let children' = transformFSTreeSym' (root </> name) names upd (childrenFSTreeSymNode (root </> name) root_ts tsn)
+		            in Map.insert name (updateFSTreeSymNodeChildren tsn children') ts
+		Nothing -> Map.insert name (FSTreeSymFileDir (transformFSTreeSym' (root </> name) names upd Map.empty)) ts
+
+childrenFSTreeSymNode :: FilePath -> FSTreeSym -> FSTreeSymNode -> FSTreeSym
+childrenFSTreeSymNode root root_ts (FSTreeSymFileDir tds) = tds
+childrenFSTreeSymNode root root_ts (FSTreeSymLink tgt) = focusFSTreeSym (root </> tgt) root_ts
+
+updateFSTreeSymDir :: FilePath -> FSTreeSym -> (FSTreeSym -> FSTreeSym) -> (FSTreeSymNode -> FSTreeSymNode)
+updateFSTreeSymDir root root_ts upd (FSTreeSymLink tgt) = FSTreeSymFileDir $ upd $ focusFSTreeSym (root </> tgt) root_ts
+updateFSTreeSymDir root root_ts upd (FSTreeSymFileDir tds) = FSTreeSymFileDir (upd tds)
+
+updateFSTreeSymNodeChildren :: FSTreeSymNode -> FSTreeSym -> FSTreeSymNode
+updateFSTreeSymNodeChildren (FSTreeSymLink tgt) tds' = FSTreeSymFileDir tds'
+updateFSTreeSymNodeChildren (FSTreeSymFileDir tds) tds' = FSTreeSymFileDir tds'
 
 -- ** Intersection
 
@@ -259,3 +312,78 @@ focusFSTreeDeltaNodeMayByRelativePath :: FSTreeDeltaNodeMay -> FilePath -> FSTre
 focusFSTreeDeltaNodeMayByRelativePath Nothing relpath = Nothing
 focusFSTreeDeltaNodeMayByRelativePath (Just td) relpath = fmap snd $ snd (findFSTreeDeltaNode relpath id $ childrenFSTreeDeltaNode td)
 
+-- focuses a FSTreeDelta with symlink information by a relative path
+--focusFSTreeDeltaSymByRelativePathMay :: (FSTreeDelta,FSTreeSym) -> FilePath -> (FSTreeDelta,FSTreeSym)
+
+-- paths are naturally canonical, because we don't resolve symlinks
+type FSTreeSym = Map FileName FSTreeSymNode
+
+data FSTreeSymNode =
+	  FSTreeSymLink FilePath -- a symbolic link
+	| FSTreeSymFileDir FSTreeSym -- a file or directory
+
+-- focuses a symtree on some path; resolves symlinks
+focusFSTreeSym :: FilePath -> FSTreeSym -> FSTreeSym
+focusFSTreeSym path root_ts = focusFSTreeSym' "" (splitDirectories path) root_ts
+	where
+	focusFSTreeSym' :: FilePath -> [FileName] -> FSTreeSym -> FSTreeSym
+	focusFSTreeSym' root [] ts = ts
+	focusFSTreeSym' root (name:names) ts = case Map.lookup name ts of
+		Nothing -> Map.empty
+		Just tsn -> focusFSTreeSymNode' (root </> name) names tsn
+	focusFSTreeSymNode' :: FilePath -> [FileName] -> FSTreeSymNode -> FSTreeSym
+	focusFSTreeSymNode' root names (FSTreeSymLink target) = focusFSTreeSym (root </> target </> joinPath names) root_ts
+	focusFSTreeSymNode' root names (FSTreeSymFileDir ts) = focusFSTreeSym' root names ts
+
+findSymLinks :: FilePath -> IO FSTreeSym
+findSymLinks path = do
+	xs <- allSymLinksUnder path
+	return $ foldl (\ts (src,tgt) -> appendToFSTreeSym (AddLink src tgt) ts) Map.empty xs
+
+-- expand a FSTreeDelta according to the supplied symlinks
+fixFSTreeDelta :: FSTreeDelta -> FSTreeSym -> FSTreeDelta
+fixFSTreeDelta root_td root_ts = fixFSTreeDelta' "" root_td root_ts
+	where
+	fixFSTreeDelta' :: FilePath -> FSTreeDelta -> FSTreeSym -> FSTreeDelta
+	fixFSTreeDelta' root = Map.mergeWithKey
+		(fixFSTreeDeltaSymNode' root)
+		(Map.mapMaybeWithKey (fixFSTreeDeltaNode' root))
+		(Map.mapMaybeWithKey (fixFSTreeSymNode' root))
+	fixFSTreeDeltaSymNode' :: FilePath -> FileName -> FSTreeDeltaNode -> FSTreeSymNode -> Maybe FSTreeDeltaNode
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNew td from c a) (FSTreeSymLink tgt) = Just $ (\td -> FSTreeNew td from c a) $ fixFSTreeDelta' (root </> rel) td (focusFSTreeSym (root </> tgt) root_ts)
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNew td from c a) (FSTreeSymFileDir tsn) = Just $ (\td -> FSTreeNew td from c a) $ fixFSTreeDelta' (root </> rel) td tsn
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeChg td a) (FSTreeSymLink tgt) = Just $ flip FSTreeChg a $ fixFSTreeDelta' (root </> rel) td (focusFSTreeSym (root </> tgt) root_ts)
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeChg td a) (FSTreeSymFileDir tsn) = Just $ flip FSTreeChg a $ fixFSTreeDelta' (root </> rel) td tsn
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNop td) (FSTreeSymLink tgt) = maybeFSTreeNop $ fixFSTreeDelta' (root </> rel) td (focusFSTreeSym (root </> tgt) root_ts)
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNop td) (FSTreeSymFileDir tsn) = maybeFSTreeNop $ fixFSTreeDelta' (root </> rel) td tsn
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeRem) ts = Just tdn
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNewLink tgt a) ts = Just $ (\td -> FSTreeNew td Nothing (error "no content") (fromJust a)) $ fixFSTreeDelta
+		(focusFSTreeDeltaByRelativePath root_td (root </> tgt))
+		(focusFSTreeSym (root </> tgt) root_ts)
+	
+	fixFSTreeDeltaNode' :: FilePath -> FileName -> FSTreeDeltaNode -> Maybe FSTreeDeltaNode
+	fixFSTreeDeltaNode' root rel tdn = Just tdn
+	
+	fixFSTreeSymNode' :: FilePath -> FileName -> FSTreeSymNode -> Maybe FSTreeDeltaNode
+	fixFSTreeSymNode' root rel (FSTreeSymLink tgt) = maybeFSTreeNop $ fixFSTreeDelta' (root </> rel) Map.empty (focusFSTreeSym (root </> tgt) root_ts)
+	fixFSTreeSymNode' root rel (FSTreeSymFileDir tsn) = maybeFSTreeNop $ fixFSTreeDelta' (root </> rel) Map.empty tsn
+
+maybeFSTreeNop :: FSTreeDelta -> Maybe FSTreeDeltaNode
+maybeFSTreeNop tds = if (Map.null tds) then Nothing else Just (FSTreeNop tds)
+
+
+
+
+
+
+
+--	data FSTreeDeltaNode = FSTreeNew FSTreeDelta MoveFrom OnDisk OnDisk -- a new directory or file (the first OnDisk is for content and the second for permisions)
+--						 | FSTreeChg FSTreeDelta OnDisk -- a directory or file whose metadata has changed
+--						 | FSTreeNop FSTreeDelta -- a directory or file that has not changed
+--						 | FSTreeRem
+--						 | FSTreeNewLink FilePath (Maybe OnDisk) -- a new symbolic link to another path from the top-level tree; the on-disk path holds the permissions
+--		deriving (Show,Eq,Ord)
+--
+--	type MoveFrom = Maybe FilePath -- move origin
+--
+--	type FSTreeDelta = Map FileName FSTreeDeltaNode

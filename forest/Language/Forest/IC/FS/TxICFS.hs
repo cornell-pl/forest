@@ -27,6 +27,7 @@ import Data.Concurrent.Deque.Class as Queue
 import Data.Concurrent.Deque.Reference.DequeInstance
 import qualified Control.Concurrent.Map as CMap
 import System.Posix.Files
+import Language.Forest.FS.Diff
 
 import Language.Forest.FS.FSRep
 import Control.Applicative
@@ -170,8 +171,9 @@ incrementTxICFSTree = do
 	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
 	-- the new tree deltas are appended to the original deltas
 	nextTreeDeltas <- forestIO $ readRef (fsTreeFSTreeDelta tree) >>= newRef
+	nextSyms <- forestIO $ readIORef (fsTreeSym newtree) >>= newIORef
 	-- create the new pending tree
-	let nexttree = TxICFSTree (fsTreeTxId newtree) (succ $ fsTreeFSVersion newtree) nextTreeDeltas (fsTreeVirtual newtree)
+	let nexttree = TxICFSTree (fsTreeTxId newtree) (succ $ fsTreeFSVersion newtree) nextTreeDeltas (fsTreeVirtual newtree) nextSyms
 	-- add the relative deltas
 	tds <- forestIO $ readRef deltas
 	forestIO $ writeRef deltas $ Map.insert (fsTreeFSVersion newtree) ds tds
@@ -207,12 +209,13 @@ putTxICFSTmp tmp = do
 	forestIO $ writeRef txlog (tree,ds,newtree,reads,bufftbl,memotbl,Set.insert tmp tmps)
 
 -- writes to the next tree
--- duplicate the action on both the relative and the absolute deltas
+-- duplicate the action on both the relative deltas (sequence of primitve FSDelta) and the absolute deltas (FSTreeDelta)
 modifyTxICFSTreeDeltas :: FSDelta -> ForestM TxICFS ()
 modifyTxICFSTreeDeltas d = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
 	forestIO $ modifyIORef (fsTreeFSTreeDelta newtree) (appendToFSTreeDelta d)
+	forestIO $ modifyIORef (fsTreeSym newtree) (\(ds,ts) -> (DList.snoc ds d,appendToFSTreeSym d ts))
 	forestIO $ writeIORef txlog (tree,DList.snoc ds d,newtree,reads,bufftbl,memotbl,tmps)
 
 treeTxICFSThunk :: (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => ForestFSThunk TxICFS l a -> ForestL TxICFS l (FSTree TxICFS)
@@ -231,7 +234,7 @@ type TxId = Unique
 type FSVersion = Int
 
 instance Eq (FSTree TxICFS) where
-	(TxICFSTree txid1 fsv1 _ virtual1) == (TxICFSTree txid2 fsv2 _ virtual2) = txid1 == txid2 && fsv1 == fsv2 && virtual1 == virtual2
+	(TxICFSTree txid1 fsv1 _ virtual1 sym1) == (TxICFSTree txid2 fsv2 _ virtual2 sym2) = txid1 == txid2 && fsv1 == fsv2 && virtual1 == virtual2
 
 instance MonadReader TxICFSEnv (ForestM TxICFS) where
 	ask = TxICFSForestM ask
@@ -242,6 +245,22 @@ instance Show (FSTree TxICFS) where
 
 instance Ord (FSTree TxICFS) where
 	tree1 <= tree2 = (fsTreeTxId tree1,fsTreeFSVersion tree1,fsTreeVirtual tree1) <= (fsTreeTxId tree2,fsTreeFSVersion tree2,fsTreeVirtual tree2)
+
+-- the root directory for transactional forest (it can't modify data not under this path)
+{-# NOINLINE root #-}
+root :: IORef FilePath
+root = unsafePerformIO $ newIORef "/"
+
+-- a global table of symbolic links that all transactions read from and keep updated
+-- this is used to explore the locality in FS modifications; without knowing the existing symlinks, there is no locality
+{-# NOINLINE symlinks #-}
+symlinks :: MVar FSTreeSym
+symlinks = unsafePerformIO $ do
+	path <- readIORef root
+	putStrLn $ "Finding all symbolic links under... " ++ show path
+	syms <- findSymLinks path
+	putStrLn $ "Symbolic links calculated for " ++ show path
+	newMVar syms
 
 instance FSRep TxICFS where
 	
@@ -261,6 +280,7 @@ instance FSRep TxICFS where
 		, fsTreeFSVersion :: FSVersion -- tx-local fsversion
 		, fsTreeFSTreeDelta :: IORef FSTreeDelta -- FS deltas since beginning of the tx (over the physical FS)
 		, fsTreeVirtual :: Bool -- virtual flag
+		, fsTreeSym :: IORef (DList FSDelta,FSTreeSym) -- a sequence of symlink modifications since the start and the symlinks table at the time of this tree
 		}
 	
 	-- log the modifications
@@ -308,37 +328,33 @@ instance FSRep TxICFS where
 	
 	canonalizePathWithTree = canonalizePathTxICFS
 
-	type FSTreeD TxICFS = (FSTreeDeltaNodeMay,FSTreeDeltaNodeMay) -- (a delta focused on the current path,the global delta from the root)
+	type FSTreeD TxICFS = FSTreeDelta -- a delta fixed-point focused on the current path
 
---	type FSTreeD fs :: *
---
---	isEmptyFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
---	isEmptyTopFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
---	isChgFSTreeD :: Proxy fs -> FSTreeD fs -> Bool
---	isMoveFSTreeD :: Proxy fs -> FSTreeD fs -> Maybe FilePath
---	focusDiffFSTreeD :: FSTree fs -> FilePath -> FSTree fs -> FilePath -> ForestM fs (FSTreeD fs)
+	isEmptyFSTreeD _ = isEmptyFSTreeDelta
+	isEmptyTopFSTreeD _ = isEmptyTopFSTreeDelta
+	isChgFSTreeD _ = isChgFSTreeDelta
+	isMoveFSTreeD _ = isMoveFSTreeDelta
 
-	-- we assume that all paths are canonized
-	focusFSTreeD fs (local_df,global_df) path file pathfile = do
-		if path `isParentPathOf` pathfile
-			-- descent on the current path
-			then (focusFSTreeDeltaNodeMayByRelativePath local_df file,global_df)
-			-- symlinks may jump to parents of the current path
-			else (focusFSTreeDeltaNodeMayByRelativePath global_df pathfile,global_df)
+	focusDiffFSTreeD tree path tree' path' = do
+		td <- focusDiffFSTreeDelta tree path tree' path'
+		syms <- forestIO $ findSymLinks path'
+		let fixtd = fixFSTreeDelta td syms
+		return fixtd
+		 
+	focusFSTreeD fs td path file pathfile = focusFSTreeDeltaByRelativePath td pathfile
 
---	-- it may fail in case it is not possible to compute a difference between the two trees
---	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs (Maybe (FSTreeD fs))
-
---	diffFS oldtree newtree path = do
---		if fsTreeTxId oldtree == fsTreeTxId newtree
---			then do
---				(starttime,txid,deltas,txlogs) <- Reader.ask
---				tds <- forestIO $ readRef deltas
---				let dfs = drop (fsTreeFSVersion oldtree) $ take (fsTreeFSVersion newtree) $ Map.elems tds
---				df <- forestIO $ focusFSGraphDeltaByRelativePathMay (compressFSDeltasAsGraph $ DList.concat dfs) path
---				return $ Just df
---			-- no sharing among different txs
---			else return Nothing
+	diffFS oldtree newtree path = do
+		if fsTreeTxId oldtree == fsTreeTxId newtree
+			then do
+				(starttime,txid,deltas,txlogs) <- Reader.ask
+				tds <- forestIO $ readRef deltas
+				let dfs = drop (fsTreeFSVersion oldtree) $ take (fsTreeFSVersion newtree) $ Map.elems tds
+				syms <- liftM snd $ forestIO $ readRef (fsTreeSym newtree)
+				let fixtd = fixFSTreeDelta (compressFSDeltas $ DList.concat dfs) syms
+				let df = focusFSTreeDeltaByRelativePath fixtd path
+				return $ Just df
+			-- no sharing among different txs
+			else return Nothing
 
 virtualizeTxICFS path tree = if fsTreeVirtual tree
 	then liftM (</> ".avfs" </> makeRelative "/" path) (forestIO getHomeDirectory)
@@ -960,10 +976,12 @@ initializeTxICFS (TxICFSForestO m) = do
 	txid <- newUnique
 	-- current tree
 	treeDelta <- newIORef $ emptyFSTreeDelta
-	let tree = TxICFSTree txid 0 treeDelta False
+	treeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
+	let tree = TxICFSTree txid 0 treeDelta False treeSyms
 	-- next tree
 	newtreeDelta <- newIORef $ emptyFSTreeDelta
-	let newtree = TxICFSTree txid 1 newtreeDelta False
+	newtreeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
+	let newtree = TxICFSTree txid 1 newtreeDelta False newtreeSyms
 	-- tables
 	bufftbl <- WeakTable.new
 	memotbl <- WeakTable.new
@@ -979,10 +997,12 @@ resetTxICFS m = do
 	(_,txid,deltas,_) <- Reader.ask
 	-- current tree
 	treeDelta <- forestM $ forestIO $ newIORef $ emptyFSTreeDelta
-	let tree = TxICFSTree txid 0 treeDelta False
+	treeSyms <- forestM $ forestIO $ newIORef =<< liftM (DList.empty,) (readMVar symlinks)
+	let tree = TxICFSTree txid 0 treeDelta False treeSyms
 	-- next tree
 	newtreeDelta <- forestM $ forestIO $ newIORef $ emptyFSTreeDelta
-	let newtree = TxICFSTree txid 1 newtreeDelta False
+	newtreeSyms <- forestM $ forestIO $ newIORef =<< liftM (DList.empty,) (readMVar symlinks)
+	let newtree = TxICFSTree txid 1 newtreeDelta False newtreeSyms
 	-- tables
 	bufftbl <- forestM $ forestIO $ WeakTable.new
 	memotbl <- forestM $ forestIO $ WeakTable.new
@@ -1126,10 +1146,12 @@ unbufferTxICFSWrites = do
 	forestIO $ writeRef deltas Map.empty
 	-- current tree
 	treeDelta1' <- forestIO $ newIORef $ emptyFSTreeDelta
-	let tree1' = TxICFSTree txid 0 treeDelta1' False
+	treeSym1' <- forestIO $ newIORef $ (DList.empty,Map.empty)
+	let tree1' = TxICFSTree txid 0 treeDelta1' False treeSym1'
 	-- next tree
 	newtreeDelta1' <- forestIO $ newIORef $ emptyFSTreeDelta
-	let newtree1' = TxICFSTree txid 1 newtreeDelta1' False
+	newtreeSym1' <- forestIO $ newIORef $ (DList.empty,Map.empty)
+	let newtree1' = TxICFSTree txid 1 newtreeDelta1' False newtreeSym1'
 	forestIO $ writeRef txlog1 (tree1',DList.empty,newtree1',reads1,bufftbl1',memotbl1',tmps1)
 
 validateTxsICFS :: UTCTime -> TxICFSLogs -> ForestM TxICFS Bool
@@ -1240,6 +1262,10 @@ commitTxICFSLog starttime doWrites txlog = do
 	writes <- forestIO $ readIORef (fsTreeFSTreeDelta newtree)
 	-- commits filesystem modifications
 	wakes <- forestIO $ commitFSTreeDelta "" writes
+	-- get the symlink changes since the beginning of the tx
+	(syms,_) <- forestIO $ readIORef (fsTreeSym newtree)
+	-- update the symlinks table (uses a global lock)
+	forestIO $ modifyMVar_ symlinks $ return . appendListToFSTreeSym syms
 	-- removes temporary files
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes

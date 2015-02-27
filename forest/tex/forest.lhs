@@ -113,6 +113,17 @@ Databases are a long-standing, effective technology for storing structured and s
 
 downsides: heavy legacy, relational model is not always adequate
 
+excerpt from~\cite{DBFS}:
+Although database systems are equipped with more advanced and
+secure data management features such as transactional atomicity,
+consistency, durability, manageability, and availability, lack of
+high performance and throughput scalability for storage of
+unstructured objects, and absence of standard filesystem-based
+application program interfaces have been cited as primary reasons
+for content management providers to often prefer existing
+filesystems or devise filesystem-like solutions for unstructured
+objects.
+
 cheaper and simpler alternative: store data directly as a collection of files, directories and symbolic links in a traditional filesystem.
 
 examples of filesystems as databases
@@ -519,11 +530,17 @@ write success theorem: if the current rep is in the image of load, then store su
 
 \subsection{Incremental Transactional Forest}
 
-problem with 1st approach: ic loading: two variables over the same file; read spec1, write spec2, read spec1 (our simple cache mechanism fails to prevent recomputation)
-laziness problem with 1st approach: ic storing: read variable (child variables are lazy), write variable (will recursively store everything); instead of no-op!
+
+forest specs "share" the whole FS, so its normal for them to interfere with one another.
+problem with 1st approach: ic loading: some change occurs between two reads, for instance, two completely unrelated variables; read spec1, write spec2, read spec1 (our simple cache mechanism fails to prevent recomputation)
+
+one of most important features of Forest is laziness: ic storing: read variable (child variables are lazy), write variable (will recursively store everything); instead of no-op!
 
 
-exploit DSL information to have incrementality
+exploit DSL information to have incrementality; intra-transaction
+
+%the fact that the filesystem is a graph, due to symlinks, brings additional complications for incremental algorithms. because although the FS is a graph, we can't have it efficiently materialized, without traversing the whole FS. crucial for an IC algorithm to identify what changed, and exploit locality to  propagate only the changes that affect the current cursor. but with symlinks, a change in a remote part of the FS tree may eventually affect, in non-obivous ways, another branch in the tree. therefore, FS deltas are algo graphs. but like the FS graph, we can't materialize them without traversing the full FS.
+% a way out would be to assume that we start with an empty FS and all the modifications to the FS, including symlink ones, are done via our interface. But this is unrealistic, even more if TxForest is used as a library, and not an ever-running process.
 
 %storeDelta is always run with a top-level modification
 

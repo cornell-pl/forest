@@ -45,8 +45,15 @@ diffPath dskpath1 dskpath2 = do
 onlyInRegex = mkRegex "Only in ([^\n]+): ([^\n]+)"
 differRegex  = mkRegex "Files ([^\n]+) and ([^\n]+) differ"
 
-focusDiffFSTree :: FSRep fs => FSTree fs -> FilePath -> FSTree fs -> FilePath -> ForestM fs FSTreeDeltaNodeMay
-focusDiffFSTree tree path tree' path' = do
+focusDiffFSTreeDelta :: FSRep fs => FSTree fs -> FilePath -> FSTree fs -> FilePath -> ForestM fs FSTreeDelta
+focusDiffFSTreeDelta tree path tree' path' = do
+	old <- pathInTree path tree
+	new <- pathInTree path' tree'
+	df <- forestIO $ diffPath old new
+	return $ focusFSTreeDeltaByRelativePath df new
+
+focusDiffFSTreeDeltaNodeMay :: FSRep fs => FSTree fs -> FilePath -> FSTree fs -> FilePath -> ForestM fs FSTreeDeltaNodeMay
+focusDiffFSTreeDeltaNodeMay tree path tree' path' = do
 	old <- pathInTree path tree
 	new <- pathInTree path' tree'
 	df <- forestIO $ diffPath old new
