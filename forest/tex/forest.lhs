@@ -332,7 +332,8 @@ class TxForest args ty rep | ty -> rep, ty -> args where
 	writeOrElse     ::  ty -> rep -> b
 	                -> (Manifest -> FTM fs b) ->  FTM fs b
 \end{spec}
-In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. The representation type |rep| is a plain Haskell type that holds the content of a transactional variable. The representation type closely follows the declared Forest type, with additional file-content metadata for directories, files and symbolic links; directories have representations of type |(FileInfo,dir_rep)| and basic types have representations of type |((FileInfo,base_md),base_rep)|, for base representation |base_rep| and metadata |base_md|.
+In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. Each transactional variables provides a window into the filesystem, shaped as a plain Haskell representation type |rep|.
+The representation type closely follows the declared Forest type, with additional file-content metadata for directories, files and symbolic links; directories have representations of type |(FileInfo,dir_rep)| and basic types have representations of type |((FileInfo,base_md),base_rep)|, for base representation |base_rep| and metadata |base_md|.
 
 \paragraph{Creation}
 The transactional forest programming style makes no distinction between data on the file system and in-memory.
@@ -492,41 +493,44 @@ do
 
 We now delve into how Transactional Forest can be efficiently implemented.
 The current implementation is available from the project website (\url{forestproj.org}) and is done completely in Haskell.
-
-
-
-increasing levels of incremental support, and added complexity.
+We split our presentation into three possible designs, with increasing levels of incremental support and complexity.
 
 %read-only vs read-write: we only allow read-only expressions in Forest specifications.
 %we need to have data/medata under the same variable because we issue stores on variable writes: writeData rep >> writeMeta md /= write (rep,md)
 
 \subsection{Transactional Forest}
 
-\emph{optimistic concurrency control}
+\paragraph{Original STM interface}
+We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a thread-local log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
+These validate-and-commit operations are guaranteed to run |atomic|ally in respect to all other threads by acquiring per-shared-resource locks according to a global total order (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
+They are \emph{disjoint-access parallel} (meaning that transactions with non-overlapping writes run in parallel) and \emph{read parallel} (meaning that transactions that only read from the same resources run in parallel).
 
-(this is important since we write to canonical paths, whose canonicalization may depend on concurrent writes...)
+Blocking transactions (|retry|) validate their log and register themselves in wait-queues attached to each read address; updating transactions unblock any pending waiters.
+Nested transactions (|orElse|) work similarly to normal transactions: writes are recorded only to a nested log and reads consult all the logs of the nested and enclosing transactions. Validation a nested transaction also implies validating all enclosing transactions.
+Exceptional transactions (|throw|) must also validate the log before raising an exception to the outside world; on success, they rollback all modifications except for new thread-local memory allocations (to consistently handle exceptions that carry information created inside the transaction).
+If the first alternative retries, then the second alternative is attempted; if both retry, then both logs are validated and the thread will wait on the union of the read resources.
+A more detailed account, including a complete formal semantics, is given in~\cite{HaskellSTM}.
 
-lock-free lazy acquire
-acquire ownership. only one tx can acquire an object at a time.
-global total order on variables, acquire variables in sorted order
-the analogous in txforest would be per-filepath locks, what does nto work out-of-the-box in the presence of symbolic links
+\paragraph{Transaction logs}
+The main difference from \texttt{STM} Haskell to TxForest is that the shared resources are not mutable memory cells in the traditional sense, but paths in the file system.
+This is to say that, although users manipulate structured representations of filestores, all the in-memory data structures are local to each transaction, and only file system operations need to be logged.
+The concurrent handling of file paths, however, is subtle in the presence of symbolic links --the identity of a path is not unique (as different paths may refer to the same real path) nor stable (since the real path depends on the current symbolic link configuration)-- making it harder to identify conflicts between transactions and to properly lock resources. For example, one transaction may read a file whose path is concurrently modified by other transaction.
+Therefore, our transaction logs keep special track of symbolic link modifications and we perform all file operations over ``canonical'' file paths, calculated against the transaction log while marking each resolved link as read.
 
-the identity of a filepath is not unique (different paths point to the same physical address) nor stable (equivalence depends on on the current filesystem).
+\paragraph{Round-tripping functions}
+In TxForest, each transactional variable is an in-memory data structure that reflects the content of a particular filestore, declared from the respective Forest description type with given arguments and root path.
+Behind the scenes, the transactional engine is responsible for preserving the abstraction, and keeping each variable ``in sync'' with the latest transactional snapshot of the file system, such that changes on the file system are propagated to the affected in-memory filestore variables, and writes to variables move the file system snapshot forward.
+This task is performed by a coupled pair of $load$ and $store$ functions. Their precise definitions and formal semantics is given in Appendix~\ref{sec:semantics}.
+Informally, each Forest variable is implemented as a ``thunk'' that lazily computes visible data (denoting the content and metadata of the filestore) and hidden data (remembering errors during validation). The $load$ function for a top-level variable generates a top-level thunk that, once evaluated, recursively reads data from the filesystem, building a thunk for each level of structure. Error information is represented inside an independent thunk to guarantee that validation is only performed when explicitly demanded by the user.
+The $store$ function strictly traverses a nested structure of in-memory thunks and updates the file system to reflect the same content, returning an additional \emph{validator} function that tests the updated file system for inconsistencies during storing.
+These two functions are carefully designed so that they preserve data on round trips: loading a filestore and immediately storing it back always succeeds and keeps the file system unchanged; and storing succeeds as long as loading the updated file system yields the same in-memory representation.
 
-transactional semantics of STM: we log reads/writes to the filesystem instead of variables. global lock, no equality check on validation.
-load/store semantics of Forest with thunks, explicit laziness
-
-transactional variables created by calling load on its spec with given arguments and root path; lazy loading, so no actual reads occur.
-Additionally to the representation data, each transactional variable remembers its creation-time arguments (they never change).
-
-
-each transaction keeps a local filesystem version number, and a per-tvar log mapping fsversions to values, stored in a weaktable (fsversions are purgeable once a tx commits).
-
-on writes: backup the current fslog, increment the fsversion, add an entry to the table for the (newfsversion,newvalue), run the store function for the new data and writing the modifications to the buffered FS; if there are errors, rollback to the backed-up FS and the previous fsversion.
-
-the store function also changes the in-memory representation by recomputing the validation thunks (hidden to users) to match the new content.
-
-write success theorem: if the current rep is in the image of load, then store succeeds
+\paragraph{Transactional variables}
+In TxForest, each transaction keeps a local file system snapshot with a unique thread-local version number and a log of tentative updates over the real file system.
+When users create a |new| transactional variable, the $load$ function is called to create the corresponding thunk. Note that, due to laziness, no data is actually loaded.
+These thunks, acting as transactional variables, can be concurrently accessed by multiple transactions.
+When a transaction |read|s a transactional variable, the associated level of data is loaded from the current file system snapshot, and the resulting value is added to a (per-transaction) per-variable memoization table mapping file system versions to values. We implement them as weak hash tables, allowing the Haskell garbage collector to purge entries for versions other than the current one.\footnote{Operations that support rollback, like |writeOrElse| and |orElse|, also require preserving entries for the preceding file system version.}
+A call to |writeOrElse| starts by making a copy of the current file system snapshot and adding an entry the the memoization table of the respective variable mapping a newly generated unique file system version to the newly written value. It then invokes the $store$ function (remembering the creation-time arguments and root path) to update the file system log (under the new version) and runs the resulting validator; on inconsistencies, the transaction rolls back to the backed up file system snapshot and executes the user-supplied alternative action instead.
 
 \subsection{Incremental Transactional Forest}
 
@@ -607,6 +611,7 @@ transactional variables do not descend to the content of files. pads specs are r
 \appendix
 
 \section {Forest Semantics}
+\label{sec:semantics}
 
 \begin{align*}
 	&|(star F (r/u)) = | \left\{
@@ -667,6 +672,9 @@ transactional variables do not descend to the content of files. pads specs are r
 |e1 (sim oenv1 oenv2) e2| denotes expression equivalence by evaluation modulo memory addresses, under the given environments.
 
 |v1 (simErr oenv1 oenv2) v2| denotes value equivalence (ignoring error information) modulo memory addresses, under the given environments.
+
+
+%the store function also changes the in-memory representation by recomputing the validation thunks (hidden to users) to match the new content.
 
 $\boxed{|load oenv eenv r s F (prime oenv) v|}$ ``Under heap |oenv| and environment |eenv|, load the specification |s| for filesystem |F| at path |r| and yield a representation |v|.''
 

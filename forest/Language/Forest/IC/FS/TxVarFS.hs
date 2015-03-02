@@ -475,7 +475,7 @@ writeOrElseTxVarFS' rep var b f = do
 			str <- showInc rep
 			forestM $ forestIO $ putStrLn $ "mani  " ++ show str
 			(mani,_,memos) <- RWS.runRWST (zmanifest' (Proxy :: Proxy args) args path rep) True ()
-			-- we need to store the errors to the (buffered) FS before validating
+			-- we need to store the changes to the (buffered) FS before validating
 			forestM $ storeManifest mani
 			
 			forestM $ forestIO $ putStrLn "Manifest!"
