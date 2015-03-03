@@ -58,7 +58,7 @@ import Control.Monad.Trans
 import Control.Monad.Ref
 import Control.Monad.Incremental as Inc
 import Data.Time.LocalTime
-import Language.Forest.FS.NILFS
+import Language.Forest.FS.NILFS hiding (LiveSnapshots,findRootDevice,MountPoint,mountSnapshot,Snapshot,readNILFSTime)
 import System.Mem.MemoTable
 import Control.Monad.Lazy
 import Control.Monad.Reader (Reader(..),ReaderT(..),MonadReader(..))

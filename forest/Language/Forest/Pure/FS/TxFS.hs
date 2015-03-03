@@ -102,22 +102,21 @@ finishTransaction starttime writes td = do
 commitPhase :: FSTreeDelta -> FilePath -> IO ()
 commitPhase td cpath = Map.foldrWithKey
     (\ npath node m -> case node of
-        FSTreeNew dmap mf od -> do --What is mf for?
+		FSTreeNew dmap mf od _ -> do --What is mf for?
  --         print dmap
    --       print cpath
-          if (cpath ++ npath) == od || (cpath ++ npath) == "/" ++ od then
-            commitPhase dmap (cpath ++ npath ++ "/")
-          else do
-            code <- runShellCommand_ ("cp -r " ++ od ++ " " ++ (cpath ++ npath))
-            print code
-            commitPhase dmap (cpath ++ npath ++ "/")
-            m
-        FSTreeChg dmap od    -> error "Not Implemented"
-        FSTreeNop dmap       ->
-          commitPhase dmap (cpath ++ npath ++ "/")
-        FSTreeRem            -> do
-          code <- removePath (cpath ++ npath)
-          print code
+			if ((cpath ++ npath) == od) || ((cpath ++ npath) == "/" ++ od)
+				then commitPhase dmap (cpath ++ npath ++ "/")
+				else do
+					code <- runShellCommand_ ("cp -r " ++ od ++ " " ++ (cpath ++ npath))
+					print code
+					commitPhase dmap (cpath ++ npath ++ "/")
+					m
+		FSTreeChg dmap od    -> error "Not Implemented"
+		FSTreeNop dmap       -> commitPhase dmap (cpath ++ npath ++ "/")
+		FSTreeRem            -> do
+			code <- removePath (cpath ++ npath)
+			print code
     ) (return ()) td
 
 
@@ -223,7 +222,7 @@ atomicallyTxFS t =
               {
                 (reads,td) <- getTxFSChanges;
 --                forestIO $ print td;
-                let writes = fsTreeDeltaWrites td in do
+                let writes = fsTreeDeltaWrites "/" td in do
                   {
                     success <- forestIO $ validateAndCommitTxFSTransaction time (reads,writes) td;
                     getTxFSTmp >>= return . Set.foldr (\path m -> removePath path >> m) (return ()); -- remove all temporary data used by this run

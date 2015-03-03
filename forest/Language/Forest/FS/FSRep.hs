@@ -55,13 +55,14 @@ forestCfg :: IORef (ForestCfg fs)
 forestCfg = unsafePerformIO $ newIORef (error "no initial Forest cfg")
 
 -- the kind of possible filesystem instantiations
-data FS = PureFS | TxFS | LazyFS | NILFS | TxVarFS | TxICFS deriving Typeable
+data FS = PureFS | TxFS | LazyFS | NILFS | TxVarFS | TxICFS | TxNILFS deriving Typeable
 deriving instance Typeable PureFS
 deriving instance Typeable TxFS
 deriving instance Typeable LazyFS
 deriving instance Typeable NILFS
 deriving instance Typeable TxVarFS
 deriving instance Typeable TxICFS
+deriving instance Typeable TxNILFS
 
 deriving instance Typeable ForestM
 

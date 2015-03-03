@@ -309,6 +309,8 @@ instance DeepTypeable TxVarFS where
 	typeTree (_::Proxy TxVarFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.TxVarFS") [] []
 instance DeepTypeable TxICFS where
 	typeTree (_::Proxy TxICFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.TxICFS") [] []
+instance DeepTypeable TxNILFS where
+	typeTree (_::Proxy TxNILFS) = MkTypeTree (mkName "Language.Forest.FS.FSRep.TxNILFS") [] []
 
 instance DeepTypeable IncForest where
 	typeTree (_::Proxy (IncForest)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.IncForest") [] []

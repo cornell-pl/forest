@@ -1,7 +1,7 @@
 
 {-# LANGUAGE OverlappingInstances, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
--- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and no incrementality
+-- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse within transactions
 
 module Language.Forest.IC.FS.TxICFS (
 	TxICForest(..)
@@ -26,6 +26,7 @@ import Data.Foldable as Foldable
 import Data.Concurrent.Deque.Class as Queue
 import Data.Concurrent.Deque.Reference.DequeInstance
 import qualified Control.Concurrent.Map as CMap
+import qualified Control.Concurrent.WeakMap as CWeakMap
 import System.Posix.Files
 import Language.Forest.FS.Diff
 
@@ -477,6 +478,7 @@ instance ICRep TxICFS where
 			TxICThunkComp force -> return True
 			TxICThunkForce a stone -> return False
 
+-- tests for equality
 diffValueThunkTxICFS :: (IncK (IncForest TxICFS) content,Typeable content,ForestRep rep (ForestFSThunkI TxICFS content)) => Bool -> FSTree TxICFS -> rep -> ForestO TxICFS (ValueDelta TxICFS rep)
 diffValueThunkTxICFS isTop oldtree rep = do
 		thunk <- forestM $ bufferedTxICFSThunk $ to iso_rep_thunk rep
@@ -569,7 +571,7 @@ dirtyTxICParents tree parents = WeakMap.mapM_' forestIO dirty parents where
 	dirty (uid,_) = do
 		(b,parents) <- changeTxICThunkM uid $ \buff -> do
 			oldtree <- buffTxICDeltaTree buff
-			let b = oldtree >= tree
+			let b = oldtree >= tree -- stop if the the current dirty tree is newer than the tree we are trying to dirty the node with
 			let buff' = if b then buff else buff { buffTxICDeltaTree = return tree }
 			return (buff',(b,parents))
 		unless b $ dirtyTxICParents tree parents
@@ -684,10 +686,7 @@ instance ZippedICMemo TxICFS where
 		
 		-- remember the arguments (only for the first time since this is how we connect transactional arguments to transactional variables)
 		let txargs = (toDyn args,path)
-		mb_args <- forestM $ forestIO $ readRef (txICFSThunkArgs var)
-		case mb_args of
-			Nothing -> forestM $ forestIO $ writeRef (txICFSThunkArgs var) $ Just txargs
-			otherwise -> return ()
+		forestM $ forestIO $ writeRef (txICFSThunkArgs var) $ Just txargs
 		
 		-- memoize the entry
 		case mb_tree of
@@ -1061,7 +1060,7 @@ validateAndCommitTopTxICFS doWrites = atomicTxICFS "validateAndCommitTopTxICFS" 
 			return False
 
 validateAndCommitNestedTxICFS :: Maybe SomeException -> TxICFTM ()
-validateAndCommitNestedTxICFS mbException = atomicTxICFS "validateAndCommitNestedTxICFS" $ do
+validateAndCommitNestedTxICFS mbException = do
 	txenv@(timeref,txid,deltas,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	case mbException of
@@ -1110,7 +1109,7 @@ retryTxICFSLog lck timeref txlog = do
 -- validates a nested transaction and merges its log with its parent
 -- note that retrying discards the tx's writes
 validateAndRetryNestedTxICFS :: TxICFTM ()
-validateAndRetryNestedTxICFS = atomicTxICFS "validateAndRetryNestedTxICFS" $ do
+validateAndRetryNestedTxICFS = do
 	txenv@(timeref,txid,deltas,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsICFS starttime txlogs
@@ -1123,7 +1122,7 @@ validateAndRetryNestedTxICFS = atomicTxICFS "validateAndRetryNestedTxICFS" $ do
 
 -- validates the current log before catching an exception
 validateCatchTxICFS :: TxICFTM ()
-validateCatchTxICFS = atomicTxICFS "validateCatchTxICFS" $ do
+validateCatchTxICFS = do
 	txenv@(timeref,txid,deltas,txlogs) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsICFS starttime txlogs
@@ -1258,14 +1257,18 @@ tryReleaseTxIC lck = do
 commitTxICFSLog :: UTCTime -> Bool -> TxICFSLog -> ForestM TxICFS TxICFSWrites
 commitTxICFSLog starttime doWrites txlog = do
 	(tree,delta,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
-	-- get writes since the beginning of the tx
-	writes <- forestIO $ readIORef (fsTreeFSTreeDelta newtree)
-	-- commits filesystem modifications
-	wakes <- forestIO $ commitFSTreeDelta "" writes
-	-- get the symlink changes since the beginning of the tx
-	(syms,_) <- forestIO $ readIORef (fsTreeSym newtree)
-	-- update the symlinks table (uses a global lock)
-	forestIO $ modifyMVar_ symlinks $ return . appendListToFSTreeSym syms
+	wakes <- if doWrites
+		then do
+			-- get writes since the beginning of the tx
+			writes <- forestIO $ readIORef (fsTreeFSTreeDelta newtree)
+			-- commits filesystem modifications
+			wakes <- forestIO $ commitFSTreeDelta "" writes
+			-- get the symlink changes since the beginning of the tx
+			(syms,_) <- forestIO $ readIORef (fsTreeSym newtree)
+			-- update the symlinks table (uses a global lock)
+			forestIO $ modifyMVar_ symlinks $ return . appendListToFSTreeSym syms
+			return wakes
+		else return Set.empty
 	-- removes temporary files
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
@@ -1279,12 +1282,12 @@ releaseFLock mv = do
 	b <- tryPutMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
-fileLocks :: CMap.Map FilePath (Weak FLock)
-fileLocks = unsafePerformIO $ CMap.empty
+fileLocks :: CWeakMap.WeakMap FilePath FLock
+fileLocks = unsafePerformIO $ CWeakMap.empty
 
 -- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
 fileLock :: FilePath -> IO FLock
-fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.deleteIf path (liftM isNothing . Weak.deRefWeak) fileLocks) fileLocks
+fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLock (\v -> MkWeak $ mkWeakKey v)
 
 atomicTxICFS :: String -> TxICFTM a -> TxICFTM a
 atomicTxICFS msg m = do

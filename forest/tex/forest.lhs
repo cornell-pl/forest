@@ -501,7 +501,7 @@ We split our presentation into three possible designs, with increasing levels of
 \subsection{Transactional Forest}
 
 \paragraph{Original STM interface}
-We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a thread-local log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
+We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a thread-local log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
 These validate-and-commit operations are guaranteed to run |atomic|ally in respect to all other threads by acquiring per-shared-resource locks according to a global total order (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
 They are \emph{disjoint-access parallel} (meaning that transactions with non-overlapping writes run in parallel) and \emph{read parallel} (meaning that transactions that only read from the same resources run in parallel).
 
@@ -513,6 +513,7 @@ A more detailed account, including a complete formal semantics, is given in~\cit
 
 \paragraph{Transaction logs}
 The main difference from \texttt{STM} Haskell to TxForest is that the shared resources are not mutable memory cells in the traditional sense, but paths in the file system.
+\footnote{STM maintains a log with the old value held in a memory cell and the new value written to it by the transaction, and validation test if they are pointer-equal. We do not remember old content of file paths, nor test for equality.}
 This is to say that, although users manipulate structured representations of filestores, all the in-memory data structures are local to each transaction, and only file system operations need to be logged.
 The concurrent handling of file paths, however, is subtle in the presence of symbolic links --the identity of a path is not unique (as different paths may refer to the same real path) nor stable (since the real path depends on the current symbolic link configuration)-- making it harder to identify conflicts between transactions and to properly lock resources. For example, one transaction may read a file whose path is concurrently modified by other transaction.
 Therefore, our transaction logs keep special track of symbolic link modifications and we perform all file operations over ``canonical'' file paths, calculated against the transaction log while marking each resolved link as read.
@@ -534,6 +535,7 @@ A call to |writeOrElse| starts by making a copy of the current file system snaps
 
 \subsection{Incremental Transactional Forest}
 
+minimal components to build a workable implementation of TxForest
 
 forest specs "share" the whole FS, so its normal for them to interfere with one another.
 problem with 1st approach: ic loading: some change occurs between two reads, for instance, two completely unrelated variables; read spec1, write spec2, read spec1 (our simple cache mechanism fails to prevent recomputation)

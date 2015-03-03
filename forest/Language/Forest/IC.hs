@@ -24,6 +24,7 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.FS.NILFS
 	, module Language.Forest.IC.FS.TxVarFS
 	, module Language.Forest.IC.FS.TxICFS
+	, module Language.Forest.IC.FS.TxNILFS
 	, module Language.Forest.IC.Generic
 	, module Language.Forest.IC.ICRep
 	, module Language.Forest.IC.IO.Default
@@ -75,6 +76,7 @@ import Language.Forest.IC.FS.LazyFS
 import Language.Forest.IC.FS.NILFS
 import Language.Forest.IC.FS.TxVarFS
 import Language.Forest.IC.FS.TxICFS
+import Language.Forest.IC.FS.TxNILFS
 import Language.Forest.IC.Generic
 import Language.Forest.IC.ICRep
 import Language.Forest.IC.IO.Default

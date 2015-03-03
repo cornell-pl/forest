@@ -93,6 +93,6 @@ getHaskellId n name  =
 
 getFileTy fmd = ((fullpath . fileInfo) fmd,
                   case (kind . fileInfo) fmd of 
-                       AsciiK    -> File ("Text",  Nothing)
-                       otherwise -> File ("Binary", Nothing))
+                       AsciiK    -> FFile ("Text",  Nothing)
+                       otherwise -> FFile ("Binary", Nothing))
 

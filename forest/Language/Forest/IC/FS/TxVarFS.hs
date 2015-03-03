@@ -28,6 +28,7 @@ import Data.Foldable as Foldable
 import Data.Concurrent.Deque.Class as Queue
 import Data.Concurrent.Deque.Reference.DequeInstance
 import qualified Control.Concurrent.Map as CMap
+import qualified Control.Concurrent.WeakMap as CWeakMap
 import System.Posix.Files
 
 import Language.Forest.FS.FSRep
@@ -600,7 +601,7 @@ validateAndCommitTopTxVarFS doWrites = atomicTxVarFS "validateAndCommitTopTxVarF
 			return False
 
 validateAndCommitNestedTxVarFS :: Maybe SomeException -> TxVarFTM ()
-validateAndCommitNestedTxVarFS mbException = atomicTxVarFS "validateAndCommitNestedTxVarFS" $ do
+validateAndCommitNestedTxVarFS mbException = do
 	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	case mbException of
@@ -649,7 +650,7 @@ retryTxVarFSLog lck timeref txlog = do
 -- validates a nested transaction and merges its log with its parent
 -- note that retrying discards the tx's writes
 validateAndRetryNestedTxVarFS :: TxVarFTM ()
-validateAndRetryNestedTxVarFS = atomicTxVarFS "validateAndRetryNestedTxVarFS" $ do
+validateAndRetryNestedTxVarFS = do
 	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
@@ -662,7 +663,7 @@ validateAndRetryNestedTxVarFS = atomicTxVarFS "validateAndRetryNestedTxVarFS" $ 
 
 -- validates the current log before catching an exception
 validateCatchTxVarFS :: TxVarFTM ()
-validateCatchTxVarFS = atomicTxVarFS "validateCatchTxVarFS" $ do
+validateCatchTxVarFS = do
 	txenv@(timeref,startversion,txlogs) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
@@ -777,7 +778,9 @@ commitTxVarFSLog :: UTCTime -> Bool -> TxVarFSLog -> ForestM TxVarFS TxVarFSWrit
 commitTxVarFSLog starttime doWrites txlog = do
 	(fsversion,(reads,writes),tmps) <- forestIO $ readIORef txlog
 	-- commits filesystem modifications
-	wakes <- forestIO $ commitFSTreeDelta "" writes
+	wakes <- if doWrites
+		then forestIO $ commitFSTreeDelta "" writes
+		else return Set.empty
 	-- removes temporary files
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
@@ -794,12 +797,12 @@ releaseFLock mv = do
 	b <- tryPutMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
-fileLocks :: CMap.Map FilePath (Weak FLock)
-fileLocks = unsafePerformIO $ CMap.empty
+fileLocks :: CWeakMap.WeakMap FilePath FLock
+fileLocks = unsafePerformIO $ CWeakMap.empty
 
 -- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
 fileLock :: FilePath -> IO FLock
-fileLock path = CMap.lookupOrInsert path Weak.deRefWeak (newFLock >>= \l -> liftM (,l) $ mkWeakRefKey l l $ Just $ CMap.deleteIf path (liftM isNothing . Weak.deRefWeak) fileLocks) fileLocks
+fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLock (\v -> MkWeak $ mkWeakKey v)
 
 atomicTxVarFS :: String -> TxVarFTM a -> TxVarFTM a
 atomicTxVarFS msg m = do
