@@ -412,12 +412,10 @@ We can observe this data flow by defining two accounts pointing to the same file
 By incrementing the balance of |acc1|, we are implicitly incrementing the balance of |acc2| (if the write succeeds, then |balance' = balance + 1|).
 Note that even if we attempt to write different balances to each variable, in sequence:
 \begin{spec}
-	tryWrite acc2 (acc_md,Balance 10) 
-	tryWrite acc1 (acc_md,Balance 20) 
-	(_,Balance balance1) <- read acc1
-	(_,Balance balance2) <- read acc2
+	tryWrite acc1 (acc_md,Balance 10) 
+	tryWrite acc2 (acc_md,Balance 20) 
 \end{spec}
-it is always the case that |balance1 == balance2 == 20|, and there is no inconsistency since the first write propagates to both variables before the second write occurs.
+it is always the case that |acc1| and |acc2| have the same balance, and there is no inconsistency since the first write propagates to both variables before the second write occurs.
 
 \subsection{Validation}
 \label{subsec:validation}
@@ -528,11 +526,12 @@ We split our presentation into three possible designs, with increasing levels of
 We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a thread-local log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
 These validate-and-commit operations are guaranteed to run |atomic|ally in respect to all other threads by acquiring per-shared-resource locks according to a global total order (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
 They are \emph{disjoint-access parallel} (meaning that transactions with non-overlapping writes run in parallel) and \emph{read parallel} (meaning that transactions that only read from the same resources run in parallel).
+\jonathan{this does not always work; requires more locks}
 
 Blocking transactions (|retry|) validate their log and register themselves in wait-queues attached to each read address; updating transactions unblock any pending waiters.
 Nested transactions (|orElse|) work similarly to normal transactions: writes are recorded only to a nested log and reads consult all the logs of the nested and enclosing transactions. Validation a nested transaction also implies validating all enclosing transactions.
-Exceptional transactions (|throw|) must also validate the log before raising an exception to the outside world; on success, they rollback all modifications except for new thread-local memory allocations (to consistently handle exceptions that carry information created inside the transaction).
 If the first alternative retries, then the second alternative is attempted; if both retry, then both logs are validated and the thread will wait on the union of the read resources.
+Exceptional transactions (|throw|) must also validate the log before raising an exception to the outside world; on success, they rollback all modifications except for new thread-local memory allocations (to consistently handle exceptions that carry information created inside the transaction); on failure, it retries.
 A more detailed account, including a complete formal semantics, is given in~\cite{HaskellSTM}.
 
 \paragraph{Transaction logs}
@@ -577,7 +576,7 @@ fs log keeps all the changes over the real fs. we need to know the changes betwe
 
 the key to any IC algorithm is to exploit locality in the updates to update only structures affected by the update
 
-the fact that the filesystem is a graph, due to symlinks, brings additional chanllenges for incremental algorithms. because although the FS is a graph, we can't have it efficiently materialized, without traversing the whole FS. with symlinks, a change in a remote part of the FS tree may eventually affect, in non-obvious ways, another branch in the tree. therefore, FS deltas are algo graphs. but like the FS graph, we can't materialize them without traversing the full FS.
+the fact that the filesystem is a graph, due to symlinks, brings additional challenges for incremental algorithms. because although the FS is a graph, we can't have it efficiently materialized, without traversing the whole FS. with symlinks, a change in a remote part of the FS tree may eventually affect, in non-obvious ways, another branch in the tree. therefore, FS deltas are algo graphs. but like the FS graph, we can't materialize them without traversing the full FS.
 
 the runtime keeps a global record of all the symbolic links found under a root path that declares the subtree of the file system over which transactions conventionally operate.
 this table can be computed once, when booting the runtime system, and maintained by running transactions.
