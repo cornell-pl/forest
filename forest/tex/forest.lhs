@@ -383,9 +383,18 @@ writeOrRetry t v = writeOrElse t v () (const retry)
 writeOrThrow :: (TxForest args ty rep,Exception e) => ty -> rep -> () -> e -> FTM ()
 writeOrThrow t v e = writeOrElse t v () (const (throw e))
 \end{spec}
-A typical example of an inconsistent representation is when a Forest description refers to the same file twice and the user attempts to write distinct file content in each occurrence. For instance, in the universal description in Figure~\ref{fig:universal}, a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
+A typical example of an inconsistent representation is when a Forest description refers to the same file more than once, to describe it in multiple ways, and the user attempts to write conflicting data in each occurrence. For instance, in Forest we may describe a symbolic link to an ASCII file both as a |SymLink| and a |Text| file:
+\begin{spec}
+type Folder = Directory {
+	{  link   is "README"  :: SymLink
+	,  notes  is "README"  :: FFile Text
+	,  ... }
+\end{spec}
+Here, the file information for the |link| and |notes| fields must match.
+%For instance, in the universal description in Figure~\ref{fig:universal}, a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
 
-Writes take immediate effect on the (transactional snapshot of the) filestore, meaning that any subsequent |read| will see the performed modifications. Within a transaction, there can be multiple variables (possibly of different types) connected to the same fragment of a file system. Consider the following example with two accounts pointing to the same file path:
+Akin to reactive environments like spreadsheets~\cite{Macedo:14}, each write takes immediate effect on the (transactional snapshot of the) file system: an update on a cell (variable) is automatically propagated to the file system, eventually triggering the update of other cells (variables) dependent on common parts of the file system.
+We can observe this data flow by defining two accounts pointing to the same file: 
 \begin{spec}
 	acc1 :: Account <- new () "/var/db/accounts/account"
 	acc2 :: Account <- new () "/var/db/accounts/account"
@@ -535,12 +544,33 @@ A call to |writeOrElse| starts by making a copy of the current file system snaps
 
 \subsection{Incremental Transactional Forest}
 
-minimal components to build a workable implementation of TxForest
+We have described all the components for a complete implementation of TxForest, but not a very efficient one.
+To understand its limitations, imagine that a transaction maintains two completely unrelated variables and reads the first, writes new content to the second, and reads the first again.
+Since the two reads occur between a file system change, our simple memoization mechanism will fail, and the same content will be redundantly loaded from the file system twice.
+Even worse, writes in TxForest force a deep evaluation of the in-memory filestore, compromising the convenient laziness properties of the runtime system.
+For example, if a transaction reads a directory variable and immediately writes the read value to the same variable, the underlying $store$ function will strictly traverse the filestore to redundantly overwrite sub- files and directories with their old content, even though nothing has actually changed.
+
+The problem in both examples is that the $load$ and $store$ functions used by the runtime system are agnostic to modifications on the file system or on the in-memory data into, and execute from scratch every time, with a running ``footprint'' proportional to the size of the Forest description.
+Being Forest an embedded DSL in Haskell, we can exploit domain-specific knowledge to design incremental round-tripping functions, intuitively named $load_\Delta$ and $store_\Delta$, with ``footprint'' proportional to the size of the performed update.
+The formal ingredients for an incremental Forest load/store semantics are developed in Appendix~\ref{sec:incsemantics}.
+Especially since transaction are already equipped with the machinery to keep logs of modifications, we can extend our runtime system to make use of the incremental functions in place of their non-incremental counterparts.
+
+and especially since each transaction already keeps a log with some modification information,
+
+
+, and operate those instead in our runtime system.
+
+exploit domain-specific knowledge to design incremental loading and storing functions
+
+The two example could be improved if transactions kept track of the changes
+
+Consider the following example
+
+the $store$ function is strict, and will always force evaluation of the whole in-memory data structure. THis is particularly bad if the changes are small
 
 forest specs "share" the whole FS, so its normal for them to interfere with one another.
 problem with 1st approach: ic loading: some change occurs between two reads, for instance, two completely unrelated variables; read spec1, write spec2, read spec1 (our simple cache mechanism fails to prevent recomputation)
 
-one of most important features of Forest is laziness: ic storing: read variable (child variables are lazy), write variable (will recursively store everything); instead of no-op!
 
 
 exploit DSL information to have incrementality; intra-transaction
@@ -954,6 +984,7 @@ the error information is not stored back to the FS, so the validity predicate ig
 %\end{lemma}
 
 \section{Forest Incremental Semantics}
+\label{sec:incsemantics}
 
 Note that:
 \begin{itemize}

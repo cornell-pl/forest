@@ -102,6 +102,7 @@
 %format `neq` = "\neq"
 %format `mapsto` = " \mapsto "
 %format vk = "v_k"
+%format FFile = "File"
 %format File = "\mathtt{File}"
 %format Link = "\mathtt{Link}"
 %format Dir = "\mathtt{Dir}"
