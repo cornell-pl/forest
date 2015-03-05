@@ -17,23 +17,23 @@ uc = REd "[A-Z]+" "A"
 
 
 [pads|
-data Entry = Entry
-             { w1 :: ws,
-               val :: Double,
-               w2 :: ws, bar :: "|", w3 :: ws, 
-               tag :: StringME uc,  
-               w4 :: ws, colon :: ":", w5 :: ws,
-               desc :: StringLn
-} 
+data Entry = Entry {
+	  ws
+	, val :: Double
+	, ws, "|", ws
+	, tag :: StringME uc
+	, ws, ":", ws
+	, desc :: StringLn
+	} 
+
 type SwatLines = [Line SwatLine] terminator EOF
 data SwatLine = SwatEntry Entry | SwatLine StringLn
 data Preamble = Preamble
-         { f :: [Line StringLn] length 2,
-           title :: (Line StringLn, Line StringLn, Line StringLn),
-           c :: Line StringLn,
-           rest :: SwatLines
-           
-         }
+	{ f :: [Line StringLn] length 2
+	, title :: (Line StringLn, Line StringLn, Line StringLn)
+	, c :: Line StringLn
+	, swatLines :: SwatLines
+	}
 type CIO = (Preamble, EOF)
 |]
 
@@ -45,38 +45,37 @@ numberPCP :: SwatLines -> Int
 numberPCP s = case s!!11 of
   SwatEntry e -> fromEnum $ val e
 
-pcpFiles :: SwatLines -> Set FilePath
+pcpFiles :: SwatLines -> [FilePath]
 pcpFiles s = case drop 28 (take 31 s)  of
-  xs -> foldr (\(SwatLine l1) l2 -> Set.fromList (words l1) `Set.union` l2) [] xs
+  xs -> foldr (\(SwatLine l1) l2 -> words l1 ++ l2) [] xs
 
-validPCP :: Pcps -> Preamble -> Bool
-validPCP this cio =
-  length this == numberPCP (cioSwatLines cio)
-  && Set.fromList (map fst this) == pcpFiles $ rest cio 
+validPCP :: [(FilePath,PCP)] -> SwatLines -> Bool
+validPCP pcps swatlines =
+	length pcps == numberPCP swatlines
+	&&
+	Set.fromList (map fst pcps) == Set.fromList (pcpFiles swatlines)
 
-cioSwatLines :: Preamble -> SwatLines
-cioSwatLines p = rest p
-
-[forest| 
-type Pcps (cio :: Preamble) = [f :: TextFile | f <- matches <|GL "*.pcp" |>] where <| validPCP this cio |>
+[forest|
+type PCP = TextFile
+type PCPs (cio :: Preamble) = [f :: PCP | f <- matches <|GL "*.pcp" |>] where <| validPCP this (swatLines cio) |>
 
 type Swat_d = Directory 
-             { all_files  is [ f :: TextFile     | f <- matches <|GL "*"|> ],
-               cio is "file.cio" :: File Preamble
-             , pcps :: Pcps cio
+	{ all_files  is [ f :: TextFile     | f <- matches <|GL "*"|> ]
+	, cio is "file.cio" :: File Preamble
+	, pcps :: PCPs cio
 } |]
 
 get :: FilePath -> IO Swat_d
 get path = do
-  { (rep, md) <- swat_d_load path
-  ; return rep
-  }
+	(rep, md) <- swat_d_load path
+	return rep
+	
 
 go :: IO ()
 go = do
-  { swat <- get "/home/richard/Documents/forest/TxtInOut"
-  ; let swatLines = Swat.rest $ cio swat
-  ; print $ numberPCP swatLines
-  ; print $ pcpFiles swatLines
-  ; print $ pcps swat
-}
+	swat <- get "/home/richard/Documents/forest/TxtInOut"
+	let swatlines = swatLines $ cio swat
+	print $ numberPCP swatlines
+	print $ pcpFiles swatlines
+	print $ pcps swat
+	

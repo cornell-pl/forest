@@ -463,7 +463,7 @@ genParseRecord c fields pred = do
   where
 
 genLabMDName s (Just lab) = return (mkFieldMDName lab)
-genLabMDName s Nothing    = newName s
+genLabMDName s Nothing    = liftM (mkName . show) $ newName s
 
 genParseField :: FieldInfo -> Name -> Q Stmt
 genParseField (labM, (strict, ty), expM) xn = do

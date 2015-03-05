@@ -112,6 +112,7 @@ patToTy pat = case pat of
   RecP name _fieldPats -> ConT name
   ListP pats  -> mkListT (map patToTy pats)
   SigP _ ty   -> ty
+  (ParensP p) -> patToTy p
   _           -> error ("patToTy: unexpected pat: " ++ show pat)
 
 litToTy :: TH.Lit -> TH.Type

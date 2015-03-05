@@ -31,7 +31,6 @@
 
 module Language.Forest.Parser where
 
-
 import Language.Forest.Syntax as S
 
 import Control.Monad (msum)
