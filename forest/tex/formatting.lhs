@@ -1,3 +1,8 @@
+%format loadSym = "\mathtt{load}"
+%format storeSym = "\mathtt{store}"
+%format loadDeltaSym = "\mathtt{load}_\Delta"
+%format storeDeltaSym = "\mathtt{store}_\Delta"
+
 %format (dpair x (s1) (s2)) = "{\langle" x ":" s1 "," s2 "\rangle}"
 %format (flist s x e) = "{\{ " s "\mid" x "\in" e " \}}"
 %format P e = "{\mathtt{P}\," e "}"

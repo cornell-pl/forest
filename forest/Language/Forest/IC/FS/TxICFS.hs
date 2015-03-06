@@ -606,13 +606,11 @@ instance (MData (AddTxICParentDict l) (ForestL TxICFS l) a) => AddTxICParent l a
 		let f m1 m2 = m1 >>= \t1 -> m2 >>= \t2 -> return $ return $ max t1 t2
 		gmapQr (addTxICParentProxy proxy) f z (addTxICParentDictDict dict proxy stone meta z) x
 
-newTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => l (IncForest TxICFS) IORef IO a -> ForestM TxICFS (TxICThunk l a)
-newTxICThunk m = do
-	tree <- latestTree
+newTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => l (IncForest TxICFS) IORef IO a -> FSTree TxICFS -> ForestM TxICFS (TxICThunk l a)
+newTxICThunk m tree = do
 	uid <- forestIO $ newUnique
 	stone <- forestIO $ newRef uid
 	let dta = TxICThunkComp m
-	--XXX: is it safe to ignore child modifications for unevaluated thunks? (since the child->parent relationship is still not built)
 	let delta = return tree
 	parents <- forestIO $ WeakMap.new
 	let thunk = TxICThunk stone
@@ -671,8 +669,10 @@ overwriteTxICThunk var ma = do
 		let dta' = TxICThunkComp ma
 		-- dirty the parents of the written thunk
 		forestM $ dirtyTxICParents newtree (buffTxICParents buff)
+		-- assuming that this is only used by loadDelta at the latest tree
+		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = return newtree },())
 		-- whenever we want to know the latest modification for the written thunk, we have to force a read and check its content thunks
-		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = join $ liftM snd $ readTxICThunk var (return newtree) },())
+		--return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = join $ liftM snd $ readTxICThunk var (return newtree) },())
 	outside $ changeTxICThunk var set
 	
 
@@ -726,10 +726,11 @@ getFTVArgsIC (proxy ::Proxy args) rep = forestIO $ do
 
 instance Thunk (HSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 	new m = do
+		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
 		txargs <- forestM $ forestIO $ newIORef Nothing
 		let var = TxICHSThunk uid txargs
-		thunk <- forestM $ newTxICThunk m
+		thunk <- forestM $ newTxICThunk m tree
 		forestM $ bufferTxICHSThunk var thunk
 		return var
 	read var = do
@@ -737,10 +738,11 @@ instance Thunk (HSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 		liftM fst $ readTxICThunk thunk (forestM latestTree)
 instance Thunk (HSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 	new m = do
+		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
 		txargs <- forestM $ forestIO $ newIORef Nothing
 		let var = TxICHSThunk uid txargs
-		thunk <- forestM $ newTxICThunk m
+		thunk <- forestM $ newTxICThunk m tree
 		forestM $ bufferTxICHSThunk var thunk
 		return var
 	read var = do
@@ -756,10 +758,11 @@ instance TxICLayer l => Output (ICThunk TxICFS) l (IncForest TxICFS) IORef IO wh
 
 instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 	new m = do
+		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
 		txargs <- forestM $ forestIO $ newIORef Nothing
 		let var = TxICFSThunk uid txargs
-		thunk <- forestM $ newTxICThunk m
+		thunk <- forestM $ newTxICThunk m tree
 		forestM $ bufferTxICFSThunk var thunk
 		return var
 	-- read on the internal thunk, not on the latest filesystem
@@ -768,10 +771,11 @@ instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 		liftM fst $ readTxICThunk thunk (forestM latestTree)
 instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 	new m = do
+		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
 		txargs <- forestM $ forestIO $ newIORef Nothing
 		let var = TxICFSThunk uid txargs
-		thunk <- forestM $ newTxICThunk m
+		thunk <- forestM $ newTxICThunk m tree
 		forestM $ bufferTxICFSThunk var thunk
 		return var
 	-- read on the internal thunk, not on the latest filesystem
@@ -897,7 +901,7 @@ writeOrElseTxICFS rep content b f = do
 				newds <- deltaArgs tree proxy txargs txargs
 				let newdeltas = (txargs,newds)
 				
-				-- store incrementally at the latest tree (there are no filesystem modifications, since have only c hanged the value since loadDelta)
+				-- store incrementally at the latest tree (there are no filesystem modifications, since only the value has changed since loadDelta)
 				man <- forestM $ newManifestWith "/" tree
 				(mani,_,memos) <- RWS.runRWST (zupdateManifestDeltaMemo proxy newdeltas path path tree (emptyFSTreeD proxyTxICFS) tree rep newdv man) True ()
 				-- we need to store the errors to the (buffered) FS before validating

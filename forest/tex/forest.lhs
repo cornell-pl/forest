@@ -159,7 +159,8 @@ LHC\\
 Network logs\\
 Dan's scientific data
 
-
+what filesystem API gives me true transactionality? this is, TxForest is currently a library, but we would need to be able to lock concurrent modifications to shared resources at commit time; to compute all symlinks under a path.
+advantages of TxForest over DBs: the user gets to declare the schema according to which he wants to read the data; he chooses the abstraction, instead of a fixed tuple store.
 
 \section{Examples}
 
@@ -227,7 +228,7 @@ We now focus on the key goal of this paper: the design of the Transactional Fore
 As we shall see, TxForest (for short) offers an elegant and powerful abstraction for concurrently manipulating structured filestores.
 We first describe general-purpose transactional facilities~(Section~\ref{subsec:composable}).
 We then introduce transactional forest variables that allow programmers to interact with filestores~(Section~\ref{subsec:tvars}).
-We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(Section~\ref{subsec:validation}), and finish by introducing analogues of standard file system operations over filestores~(Section~\ref{subsec:fsops}).
+We briefly touch on how programmers can verify, at any time, if a filestore conforms to its specification~(Section~\ref{subsec:validation}), and finish by introducing analogues of standard filesystem operations over filestores~(Section~\ref{subsec:fsops}).
 
 \subsection{Composable transactions}
 \label{subsec:composable}
@@ -251,7 +252,7 @@ For example, consider the Haskell prelude functions:
 These respectively read a character from the standard input and write a character to the standard output.
 
 Conversely, our |FTM| monad denotes computations that are tentative, in the sense that they happen inside the scope of a transaction and can always be rolled back.
-As we discuss in the remainder of this section, these consist of STM-like transactional combinators, file system operations on Forest filestores, or arbitrary pure functions.
+As we discuss in the remainder of this section, these consist of STM-like transactional combinators, filesystem operations on Forest filestores, or arbitrary pure functions.
 Note that, since |FTM| and |IO| are different types, the Haskell type system effectively prevents non-transactional actions from being run inside of a transaction. This is a valuable guarantee and one that is not commonly found in transactional libraries for mainstream programming languages lacking a very expressive type system.
 
 \paragraph{Blocking transactions}
@@ -289,7 +290,7 @@ We can also compose transactions as \emph{alternatives}, using the |orElse| prim
 \end{spec}
 This combinator performs a left-biased choice: It first runs transaction |ftm1|, tries |ftm2| if |ftm1| retries, and the whole transaction retries if |ftm2| retries.
 %ToDo by Jonathan: Make sure it's the whole transaction, not just the action. Apparently orElse semantics are a bit funky.
-For example, it might be used to read either one of two files depending on the current configuration of the file system.
+For example, it might be used to read either one of two files depending on the current configuration of the filesystem.
 
 Note that |orElse| provides an elegant mechanism for nested transactions. At any point inside a larger transaction, we can tentatively perform a transaction |ftm1| and rollback to the beginning (of the nested transaction) to try |ftm2| in case |ftm1| retries:
 \begin{spec}
@@ -329,7 +330,7 @@ In the context of TxForest, shared data is not stored in-memory, but instead on 
 \begin{quote}
 ``We study internal concurrency between threads interacting through memory [...]; we do not consider here the questions of external interaction through storage systems or databases.''
 \end{quote}
-We consider precisely the question of external interaction with a file system.
+We consider precisely the question of external interaction with a filesystem.
 Two transactions may communicate, e.g., by reading from or writing to the same file or possibly a list of files within a directory.
 To facilitate this interaction, the TxForest compiler generates an instance of the |TxForest| type class (and corresponding types) for each Forest declaration:
 \begin{spec}
@@ -343,9 +344,9 @@ In this signature, |ty| is an opaque transactional variable type that uniquely i
 The representation type closely follows the declared Forest type, with additional file-content metadata for directories, files and symbolic links; directories have representations of type |(FileInfo,dir_rep)| and basic types have representations of type |((FileInfo,base_md),base_rep)|, for base representation |base_rep| and metadata |base_md|.
 
 \paragraph{Creation}
-The transactional forest programming style makes no distinction between data on the file system and in-memory.
-Anywhere inside a transaction, users can declare a |new| transactional variable, with argument data pertaining to the forest declaration and rooted at the argument path in the file system.
-This operation does not have any effect on the file system and just establishes the schema to which a filestore should conform.
+The transactional forest programming style makes no distinction between data on the filesystem and in-memory.
+Anywhere inside a transaction, users can declare a |new| transactional variable, with argument data pertaining to the forest declaration and rooted at the argument path in the filesystem.
+This operation does not have any effect on the filesystem and just establishes the schema to which a filestore should conform.
 
 \paragraph{Reading}
 Users can |read| data from a filestore by reading the contents of a transactional variable.
@@ -376,8 +377,8 @@ Then reading the accounts directory would also read the file content of all acco
 \paragraph{Writing}
 Users can modify a filestore by writing new content to a transactional variable.
 The |writeOrElse| function accepts additional arguments to handle possible conflicts, which may arise due to data dependencies in the Forest description that cannot be statically checked by the type system. If these dependencies are not met, the data is not a valid representation of a filestore.
-If the write succeeds, the file system is updated with the new data and a default value of type |b| is returned.
-If the write fails, a user-supplied alternate function is executed instead. The function takes a |Manifest| describing the tentative modifications to the file system and a report of the inconsistencies.
+If the write succeeds, the filesystem is updated with the new data and a default value of type |b| is returned.
+If the write fails, a user-supplied alternate function is executed instead. The function takes a |Manifest| describing the tentative modifications to the filesystem and a report of the inconsistencies.
 We can easily define more convenient derived forms of |writeOrElse|:
 \begin{spec}
 -- optional write
@@ -400,7 +401,7 @@ type Folder = Directory {
 Here, the file information for the |link| and |notes| fields must match.
 %For instance, in the universal description in Figure~\ref{fig:universal}, a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
 
-Akin to reactive environments like spreadsheets~\cite{Macedo:14}, each write takes \emph{immediate} effect on the (transactional snapshot of the) file system: an update on a variable is automatically propagated to the file system, eventually triggering the update of other variables dependent on common parts of the file system.
+Akin to reactive environments like spreadsheets~\cite{Macedo:14}, each write takes \emph{immediate} effect on the (transactional snapshot of the) filesystem: an update on a variable is automatically propagated to the filesystem, eventually triggering the update of other variables dependent on common parts of the filesystem.
 We can observe this data flow by defining two accounts pointing to the same file and writing to one of them:
 \begin{spec}
 	acc1 :: Account <- new () "/var/db/accounts/account"
@@ -420,7 +421,7 @@ it is always the case that |acc1| and |acc2| have the same balance, and there is
 \subsection{Validation}
 \label{subsec:validation}
 
-As Forest lays a structured view on top of a semi-structured file system, a filestore does not need to conform perfectly to an associated Forest description.
+As Forest lays a structured view on top of a semi-structured filesystem, a filestore does not need to conform perfectly to an associated Forest description.
 Behind the scenes, TxForest lazily computes a summary of such discrepancies. These may flag, for example, that a mandatory file does not exist or an arbitrarily complex user-defined Forest constraint is not satisfied.
 Validation is not performed unless explicitly demanded by the user. At any point, a user can |validate| a transactional variable and its underlying filestore:
 \begin{spec}	
@@ -444,7 +445,7 @@ validRead ty = do
 		else throw (ForestError err)
 \end{spec}
 
-\subsection{Standard file system operations}
+\subsection{Standard filesystem operations}
 \label{subsec:fsops}
 
 To better understand the TxForest interface, we now discuss how to perform common operations on a Forest filestore.
@@ -468,7 +469,7 @@ Deleting an account is dual to creating one; we write invalid file information a
 delAccount acc = do
 	tryWrite acc (invalidFile,Balance 0)
 \end{spec}
-The takeaway lesson is that the |FileInfo| metadata actually determines whether a directory, file or symbolic link exists or not in the file system, since we cannot infer that from the data alone (e.g., an empty account has the same balance as a non-existent account).
+The takeaway lesson is that the |FileInfo| metadata actually determines whether a directory, file or symbolic link exists or not in the filesystem, since we cannot infer that from the data alone (e.g., an empty account has the same balance as a non-existent account).
 This also reveals less obvious data dependencies: For valid paths the |fullpath| in the metadata must match the path to which the representation corresponds in the description, and for invalid paths the representation data must match the Forest-generated default data.
 Since this can become cumbersome to ensure manually, we provide a general function that conveniently removes a filestore, named after the POSIX \verb|rm| operation:
 \begin{spec}
@@ -511,6 +512,22 @@ do
 	tryCopy src tgt 
 \end{spec}
 
+\subsection{Read-only transactions}
+
+all the operations presented before work in any mode |FTM mode a|, except for |writeOrElse| that requires |FTM RW a|.
+
+|FTM RO a| can only read data from the fs
+
+|FTM RW a| can write data to the fs
+
+expressions statically restricted to just perform a series of new/read operations.
+
+introduce monadic expression quotation: example
+
+embedded expressions are read-only, to prevent side-effects during loads/stores.
+
+for implementation purposes, it also allows the transaction manager to distinguish read-only transactions
+
 \section{Implementation}
 
 We now delve into how Transactional Forest can be efficiently implemented.
@@ -523,7 +540,7 @@ We split our presentation into three possible designs, with increasing levels of
 \subsection{Transactional Forest}
 
 \paragraph{Original STM interface}
-We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a thread-local log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
+We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a private log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
 These validate-and-commit operations are guaranteed to run |atomic|ally in respect to all other threads by acquiring per-shared-resource locks according to a global total order (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
 They are \emph{disjoint-access parallel} (meaning that transactions with non-overlapping writes run in parallel) and \emph{read parallel} (meaning that transactions that only read from the same resources run in parallel).
 \jonathan{this does not always work; requires more locks}
@@ -535,95 +552,77 @@ Exceptional transactions (|throw|) must also validate the log before raising an 
 A more detailed account, including a complete formal semantics, is given in~\cite{HaskellSTM}.
 
 \paragraph{Transaction logs}
-The main difference from \texttt{STM} Haskell to TxForest is that the shared resources are not mutable memory cells in the traditional sense, but paths in the file system.
+The main difference from \texttt{STM} Haskell to TxForest is that the shared resources are not mutable memory cells in the traditional sense, but paths in the filesystem.
 \footnote{STM maintains a log with the old value held in a memory cell and the new value written to it by the transaction, and validation test if they are pointer-equal. We do not remember old content of file paths, nor test for equality.}
-This is to say that, although users manipulate structured representations of filestores, all the in-memory data structures are local to each transaction, and only file system operations need to be logged.
+This is to say that, although users manipulate structured filestores, all the in-memory data structures are local to each transaction, and only filesystem operations need to be logged for commit.
 The concurrent handling of file paths, however, is subtle in the presence of symbolic links --the identity of a path is not unique (as different paths may refer to the same real path) nor stable (since the real path depends on the current symbolic link configuration)-- making it harder to identify conflicts between transactions and to properly lock resources. For example, one transaction may read a file whose path is concurrently modified by other transaction.
 Therefore, our transaction logs keep special track of symbolic link modifications and we perform all file operations over ``canonical'' file paths, calculated against the transaction log while marking each resolved link as read.
 
 \paragraph{Round-tripping functions}
 In TxForest, each transactional variable is an in-memory data structure that reflects the content of a particular filestore, declared from the respective Forest description type with given arguments and root path.
-Behind the scenes, the transactional engine is responsible for preserving the abstraction, and keeping each variable ``in sync'' with the latest transactional snapshot of the file system, such that changes on the file system are propagated to the affected in-memory filestore variables, and writes to variables move the file system snapshot forward.
-This task is performed by a coupled pair of $load$ and $store$ functions. Their precise definitions and formal semantics is given in Appendix~\ref{sec:semantics}.
-Informally, each Forest variable is implemented as a ``thunk'' that lazily computes visible data (denoting the content and metadata of the filestore) and hidden data (remembering errors during validation). The $load$ function for a top-level variable generates a top-level thunk that, once evaluated, recursively reads data from the (transactional snapshot of the) filesystem, building a thunk for each level of structure. Error information is computed behind an additional thunk to guarantee that validation is only performed when explicitly demanded by the user.
-The $store$ function strictly traverses a nested structure of in-memory thunks and updates the (transactional snapshot of the) file system to reflect the same content, returning an additional \emph{validator} function that tests the updated file system for inconsistencies during storing.
-These two functions are carefully designed so that they preserve data on round trips: loading a filestore and immediately storing it back always succeeds and keeps the file system unchanged; and storing succeeds as long as loading the updated file system yields the same in-memory representation.
+Behind the scenes, the transactional engine is responsible for preserving the abstraction, and keeping each variable ``in sync'' with the latest transactional snapshot of the filesystem, such that changes on the filesystem are propagated to the affected in-memory filestore variables, and writes to variables move the filesystem snapshot forward.
+This task is performed by a coupled pair of |loadSym| and |storeSym| functions. Their precise definitions and formal semantics is given in Appendix~\ref{sec:semantics}.
+Informally, each Forest variable is implemented as a ``thunk'' that lazily computes visible data (denoting the content and metadata of the filestore) and hidden data (remembering errors during validation). The |loadSym| function for a top-level variable generates a top-level thunk that, once evaluated, recursively reads data from the (transactional snapshot of the) filesystem, building a thunk for each level of structure. Error information is computed behind an additional thunk to guarantee that validation is only performed when explicitly demanded by the user.
+The |storeSym| function strictly traverses a nested structure of in-memory thunks and updates the (transactional snapshot of the) filesystem to reflect the same content, returning an additional \emph{validator} function that tests the updated filesystem for inconsistencies during storing.
+These two functions are carefully designed so that they preserve data on round trips: loading a filestore and immediately storing it back always succeeds and keeps the filesystem unchanged; and storing succeeds as long as loading the updated filesystem yields the same in-memory representation.
 
 \paragraph{Transactional variables}
-In TxForest, each transaction keeps a local file system snapshot with a unique thread-local version number and a log of tentative updates over the real file system.
-When users create a |new| transactional variable, the $load$ function is called to create the corresponding thunk. Note that, due to laziness, no data is actually loaded.
+In TxForest, each transaction keeps a local filesystem snapshot with a unique thread-local version number and a log of tentative updates over the real filesystem.
+When users create a |new| transactional variable, the |loadSym| function is called to create the corresponding thunk with a suspendend computation that always loads data from the latest version of the filesystem. Note that, due to laziness, no data is actually loaded.
 These thunks, acting as transactional variables, can be concurrently accessed by multiple transactions.
-When a transaction |read|s a transactional variable, the associated level of data is loaded from the current file system snapshot, and the resulting value is added to a (per-transaction) per-variable memoization table mapping file system versions to values. We implement them as weak hash tables, allowing the Haskell garbage collector to purge entries for versions other than the current one.\footnote{Operations that support rollback, like |writeOrElse| and |orElse|, also require preserving entries for the backed up file system version.}
-A call to |writeOrElse| starts by making a copy of the current file system snapshot and adding an entry the the memoization table of the respective variable mapping a newly generated unique file system version to the newly written value. It then invokes the $store$ function (remembering the creation-time arguments and root path) to update the file system log (under the new version) and runs the resulting validator; on inconsistencies, the transaction rolls back to the backed up file system snapshot and executes the user-supplied alternative action instead.
+Each transacation keeps a memoization table mapping variables to the latest read values at a particular filesystem version.
+We implement them as weak hash tables, allowing the Haskell garbage collector to purge older entries.
+When a transaction |read|s a transactional variable it first checks the memoization table for a value for the current filesystem, otherwise the associated level of data is loaded from the current filesystem snapshot, and adds a new memo entry with the read value at the current version. 
+A call to |writeOrElse| starts by making a copy of the current filesystem snapshot and adding an entry to the memoization table of the respective variable mapping the next filesystem version to the newly written value.
+It then invokes the |storeSym| function (remembering the creation-time arguments and root path) to update the filesystem log under the new version and runs the resulting validator; on inconsistencies, the transaction rolls back to the backed up filesystem snapshot and executes the user-supplied alternative action instead.
 
 \subsection{Incremental Transactional Forest}
 
 We have described all the components for a complete implementation of TxForest, but not a very efficient one.
 To understand its limitations, imagine that a transaction maintains two completely unrelated variables and reads the first, writes new content to the second, and reads the first again.
-Since the two reads occur between a file system change, our simple memoization mechanism will fail, and the same content will be redundantly loaded from the file system twice.
+Since the two reads occur between a filesystem change, our simple memoization mechanism will fail, and the same content will be redundantly loaded from the filesystem twice.
 Even worse, writes in TxForest force a deep evaluation of the in-memory filestore, compromising the convenient laziness properties of the runtime system.
-For example, if a transaction reads a directory variable and immediately writes the read value to the same variable, the underlying $store$ function will strictly traverse the filestore to redundantly overwrite sub- files and directories with their old content, even though nothing has actually changed.
+For example, if a transaction reads a directory variable and immediately writes the read value to the same variable, the underlying |storeSym| function will strictly traverse the filestore to redundantly overwrite sub- files and directories with their old content, even though nothing has actually changed.
 
 \paragraph{Round-tripping functions}
-The problem in both examples is that the $load$ and $store$ functions used by the runtime system are agnostic to modifications on the file system or on the in-memory data, and execute from scratch every time with a running ``footprint'' proportional to the size of the Forest description.
-Being Forest an embedded DSL in Haskell, we can exploit domain-specific knowledge to design incremental round-tripping functions, intuitively named $load_\Delta$ and $store_\Delta$, with ``footprint'' proportional to the size of the actual updates.
-Especially since transaction are already equipped with the machinery to keep logs of modifications, we can extend our runtime system to make use of the incremental functions in place of their non-incremental counterparts.
-The formal ingredients for an incremental Forest load/store semantics are developed in Appendix~\ref{sec:incsemantics}.
+The problem in both examples is that the |loadSym| and |storeSym| functions used by the runtime system are agnostic to modifications made to the filesystem or to the in-memory data, and execute from scratch every time with a running ``footprint'' proportional to the size of the Forest description.
+Being Forest an embedded DSL in Haskell, we can exploit domain-specific knowledge to design incremental round-tripping functions, intuitively named |loadDeltaSym| and |storeDeltaSym|, with ``footprint'' proportional to the size of the actual updates.
+Especially since transactions are already equipped with the machinery to keep logs of modifications, we can extend our runtime system to make use of the incremental functions in place of their non-incremental counterparts.
+In this section we informally discuss the necessary extensions. The formal ingredients for an incremental Forest load/store semantics are developed in Appendix~\ref{sec:incsemantics}.
 
 \paragraph{File system updates}
+In order to support incrementality within individual transactions, each transaction shall be able to identify the updates that occurred since a previous point in time (identified by a filesystem version).
+We thus split the sequences of writes recorded in transaction logs according to their increasing filesystem versions.
 
-fs log keeps all the changes over the real fs. we need to know the changes between particular tx-local fs versions.
+The key behind incrementality is to exploit the locality of updates, so that the algorithm can distinguish affected structures that need to be updated from unaffected ones that are already up-to-date.
+In the context of filesystems, with updates as sequences of operations on file paths, locality checking boils down to path inclusion: seeing the filesystem as a tree, an update on path |r'| is local to another path |r| if |r'| is a subpath of |r|.
 
-the key to any IC algorithm is to exploit locality in the updates to update only structures affected by the update
-
-the fact that the filesystem is a graph, due to symlinks, brings additional challenges for incremental algorithms. because although the FS is a graph, we can't have it efficiently materialized, without traversing the whole FS. with symlinks, a change in a remote part of the FS tree may eventually affect, in non-obvious ways, another branch in the tree. therefore, FS deltas are algo graphs. but like the FS graph, we can't materialize them without traversing the full FS.
-
-the runtime keeps a global record of all the symbolic links found under a root path that declares the subtree of the file system over which transactions conventionally operate.
-this table can be computed once, when booting the runtime system, and maintained by running transactions.
-although finding symlinks is an expensive task that involves traversing the whole file system tree, this initial cost is less relevant if we assume the database-centric model, in which the runtime system operates as an always-on server that accepts txs issued by client processes.
+However, as filesystems are in fact graphs, a branch in the filesystem may be affected by changes made to distinct branches, by following symbolic links.
+This requires our transaction manager to keep a materialized record of all the symbolic links in the filesystem.
+Although finding all symbolic links in traditional filesystems is an expensive task that involves traversing the whole file hierarchy, it can be amortized by running once when the transaction manager is initialized, and having transactions updating the necessary symbolic link records. This cost becomes negligible in a database-centric model, in which an always-on server assumes full control of the filesystem and accepts transactions issued by clients.
 
 \paragraph{Filestore updates}
+Additionally to filesystem updates, transactions must also recognize the data modifications that have been performed on a given in-memory data structure since a particular filesystem version.
+For individual variables, our transaction logs already keep entries with the latest value read from or wrote to them, annotated with the corresponding filesystem version.
+But filestores often have multiple levels of nested variables (e.g., an accounts directory contains multiple account variables) and data edits may occur deep in the structure (e.g., the user updates one specific account).
 
-thunks don't keep a table, just the latest value and associated fs version
+In order to support incremental update propagation, a variable must also be aware of modifications to its underlying child variables.
+We do so by maintaining an extra acyclic parenthood graph between thunks and an extra field with the version of the last modification made to (the underlying structure of) each variable.
+A new variable is created with no parent nor child edges, and set as last modified at the current filesystem version.
+When a variable is read or written, we remove its child edges from the graph, add new parent edges for its immediate child variables, and recursively set the modification version for all its parent variables (itself included) to the current filesystem version.
 
 \paragraph{Transactional variables}
+In the incremental variant of TxForest, |new| variables are created as before, with a call to |loadSym|.
 
-compute a fs diff (from the old fs version associated to the latest value stored in the memo table to the current fs version)
-computea value diff (since the old fs version)
+When |read|ing a variable, we first search for a memoized value; if none is found, we load the contents from the filesystem as before.
+If an old value is found, we compute the updates since the previous filesystem version, by filtering the logged filesystem updates in the corresponding interval that affect the variable's root path and by retrieving the variable's latest modification version.
+We then invoke |loadDeltaSym| (assuming that top-level arguments may have changed) to incrementally repair the memoized in-memory representation, and finish by reading the content of the variable as before.
+The |loadDeltaSym| function strictly traverses the filesystem and the in-memory data according to the Forest description: if there are no filesystem nor data updates (i.e., the latest modified version of the top-level variable matches the version of the memoized value), it stops; it also stops on variables with no memoized data, since there is no old value to be repaired; otherwise, it repairs the memoized value according to the updates and proceeds recursively.
 
-read computes a diff and calls loadDelta, write computes a diff and calls storeDelta
-
-
-forest specs "share" the whole FS, so its normal for them to interfere with one another.
-problem with 1st approach: ic loading: some change occurs between two reads, for instance, two completely unrelated variables; read spec1, write spec2, read spec1 (our simple cache mechanism fails to prevent recomputation)
-
-
-
-exploit DSL information to have incrementality; intra-transaction
-
-
-
-%storeDelta is always run with a top-level modification
-
-%invariant: there is a consistent (FS,value) pair to start with; in our implementation that is not the case; loadDelta can be more general, we only check for differences between the values and the FS, and any whose version does not match the old FS is guaranteedly repaired, be it an older value or a more recent value.
-%optimization for ic storing: since we can only change one variable at once, we admit side-effects
-%react immediately to one variable update at a time
-%akin to reactive environments like spreadsheets: we only write a variable/cell at a time, and that change is propagated to all dependent cells (via the FS)
-%when stopping, we know that no write to the FS is required, but data dependencies may be violated (leading to a write failure). instead, we allow the write to go through without a deep sensibility check; side-effects
-
-%\begin{spec}
-%[forest| type Dup = Directory {
-%	  file1 is "file" :: TextFile
-%	, file2 is "file" :: TextFile
-%} |]
-%
-%read dup
-%write file2
-%write dup (file1,file2')
-%read file1
-%\end{spec}
-
-%file1 will get updated
+When writing to a variable (|writeOrElse|), we first search for a memoized value; if none is found, we write the new contents as before.
+If an old value is found, we compute the updates since the memoized value and invoke |loadDeltaSym| to make sure that all memoized data for the filestore is up-to-date with the current filesystem version.
+We then backup the transaction log, increment the filesystem version, write the new content to the variable and invoke |storeDeltaSym| (with empty filesystem updates and only the user's write to the top-level variable as a data update) to incrementally repair the filesystem.
+Likewise, the |storeDeltaSym| function strictly traverses the filesystem and the in-memory data according to the Forest description: if there are no updates, it stops; otherwise, it modifies the filesystem to conform to the new content and proceeds recursively. Note that, in the general case, when |storeDeltaSym| stops the generated validator still needs verify that the corresponding branch of the filesystem is consistent with other |storeDeltaSym| traversals that may modify overlapping fragments of the filesystem ---in order to guarantee that arbitrary data dependencies in a Forest specification are correctly enforced. We can skip these checks in our particular application, as long as we only call |storeDeltaSym| with a top-level data modification.
 
 \subsection{Log-structured Transactional Forest}
 
