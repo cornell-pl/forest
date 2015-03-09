@@ -141,7 +141,7 @@ Forest~\cite{forest} made a solid step into solving this, by offering an integra
 
 Although promising, the old Forest suffered two essential shortcomings:
 \begin{itemize}
-	\item It did not offer the level of transparency of a typical DBMS. Users don't get to believe that they are working directly on the database (filesystem). they explicitly issue load/store calls, and instead manipulate in-memory representations and the filesystem independently. offline synchronization.
+	\item It did not offer the level of transparency of a typical DBMS. Users don't get to believe that they are working directly on the database (filesystem). they explicitly issue load/store calls, and instead manipulate in-memory representations and the filesystem independently. offline synchronization. offers a load/store interface, placing full responsibility for explicitly managing the filesystem with the application.
 	\item It provided none of the transactional guarantees familiar from databases. transactions are nice: prevent concurrency and failure problems. successful transactions are guaranteed to run in serial order and failing transactions rollback as if they never occurred. rely on extra programmers' to avoid the hazards of concurrent updates. different hacks and tricks like creating lock files and storing data in temporary locations, that severely increase the complexity of the applications. writing concurrent programs is notoriously hard to get right. even more in the presence of laziness (original forest used the generally unsound Haskell lazy I/O)
 \end{itemize}
 
@@ -514,17 +514,20 @@ do
 
 \subsection{Read-only transactions}
 
-all the operations presented before work in any mode |FTM mode a|, except for |writeOrElse| that requires |FTM RW a|.
+explain the need for monadic quotation and give an example
+
+however, this introduces problems 
+therefore embedded expressions are read-only, to prevent side-effects during loads/stores.
+
+transactional operations (|retry|,|orElse|,|atomic|) are done in write mode (|FTM RW a|).
+
+|read| and |new| in any mode (|FTM mode a|).
 
 |FTM RO a| can only read data from the fs
 
 |FTM RW a| can write data to the fs
 
 expressions statically restricted to just perform a series of new/read operations.
-
-introduce monadic expression quotation: example
-
-embedded expressions are read-only, to prevent side-effects during loads/stores.
 
 for implementation purposes, it also allows the transaction manager to distinguish read-only transactions
 
@@ -546,7 +549,7 @@ They are \emph{disjoint-access parallel} (meaning that transactions with non-ove
 \jonathan{this does not always work; requires more locks}
 
 Blocking transactions (|retry|) validate their log and register themselves in wait-queues attached to each read address; updating transactions unblock any pending waiters.
-Nested transactions (|orElse|) work similarly to normal transactions: writes are recorded only to a nested log and reads consult all the logs of the nested and enclosing transactions. Validation a nested transaction also implies validating all enclosing transactions.
+Nested transactions (|orElse|) work similarly to normal transactions: writes are recorded only to a nested log and reads consult all the logs of the nested and enclosing transactions. Validating a nested transaction also implies validating all enclosing transactions.
 If the first alternative retries, then the second alternative is attempted; if both retry, then both logs are validated and the thread will wait on the union of the read resources.
 Exceptional transactions (|throw|) must also validate the log before raising an exception to the outside world; on success, they rollback all modifications except for new thread-local memory allocations (to consistently handle exceptions that carry information created inside the transaction); on failure, it retries.
 A more detailed account, including a complete formal semantics, is given in~\cite{HaskellSTM}.
@@ -622,15 +625,35 @@ The |loadDeltaSym| function strictly traverses the filesystem and the in-memory 
 When writing to a variable (|writeOrElse|), we first search for a memoized value; if none is found, we write the new contents as before.
 If an old value is found, we compute the updates since the memoized value and invoke |loadDeltaSym| to make sure that all memoized data for the filestore is up-to-date with the current filesystem version.
 We then backup the transaction log, increment the filesystem version, write the new content to the variable and invoke |storeDeltaSym| (with empty filesystem updates and only the user's write to the top-level variable as a data update) to incrementally repair the filesystem.
-Likewise, the |storeDeltaSym| function strictly traverses the filesystem and the in-memory data according to the Forest description: if there are no updates, it stops; otherwise, it modifies the filesystem to conform to the new content and proceeds recursively. Note that, in the general case, when |storeDeltaSym| stops the generated validator still needs verify that the corresponding branch of the filesystem is consistent with other |storeDeltaSym| traversals that may modify overlapping fragments of the filesystem ---in order to guarantee that arbitrary data dependencies in a Forest specification are correctly enforced. We can skip these checks in our particular application, as long as we only call |storeDeltaSym| with a top-level data modification.
+Likewise, the |storeDeltaSym| function strictly traverses the filesystem and the in-memory data according to the Forest description: if there are no updates, it stops; otherwise, it modifies the filesystem to conform to the new content and proceeds recursively. Note that, in the general case, when |storeDeltaSym| stops the generated validator still needs verify that the unmodified fragment of the filesystem is consistent with other |storeDeltaSym| traversals that may modify overlapping fragments of the filesystem ---in order to guarantee that arbitrary data dependencies in a Forest specification are correctly enforced. We can skip these checks in our particular application, as long as we only call |storeDeltaSym| with a top-level data modification.
 
 \subsection{Log-structured Transactional Forest}
 
-problem with 2nd approach: tx1 reads a variable; tx2 reads the same variable
+Thus far, our implementation of TxForest only supports incremental updates locally to each transaction.
+This has the potential to greatly speed-up larger transactions that combine several filestore operations, but is ineffective for smaller transactions. For example, it offers no incrementality for the extreme case in which each single filestore operation is performed in a separate transaction.
+It is also non-optimal for scenarios that involve multiple concurrent transactions trying to access a shared resource, e.g., a set of configuration files: each transaction will have to load all necessary files into memory, perform the respective modifications, and discard all the in-memory data at the end; such loading work is often redundant, even more for workloads dominated by read-only transactions where the filesystem seldom changes between consecutive transactions.
 
-exploit (DSL info +) FS support to have incrementality
+Unfortunately, this is how far TxForest can reasonably go on top of a conventional filesystem.
+As in any OCC method, each transaction builds an interim timeline of filesystem updates that is preserved for the duration of concurrently running transactions.
+Consequently, there is no global timeline that records the history of filesystem modifications to which in-memory data can be chronologically affixed across transactions.
 
-read-only transactions require no synchronization
+\paragraph{Log-structured filesystem}
+This is precisely one of the main advantages of a log-structured filesystem, in which updates do not overwrite existing data but rather issue continuous snapshots, that can be made accessible as a log that records the history of modifications on the filesystem since an initial point in time.
+To provide inter-transaction incrementality, we have explored a variant of TxForest implemented on top of NILFS, a log-structured filesystem for Linux supporting read-only snapshots.
+
+\paragraph{Transactional logs}
+The main difference in our third design is that transactions are logically executed over particular snapshots of the filesystem.
+When initialized, each transaction acquires the version number of the latest snapshot from the NILFS filesystem. Reads on the filesystem are instead performed against the initial snapshot; and groups of writes create advancing transaction-local snapshots over the initial physical snapshot. On success, the transaction commits its modifications over the current filesystem (that may be at newer snapshot than the transaction's snapshot due to concurrent updates) and requests the creation of a new NILFS snapshot combining concurrent and transaction-local updates.
+
+\paragraph{Transactional variables}
+We also refine variables to store memoized content that was previously read at an older NILFS snapshot.
+This enables a transaction to incrementally reuse filestores loaded by previous transactions. The filesystem delta is computed as the difference between the memoized and the transaction's NILFS snapshots, prepended to the transaction-local tentative updates. Once finished, the transaction commits its local data updates to the global transactional variables; to ensure that all the committed data is bound to externally visible filesystem snapshots, we first use |loadDeltaSym| to synchronize all the transaction-local memoized data with the latest filesystem snapshot ---the one for which we will later request a new NILFS snapshot.
+Since multiple transactions may now concurrently read and write the content of the same transactional variables, each |atomic| block must acquire extra per-variable locks during the validate-and-commit phase.
+
+\paragraph{Read-only transactions}
+A side-benefit of using a snapshotting filesystem is that every transaction starts from a possibly outdated, but nevertheless consistent, snapshot of the filesystem.
+Read-write transactions need to anyway validate their read file paths against concurrent writes, to guarantee that they are assigned a position in the serial order.
+Nonetheless, read-only transactions can be significantly optimized to bypass all the logging, validation and committing processes~\cite{TxCache}; the serial order is as if they happened to run before all other concurrent transactions.
 
 \section{Evaluation}
 

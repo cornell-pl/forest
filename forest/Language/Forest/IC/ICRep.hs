@@ -157,17 +157,6 @@ class ICRep fs => ICMemo (fs :: FS) where
 	addMemo :: (Typeable (ForestIs fs args),Typeable rep,Typeable md) => FilePath -> Proxy args -> ForestIs fs args -> (rep,md) -> FSTree fs -> ForestI fs ()
 	remMemo :: Proxy fs -> FilePath -> Proxy rep -> ForestI fs ()
 	findMemo :: Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep,md))
-
-class ICRep fs => ZippedICMemo fs where
-	
-	-- adds a consistent path ~ value entry to the consistency table
-	-- if no tree is provided, no memoization is done and we just remember the arguments
-	addZippedMemo :: (IncK (IncForest fs) content,Typeable content,Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => FilePath -> Proxy args -> ForestIs fs args -> rep -> Maybe (FSTree fs) -> ForestI fs ()
-	
-	-- given a path finds an old entry = (old FSTree,outdated thunks)
-	-- the old entry needs to match on the filepath, i.e., have been loaded with that path
-	-- if repairing incrementally, we have to assume that the environment changed
-	findZippedMemo :: (IncK (IncForest fs) content,Typeable content,Typeable (ForestIs fs args),Typeable rep,ForestRep rep (ForestFSThunkI fs content)) => Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep))
 	
 
 type ForestThunk fs mod l = Thunk (mod fs) l (IncForest fs) IORef IO

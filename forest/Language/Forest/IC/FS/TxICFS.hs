@@ -487,7 +487,7 @@ diffValueThunkTxICFS isTop oldtree rep = do
 		if isTop
 			then return $ ValueDeltaTxICFS $ oldtree == buffTxICTree buff
 			else do
-				newtree <- inside $ buffTxICDeltaTree buff
+				let newtree = buffTxICDeltaTree buff
 				return $ ValueDeltaTxICFS $ oldtree == newtree
 	
 -- arguments passed to transactional variables
@@ -512,7 +512,7 @@ dynTxMkWeak (DynBuffTxICThunk _ mkWeak) = mkWeak
 data BuffTxICThunk l a = BuffTxICThunk {
 	  buffTxICData :: TxICThunkData l a
 	, buffTxICTree :: FSTree TxICFS -- latest change to the thunk
-	, buffTxICDeltaTree :: ForestL TxICFS l (FSTree TxICFS) -- latest recursive change
+	, buffTxICDeltaTree :: FSTree TxICFS -- latest recursive change
 	, buffTxICParents :: TxICParents -- parent thunks
 	} deriving Typeable
 
@@ -570,19 +570,19 @@ dirtyTxICParents :: FSTree TxICFS -> TxICParents -> ForestM TxICFS ()
 dirtyTxICParents tree parents = WeakMap.mapM_' forestIO dirty parents where
 	dirty (uid,_) = do
 		(b,parents) <- changeTxICThunkM uid $ \buff -> do
-			oldtree <- buffTxICDeltaTree buff
+			let oldtree = buffTxICDeltaTree buff
 			let b = oldtree >= tree -- stop if the the current dirty tree is newer than the tree we are trying to dirty the node with
-			let buff' = if b then buff else buff { buffTxICDeltaTree = return tree }
+			let buff' = if b then buff else buff { buffTxICDeltaTree = tree }
 			return (buff',(b,parents))
 		unless b $ dirtyTxICParents tree parents
 
 class AddTxICParent l a where
-	addTxICParent :: Proxy l -> TxICStone -> Unique -> ForestL TxICFS l (FSTree TxICFS) -> a -> ForestL TxICFS l (ForestL TxICFS l (FSTree TxICFS))
+	addTxICParent :: Proxy l -> TxICStone -> Unique -> FSTree TxICFS -> a -> ForestL TxICFS l (FSTree TxICFS)
 
 addTxICParentProxy :: Proxy l -> Proxy (AddTxICParentDict l)
 addTxICParentProxy _ = Proxy
 
-data AddTxICParentDict l a = AddTxICParentDict { addTxICParentDictDict :: Proxy l -> TxICStone -> Unique -> ForestL TxICFS l (FSTree TxICFS) -> a -> ForestL TxICFS l (ForestL TxICFS l (FSTree TxICFS)) }
+data AddTxICParentDict l a = AddTxICParentDict { addTxICParentDictDict :: Proxy l -> TxICStone -> Unique -> FSTree TxICFS -> a -> ForestL TxICFS l (FSTree TxICFS) }
 
 instance (AddTxICParent l a) => Sat (AddTxICParentDict l a) where
 	dict = AddTxICParentDict { addTxICParentDictDict = addTxICParent }
@@ -592,18 +592,20 @@ instance (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => AddTxI
 		(thunk :: TxICThunk l a) <- forestM $ bufferedTxICFSThunk var
 		let add buff = do
 			forestM $ forestIO $ WeakMap.insertWithMkWeak (buffTxICParents buff) (MkWeak $ mkWeakRefKey stone) uid ()
-			return (buff,treeTxICThunk thunk)
+			tree <- treeTxICThunk thunk
+			return (buff,tree)
 		changeTxICThunk thunk add
 instance (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => AddTxICParent l (ForestHSThunk TxICFS l a) where
 	addTxICParent proxy stone uid z (var :: ForestHSThunk TxICFS l a) = do
 		(thunk :: TxICThunk l a) <- forestM $ bufferedTxICHSThunk var
 		let add buff = do
 			forestM $ forestIO $ WeakMap.insertWithMkWeak (buffTxICParents buff) (MkWeak $ mkWeakRefKey stone) uid ()
-			return (buff,treeTxICThunk thunk)
+			tree <- treeTxICThunk thunk
+			return (buff,tree)
 		changeTxICThunk thunk add
 instance (MData (AddTxICParentDict l) (ForestL TxICFS l) a) => AddTxICParent l a where
 	addTxICParent proxy stone meta z x = do
-		let f m1 m2 = m1 >>= \t1 -> m2 >>= \t2 -> return $ return $ max t1 t2
+		let f t1 t2 = return $ max t1 t2
 		gmapQr (addTxICParentProxy proxy) f z (addTxICParentDictDict dict proxy stone meta z) x
 
 newTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => l (IncForest TxICFS) IORef IO a -> FSTree TxICFS -> ForestM TxICFS (TxICThunk l a)
@@ -611,15 +613,15 @@ newTxICThunk m tree = do
 	uid <- forestIO $ newUnique
 	stone <- forestIO $ newRef uid
 	let dta = TxICThunkComp m
-	let delta = return tree
+	let delta = tree
 	parents <- forestIO $ WeakMap.new
 	let thunk = TxICThunk stone
 	let buff = BuffTxICThunk dta tree delta parents
 	bufferTxICThunk thunk buff
 	return thunk
 
-readTxICThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => TxICThunk l a -> ForestL TxICFS l (FSTree TxICFS) -> ForestL TxICFS l (a,ForestL TxICFS l (FSTree TxICFS))
-readTxICThunk t mtree = do
+readTxICThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => TxICThunk l a -> FSTree TxICFS -> ForestL TxICFS l (a,FSTree TxICFS)
+readTxICThunk t tree = do
 	let eval buff = case buffTxICData buff of
 		TxICThunkComp force -> do
 			a <- force
@@ -627,9 +629,9 @@ readTxICThunk t mtree = do
 			let dta' = TxICThunkForce a stone
 			uid <- forestM $ forestIO $ readRef $ txICId t
 			-- add current thunk as a parent of its content thunks
-			deltatree <- addTxICParent Proxy stone uid mtree a
+			deltatree <- addTxICParent Proxy stone uid tree a
 			return (buff { buffTxICData = dta', buffTxICDeltaTree = deltatree },(a,deltatree))
-		TxICThunkForce a stone -> return (buff,(a,mtree))
+		TxICThunkForce a stone -> return (buff,(a,tree))
 	changeTxICThunk t eval
 
 changeTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => TxICThunk l a -> (BuffTxICThunk l a -> ForestL TxICFS l (BuffTxICThunk l a,b)) -> ForestL TxICFS l b
@@ -655,10 +657,10 @@ writeTxICThunk var a = do
 		let dta' = TxICThunkForce a stone
 		uid <- forestM $ forestIO $ readRef $ txICId var
 		-- mark the written thunk as a parent to its content thunks
-		_ <- addTxICParent Proxy stone uid (return newtree) a
+		_ <- addTxICParent Proxy stone uid newtree a
 		-- dirty the parents of the written thunk
 		forestM $ dirtyTxICParents newtree (buffTxICParents buff)
-		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = return newtree },())
+		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = newtree },())
 	outside $ changeTxICThunk var set
 
 -- lazy variable write (expression)
@@ -670,7 +672,7 @@ overwriteTxICThunk var ma = do
 		-- dirty the parents of the written thunk
 		forestM $ dirtyTxICParents newtree (buffTxICParents buff)
 		-- assuming that this is only used by loadDelta at the latest tree
-		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = return newtree },())
+		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = newtree },())
 		-- whenever we want to know the latest modification for the written thunk, we have to force a read and check its content thunks
 		--return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = join $ liftM snd $ readTxICThunk var (return newtree) },())
 	outside $ changeTxICThunk var set
@@ -684,7 +686,7 @@ instance ZippedICMemo TxICFS where
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestM $ forestIO $ readRef txlog
 		
-		-- remember the arguments (only for the first time since this is how we connect transactional arguments to transactional variables)
+		-- remember the arguments (this is how we connect transactional arguments to transactional variables)
 		let txargs = (toDyn args,path)
 		forestM $ forestIO $ writeRef (txICFSThunkArgs var) $ Just txargs
 		
@@ -735,7 +737,8 @@ instance Thunk (HSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 		return var
 	read var = do
 		thunk <- forestM $ bufferedTxICHSThunk var
-		liftM fst $ readTxICThunk thunk (forestM latestTree)
+		tree <- forestM $ latestTree
+		liftM fst $ readTxICThunk thunk tree
 instance Thunk (HSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 	new m = do
 		tree <- forestM $ latestTree
@@ -747,7 +750,8 @@ instance Thunk (HSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 		return var
 	read var = do
 		thunk <- forestM $ bufferedTxICHSThunk var
-		liftM fst $ readTxICThunk thunk (forestM latestTree)
+		tree <- forestM $ latestTree
+		liftM fst $ readTxICThunk thunk tree
 
 instance TxICLayer l => Thunk (ICThunk TxICFS) l (IncForest TxICFS) IORef IO where
 	new m = return $ TxICICThunk m
@@ -768,7 +772,8 @@ instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 	-- read on the internal thunk, not on the latest filesystem
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
-		liftM fst $ readTxICThunk thunk (forestM latestTree)
+		tree <- forestM $ latestTree
+		liftM fst $ readTxICThunk thunk tree
 instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 	new m = do
 		tree <- forestM $ latestTree
@@ -781,7 +786,8 @@ instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 	-- read on the internal thunk, not on the latest filesystem
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
-		liftM fst $ readTxICThunk thunk (forestM latestTree)
+		tree <- forestM $ latestTree
+		liftM fst $ readTxICThunk thunk tree
 
 instance Input (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 	ref c = Inc.new (return c)
