@@ -127,7 +127,6 @@ tmpValid tmps swatlines =
 
 [forest|
          type PCP = TextFile
-         type PCPs (cio :: Preamble) = [f :: PCP | f <- matches <|GL "*.pcp" |>] where <| pcpValid this (swatLines cio) |>
 
          type FIG = TextFile
          type CST = TextFile
@@ -146,21 +145,21 @@ tmpValid tmps swatlines =
 
          type Swat_d = Directory 
 	     { cio is "file.cio" :: File Preamble
-	     , pcps :: PCPs cio
-             , tmps :: TMPs cio
-             , fig is <| figFile $ swatLines cio |> :: FIG
-             , cst matches <| RE (cstFile $ swatLines cio) |> :: Maybe CST
-             , wnd matches <| RE (wndFile $ swatLines cio) |> :: Maybe WND
-             , rhf matches <| RE (rhFile $ swatLines cio) |> :: Maybe RH
-             , slr matches <| RE (slrFile $ swatLines cio) |> :: Maybe SLR
-             , bsn is <| bsnFile $ swatLines cio |> :: BSN
-             , plant is <| plantFile $ swatLines cio |> :: PLANT
-             , till is <| tillFile $ swatLines cio |> :: TILL
-             , pest is <| pestFile $ swatLines cio |> :: PEST
-             , fert is <| fertFile $ swatLines cio |> :: FERT
-             , urban is <| urbanFile $ swatLines cio |> :: URBAN
-             , all_files  is [ f :: TextFile     | f <- matches <|GL "*"|> ]
-             } 
+	     , pcps is [f :: PCP | f <- matches <|GL "*.pcp" |>]
+         , tmps :: TMPs cio
+         , fig is <| figFile $ swatLines cio |> :: FIG
+         , cst matches <| RE (cstFile $ swatLines cio) |> :: Maybe CST
+         , wnd matches <| RE (wndFile $ swatLines cio) |> :: Maybe WND
+         , rhf matches <| RE (rhFile $ swatLines cio) |> :: Maybe RH
+         , slr matches <| RE (slrFile $ swatLines cio) |> :: Maybe SLR
+         , bsn is <| bsnFile $ swatLines cio |> :: BSN
+         , plant is <| plantFile $ swatLines cio |> :: PLANT
+         , till is <| tillFile $ swatLines cio |> :: TILL
+         , pest is <| pestFile $ swatLines cio |> :: PEST
+         , fert is <| fertFile $ swatLines cio |> :: FERT
+         , urban is <| urbanFile $ swatLines cio |> :: URBAN
+         , all_files  is [ f :: TextFile     | f <- matches <|GL "*"|> ]
+         } where <| pcpValid (pcps this) (swatLines $ cio this) |>
 |]
 
 get :: FilePath -> IO Swat_d

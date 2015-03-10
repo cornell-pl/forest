@@ -337,7 +337,8 @@ param = do { str <- manyTill anyChar (reservedOp "=")
 
 replaceName :: String -> ForestTy -> ForestTy
 replaceName str ty = case ty of
-  Directory (Record _ body) -> Directory(Record str body)
+  Directory (Record _ body) -> Directory (Record str body)
+  FConstraint pat (Directory (Record _ body)) pred -> FConstraint pat (Directory (Record str body)) pred
   otherwise -> ty
 
 

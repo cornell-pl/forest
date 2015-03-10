@@ -176,9 +176,8 @@ do { man2P <- setManifestRoot mdE man1E
 wrapRepP :: Name -> ForestTy -> TH.Pat -> TH.Pat
 wrapRepP repN fty repP = case fty of
   Directory _ -> repP
+  (FConstraint pat (Directory _) pred) -> repP
   otherwise   -> ConP repN [repP]
-
-
 
 writeE' :: (ForestTy, TH.Exp, TH.Exp, TH.Exp) -> Q TH.Exp
 writeE' (forestTy, repE, mdE, manE) = case forestTy of
@@ -391,6 +390,7 @@ genLoadBody pathE repN mdN ty = do
    rhsE        <- loadE ty pathE
    case ty of 
      Directory _ -> return rhsE
+     (FConstraint pat (Directory _) pred) -> return rhsE
      otherwise   -> do                  -- Add type constructor
           repName     <- genRepName 
           mdName      <- genMdName 
@@ -711,19 +711,18 @@ mkStrLitM s = LitE (StringL s)
 genRepMDDecl :: ForestTy -> Name -> Name -> Q (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDecl ty ty_name md_ty_name = case ty of
   Directory dirTy -> genRepMDDir dirTy ty_name md_ty_name
+  (FConstraint _ (Directory dirTy) _) -> genRepMDDir dirTy ty_name md_ty_name
   others          -> do (rep,md) <- genRepMDTy others
                         return (mk_newTyD ty_name rep, [mk_TySynD md_ty_name md], md) 
 
 {- Generate a representation and meta-data type for maybe. -}
 genRepMDMaybe :: ForestTy -> Q (TH.Type, TH.Type)
 genRepMDMaybe ty = do
-  { (rep_orig, md_orig) <- genRepMDTy ty
-  ; let rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
-  ; let md'_ty = AppT (ConT ''Maybe) md_orig                  -- underyling md is Maybe of md of nested type
-  ; let md_ty  = tyListToTupleTy [ConT ''Forest_md, md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
-  ; return (rep_ty, md_ty)
-  }
-
+	(rep_orig, md_orig) <- genRepMDTy ty
+	let rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
+	let md'_ty = AppT (ConT ''Maybe) md_orig                  -- underyling md is Maybe of md of nested type
+	let md_ty  = tyListToTupleTy [ConT ''Forest_md, md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
+	return (rep_ty, md_ty)
 
 genRepMDDir :: DirectoryTy -> Name -> Name -> Q (TH.Dec, [TH.Dec], TH.Type)
 genRepMDDir ty ty_name md_ty_name = case ty of
