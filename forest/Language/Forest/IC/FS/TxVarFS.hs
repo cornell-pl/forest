@@ -75,6 +75,8 @@ import Safe
 import Control.Monad.Catch as Catch
 import System.Mem.Concurrent.WeakMap as WeakMap
 
+import qualified Control.Concurrent.STM as STM
+
 type instance IncK (IncForest TxVarFS) a = (Typeable a,Eq a)
 
 proxyTxVarFS = Proxy :: Proxy TxVarFS
@@ -407,7 +409,7 @@ instance TxICForest TxVarFS where
 	delete = deleteTxVarFS Proxy
 	copyOrElse = copyOrElseTxVarFS Proxy
 
-deleteTxVarFS :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => Proxy args -> rep -> TxVarFTM ()
+deleteTxVarFS :: (FTK TxVarFS args rep var content) => Proxy args -> rep -> TxVarFTM ()
 deleteTxVarFS proxy (rep :: rep) = do
 	mb <- forestM $ getFTVArgs proxy rep
 	case mb of
@@ -415,11 +417,11 @@ deleteTxVarFS proxy (rep :: rep) = do
 		Just (args,path) -> do
 			def_rep :: rep <- inside $ zdefaultScratchMemo proxy args path
 			var <- Inc.getOutside $ to iso_rep_thunk def_rep
-			str <- showInc def_rep
-			forestM $ forestIO $ print str
+--			str <- showInc def_rep
+--			forestM $ forestIO $ print str
 			writeOrElseTxVarFS' rep var () (error "failed to write")
 
-copyOrElseTxVarFS :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+copyOrElseTxVarFS :: (FTK TxVarFS args rep var content) => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 copyOrElseTxVarFS proxy src tgt b f = do
 	mb_src <- forestM $ getFTVArgs proxy src
 	mb_tgt <- forestM $ getFTVArgs proxy tgt
@@ -785,16 +787,16 @@ commitTxVarFSLog starttime doWrites txlog = do
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
 
---globalLock :: Lock
---globalLock = unsafePerformIO $ Lock.new
+type FLock = STM.TMVar ()
 
-type FLock = MVar ()
-
-newFLock = newMVar ()
-waitFLock mv = Exception.mask_ $ takeMVar mv >> putMVar mv ()
-acquireFLock = takeMVar
+newFLockIO = STM.newTMVarIO ()
+waitOrRetryFLock :: FLock -> STM.STM ()
+waitOrRetryFLock mv = STM.tryTakeTMVar mv >>= maybe STM.retry (STM.putTMVar mv)
+acquireFLock = STM.takeTMVar
+acquireOrRetryFLock :: FLock -> STM.STM ()
+acquireOrRetryFLock = STM.tryTakeTMVar >=> maybe STM.retry return
 releaseFLock mv = do
-	b <- tryPutMVar mv ()
+	b <- STM.tryPutTMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
 fileLocks :: CWeakMap.WeakMap FilePath FLock
@@ -802,37 +804,31 @@ fileLocks = unsafePerformIO $ CWeakMap.empty
 
 -- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
 fileLock :: FilePath -> IO FLock
-fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLock (\v -> MkWeak $ mkWeakKey v)
+fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLockIO (\v mb -> STM.mkWeakTMVar v (maybe (return ()) id mb))
 
 atomicTxVarFS :: String -> TxVarFTM a -> TxVarFTM a
 atomicTxVarFS msg m = do
 	-- get the changes of the innermost txlog
 	(reads,writes) <- forestM getTxVarFSChangesFlat
 	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
-	waitFileLocks reads
 	forestM $ forestIO $ print $ "entering atomic " ++ msg
-	x <- withFileLocks writes m
+	x <- withFileLocks reads writes m
 	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 
-waitFileLocks :: Set FilePath -> TxVarFTM ()
-waitFileLocks = inL . liftIO . Foldable.mapM_ (waitFLock <=< fileLock) . Set.toAscList
-
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
-withFileLocks :: Set FilePath -> TxVarFTM a -> TxVarFTM a
-withFileLocks paths m = do
-	lcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList paths
-	liftA2 Catch.bracket_ (inL . liftIO . Foldable.mapM_ acquireFLock) (inL . liftIO . Foldable.mapM_ releaseFLock) lcks m
-
---withLock :: Lock -> TxVarFTM a -> TxVarFTM a
---withLock = liftA2 Catch.bracket_ (forestM . forestIO . Lock.acquire) (forestM . forestIO . Lock.release)
-
----- acquiring the locks in sorted order is essential to avoid deadlocks!
---withFileLocksTxVarFS :: Set FilePath -> TxVarFTM a -> TxVarFTM a
---withFileLocksTxVarFS paths = Catch.bracket (inL $ Foldable.foldlM (\xs path -> liftM (:xs) $ FileLock.lock path WriteLock) [] paths) (inL . Foldable.mapM_ FileLock.unlock) . Prelude.const
---
---waitFileLock :: MonadIO m => FilePath -> m ()
---waitFileLock path = liftIO $ Control.Exception.mask_ $ FileLock.lock path WriteLock >>= FileLock.unlock
+withFileLocks :: Set FilePath -> Set FilePath -> TxVarFTM a -> TxVarFTM a
+withFileLocks reads writes m = do
+	rcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList reads
+	wcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList writes
+		
+	let waitAndAcquire wcks = inL $ liftIO $ STM.atomically $ do
+		-- wait on read locks
+		Foldable.mapM_ waitOrRetryFLock rcks
+		-- acquire write locks or retry
+		Foldable.mapM_ acquireOrRetryFLock wcks
+		
+	liftA2 Catch.bracket_ waitAndAcquire (inL . liftIO . STM.atomically . Foldable.mapM_ releaseFLock) wcks m
 
 debugChanges :: String -> TxVarFTM a -> TxVarFTM a
 debugChanges str m = do

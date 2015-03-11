@@ -7,6 +7,7 @@ module Language.Forest.IC.FS.TxICFS (
 	TxICForest(..)
 ) where
 
+import qualified Control.Concurrent.STM as STM
 import Control.Monad.RWS (RWS(..),RWST(..))
 import qualified Control.Monad.RWS as RWS
 import Control.Monad.Writer (Writer(..),WriterT(..))
@@ -234,18 +235,12 @@ type TxId = Unique
 -- a transaction-local version number that is incremented on writes
 type FSVersion = Int
 
-instance Eq (FSTree TxICFS) where
-	(TxICFSTree txid1 fsv1 _ virtual1 sym1) == (TxICFSTree txid2 fsv2 _ virtual2 sym2) = txid1 == txid2 && fsv1 == fsv2 && virtual1 == virtual2
-
 instance MonadReader TxICFSEnv (ForestM TxICFS) where
 	ask = TxICFSForestM ask
 	local f (TxICFSForestM m) = TxICFSForestM $ local f m
-
+	
 instance Show (FSTree TxICFS) where
 	show tree = "FSTreeTxICFS " ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree)
-
-instance Ord (FSTree TxICFS) where
-	tree1 <= tree2 = (fsTreeTxId tree1,fsTreeFSVersion tree1,fsTreeVirtual tree1) <= (fsTreeTxId tree2,fsTreeFSVersion tree2,fsTreeVirtual tree2)
 
 -- the root directory for transactional forest (it can't modify data not under this path)
 {-# NOINLINE root #-}
@@ -283,6 +278,10 @@ instance FSRep TxICFS where
 		, fsTreeVirtual :: Bool -- virtual flag
 		, fsTreeSym :: IORef (DList FSDelta,FSTreeSym) -- a sequence of symlink modifications since the start and the symlinks table at the time of this tree
 		}
+	
+	compareFSTree tree1 tree2 = return $ compare
+		(fsTreeTxId tree1,fsTreeFSVersion tree1,fsTreeVirtual tree1)
+		(fsTreeTxId tree2,fsTreeFSVersion tree2,fsTreeVirtual tree2)
 	
 	-- log the modifications
 	-- writes come only from manifests, for which we have already canonized the paths
@@ -484,11 +483,9 @@ diffValueThunkTxICFS isTop oldtree rep = do
 		thunk <- forestM $ bufferedTxICFSThunk $ to iso_rep_thunk rep
 		uid <- forestM $ forestIO $ readRef $ txICId thunk
 		(buff :: BuffTxICThunk Inside content) <- forestM $ bufferedTxICThunk thunk
-		if isTop
-			then return $ ValueDeltaTxICFS $ oldtree == buffTxICTree buff
-			else do
-				let newtree = buffTxICDeltaTree buff
-				return $ ValueDeltaTxICFS $ oldtree == newtree
+		let newtree = if isTop then buffTxICTree buff else buffTxICDeltaTree buff
+		cmp <- forestM $ compareFSTree oldtree newtree
+		return $ ValueDeltaTxICFS $ cmp == EQ
 	
 -- arguments passed to transactional variables
 type TxICArgs = (Dynamic,FilePath)
@@ -571,7 +568,9 @@ dirtyTxICParents tree parents = WeakMap.mapM_' forestIO dirty parents where
 	dirty (uid,_) = do
 		(b,parents) <- changeTxICThunkM uid $ \buff -> do
 			let oldtree = buffTxICDeltaTree buff
-			let b = oldtree >= tree -- stop if the the current dirty tree is newer than the tree we are trying to dirty the node with
+			-- stop if the the current dirty tree is newer than the tree we are trying to dirty the node with
+			cmp <- forestM $ compareFSTree oldtree tree
+			let b = cmp > LT
 			let buff' = if b then buff else buff { buffTxICDeltaTree = tree }
 			return (buff',(b,parents))
 		unless b $ dirtyTxICParents tree parents
@@ -603,9 +602,9 @@ instance (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => AddTxI
 			tree <- treeTxICThunk thunk
 			return (buff,tree)
 		changeTxICThunk thunk add
-instance (MData (AddTxICParentDict l) (ForestL TxICFS l) a) => AddTxICParent l a where
+instance (ForestLayer TxICFS l,MData (AddTxICParentDict l) (ForestL TxICFS l) a) => AddTxICParent l a where
 	addTxICParent proxy stone meta z x = do
-		let f t1 t2 = return $ max t1 t2
+		let f t1 t2 = forestM $ maxFSTree t1 t2
 		gmapQr (addTxICParentProxy proxy) f z (addTxICParentDictDict dict proxy stone meta z) x
 
 newTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => l (IncForest TxICFS) IORef IO a -> FSTree TxICFS -> ForestM TxICFS (TxICThunk l a)
@@ -1283,13 +1282,16 @@ commitTxICFSLog starttime doWrites txlog = do
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
 
-type FLock = MVar ()
+type FLock = STM.TMVar ()
 
-newFLock = newMVar ()
-waitFLock mv = Exception.mask_ $ takeMVar mv >> putMVar mv ()
-acquireFLock = takeMVar
+newFLockIO = STM.newTMVarIO ()
+waitOrRetryFLock :: FLock -> STM.STM ()
+waitOrRetryFLock mv = STM.tryTakeTMVar mv >>= maybe STM.retry (STM.putTMVar mv)
+acquireFLock = STM.takeTMVar
+acquireOrRetryFLock :: FLock -> STM.STM ()
+acquireOrRetryFLock = STM.tryTakeTMVar >=> maybe STM.retry return
 releaseFLock mv = do
-	b <- tryPutMVar mv ()
+	b <- STM.tryPutTMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
 fileLocks :: CWeakMap.WeakMap FilePath FLock
@@ -1297,24 +1299,28 @@ fileLocks = unsafePerformIO $ CWeakMap.empty
 
 -- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
 fileLock :: FilePath -> IO FLock
-fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLock (\v -> MkWeak $ mkWeakKey v)
+fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLockIO (\v mb -> STM.mkWeakTMVar v (maybe (return ()) id mb))
 
 atomicTxICFS :: String -> TxICFTM a -> TxICFTM a
 atomicTxICFS msg m = do
 	-- get the changes of the innermost txlog
 	(reads,writes) <- forestM getTxICFSChangesFlat
 	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
-	waitFileLocks reads
 	forestM $ forestIO $ print $ "entering atomic " ++ msg
-	x <- withFileLocks writes m
+	x <- withFileLocks reads writes m
 	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 
-waitFileLocks :: Set FilePath -> TxICFTM ()
-waitFileLocks = inL . liftIO . Foldable.mapM_ (waitFLock <=< fileLock) . Set.toAscList
-
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
-withFileLocks :: Set FilePath -> TxICFTM a -> TxICFTM a
-withFileLocks paths m = do
-	lcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList paths
-	liftA2 Catch.bracket_ (inL . liftIO . Foldable.mapM_ acquireFLock) (inL . liftIO . Foldable.mapM_ releaseFLock) lcks m
+withFileLocks :: Set FilePath -> Set FilePath -> TxICFTM a -> TxICFTM a
+withFileLocks reads writes m = do
+	rcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList reads
+	wcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList writes
+		
+	let waitAndAcquire wcks = inL $ liftIO $ STM.atomically $ do
+		-- wait on read locks
+		Foldable.mapM_ waitOrRetryFLock rcks
+		-- acquire write locks or retry
+		Foldable.mapM_ acquireOrRetryFLock wcks
+		
+	liftA2 Catch.bracket_ waitAndAcquire (inL . liftIO . STM.atomically . Foldable.mapM_ releaseFLock) wcks m

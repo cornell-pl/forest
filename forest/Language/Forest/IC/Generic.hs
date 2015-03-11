@@ -135,7 +135,7 @@ class TxICForest fs where
 	-- tries to modify a variable
 	-- the write only occurs if validation succeeds
 	-- if the new value is not a consistent view of the FS, an alternative action is run otherwise
-	writeOrElse :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
+	writeOrElse :: (FTK fs args rep var content) => rep -> content -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
 	-- read-only Forest error count
 	validate :: (ForestLayer fs l,FTK fs args rep var content) => rep -> ForestL fs l Forest_err
@@ -144,9 +144,9 @@ class TxICForest fs where
 	-- * An attempt to mimic regular filesystem operations, but over Forest specifications
 	
 	-- recursively deletes a variable from the filesystem; should always succeed
-	delete :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> FTM fs ()
+	delete :: (FTK fs args rep var content) => rep -> FTM fs ()
 	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
-	copyOrElse :: (Display Outside (IncForest fs) IORef IO rep,FTK fs args rep var content) => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
+	copyOrElse :: (FTK fs args rep var content) => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
 unsafeIOToFTM :: (TxICForest fs,ICRep fs) => IO a -> FTM fs a
 unsafeIOToFTM = forestM . forestIO

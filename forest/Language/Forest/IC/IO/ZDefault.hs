@@ -38,6 +38,7 @@ import Language.Forest.IC.Generic
 import Language.Forest.IC.ICRep
 import Control.Monad.Incremental
 import Language.Forest.IC.MetaData
+import Language.Forest.IC.Default
 import Data.WithClass.MData
 
 doZDefaultFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => ForestI fs arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
@@ -59,7 +60,8 @@ doZDefaultFile1' (marg) path = do
 	fmd' <- updateForestMDErrorsInsideWithPadsMD fmd $ return md
 	debug ("doZDefaultFile1 ") $ return $ ((fmd',md),rep)
 
-doZDefaultArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,ForestMD fs rep,ZippedICMemo fs) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
+doZDefaultArchive :: (
+	IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,ForestMD fs rep,ZippedICMemo fs) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
 doZDefaultArchive path doContent = do
 	let argsProxy = Proxy :: Proxy ()
 	rep_thunk <- fsThunk $ doZDefaultArchiveInner path doContent

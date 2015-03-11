@@ -7,6 +7,7 @@ module Language.Forest.IC.FS.TxNILFS (
 	TxICForest(..)
 ) where
 	
+import qualified Control.Concurrent.STM as STM
 import Data.Monoid as Monoid
 import Language.Forest.FS.NILFS
 import Control.Monad.RWS (RWS(..),RWST(..))
@@ -224,18 +225,23 @@ getNextFSTree = do
 	return newtree
 
 incrementTxNILFSTree :: MonadReader TxNILFSEnv (ForestM TxNILFS) => ForestM TxNILFS ()
-incrementTxNILFSTree = undefined
---	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
---	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
---	-- the new tree deltas are appended to the original deltas
---	nextTreeDeltas <- forestIO $ readRef (fsTreeFSTreeDelta tree) >>= newRef
---	nextSyms <- forestIO $ readIORef (fsTreeSym newtree) >>= newIORef
---	-- create the new pending tree
---	let nexttree = TxNILFSTree (fsTreeTxId newtree) (succ $ fsTreeFSVersion newtree) nextTreeDeltas (fsTreeVirtual newtree) nextSyms
---	-- add the relative deltas
---	tds <- forestIO $ readRef deltas
---	forestIO $ writeRef deltas $ Map.insert (fsTreeFSVersion newtree) ds tds
---	forestIO $ writeRef txlog (newtree,DList.empty,nexttree,reads,bufftbl,memotbl,tmps)
+incrementTxNILFSTree = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	-- the new tree deltas are appended to the original deltas
+	treeDelta <- forestIO $ fsTreeFSTreeDelta tree
+	nextTreeDeltas <- forestIO $ readRef treeDelta >>= newRef
+	newTreeSym <- forestIO $ fsTreeSym newtree
+	nextSyms <- forestIO $ readIORef newTreeSym >>= newIORef
+	-- create the new pending tree
+	newTreeSnap <- forestIO $ fsTreeSnapshot newtree
+	newTreeVersion <- forestIO $ fsTreeFSVersion newtree
+	newTreeVirtual <- forestIO $ fsTreeVirtual newtree
+	nexttree <- liftM FSTreeTxNILFS $ forestIO $ newIORef $ TxTree newTreeSnap (succ newTreeVersion) nextTreeDeltas newTreeVirtual nextSyms
+	-- add the relative deltas
+	tds <- forestIO $ readRef deltas
+	forestIO $ writeRef deltas $ Map.insert newTreeVersion ds tds
+	forestIO $ writeRef txlog (newtree,DList.empty,nexttree,reads,bufftbl,memotbl,tmps)
 
 -- only needs to read from the top-level log
 getTxNILFSChangesFlat :: ForestM TxNILFS TxNILFSChangesFlat
@@ -293,12 +299,12 @@ treeTxNILFSThunk thunk = do
 -- transaction unique id
 type TxId = Unique
 
-instance Eq (FSTree TxNILFS) where
---	(TxNILFSTree txid1 fsv1 _ virtual1 sym1) == (TxNILFSTree txid2 fsv2 _ virtual2 sym2) = txid1 == txid2 && fsv1 == fsv2 && virtual1 == virtual2
-
 instance MonadReader TxNILFSEnv (ForestM TxNILFS) where
 	ask = TxNILFSForestM ask
 	local f (TxNILFSForestM m) = TxNILFSForestM $ local f m
+
+instance Eq (FSTree TxNILFS) where
+--	(TxNILFSTree txid1 fsv1 _ virtual1 sym1) == (TxNILFSTree txid2 fsv2 _ virtual2 sym2) = txid1 == txid2 && fsv1 == fsv2 && virtual1 == virtual2
 
 instance Show (FSTree TxNILFS) where
 --	show tree = "FSTreeTxNILFS " ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree)
@@ -337,13 +343,16 @@ instance FSRep TxNILFS where
 	
 	-- registers a new temporary path
 	tempPath = forestIO getTempPath >>= \path -> putTxNILFSTmp path >> return path
---	-- change into AVFS mode
---	virtualTree tree = return $ tree { fsTreeVirtual = True }
---	latestTree = do
---		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
---		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
---		return tree
---	
+	-- change into AVFS mode
+	virtualTree (FSTreeTxNILFS tree) = do
+		t <- forestIO $ readIORef tree
+		let t' = t { txTreeVirtual = True }
+		liftM FSTreeTxNILFS $ forestIO $ newIORef t'
+	latestTree = do
+		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+		return tree
+	
 	-- reads from the FS or from the modification log
 	pathInTree path tree = do
 		-- canonize the fullpath for reads
@@ -1456,13 +1465,16 @@ commitTxNILFSLog starttime doWrites txlog = do
 	forestIO $ Foldable.mapM_ (\tmp -> runShellCommand_ $ "rm -rf " ++ tmp) tmps
 	return wakes
 
-type FLock = MVar ()
+type FLock = STM.TMVar ()
 
-newFLock = newMVar ()
-waitFLock mv = Exception.mask_ $ takeMVar mv >> putMVar mv ()
-acquireFLock = takeMVar
+newFLockIO = STM.newTMVarIO ()
+waitOrRetryFLock :: FLock -> STM.STM ()
+waitOrRetryFLock mv = STM.tryTakeTMVar mv >>= maybe STM.retry (STM.putTMVar mv)
+acquireFLock = STM.takeTMVar
+acquireOrRetryFLock :: FLock -> STM.STM ()
+acquireOrRetryFLock = STM.tryTakeTMVar >=> maybe STM.retry return
 releaseFLock mv = do
-	b <- tryPutMVar mv ()
+	b <- STM.tryPutTMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
 fileLocks :: CWeakMap.WeakMap FilePath FLock
@@ -1470,27 +1482,31 @@ fileLocks = unsafePerformIO $ CWeakMap.empty
 
 -- a reference to a lock lives as long as the lock itself, and the lock lives at least as long as it is acquired by a transaction
 fileLock :: FilePath -> IO FLock
-fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLock (\v -> MkWeak $ mkWeakKey v)
+fileLock path = CWeakMap.lookupOrInsert fileLocks path newFLockIO (\v mb -> STM.mkWeakTMVar v (maybe (return ()) id mb))
 
-atomicTxNILFS :: String -> TxNILFSFTM a -> TxNILFSFTM a
+atomicTxNILFS :: String -> FTM TxNILFS a -> FTM TxNILFS a
 atomicTxNILFS msg m = do
 	-- get the changes of the innermost txlog
 	(reads,writes) <- forestM getTxNILFSChangesFlat
 	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
-	waitFileLocks reads
 	forestM $ forestIO $ print $ "entering atomic " ++ msg
-	x <- withFileLocks writes m
+	x <- withFileLocks reads writes m
 	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 
-waitFileLocks :: Set FilePath -> TxNILFSFTM ()
-waitFileLocks = inL . liftIO . Foldable.mapM_ (waitFLock <=< fileLock) . Set.toAscList
-
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
-withFileLocks :: Set FilePath -> TxNILFSFTM a -> TxNILFSFTM a
-withFileLocks paths m = do
-	lcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList paths
-	liftA2 Catch.bracket_ (inL . liftIO . Foldable.mapM_ acquireFLock) (inL . liftIO . Foldable.mapM_ releaseFLock) lcks m
+withFileLocks :: Set FilePath -> Set FilePath -> FTM TxNILFS a -> FTM TxNILFS a
+withFileLocks reads writes m = do
+	rcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList reads
+	wcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList writes
+		
+	let waitAndAcquire wcks = inL $ liftIO $ STM.atomically $ do
+		-- wait on read locks
+		Foldable.mapM_ waitOrRetryFLock rcks
+		-- acquire write locks or retry
+		Foldable.mapM_ acquireOrRetryFLock wcks
+		
+	liftA2 Catch.bracket_ waitAndAcquire (inL . liftIO . STM.atomically . Foldable.mapM_ releaseFLock) wcks m
 
 {-# NOINLINE nilfsData #-}
 nilfsData :: NILFSData
