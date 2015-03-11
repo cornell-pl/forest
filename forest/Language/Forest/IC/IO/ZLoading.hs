@@ -58,7 +58,8 @@ import Data.Proxy
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- Pads errors contribute to the Forest error count
-doZLoadFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
+doZLoadFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
 	Proxy pads -> ForestI fs arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZLoadFile1 (repProxy :: Proxy pads) (marg :: ForestI fs arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
@@ -88,7 +89,7 @@ doZLoadFile1 (repProxy :: Proxy pads) (marg :: ForestI fs arg) oldpath_f path (t
 		return (rep_thunk)
 
 	oldpath <- oldpath_f path
-	mb <- findZippedMemo argProxy oldpath fsrepProxy 
+	mb <- findZippedMemo argProxy oldpath fsrepProxy -- find a move
 	rep <- case mb of
 		(Just (memo_tree,memo_marg,memo_rep)) -> do
 			memo_arg <- memo_marg
@@ -159,39 +160,40 @@ doZLoadArchive isClosed (repProxy :: Proxy rep) exts oldpath_f path (tree :: FST
 	-- static loading
 	let load_folder = fsThunk $ doZLoadArchiveInner exts oldpath_f path tree getMD loadGood loadBad
 		
-	if isClosed
-		then do
-			oldpath <- oldpath_f path
-			mb <- findZippedMemo argsProxy oldpath fsrepProxy
-			rep <- case mb of
-				Just (memo_tree,(),memo_rep_thunk) -> do
-	
-					md@(fmd,irep) <- Inc.get memo_rep_thunk
-					
-					avfsTree <- forestM $ virtualTree tree
-					avfsOldTree <- forestM $ virtualTree memo_tree
-					let oldpathC = cardinalPath oldpath
-					let pathC = cardinalPath path
-					archiveDf <- forestM $ focusDiffFSTreeD memo_tree oldpathC tree pathC
-					
-					unsafeWorld $ do
-						dv <- diffValue memo_tree irep
-						direp <- liftM toNSValueDelta $ loadD (return oldpathC) pathC (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree dv
-						case (oldpath==path,direp) of
-							(True,StableVD _) -> do
-								fmd' <- inside $ getForestMDInTree path tree
-								replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors fmd'
-								updateForestMDErrorsWith fmd $ liftM (:[]) $ get_errors irep
-							otherwise -> do
-								fmd' <- inside $ getForestMDInTree path tree
-								let irep' = applyNSValueDelta direp irep
-								updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors irep' -- like a directory
-								set memo_rep_thunk (fmd',irep')
-					return memo_rep_thunk
-				Nothing -> load_folder
-			addZippedMemo path argsProxy () rep (Just tree)
-			return rep
-		else load_folder
+--	if isClosed
+--		then do
+--			oldpath <- oldpath_f path
+--			mb <- findZippedMemo argsProxy oldpath fsrepProxy -- find a move
+--			rep <- case mb of
+--				Just (memo_tree,(),memo_rep_thunk) -> do
+--	
+--					md@(fmd,irep) <- Inc.get memo_rep_thunk
+--					
+--					avfsTree <- forestM $ virtualTree tree
+--					avfsOldTree <- forestM $ virtualTree memo_tree
+--					let oldpathC = cardinalPath oldpath
+--					let pathC = cardinalPath path
+--					archiveDf <- forestM $ focusDiffFSTreeD memo_tree oldpathC tree pathC
+--					
+--					unsafeWorld $ do
+--						dv <- diffValue memo_tree irep
+--						direp <- liftM toNSValueDelta $ loadD (return oldpathC) pathC (irep,getForestMDInTree) avfsOldTree archiveDf avfsTree dv
+--						case (oldpath==path,direp) of
+--							(True,StableVD _) -> do
+--								fmd' <- inside $ getForestMDInTree path tree
+--								replaceForestMDErrorsWith fmd $ liftM (:[]) $ get_errors fmd'
+--								updateForestMDErrorsWith fmd $ liftM (:[]) $ get_errors irep
+--							otherwise -> do
+--								fmd' <- inside $ getForestMDInTree path tree
+--								let irep' = applyNSValueDelta direp irep
+--								updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors irep' -- like a directory
+--								set memo_rep_thunk (fmd',irep')
+--					return memo_rep_thunk
+--				Nothing -> load_folder
+--			addZippedMemo path argsProxy () rep (Just tree)
+--			return rep
+--		else
+	load_folder
 
 doZLoadArchiveInner :: (ForestMD fs rep,ICRep fs) =>
 	[ArchiveType] -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs

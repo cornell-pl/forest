@@ -343,6 +343,8 @@ class TxForest args ty rep | ty -> rep, ty -> args where
 In this signature, |ty| is an opaque transactional variable type that uniquely identifies a user-declared Forest type. Each transactional variables provides a window into the filesystem, shaped as a plain Haskell representation type |rep|.
 The representation type closely follows the declared Forest type, with additional file-content metadata for directories, files and symbolic links; directories have representations of type |(FileInfo,dir_rep)| and basic types have representations of type |((FileInfo,base_md),base_rep)|, for base representation |base_rep| and metadata |base_md|.
 
+\hugo{Shall we instead have type/data declaractions as in Pads, where only data declarations create new tx variables, to provide users more control? E.g., we currently have to create variables for top-level directory records since these need to be declared as top-level types.}
+
 \paragraph{Creation}
 The transactional forest programming style makes no distinction between data on the filesystem and in-memory.
 Anywhere inside a transaction, users can declare a |new| transactional variable, with argument data pertaining to the forest declaration and rooted at the argument path in the filesystem.
@@ -401,7 +403,7 @@ type Folder = Directory {
 Here, the file information for the |link| and |notes| fields must match.
 %For instance, in the universal description in Figure~\ref{fig:universal}, a symbolic link to an ASCII file in the same directory is mapped both under the |ascii_files| and |symlinks| fields.
 
-Akin to reactive environments like spreadsheets~\cite{Macedo:14}, each write takes \emph{immediate} effect on the (transactional snapshot of the) filesystem: an update on a variable is automatically propagated to the filesystem, eventually triggering the update of other variables dependent on common parts of the filesystem.
+Akin to reactive environments like (bidirectional) spreadsheets~\cite{Macedo:14}, each write takes \emph{immediate} effect on the (transactional snapshot of the) filesystem: an update on a variable is automatically propagated to the filesystem, eventually triggering the update of other variables dependent on common parts of the filesystem.
 We can observe this data flow by defining two accounts pointing to the same file and writing to one of them:
 \begin{spec}
 	acc1 :: Account <- new () "/var/db/accounts/account"
@@ -546,7 +548,7 @@ We split our presentation into three possible designs, with increasing levels of
 We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a private log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
 These validate-and-commit operations are guaranteed to run |atomic|ally in respect to all other threads by relying on per-shared-resource locks (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
 They are \emph{disjoint-access parallel} (meaning that transactions with non-overlapping writes run in parallel) and \emph{read parallel} (meaning that transactions that only read from the same resources run in parallel).
-The wait-and-acquire sequences are repeatedly attempted atomically, without interruption by the Haskell scheduler, and implemented using GHC's lightweight primitive transaction~\cite{HaskellLWC}.
+These wait-and-acquire sequences are repeatedly attempted atomically, without interruption by the Haskell scheduler, and implemented over GHC's lightweight concurrency substrate~\cite{HaskellLWC}.
 
 Blocking transactions (|retry|) validate their log and register themselves in wait-queues attached to each read resource; updating transactions unblock any pending waiters.
 Nested transactions (|orElse|) work similarly to normal transactions: writes are recorded only to a nested log and reads consult the logs of nested and all enclosing transactions. Validating a nested transaction also implies validating all enclosing transactions.

@@ -61,7 +61,8 @@ import qualified Data.Map as Map
 import Language.Forest.IC.IO.Memo
 import Language.Forest.IC.BX as BX
 
-doZLoadDeltaFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),rept ~ ForestFSThunkI fs ((Forest_md fs,md),pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md)
+doZLoadDeltaFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),rept ~ ForestFSThunkI fs ((Forest_md fs,md),pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md)
 	=> Bool -> ForestI fs arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
 	-> ForestO fs (SValueDelta rept)
 doZLoadDeltaFile1 isEmptyDArg (marg' :: ForestI fs arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
@@ -173,14 +174,14 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df (tree' :: FSTree fs) dv
 		path <- inside mpath
 		case (path == path',isIdValueDelta dv,df) of
 			(True,True,isEmptyFSTreeD fs -> True) -> do
-				when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
+--				when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
 				return Id
 			(True,True,isChgFSTreeD fs -> True) -> do
 				modify rep_thunk $ \(_,irep') -> do
 					fmd' <- getMD path' tree'
 					fmd'' <- updateForestMDErrorsInsideWith fmd' $ liftM (:[]) $ get_errors irep'
 					return (fmd'',irep')
-				when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
+--				when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
 				return Delta
 			
 			-- if the archive file has been moved, try to reuse originally loaded archive data
@@ -207,7 +208,7 @@ doZLoadDeltaArchive isClosed exts mpath path' oldtree df (tree' :: FSTree fs) dv
 						let irep' = applyNSValueDelta direp irep
 						updateForestMDErrorsWith fmd' $ liftM (:[]) $ get_errors irep' -- like a directory
 						set rep_thunk (fmd',irep')
-				when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
+--				when isClosed $ inside $ addZippedMemo path' argsProxy () rep_thunk (Just tree')
 				return Delta
 
 doZLoadDeltaSymLink :: (sym ~ ForestFSThunkI fs ((Forest_md fs,Base_md),FilePath),IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ForestInput fs FSThunk Inside,ICRep fs)

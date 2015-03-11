@@ -110,7 +110,7 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	eqFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Bool
 	compareFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Ordering
 
-	isUnevaluatedFSThunk :: (IncK (IncForest fs) a,ForestLayer fs l) => ForestFSThunk fs l a -> ForestL fs l Bool
+	isUnevaluatedFSThunk :: (IncK (IncForest fs) a,ForestLayer fs Inside) => ForestFSThunkI fs a -> ForestI fs Bool
 
 	-- | incremental computation thunks that depend on @FSThunk@s and cannot be directly modified, but are updated for changes on dependencies
 	data ICThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *

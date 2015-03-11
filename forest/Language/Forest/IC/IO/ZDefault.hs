@@ -41,7 +41,8 @@ import Language.Forest.IC.MetaData
 import Language.Forest.IC.Default
 import Data.WithClass.MData
 
-doZDefaultFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => ForestI fs arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
+doZDefaultFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => ForestI fs arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZDefaultFile1 (marg :: ForestI fs arg) path = do
 	let argProxy = Proxy :: Proxy (Pure.Arg arg)
 	rep_thunk <- fsThunk $ doZDefaultFile1' marg path
@@ -60,12 +61,11 @@ doZDefaultFile1' (marg) path = do
 	fmd' <- updateForestMDErrorsInsideWithPadsMD fmd $ return md
 	debug ("doZDefaultFile1 ") $ return $ ((fmd',md),rep)
 
-doZDefaultArchive :: (
-	IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,ForestMD fs rep,ZippedICMemo fs) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
-doZDefaultArchive path doContent = do
+doZDefaultArchive :: (IncK (IncForest fs) (Forest_md fs, rep),Typeable rep,ForestMD fs rep,ZippedICMemo fs) => Bool -> FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (ForestFSThunkI fs (Forest_md fs,rep))
+doZDefaultArchive isClosed path doContent = do
 	let argsProxy = Proxy :: Proxy ()
 	rep_thunk <- fsThunk $ doZDefaultArchiveInner path doContent
-	addZippedMemo path argsProxy () rep_thunk Nothing
+--	when isClosed $ addZippedMemo path argsProxy () rep_thunk Nothing
 	return rep_thunk
 
 doZDefaultArchiveInner :: (ForestMD fs rep,Input (FSThunk fs) Inside (IncForest fs) IORef IO) => FilePath -> (FilePath -> ForestI fs rep) -> ForestI fs (Forest_md fs,rep)

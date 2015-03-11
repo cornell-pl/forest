@@ -46,6 +46,10 @@ import Data.WithClass.MData
 import Language.Forest.FS.FSRep
 import Language.Forest.IC.ICRep
 import Language.Forest.IC.Generic
+import Language.Forest.IC.FS.TxVarFS
+import Language.Forest.IC.FS.TxICFS
+import Language.Forest.IC.FS.TxNILFS
+import Data.Typeable
 
 import Data.IORef
 import Control.Monad.Incremental

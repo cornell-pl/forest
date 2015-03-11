@@ -452,13 +452,13 @@ readTxVarFS proxy (rep :: rep) = do
 			return $ BX.get lens_content v'
 		Just v -> return $ BX.get lens_content v
 
-writeOrElseTxVarFS :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+writeOrElseTxVarFS :: (FTK TxVarFS args rep var content) => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS rep content b f = do
 	var <- Inc.getOutside $ to iso_rep_thunk rep
 	writeOrElseTxVarFS' rep (BX.put lens_content var content) b f
 
 -- does not change the inner computation; just sets the cached fsversion forward
-writeOrElseTxVarFS' :: (Display Outside (IncForest 'TxVarFS) IORef IO rep,FTK TxVarFS args rep var content) => rep -> var -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
+writeOrElseTxVarFS' :: (FTK TxVarFS args rep var content) => rep -> var -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS' rep var b f = do
 	let t = to iso_rep_thunk rep
 	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
@@ -475,8 +475,8 @@ writeOrElseTxVarFS' rep var b f = do
 	case mb of
 		Nothing -> rollback [ConflictingArguments] -- the top-level arguments of a variable don't match the spec
 		Just (args,path) -> do
-			str <- showInc rep
-			forestM $ forestIO $ putStrLn $ "mani  " ++ show str
+--			str <- showInc rep
+--			forestM $ forestIO $ putStrLn $ "mani  " ++ show str
 			(mani,_,memos) <- RWS.runRWST (zmanifest' (Proxy :: Proxy args) args path rep) True ()
 			-- we need to store the changes to the (buffered) FS before validating
 			forestM $ storeManifest mani

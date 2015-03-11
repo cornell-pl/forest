@@ -71,6 +71,9 @@ import Language.Forest.Errors
 import Language.Forest.IC.BX as BX
 import Control.Monad.Incremental.Display
 
+instance ForestContent Binary Binary where
+	lens_content = idLens
+
 type FTK fs args rep var content = (CopyFSThunks fs Outside rep,Eq rep,IncK (IncForest fs) var,IncK (IncForest fs) content,ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent var content,Typeable var)
 
 infoLens = (Lens fileInfo $ \fmd info' -> fmd { fileInfo = info'} ) 

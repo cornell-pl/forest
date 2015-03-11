@@ -171,8 +171,9 @@ zdefaultArchive isTop archtype ty pathE = do
 	let (newPathE, newPathP) = genPE newPathName
 	rhsE <- liftM (LamE [newPathP]) $ zdefaultE False ty newPathE
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
+	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
 	if isTop
-		then return $ Pure.appE2 (VarE 'doZDefaultArchive) pathE rhsE
+		then return $ Pure.appE3 (VarE 'doZDefaultArchive) isClosedE pathE rhsE
 		else return $ Pure.appE2 (VarE 'doZDefaultArchiveInner) pathE rhsE
 
 zdefaultMaybe :: Bool -> ForestTy -> Exp -> ZEnvQ Exp

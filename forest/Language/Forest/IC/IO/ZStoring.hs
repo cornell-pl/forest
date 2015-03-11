@@ -69,7 +69,8 @@ doZManifestArgs :: (ICRep fs,ForestArgs fs args) =>
 doZManifestArgs proxy margs rep manifestContent man = do
 	manifestContent rep man
 
-doZManifestFile1 :: (MData NoCtx (ForestI fs) arg,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Typeable arg,ZippedICMemo fs,ICRep fs,Pads1 arg pads md) => ForestI fs arg -> FilePath -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> Manifest fs -> MManifestForestO fs
+doZManifestFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+	,MData NoCtx (ForestI fs) arg,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Typeable arg,ZippedICMemo fs,ICRep fs,Pads1 arg pads md) => ForestI fs arg -> FilePath -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> Manifest fs -> MManifestForestO fs
 doZManifestFile1 (marg :: ForestI fs arg) path tree rep_t man = do
 	
 	repairMd <- Reader.ask
@@ -173,20 +174,20 @@ doZManifestArchive isClosed archTy path tree toprep manifest manifestD diffValue
 			
 			let mani_scratch = manifest arch_canpath avfsTree rep archiveManifest
 			
-			archiveManifest' <- if isClosed
-				then do
-					mb <- lift $ inside $ findZippedMemo argsProxy path repProxy
-					rep <- case mb of
-						Just (memo_tree,(),(== toprep) -> True) -> do
-							md@(fmd,irep) <- lift $ Inc.getOutside toprep
-							avfsOldTree <- lift $ forestM $ virtualTree memo_tree
-							archiveDf <- lift $ forestM $ focusDiffFSTreeD memo_tree arch_canpath tree arch_canpath
-							dv <- lift $ diffValue memo_tree irep
-							manifestD arch_canpath arch_canpath avfsOldTree archiveDf avfsTree irep dv archiveManifest
-						Nothing -> mani_scratch
-					Writer.tell $ inside . addZippedMemo path argsProxy () toprep . Just
-					return rep
-				else mani_scratch
+			archiveManifest' <- mani_scratch --if isClosed
+--				then do
+--					mb <- lift $ inside $ findZippedMemo argsProxy path repProxy
+--					rep <- case mb of
+--						Just (memo_tree,(),(== toprep) -> True) -> do
+--							md@(fmd,irep) <- lift $ Inc.getOutside toprep
+--							avfsOldTree <- lift $ forestM $ virtualTree memo_tree
+--							archiveDf <- lift $ forestM $ focusDiffFSTreeD memo_tree arch_canpath tree arch_canpath
+--							dv <- lift $ diffValue memo_tree irep
+--							manifestD arch_canpath arch_canpath avfsOldTree archiveDf avfsTree irep dv archiveManifest
+--						Nothing -> mani_scratch
+--					Writer.tell $ inside . addZippedMemo path argsProxy () toprep . Just
+--					return rep
+--				else mani_scratch
 			
 			-- NOTE: we only need to commit the writes that contribute to the new archive, inside the forest temp dir; if we chose otherwise we could unsafely commit to the filesystem!
 			man1 <- lift $ forestM $ storeManifestAt archiveDir archiveManifest' -- store the manifest at the temp dir, and return all the modifications outside the archive

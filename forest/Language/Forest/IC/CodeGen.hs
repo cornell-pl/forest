@@ -565,13 +565,27 @@ predTy (ClassP n tys) = appConT n tys
 appConT :: Name -> [Type] -> Type
 appConT con = Foldable.foldl' AppT (ConT con)
 
---instance (ForestDiff fs arg,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (ForestFSThunkI fs ((Forest_md fs, md), rep)),IncK (IncForest fs) arg,Eq rep,Eq md,IncK (IncForest fs) ((Forest_md fs, md), rep),MData NoCtx (ForestO fs) rep,MData NoCtx (ForestO fs) md,Data arg,Eq arg,MData NoCtx (ForestI fs) arg,ZippedICMemo fs,ICRep fs,Pads1 arg rep md) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),rep)) where
---	zloadScratch proxy marg pathfilter path tree getMD = marg >>= \arg -> doZLoadFile1 Proxy (Arg arg) pathfilter path tree getMD
---	zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = inside marg >>= \arg -> doZLoadDeltaFile1 (isEmptyDelta darg) (Arg arg) mpath path' tree df tree' dv (rep,getMD)
---	zupdateManifestScratch proxy marg path tree rep man = lift (inside marg) >>= \arg -> doZManifestFile1 (Arg arg) path tree rep man
---	zupdateManifestDelta proxy (marg,darg) path path' tree df tree' rep dv man = lift (inside marg) >>= \arg -> doZDeltaManifestFile1 (isEmptyDelta darg) (Arg arg) path path' tree df tree' rep dv man
---	zdefaultScratch proxy marg path = inside marg >>= \arg -> doZDefaultFile1 (Arg arg) path
---
+instance (
+	MData NoCtx (ForestI fs) arg,
+	IncK (IncForest fs) Forest_err,
+	IncK (IncForest fs) (ForestFSThunkI fs ((Forest_md fs, md), pads)),
+	IncK (IncForest fs) arg,
+	Eq arg,Data arg,
+	IncK (IncForest fs) ((Forest_md fs, md), pads),
+	IncK (IncForest fs) ((FileInfo, md), padsc),
+	ForestDiff fs arg,Eq md,Eq pads,Typeable arg,MData (CopyFSThunksDict fs Outside) (ForestO fs) md,
+	MData (CopyFSThunksDict fs Outside) (ForestO fs) pads,
+	MData NoCtx (ForestO fs) pads,
+	MData NoCtx (ForestO fs) md,
+	DeepTypeable md,DeepTypeable pads,
+	ForestContent pads padsc,ZippedICMemo fs,Pads1 arg pads md
+	) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) where
+		zloadScratch proxy marg pathfilter path tree getMD = doZLoadFile1 Proxy marg pathfilter path tree getMD
+		zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaFile1 (isEmptyDelta darg) marg mpath path' tree df tree' dv (rep,getMD)
+		zupdateManifestScratch proxy marg path tree rep man = doZManifestFile1 marg path tree rep man
+		zupdateManifestDelta proxy (marg,darg) path path' tree df tree' rep dv man = doZDeltaManifestFile1 (isEmptyDelta darg) marg path path' tree df tree' rep dv man
+		zdefaultScratch proxy marg path = doZDefaultFile1 marg path
+
 --instance (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (SymLink fs),IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ZippedICMemo fs,ICRep fs) => ZippedICForest fs () (ForestFSSymLinkE fs) where
 --	zloadScratch proxy args pathfilter path tree getMD = doZLoadSymLink path tree getMD
 --	zloadDelta proxy (margs,dargs) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaSymLink mpath path' tree df tree' dv (rep,getMD)

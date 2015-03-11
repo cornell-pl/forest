@@ -69,7 +69,8 @@ doZDeltaManifestArgs proxy (margs,_) rep dv manifestD (man :: Manifest fs) = deb
 	arg_thunks <- lift $ inside $ newArgs (Proxy :: Proxy fs) proxy margs -- creates new thunks to hold the new expressions
 	manifestD arg_thunks rep dv man
 
-doZDeltaManifestFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
+doZDeltaManifestFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
 	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> ValueDelta fs (ForestFSThunkI fs ((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
 doZDeltaManifestFile1 isEmptyDArg marg path path' (tree :: FSTree fs) df tree' rep_t dv man = do
 	let fs = Proxy :: Proxy fs
