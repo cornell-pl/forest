@@ -494,7 +494,7 @@ doZLoadDeltaFocus :: (DeltaClass d,Matching fs a,ForestMD fs rep) =>
 	-> ValueDelta fs rep
 	-> (ForestI fs FilePath -> FilePath -> FSTreeD fs -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> ForestO fs (d rep)
-doZLoadDeltaFocus mpath path' (rep,getMD) matching oldtree df tree' dv loadD = do
+doZLoadDeltaFocus mpath path' (rep,getMD) matching oldtree df tree' dv loadD = debug ("doZLoadDeltaFocus " ++ show path') $ do
 	
 	let mfile = do
 		path <- inside mpath
@@ -666,7 +666,7 @@ doZLoadDeltaCompoundFileWithConstraint :: (IncK (IncForest fs) FileInfo,DeltaCla
 	-> (key -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep)
 	-> (key -> key -> ForestFSThunkI fs FileInfo -> SValueDelta (ForestICThunkI fs FileInfo) -> (rep,GetForestMD fs) -> ForestI fs FilePath -> FilePath -> FSTreeD fs -> ValueDelta fs rep -> ForestO fs (d rep))
 	-> ForestO fs (Maybe (key,rep),ValueDeltaKind)
-doZLoadDeltaCompoundFileWithConstraint mpath path' file' key Nothing oldtree df (tree' :: FSTree fs) dv pred load loadD = debug ("doLoadDeltaCompoundFileNothing: "++show (path',file')) $ do
+doZLoadDeltaCompoundFileWithConstraint mpath path' file' key Nothing oldtree df (tree' :: FSTree fs) dv pred load loadD = debug ("doLoadDeltaCompoundFileNothingK: "++show (path',file')) $ do
 	path <- inside mpath
 	let fs = Proxy :: Proxy fs
 	-- try to reuse the original metadata (in this case it is not reused)
@@ -680,7 +680,7 @@ doZLoadDeltaCompoundFileWithConstraint mpath path' file' key Nothing oldtree df 
 				load key fileInfo_thunk newpath newGetMD
 			return (Just (key,rep'),NonStable)
 		else return (Nothing,NonStable)
-doZLoadDeltaCompoundFileWithConstraint mpath path' file' key (Just rep) oldtree df (tree' :: FSTree fs) dv pred load loadD = debug ("doLoadDeltaCompoundFile: "++show (path',file')) $ do
+doZLoadDeltaCompoundFileWithConstraint mpath path' file' key (Just rep) oldtree df (tree' :: FSTree fs) dv pred load loadD = debug ("doLoadDeltaCompoundFileK: "++show (path',file')) $ do
 	path <- inside mpath
 	let fs = Proxy :: Proxy fs
 	fmd <- getRelForestMDInTree path' tree' file'
@@ -707,7 +707,7 @@ zstopLoadIf :: (Typeable irep,IncK (IncForest fs) irep,ForestMD fs rep,ICRep fs,
 	-> (GetForestMD fs -> ForestI fs rep) -- static loading function
 	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (SValueDelta rep)) -- delta loading function
 	-> ForestO fs (SValueDelta rep)
-zstopLoadIf str isEmptyEnv mpath path' df (tree' :: FSTree fs) dv repmd load loadD = zskipLoadUnevaluated str tree' repmd load $ \newrepmd -> do
+zstopLoadIf str isEmptyEnv mpath path' df (tree' :: FSTree fs) dv repmd load loadD = zskipLoadUnevaluated str path' tree' repmd load $ \newrepmd -> do
 	let fs = Proxy :: Proxy fs
 	path <- inside mpath
 	zskipLoadIf3 str (isEmptyEnv && isIdValueDelta dv) (path == path') (isEmptyFSTreeD fs df) $ loadD dv newrepmd
@@ -718,11 +718,11 @@ zskipLoadIf3 str b1 b2 b3 io = if b1 && b2 && b3
 	else io
 	
 zskipLoadUnevaluated :: (Typeable irep,IncK (IncForest fs) irep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),ForestMD fs rep,StableMD fs rep) =>
-	String -> FSTree fs -> (rep,GetForestMD fs)
+	String -> FilePath -> FSTree fs -> (rep,GetForestMD fs)
 	-> (GetForestMD fs -> ForestI fs rep) -- static loading function
 	-> ((rep,GetForestMD fs) -> ForestO fs (SValueDelta rep)) -- delta loading function
 	-> ForestO fs (SValueDelta rep)
-zskipLoadUnevaluated str tree' olddata@(rep,getMD) load loadD = do 
+zskipLoadUnevaluated str path' tree' olddata@(rep,getMD) load loadD = debug ("zskipLoadUnevaluated "++show str++ " "++show path') $ do 
 	let rep_thunk = to iso_rep_thunk rep
 	cond1 <- inside $ isUnevaluatedFSThunk rep_thunk
 	if cond1

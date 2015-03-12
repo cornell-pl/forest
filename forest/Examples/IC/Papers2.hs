@@ -2,6 +2,8 @@
 
 module Examples.IC.Papers2 where
 
+import qualified Data.ByteString as B
+import qualified Control.Exception as E
 import Data.Hashable
 import Prelude hiding (mod,read,const)
 import qualified Prelude
@@ -10,6 +12,7 @@ import Control.Monad.Lazy
 import Control.Monad.Incremental.Display
 import Control.Monad.Reader (ReaderT(..))
 import qualified Control.Monad.Reader as Reader
+import Language.Forest.Pure.MetaData (cleanFileInfo)
 import Data.List
 import Data.Char
 import Data.Maybe
@@ -20,7 +23,7 @@ import System.Posix.Types
 import System.Mem.WeakKey
 import Data.Int
 import Data.IORef
-import Control.Monad.Incremental as Inc
+import Control.Monad.Incremental as Inc hiding (new)
 import qualified Data.Set as Set
 import Control.Monad.State as State
 
@@ -45,7 +48,7 @@ import System.Mem.MemoTable hiding (memo)
 import System.IO.Unsafe
 import System.Mem.StableName
 import System.Mem.Weak as Weak
-import System.Mem.WeakTable as WeakTable
+import qualified System.Mem.WeakTable as WeakTable
 import Language.Pads.Padsc as Pads hiding (numErrors)
 
 import Data.Typeable.Internal
@@ -62,7 +65,7 @@ import Language.Forest.IC hiding (Id)
 |]
 
 [iforest|
-	type Paper (y :: YearId) (a :: AuthorId) = BinaryFile where (isPaperOf (fullpath this_att) y a)
+	type Paper (y :: YearId) (a :: AuthorId) = File Binary where (isPaperOf (fullpath this_att) y a)
 
     type Supplemental (y :: YearId) (a :: AuthorId) = Directory {
 		supplementalFiles is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
@@ -145,12 +148,6 @@ toLowerString = map toLower
 
 foldr1Safe f [] = ""
 foldr1Safe f l = foldr1 f l
-
-
-papersDefaultRoot = "/home/hpacheco/Documents/Papers2"
-papersNILFSRoot = "/media/hpacheco/nilfs/Papers2"
-smallpapersNILFSRoot = "/media/hpacheco/nilfs/SmallPapers2"
-myDir = "/home/hpacheco/Forest"
 
 --papersErrors :: ICRep fs => ((Papers2 fs,Papers2_md fs),LoadInfo fs) -> ForestO fs ()
 --papersErrors ((rep,md),_) = do

@@ -169,8 +169,8 @@ fsThunk :: (IncK (IncForest fs) a,FSRep fs,ForestInput fs FSThunk l) => ForestL 
 fsThunk = mod
 icThunk :: (IncK (IncForest fs) a,FSRep fs,ForestOutput fs ICThunk l) => ForestL fs l a -> ForestL fs l (ForestICThunk fs l a)
 icThunk = thunk
-newHSThunk :: (IncK (IncForest fs) a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
-newHSThunk = new
+hsThunk :: (IncK (IncForest fs) a,ForestThunk fs HSThunk l,ForestLayer fs l) => ForestL fs l a -> ForestL fs l (ForestHSThunk fs l a)
+hsThunk = new
 
 deriving instance Typeable FSThunk
 deriving instance Typeable ICThunk

@@ -5,6 +5,7 @@
 
 module Language.Forest.IC.FS.TxVarFS (
 	TxICForest(..)
+	, proxyTxVarFS
 	) where
 		
 import Control.Monad.Incremental.Display
@@ -313,6 +314,9 @@ instance ICRep TxVarFS where
 
 	-- stores a computation and a concurrent map from @FSVersion@s to computed values
 	newtype FSThunk TxVarFS l inc r m a = TxVarFSThunk (IORef (Dynamic,FilePath),l inc r m a,WeakMap FSVersion a)
+
+	-- a rough estimate
+	isUnevaluatedFSThunk (TxVarFSThunk (args,m,entries)) = liftM Map.null $ forestM $ forestIO $ WeakMap.toMap entries
 
 	newtype HSThunk TxVarFS l inc r m a = TxVarHSThunk (IORef (Dynamic,FilePath),l inc r m a,WeakMap FSVersion a)
 	
@@ -812,7 +816,7 @@ atomicTxVarFS msg m = do
 	(reads,writes) <- forestM getTxVarFSChangesFlat
 	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
 	forestM $ forestIO $ print $ "entering atomic " ++ msg
-	x <- withFileLocks reads writes m
+	x <- withFileLocks reads writes $ forestM (forestIO $ print $ "entered atomic " ++ msg) >> m
 	forestM $ forestIO $ print $ "left atomic " ++ msg
 	return x
 

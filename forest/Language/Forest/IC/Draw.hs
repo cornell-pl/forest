@@ -19,7 +19,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 --import Control.Monad.IO.Class
 import Language.Forest.FS.FSRep
-import Control.Monad.Incremental
+import Control.Monad.Incremental as Inc
 import Language.Forest.IO.Shell
 import Language.Forest.Pure.MetaData hiding (Forest_md(..))
 import Control.Monad.Trans
@@ -94,3 +94,22 @@ instance (Input L l (IncForest NILFS) IORef IO,ForestInput NILFS FSThunk l,Eq a,
 -- for NILFS thunks, we also print IC information
 instance (Output U l (IncForest 'NILFS) IORef IO,ForestOutput NILFS ICThunk l,Eq a,MData (DrawDict (IncForest NILFS) IORef IO) (ForestO NILFS) a) => Draw (IncForest NILFS) IORef IO (ForestICThunk NILFS l a) where
 	draw inc r m = draw inc r m . adaptonU
+
+
+instance (ICRep TxVarFS,IncK (IncForest 'TxVarFS) a,Input (FSThunk TxVarFS) Inside (IncForest TxVarFS) IORef IO,ForestLayer TxVarFS Inside,MData (DrawDict (IncForest TxVarFS) IORef IO) (ForestO TxVarFS) a) => Draw (IncForest TxVarFS) IORef IO (ForestFSThunkI TxVarFS a) where
+	draw inc r m t = do
+		thunkID <- liftM show $ forestM $ forestIO $ newUnique
+		isUnevaluated <- inside $ isUnevaluatedFSThunk t
+		let thunkNode = lNode isUnevaluated thunkID
+		if isUnevaluated
+			then return ([thunkID],[DN thunkNode])
+			else do
+				(childrenIDs,childrenDot) <- drawDict dict inc r m =<< Inc.getOutside t
+				let childrenEdges = map (DE . constructorEdge thunkID) childrenIDs
+				let childrenRank = sameRank childrenIDs
+				return ([thunkID],DN thunkNode : childrenEdges ++ SG childrenRank : childrenDot)
+
+
+
+
+

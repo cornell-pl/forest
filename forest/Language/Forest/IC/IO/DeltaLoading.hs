@@ -543,7 +543,7 @@ skipUnevaluated str tree' olddata@((rep,md),getMD) load loadD = do
 	cond2 <- inside $ isUnevaluatedMDThunk md
 	if cond1 && cond2
 		then do -- if the thunks have not been forced, then we can return a NoOp update because we know that their values have not been necessary, so no other part of the specification needs to incrementally repaired
-			loadThunk <- inside $ newHSThunk $ load getMD -- load recursively without original data
+			loadThunk <- inside $ hsThunk $ load getMD -- load recursively without original data
 			overwrite rep_thunk $ Inc.get =<< liftM (to isoRep) (getRep $ Inc.read loadThunk)
 			overwriteMD md $ getMd $ Inc.read loadThunk
 			debug ("skippedUnevaluated "++str++" ") $ return (Delta,Delta) -- we modify the original thunks, but return Id updates

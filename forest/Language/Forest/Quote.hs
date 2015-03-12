@@ -119,7 +119,7 @@ forest  = fquasiquote1 PureForest P.forestDecls
 -- | A quasi-quoter for Forest with IC-specific data structures
 iforest :: QuasiQuoter
 --iforest  = fquasiquote1 ICForest P.forestDecls
-iforest = fquasiquote1z [ConT 'TxVarFS] P.forestDecls
+iforest = fquasiquote1z [ConT 'TxVarFS,ConT 'TxICFS] P.forestDecls
 	
 --txforest :: QuasiQuoter
 --txforest = fquasiquote1z (ConT 'TxVarFS) P.forestDecls

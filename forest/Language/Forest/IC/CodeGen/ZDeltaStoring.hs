@@ -140,9 +140,16 @@ zmanifestDeltaE isTop forestTy pathE pathE' treeE dfE treeE' repE dvE manE = cas
 			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaSymLink True (Pure.returnExp pathE) pathE' treeE' newdfE newtreeE newdvE newrepmdE)
 			(zmanifestDeltaSymLink True pathE pathE' treeE dfE treeE')
 		else zmanifestDeltaSymLink False pathE pathE' treeE dfE treeE' repE dvE manE
-	FConstraint pat descTy predE -> zmanifestDeltaConstraint isTop descTy pat predE treeE repE dvE manE
-		(\newrepE newmanE -> zmanifestE False descTy pathE' treeE' newrepE newmanE)
-		(\newrepE newdvE newmanE -> zmanifestDeltaE False descTy pathE pathE' treeE dfE treeE' newrepE newdvE newmanE)
+	FConstraint pat descTy predE -> if isTop
+		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
+			(\newtreeE -> zloadConstraint True newtreeE pat predE $ zloadE False descTy filterPathE pathE' newtreeE getMDE)
+			(\newdfE newtreeE newdvE newrepmdE -> zloadDeltaE True forestTy (Pure.returnExp pathE) treeE newrepmdE pathE' newdfE newtreeE newdvE)
+			(\newRepE newdvE newManE -> zmanifestDeltaConstraint True descTy pat predE treeE newRepE newdvE newManE
+				(\newrepE newmanE -> zmanifestE False descTy pathE' treeE' newrepE newmanE)
+				(\newrepE newdvE newmanE -> zmanifestDeltaE False descTy pathE pathE' treeE dfE treeE' newrepE newdvE newmanE))
+		else zmanifestDeltaConstraint False descTy pat predE treeE repE dvE manE
+			(\newrepE newmanE -> zmanifestE False descTy pathE' treeE' newrepE newmanE)
+			(\newrepE newdvE newmanE -> zmanifestDeltaE False descTy pathE pathE' treeE dfE treeE' newrepE newdvE newmanE)
 	(Directory dirTy) -> if isTop
 		then zcheckManifestStop forestTy pathE pathE' dfE treeE' repE dvE manE
 			(\newtreeE -> zloadDirectory True dirTy filterPathE pathE' newtreeE getMDE)	

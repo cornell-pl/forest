@@ -3,6 +3,8 @@ update:
 	cd ../../HsAdapton; cabal install adapton.cabal --force-reinstalls -j1
 icpapers2:
 	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Papers2.hs
+icpapers2x:
+	ghc --make -ddump-splices -fcontext-stack=60 Examples/IC/Papers2Tx.hs -o Papers2Tx
 icuniversal:
 	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Universal.hs
 pureaccount:
@@ -29,3 +31,7 @@ clean:
 run:
 	ghc --make Run.hs -fcontext-stack=60
 	./Run
+exprof:
+	ghc --make Examples/IC/Papers2Tx.hs -fcontext-stack=60 -rtsopts -isrc -o Papers2Tx
+	ghc --make Examples/IC/Papers2Tx.hs -fcontext-stack=60 -osuf p_o -prof -auto-all -caf-all -rtsopts -isrc -o Papers2Tx
+	./Papers2Tx +RTS -pa -s

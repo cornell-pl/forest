@@ -4,9 +4,11 @@
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse within transactions
 
 module Language.Forest.IC.FS.TxICFS (
-	TxICForest(..)
+	TxICForest(..),FSRep(..),ForestCfg(..)
 ) where
 
+import Language.Forest.Errors
+import Language.Forest.Pure.MetaData (FileInfo)
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.RWS (RWS(..),RWST(..))
 import qualified Control.Monad.RWS as RWS
@@ -243,28 +245,37 @@ instance Show (FSTree TxICFS) where
 	show tree = "FSTreeTxICFS " ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree)
 
 -- the root directory for transactional forest (it can't modify data not under this path)
-{-# NOINLINE root #-}
-root :: IORef FilePath
-root = unsafePerformIO $ newIORef "/"
+{-# NOINLINE rootTxICFS #-}
+rootTxICFS :: IORef FilePath
+rootTxICFS = unsafePerformIO $ newIORef "/"
 
 -- a global table of symbolic links that all transactions read from and keep updated
 -- this is used to explore the locality in FS modifications; without knowing the existing symlinks, there is no locality
 {-# NOINLINE symlinks #-}
 symlinks :: MVar FSTreeSym
 symlinks = unsafePerformIO $ do
-	path <- readIORef root
+	syms <- computeSymlinks
+	newMVar syms
+
+updateSymlinks :: IO ()
+updateSymlinks = do
+	syms <- computeSymlinks
+	swapMVar symlinks syms
+	return ()
+
+computeSymlinks :: IO FSTreeSym
+computeSymlinks = do
+	path <- readIORef rootTxICFS
 	putStrLn $ "Finding all symbolic links under... " ++ show path
 	syms <- findSymLinks path
 	putStrLn $ "Symbolic links calculated for " ++ show path
-	newMVar syms
+	return syms
 
 instance FSRep TxICFS where
 	
 	newtype ForestM TxICFS a = TxICFSForestM { runTxICFSForestM :: ReaderT TxICFSEnv IO a } deriving (Functor,Applicative,Monad,MonadLazy,MonadThrow,MonadCatch,MonadMask)
 	
-	data ForestCfg TxICFS = TxICFSForestCfg
-	
-	runForest _ m = error "please use atomically instead"
+	data ForestCfg TxICFS = TxICFSForestCfg FilePath
 	
 	forestIO = TxICFSForestM . lift
 	
@@ -446,6 +457,8 @@ instance InLayer Inside (IncForest TxICFS) IORef IO where
 	
 instance ICRep TxICFS where
 
+	runIncrementalForest (TxICFSForestCfg root) m = atomicallyTxICFS root m
+
 	forestM = inside . TxICFSForestI . runTxICFSForestM
 	forestO = TxICFSForestM . runTxICFSForestO
 
@@ -602,6 +615,12 @@ instance (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => AddTxI
 			tree <- treeTxICThunk thunk
 			return (buff,tree)
 		changeTxICThunk thunk add
+instance (ForestLayer TxICFS l) => AddTxICParent l Forest_err where
+	addTxICParent proxy stone meta z x = return z
+instance (ForestLayer TxICFS l) => AddTxICParent l FileInfo where
+	addTxICParent proxy stone meta z x = return z
+instance (ForestLayer TxICFS l,AddTxICParent l (ForestFSThunkI TxICFS Forest_err)) => AddTxICParent l (Forest_md TxICFS) where
+	addTxICParent proxy stone meta z fmd = addTxICParent proxy stone meta z (errors fmd)
 instance (ForestLayer TxICFS l,MData (AddTxICParentDict l) (ForestL TxICFS l) a) => AddTxICParent l a where
 	addTxICParent proxy stone meta z x = do
 		let f t1 t2 = forestM $ maxFSTree t1 t2
@@ -818,7 +837,7 @@ type TxICFTV a = FTV TxICFS a
 
 instance TxICForest TxICFS where
 	
-	atomically = atomicallyTxICFS
+	atomically = atomicallyTxICFS "/"
 	retry = retryTxICFS
 	orElse = orElseTxICFS
 	throw = throwTxICFS 
@@ -854,7 +873,7 @@ copyOrElseTxICFS proxy src tgt b f = do
 		otherwise -> error "tried to write to a variable that is not connected to the FS"
 
 newTxICFS :: FTK TxICFS args rep var content => Proxy args -> ForestVs args -> FilePath -> TxICFTM rep
-newTxICFS proxy args path = inside $ zload (vmonadArgs proxyTxICFS proxy args) path
+newTxICFS proxy args path = debug ("newTxICFS " ++ show path) $ inside $ zload (vmonadArgs proxyTxICFS proxy args) path
 
 -- read the transactional variable by incrementally repairing its internal thunk to the latest tree
 readTxICFS :: (ForestLayer TxICFS l,FTK TxICFS args rep var content) => Proxy args -> rep -> ForestL TxICFS l content
@@ -865,7 +884,7 @@ readTxICFS proxy rep = do
 	tree <- forestM latestTree
 	df <- liftM fromJust $ forestM $ diffFS oldtree tree path
 	-- load incrementally at the latest tree
-	inside $ unsafeWorld $ do
+	debug ("readTxICFS " ++ show path) $ inside $ unsafeWorld $ do
 		dv <- diffValueThunk oldtree rep
 		ds <- deltaArgs oldtree proxy txargs txargs
 		let deltas = (txargs,ds)
@@ -922,8 +941,8 @@ writeOrElseTxICFS rep content b f = do
 					else throwTxICFS $ ManifestConflictTx errors
 			catchTxICFS tryWrite (\(ManifestConflictTx errors) -> f errors)
 					
-atomicallyTxICFS :: TxICFTM b -> IO b
-atomicallyTxICFS stm = initializeTxICFS try where
+atomicallyTxICFS :: FilePath -> TxICFTM b -> IO b
+atomicallyTxICFS root stm = updateRootTxICFS root >> initializeTxICFS try where
 	try = flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ do
 		-- run the tx
 		x <- stm
@@ -1324,3 +1343,10 @@ withFileLocks reads writes m = do
 		Foldable.mapM_ acquireOrRetryFLock wcks
 		
 	liftA2 Catch.bracket_ waitAndAcquire (inL . liftIO . STM.atomically . Foldable.mapM_ releaseFLock) wcks m
+
+updateRootTxICFS :: FilePath -> IO ()
+updateRootTxICFS root = do
+	oldroot <- readIORef rootTxICFS
+	unless (oldroot `isParentPathOf` root) $ updateSymlinks
+	writeIORef rootTxICFS root
+

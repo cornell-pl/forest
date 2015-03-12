@@ -6,7 +6,9 @@
 module Language.Forest.IC.FS.TxNILFS (
 	TxICForest(..)
 ) where
-	
+
+import Language.Forest.Errors
+import Language.Forest.Pure.MetaData (FileInfo)
 import qualified Control.Concurrent.STM as STM
 import Data.Monoid as Monoid
 import Language.Forest.FS.NILFS
@@ -312,7 +314,7 @@ instance FSRep TxNILFS where
 	
 	newtype ForestM TxNILFS a = TxNILFSForestM { runTxNILFSForestM :: ReaderT TxNILFSEnv IO a } deriving (Functor,Applicative,Monad,MonadLazy,MonadThrow,MonadCatch,MonadMask)
 	
-	data ForestCfg TxNILFS = TxNILFSForestCfg
+	data ForestCfg TxNILFS = TxNILFSForestCfg FilePath
 	
 	runForest _ m = error "please use atomically instead"
 	
@@ -748,6 +750,12 @@ instance (IncK (IncForest TxNILFS) a,Typeable l,Typeable a,TxNILFSLayer l) => Ad
 			tree <- treeTxNILFSThunk thunk
 			return (buff,tree)
 		changeTxNILFSThunk thunk add
+instance (ForestLayer TxNILFS l) => AddTxNILFSParent l Forest_err where
+	addTxNILFSParent proxy stone meta z x = return z
+instance (ForestLayer TxNILFS l) => AddTxNILFSParent l FileInfo where
+	addTxNILFSParent proxy stone meta z x = return z
+instance (ForestLayer TxNILFS l,AddTxNILFSParent l (ForestFSThunkI TxNILFS Forest_err)) => AddTxNILFSParent l (Forest_md TxNILFS) where
+	addTxNILFSParent proxy stone meta z fmd = addTxNILFSParent proxy stone meta z (errors fmd)
 instance (ForestLayer TxNILFS l,MData (AddTxNILFSParentDict l) (ForestL TxNILFS l) a) => AddTxNILFSParent l a where
 	addTxNILFSParent proxy stone meta z x = do
 		let f t1 t2 = forestM $ maxFSTree t1 t2

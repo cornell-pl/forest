@@ -220,7 +220,7 @@ instance (ForestMD fs a) => ForestMD fs ((a,b),c) where
 	replace_fmd_header ((a,b),c) f = replace_fmd_header a f >>= \a' -> return ((a',b),c)
 
 instance (IncK (IncForest fs) a,ForestMD fs a,ForestInput fs FSThunk Inside,ForestLayer fs Outside) => ForestMD fs (ForestFSThunk fs Inside a) where
-	isUnevaluatedMDThunk t = inside $ isUnevaluatedMDThunk t
+	isUnevaluatedMDThunk t = inside $ isUnevaluatedFSThunk t
 	get_fmd_header t = do
 		md <- inside (get t)
 		get_fmd_header md

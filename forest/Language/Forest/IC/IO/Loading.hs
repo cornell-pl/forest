@@ -70,7 +70,7 @@ doLoadFile repProxy oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFil
 	let fsrepProxy = Proxy :: Proxy (ForestFSThunkI fs pads)
 	-- default static loading
 	let load_file = do
-		parseThunk <- newHSThunk $ debug ("reading file "++show path) $ forestM $ pathInTree path tree >>= forestIO . parseFile
+		parseThunk <- hsThunk $ debug ("reading file "++show path) $ forestM $ pathInTree path tree >>= forestIO . parseFile
 		rep_thunk <- checkPathData path tree (getRep $ Inc.read parseThunk)
 		md_thunk <- checkPathMeta path tree $ do
 			fmd <- getMD path tree
@@ -117,7 +117,7 @@ doLoadFile1 (repProxy :: Proxy pads) (arg :: arg) oldpath_f path (tree :: FSTree
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
 	let load_file = do
-		parseThunk <- newHSThunk $ debug ("reading file "++show path) $ forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
+		parseThunk <- hsThunk $ debug ("reading file "++show path) $ forestM $ pathInTree path tree >>= forestIO . parseFile1 arg
 		rep_thunk <- checkPathData path tree (getRep $ Inc.read parseThunk)
 		md_thunk <- checkPathMeta path tree $ do
 			fmd <- getMD path tree
@@ -266,7 +266,7 @@ doLoadDirectory path tree collectMDErrors getMD load = mkThunksM tree $ doLoadDi
 doLoadDirectory' :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (rep, md),IncK (IncForest fs) rep,IncK (IncForest fs) md,ICRep fs,ForestInput fs FSThunk Inside,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md))
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestI fs rep,ForestI fs (Forest_md fs,md))
 doLoadDirectory' path tree collectMDErrors getMD ifGood = debug ("doLoadDirectory: "++show path) $ do
-	ifGoodThunk <- newHSThunk ifGood
+	ifGoodThunk <- hsThunk ifGood
 	let loadData = checkPathData' True path tree $ getRep $ Inc.read ifGoodThunk
 	let loadMeta = checkPathMeta' True path tree $ do
 		fmd <- getMD path tree
@@ -281,7 +281,7 @@ doLoadMaybe pathfilter path tree ifExists = mkThunksM tree $ doLoadMaybe' pathfi
 
 doLoadMaybe' :: (IncK (IncForest fs) (rep, md),ForestMD fs md) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestI fs (Maybe rep),ForestI fs (Forest_md fs,Maybe md))
 doLoadMaybe' pathfilter path tree ifExists = do
-	ifExistsThunk <- newHSThunk ifExists
+	ifExistsThunk <- hsThunk ifExists
 	let loadData = do
 		exists <- forestM $ doesExistInTree path tree
 		if exists
@@ -374,7 +374,7 @@ checkPathMeta :: (IncK (IncForest fs) md,ForestDefault fs Inside md,ForestMD fs 
 checkPathMeta path tree ifExists = mod $ checkPathMeta' False path tree ifExists
 checkPath :: (IncK (IncForest fs) (rep, md),IncK (IncForest fs) rep,IncK (IncForest fs) md,ForestDefault fs Inside rep,ForestDefault fs Inside md,ICRep fs,ForestMD fs md) => FilePath -> FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
 checkPath path tree ifExists = do
-	ifExistsThunk <- newHSThunk ifExists
+	ifExistsThunk <- hsThunk ifExists
 	dataThunk <- checkPathData path tree $ getRep $ Inc.read ifExistsThunk
 	metaThunk <- checkPathMeta path tree $ getMd $ Inc.read ifExistsThunk
 	return (dataThunk,metaThunk)
@@ -408,7 +408,7 @@ checkFileExtension ext path ifExists = do
 
 mkThunks :: (IncK (IncForest fs) rep,IncK (IncForest fs) md,IncK (IncForest fs) (rep, md),ForestInput fs FSThunk Inside,ICRep fs) => FSTree fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs md)
 mkThunks tree load = do
-	loadThunk <- newHSThunk load
+	loadThunk <- hsThunk load
 	dataThunk <- mod $ getRep $ Inc.read loadThunk
 	metaThunk <- mod $ getMd $ Inc.read loadThunk
 	return (dataThunk,metaThunk)

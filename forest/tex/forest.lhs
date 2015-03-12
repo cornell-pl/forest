@@ -669,7 +669,7 @@ Read-write transactions need to anyway validate their read file paths against co
 
 \section{Evaluation}
 
-although Haskell is a great language laboratory, we are already paying a severe performance overhead if efficiency is the only concern.
+although Haskell is a great language laboratory, we are already paying a severe performance overhead if efficiency is the main concern.
 
 even the Haskell STM is implemented in C
 

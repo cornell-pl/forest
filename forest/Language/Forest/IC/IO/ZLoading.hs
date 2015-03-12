@@ -293,7 +293,7 @@ doZLoadMaybeInner :: (ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTre
 doZLoadMaybeInner pathfilter path tree ifExists = liftM snd $ doZLoadMaybe' pathfilter path tree ifExists
 
 doZLoadMaybe' :: (ForestMD fs rep) => FilePathFilter fs -> FilePath -> FSTree fs -> ForestI fs rep -> ForestI fs (Forest_md fs,Maybe rep)
-doZLoadMaybe' pathfilter path tree ifExists = do
+doZLoadMaybe' pathfilter path tree ifExists = debug ("doLoadMaybe' "++ show path) $ do
 	exists <- forestM $ doesExistInTree path tree
 	if exists
 		then do
@@ -319,7 +319,7 @@ doZLoadSimpleWithConstraint :: (ForestContent rep content,ForestOutput fs ICThun
 	-> ForestI fs (ForestFSThunkI fs Forest_err,rep)
 doZLoadSimpleWithConstraint pathfilter path matching tree pred load = doZLoadConstraintInner tree pred $ matching >>= \m -> doZLoadFocus pathfilter path m tree getForestMDInTree load
 
-doZLoadCompound :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,IncK (IncForest fs) container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZLoadCompound :: (IncK (IncForest fs) (Forest_md fs),Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,IncK (IncForest fs) container_rep,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> ForestI fs key_arg -> ([(key,rep')] -> container_rep)
 	-> (key -> ForestFSThunkI fs FileInfo -> FilePath -> GetForestMD fs -> ForestI fs rep')
@@ -328,17 +328,17 @@ doZLoadCompound pathfilter path matchingM tree mkeyarg buildContainerRep load = 
 	key_arg <- mkeyarg
 	matching <- matchingM
 	files <- forestM $ getMatchingFilesInTree path matching tree
-	metadatas <- mapM (getRelForestMDInTree path tree) files
+	metadatas <- mapM (hsThunk . getRelForestMDInTree path tree) files
 	let filesmetas = zip files metadatas
-	let loadEach (n,n_md) = do
+	let loadEach (n,n_md_thunk) = do
 		let key = fst $ Pads.parseString1 key_arg n
-		liftM (key,) $ doZLoadFocus pathfilter path n tree (const2 $ return n_md) $ \newpath newGetMD -> do
-			fileInfo_thunk <- ref $ fileInfo n_md
+		liftM (key,) $ doZLoadFocus pathfilter path n tree (const2 $ Inc.read n_md_thunk) $ \newpath newGetMD -> do
+			fileInfo_thunk <- fsThunk $ liftM fileInfo $ Inc.read n_md_thunk
 			load key fileInfo_thunk newpath newGetMD
 	loadlist <- mapM loadEach filesmetas
 	return $ buildContainerRep loadlist
 
-doZLoadCompoundWithConstraint :: (Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,IncK (IncForest fs) Bool,IncK (IncForest fs) container_rep,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
+doZLoadCompoundWithConstraint :: (IncK (IncForest fs) (Forest_md fs),Pads1 key_arg key key_md,IncK (IncForest fs) FileInfo,IncK (IncForest fs) Bool,IncK (IncForest fs) container_rep,ForestOutput fs ICThunk Inside,Matching fs a,MData NoCtx (ForestI fs) rep',ForestMD fs rep') =>
 	FilePathFilter fs -> FilePath -> ForestI fs a -> FSTree fs
 	-> (key -> ForestFSThunkI fs FileInfo -> ForestI fs Bool)
 	-> ForestI fs key_arg -> ([(key,rep')] -> container_rep)
@@ -348,17 +348,17 @@ doZLoadCompoundWithConstraint pathfilter path matchingM tree pred mkeyarg buildC
 	key_arg <- mkeyarg
 	matching <- matchingM -- matching expressions are not saved for incremental reuse
 	files <- forestM $ getMatchingFilesInTree path matching tree
-	metadatas <- mapM (getRelForestMDInTree path tree) files
+	metadatas <- mapM (hsThunk . getRelForestMDInTree path tree) files
 	let filesmetas = zip files metadatas
-	let makeInfo (n,fmd) = do
+	let makeInfo (n,fmd_thunk) = do
 		let key = fst $ Pads.parseString1 key_arg n
-		t <- ref $ fileInfo fmd -- we store the @FileInfo@ in a @FSThunk@ to allow incremental evaluation of the constraint expression
+		t <- fsThunk $ liftM fileInfo $ Inc.read fmd_thunk -- we store the @FileInfo@ in a @FSThunk@ to allow incremental evaluation of the constraint expression
 		u <- icThunk $ pred key t --the filename is a constant. during delta loading, whenever it changes we will load from scratch
-		return ((n,key),(fmd,(t,u)))
+		return ((n,key),(fmd_thunk,(t,u)))
 	filesmetasInfo <- mapM makeInfo filesmetas
 	filesmetasInfo' <- filterM (force . snd . snd . snd) filesmetasInfo
-	let loadEach ((n,key),(n_md,(t,u))) = do
-		rep <- doZLoadFocus pathfilter path n tree (const2 $ return n_md) $ load key t
+	let loadEach ((n,key),(n_md_thunk,(t,u))) = do
+		rep <- doZLoadFocus pathfilter path n tree (const2 $ Inc.read n_md_thunk) $ load key t
 		return (key,rep)
 	loadlist <- mapM loadEach filesmetasInfo'
 	return (buildContainerRep loadlist)

@@ -197,7 +197,7 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 			return rep
 		
 		case mb of
-			Just (memo_tree,memo_args,memo_rep) -> do
+			Just (memo_tree,memo_args,memo_rep) -> debug ("zloadDeltaMemo "++show path) $ do
 				mb_df <- forestM $ diffFS memo_tree tree path
 				case mb_df of
 					Just df -> unsafeWorld $ do -- XXX: how safe is this?

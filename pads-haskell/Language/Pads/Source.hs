@@ -20,6 +20,7 @@ import Data.Int
 import Data.Data
 import Data.Word
 import Data.Char
+import qualified Data.ByteString.Char8 as Char8
 
 type RawStream = B.ByteString   -- This is the type that should be used in other files!!!
 
@@ -365,7 +366,8 @@ byteStringToStr :: B.ByteString -> String
 byteStringToStr = word8sToStr . B.unpack
 
 strToByteString :: String -> B.ByteString
-strToByteString = B.pack . strToWord8s
+--strToByteString = B.pack . strToWord8s
+strToByteString = Char8.pack
 
 
 
