@@ -303,7 +303,7 @@ septValid sols hruLines =
              , fert is <| fertFile $ swatLines cio |> :: FERT
              , urban is <| urbanFile $ swatLines cio |> :: URBAN
 
-             , subs is [f :: File SUB | f <- matches <|GL "[0-9]*.sub" |>]
+             , subs is [f :: File SUB | f <- matches <|GL "*.sub" |>, <| f /= "output.sub" |>]
              , rtes is [f :: RTE | f <- matches <|GL "*.rte" |>]
              , swqs is [f :: SWQ | f <- matches <|GL "*.swq" |>]
 
@@ -329,7 +329,7 @@ septValid sols hruLines =
              && chmValid (chms this) (map (hruLines . snd) $ subs this)
              && gwValid (gws this) (map (hruLines . snd) $ subs this)
              && septValid (seps this) (map (hruLines . snd) $ subs this)|>
-|] -- note regex for subs is probably wrong, can't figure out how to specifically exclude output
+|]
 
 get :: FilePath -> IO Swat_d
 get path = do
@@ -364,7 +364,7 @@ testFIG = do
   print $ subFiles figInfo
   print $ rteFiles figInfo
   print $ swqFiles figInfo
-  print $ map snd $ subs swat
+  print $ map fst $ subs swat
 --  print $ swqs swat
 
 testSUB :: IO ()
