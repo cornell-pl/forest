@@ -1,8 +1,8 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 module Swat where
-import Language.Pads.Padsc hiding (take, rest, head, numErrors)
+import Language.Pads.Padsc hiding (take, rest, head)
 import Language.Pads.BaseTypes
-import Language.Forest.Forestc
+import Language.Forest.Forestc hiding (test, numErrors)
 import Language.Pads.GenPretty
 import Language.Forest.Graph
 import Language.Forest.Infer
@@ -11,7 +11,7 @@ import Data.Maybe
 import qualified Data.Set as Set
 import Data.Set (Set(..))
 import Data.Char (isSpace)
-
+import Control.Monad
 import System.IO.Unsafe (unsafePerformIO)
 ws = REd "[ \t]*" " "
 fileName = REd "[a-zA-Z.0-9]*" "a"
@@ -21,6 +21,7 @@ trim :: String -> String
 trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
        removeWS . reverse . removeWS . reverse
 
+-- Known issue: we assume unix line endings for fig file.
 [pads|
        data NumEntry = NumEntry {
              ws
@@ -62,20 +63,20 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
            }
 
        data AddComm = AddComm {
-             "add", StringLn, EOR
+             "add", StringLn
            }
 
        data SaveConcComm = SaveConcComm {
-             "saveconc", StringLn, EOR, ws
+             "saveconc", Line StringLn, ws
            , concFile :: StringME fileName
            }
 
        data FinishComm = FinishComm {
-             "finish", StringLn, EOR
+             "finish", StringLn
            }
 
        data FigLine = Sub SubComm | Route RouteComm | Add AddComm | SaveConc SaveConcComm | Finish FinishComm
-       type FigLines = [Line FigLine] terminator EOF 
+       type FigLines = [Line FigLine] terminator EOF
        data FIG = FIG {figLines :: FigLines}
 
        data HruFiles = HruFiles {
@@ -89,13 +90,27 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
            , sdrFile :: [Char] length 13
            }
 
-        type SubLines = [Line SwatLine] terminator "HRU: General"
+        type SubLines = [Line SwatLine] terminator ("HRU: General", EOR)
         type HruLines = [Line HruFiles] terminator EOF
         data SUB = SUB {
               subLines :: SubLines
             , hruLines :: HruLines
             }
  |]
+
+dir = "/home/richard/Documents/forest/TxtInOut/"
+
+testsub :: IO (SUB, SUB_md)
+testsub = parseFile (dir ++ "000010000.sub")
+
+testsub_rep = liftM fst testsub
+testsub_md = liftM snd testsub
+
+test :: IO (FIG, FIG_md)
+test = parseFile "/home/richard/Documents/forest/TxtInOut/fig.fig"
+
+test_rep = liftM fst test
+test_md = liftM snd test
 
 isEntry :: SwatLine -> Bool
 isEntry (SwatLine l) = False
@@ -307,7 +322,7 @@ septValid sols hruLines =
              , rtes is [f :: RTE | f <- matches <|GL "*.rte" |>]
              , swqs is [f :: SWQ | f <- matches <|GL "*.swq" |>]
 
-             , hrus is [f :: HRU | f <- matches <|GL "*.hru" |>]
+             , hrus is [f :: HRU | f <- matches <|GL "*.hru" |>, <| f /= "output.hru" |>]
              , mgts is [f :: MGT | f <- matches <|GL "*.mgt" |>]
              , sols is [f :: SOL | f <- matches <|GL "*.sol" |>]
              , chms is [f :: CHM | f <- matches <|GL "*.chm" |>]
@@ -335,6 +350,11 @@ get :: FilePath -> IO Swat_d
 get path = do
   (rep, md) <- swat_d_load path
   return rep
+
+md :: FilePath -> IO Swat_d_md
+md path = do
+  (rep, md) <- swat_d_load path
+  return md
 	
 
 testCIO :: IO ()
@@ -361,6 +381,7 @@ testFIG :: IO ()
 testFIG = do
   swat <- get "/home/richard/Documents/forest/TxtInOut"
   let figInfo = figLines $ fig swat
+  print figInfo
   print $ subFiles figInfo
   print $ rteFiles figInfo
   print $ swqFiles figInfo
