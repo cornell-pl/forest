@@ -55,10 +55,9 @@ import System.Random
 import Data.Proxy
 import Data.Map (Map(..))
 import qualified Data.Map as Map
-import Language.Forest.IC.IO.Memo
 import Language.Forest.IC.BX as BX
 
-doLoadDeltaFile :: (IncK (IncForest fs) Forest_err,IncK
+doLoadDeltaFile :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK
                         (IncForest fs) (Forest_md fs, ForestFSThunkI fs md),IncK (IncForest fs) (pads, md),
                       IncK (IncForest fs) pads,
                       IncK (IncForest fs) md,ForestDefault fs Inside pads,ForestDefault fs Inside (Forest_md fs,ForestFSThunkI fs md),ICMemo fs,ForestInput fs FSThunk Inside,MData NoCtx (ForestO fs) pads,ICRep fs,Pads pads md) =>
@@ -144,7 +143,7 @@ doLoadDeltaArchive isClosed exts mpath path' oldtree df (tree' :: FSTree fs) ((r
 			set md_thunk (fmd',imd)
 			return (mapSValueDelta direp,Delta)
 
-doLoadDeltaSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) FilePath,IncK (IncForest fs) (Forest_md fs, Base_md),ForestDefault fs Inside (FilePath,(Forest_md fs,Base_md)),ForestInput fs FSThunk Inside,ICRep fs)
+doLoadDeltaSymLink :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) FilePath,IncK (IncForest fs) (Forest_md fs, Base_md),ForestDefault fs Inside (FilePath,(Forest_md fs,Base_md)),ForestInput fs FSThunk Inside,ICRep fs)
 	=> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> OldData fs (ForestFSThunkI fs FilePath) (ForestFSThunkI fs (Forest_md fs,Base_md))
 	-> ForestO fs (SValueDelta (ForestFSThunkI fs FilePath),SValueDelta (ForestFSThunkI fs (Forest_md fs,Base_md)))
@@ -199,7 +198,7 @@ doLoadDeltaArgs LiftedICExpr proxy dargs (((rep,(md,arg_thunks)),getMD)) (tree' 
 	return (mapSValueDelta drep,mapSValueDelta dmd `prodSValueDelta` andSValueDeltas (Proxy :: Proxy fs) proxy dargs)
 
 -- This is the only function that accepts inner non-stable @SValueDelta@s to account for nested comprehensions. In all other cases @SValueDelta@s shall always be stable
-doLoadDeltaDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, md),IncK (IncForest fs) rep,IncK (IncForest fs) (rep, md),
+doLoadDeltaDirectory :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, md),IncK (IncForest fs) rep,IncK (IncForest fs) (rep, md),
                       IncK (IncForest fs) md,ForestDefault fs Inside (Forest_md fs),ICRep fs,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md)) =>
 	ForestI fs FilePath -> OldData fs (ForestFSThunkI fs rep) (ForestFSThunkI fs (Forest_md fs,md)) -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
 	-> (md -> ForestI fs Forest_err)
@@ -209,7 +208,7 @@ doLoadDeltaDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (For
 doLoadDeltaDirectory mpath ((rep_thunk,md_thunk),getMD) path' oldtree df (tree' :: FSTree fs) collectMDErrors load loadD = do
 	let fs = Proxy :: Proxy fs
 	path <- inside mpath
-	exists <- liftM doesDirectoryExistInMD $ get_fmd_header md_thunk -- to avoid having the old tree materialized, this should be fine with regards to @stopUnevaluated@
+	exists <- doesDirectoryExistInMD =<< get_fmd_header md_thunk -- to avoid having the old tree materialized, this should be fine with regards to @stopUnevaluated@
 	exists' <- forestM $ doesDirectoryExistInTree path' tree'
 	debug ("doLoadDeltaDirectory: " ++ show (path,exists,path',exists')) $ case (exists,exists') of
 		(False,False) -> case (path == path',isEmptyTopFSTreeD fs df) of
@@ -263,7 +262,7 @@ doLoadDeltaMaybe :: (IncK (IncForest fs) (Forest_md fs, Maybe md),IncK (IncFores
 doLoadDeltaMaybe mpath ((rep_thunk,md_thunk),getMD) path' oldtree df (tree' :: FSTree fs) load loadD = do
 	let fs = Proxy :: Proxy fs
 	path <- inside mpath
-	exists <- liftM doesExistInMD $ get_fmd_header md_thunk -- to avoid having the old tree materialized. this evaluates the inner thunk as well, so compromises @stopUnevaluated@
+	exists <- doesExistInMD =<< get_fmd_header md_thunk -- to avoid having the old tree materialized. this evaluates the inner thunk as well, so compromises @stopUnevaluated@
 	exists' <- forestM $ doesExistInTree path' tree'
 	case (exists,exists') of
 		(False,False) -> do
@@ -410,20 +409,20 @@ doLoadDeltaCompoundFile mode mpath path' file' Nothing (oldtree :: FSTree fs) df
 	-- try to reuse the original metadata (in this case it is not reused)
 	(newGetMD,info) <- inside $ getRelForestMDInTree path' tree' file' >>= \fmd -> return (const2 $ return fmd,fileInfo fmd)
 	-- filter new files according to the predicate
-	fileInfo_thunk <- inside $ ref info
+	let fileInfo_thunk = info
 	(rep',md') <- inside $ doLoadFocus (fsTreeDPathFilter fs df path') path' file' tree' newGetMD $ \newpath newGetMD -> do
 		load file' fileInfo_thunk newpath newGetMD
 	return ((Just (file',rep'),NonStable),(Just (file',(mkMDArgs mode md' fileInfo_thunk)),NonStable))
 doLoadDeltaCompoundFile mode mpath path' file' (Just (rep,imd)) oldtree df (tree' :: FSTree fs) load loadD = debug ("doLoadDeltaCompoundFile: "++show (path',file')) $ do
 	let fs = Proxy :: Proxy fs
-	(md,fileInfo_thunk) <- patMDArgs mode imd (\_ -> getRelForestMDInTree path' tree' file' >>= \fmd -> inside $ ref $ fileInfo fmd)
+	(md,fileInfo_thunk) <- patMDArgs mode imd (\_ -> getRelForestMDInTree path' tree' file' >>= \fmd -> return $ fileInfo fmd)
 	path <- inside mpath
 	-- try to reuse the original metadata
 	(newGetMD,dFileInfo) <- do
 		isUnevaluated <- isUnevaluatedMDThunk md -- just an optimization to preserve the evaluation status of the thunk and avoid the unnecessary loading of old data
 		case (isUnevaluated,path == path',isEmptyTopFSTreeD fs $ focusFSTreeD fs df path' file' (path' </> file')) of
 			(False,True,True) -> get_fmd_header md >>= \fmd -> return (getForestMDInTree,Id) -- we keep the original data
-			otherwise -> getRelForestMDInTree path' tree' file' >>= \fmd -> set fileInfo_thunk (fileInfo fmd) >> return (const2 $ return fmd,Delta)
+			otherwise -> getRelForestMDInTree path' tree' file' >>= \fmd -> overwrite fileInfo_thunk (get_info fmd) >> return (const2 $ return fmd,Delta)
 	-- the filename has not changed as long as there was a match in the alignment operation, i.e., doLoadDeltaCompoundFile is called with original data
 	(drep,dmd) <- doLoadDeltaFocus mpath path' ((rep,md),newGetMD) file' oldtree df tree' (load file' fileInfo_thunk) $ loadD file' file' fileInfo_thunk dFileInfo ((rep,md),newGetMD) -- load recursively under a different focus
 	-- apply the field deltas so that the post-values can be made available in the environment
@@ -479,7 +478,7 @@ doLoadDeltaCompoundFileWithConstraint mode mpath path' file' Nothing (oldtree ::
 	let fs = Proxy :: Proxy fs
 	-- try to reuse the original metadata (in this case it is not reused)
 	(newGetMD,info) <- inside $ getRelForestMDInTree path' tree' file' >>= \fmd -> return (const2 $ return fmd,fileInfo fmd)
-	fileInfo_thunk <- inside $ ref info
+	let fileInfo_thunk = info
 	-- filter new files according to the predicate
 	cond_thunk <- inside $ icThunk $ pred file' fileInfo_thunk
 	cond <- forceOutside cond_thunk
@@ -494,7 +493,7 @@ doLoadDeltaCompoundFileWithConstraint mode mpath path' file' (Just (rep,imd)) ol
 	path <- inside mpath
 	(md,(fileInfo_thunk,cond_thunk)) <- patMDArgs mode imd $ \_ -> do
 		fmd <- getRelForestMDInTree path' tree' file'
-		fileInfo_thunk <- inside $ ref $ fileInfo fmd
+		let fileInfo_thunk = fileInfo fmd
 		cond_thunk <- inside $ icThunk $ pred file' fileInfo_thunk
 		return (fileInfo_thunk,cond_thunk)
 	-- try to reuse the original metadata
@@ -502,7 +501,7 @@ doLoadDeltaCompoundFileWithConstraint mode mpath path' file' (Just (rep,imd)) ol
 		isUnevaluated <- isUnevaluatedMDThunk md -- just an optimization to preserve the evaluation status of the thunk and avoid the unnecessary loading of old data
 		case (isUnevaluated,path == path',isEmptyTopFSTreeD fs $ focusFSTreeD fs df path' file' (path' </> file')) of
 			(False,True,True) -> get_fmd_header md >>= \fmd -> return (getForestMDInTree,Id) -- we keep the original data
-			otherwise -> getRelForestMDInTree path' tree' file' >>= \fmd -> set fileInfo_thunk (fileInfo fmd) >> return (const2 $ return fmd,Delta)
+			otherwise -> getRelForestMDInTree path' tree' file' >>= \fmd -> overwrite fileInfo_thunk (get_info fmd) >> return (const2 $ return fmd,Delta)
 	-- filter new files according to the predicate
 	cond <- forceOutside cond_thunk -- this thunk should be automatically updated from the environment changes
 	if cond

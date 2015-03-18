@@ -42,7 +42,7 @@ import qualified Control.Monad.State as State
 import Language.Forest.Manifest
 import Data.Time.Clock
 import Safe
-
+import Data.Global.TH
 
 {-
 TODO:
@@ -55,14 +55,10 @@ TODO:
 -}
 
 -- a list of the starting times of running transactions sorted from newest to oldest
-{-# NOINLINE runningTransactions #-}
-runningTransactions :: MVar [UTCTime]
-runningTransactions = unsafePerformIO $ newMVar []
+TH.declareMVar "runningTransactions"  [t| [UTCTime] |] [e| [] |]
 
 -- a map with commit times of committed transactions and their performed changes
-{-# NOINLINE doneTransactions #-}
-doneTransactions :: MVar (Map UTCTime TxFSWrites)
-doneTransactions = unsafePerformIO $ newMVar Map.empty
+TH.declareMVar "doneTransactions"  [t| (Map UTCTime TxFSWrites) |] [e| Map.empty |]
 
 startTxFSTransaction ::(MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS UTCTime
 startTxFSTransaction = do
@@ -324,7 +320,7 @@ instance FSRep TxFS where
 		return result
 		
 	stepPathInTree _ path rel = return $ path </> rel
-	canonalizePathWithTree path _ = forestIO $ canonalizePath path
+	canonalizePathInTree path _ = forestIO $ canonalizePath path
 
 
 

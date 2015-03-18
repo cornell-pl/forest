@@ -158,20 +158,20 @@ detectPairConflict pathRoot rel (c1,s1) (c2,s2) = do
 		(None,None) -> return Valid
 		(Link target1,Link target2) -> do
 			tree <- latestTree
-			dest1 <- canonalizePathWithTree (dir </> target1) tree
-			dest2 <- canonalizePathWithTree (dir </> target2) tree
+			dest1 <- canonalizePathInTree (dir </> target1) tree
+			dest2 <- canonalizePathInTree (dir </> target2) tree
 			if dest1 == dest2
 				then return Valid
 				else return $ Invalid [ConflictingFileContent (pathRoot </> rel) c1 c2]
 		(Dir,Dir) -> return Valid   --- update this to manage conflicts with contained comprehensions
 		(Local fp1,Link target2) -> do
 			tree <- latestTree
-			dest2 <- canonalizePathWithTree (dir </> target2) tree
+			dest2 <- canonalizePathInTree (dir </> target2) tree
 			fp2 <- pathInTree dest2 tree
 			checkFiles fp1 fp2
 		(Link target1,Local fp2) -> do
 			tree <- latestTree
-			dest1 <- canonalizePathWithTree (dir </> target1) tree
+			dest1 <- canonalizePathInTree (dir </> target1) tree
 			fp1 <- pathInTree dest1 tree
 			checkFiles fp1 fp2
 		otherwise -> return $ Invalid [ConflictingFileContent (pathRoot </> rel) c1 c2]

@@ -15,7 +15,6 @@ import Control.Monad
 --import Control.Monad.IO.Class
 import Control.Concurrent.MVar
 import Control.Concurrent
-import Language.Forest.IC.IO.Memo
 import Control.Exception
 --import Control.Concurrent.Async
 import System.Mem.WeakKey
@@ -63,6 +62,7 @@ import System.Mem.MemoTable
 import Control.Monad.Lazy
 import Control.Monad.Reader (Reader(..),ReaderT(..),MonadReader(..))
 import qualified Control.Monad.Reader as Reader
+import Data.Global.Dynamic as Dyn
 
 type instance IncK (IncForest NILFS) a = (Typeable a,Eq a)
 
@@ -167,9 +167,9 @@ instance FSRep NILFS where
 				return $ rootPath </> makeRelative (home </> ".avfs" </> makeRelative "/" mountpoint) path
 			Nothing -> mountSnapshot snapshot >> pathFromTree path tree
 	stepPathInTree tree path rel = do
-		cpath <- canonalizePathWithTree path tree
+		cpath <- canonalizePathInTree path tree
 		let newpath = path </> rel
-		cnewpath <- canonalizePathWithTree newpath tree
+		cnewpath <- canonalizePathInTree newpath tree
 		if cpath `isParentPathOf` cnewpath
 			then return newpath 
 			else error $ "NILFS incremental loading forbids non-tree-like filesystems" ++ show cpath ++ " " ++ show newpath
@@ -227,9 +227,9 @@ type GenericQMemoNILFSU ctx l inc r m b = GenericQMemo ctx (ICThunk NILFS) l inc
 type NewGenericQMemoNILFSU ctx l inc r m b = NewGenericQMemo ctx (ICThunk NILFS) l inc r m b
 
 -- we just repeat the code from adapton here as workaround. revise this!
-gmemoNonRecNILFSU :: Proxy ctx -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
+gmemoNonRecNILFSU :: (Typeable ctx,Typeable b) => Proxy ctx -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
 gmemoNonRecNILFSU ctx f = unNewGenericQ (newGmemoNonRecNILFSU ctx (NewGenericQ f)) where
-	newGmemoNonRecNILFSU ctx f = gmemoNonRecNILFSU' ctx f (unsafePerformIO $ debug "NewTable!!" $ WeakTable.newFor f)
+	newGmemoNonRecNILFSU ctx f = gmemoNonRecNILFSU' ctx f (Dyn.declareWeakTable f)
 
 gmemoNonRecNILFSU' :: Proxy ctx -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> MemoTable (TypeRep,KeyDynamic) (U Inside (IncForest NILFS) IORef IO b) -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
 gmemoNonRecNILFSU' ctx (NewGenericQ f) tbl = NewGenericQ $ \arg -> do
@@ -398,13 +398,12 @@ changesBetweenNILFS tree tree' = do
 	let report = "NILFS changes between " ++ show tree ++ " and " ++ show tree' ++ ": " ++ show td
 	debug report $ return td
 
-{-# NOINLINE diffCheckpoints #-}
-diffCheckpoints :: MVar (Int,Int)
-diffCheckpoints = unsafePerformIO $ newEmptyMVar
+--{-# NOINLINE diffCheckpoints #-}
+--diffCheckpoints :: MVar (Int,Int)
+--diffCheckpoints = unsafePerformIO $ newEmptyMVar
 
-{-# NOINLINE diffTree #-}
-diffTree :: MVar FSTreeDelta
-diffTree = unsafePerformIO $ newEmptyMVar
+--diffTree :: MVar FSTreeDelta
+--diffTree = TH.declareMVar "diffTree"  [t| [FSTreeDelta] |] [e| [] |]
 
 latestNILFSTree :: IO (FSTree NILFS)
 latestNILFSTree = do

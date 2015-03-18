@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, GADTs, ViewPatterns, TupleSections #-}
+{-# LANGUAGE DeriveDataTypeable, Rank2Types, GADTs, ViewPatterns, TupleSections #-}
 
 module Language.Forest.FS.FSDelta where
 
@@ -20,6 +20,9 @@ import Safe
 import Data.List as List
 import Data.DList as DList
 import Data.IORef
+import Data.Typeable
+
+import Debug.Trace
 
 type OnDisk = FilePath
 
@@ -31,7 +34,7 @@ data FSTreeDeltaNode = FSTreeNew FSTreeDelta MoveFrom OnDisk OnDisk -- a new dir
 					 | FSTreeNop FSTreeDelta -- a directory or file that has not changed
 					 | FSTreeRem
 					 | FSTreeNewLink FilePath (Maybe OnDisk) -- a new symbolic link to another path from the top-level tree; the on-disk path holds the permissions
-	deriving (Show,Eq,Ord)
+	deriving (Show,Eq,Ord,Typeable)
 
 type MoveFrom = Maybe FilePath -- move origin
 
@@ -42,6 +45,7 @@ data FSDelta = Add FilePath OnDisk
 			 | Rem FilePath
 			 | Move FilePath FilePath OnDisk
 			 | ChgAttrs FilePath OnDisk
+	deriving (Eq,Show,Ord,Typeable)
 
 -- * Operations on filesystem deltas
 
@@ -49,7 +53,7 @@ getContentsFSTreeDeltaNodeMay :: FilePath -> FSTreeDeltaNodeMay -> IO [FileName]
 getContentsFSTreeDeltaNodeMay root Nothing = getDirectoryContentsTry root
 getContentsFSTreeDeltaNodeMay root (Just td) = getContentsFSTreeDeltaNode root td
 
-getContentsFSTreeDeltaNode :: FilePath -> FSTreeDeltaNode -> IO [FileName]
+getContentsFSTreeDeltaNode ::FilePath -> FSTreeDeltaNode -> IO [FileName]
 getContentsFSTreeDeltaNode root (FSTreeNew tds _ dsk permissions) = do
 	files <- getDirectoryContentsTry dsk
 	let files' = Map.foldrWithKey (\file td xs -> if isFSTreeDeltaNodeRem td then List.delete file xs else file:xs) files tds
@@ -63,7 +67,7 @@ getContentsFSTreeDeltaNode root (FSTreeNop tds) = do
 	let files' = Map.foldrWithKey (\file td xs -> if isFSTreeDeltaNodeRem td then List.delete file xs else file:xs) files tds
 	return $ List.sort $ List.nub files'
 getContentsFSTreeDeltaNode root FSTreeRem = return []
-getContentsFSTreeDeltaNode root (FSTreeNewLink _ _) = return []
+getContentsFSTreeDeltaNode root (FSTreeNewLink tgt _) = error "getContentsFSTreeDeltaNode link"
 
 isFSTreeDeltaNodeRem :: FSTreeDeltaNode -> Bool
 isFSTreeDeltaNodeRem FSTreeRem = True
@@ -126,7 +130,7 @@ fsTreeDeltaNodeWrites root (FSTreeNop td) = fsTreeDeltaWrites root td
 fsTreeDeltaNodeWrites root FSTreeRem = Set.singleton root
 fsTreeDeltaNodeWrites root (FSTreeNewLink _ _) = Set.singleton root
 
-childrenFSTreeDeltaNode = fromJustNote "no FSTreeDelta children" . childrenFSTreeDeltaNodeMay
+childrenFSTreeDeltaNode = maybe Map.empty id . childrenFSTreeDeltaNodeMay
 
 childrenFSTreeDeltaNodeMay :: FSTreeDeltaNode -> Maybe FSTreeDelta
 childrenFSTreeDeltaNodeMay (FSTreeNew tds _ _ _) = Just tds
@@ -140,29 +144,40 @@ emptyFSTreeDelta = Map.empty
 isEmptyFSTreeDelta :: FSTreeDelta -> Bool
 isEmptyFSTreeDelta = Map.null
 
+isEmptyFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Bool
+isEmptyFSTreeDeltaNodeMay = isNothing
+
 isEmptyTopFSTreeDelta :: FSTreeDelta -> Bool
 isEmptyTopFSTreeDelta tds = case (Map.toList tds) of
 	[] -> True
 	[(_,FSTreeNop td)] -> True
 	otherwise -> False
 
+isEmptyTopFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Bool
+isEmptyTopFSTreeDeltaNodeMay tds = case tds of
+	Nothing -> True
+	Just (FSTreeNop td) -> True
+	otherwise -> False
+
 isChgFSTreeDelta :: FSTreeDelta -> Bool
 isChgFSTreeDelta tds = case (Map.toList tds) of
 	[(_,FSTreeChg td _)] -> True
+	otherwise -> False
+	
+isChgFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Bool
+isChgFSTreeDeltaNodeMay tds = case tds of
+	Just (FSTreeChg td _) -> True
 	otherwise -> False
 
 isMoveFSTreeDelta :: FSTreeDelta -> Maybe FilePath
 isMoveFSTreeDelta tds = case (Map.toList tds) of
 	[(_,FSTreeNew td (Just from) _ _)] -> Just from
 	otherwise -> Nothing
-
-isEmptyFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Bool
-isEmptyFSTreeDeltaNodeMay = isNothing
-
-isEmptyTopFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Bool
-isEmptyTopFSTreeDeltaNodeMay Nothing = True
-isEmptyTopFSTreeDeltaNodeMay (Just (FSTreeNop td)) = True
-isEmptyTopFSTreeDeltaNodeMay _ = False
+	
+isMoveFSTreeDeltaNodeMay :: FSTreeDeltaNodeMay -> Maybe FilePath
+isMoveFSTreeDeltaNodeMay tds = case tds of
+	Just (FSTreeNew td (Just from) _ _) -> Just from
+	otherwise -> Nothing
 
 -- ** Compression
 
@@ -219,6 +234,7 @@ updateFSTreeDeltaDir :: (FSTreeDelta -> FSTreeDelta) -> (FSTreeDeltaNode -> FSTr
 updateFSTreeDeltaDir upd (FSTreeNew tds moved dsk dsk2) = FSTreeNew (upd tds) moved dsk dsk2
 updateFSTreeDeltaDir upd (FSTreeChg tds dsk) = FSTreeChg (upd tds) dsk
 updateFSTreeDeltaDir upd (FSTreeNop tds) = FSTreeNop (upd tds)
+updateFSTreeDeltaDir upd (FSTreeNewLink _ _) = error "updateFSTreeDeltaDir link"
 updateFSTreeDeltaDir upd td = td
 
 -- finds and updates a delta for a specific filepath when found, returning the new global tree and the local tree before being updated
@@ -238,6 +254,7 @@ updateFSTreeDeltaNodeChildren :: FSTreeDeltaNode -> FSTreeDelta -> FSTreeDeltaNo
 updateFSTreeDeltaNodeChildren (FSTreeNew tds mv dsk dsk2) tds' = FSTreeNew tds' mv dsk dsk2
 updateFSTreeDeltaNodeChildren (FSTreeChg tds dsk) tds' = FSTreeChg tds' dsk
 updateFSTreeDeltaNodeChildren (FSTreeNop tds) tds' = FSTreeNop tds'
+updateFSTreeDeltaNodeChildren (FSTreeNewLink _ _) tds = error "updateFSTreeDeltaNodeChildren link"
 updateFSTreeDeltaNodeChildren td tds = td
 
 -- applies a tree delta transformation under the parent directory of a given filepath
@@ -321,6 +338,7 @@ type FSTreeSym = Map FileName FSTreeSymNode
 data FSTreeSymNode =
 	  FSTreeSymLink FilePath -- a symbolic link
 	| FSTreeSymFileDir FSTreeSym -- a file or directory
+  deriving (Eq,Show,Ord,Typeable)
 
 -- focuses a symtree on some path; resolves symlinks
 focusFSTreeSym :: FilePath -> FSTreeSym -> FSTreeSym
@@ -330,10 +348,10 @@ focusFSTreeSym path root_ts = focusFSTreeSym' "" (splitDirectories path) root_ts
 	focusFSTreeSym' root [] ts = ts
 	focusFSTreeSym' root (name:names) ts = case Map.lookup name ts of
 		Nothing -> Map.empty
-		Just tsn -> focusFSTreeSymNode' (root </> name) names tsn
-	focusFSTreeSymNode' :: FilePath -> [FileName] -> FSTreeSymNode -> FSTreeSym
-	focusFSTreeSymNode' root names (FSTreeSymLink target) = focusFSTreeSym (root </> target </> joinPath names) root_ts
-	focusFSTreeSymNode' root names (FSTreeSymFileDir ts) = focusFSTreeSym' root names ts
+		Just tsn -> focusFSTreeSymNode' root name names tsn
+	focusFSTreeSymNode' :: FilePath -> FileName -> [FileName] -> FSTreeSymNode -> FSTreeSym
+	focusFSTreeSymNode' root name names (FSTreeSymLink target) = focusFSTreeSym (root </> target </> joinPath names) root_ts
+	focusFSTreeSymNode' root name names (FSTreeSymFileDir ts) = focusFSTreeSym' (root </> name) names ts
 
 findSymLinks :: FilePath -> IO FSTreeSym
 findSymLinks path = do
@@ -357,7 +375,7 @@ fixFSTreeDelta root_td root_ts = fixFSTreeDelta' "" root_td root_ts
 	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNop td) (FSTreeSymLink tgt) = maybeFSTreeNop $ fixFSTreeDelta' (root </> rel) td (focusFSTreeSym (root </> tgt) root_ts)
 	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNop td) (FSTreeSymFileDir tsn) = maybeFSTreeNop $ fixFSTreeDelta' (root </> rel) td tsn
 	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeRem) ts = Just tdn
-	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNewLink tgt a) ts = Just $ (\td -> FSTreeNew td Nothing (error "no content") (fromJust a)) $ fixFSTreeDelta
+	fixFSTreeDeltaSymNode' root rel tdn@(FSTreeNewLink tgt a) ts = Just $ (\td -> FSTreeNew td Nothing (error "no content") (fromJustNote "fixFSTreeDelta" a)) $ fixFSTreeDelta
 		(focusFSTreeDeltaByRelativePath root_td (root </> tgt))
 		(focusFSTreeSym (root </> tgt) root_ts)
 	
@@ -370,20 +388,3 @@ fixFSTreeDelta root_td root_ts = fixFSTreeDelta' "" root_td root_ts
 
 maybeFSTreeNop :: FSTreeDelta -> Maybe FSTreeDeltaNode
 maybeFSTreeNop tds = if (Map.null tds) then Nothing else Just (FSTreeNop tds)
-
-
-
-
-
-
-
---	data FSTreeDeltaNode = FSTreeNew FSTreeDelta MoveFrom OnDisk OnDisk -- a new directory or file (the first OnDisk is for content and the second for permisions)
---						 | FSTreeChg FSTreeDelta OnDisk -- a directory or file whose metadata has changed
---						 | FSTreeNop FSTreeDelta -- a directory or file that has not changed
---						 | FSTreeRem
---						 | FSTreeNewLink FilePath (Maybe OnDisk) -- a new symbolic link to another path from the top-level tree; the on-disk path holds the permissions
---		deriving (Show,Eq,Ord)
---
---	type MoveFrom = Maybe FilePath -- move origin
---
---	type FSTreeDelta = Map FileName FSTreeDeltaNode

@@ -57,7 +57,7 @@ buildFieldLens field = do
 	let putE = LamE [rP,fP] $ RecUpdE rE [(field,fE)]
 	return $ Pure.appE2 (ConE 'Lens) getE putE
 	
-class (IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside) => MDContainer fs md where
+class (IncK (IncForest fs) Pure.FileInfo,IncK (IncForest fs) Forest_err,ICRep fs,ForestInput fs FSThunk Inside) => MDContainer fs md where
 	collect_container_mds :: ForestLayer fs l => md -> ForestL fs l [Forest_md fs]
 	merge_container_errors :: ForestLayer fs l => md -> ForestL fs l Forest_err
 	merge_container_errors md = liftM Pure.mergeMDErrors $ mapM get_errors =<< collect_container_mds md
@@ -81,7 +81,7 @@ modPredE externalP predE = case externalP of
   VarP name -> let md_name = mkName ((nameBase name) ++"_md")  
                    attP    = VarP (mkName ((nameBase name) ++"_att"))
                    pat     = TildeP (TupP[VarP name, VarP md_name])
-                   initE   = AppE (VarE 'get_fileInfo) (VarE md_name)
+                   initE   = AppE (VarE 'get_info) (VarE md_name)
                    bodyE   = DoE [BindS attP initE,NoBindS predE]      -- let name_att = fileInfo name_md in predE
                in LamE [pat] bodyE            
   otherwise -> error "Forest: Couldn't convert constraint pattern to pattern for meta data.  Use simple pattern."
@@ -90,7 +90,7 @@ zmodPredE externalP predE = case externalP of
   VarP name -> let rep_name = mkName ((nameBase name))  
                    attP    = VarP (mkName ((nameBase name) ++"_att"))
                    pat     = TildeP (TupP[VarP name])
-                   initE   = AppE (VarE 'get_fileInfo) (VarE rep_name)
+                   initE   = AppE (VarE 'get_info) (VarE rep_name)
                    bodyE   = DoE [BindS attP initE,NoBindS predE]      -- let name_att = fileInfo name_md in predE
                in LamE [pat] bodyE            
   otherwise -> error "Forest: Couldn't convert constraint pattern to pattern for meta data.  Use simple pattern."

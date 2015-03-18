@@ -77,7 +77,7 @@ instance (Display l inc r m a,Display l inc r m b) => Display l inc r m (a :*: b
 		sx <- displaysPrec l inc r m x (":*:"++sy)
 		return $ '(':sx
 
-instance (Display l inc r m (ForestFSThunk fs Inside Forest_err)) => Display l inc r m (Forest_md fs) where
+instance (Display l inc r m (ForestFSThunk fs Inside FileInfo),Display l inc r m (ForestFSThunk fs Inside Forest_err)) => Display l inc r m (Forest_md fs) where
 	displaysPrec l inc r m fmd rest = do
 		sinfo <- displaysPrec l inc r m (fileInfo fmd) (')':rest)
 		serrs <- displaysPrec l inc r m (errors fmd) (' ':sinfo)

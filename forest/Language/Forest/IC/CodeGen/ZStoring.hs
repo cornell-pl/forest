@@ -284,7 +284,7 @@ zmanifestSimple (internal, isForm, externalE, forestTy, predM) treeE parentPathE
 	-- we need to name the variables after the field names
 	varName <- lift $ newName "var"
 	let (varE,varP) = genPE varName
-	let letRepS = [LetS [ValD varP (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) innerRepE) []],LetS [ValD repP (NormalB varE) []]]
+	let letRepS = [BindS varP (AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp innerRepE),LetS [ValD repP (NormalB varE) []]]
 	
 	manifestFocusE <- do
 		manifestContentE <- liftM (LamE [newpathP,newdtaP,newmanP]) $ zmanifestE False forestTy newpathE treeE newdtaE newmanE
@@ -306,14 +306,14 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 	newpathName <- lift $ newName "newpath"
 	let (newpathE,newpathP) = genPE newpathName
 	
-	let innerRepE = Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) $ if isNested then AppE repE dtaE else dtaE
+	let innerRepE = AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp $ if isNested then AppE repE dtaE else dtaE
 	
 	-- we need to name the variables after the field names
 --	let letRepS = LetS [ValD repP (NormalB innerRepE) []]
 --	let letMdS = LetS [ValD mdP (NormalB innerMdE) []]
 	varName <- lift $ newName "var"
 	let (varE,varP) = genPE varName
-	let letRepS = [LetS [ValD varP (NormalB innerRepE) []],LetS [ValD repP (NormalB varE) []]]
+	let letRepS = [BindS varP innerRepE,LetS [ValD repP (NormalB varE) []]]
 	
 	let genE = case generatorG of
 		Explicit expE -> expE
@@ -338,12 +338,12 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 		Reader.local update $ case predM of
 			Nothing -> do
 				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdtaP,newmanP]) $ zmanifestE False descTy newpathE treeE newdtaE newmanE
-				let manifestContainerE = Pure.appE8 (VarE 'doZManifestCompound) parentPathE genE treeE keyArgE destroyContainerE innerRepE manifestSingleE man0E
+				let manifestContainerE = Pure.appE8 (VarE 'doZManifestCompound) parentPathE genE treeE keyArgE destroyContainerE varE manifestSingleE man0E
 				let bindManS = BindS man1P manifestContainerE
-				return (repName,bindManS:letRepS)
+				return (repName,letRepS++[bindManS])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdtaP,newmanP]) $ zmanifestE False descTy newpathE treeE newdtaE newmanE
-				let manifestContainerE = Pure.appE9 (VarE 'doZManifestCompoundWithConstraint) parentPathE genE treeE keyArgE destroyContainerE (modPredEComp (VarP fileName) predE) innerRepE manifestSingleE man0E
+				let manifestContainerE = Pure.appE9 (VarE 'doZManifestCompoundWithConstraint) parentPathE genE treeE keyArgE destroyContainerE (modPredEComp (VarP fileName) predE) varE manifestSingleE man0E
 				let bindManS = BindS man1P manifestContainerE
-				return (repName,bindManS:letRepS)
+				return (repName,letRepS++[bindManS])

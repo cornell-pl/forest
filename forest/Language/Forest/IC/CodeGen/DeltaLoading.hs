@@ -11,6 +11,7 @@ import Language.Forest.IC.CodeGen.Loading
 import Language.Haskell.TH.Quote
 import Language.Forest.IC.IO.DeltaLoading
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
+import Safe
 
 import Language.Forest.Syntax as PS
 import Language.Forest.Pure.MetaData
@@ -118,7 +119,7 @@ genLoadDeltaM (untyRep,tyRep) pd_name forestTy pat_infos = do
 				
 				newrepmdName <- State.lift $ newName "newrepmd"
 				core_bodyE <- genLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName newrepmdName dpathName dfName treeName' (untyRep,tyRep) forestTy
-				let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
+				let dargsP = AsP (fromJustNote "genLoadDeltaM" dargsName) $ Pure.forestTupleP $ map VarP dargNames
 				let argsP = AsP argsName (ViewP (Pure.appE3 (VarE 'getLoadDeltaArgs) (VarE mode) (proxyN fs) (VarE proxyName)) dargsP)
 				let pats = [VarP mode,VarP proxyName,argsP,VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName']
 				let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]

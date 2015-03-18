@@ -14,6 +14,7 @@ import Language.Haskell.TH.Quote
 import Language.Forest.IC.IO.DeltaLoading
 import Language.Forest.IC.IO.ZDeltaLoading
 import qualified Language.Forest.Pure.CodeGen.Utils as Pure
+import Safe
 
 import Language.Forest.Syntax as PS
 import Language.Forest.Pure.MetaData
@@ -124,7 +125,7 @@ genZLoadDeltaM (untyRep,tyRep) forestTy pat_infos = do
 				
 				newrepmdName <- State.lift $ newName "newrepmd"
 				core_bodyE <- genZLoadDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName treeName newrepmdName dpathName dfName treeName' dvName (untyRep,tyRep) forestTy
-				let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
+				let dargsP = AsP (fromJustNote "genZLoadDeltaM" dargsName) $ Pure.forestTupleP $ map VarP dargNames
 				let argsP = AsP argsName (ViewP (VarE 'snd) dargsP)
 				let pats = [VarP proxyName,argsP,VarP pathName,VarP treeName,VarP repmdName,VarP dpathName,VarP dfName,VarP treeName',VarP dvName]
 				let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepmdName] $ DoE [NoBindS core_bodyE]
@@ -377,9 +378,7 @@ zloadDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE treeE repm
 		 ValD xP (NormalB $ AppE (VarE repName) $ AppE (VarE 'fst) repmdE) []
 		,ValD lensP (NormalB lensRepE) []
 		]
-	let fieldStmt2 = LetS [
-		ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []
-		]
+	let fieldStmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 	
 --	let innerrepmdE = TupE [xE,AppE (VarE 'snd) repmdE]
 
@@ -453,9 +452,7 @@ zloadDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt explicitN
 		 ValD xP (NormalB $ AppE (VarE repName) $ AppE (VarE 'fst) repmdE) []
 		,ValD lensP (NormalB lensRepE) []
 		]
-	let fieldStmt2 = LetS [
-		ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []
-		]
+	let fieldStmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 	let fieldStmts = if insideDirectory then [fieldStmt1,fieldStmt2] else [LetS [ValD lensP (NormalB lensRepE) []]]
 	
 	let genE = case generatorG of
@@ -531,14 +528,6 @@ isEmptyZDeltaEnvField = isEmptyZDeltaEnv fieldPVars
 	
 isEmptyZDeltaEnvExp :: Exp -> ZDeltaQ Exp
 isEmptyZDeltaEnvExp = isEmptyZDeltaEnv expVars
-
---zcheckNoChange :: ForestTy -> Exp -> Exp -> ZDeltaQ Exp -> ZDeltaQ Exp
---zcheckNoChange ty dpathEs dfE m = do
---	cond1 <- isEmptyZDeltaEnvForestTy ty
---	let cond2 = AppE (VarE 'isEmptyDelta) dpathEs
---	let cond3 = AppE (VarE 'isEmptyFSTreeDelta) dfE
---	x <- m
---	return $ Pure.appE5 (VarE 'zskipLoadIf3) (LitE $ StringL "checkNoChange") cond1 cond2 cond3 x
 
 zcheckLoadUnevaluated :: String -> Exp -> Exp -> Exp -> (Exp -> ZEnvQ Exp) -> (Exp -> ZDeltaQ Exp) -> ZDeltaQ Exp
 zcheckLoadUnevaluated str pathE' treeE' repmdE load loadD = do

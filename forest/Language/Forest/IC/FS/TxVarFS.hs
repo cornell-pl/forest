@@ -1,5 +1,5 @@
 
-{-# LANGUAGE TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and no incrementality
 
@@ -7,7 +7,8 @@ module Language.Forest.IC.FS.TxVarFS (
 	TxICForest(..)
 	, proxyTxVarFS
 	) where
-		
+	
+import Data.Global.TH as TH
 import Control.Monad.Incremental.Display
 import Control.Monad.RWS (RWS(..),RWST(..))
 import qualified Control.Monad.RWS as RWS
@@ -83,20 +84,12 @@ type instance IncK (IncForest TxVarFS) a = (Typeable a,Eq a)
 proxyTxVarFS = Proxy :: Proxy TxVarFS
 
 -- a list of the starting times of running transactions sorted from newest to oldest (we may two txs with the same starting time)
-{-# NOINLINE runningTxs #-}
-runningTxs :: MVar [UTCTime]
-runningTxs = unsafePerformIO $ newMVar []
+TH.declareMVar "runningTxs"  [t| [UTCTime] |] [e| [] |]
 
 -- insert a new time in a list sorted from newest to oldest
 addRunningTx time = modifyMVarMasked_ runningTxs (\xs -> return $ List.insertBy (\x y -> compare y x) time xs)
 -- remove a time in a list sorted from newest to oldest
 deleteRunningTx time = modifyMVarMasked_ runningTxs (\xs -> return $ List.delete time xs)
-
--- a map with commit times of committed transactions and their performed changes
--- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
-{-# NOINLINE doneTxs #-}
-doneTxs :: MVar (Map UTCTime TxVarFSWrites)
-doneTxs = unsafePerformIO $ newMVar Map.empty
 
 -- ** Filesystem
 
@@ -120,6 +113,17 @@ type TxVarFSChangesFlat = (TxVarFSReads,TxVarFSWrites)
 
 -- the FSVersion is initialized differently for each top-level tx and modified on stores. initializing a nested tx does not modify the FSVersion
 type FSVersion = Unique
+
+-- a map with commit times of committed transactions and their performed changes
+-- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
+TH.declareMVar "doneTxs"  [t| (Map UTCTime TxVarFSWrites) |] [e| Map.empty |]
+
+-- locks on which retrying transactions will wait
+type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
+
+-- a register of locks for retrying transactions
+-- these paths should be canonical
+declareMVar "waitingTxs"  [t| (Map FilePath WaitQueue) |] [e| Map.empty |]
 
 -- only needs to read from the top-level log
 getTxVarFSChangesFlat :: ForestM TxVarFS TxVarFSChangesFlat
@@ -226,30 +230,32 @@ instance FSRep TxVarFS where
 	
 	getDirectoryContentsInTree dir _ = getDirectoryContentsTxVarFS dir
 		
-	doesDirectoryExistInTree path _ = doesExistTxVarFS doesDirectoryExist path
-	doesFileExistInTree path _ = doesExistTxVarFS doesFileExist path
-	doesExistInTree path _ = doesExistTxVarFS (\path -> doesDirectoryExist path >>= \isDir -> if isDir then return True else doesFileExist path) path
+	doesDirectoryExistInTree path _ = doesExistTxVarFS DirExists path
+	doesFileExistInTree path _ = doesExistTxVarFS FileExists path
+	doesExistInTree path _ = doesExistTxVarFS AnyExists path
 	
-	canonalizePathWithTree path _ = canonalizePathTxVarFS path
+	canonalizePathInTree path _ = canonalizePathTxVarFS path
 
 getDirectoryContentsTxVarFS :: FilePath -> ForestM TxVarFS [FileName]
 getDirectoryContentsTxVarFS path = do
-	canpath <- canonalizeDirectoryInTree path TxVarFSTree
+	canpath <- canonalizePathInTree path TxVarFSTree
 	putTxVarFSRead canpath
 	(_,td) <- getTxVarFSChanges
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	xs <- forestIO $ getContentsFSTreeDeltaNodeMay canpath path_td
 	return xs
 
-doesExistTxVarFS :: (FilePath -> IO Bool) -> FilePath -> ForestM TxVarFS Bool
-doesExistTxVarFS test path = do
+doesExistTxVarFS :: ExistFlag -> FilePath -> ForestM TxVarFS Bool
+doesExistTxVarFS flag path = do
 	canpath <- canonalizeDirectoryInTree path TxVarFSTree
 	putTxVarFSRead canpath
 	(_,td) <- getTxVarFSChanges
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	case path_td of
-		Just (FSTreeNew _ _ diskpath _) -> forestIO $ test diskpath
-		otherwise -> forestIO $ test canpath
+		Just (FSTreeNop _) -> return $ flag /= FileExists
+		Just (FSTreeChg _ _) -> return $ flag /= FileExists
+		Just (FSTreeNew _ _ diskpath _) -> forestIO $ doesExistShellFlag flag diskpath
+		otherwise -> forestIO $ doesExistShellFlag flag canpath
 
 -- canonalizes a path, taking into account the buffered FSTreeDelta and logging reads of followed symlinks
 canonalizePathTxVarFS :: FilePath -> ForestM TxVarFS FilePath
@@ -405,7 +411,7 @@ instance TxICForest TxVarFS where
 	retry = retryTxVarFS
 	orElse = orElseTxVarFS
 	throw = throwTxVarFS 
-	catch = catchTxVarFS 
+	catch = catchTxVarFS False
 	new = newTxVarFS Proxy
 	args = argsTxVarFS Proxy
 	read = readTxVarFS Proxy
@@ -434,7 +440,7 @@ copyOrElseTxVarFS proxy src tgt b f = do
 			-- XXX: this may fail if FileInfo paths are canonized...
 			let chgPath path = path_tgt </> (makeRelative path_src path)
 			tgt' <- copyFSThunks proxyTxVarFS proxyOutside chgPath src
-			content' <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk tgt'
+			content' <- inside $ BX.getM lens_content $ Inc.get $ to iso_rep_thunk tgt'
 			writeOrElseTxVarFS tgt content' b f
 		otherwise -> error "tried to write to a variable that is not connected to the FS"
 
@@ -453,13 +459,13 @@ readTxVarFS proxy (rep :: rep) = do
 			(rep' :: rep) <- inside $ zload (vmonadArgs proxyTxVarFS proxy txargs) path
 			v' <- inside $ Inc.get (to iso_rep_thunk rep')
 			forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v'
-			return $ BX.get lens_content v'
-		Just v -> return $ BX.get lens_content v
+			inside $ BX.getM lens_content (return v')
+		Just v -> inside $ BX.getM lens_content (return v)
 
 writeOrElseTxVarFS :: (FTK TxVarFS args rep var content) => rep -> content -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS rep content b f = do
-	var <- Inc.getOutside $ to iso_rep_thunk rep
-	writeOrElseTxVarFS' rep (BX.put lens_content var content) b f
+	t <- inside $ BX.putM lens_content (Inc.get $ to iso_rep_thunk rep) (return content)
+	writeOrElseTxVarFS' rep t b f
 
 -- does not change the inner computation; just sets the cached fsversion forward
 writeOrElseTxVarFS' :: (FTK TxVarFS args rep var content) => rep -> var -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
@@ -541,13 +547,13 @@ orElseTxVarFS stm1 stm2 = do1 where
 throwTxVarFS :: Exception e => e -> TxVarFTM a
 throwTxVarFS = Catch.throwM
 
-catchTxVarFS :: Exception e => TxVarFTM a -> (e -> TxVarFTM a) -> TxVarFTM a
-catchTxVarFS stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxVarFS :: Exception e => Bool -> TxVarFTM a -> (e -> TxVarFTM a) -> TxVarFTM a
+catchTxVarFS doWrites stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
 	catchSome (e::SomeException) = do
-		validateCatchTxVarFS
-		h $ fromJust $ fromException e
+		validateCatchTxVarFS doWrites
+		h $ fromJustNote "catchTxICFS" $ fromException e
 
 initializeTxVarFS :: TxVarFTM b -> IO b 
 initializeTxVarFS (TxVarFSForestO m) = do
@@ -668,15 +674,15 @@ validateAndRetryNestedTxVarFS = do
 			throwM InvalidTx
 
 -- validates the current log before catching an exception
-validateCatchTxVarFS :: TxVarFTM ()
-validateCatchTxVarFS = do
+validateCatchTxVarFS :: Bool -> TxVarFTM ()
+validateCatchTxVarFS doWrites = do
 	txenv@(timeref,startversion,txlogs) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
 	if success
 		then do
 			-- in case the computation raises an exception, discard all its visible (write) effects
-			forestM $ unbufferTxVarFSWrites
+			unless doWrites $ forestM $ unbufferTxVarFSWrites
 		else do
 			inL $ liftIO $ deleteRunningTx starttime
 			throwM InvalidTx
@@ -750,15 +756,6 @@ extendTxVarFSLog txlog1 txlog2 = forestIO $ do
 	(fsversion2,(reads2,writes2),tmps2) <- readRef txlog2
 	writeRef txlog2 (fsversion1,(reads1,writes2),tmps1)
 
--- locks on which retrying transactions will wait
-type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
-
--- a register of locks for retrying transactions
--- these paths should be canonical
-{-# NOINLINE waitingTxs #-}
-waitingTxs :: MVar (Map FilePath WaitQueue)
-waitingTxs = unsafePerformIO $ newMVar Map.empty
-
 -- wakes up the locks waiting on a given set of paths
 wakeUpWaits :: Set FilePath -> ForestM TxVarFS ()
 wakeUpWaits = Foldable.mapM_ wakeUpWait
@@ -803,6 +800,7 @@ releaseFLock mv = do
 	b <- STM.tryPutTMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
+{-# NOINLINE fileLocks #-}
 fileLocks :: CWeakMap.WeakMap FilePath FLock
 fileLocks = unsafePerformIO $ CWeakMap.empty
 

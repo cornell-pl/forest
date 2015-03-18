@@ -71,36 +71,43 @@ import Language.Forest.Errors
 import Language.Forest.IC.BX as BX
 import Control.Monad.Incremental.Display
 
-instance ForestContent Binary Binary where
-	lens_content = idLens
-
-type FTK fs args rep var content = (CopyFSThunks fs Outside rep,Eq rep,IncK (IncForest fs) var,IncK (IncForest fs) content,ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent var content,Typeable var)
-
-infoLens = (Lens fileInfo $ \fmd info' -> fmd { fileInfo = info'} ) 
-
 -- hides @Forest_err@ values from the representation type of a variable
-class ForestContent var content | var -> content where
-	lens_content :: Lens var content
-instance ForestContent rep c => ForestContent (Forest_md fs,rep) (FileInfo,c) where
-	lens_content = prodLens infoLens lens_content
-instance ForestContent rep c => ForestContent ((Forest_md fs,bmd),rep) ((FileInfo,bmd),c) where
-	lens_content = prodLens (prodLens infoLens idLens) lens_content
-instance ForestContent rep c => ForestContent (ForestFSThunkI fs Forest_err,rep) c where
-	lens_content = sndLens `compLens` lens_content
-instance ForestContent String String where
-	lens_content = idLens
-instance ForestContent (ForestFSThunkI fs rep) (ForestFSThunkI fs rep) where
-	lens_content = idLens
-instance ForestContent (Map a b) (Map a b) where
-	lens_content = idLens
-instance ForestContent (Set a) (Set a) where
-	lens_content = idLens
-instance ForestContent [a] [a] where
-	lens_content = idLens
-instance ForestContent (Maybe a) (Maybe a) where
-	lens_content = idLens
-instance ForestContent Text Text where
-	lens_content = idLens
+class ICRep fs => ForestContent (fs :: FS) var content | var -> content where
+	lens_content :: LensM (ForestI fs) var content
+
+instance ICRep fs => ForestContent fs Binary Binary where
+	lens_content = idLensM
+
+type FTK fs args rep var content = (CopyFSThunks fs Outside rep,Eq rep,IncK (IncForest fs) var,IncK (IncForest fs) content,ZippedICForest fs args rep,ForestRep rep (FTV fs var),ForestContent fs var content,Typeable var)
+
+infoLensM :: ICRep fs => LensM (ForestI fs) (Forest_md fs) (ForestFSThunkI fs FileInfo)
+infoLensM = LensM get put where
+	get ms = liftM fileInfo ms
+	put ms mv = do
+		fmd <- ms
+		info' <- mv
+		return $ fmd { fileInfo = info'}
+
+instance (IncK (IncForest fs) FileInfo,ForestContent fs rep c) => ForestContent fs (Forest_md fs,rep) (FileInfo,c) where
+	lens_content = prodLensM (infoLensM `compLensM` fsThunkLensI) lens_content
+instance (IncK (IncForest fs) FileInfo,ForestContent fs rep c) => ForestContent fs ((Forest_md fs,bmd),rep) ((FileInfo,bmd),c) where
+	lens_content = prodLensM (prodLensM (infoLensM `compLensM` fsThunkLensI) idLensM) lens_content
+instance (ForestContent fs rep c) => ForestContent fs (ForestFSThunkI fs Forest_err,rep) c where
+	lens_content = sndLensM `compLensM` lens_content
+instance ICRep fs => ForestContent fs String String where
+	lens_content = idLensM
+instance ICRep fs => ForestContent fs (ForestFSThunkI fs rep) (ForestFSThunkI fs rep) where
+	lens_content = idLensM
+instance ICRep fs => ForestContent fs (Map a b) (Map a b) where
+	lens_content = idLensM
+instance ICRep fs => ForestContent fs (Set a) (Set a) where
+	lens_content = idLensM
+instance ICRep fs => ForestContent fs [a] [a] where
+	lens_content = idLensM
+instance ICRep fs => ForestContent fs (Maybe a) (Maybe a) where
+	lens_content = idLensM
+instance ICRep fs => ForestContent fs Text Text where
+	lens_content = idLensM
 
 
 class ICRep fs => ZippedICMemo fs where
@@ -471,10 +478,9 @@ listInfoEmptyFiles = listify proxyNoCtx $ \(r::FileInfo) -> return $ (fullpath r
 listInfoNonEmptyFiles :: MData NoCtx m a => a -> m [FileInfo]
 listInfoNonEmptyFiles = listify proxyNoCtx $ \(r::FileInfo) -> return $ (fullpath r) /= ""
 
-listMDNonEmptyFiles :: (FSRep fs,MData NoCtx (ForestO fs) a) => a -> ForestO fs [Forest_md fs]
-listMDNonEmptyFiles = listify proxyNoCtx (return . aux) where
-	aux :: Forest_md fs -> Bool
-	aux r = (fullpath $ fileInfo r) /= ""
+listMDNonEmptyFiles :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,ICRep fs,FSRep fs,MData NoCtx (ForestO fs) a) => a -> ForestO fs [Forest_md fs]
+listMDNonEmptyFiles = listify proxyNoCtx aux where
+	aux r = get_info r >>= \i -> return $ fullpath i /= ""
 
 mapInfoFiles :: MData NoCtx m a => a -> m (Map FilePath FileInfo)
 mapInfoFiles md = do

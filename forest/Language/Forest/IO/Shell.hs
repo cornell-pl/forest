@@ -1,10 +1,11 @@
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 module Language.Forest.IO.Shell where
 
+import Data.Typeable
 import Data.Text (Text(..))
 import qualified Data.Text as T
 import Data.String
@@ -27,7 +28,7 @@ pathDevice path = liftM (head . words) $ runShellCommand $ "/usr/sbin/grub-probe
 
 -- gets the path where a given device is mounted
 devicePath :: String -> IO String
-devicePath = liftM fromJust . devicePathMay
+devicePath = liftM (fromJustNote "devicePath") . devicePathMay
 
 mergePDFsTo :: [String] -> String -> IO ExitCode
 mergePDFsTo pdfs to = runShellCommand_ $ "pdftk " ++ unwords pdfs ++ " cat output " ++ to
@@ -80,6 +81,14 @@ removePath path = do
 
 movePath :: FilePath -> FilePath -> IO ExitCode
 movePath from to = runShellCommand_ $ "mv " ++ from ++ " " ++ to
+
+data ExistFlag = DirExists | FileExists | AnyExists deriving (Typeable,Show,Eq,Ord)
+
+doesExistShellFlag :: ExistFlag -> FilePath -> IO Bool
+doesExistShellFlag flag = case flag of
+	DirExists -> doesDirectoryExistShell
+	FileExists -> doesFileExistShell
+	AnyExists -> doesPathExistShell
 
 doesDirectoryExistShell :: FilePath -> IO Bool
 doesDirectoryExistShell path = liftM (==ExitSuccess) $ runShellCommand_ ("test -d " ++ path)

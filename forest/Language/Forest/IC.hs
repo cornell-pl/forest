@@ -34,7 +34,6 @@ module Language.Forest.IC (
 	, module Language.Forest.IC.IO.ZDeltaStoring
 	, module Language.Forest.IC.IO.Loading
 	, module Language.Forest.IC.IO.ZLoading
-	, module Language.Forest.IC.IO.Memo
 	, module Language.Forest.IC.IO.Storing
 	, module Language.Forest.IC.IO.ZStoring
 	, module Language.Forest.IC.MetaData
@@ -86,7 +85,7 @@ import Language.Forest.IC.IO.ZDeltaLoading
 import Language.Forest.IC.IO.ZDeltaStoring
 import Language.Forest.IC.IO.Loading
 import Language.Forest.IC.IO.ZLoading
-import Language.Forest.IC.IO.Memo
+
 import Language.Forest.IC.IO.Storing
 import Language.Forest.IC.IO.ZStoring
 import Language.Forest.IC.MetaData

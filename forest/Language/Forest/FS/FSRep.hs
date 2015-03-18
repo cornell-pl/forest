@@ -22,6 +22,7 @@ import Language.Forest.IO.Utils
 import Control.Monad.Lazy
 import System.FilePath.Glob
 import Language.Pads.Padsc hiding (numErrors)
+import Data.Map as Map
 
 import Language.Pads.MetaData hiding (numErrors)
 import Language.Pads.CoreBaseTypes
@@ -41,6 +42,7 @@ import Data.Unique
 import Data.Int
 import Data.Word
 import Data.Time.Clock
+import Data.Global.Dynamic as Dyn
 
 import Language.Haskell.TH.Syntax hiding (Loc(..))
 
@@ -50,9 +52,8 @@ debug str = trace str
 
 ---------------------------------------------------------------
 
-{-# NOINLINE forestCfg #-}
-forestCfg :: IORef (ForestCfg fs)
-forestCfg = unsafePerformIO $ newIORef (error "no initial Forest cfg")
+forestCfg :: (Typeable fs) => IORef (ForestCfg fs)
+forestCfg = Dyn.declareIORef "forestCfg" (error "no initial Forest cfg")
 
 -- the kind of possible filesystem instantiations
 data FS = PureFS | TxFS | LazyFS | NILFS | TxVarFS | TxICFS | TxNILFS deriving Typeable
@@ -124,7 +125,7 @@ class (Typeable fs,MonadLazy (ForestM fs),Show (FSTree fs)) => FSRep (fs :: FS) 
 	-- translates a tree filepath to an on-disk filepath. this is used before any read from the FS
 	pathInTree :: FilePath -> FSTree fs -> ForestM fs OnDisk
 	-- translates an on-disk filepath to a tree filepath
-	-- optional: if the FS does not support this functionality, this can be undefined provided a specialized instance for @canonalizePathWithTree@
+	-- optional: if the FS does not support this functionality, this can be undefined provided a specialized instance for @canonalizePathInTree@
 	pathFromTree :: OnDisk -> FSTree fs -> ForestM fs FilePath
 	-- appends a relative path to an original tree path
 	stepPathInTree :: FSTree fs -> FilePath -> FilePath -> ForestM fs FilePath
@@ -140,8 +141,8 @@ class (Typeable fs,MonadLazy (ForestM fs),Show (FSTree fs)) => FSRep (fs :: FS) 
 		isDir <- forestIO $ doesDirectoryExist diskpath
 		if isDir then return True else forestIO $ doesFileExist diskpath
 	-- returns a canonical version of a filepath according for a given tree
-	canonalizePathWithTree :: FilePath -> FSTree fs -> ForestM fs FilePath
-	canonalizePathWithTree path tree = flip pathFromTree tree =<< forestIO . canonalizePath =<< pathInTree path tree
+	canonalizePathInTree :: FilePath -> FSTree fs -> ForestM fs FilePath
+	canonalizePathInTree path tree = flip pathFromTree tree =<< forestIO . canonalizePath =<< pathInTree path tree
 
 	type FSTreeD fs :: *
 
@@ -156,11 +157,13 @@ class (Typeable fs,MonadLazy (ForestM fs),Show (FSTree fs)) => FSRep (fs :: FS) 
 	-- it may fail in case it is not possible to compute a difference between the two trees
 	diffFS :: FSTree fs -> FSTree fs -> FilePath -> ForestM fs (Maybe (FSTreeD fs))
 
+deriving instance Typeable ForestCfg
+
 -- canonalizes a filepath, but leaving the filename uncanonized
 canonalizeDirectoryInTree :: FSRep fs => FilePath -> FSTree fs -> ForestM fs FilePath
 canonalizeDirectoryInTree path tree = do
 	let (root,file) = splitFileName path
-	canroot <- canonalizePathWithTree root tree
+	canroot <- canonalizePathInTree root tree
 	return $ canroot </> file
 
 ----------
@@ -203,3 +206,23 @@ getMatchingFilesInTreeM :: (FSRep fs,Matching fs a) => FilePath -> ForestM fs a 
 getMatchingFilesInTreeM path matchingM tree = do
 	matching <- matchingM
 	getMatchingFilesInTree path matching tree
+
+-- * Pure data structure for memoized canonical paths
+
+newtype CanonicalTree fs = CanonicalTree (Map FileName (CanonicalTree fs,Maybe (FilePath,FSTree fs)))
+
+memoCanonicalTree :: FilePath -> FilePath -> FSTree fs -> CanonicalTree fs -> CanonicalTree fs
+memoCanonicalTree src tgt fs tree = follow (splitDirectories src) tree where
+	follow [] xs = xs
+	follow [dir] (CanonicalTree xs) = CanonicalTree $ Map.insertWith merge dir (CanonicalTree Map.empty,Just (tgt,fs)) xs
+	follow (dir:dirs) (CanonicalTree xs) = case Map.lookup dir xs of
+		Nothing -> CanonicalTree $ Map.insert dir (follow dirs (CanonicalTree Map.empty),Nothing) xs
+		Just (subtree,tgt) -> CanonicalTree $ Map.insert dir (follow dirs subtree,tgt) xs
+	merge (CanonicalTree xs,mbx) (CanonicalTree ys,mby) = (CanonicalTree (ys `Map.union` xs),mbx `mplus` mby)
+
+findCanonicalTree :: [FileName] -> CanonicalTree fs -> Maybe (FilePath,FSTree fs,[FileName])
+findCanonicalTree [] (CanonicalTree xs) = Nothing
+findCanonicalTree (dir:dirs) (CanonicalTree xs) = case Map.lookup dir xs of
+	Just (subtree,Nothing) -> findCanonicalTree dirs subtree
+	Just (subtree,Just (tgt,oldtree)) -> findCanonicalTree dirs subtree `mplus` Just (tgt,oldtree,dirs)
+	Nothing -> Nothing

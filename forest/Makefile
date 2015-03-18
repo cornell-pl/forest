@@ -3,6 +3,8 @@ update:
 	cd ../../HsAdapton; cabal install adapton.cabal --force-reinstalls -j1
 icpapers2:
 	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Papers2.hs
+icpapers2tx:
+	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Papers2Tx.hs
 icpapers2x:
 	ghc --make -ddump-splices -fcontext-stack=60 Examples/IC/Papers2Tx.hs -o Papers2Tx
 icuniversal:

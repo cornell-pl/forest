@@ -236,7 +236,7 @@ zdefaultSimple (internal, isForm, externalE, forestTy, predM) pathE = do
 			Just pred -> do
 				return $ Pure.appE4 (VarE 'doZDefaultSimpleWithConstraint) pathE externalE (zmodPredE (VarP repName) pred) loadContentE
 	let stmt1 = BindS (TildeP $ TupP [xP]) loadFocusE
-	let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+	let stmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 	return (xName,repName,[stmt1,stmt2])
 
 -- | Load a top-level declared comprehension
@@ -298,14 +298,14 @@ zdefaultCompound isNested (CompField internal tyConNameOpt explicitName external
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP]) $ zdefaultE False descTy newpathE
 				let loadContainerE = Pure.appE5 (VarE 'doZDefaultCompound) pathE genE keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [xP]) loadContainerE
-				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				let stmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 				return (xName,repName,[loadContainerS,stmt2])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP]) $ zdefaultE False descTy newpathE
 				let loadContainerE = Pure.appE6 (VarE 'doZDefaultCompoundWithConstraint) pathE genE (modPredEComp (VarP fileName) predE) keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [xP]) loadContainerE
-				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				let stmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 				return (xName,repName,[loadContainerS,stmt2])
 
 				

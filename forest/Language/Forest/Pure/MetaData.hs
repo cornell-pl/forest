@@ -332,8 +332,8 @@ sameCanonicalFullPathInTree md1 md2 tree = do
 	let fmd2 = get_fmd_header md2
 	let path1 = fullpath (fileInfo fmd1)
 	let path2 = fullpath (fileInfo fmd2)
-	canpath1 <- canonalizePathWithTree path1 tree
-	canpath2 <- canonalizePathWithTree path2 tree
+	canpath1 <- canonalizePathInTree path1 tree
+	canpath2 <- canonalizePathInTree path2 tree
 	return $ canpath1 == canpath2
 
 mergeForestErrs :: Forest_err -> Forest_err -> Forest_err

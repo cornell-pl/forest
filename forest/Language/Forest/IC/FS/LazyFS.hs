@@ -105,7 +105,7 @@ instance FSRep LazyFS where
 		return result
 		
 	stepPathInTree _ path rel = return $ path </> rel
-	canonalizePathWithTree path _ = forestIO $ canonalizePath path
+	canonalizePathInTree path _ = forestIO $ canonalizePath path
 	
 instance ICRep LazyFS where
 

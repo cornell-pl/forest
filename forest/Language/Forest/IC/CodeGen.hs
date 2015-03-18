@@ -210,11 +210,12 @@ genZFInst mb_fsTy ecName fsName loadM loadDeltaM manifestM manifestDeltaM defaul
 	
 	let mkInst mb_ty =
 		let ctx = Set.toList ks ++
-			[ ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),tyName]
-			, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FileInfo]
-			, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FilePath]
-			, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''Forest_err]
-			, ClassP ''Typeable [VarT fsName],ClassP ''ZippedICMemo [VarT fsName]
+			[ --ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),tyName]
+			--, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FileInfo]
+			--, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''FilePath]
+			--, ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ConT ''Forest_err]
+			--,
+			ClassP ''Typeable [VarT fsName],ClassP ''ZippedICMemo [VarT fsName]
 			]
 		    instD = InstanceD ctx inst [load_method,loadDelta_method,manifest_method,manifestD_method,default_method]
 		    instD' = SYB.everywhere (SYB.mkT $ \(t::Type) -> if t == VarT ecName then (PromotedT 'E) else t) instD
@@ -247,7 +248,7 @@ genZRepMDDecl ecName fsName ty (unty_name,ty_name) pat_infos = case ty of
 		forestRepInstance <- lift $ mkNewTypeForestRepEC ecName fsName tyNameEC (unty_name,ty_name) rep
 		let tyEC = Pure.appT2 (ConT tyNameEC) (VarT ecName) (VarT fsName)
 		-- identity
-		let forestContentInstance = [InstanceD [] (Pure.appT2 (ConT ''ForestContent) tyEC tyEC) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLens) []]]
+		let forestContentInstance = [InstanceD [ClassP ''ICRep [VarT fsName]] (Pure.appT3 (ConT ''ForestContent) (VarT fsName) tyEC tyEC) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLensM) []]]
 		return (ty_decEC, ty_decC:ty_dec:forestRepInstance:mdataInstance++deepTypeableInstance++forestContentInstance)
 
 {- Generate a representation and meta-data type for maybe. -}
@@ -319,11 +320,20 @@ mkDirForestContentEC fsName ty_name inner_ty_name inner_ty_nameEC fields = do
 	let tyC = Pure.appT2 (ConT inner_ty_nameEC) (PromotedT 'C) $ VarT fsName
 	let (es,map snd -> ps) = Pure.getPEforFields mkName fields
 	let (es',map snd -> ps') = Pure.getPEforFields (mkName . (++"'")) fields
-	let lns_get = LamE [SigP (ConP inner_ty_name ps) tyE] $ SigE (List.foldl AppE (ConE inner_ty_name) $ map (\s -> Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) s) es) tyC
-	let lns_put = LamE [SigP (ConP inner_ty_name ps) tyE,SigP (ConP inner_ty_name ps') tyC] $ SigE (List.foldl AppE (ConE inner_ty_name) $ map (\(s,v) -> Pure.appE3 (VarE 'BX.put) (VarE 'lens_content) s v) $ zip es es') tyE
-	let lns = Pure.appE2 (ConE 'Lens) lns_get lns_put
+	let (es'',map snd -> ps'') = Pure.getPEforFields (mkName . (++"''")) fields
+	let ms = mkName "ms"
+	let mv = mkName "mv"
+	let lns_get = LamE [VarP ms] $ DoE $
+		[BindS (SigP (ConP inner_ty_name ps) tyE) (VarE ms)] ++
+		map (\(s,v) -> BindS v $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) (Pure.returnExp s)) (zip es ps') ++
+		[NoBindS $ Pure.returnExp $ SigE (List.foldl AppE (ConE inner_ty_name) es') tyC ]	
+	let lns_put = LamE [VarP ms,VarP mv] $ DoE $
+		[BindS (SigP (ConP inner_ty_name ps) tyE) (VarE ms),BindS (SigP (ConP inner_ty_name ps') tyC) (VarE mv)] ++
+		map (\(s,v,s') -> BindS s' $ Pure.appE3 (VarE 'BX.putM) (VarE 'lens_content) (Pure.returnExp s) (Pure.returnExp v) ) (zip3 es es' ps'') ++
+		[NoBindS $ Pure.returnExp $ SigE (List.foldl AppE (ConE inner_ty_name) es'') tyE ]	
+	let lns = Pure.appE2 (ConE 'LensM) lns_get lns_put
 	let fun = FunD 'lens_content [Clause [] (NormalB lns) []]
-	let dec = InstanceD [] (Pure.appT2 (ConT ''ForestContent) tyE tyC) [fun]
+	let dec = InstanceD [ClassP ''ICRep [VarT fsName]] (Pure.appT3 (ConT ''ForestContent) (VarT fsName) tyE tyC) [fun]
 	return [dec]
 
 genZRepMDField :: Name -> Name -> Field -> GenQ (VST)
@@ -553,7 +563,7 @@ uTy fsName ty = Pure.appT2 (ConT ''ForestICThunkI) (VarT fsName) ty
 
 fsthunkTyQ :: Name -> Type -> GenQ Type
 fsthunkTyQ fsName ty = do
-	State.modify $ Set.insert (ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ty])
+--	State.modify $ Set.insert (ClassP ''IncK [AppT (ConT ''IncForest) (VarT fsName),ty])
 	return $ fsthunkTy fsName ty
 
 fsthunkTy :: Name -> Type -> Type
@@ -567,7 +577,7 @@ appConT con = Foldable.foldl' AppT (ConT con)
 
 instance (
 	MData NoCtx (ForestI fs) arg,
-	IncK (IncForest fs) Forest_err,
+	IncK (IncForest fs) Forest_err,IncK (IncForest fs) FileInfo,
 	IncK (IncForest fs) (ForestFSThunkI fs ((Forest_md fs, md), pads)),
 	IncK (IncForest fs) arg,
 	Eq arg,Data arg,
@@ -578,7 +588,7 @@ instance (
 	MData NoCtx (ForestO fs) pads,
 	MData NoCtx (ForestO fs) md,
 	DeepTypeable md,DeepTypeable pads,
-	ForestContent pads padsc,ZippedICMemo fs,Pads1 arg pads md
+	ForestContent fs pads padsc,ZippedICMemo fs,Pads1 arg pads md
 	) => ZippedICForest fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) where
 		zloadScratch proxy marg pathfilter path tree getMD = doZLoadFile1 Proxy marg pathfilter path tree getMD
 		zloadDelta proxy (marg,darg) mpath tree (rep,getMD) path' df tree' dv = doZLoadDeltaFile1 (isEmptyDelta darg) marg mpath path' tree df tree' dv (rep,getMD)

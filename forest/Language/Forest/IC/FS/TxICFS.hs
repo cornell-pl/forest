@@ -1,10 +1,10 @@
 
-{-# LANGUAGE OverlappingInstances, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell, OverlappingInstances, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse within transactions
 
 module Language.Forest.IC.FS.TxICFS (
-	TxICForest(..),FSRep(..),ForestCfg(..)
+	TxICForest(..),FSRep(..),ForestCfg(..),atomicallyTxICFS
 ) where
 
 import Language.Forest.Errors
@@ -77,6 +77,26 @@ import Safe
 import Control.Monad.Catch as Catch
 import System.Mem.Concurrent.WeakMap as WeakMap
 import Data.DList as DList
+import Data.Global.TH as TH
+
+-- locks on which retrying transactions will wait
+type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
+
+-- a register of locks for retrying transactions
+-- these paths should be canonical
+TH.declareMVar "waitingTxsIC"  [t| (Map FilePath WaitQueue) |] [e| Map.empty |]
+
+-- the root directory for transactional forest (it can't modify data not under this path)
+TH.declareMVar "rootTxICFS"  [t| FilePath |] [e| "/" |]
+
+-- a list of the starting times of running transactions sorted from newest to oldest (we may two txs with the same starting time)
+declareMVar "runningTxsIC"  [t| [UTCTime] |] [e| [] |]
+
+type TxICFSWrites = Set FilePath
+
+-- a map with commit times of committed transactions and their performed changes
+-- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
+declareMVar "doneTxsIC"  [t| (Map UTCTime TxICFSWrites) |] [e| Map.empty |]
 
 type TxICLayer l = (MonadReader TxICFSEnv (ForestL TxICFS l),ForestLayer TxICFS l)
 
@@ -84,29 +104,18 @@ type instance IncK (IncForest TxICFS) a = (Typeable a,Eq a,AddTxICParent Inside 
 
 proxyTxICFS = Proxy :: Proxy TxICFS
 
--- a list of the starting times of running transactions sorted from newest to oldest (we may two txs with the same starting time)
-{-# NOINLINE runningTxsIC #-}
-runningTxsIC :: MVar [UTCTime]
-runningTxsIC = unsafePerformIO $ newMVar []
-
 -- insert a new time in a list sorted from newest to oldest
 addRunningTxIC time = modifyMVarMasked_ runningTxsIC (\xs -> return $ List.insertBy (\x y -> compare y x) time xs)
 -- remove a time in a list sorted from newest to oldest
 deleteRunningTxIC time = modifyMVarMasked_ runningTxsIC (\xs -> return $ List.delete time xs)
 
--- a map with commit times of committed transactions and their performed changes
--- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
-{-# NOINLINE doneTxsIC #-}
-doneTxsIC :: MVar (Map UTCTime TxICFSWrites)
-doneTxsIC = unsafePerformIO $ newMVar Map.empty
-
 -- ** Filesystem
 
 -- latest tree,delta after the current tree,next tree,reads since the beginning, buffered variables, memoized forest transactional variables, temporary paths since the beginning
-type TxICFSLog = IORef (FSTree TxICFS,FSDeltas,FSTree TxICFS,TxICFSReads,TxICBuffTable,TxICMemoTable,Set FilePath)
+type TxICFSLog = IORef (FSTree TxICFS,FSDeltas,FSTree TxICFS,TxICFSReads,TxICBuffTable,TxICMemoTable,CanonicalTree TxICFS,Set FilePath)
 
 type TxICBuffTable = WeakTable Unique DynTxICThunk
-type TxICMemoTable = WeakTable (FilePath,TypeRep) (Dynamic,MkWeak)
+type TxICMemoTable = WeakTable (FilePath,TypeRep) (Dynamic,MkWeak,FSTree TxICFS)
 
 -- nested logs for nested transactions
 type TxICFSLogs = SList TxICFSLog
@@ -118,76 +127,106 @@ type TxICFSTreeDeltas = IORef (Map FSVersion FSDeltas)
 type TxICFSEnv = (IORef UTCTime,TxId,TxICFSTreeDeltas,TxICFSLogs)
 
 type TxICFSReads = Set FilePath
-type TxICFSWrites = Set FilePath
 type TxICFSChanges = (TxICFSReads,FSTreeDelta)
 type TxICFSChangesFlat = (TxICFSReads,TxICFSWrites)
 
-bufferTxICFSThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => ForestFSThunk TxICFS l a -> TxICThunk l a -> ForestM TxICFS ()
+bufferTxICFSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestFSThunk TxICFS l a -> TxICThunk l a -> ForestM TxICFS ()
 bufferTxICFSThunk var thunk = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	let mkWeak = MkWeak $ mkWeakRefKey $ txICFSThunkArgs var
 	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak (txICFSThunkId var) $ DynTxICThunk thunk mkWeak
 	
-bufferTxICHSThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => ForestHSThunk TxICFS l a -> TxICThunk l a -> ForestM TxICFS ()
+bufferTxICHSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestHSThunk TxICFS l a -> TxICThunk l a -> ForestM TxICFS ()
 bufferTxICHSThunk var thunk = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	let mkWeak = MkWeak $ mkWeakRefKey $ txICHSThunkArgs var
 	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak (txICHSThunkId var) $ DynTxICThunk thunk mkWeak
 
 -- reads the pointer from a transactional variable to a thunk
-bufferedTxICFSThunk :: (Typeable l,Typeable a) => ForestFSThunk TxICFS l a -> ForestM TxICFS (TxICThunk l a)
-bufferedTxICFSThunk var = do
+bufferedTxICFSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestFSThunk TxICFS l a -> ForestM TxICFS (TxICThunk l a)
+bufferedTxICFSThunk (var :: ForestFSThunk TxICFS l a) = do
 	(starttime,txid,deltas,txlogs) <- Reader.ask
-	let find mb txlog = case mb of
-		Nothing -> do
-			(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
-			mb <- forestIO $ WeakTable.lookup bufftbl (txICFSThunkId var)
-			case mb of
-				Just (DynTxICThunk (cast -> Just thunk) _) -> return $ Just thunk
-				Nothing -> return Nothing
-		otherwise -> return mb
-	liftM fromJust $ Foldable.foldlM find Nothing txlogs
+	
+	let find txlog m = do
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+		mb <- forestIO $ WeakTable.lookup bufftbl (txICFSThunkId var)
+		case mb of
+			Just (DynTxICThunk (cast -> Just thunk) _) -> return thunk
+			Just dyn -> error $ "type mismatch: " ++ show (typeOf (undefined :: (TxICThunk l a))) ++" "++show dyn
+			otherwise -> m
+	
+	let global = do
+		tree <- latestTree
+		mb <- forestIO $ readIORef (txICFSThunkArgs var)
+		case mb of
+			Just (_,comp) -> do
+				t <- newTxICThunk comp tree
+				bufferTxICFSThunk var t
+				return t
+			Nothing -> error $ "bufferedTxICFSThunk"
+	
+	Foldable.foldr find global txlogs
 
-bufferedTxICHSThunk :: (Typeable l,Typeable a) => ForestHSThunk TxICFS l a -> ForestM TxICFS (TxICThunk l a)
-bufferedTxICHSThunk var = do
+bufferedTxICHSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestHSThunk TxICFS l a -> ForestM TxICFS (TxICThunk l a)
+bufferedTxICHSThunk (var :: ForestHSThunk TxICFS l a) = do
 	(starttime,txid,deltas,txlogs) <- Reader.ask
-	let find mb txlog = case mb of
-		Nothing -> do
-			(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
-			mb <- forestIO $ WeakTable.lookup bufftbl (txICHSThunkId var)
-			case mb of
-				Just (DynTxICThunk (cast -> Just thunk) _) -> return $ Just thunk
-				Nothing -> return Nothing
-		otherwise -> return mb
-	liftM fromJust $ Foldable.foldlM find Nothing txlogs
+	
+	let find txlog m = do
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+		mb <- forestIO $ WeakTable.lookup bufftbl (txICHSThunkId var)
+		case mb of
+			Just (DynTxICThunk (cast -> Just thunk) _) -> return thunk
+			Just dyn -> error $ "type mismatch: " ++ show (typeOf (undefined :: (TxICThunk l a))) ++" "++show dyn
+			otherwise -> m
+	
+	let global = do
+		tree <- latestTree
+		mb <- forestIO $ readIORef (txICHSThunkArgs var)
+		case mb of
+			Just (_,comp) -> do
+				t <- newTxICThunk comp tree
+				bufferTxICHSThunk var t
+				return t
+			Nothing -> error $ "bufferedTxICHSThunk"
+	
+	Foldable.foldr find global txlogs
 
 getNextFSTree :: MonadReader TxICFSEnv (ForestM TxICFS) => ForestM TxICFS (FSTree TxICFS)
 getNextFSTree = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	return newtree
+
+-- creates the next tree (on writes)
+nextTxICFSTree :: MonadReader TxICFSEnv (ForestM TxICFS) => ForestM TxICFS ()
+nextTxICFSTree = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,_,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	
+	-- next tree
+	newtreeDelta <- forestIO $ readIORef (fsTreeFSTreeDelta tree) >>= newIORef 
+	newtreeSyms <- forestIO $ readIORef (fsTreeSym tree) >>= newIORef
+	let newtree = TxICFSTree (fsTreeTxId tree) (succ $ fsTreeFSVersion tree) newtreeDelta (fsTreeVirtual tree) newtreeSyms
+	
+	forestIO $ writeRef txlog (tree,DList.empty,newtree,reads,bufftbl,memotbl,cantree,tmps)
+	
 
 incrementTxICFSTree :: MonadReader TxICFSEnv (ForestM TxICFS) => ForestM TxICFS ()
 incrementTxICFSTree = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
-	-- the new tree deltas are appended to the original deltas
-	nextTreeDeltas <- forestIO $ readRef (fsTreeFSTreeDelta tree) >>= newRef
-	nextSyms <- forestIO $ readIORef (fsTreeSym newtree) >>= newIORef
-	-- create the new pending tree
-	let nexttree = TxICFSTree (fsTreeTxId newtree) (succ $ fsTreeFSVersion newtree) nextTreeDeltas (fsTreeVirtual newtree) nextSyms
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	-- add the relative deltas
 	tds <- forestIO $ readRef deltas
 	forestIO $ writeRef deltas $ Map.insert (fsTreeFSVersion newtree) ds tds
-	forestIO $ writeRef txlog (newtree,DList.empty,nexttree,reads,bufftbl,memotbl,tmps)
+	forestIO $ writeRef txlog (newtree,DList.empty,newtree,reads,bufftbl,memotbl,cantree,tmps)
 
 -- only needs to read from the top-level log
 getTxICFSChangesFlat :: ForestM TxICFS TxICFSChangesFlat
 getTxICFSChangesFlat = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	writes <- forestIO $ readRef (fsTreeFSTreeDelta tree)
 	return (reads,fsTreeDeltaWrites "" writes)
 
@@ -196,31 +235,38 @@ getTxICFSChangesFlat = do
 getTxICFSChanges :: ForestM TxICFS TxICFSChanges
 getTxICFSChanges = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	writes <- forestIO $ readRef (fsTreeFSTreeDelta tree)
 	return (reads,writes)
+	
+getTxICFSNextChanges :: ForestM TxICFS FSTreeDelta
+getTxICFSNextChanges = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	writes <- forestIO $ readRef (fsTreeFSTreeDelta newtree)
+	return writes
 
 putTxICFSRead :: FilePath -> ForestM TxICFS ()
 putTxICFSRead path = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
-	forestIO $ writeIORef txlog (tree,ds,newtree,Set.insert path reads,bufftbl,memotbl,tmps)
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	forestIO $ writeIORef txlog (tree,ds,newtree,Set.insert path reads,bufftbl,memotbl,cantree,tmps)
 
 putTxICFSTmp :: FilePath -> ForestM TxICFS ()
 putTxICFSTmp tmp = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
-	forestIO $ writeRef txlog (tree,ds,newtree,reads,bufftbl,memotbl,Set.insert tmp tmps)
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	forestIO $ writeRef txlog (tree,ds,newtree,reads,bufftbl,memotbl,cantree,Set.insert tmp tmps)
 
 -- writes to the next tree
 -- duplicate the action on both the relative deltas (sequence of primitve FSDelta) and the absolute deltas (FSTreeDelta)
 modifyTxICFSTreeDeltas :: FSDelta -> ForestM TxICFS ()
 modifyTxICFSTreeDeltas d = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	forestIO $ modifyIORef (fsTreeFSTreeDelta newtree) (appendToFSTreeDelta d)
 	forestIO $ modifyIORef (fsTreeSym newtree) (\(ds,ts) -> (DList.snoc ds d,appendToFSTreeSym d ts))
-	forestIO $ writeIORef txlog (tree,DList.snoc ds d,newtree,reads,bufftbl,memotbl,tmps)
+	forestIO $ writeIORef txlog (tree,DList.snoc ds d,newtree,reads,bufftbl,memotbl,cantree,tmps)
 
 treeTxICFSThunk :: (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => ForestFSThunk TxICFS l a -> ForestL TxICFS l (FSTree TxICFS)
 treeTxICFSThunk var = do
@@ -242,12 +288,7 @@ instance MonadReader TxICFSEnv (ForestM TxICFS) where
 	local f (TxICFSForestM m) = TxICFSForestM $ local f m
 	
 instance Show (FSTree TxICFS) where
-	show tree = "FSTreeTxICFS " ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree)
-
--- the root directory for transactional forest (it can't modify data not under this path)
-{-# NOINLINE rootTxICFS #-}
-rootTxICFS :: IORef FilePath
-rootTxICFS = unsafePerformIO $ newIORef "/"
+	show tree = "(FSTreeTxICFS " ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree) ++ ")"
 
 -- a global table of symbolic links that all transactions read from and keep updated
 -- this is used to explore the locality in FS modifications; without knowing the existing symlinks, there is no locality
@@ -265,7 +306,7 @@ updateSymlinks = do
 
 computeSymlinks :: IO FSTreeSym
 computeSymlinks = do
-	path <- readIORef rootTxICFS
+	path <- readMVar rootTxICFS
 	putStrLn $ "Finding all symbolic links under... " ++ show path
 	syms <- findSymLinks path
 	putStrLn $ "Symbolic links calculated for " ++ show path
@@ -311,7 +352,7 @@ instance FSRep TxICFS where
 	virtualTree tree = return $ tree { fsTreeVirtual = True }
 	latestTree = do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 		return tree
 	
 	-- reads from the FS or from the modification log
@@ -320,7 +361,7 @@ instance FSRep TxICFS where
 		canpath <- canonalizeDirectoryInTree path tree
 		-- mark the path as read
 		putTxICFSRead canpath
-		(_,td) <- getTxICFSChanges
+		td <- forestIO $ readIORef $ fsTreeFSTreeDelta tree
 		let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 		let ondisk = case onDiskWriteMay path_td of
 			Nothing -> canpath
@@ -328,31 +369,31 @@ instance FSRep TxICFS where
 		virtualizeTxICFS ondisk tree
 
 	stepPathInTree tree path rel = do
-		dir <- canonalizePathWithTree path tree
+		dir <- canonalizePathInTree path tree
 		return $ dir </> rel
 	
 	getDirectoryContentsInTree = getDirectoryContentsTxICFS
 		
-	doesDirectoryExistInTree = doesExistTxICFS doesDirectoryExist
-	doesFileExistInTree = doesExistTxICFS doesFileExist
-	doesExistInTree = doesExistTxICFS (\path -> doesDirectoryExist path >>= \isDir -> if isDir then return True else doesFileExist path)
+	doesDirectoryExistInTree = doesExistTxICFS DirExists
+	doesFileExistInTree = doesExistTxICFS FileExists
+	doesExistInTree = doesExistTxICFS AnyExists
 	
-	canonalizePathWithTree = canonalizePathTxICFS
+	canonalizePathInTree = canonalizePathTxICFS
 
-	type FSTreeD TxICFS = FSTreeDelta -- a delta fixed-point focused on the current path
+	type FSTreeD TxICFS = FSTreeDeltaNodeMay -- a delta fixed-point focused on the current path
 
-	isEmptyFSTreeD _ = isEmptyFSTreeDelta
-	isEmptyTopFSTreeD _ = isEmptyTopFSTreeDelta
-	isChgFSTreeD _ = isChgFSTreeDelta
-	isMoveFSTreeD _ = isMoveFSTreeDelta
+	isEmptyFSTreeD _ = isEmptyFSTreeDeltaNodeMay
+	isEmptyTopFSTreeD _ = isEmptyTopFSTreeDeltaNodeMay
+	isChgFSTreeD _ = isChgFSTreeDeltaNodeMay
+	isMoveFSTreeD _ = isMoveFSTreeDeltaNodeMay
 
 	focusDiffFSTreeD tree path tree' path' = do
 		td <- focusDiffFSTreeDelta tree path tree' path'
 		syms <- forestIO $ findSymLinks path'
 		let fixtd = fixFSTreeDelta td syms
-		return fixtd
+		return $ focusFSTreeDeltaByRelativePathMay fixtd "/"
 		 
-	focusFSTreeD fs td path file pathfile = focusFSTreeDeltaByRelativePath td pathfile
+	focusFSTreeD fs td path file pathfile = focusFSTreeDeltaNodeMayByRelativePath td file
 
 	diffFS oldtree newtree path = do
 		if fsTreeTxId oldtree == fsTreeTxId newtree
@@ -362,7 +403,7 @@ instance FSRep TxICFS where
 				let dfs = drop (fsTreeFSVersion oldtree) $ take (fsTreeFSVersion newtree) $ Map.elems tds
 				syms <- liftM snd $ forestIO $ readRef (fsTreeSym newtree)
 				let fixtd = fixFSTreeDelta (compressFSDeltas $ DList.concat dfs) syms
-				let df = focusFSTreeDeltaByRelativePath fixtd path
+				let df = focusFSTreeDeltaByRelativePathMay fixtd path
 				return $ Just df
 			-- no sharing among different txs
 			else return Nothing
@@ -373,60 +414,113 @@ virtualizeTxICFS path tree = if fsTreeVirtual tree
 
 getDirectoryContentsTxICFS :: FilePath -> FSTree TxICFS -> ForestM TxICFS [FileName]
 getDirectoryContentsTxICFS path tree = do
-	canpath <- canonalizeDirectoryInTree path tree
+	canpath <- canonalizePathInTree path tree
 	putTxICFSRead canpath
-	(_,td) <- getTxICFSChanges
+	td <- forestIO $ readIORef $ fsTreeFSTreeDelta tree
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	xs <- forestIO $ getContentsFSTreeDeltaNodeMay canpath path_td
 	return xs
 
-doesExistTxICFS :: (FilePath -> IO Bool) -> FilePath -> FSTree TxICFS -> ForestM TxICFS Bool
-doesExistTxICFS test path tree = do
+doesExistTxICFS :: ExistFlag -> FilePath -> FSTree TxICFS -> ForestM TxICFS Bool
+doesExistTxICFS flag path tree = do
 	canpath <- canonalizeDirectoryInTree path tree
 	putTxICFSRead canpath
-	(_,td) <- getTxICFSChanges
+	td <- forestIO $ readIORef $ fsTreeFSTreeDelta tree
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	case path_td of
-		Just (FSTreeNew _ _ diskpath _) -> forestIO $ test diskpath
-		otherwise -> forestIO $ test canpath
+		Just (FSTreeNop _) -> return $ flag /= FileExists
+		Just (FSTreeChg _ _) -> return $ flag /= FileExists
+		Just (FSTreeNew _ _ diskpath _) -> forestIO $ doesExistShellFlag flag diskpath
+		otherwise -> forestIO $ doesExistShellFlag flag canpath
+
+memoCanonicalPath :: FilePath -> FilePath -> FSTree TxICFS -> ForestM TxICFS ()
+memoCanonicalPath src tgt fs = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	let cantree' = memoCanonicalTree src tgt fs cantree
+	forestIO $ writeIORef txlog (tree,ds,newtree,reads,bufftbl,memotbl,cantree',tmps)
+
+-- returns a canonical prefix, at a given tree, and a non-canonized suffix
+findCanonicalPath :: [FileName] -> ForestM TxICFS (Maybe (FilePath,FSTree TxICFS,[FileName]))
+findCanonicalPath dirs = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	return $ findCanonicalTree dirs cantree
 
 -- canonalizes a path, taking into account the buffered FSTreeDelta and logging reads of followed symlinks
+--canonalizePathTxICFS :: FilePath -> FSTree TxICFS -> ForestM TxICFS FilePath
+--canonalizePathTxICFS path tree = do
+--	norm <- forestIO $ liftM normalise $ absolutePath path
+--	let dirs = splitDirectories norm	
+--	mb <- findCanonicalPath dirs
+--	can <- case mb of
+--		Just (root,oldtree,suffix) -> do
+--			mb <- diffFS oldtree tree ""
+--			case mb of
+--				Just df -> follow df root suffix
+--				Nothing -> liftM snd getTxICFSChanges >>= \df -> follow df "" dirs
+--		Nothing -> liftM snd getTxICFSChanges >>= \df -> follow df "" dirs
+--	memoCanonicalPath norm can tree
+--	return can	
+--  where
+--	follow :: FSTreeDelta -> FilePath -> [FileName] -> ForestM TxICFS FilePath
+--	follow td root [] = return root
+--	follow td root (".":dirs) = follow td root dirs
+--	follow td root ("..":dirs) = follow td (takeDirectory root) dirs
+--	follow td root (dir:dirs) = do
+--		let rootdir = root </> dir
+--		let td' = focusFSTreeDeltaByRelativePathMay td rootdir
+--		case td' of
+--			Just (FSTreeNewLink link _) -> do -- follow buffered links
+--				-- mark the symbolic link as read
+--				putTxICFSRead rootdir
+--				canonalizePathTxICFS (root </> link </> joinPath dirs) tree
+--			otherwise -> do -- follow FS links
+--				rootdir_dsk <- virtualizeTxICFS rootdir tree
+--				e <- forestIO $ Exception.try $ liftM isSymbolicLink (getSymbolicLinkStatus rootdir_dsk)
+--				case e of
+--					Left (e::SomeException) -> follow td rootdir dirs
+--					Right isLink -> do
+--						if isLink
+--							then do
+--								-- mark the symbolic link as read
+--								putTxICFSRead rootdir
+--								e <- forestIO $ Exception.try $ readSymbolicLink rootdir_dsk
+--								case e of
+--									Left (e::SomeException) -> follow td rootdir dirs
+--									Right p -> canonalizePathTxICFS (root </> p </> joinPath dirs) tree
+--							else follow td rootdir dirs
+
+-- canonalize subpaths within the same tree (does it pay off to compute diffs just for canonization?)
 canonalizePathTxICFS :: FilePath -> FSTree TxICFS -> ForestM TxICFS FilePath
-canonalizePathTxICFS path tree = do
+canonalizePathTxICFS path tree = {-debug ("canonalizePathTxICFS " ++ show path) $ -} do
 	norm <- forestIO $ liftM normalise $ absolutePath path
-	let dirs = splitDirectories norm
-	follow "" dirs
+	let dirs = splitDirectories norm	
+	mb <- findCanonicalPath dirs
+	(_,syms) <- forestIO $ readIORef $ fsTreeSym tree
+	can <- case mb of
+		Just (root,oldtree,suffix) -> do
+			cmp <- compareFSTree oldtree tree
+			if (cmp == EQ)
+				then follow (focusFSTreeSym root syms) root suffix
+				else follow syms "" dirs
+		otherwise -> follow syms "" dirs
+	memoCanonicalPath norm can tree
+	return can	
   where
-	follow root [] = return root
-	follow root (".":dirs) = follow root dirs
-	follow root ("..":dirs) = follow (takeDirectory root) dirs
-	follow root (dir:dirs) = do
-		(reads,td) <- getTxICFSChanges
+	follow :: FSTreeSym -> FilePath -> [FileName] -> ForestM TxICFS FilePath
+	follow td root [] = return root
+	follow td root (".":dirs) = follow td root dirs
+	follow td root ("..":dirs) = follow td (takeDirectory root) dirs
+	follow td root (dir:dirs) = do
 		let rootdir = root </> dir
-		let td' = focusFSTreeDeltaByRelativePathMay td rootdir
-		case td' of
-			Just (FSTreeNewLink link _) -> do -- follow buffered links
+		case Map.lookup dir td of
+			Just (FSTreeSymLink tgt) -> do -- follow link
 				-- mark the symbolic link as read
 				putTxICFSRead rootdir
-				canLink <- canonalizePathTxICFS (root </> link) tree
-				follow canLink dirs
-			otherwise -> do -- follow FS links
-				rootdir_dsk <- virtualizeTxICFS rootdir tree
-				e <- forestIO $ Exception.try $ liftM isSymbolicLink (getSymbolicLinkStatus rootdir_dsk)
-				case e of
-					Left (e::SomeException) -> follow rootdir dirs
-					Right isLink -> do
-						if isLink
-							then do
-								-- mark the symbolic link as read
-								putTxICFSRead rootdir
-								e <- forestIO $ Exception.try $ readSymbolicLink rootdir_dsk
-								case e of
-									Left (e::SomeException) -> follow rootdir dirs
-									Right p -> do
-										canLink <- canonalizePathTxICFS (root </> p) tree
-										follow canLink dirs
-							else follow rootdir dirs
+				canonalizePathTxICFS (root </> tgt </> joinPath dirs) tree
+			Nothing -> do
+				follow (focusFSTreeSym dir td) rootdir dirs
 
 -- ** Incrementality
 
@@ -463,9 +557,10 @@ instance ICRep TxICFS where
 	forestO = TxICFSForestM . runTxICFSForestO
 
 	-- arguments never change
-	data FSThunk TxICFS l inc r m a = TxICFSThunk { txICFSThunkId :: Unique, txICFSThunkArgs :: IORef (Maybe TxICArgs) }
+	-- global variables may be shared across transactions, and the argument computation creates new data if no buffered data is found in the tx log
+	data FSThunk TxICFS l inc r m a = TxICFSThunk { txICFSThunkId :: Unique, txICFSThunkArgs :: IORef (Maybe (TxICArgs,l inc r m a)) }
 
-	data HSThunk TxICFS l inc r m a = TxICHSThunk { txICHSThunkId :: Unique, txICHSThunkArgs :: IORef (Maybe TxICArgs) }
+	data HSThunk TxICFS l inc r m a = TxICHSThunk { txICHSThunkId :: Unique, txICHSThunkArgs :: IORef (Maybe (TxICArgs,l inc r m a)) }
 		
 	newtype ICThunk TxICFS l inc r m a = TxICICThunk (l inc r m a)
 
@@ -510,10 +605,9 @@ data DynTxICThunk where
 	-- internal thunk (buffered content used for nested logs) 
 	DynBuffTxICThunk :: (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => BuffTxICThunk l a -> MkWeak -> DynTxICThunk
 
-mapDynBuffTxICThunk :: (forall a l . (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => BuffTxICThunk l a -> ForestL TxICFS l (BuffTxICThunk l a,b)) -> DynTxICThunk -> ForestM TxICFS (DynTxICThunk,b)
-mapDynBuffTxICThunk f (DynBuffTxICThunk buff mkWeak) = do
-	(buff',b) <- forestO $ outside $ f buff
-	return (DynBuffTxICThunk buff' mkWeak,b)
+instance Show DynTxICThunk where
+	show (DynTxICThunk t _) = show (typeOf t)
+	show (DynBuffTxICThunk t _) = show (typeOf t)
 
 dynTxMkWeak :: DynTxICThunk -> MkWeak
 dynTxMkWeak (DynTxICThunk _ mkWeak) = mkWeak
@@ -531,62 +625,52 @@ newtype TxICThunk (l :: * -> (* -> *) -> (* -> *) -> * -> *) a = TxICThunk { txI
 
 data TxICThunkData l a =
 		TxICThunkComp (l (IncForest TxICFS) IORef IO a)
-	| 	TxICThunkForce a TxICStone
+	| 	TxICThunkForce a TxICStone -- the stone is used to keep weak memoized entries as long as the thunk is not recomputed
 
 -- a dummy reference to be used as key for weak references
 type TxICStone = IORef ()
 
-type TxICParents = WeakMap Unique ()
+type TxICParents = WeakMap Unique (WeakTxICThunk,MkWeak)
+
+data WeakTxICThunk where
+	WeakTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => Weak (TxICThunk l a) -> WeakTxICThunk
 
 bufferTxICThunk :: (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => TxICThunk l a -> BuffTxICThunk l a -> ForestM TxICFS ()
 bufferTxICThunk thunk buff = do
 	uid <- forestIO $ readIORef (txICId thunk)
 	let mkWeak = MkWeak $ mkWeakRefKey $ txICId thunk
-	bufferTxICThunk' uid mkWeak buff
-
-bufferTxICThunk' :: (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => Unique -> MkWeak -> BuffTxICThunk l a -> ForestM TxICFS ()
-bufferTxICThunk' uid mkWeak buff = do
-	bufferTxICThunk'' uid (DynBuffTxICThunk buff mkWeak)
-
-bufferTxICThunk'' :: Unique -> DynTxICThunk -> ForestM TxICFS ()
-bufferTxICThunk'' uid dyn = do
+	let dyn = DynBuffTxICThunk buff mkWeak
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,delta,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
-	forestIO $ WeakTable.insertWithMkWeak bufftbl (dynTxMkWeak dyn) uid dyn
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak uid dyn
 
 bufferedTxICThunk :: (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => TxICThunk l a -> ForestM TxICFS (BuffTxICThunk l a)
 bufferedTxICThunk thunk = do
 	uid <- forestIO $ readIORef (txICId thunk)
-	liftM fst $ bufferedTxICThunk' uid
-
-bufferedTxICThunk' :: (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => Unique -> ForestM TxICFS (BuffTxICThunk l a,MkWeak)
-bufferedTxICThunk' uid = do
-	dyn <- bufferedTxICThunk'' uid
-	case dyn of
-		(DynBuffTxICThunk (cast -> Just buff) mkWeak) -> return (buff,mkWeak)
-
-bufferedTxICThunk'' :: Unique -> ForestM TxICFS DynTxICThunk
-bufferedTxICThunk'' uid = do
 	(starttime,txid,deltas,txlogs) <- Reader.ask
 	let find mb txlog = case mb of
 		Nothing -> do
-			(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
-			mb <- forestIO $ WeakTable.lookup bufftbl uid
-			return mb
+			(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+			forestIO $ WeakTable.lookup bufftbl uid
 		otherwise -> return mb
-	liftM fromJust $ Foldable.foldlM find Nothing txlogs
+	dyn <- liftM (fromJustNote $ "bufferedTxICThunk'' ") $ Foldable.foldlM find Nothing txlogs
+	
+	case dyn of
+		(DynBuffTxICThunk (cast -> Just buff) mkWeak) -> return buff
+		dyn -> error $ "type mismatch: " ++ show (typeOf thunk) ++" "++show dyn
 
 dirtyTxICParents :: FSTree TxICFS -> TxICParents -> ForestM TxICFS ()
 dirtyTxICParents tree parents = WeakMap.mapM_' forestIO dirty parents where
-	dirty (uid,_) = do
-		(b,parents) <- changeTxICThunkM uid $ \buff -> do
+	dirty (uid,(w,mk)) = do
+		mb <- changeTxICThunkW w $ \buff -> do
 			let oldtree = buffTxICDeltaTree buff
-			-- stop if the the current dirty tree is newer than the tree we are trying to dirty the node with
 			cmp <- forestM $ compareFSTree oldtree tree
 			let b = cmp > LT
 			let buff' = if b then buff else buff { buffTxICDeltaTree = tree }
 			return (buff',(b,parents))
-		unless b $ dirtyTxICParents tree parents
+		case mb of
+			Just (b,parents) -> unless b $ dirtyTxICParents tree parents
+			Nothing -> return ()
 
 class AddTxICParent l a where
 	addTxICParent :: Proxy l -> TxICStone -> Unique -> FSTree TxICFS -> a -> ForestL TxICFS l (FSTree TxICFS)
@@ -603,7 +687,9 @@ instance (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => AddTxI
 	addTxICParent proxy stone uid z (var :: ForestFSThunk TxICFS l a) = do
 		(thunk :: TxICThunk l a) <- forestM $ bufferedTxICFSThunk var
 		let add buff = do
-			forestM $ forestIO $ WeakMap.insertWithMkWeak (buffTxICParents buff) (MkWeak $ mkWeakRefKey stone) uid ()
+			w <- forestM $ forestIO $ Weak.mkWeak thunk thunk Nothing
+			let mkWeak = MkWeak $ mkWeakRefKey stone
+			forestM $ forestIO $ WeakMap.insertWithMkWeak (buffTxICParents buff) mkWeak uid (WeakTxICThunk w,mkWeak)
 			tree <- treeTxICThunk thunk
 			return (buff,tree)
 		changeTxICThunk thunk add
@@ -611,7 +697,9 @@ instance (IncK (IncForest TxICFS) a,Typeable l,Typeable a,TxICLayer l) => AddTxI
 	addTxICParent proxy stone uid z (var :: ForestHSThunk TxICFS l a) = do
 		(thunk :: TxICThunk l a) <- forestM $ bufferedTxICHSThunk var
 		let add buff = do
-			forestM $ forestIO $ WeakMap.insertWithMkWeak (buffTxICParents buff) (MkWeak $ mkWeakRefKey stone) uid ()
+			w <- forestM $ forestIO $ Weak.mkWeak thunk thunk Nothing
+			let mkWeak = MkWeak $ mkWeakRefKey stone
+			forestM $ forestIO $ WeakMap.insertWithMkWeak (buffTxICParents buff) mkWeak uid (WeakTxICThunk w,mkWeak)
 			tree <- treeTxICThunk thunk
 			return (buff,tree)
 		changeTxICThunk thunk add
@@ -619,8 +707,10 @@ instance (ForestLayer TxICFS l) => AddTxICParent l Forest_err where
 	addTxICParent proxy stone meta z x = return z
 instance (ForestLayer TxICFS l) => AddTxICParent l FileInfo where
 	addTxICParent proxy stone meta z x = return z
-instance (ForestLayer TxICFS l,AddTxICParent l (ForestFSThunkI TxICFS Forest_err)) => AddTxICParent l (Forest_md TxICFS) where
-	addTxICParent proxy stone meta z fmd = addTxICParent proxy stone meta z (errors fmd)
+instance (ForestLayer TxICFS l,AddTxICParent l (ForestFSThunkI TxICFS Forest_err),AddTxICParent l (ForestFSThunkI TxICFS FileInfo)) => AddTxICParent l (Forest_md TxICFS) where
+	addTxICParent proxy stone meta z fmd = do
+		z1 <- addTxICParent proxy stone meta z (errors fmd)
+		addTxICParent proxy stone meta z1 (fileInfo fmd)
 instance (ForestLayer TxICFS l,MData (AddTxICParentDict l) (ForestL TxICFS l) a) => AddTxICParent l a where
 	addTxICParent proxy stone meta z x = do
 		let f t1 t2 = forestM $ maxFSTree t1 t2
@@ -659,12 +749,12 @@ changeTxICThunk thunk f = do
 	forestM $ bufferTxICThunk thunk buff'
 	return b
 
-changeTxICThunkM :: Unique -> (forall a l . (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => BuffTxICThunk l a -> ForestL TxICFS l (BuffTxICThunk l a,b)) -> ForestM TxICFS b
-changeTxICThunkM uid f = do
-	dyn <- bufferedTxICThunk'' uid
-	(dyn',b) <- mapDynBuffTxICThunk f dyn
-	bufferTxICThunk'' uid dyn'
-	return b
+changeTxICThunkW :: WeakTxICThunk -> (forall a l . (IncK (IncForest TxICFS) a,TxICLayer l) => BuffTxICThunk l a -> ForestL TxICFS l (BuffTxICThunk l a,b)) -> ForestM TxICFS (Maybe b)
+changeTxICThunkW (WeakTxICThunk w) f = do
+	mb <- forestIO $ Weak.deRefWeak w
+	case mb of
+		Nothing -> return Nothing
+		Just thunk -> liftM Just $ forestO $ outside $ changeTxICThunk thunk f
 
 -- strict variable write (value)
 writeTxICThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => TxICThunk l a -> a -> ForestO TxICFS ()
@@ -699,34 +789,39 @@ overwriteTxICThunk var ma = do
 -- memoize internal thunks, not FSThunks
 instance ZippedICMemo TxICFS where
 
-	addZippedMemo path proxy args rep mb_tree = do
+	addZippedMemo path proxy args (rep :: rep) mb_tree = debug ("added memo "++show path ++ show mb_tree) $ do
 		let var = to iso_rep_thunk rep
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestM $ forestIO $ readRef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 		
 		-- remember the arguments (this is how we connect transactional arguments to transactional variables)
 		let txargs = (toDyn args,path)
-		forestM $ forestIO $ writeRef (txICFSThunkArgs var) $ Just txargs
+		
+		let load = do
+			latest <- forestM latestTree
+			(t :: rep) <- zloadScratch proxy args return path latest getForestMDInTree
+			Inc.get (to iso_rep_thunk t)
+			
+		
+		forestM $ forestIO $ writeRef (txICFSThunkArgs var) $ Just (txargs,load)
 		
 		-- memoize the entry
 		case mb_tree of
 			Nothing -> return ()
 			Just tree -> do
 				let mkWeak = MkWeak $ mkWeakRefKey $ txICFSThunkArgs var
-				forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (toDyn rep,mkWeak)
+				forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (toDyn rep,mkWeak,tree)
 	
 	findZippedMemo args path (Proxy :: Proxy rep) = do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestM $ forestIO $ readRef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 		mb <- forestM $ forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
 		case mb of
 			Nothing -> return Nothing
-			Just (fromDynamic -> Just rep,mkWeak) -> do
+			Just (fromDynamic -> Just rep,mkWeak,tree) -> do
 				let var = to iso_rep_thunk rep
-				Just (fromDynamic -> Just txargs,_) <- forestM $ forestIO $ readRef $ txICFSThunkArgs var
-				thunk <- forestM $ bufferedTxICFSThunk var
- 				buff <- forestM $ bufferedTxICThunk thunk
-				return $ Just (buffTxICTree buff,txargs,rep)
+				Just ((fromDynamic -> Just txargs,_),_) <- forestM $ forestIO $ readRef $ txICFSThunkArgs var
+				return $ Just (tree,txargs,rep)
 
 argsTxICFS :: (FTK TxICFS args rep var content) => Proxy args -> rep -> ForestO TxICFS (ForestVs args,FilePath)
 argsTxICFS proxy rep = do
@@ -740,7 +835,7 @@ getFTVArgsIC (proxy ::Proxy args) rep = forestIO $ do
 	let var = to iso_rep_thunk rep
 	mb <- readIORef (txICFSThunkArgs var)
 	case mb of
-		Just (fromDynamic -> Just args,path) -> return $ Just (args,path)
+		Just ((fromDynamic -> Just args,path),_) -> return $ Just (args,path)
 		otherwise -> return Nothing
 	
 
@@ -841,7 +936,7 @@ instance TxICForest TxICFS where
 	retry = retryTxICFS
 	orElse = orElseTxICFS
 	throw = throwTxICFS 
-	catch = catchTxICFS 
+	catch = catchTxICFS False
 	new = newTxICFS Proxy
 	args = argsTxICFS Proxy
 	read = readTxICFS Proxy
@@ -856,7 +951,7 @@ deleteTxICFS proxy (rep :: rep) = do
 		Nothing -> error "tried to write to a variable that is not connected to the FS"
 		Just (args,path) -> do
 			def_rep :: rep <- inside $ zdefaultScratchMemo proxy args path
-			content <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk def_rep
+			content <- inside $ BX.getM lens_content $ Inc.get $ to iso_rep_thunk def_rep
 			writeOrElseTxICFS rep content () (error "failed to write")
 
 copyOrElseTxICFS :: (FTK TxICFS args rep var content) => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxICFTM b) -> TxICFTM b
@@ -868,7 +963,7 @@ copyOrElseTxICFS proxy src tgt b f = do
 			-- XXX: this may fail if FileInfo paths are canonized...
 			let chgPath path = path_tgt </> (makeRelative path_src path)
 			tgt' <- copyFSThunks proxyTxICFS proxyOutside chgPath src
-			content' <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk tgt'
+			content' <- inside $ BX.getM lens_content $ Inc.get $ to iso_rep_thunk tgt'
 			writeOrElseTxICFS tgt content' b f
 		otherwise -> error "tried to write to a variable that is not connected to the FS"
 
@@ -879,17 +974,18 @@ newTxICFS proxy args path = debug ("newTxICFS " ++ show path) $ inside $ zload (
 readTxICFS :: (ForestLayer TxICFS l,FTK TxICFS args rep var content) => Proxy args -> rep -> ForestL TxICFS l content
 readTxICFS proxy rep = do
 	let t = to iso_rep_thunk rep
-	(txargs,path) <- liftM fromJust $ forestM $ getFTVArgsIC proxy rep
+	(txargs,path) <- liftM (fromJustNote "readTxICFS1") $ forestM $ getFTVArgsIC proxy rep
 	oldtree <- inside $ treeTxICFSThunk t
 	tree <- forestM latestTree
-	df <- liftM fromJust $ forestM $ diffFS oldtree tree path
+	df <- liftM (fromJustNote "readTxICFS2") $ forestM $ diffFS oldtree tree path
 	-- load incrementally at the latest tree
 	debug ("readTxICFS " ++ show path) $ inside $ unsafeWorld $ do
 		dv <- diffValueThunk oldtree rep
 		ds <- deltaArgs oldtree proxy txargs txargs
 		let deltas = (txargs,ds)
 		zloadDeltaMemo proxy deltas (return path) oldtree (rep,getForestMDInTree) path df tree dv
-	liftM (BX.get lens_content) $ inside $ Inc.get t
+	res <- inside $ BX.getM lens_content $ Inc.get t
+	return res
 
 data ManifestConflictTx = ManifestConflictTx [ManifestError] deriving (Show,Eq,Typeable)
 instance Exception ManifestConflictTx
@@ -902,11 +998,11 @@ writeOrElseTxICFS rep content b f = do
 	mb :: (Maybe (ForestIs TxICFS args,FilePath)) <- forestM $ getFTVArgsIC Proxy rep
 	case mb of
 		Nothing -> error "writeOrElseTxICFS: should not happen" -- the top-level arguments of a variable don't match the spec
-		Just (txargs,path) -> do
+		Just (txargs,path) -> debug ("writeOrElseTxICFS " ++ show path) $ do
 			let proxy = Proxy :: Proxy args
 			oldtree <- inside $ treeTxICFSThunk t
 			tree <- forestM latestTree
-			df <- liftM fromJust $ forestM $ diffFS oldtree tree path
+			df <- liftM (fromJustNote "writeOrElseTxICFS") $ forestM $ diffFS oldtree tree path
 			dv <- diffValueThunk oldtree rep
 			ds <- deltaArgs oldtree proxy txargs txargs
 			let deltas = (txargs,ds)
@@ -917,8 +1013,10 @@ writeOrElseTxICFS rep content b f = do
 			zloadDeltaMemo proxy deltas (return path) oldtree (rep,getForestMDInTree) path df tree dv
 			
 			let tryWrite = do
+				-- set the next tree with which writes will be consistent with
+				forestM nextTxICFSTree
 				-- write the new content
-				modify t $ \s -> return $ BX.put lens_content s content
+				modify t $ \s -> BX.putM lens_content (return s) (return content)
 				
 				-- compute new value deltas for the write
 				newdv <- diffValueThunk tree rep
@@ -927,7 +1025,7 @@ writeOrElseTxICFS rep content b f = do
 				
 				-- store incrementally at the latest tree (there are no filesystem modifications, since only the value has changed since loadDelta)
 				man <- forestM $ newManifestWith "/" tree
-				(mani,_,memos) <- RWS.runRWST (zupdateManifestDeltaMemo proxy newdeltas path path tree (emptyFSTreeD proxyTxICFS) tree rep newdv man) True ()
+				(mani,_,memos) <- debug ("storing... " ++ show path) $ RWS.runRWST (zupdateManifestDeltaMemo proxy newdeltas path path tree (emptyFSTreeD proxyTxICFS) tree rep newdv man) True ()
 				-- we need to store the errors to the (buffered) FS before validating
 				forestM $ storeManifest mani
 				-- commit the pending modifications
@@ -939,7 +1037,7 @@ writeOrElseTxICFS rep content b f = do
 				if List.null errors
 					then forestM latestTree >>= memos >> return b
 					else throwTxICFS $ ManifestConflictTx errors
-			catchTxICFS tryWrite (\(ManifestConflictTx errors) -> f errors)
+			catchTxICFS True tryWrite (\(ManifestConflictTx errors) -> f errors)
 					
 atomicallyTxICFS :: FilePath -> TxICFTM b -> IO b
 atomicallyTxICFS root stm = updateRootTxICFS root >> initializeTxICFS try where
@@ -988,31 +1086,29 @@ orElseTxICFS stm1 stm2 = do1 where
 throwTxICFS :: Exception e => e -> TxICFTM a
 throwTxICFS = Catch.throwM
 
-catchTxICFS :: Exception e => TxICFTM a -> (e -> TxICFTM a) -> TxICFTM a
-catchTxICFS stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxICFS :: Exception e => Bool -> TxICFTM a -> (e -> TxICFTM a) -> TxICFTM a
+catchTxICFS doWrites stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
 	catchSome (e::SomeException) = do
-		validateCatchTxICFS
-		h $ fromJust $ fromException e
+		validateCatchTxICFS doWrites
+		h $ (fromJustNote "catchTxICFS") $ fromException e
 
+-- the next tree is initialized as the same as the current tree
 initializeTxICFS :: TxICFTM b -> IO b 
 initializeTxICFS (TxICFSForestO m) = do
 	starttime <- startTxICFS >>= newIORef
 	mountAVFS -- should succeed even if AVFS is already mounted
+	putStrLn "mounted AVFS"
 	txid <- newUnique
 	-- current tree
 	treeDelta <- newIORef $ emptyFSTreeDelta
 	treeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
 	let tree = TxICFSTree txid 0 treeDelta False treeSyms
-	-- next tree
-	newtreeDelta <- newIORef $ emptyFSTreeDelta
-	newtreeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
-	let newtree = TxICFSTree txid 1 newtreeDelta False newtreeSyms
 	-- tables
 	bufftbl <- WeakTable.new
 	memotbl <- WeakTable.new
-	txlog <- newIORef (tree,DList.empty,newtree,Set.empty,bufftbl,memotbl,Set.empty)
+	txlog <- newIORef (tree,DList.empty,tree,Set.empty,bufftbl,memotbl,CanonicalTree Map.empty,Set.empty)
 	deltas <- newIORef Map.empty
 	debug ("initializeTxICFS") $ Reader.runReaderT m (starttime,txid,deltas,SCons txlog SNil)
 	-- don't unmount AVFS, since multiple parallel txs may be using it
@@ -1026,14 +1122,10 @@ resetTxICFS m = do
 	treeDelta <- forestM $ forestIO $ newIORef $ emptyFSTreeDelta
 	treeSyms <- forestM $ forestIO $ newIORef =<< liftM (DList.empty,) (readMVar symlinks)
 	let tree = TxICFSTree txid 0 treeDelta False treeSyms
-	-- next tree
-	newtreeDelta <- forestM $ forestIO $ newIORef $ emptyFSTreeDelta
-	newtreeSyms <- forestM $ forestIO $ newIORef =<< liftM (DList.empty,) (readMVar symlinks)
-	let newtree = TxICFSTree txid 1 newtreeDelta False newtreeSyms
 	-- tables
 	bufftbl <- forestM $ forestIO $ WeakTable.new
 	memotbl <- forestM $ forestIO $ WeakTable.new
-	txlog <- forestM $ forestIO $ newIORef (tree,DList.empty,newtree,Set.empty,bufftbl,memotbl,Set.empty)
+	txlog <- forestM $ forestIO $ newIORef (tree,DList.empty,tree,Set.empty,bufftbl,memotbl,CanonicalTree Map.empty,Set.empty)
 	forestM $ forestIO $ writeIORef deltas Map.empty
 	debug ("resetTxICFS") $ Reader.local (Prelude.const $ (now,txid,deltas,SCons txlog SNil)) m
 
@@ -1047,17 +1139,17 @@ startTxICFS = getCurrentTime >>= \t -> addRunningTxIC t >> return t
 startNestedTxICFS :: TxICFTM a -> TxICFTM a
 startNestedTxICFS m = do
 	(starttime,txid,deltas,txlogs@(SCons txlog_parent _)) <- Reader.ask
-	(tree,delta,newtree,reads,_,_,tmps) <- inL $ readIORef txlog_parent
+	(tree,delta,newtree,reads,_,_,cantree,tmps) <- inL $ readIORef txlog_parent
 	bufftbl' <- forestM $ forestIO $ WeakTable.new
 	memotbl' <- forestM $ forestIO $ WeakTable.new
-	txlog_child <- inL $ newIORef (tree,delta,newtree,Set.empty,bufftbl',memotbl',Set.empty)
+	txlog_child <- inL $ newIORef (tree,delta,newtree,Set.empty,bufftbl',memotbl',cantree,Set.empty)
 	debug ("startNestedTxICFS ") $ Reader.local (Prelude.const (starttime,txid,deltas,SCons txlog_child txlogs)) m
 
 -- remember to empty the next tree and delete the new versions in case nested txs fail
 dropChildTxICLog :: TxICFTM a -> TxICFTM a
 dropChildTxICLog m = do
 	(starttime,txid,deltas,(SCons txlog_child txlogs@(SCons txlog_parent _))) <- Reader.ask
-	(tree_parent,_,newtree_parent,_,_,_,_) <- inL $ readIORef txlog_parent
+	(tree_parent,_,newtree_parent,_,_,_,_,_) <- inL $ readIORef txlog_parent
 	-- forget newly created nested versions
 	forestM $ forestIO $ modifyIORef deltas $ Map.filterWithKey (\version _ -> version <= fsTreeFSVersion tree_parent)
 	-- reset the next tree
@@ -1125,7 +1217,7 @@ validateAndRetryTopTxICFS = atomicTxICFS "validateAndRetryTopTxICFS" $ do
 --since we treat reads/writes separately, we don't need to wait on writes that have not been read
 retryTxICFSLog :: Lock -> IORef UTCTime -> TxICFSLog -> ForestM TxICFS ()
 retryTxICFSLog lck timeref txlog = do
-	(tree,delta,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	let retryPath path = do
 		-- the reference to the lock lives as long as the transaction
 		modifyMVar_ waitingTxsIC $ \xs -> do
@@ -1149,24 +1241,30 @@ validateAndRetryNestedTxICFS = do
 			throwM InvalidTx
 
 -- validates the current log before catching an exception
-validateCatchTxICFS :: TxICFTM ()
-validateCatchTxICFS = do
+validateCatchTxICFS :: Bool -> TxICFTM ()
+validateCatchTxICFS doWrites = do
 	txenv@(timeref,txid,deltas,txlogs) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsICFS starttime txlogs
 	if success
 		then do
 			-- in case the computation raises an exception, discard all its visible (write) effects
-			forestM unbufferTxICFSWrites
+			unless doWrites $ forestM unbufferTxICFSWrites
 		else do
 			inL $ liftIO $ deleteRunningTxIC starttime
 			throwM InvalidTx
 
+parentCanonicalTree :: TxICFSLogs -> ForestM TxICFS (CanonicalTree TxICFS)
+parentCanonicalTree SNil = return $ CanonicalTree Map.empty
+parentCanonicalTree (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	return cantree
+
 -- we only unbuffer the child log
 unbufferTxICFSWrites :: ForestM TxICFS ()
 unbufferTxICFSWrites = do
-	(starttime,txid,deltas,txlogs@(SCons txlog1 _)) <- Reader.ask
-	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,tmps1) <- forestIO $ readRef txlog1
+	(starttime,txid,deltas,txlogs@(SCons txlog1 txlogs_parent)) <- Reader.ask
+	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- forestIO $ readRef txlog1
 	bufftbl1' <- forestIO $ WeakTable.new
 	memotbl1' <- forestIO $ WeakTable.new
 	-- reset deltas
@@ -1175,11 +1273,8 @@ unbufferTxICFSWrites = do
 	treeDelta1' <- forestIO $ newIORef $ emptyFSTreeDelta
 	treeSym1' <- forestIO $ newIORef $ (DList.empty,Map.empty)
 	let tree1' = TxICFSTree txid 0 treeDelta1' False treeSym1'
-	-- next tree
-	newtreeDelta1' <- forestIO $ newIORef $ emptyFSTreeDelta
-	newtreeSym1' <- forestIO $ newIORef $ (DList.empty,Map.empty)
-	let newtree1' = TxICFSTree txid 1 newtreeDelta1' False newtreeSym1'
-	forestIO $ writeRef txlog1 (tree1',DList.empty,newtree1',reads1,bufftbl1',memotbl1',tmps1)
+	cantree1' <- parentCanonicalTree txlogs_parent
+	forestIO $ writeRef txlog1 (tree1',DList.empty,tree1',reads1,bufftbl1',memotbl1',cantree1',tmps1)
 
 validateTxsICFS :: UTCTime -> TxICFSLogs -> ForestM TxICFS Bool
 validateTxsICFS starttime txlogs = do
@@ -1231,35 +1326,26 @@ commitNestedTxICFS doWrites deltas txlog_child txlog_parent = if doWrites
 -- merges a nested txlog with its parent txlog
 mergeTxICFSLog :: TxICFSLog -> TxICFSLog -> ForestM TxICFS ()
 mergeTxICFSLog txlog1 txlog2 = forestIO $ do
-	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,tmps1) <- readIORef txlog1
-	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,tmps2) <- readIORef txlog2
+	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- readIORef txlog1
+	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,cantree2,tmps2) <- readIORef txlog2
 	
 	WeakTable.mapM_ (\(uid,entry) -> WeakTable.insertWithMkWeak bufftbl2 (dynTxMkWeak entry) uid entry) bufftbl1
-	WeakTable.mapM_ (\(uid,entry) -> WeakTable.insertWithMkWeak memotbl2 (snd entry) uid entry) memotbl1
+	WeakTable.mapM_ (\(uid,entry@(_,mkWeak,_)) -> WeakTable.insertWithMkWeak memotbl2 mkWeak uid entry) memotbl1
 	
-	writeIORef txlog2 (tree1,delta1,newtree1,reads1 `Set.union` reads2,bufftbl2,memotbl2,tmps1 `Set.union` tmps2)
+	writeIORef txlog2 (tree1,delta1,newtree1,reads1 `Set.union` reads2,bufftbl2,memotbl2,cantree1,tmps1 `Set.union` tmps2)
 	
 -- does not commit writes
 extendTxICFSLog :: TxICFSTreeDeltas -> TxICFSLog -> TxICFSLog -> ForestM TxICFS ()
 extendTxICFSLog deltas txlog1 txlog2 = forestIO $ do
-	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,tmps1) <- readIORef txlog1
-	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,tmps2) <- readIORef txlog2
+	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- readIORef txlog1
+	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,cantree2,tmps2) <- readIORef txlog2
 	
 	-- forget newly created nested versions
 	modifyIORef deltas $ Map.filterWithKey (\version _ -> version <= fsTreeFSVersion tree2)
 	-- reset the next tree
 	writeIORef (fsTreeFSTreeDelta newtree2) emptyFSTreeDelta
 	
-	writeIORef txlog2 (tree2,delta2,newtree2,reads1 `Set.union` reads2,bufftbl2,memotbl2,tmps1 `Set.union` tmps2)
-
--- locks on which retrying transactions will wait
-type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
-
--- a register of locks for retrying transactions
--- these paths should be canonical
-{-# NOINLINE waitingTxsIC #-}
-waitingTxsIC :: MVar (Map FilePath WaitQueue)
-waitingTxsIC = unsafePerformIO $ newMVar Map.empty
+	writeIORef txlog2 (tree2,delta2,newtree2,reads1 `Set.union` reads2,bufftbl2,memotbl2,cantree2,tmps1 `Set.union` tmps2)
 
 -- wakes up the locks waiting on a given set of paths
 wakeUpWaitsTxIC :: Set FilePath -> ForestM TxICFS ()
@@ -1284,15 +1370,15 @@ tryReleaseTxIC lck = do
 
 commitTxICFSLog :: UTCTime -> Bool -> TxICFSLog -> ForestM TxICFS TxICFSWrites
 commitTxICFSLog starttime doWrites txlog = do
-	(tree,delta,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	wakes <- if doWrites
 		then do
 			-- get writes since the beginning of the tx
-			writes <- forestIO $ readIORef (fsTreeFSTreeDelta newtree)
+			writes <- forestIO $ readIORef (fsTreeFSTreeDelta tree)
 			-- commits filesystem modifications
 			wakes <- forestIO $ commitFSTreeDelta "" writes
 			-- get the symlink changes since the beginning of the tx
-			(syms,_) <- forestIO $ readIORef (fsTreeSym newtree)
+			(syms,_) <- forestIO $ readIORef (fsTreeSym tree)
 			-- update the symlinks table (uses a global lock)
 			forestIO $ modifyMVar_ symlinks $ return . appendListToFSTreeSym syms
 			return wakes
@@ -1313,6 +1399,7 @@ releaseFLock mv = do
 	b <- STM.tryPutTMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
+{-# NOINLINE fileLocks #-}
 fileLocks :: CWeakMap.WeakMap FilePath FLock
 fileLocks = unsafePerformIO $ CWeakMap.empty
 
@@ -1346,7 +1433,10 @@ withFileLocks reads writes m = do
 
 updateRootTxICFS :: FilePath -> IO ()
 updateRootTxICFS root = do
-	oldroot <- readIORef rootTxICFS
-	unless (oldroot `isParentPathOf` root) $ updateSymlinks
-	writeIORef rootTxICFS root
+	oldroot <- readMVar rootTxICFS
+	if (oldroot `isParentPathOf` root)
+		then putStrLn $ "child root " ++ show root ++ " " ++ show oldroot
+		else updateSymlinks
+	swapMVar rootTxICFS root
+	return ()
 

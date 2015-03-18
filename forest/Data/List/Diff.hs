@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE TupleSections, ViewPatterns #-}
 
 -- | A simple linear-time list alignment algorithm presented in http://dl.acm.org/citation.cfm?id=359467
 -- It performs bad when elements are duplicated, but in forest we align (old and new) filenames listed in a directory, that are supposed to be unique.
@@ -12,6 +12,7 @@ import Data.Maybe
 import Data.Array.MArray
 import Data.Array.IO
 import Data.Either
+import Safe
 
 -- * Data structures (IOArrays for constant array update operations)
 
@@ -116,13 +117,15 @@ pass5 oa na i = if i == 0 then return () else do
 -- alignment between positions in the first list and positions in the second list
 -- positions start at 0
 align :: Ord a => [a] -> [a] -> IO [(Int,Int)]
+align o [] = return []
+align [] n = return []
 align o n = do
 	let newTable = mkNewTable n
 	let table = mkOldTable o newTable
-	let maxi = length n - 1
-	let maxj = length o - 1
-	na <- newListArray (0,maxi) $ map (Right . fromJust . (flip Map.lookup) table) n
-	oa <- newListArray (0,maxj) $ map (Right . fromJust . (flip Map.lookup) table) o
+	let maxi = max (length n - 1) 0
+	let maxj = max (length o - 1) 0
+	na <- newListArray (0,maxi) $ map (Right . fromJustNote "align" . (flip Map.lookup) table) n
+	oa <- newListArray (0,maxj) $ map (Right . fromJustNote "align" . (flip Map.lookup) table) o
 	pass3 oa na (Map.elems $ Map.filter oneEntries table)
 	pass4 oa na 0 maxi maxj
 	pass5 oa na maxi
@@ -132,13 +135,15 @@ align o n = do
 
 -- returns a list of associations for all the elements in the first list, and a boolean stating whether all elements in the second list have a match
 alignMaybe :: Ord a => [a] -> [a] -> IO ([(Int,Maybe Int)],Bool)
+alignMaybe o [] = return (map (,Nothing) (take (length o - 1) [0..]),False)
+alignMaybe [] n = return ([],False)
 alignMaybe o n = do
 	let newTable = mkNewTable n
 	let table = mkOldTable o newTable
 	let maxi = length n - 1
 	let maxj = length o - 1
-	na <- newListArray (0,maxi) $ map (Right . fromJust . (flip Map.lookup) table) n
-	oa <- newListArray (0,maxj) $ map (Right . fromJust . (flip Map.lookup) table) o
+	na <- newListArray (0,maxi) $ map (Right . fromJustNote "alignMaybe" . (flip Map.lookup) table) n
+	oa <- newListArray (0,maxj) $ map (Right . fromJustNote "alignMaybe" . (flip Map.lookup) table) o
 	pass3 oa na (Map.elems $ Map.filter oneEntries table)
 	pass4 oa na 0 maxi maxj
 	pass5 oa na maxi

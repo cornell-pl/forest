@@ -40,7 +40,7 @@ import Language.Forest.FS.FSRep
 --import Control.Monad.IO.Class
 import Data.WithClass.MData
 
-import Language.Forest.IC.IO.Memo
+
 
 import qualified Control.Exception as CE
 
@@ -59,14 +59,14 @@ doManifestArgs proxy margs (rep,(md,targs)) manifestContent (man::Manifest fs) =
 	let man1 = addTestToManifest (forestO $ checkArgs (Proxy::Proxy fs) proxy margs targs) man
 	manifestContent (rep,md) man1
 
-doManifestFile :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) pads,	IncK
+doManifestFile :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) pads,	IncK
 	                        (IncForest fs) (Forest_md fs, ForestFSThunkI fs md),IncK (IncForest fs) md,ICRep fs,Pads pads md) => FSTree fs -> (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md)) -> Manifest fs -> ForestO fs (Manifest fs)
 doManifestFile tree (rep_t,md_t) man = do
 	rep <- inside $ get rep_t
 	(fmd,md_t') <- inside $ get md_t
 	md <- inside $ get md_t'
-	let path = fullpath $ fileInfo fmd
-	canpath <- forestM $ canonalizePathWithTree path tree
+	path <- inside $ get_fullpath fmd
+	canpath <- forestM $ canonalizePathInTree path tree
 	dskpath <- forestM $ pathInTree canpath tree
 	valid <- isValidMD fmd
 	if valid
@@ -78,14 +78,14 @@ doManifestFile tree (rep_t,md_t) man = do
 				then return $ removePathFromManifest canpath path man
 				else return man
 
-doManifestFile1 :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) pads,				IncK
+doManifestFile1 :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) pads,				IncK
 				                        (IncForest fs) (Forest_md fs, ForestFSThunkI fs md),IncK (IncForest fs) md,ICRep fs,Pads1 arg pads md) => arg -> FSTree fs -> (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md)) -> Manifest fs -> ForestO fs (Manifest fs)
 doManifestFile1 arg tree (rep_t,md_t) man = do
 	rep <- inside $ get rep_t
 	(fmd,md_t') <- inside $ get md_t
 	md <- inside $ get md_t'
-	let path = fullpath $ fileInfo fmd
-	canpath <- forestM $ canonalizePathWithTree path tree
+	path <- inside $ get_fullpath fmd
+	canpath <- forestM $ canonalizePathInTree path tree
 	dskpath <- forestM $ pathInTree canpath tree
 	valid <- isValidMD fmd
 	if valid
@@ -105,8 +105,8 @@ doManifestArchive :: (IncK (IncForest fs) md,IncK (IncForest fs) rep,IncK (IncFo
 doManifestArchive archTy tree (rep_t,md_t) manifestContents man = do
 	rep <- inside $ get rep_t
 	(fmd,md) <- inside $ get md_t
-	let path = fullpath $ fileInfo fmd 
-	canpath <- forestM $ canonalizePathWithTree path tree
+	path <- inside $ get_fullpath fmd
+	canpath <- forestM $ canonalizePathInTree path tree
 	dskpath <- forestM $ pathInTree canpath tree
 	let arch_canpath = cardinalPath canpath
 	avfsTree <- forestM $ virtualTree tree
@@ -133,20 +133,20 @@ doManifestArchive archTy tree (rep_t,md_t) manifestContents man = do
 	let man3 = addFileToManifest' canpath path archiveFile man2
 	return $ mergeManifests man1 man3
 
-doManifestSymLink :: (IncK (IncForest fs) FilePath,IncK (IncForest fs) (Forest_md fs, Base_md),ICRep fs) =>
+doManifestSymLink :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) FilePath,IncK (IncForest fs) (Forest_md fs, Base_md),ICRep fs) =>
 	FSTree fs
 	-> (ForestFSThunkI fs FilePath,ForestFSThunkI fs (Forest_md fs, Base_md))
 	-> Manifest fs -> ForestO fs (Manifest fs)
 doManifestSymLink tree (rep_t,md_t) man = do
 	tgt <- inside $ get rep_t
 	(fmd,base_md) <- inside $ get md_t
-	let path = fullpath $ fileInfo fmd
+	path <- inside $ get_fullpath fmd
 	
-	canpath <- forestM $ canonalizePathWithTree path tree
+	canpath <- forestM $ canonalizePathInTree path tree
 	dskpath <- forestM $ pathInTree canpath tree
 	
 	let testm = do
-		let sym = symLink $ fileInfo fmd
+		sym <- forestO $ get_symLink fmd
 		liftM (boolStatus $ ConflictingLink path tgt sym) $ return $ sym == Just tgt
 	let man1 = addTestToManifest testm man
 	
@@ -164,7 +164,7 @@ doManifestConstraint tree pred (rep,(md,pred_t)) manifestContent man = do
 	let man1 = addTestToManifest testm man
 	manifestContent (rep,md) man1
 
-doManifestDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) rep,IncK (IncForest fs) (Forest_md fs, md),ICRep fs) => 
+doManifestDirectory :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) rep,IncK (IncForest fs) (Forest_md fs, md),ICRep fs) => 
 	FSTree fs -> (md -> ForestI fs Forest_err)
 	-> (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 	-> (FilePath -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs))
@@ -172,8 +172,8 @@ doManifestDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) rep,I
 doManifestDirectory tree collectMDErrors (rep_t,md_t) manifestContent man = do
 	rep <- inside $ get rep_t
 	(fmd,md) <- inside $ get md_t
-	let path = fullpath $ fileInfo fmd
-	canpath <- forestM $ canonalizePathWithTree path tree
+	path <- inside $ get_fullpath fmd
+	canpath <- forestM $ canonalizePathInTree path tree
 	dskpath <- forestM $ pathInTree canpath tree
 	let man1 = addDirToManifest canpath path man -- adds a new directory
 	let testm = liftM (boolStatus ConflictingMdValidity) $ forestO $ inside (collectMDErrors md) >>= sameValidity' fmd
@@ -189,7 +189,7 @@ doManifestMaybe :: (IncK (IncForest fs) (Maybe rep),IncK (IncForest fs) (Forest_
 doManifestMaybe tree (rep_t,md_t) manifestContent defaultContent man = do
 	rep_mb <- inside $ get rep_t
 	(fmd,md_mb) <- inside $ get md_t
-	let path = fullpath $ fileInfo fmd
+	path <- inside $ get_fullpath fmd
 	case (rep_mb,md_mb) of
 		(Just rep,Just md) -> do
 			let testm = do
@@ -199,7 +199,7 @@ doManifestMaybe tree (rep_t,md_t) manifestContent defaultContent man = do
 			let man1 = addTestToManifest testm man
 			manifestContent (rep,md) man1 -- the path will be added recursively
 		(Nothing,Nothing) -> do
-			canpath <- forestM $ canonalizePathWithTree path tree
+			canpath <- forestM $ canonalizePathInTree path tree
 			dskpath <- forestM $ pathInTree canpath tree
 			let testm = do
 				status1 <- liftM (boolStatus $ ConflictingMdValidity) $ forestO $ isValidMD fmd
@@ -213,7 +213,7 @@ doManifestMaybe tree (rep_t,md_t) manifestContent defaultContent man = do
 			let man1 = addTestToManifest testm man
 			manifestContent (rep,md) man1 -- the path will be added recursively
 		(Nothing,Just md) -> do 
-			canpath <- forestM $ canonalizePathWithTree path tree
+			canpath <- forestM $ canonalizePathInTree path tree
 			dskpath <- forestM $ pathInTree canpath tree
 			let testm = return (Invalid [ConflictingRepMd]) -- always invalid
 			let man1 = addTestToManifest testm man
@@ -226,7 +226,7 @@ doManifestFocus :: (ForestMD fs md,Matching fs a) =>
 doManifestFocus parentPath matching tree dta@(rep,md) manifestUnder man = do
 	let testm = do
 		fmd <- forestO $ get_fmd_header md
-		let path = fullpath $ fileInfo fmd
+		path <- forestO $ get_fullpath fmd
 		let name = makeRelative parentPath path
 		isValid <- forestO $ isValidMD fmd
 		testFocus parentPath name (\file tree -> return True) [name]
@@ -237,8 +237,8 @@ testFocus root matching pred new_files = do
 	tree <- latestTree
 	files <- filterM (flip pred tree) =<< getMatchingFilesInTree root matching tree
 	let testFile (file,new_file) = do
-		canpath <- canonalizePathWithTree (root </> file) tree
-		new_canpath <- canonalizePathWithTree (root </> new_file) tree
+		canpath <- canonalizePathInTree (root </> file) tree
+		new_canpath <- canonalizePathInTree (root </> new_file) tree
 		return $ canpath == new_canpath
 	same <- liftM and $ mapM testFile $ zip (List.sort new_files) (List.sort files)
 	return $ boolStatus (ConflictingMatching root (show matching) new_files files) $ (length files == length new_files) && same
@@ -274,7 +274,7 @@ doManifestCompound parentPath matchingM tree toListRep toListMd (c_rep,c_md) man
 	let dtas' = zip reps' mds'
 	
 	let rem_files = old_files \\ new_files -- files to be removed
-	man1 <- forestM $ foldr (\rem_path man0M -> canonalizePathWithTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
+	man1 <- forestM $ foldr (\rem_path man0M -> canonalizePathInTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
 	let manifestEach ((n,info_t),dta') man0M = man0M >>= doManifestFocus parentPath n tree dta' (manifestUnder n info_t)
 	foldr manifestEach (return man1) (zip (zip new_files fileinfos_t) dtas')
@@ -299,10 +299,10 @@ doManifestCompoundWithConstraint parentPath matchingM tree toListRep toListMd pr
 	let old_files' = old_files \\ new_files -- old files that are not in the view
 	old_metadatas' <- mapM (getRelForestMDInTree parentPath tree) old_files'
 	-- we need to check which old files satisfy the predicate
-	old_values' <- inside $ filterM (\(n,fmd) -> ref (fileInfo fmd) >>= \info_t -> pred n info_t) $ zip old_files' old_metadatas'
+	old_values' <- inside $ filterM (\(n,fmd) -> pred n (fileInfo fmd)) $ zip old_files' old_metadatas'
 	let rem_files = map fst old_values'
 	-- and delete them
-	man1 <- forestM $ foldr (\rem_path man0M -> canonalizePathWithTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
+	man1 <- forestM $ foldr (\rem_path man0M -> canonalizePathInTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
 	let manifestEach ((n,(info_t,pred_t)),(rep',md')) man0M = man0M >>= doManifestConstraint tree (\_ -> pred n info_t) (rep',(md',pred_t))
 		(\dta' -> doManifestFocus parentPath n tree dta' (manifestUnder n info_t))

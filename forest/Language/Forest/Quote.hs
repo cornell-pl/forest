@@ -46,6 +46,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import Language.Haskell.TH
 import Language.Forest.FS.FSRep
 import Language.Forest.IC.Generic
+import Language.Forest.IC.ICRep
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 
 import Language.Forest.Pure.CodeGen as Pure
@@ -64,7 +65,7 @@ parse mode loc p input = let
   fileName = loc_filename loc
   (line,column) = loc_start loc
   in case P.parse mode p fileName line column input of
-       Left err -> unsafePerformIO $ fail $ show err
+       Left err -> error $ show err
        Right x  -> return x
 
 
@@ -105,7 +106,8 @@ ipads = P.padsDerivation $ \dec -> do
 	mdata <- deriveFromDec makeMData dec
 	deep <- deriveFromDec makeDeepTypeable dec
 	let decty = foldl AppT (ConT n) tyargs
-	let forestContent = InstanceD [] (Pure.appT2 (ConT ''ForestContent) decty decty) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLens) []]
+	let fsName = mkName "fs"
+	let forestContent = InstanceD [ClassP ''ICRep [VarT fsName]] (Pure.appT3 (ConT ''ForestContent) (VarT fsName) decty decty) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLensM) []]
 	return $ mdata ++ deep ++ [forestContent]
 
 tyVarBndrName :: TyVarBndr -> Name
@@ -119,7 +121,7 @@ forest  = fquasiquote1 PureForest P.forestDecls
 -- | A quasi-quoter for Forest with IC-specific data structures
 iforest :: QuasiQuoter
 --iforest  = fquasiquote1 ICForest P.forestDecls
-iforest = fquasiquote1z [ConT 'TxVarFS,ConT 'TxICFS] P.forestDecls
+iforest = fquasiquote1z [{-ConT 'TxVarFS,-}ConT 'TxICFS] P.forestDecls
 	
 --txforest :: QuasiQuoter
 --txforest = fquasiquote1z (ConT 'TxVarFS) P.forestDecls

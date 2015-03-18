@@ -107,7 +107,6 @@ Library
                    Language.Forest.IC.IO.ZDeltaLoading,
                    Language.Forest.IC.IO.Loading,
                    Language.Forest.IC.IO.ZLoading,
-                   Language.Forest.IC.IO.Memo,
                    Language.Forest.IC.IO.Storing,
                    Language.Forest.IC.IO.ZStoring,
                    Language.Forest.IC.IO.ZDeltaStoring,

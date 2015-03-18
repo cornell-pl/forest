@@ -106,10 +106,10 @@ instance (IncK (IncForest fs) a,ForestLayer fs l,ForestInput fs FSThunk l) => Co
 	copyFSThunks _ _ f t = get t >>= ref 
 
 -- change fullpaths
-instance (IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ForestLayer fs l) => CopyFSThunks fs l (Forest_md fs) where
+instance (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,ForestInput fs FSThunk Inside,ForestLayer fs l) => CopyFSThunks fs l (Forest_md fs) where
 	copyFSThunks _ _ f fmd = do
 		errors' <- inside $ get (errors fmd) >>= ref
-		let fileInfo' = (fileInfo fmd) { fullpath = f (fullpath $ fileInfo fmd) }
+		fileInfo' <- inside $ get (fileInfo fmd) >>= ref . (\i -> i { fullpath = f (fullpath i) })
 		return $ Forest_md errors' fileInfo'
 
 -- just traverse recursively, until there are no more @FSThunks@ inside the type

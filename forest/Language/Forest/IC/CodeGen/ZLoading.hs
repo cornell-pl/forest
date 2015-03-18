@@ -257,7 +257,7 @@ zloadSimple (internal, isForm, externalE, forestTy, predM) filterPathE pathE tre
 			Just pred -> do
 				return $ Pure.appE6 (VarE 'doZLoadSimpleWithConstraint) filterPathE pathE externalE treeE (zmodPredE (VarP repName) pred) loadContentE
 	let stmt1 = BindS (TildeP $ TupP [xP]) loadFocusE
-	let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+	let stmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 	return (xName,repName,[stmt1,stmt2])
 
 -- | Load a top-level declared comprehension
@@ -321,13 +321,13 @@ zloadCompound isNested (CompField internal tyConNameOpt explicitName externalE d
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
 				let loadContainerE = Pure.appE7 (VarE 'doZLoadCompound) filterPathE pathE genE treeE keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [xP]) loadContainerE
-				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				let stmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 				return (xName,repName,[loadContainerS,stmt2])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				loadSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newGetMDP]) $ zloadE False descTy filterPathE newpathE treeE newGetMDE
 				let loadContainerE = Pure.appE8 (VarE 'doZLoadCompoundWithConstraint) filterPathE pathE genE treeE (modPredEComp (VarP fileName) predE) keyArgE buildContainerE loadSingleE
 				let loadContainerS = BindS (TupP [xP]) loadContainerE
-				let stmt2 = LetS [ValD (VarP repName) (NormalB $ Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) xE) []]
+				let stmt2 = BindS (VarP repName) (AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp xE)
 				return (xName,repName,[loadContainerS,stmt2])
 

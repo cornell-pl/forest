@@ -145,6 +145,7 @@ Although promising, the old Forest suffered two essential shortcomings:
 	\item It provided none of the transactional guarantees familiar from databases. transactions are nice: prevent concurrency and failure problems. successful transactions are guaranteed to run in serial order and failing transactions rollback as if they never occurred. rely on extra programmers' to avoid the hazards of concurrent updates. different hacks and tricks like creating lock files and storing data in temporary locations, that severely increase the complexity of the applications. writing concurrent programs is notoriously hard to get right. even more in the presence of laziness (original forest used the generally unsound Haskell lazy I/O)
 \end{itemize}
 
+TxForest offers filestores, materialized in-memory views of fragments of a filesystem structured onto a given schema, that are kept up-to-date as transactions modify filestores (and implicitly the underlying filesystem).
 
 transactional filesystem use cases:
 
@@ -548,7 +549,7 @@ We split our presentation into three possible designs, with increasing levels of
 We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a private log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
 These validate-and-commit operations are guaranteed to run |atomic|ally in respect to all other threads by relying on per-shared-resource locks (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
 They are \emph{disjoint-access parallel} (meaning that transactions with non-overlapping writes run in parallel) and \emph{read parallel} (meaning that transactions that only read from the same resources run in parallel).
-These wait-and-acquire sequences are repeatedly attempted atomically, without interruption by the Haskell scheduler, and implemented over GHC's lightweight concurrency substrate~\cite{HaskellLWC}.
+These wait-and-acquire sequences are repeatedly attempted atomically, without interruption from the Haskell scheduler, and implemented over GHC's lightweight concurrency substrate~\cite{HaskellLWC}.
 
 Blocking transactions (|retry|) validate their log and register themselves in wait-queues attached to each read resource; updating transactions unblock any pending waiters.
 Nested transactions (|orElse|) work similarly to normal transactions: writes are recorded only to a nested log and reads consult the logs of nested and all enclosing transactions. Validating a nested transaction also implies validating all enclosing transactions.
@@ -690,6 +691,9 @@ tx file-level operations (copy,create,delete,move,write)
 schema somehow equivalent to using the unstructured universal Forest representation
 
 but what about data manipulation: transactional maps,etc?
+
+os transactions:
+\url{http://www.cs.utexas.edu/~porterde/pubs/sosp063-porter.pdf}
 
 \section{Conclusions}
 

@@ -68,16 +68,16 @@ import Language.Forest.IC hiding (Id)
 	type Paper (y :: YearId) (a :: AuthorId) = File Binary where (isPaperOf (fullpath this_att) y a)
 
     type Supplemental (y :: YearId) (a :: AuthorId) = Directory {
-		supplementalFiles is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
+		supplementalFiles is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHidden p) ] 
 	} 
 
 	type Author (y :: YearId) (a :: AuthorId) = Directory {
-		authorPapers is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHiddenFile p p_att) ] 
+		authorPapers is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHidden p) ] 
 	,   supplemental is "Supplemental" :: Maybe (Supplemental y a)
 	}
 
 	type Year (y :: YearId) = Directory {
-		authors is Map [ a :: Author y a | a :: AuthorId <- matches (GL "*"), (not $ hidden $ show a) ]
+		authors is Map [ a :: Author y a | a :: AuthorId <- matches (GL "*"), (isNotHidden $ show a) ]
 	}
 
 	type Articles = Map [ y :: Year y | y :: YearId <- matches yearRE ] where True
@@ -105,8 +105,8 @@ allPaperNames articles books media reports = return []
 hidden :: String -> Bool
 hidden = isPrefixOf "."
 
-isNotHiddenFile :: String -> FileInfo -> Bool
-isNotHiddenFile p p_att = isFile p_att && not (hidden p)
+isNotHidden :: String -> Bool
+isNotHidden p = not (hidden p)
 
 fromId :: Id a -> Maybe a
 fromId (Id x) = Just x

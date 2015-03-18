@@ -9,7 +9,6 @@ import Data.Maybe
 import Data.IORef
 import Language.Haskell.TH.Syntax
 
-import System.IO.Unsafe (unsafePerformIO)
 import System.Posix.Files
 import Control.Concurrent
 import Control.Concurrent.Async

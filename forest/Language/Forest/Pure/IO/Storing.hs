@@ -42,7 +42,7 @@ import Data.Proxy
 doManifestFile :: (Eq pads,Eq md,FSRep fs,Pads pads md) => FSTree fs -> (pads,(Forest_md,md)) -> Manifest fs -> ForestM fs (Manifest fs)
 doManifestFile tree (rep,(fmd,md)) man = do
 	let path = fullpath $ fileInfo fmd
-	canpath <- canonalizePathWithTree path tree
+	canpath <- canonalizePathInTree path tree
 	dskpath <- pathInTree canpath tree
 	let valid = isValidMD fmd
 	if valid
@@ -57,7 +57,7 @@ doManifestFile tree (rep,(fmd,md)) man = do
 doManifestFile1 :: (Eq pads,Eq md,FSRep fs,Pads1 arg pads md) => arg -> FSTree fs -> (pads,(Forest_md,md)) -> Manifest fs -> ForestM fs (Manifest fs)
 doManifestFile1 arg tree (rep,(fmd,md)) man = do
 	let path = fullpath $ fileInfo fmd
-	canpath <- canonalizePathWithTree path tree
+	canpath <- canonalizePathInTree path tree
 	dskpath <- pathInTree canpath tree
 	let valid = isValidMD fmd
 	if valid
@@ -76,7 +76,7 @@ doManifestArchive :: (ForestMD md,Eq rep,Eq md,FSRep fs) =>
 	-> Manifest fs -> ForestM fs (Manifest fs)
 doManifestArchive archTy tree (rep,(fmd,md)) manifestContents man = do
 	let path = fullpath $ fileInfo fmd
-	canpath <- canonalizePathWithTree path tree
+	canpath <- canonalizePathInTree path tree
 	dskpath <- pathInTree canpath tree
 	let arch_canpath = cardinalPath canpath -- the virtual path that points to the content of the archive
 	
@@ -112,7 +112,7 @@ doManifestSymLink :: FSRep fs =>
 doManifestSymLink tree (tgt,(fmd,base_md)) man = do
 	let path = fullpath $ fileInfo fmd
 	
-	canpath <- canonalizePathWithTree path tree
+	canpath <- canonalizePathInTree path tree
 	dskpath <- pathInTree canpath tree
 	
 	let testm = do
@@ -141,7 +141,7 @@ doManifestDirectory :: (Eq rep,Eq md,FSRep fs) =>
 	-> Manifest fs -> ForestM fs (Manifest fs)
 doManifestDirectory tree collectMDErrors (rep,(fmd,md)) manifestContent man = do
 	let path = fullpath $ fileInfo fmd
-	canpath <- canonalizePathWithTree path tree
+	canpath <- canonalizePathInTree path tree
 	dskpath <- pathInTree canpath tree
 	let man1 = addDirToManifest canpath path man -- adds a new directory
 	let testm = return $ boolStatus ConflictingMdValidity $ sameValidity' fmd $ collectMDErrors md
@@ -166,7 +166,7 @@ doManifestMaybe tree (rep_mb,(fmd,md_mb)) manifestContent defaultContent man = d
 			manifestContent (rep,md) man1 -- the path will be added recursively
 		(Nothing,Nothing) -> do
 			let path = fullpath $ fileInfo fmd
-			canpath <- canonalizePathWithTree path tree
+			canpath <- canonalizePathInTree path tree
 			dskpath <- pathInTree canpath tree
 			let testm = return $ boolStatus (ConflictingMdValidity) $ isValidMD fmd
 			let man1 = addTestToManifest testm man
@@ -178,7 +178,7 @@ doManifestMaybe tree (rep_mb,(fmd,md_mb)) manifestContent defaultContent man = d
 			manifestContent (rep,md) man1 -- the path will be added recursively
 		(Nothing,Just md) -> do 
 			let path = fullpath $ fileInfo fmd
-			canpath <- canonalizePathWithTree path tree
+			canpath <- canonalizePathInTree path tree
 			dskpath <- pathInTree canpath tree
 			let testm = return (Invalid [ConflictingRepMd]) -- always invalid
 			let man1 = addTestToManifest testm man
@@ -229,7 +229,7 @@ doManifestCompound parentPath matching tree toListRep toListMd (c_rep,c_md) mani
 	let dtas' = zip reps' mds'
 	
 	let rem_files = old_files \\ new_files -- files to be removed
-	man1 <- foldr (\rem_path man0M -> canonalizePathWithTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
+	man1 <- foldr (\rem_path man0M -> canonalizePathInTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
 	let manifestEach (n,dta'@(rep',md')) man0M = man0M >>= doManifestFocus parentPath n tree dta' (manifestUnder n $ fileInfo $ get_fmd_header md')
 	foldr manifestEach (return man1) (zip new_files dtas')
@@ -254,7 +254,7 @@ doManifestCompoundWithConstraint parentPath matching tree toListRep toListMd pre
 	let old_values' = filter (\(n,fmd) -> pred n $ fileInfo fmd) $ zip old_files' old_metadatas'
 	let rem_files = map fst old_values'
 	-- and delete them
-	man1 <- foldr (\rem_path man0M -> canonalizePathWithTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
+	man1 <- foldr (\rem_path man0M -> canonalizePathInTree rem_path tree >>= \canpath -> liftM (removePathFromManifest canpath rem_path) man0M) (return man) $ map (parentPath </>) rem_files -- remove deprecated files
 	
 	let manifestEach (n,(rep',md')) man0M = man0M >>= doManifestConstraint tree (\_ -> pred n $ fileInfo $ get_fmd_header md') (rep',md')
 		(\dta' -> doManifestFocus parentPath n tree dta' (manifestUnder n $ fileInfo $ get_fmd_header md'))

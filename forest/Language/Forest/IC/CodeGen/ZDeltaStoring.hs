@@ -55,6 +55,7 @@ import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.Trans.Class
 import qualified Language.Forest.Pure.MetaData as Pure
+import Safe
 
 genZManifestDeltaM :: Name -> ForestTy -> [(TH.Pat, TH.Type)] -> ZDeltaQ Exp
 genZManifestDeltaM rep_name forestTy pat_infos = do
@@ -93,7 +94,7 @@ genZManifestDeltaM rep_name forestTy pat_infos = do
 				newdvName <- State.lift $ newName "newdv"
 				newmanName <- State.lift $ newName "newman"
 				core_bodyE <- genZManifestDeltaBody (VarE proxyName) (liftM VarE dargsName) pathName pathName' treeName dfName treeName' newrepName newdvName newmanName rep_name forestTy
-				let dargsP = AsP (fromJust dargsName) $ Pure.forestTupleP $ map VarP dargNames
+				let dargsP = AsP (fromJustNote "genZmanifestDeltaM" dargsName) $ Pure.forestTupleP $ map VarP dargNames
 				let argsP = AsP argsName (ViewP (VarE 'snd) dargsP)
 				let pats = [VarP proxyName,argsP,VarP pathName,VarP pathName',VarP treeName,VarP dfName,VarP treeName',VarP repName,VarP dvName,VarP manName]
 				let recBodyE = LamE [Pure.forestTupleP $ map (VarP) thunkNames,VarP newrepName,VarP newdvName,VarP newmanName] $ DoE [NoBindS core_bodyE]
@@ -312,11 +313,9 @@ zmanifestDeltaSimple (internal, isForm, externalE, forestTy, predM) pathE pathE'
 	let (xE,xP) = genPE xName
 	
 	lensRepE <- lift $ buildFieldLens repName
-	let innerRepE = Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) $ AppE (VarE repName) repE
+	let innerRepE = AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp $ AppE (VarE repName) repE
 	
-	let fieldStmt1 = LetS [
-		ValD xP (NormalB innerRepE) []
-		]
+	let fieldStmt1 = BindS xP innerRepE
 	let fieldStmt2 = LetS [
 		ValD (VarP repName) (NormalB xE) []
 		, ValD (VarP drepName) (NormalB dvE) []
@@ -387,11 +386,9 @@ zmanifestDeltaCompound insideDirectory ty@(CompField internal tyConNameOpt expli
 	lensRepE <- if insideDirectory
 		then lift $ buildFieldLens repName
 		else return idLensE
-	let innerRepE = Pure.appE2 (VarE 'BX.get) (VarE 'lens_content) $ if insideDirectory then AppE (VarE repName) repE else repE
+	let innerRepE = AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp $ if insideDirectory then AppE (VarE repName) repE else repE
 	
-	let fieldStmt1 = LetS [
-		ValD xP (NormalB $ innerRepE) []
-		]
+	let fieldStmt1 = BindS xP innerRepE
 	let fieldStmt2 = LetS [
 		ValD (VarP repName) (NormalB xE) []
 		, ValD (VarP drepName) (NormalB dvE) []

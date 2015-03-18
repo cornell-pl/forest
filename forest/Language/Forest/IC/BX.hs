@@ -36,6 +36,9 @@ fsThunkLensI = LensM (\mt -> mt >>= IC.get) (\s -> mod)
 idLens :: Lens a a
 idLens = Lens id (curry snd)
 
+idLensM :: Monad m => LensM m a a
+idLensM = lensM idLens
+
 fstLens :: Lens (a,b) a
 fstLens = Lens fst (\(x,y) x' -> (x',y))
 
@@ -57,6 +60,20 @@ compLens :: Lens a b -> Lens b c -> Lens a c
 compLens l1 l2 = Lens get' put' where
 	get' = Language.Forest.IC.BX.get l2 . Language.Forest.IC.BX.get l1
 	put' s v = put l1 s (put l2 (Language.Forest.IC.BX.get l1 s) v)
+
+prodLensM :: Monad m => LensM m a b -> LensM m c d -> LensM m (a , c) (b , d)
+prodLensM l1 l2 = LensM get put where
+	get ms = do
+		(x , y) <- ms
+		z <- getM l1 (return x)
+		w <- getM l2 (return y)
+		return (z , w)
+	put ms mv = do
+		(x , y) <- ms
+		(z , w) <- mv
+		x' <- putM l1 (return x) (return z)
+		y' <- putM l2 (return y) (return w)
+		return (x' , y')	
 
 prodFLensM :: Monad m => LensM m a b -> LensM m c d -> LensM m (a :.: c) (b :.: d)
 prodFLensM l1 l2 = LensM get put where

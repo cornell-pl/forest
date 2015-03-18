@@ -1,5 +1,5 @@
 
-{-# LANGUAGE OverlappingInstances, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell, OverlappingInstances, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- NILFS filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse amoung transactions
 
@@ -81,27 +81,39 @@ import Control.Monad.Catch as Catch
 import System.Mem.Concurrent.WeakMap as WeakMap
 import Data.DList as DList
 
+import Data.Global.TH as TH
+
+-- the root directory for transactional forest (it can't modify data not under this path)
+TH.declareMVar "root"  [t| FilePath |] [e| "/" |]
+
+-- locks on which retrying transactions will wait
+type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
+
+-- a register of locks for retrying transactions
+-- these paths should be canonical
+TH.declareMVar "waitingTxsNILFS"  [t| (Map FilePath WaitQueue) |] [e| Map.empty |]
+
+-- a list of the starting times of running transactions sorted from newest to oldest (we may two txs with the same starting time)
+TH.declareMVar "runningTxsNILFS"  [t| [UTCTime] |] [e| [] |]
+
+type TxNILFSWrites = Set FilePath
+
+-- a map with commit times of committed transactions and their performed changes
+-- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
+TH.declareMVar "doneTxsNILFS"  [t| (Map UTCTime TxNILFSWrites) |] [e| Map.empty |]
+
+TH.declareMVar "canonicalTxNILFS"  [t| (CanonicalTree TxNILFS) |] [e| CanonicalTree Map.empty |]
+
 type TxNILFSLayer l = (MonadReader TxNILFSEnv (ForestL TxNILFS l),ForestLayer TxNILFS l)
 
 type instance IncK (IncForest TxNILFS) a = (Typeable a,Eq a,AddTxNILFSParent Inside a,AddTxNILFSParent Outside a)
 
 proxyTxNILFS = Proxy :: Proxy TxNILFS
 
--- a list of the starting times of running transactions sorted from newest to oldest (we may two txs with the same starting time)
-{-# NOINLINE runningTxsNILFS #-}
-runningTxsNILFS :: MVar [UTCTime]
-runningTxsNILFS = unsafePerformIO $ newMVar []
-
 -- insert a new time in a list sorted from newest to oldest
 addRunningTxNILFS time = modifyMVarMasked_ runningTxsNILFS (\xs -> return $ List.insertBy (\x y -> compare y x) time xs)
 -- remove a time in a list sorted from newest to oldest
 deleteRunningTxNILFS time = modifyMVarMasked_ runningTxsNILFS (\xs -> return $ List.delete time xs)
-
--- a map with commit times of committed transactions and their performed changes
--- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
-{-# NOINLINE doneTxsNILFS #-}
-doneTxsNILFS :: MVar (Map UTCTime TxNILFSWrites)
-doneTxsNILFS = unsafePerformIO $ newMVar Map.empty
 
 -- not a concurrent data structure, because we only commit to it under a lock
 {-# NOINLINE memoTxNILFS #-}
@@ -111,14 +123,14 @@ memoTxNILFS = unsafePerformIO $ CWeakMap.empty
 -- ** Filesystem
 
 -- latest tree,delta after the current tree,next tree,reads since the beginning, buffered variables, memoized forest transactional variables, temporary paths since the beginning
-type TxNILFSLog = IORef (FSTree TxNILFS,FSDeltas,FSTree TxNILFS,TxNILFSReads,TxNILFSBuffTable,TxNILFSMemoTable,Set FilePath)
+type TxNILFSLog = IORef (FSTree TxNILFS,FSDeltas,FSTree TxNILFS,TxNILFSReads,TxNILFSBuffTable,TxNILFSMemoTable,CanonicalTree TxNILFS,Set FilePath)
 
 -- one per transaction
 type TxNILFSBuffTable = WeakTable Unique DynTxNILFSThunk
 -- one per transaction
-type TxNILFSMemoTable = WeakTable (FilePath,TypeRep) (DynamicNILFS,MkWeak)
+type TxNILFSMemoTable = WeakTable (FilePath,TypeRep) (DynamicNILFS,MkWeak,FSTree TxNILFS)
 -- a global memotable
-type TxNILFSCMemoTable = CWeakMap.WeakMap (FilePath,TypeRep) (DynamicNILFS,MkWeak)
+type TxNILFSCMemoTable = CWeakMap.WeakMap (FilePath,TypeRep) (DynamicNILFS,MkWeak,FSTree TxNILFS)
 
 data DynamicNILFS where
 	DynNILFS :: FTK TxNILFS args rep var content => rep -> DynamicNILFS
@@ -136,7 +148,6 @@ type TxNILFSTreeDeltas = IORef (Map FSVersion FSDeltas)
 type TxNILFSEnv = (IORef UTCTime,Snapshot,TxNILFSTreeDeltas,TxNILFSLogs)
 
 type TxNILFSReads = Set FilePath
-type TxNILFSWrites = Set FilePath
 type TxNILFSChanges = (TxNILFSReads,FSTreeDelta)
 type TxNILFSChangesFlat = (TxNILFSReads,TxNILFSWrites)
 
@@ -162,25 +173,25 @@ commitDynTxNILFSThunk (uid,DynBuffTxNILFSThunk v _ t) = do
 
 commitTxNILFSMemoTable :: TxNILFSMemoTable -> IO ()
 commitTxNILFSMemoTable = WeakTable.mapM_ commitTxNILFSMemoEntry where
-	commitTxNILFSMemoEntry (k,v@(_,mkWeak)) = CWeakMap.insertWithMkWeak memoTxNILFS mkWeak k v 
+	commitTxNILFSMemoEntry (k,v@(_,mkWeak,tree)) = CWeakMap.insertWithMkWeak memoTxNILFS mkWeak k v 
 
 -- repairs memoized entries to the latest fs tree
 repairTxNILFSMemoTable :: TxNILFSLayer l => TxNILFSMemoTable -> ForestL TxNILFS l ()
 repairTxNILFSMemoTable = WeakTable.mapMGeneric__ (forestM . forestIO) repairTxNILFSMemoEntry where
-	repairTxNILFSMemoEntry :: TxNILFSLayer l => ((FilePath,TypeRep),(DynamicNILFS,MkWeak)) -> ForestL TxNILFS l ()
-	repairTxNILFSMemoEntry ((path,tyRep),(DynNILFS rep,mkWeak)) = loadTxNILFS Proxy rep
+	repairTxNILFSMemoEntry :: TxNILFSLayer l => ((FilePath,TypeRep),(DynamicNILFS,MkWeak,FSTree TxNILFS)) -> ForestL TxNILFS l ()
+	repairTxNILFSMemoEntry ((path,tyRep),(DynNILFS rep,mkWeak,tree)) = loadTxNILFS Proxy rep
 
 bufferTxNILFSFSThunk :: (IncK (IncForest TxNILFS) a,AddTxNILFSParent l a,TxNILFSLayer l) => ForestFSThunk TxNILFS l a -> TxNILFSThunk l a -> ForestM TxNILFS ()
 bufferTxNILFSFSThunk var thunk = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
 	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak (txNILFSFSThunkId var) $ DynTxFSThunk thunk mkWeak var
 	
 bufferTxNILFSHSThunk :: (IncK (IncForest TxNILFS) a,AddTxNILFSParent l a,TxNILFSLayer l) => ForestHSThunk TxNILFS l a -> TxNILFSThunk l a -> ForestM TxNILFS ()
 bufferTxNILFSHSThunk var thunk = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSHSThunkArgs var
 	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak (txNILFSHSThunkId var) $ DynTxHSThunk thunk mkWeak var
 
@@ -195,7 +206,7 @@ bufferedTxNILFSFSThunk var = do
 		return buff
 	-- read from the local buffer
 	let find txlog m = do
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 		mb <- forestIO $ WeakTable.lookup bufftbl (txNILFSFSThunkId var)
 		case mb of
 			Nothing -> m
@@ -213,7 +224,7 @@ bufferedTxNILFSHSThunk var = do
 		return buff
 	-- read from the local buffer
 	let find txlog m = do
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 		mb <- forestIO $ WeakTable.lookup bufftbl (txNILFSHSThunkId var)
 		case mb of
 			Nothing -> m
@@ -223,33 +234,31 @@ bufferedTxNILFSHSThunk var = do
 getNextFSTree :: MonadReader TxNILFSEnv (ForestM TxNILFS) => ForestM TxNILFS (FSTree TxNILFS)
 getNextFSTree = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	return newtree
+
+nextTxNILFSTree :: MonadReader TxNILFSEnv (ForestM TxNILFS) => ForestM TxNILFS ()
+nextTxNILFSTree = undefined
 
 incrementTxNILFSTree :: MonadReader TxNILFSEnv (ForestM TxNILFS) => ForestM TxNILFS ()
 incrementTxNILFSTree = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	-- the new tree deltas are appended to the original deltas
-	treeDelta <- forestIO $ fsTreeFSTreeDelta tree
-	nextTreeDeltas <- forestIO $ readRef treeDelta >>= newRef
-	newTreeSym <- forestIO $ fsTreeSym newtree
-	nextSyms <- forestIO $ readIORef newTreeSym >>= newIORef
-	-- create the new pending tree
-	newTreeSnap <- forestIO $ fsTreeSnapshot newtree
 	newTreeVersion <- forestIO $ fsTreeFSVersion newtree
-	newTreeVirtual <- forestIO $ fsTreeVirtual newtree
-	nexttree <- liftM FSTreeTxNILFS $ forestIO $ newIORef $ TxTree newTreeSnap (succ newTreeVersion) nextTreeDeltas newTreeVirtual nextSyms
+	newTreeDelta <- forestIO $ fsTreeFSTreeDelta newtree
+	nextTreeDeltas <- forestIO $ readRef newTreeDelta >>= newRef
+	newTreeSym <- forestIO $ fsTreeSym newtree
 	-- add the relative deltas
 	tds <- forestIO $ readRef deltas
 	forestIO $ writeRef deltas $ Map.insert newTreeVersion ds tds
-	forestIO $ writeRef txlog (newtree,DList.empty,nexttree,reads,bufftbl,memotbl,tmps)
+	forestIO $ writeRef txlog (newtree,DList.empty,newtree,reads,bufftbl,memotbl,cantree,tmps)
 
 -- only needs to read from the top-level log
 getTxNILFSChangesFlat :: ForestM TxNILFS TxNILFSChangesFlat
 getTxNILFSChangesFlat = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	d <- forestIO $ fsTreeFSTreeDelta tree
 	writes <- forestIO $ readRef d
 	return (reads,fsTreeDeltaWrites "" writes)
@@ -259,7 +268,7 @@ getTxNILFSChangesFlat = do
 getTxNILFSChanges :: ForestM TxNILFS TxNILFSChanges
 getTxNILFSChanges = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	d <- forestIO $ fsTreeFSTreeDelta tree
 	writes <- forestIO $ readRef d
 	return (reads,writes)
@@ -267,26 +276,26 @@ getTxNILFSChanges = do
 putTxNILFSRead :: FilePath -> ForestM TxNILFS ()
 putTxNILFSRead path = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
-	forestIO $ writeIORef txlog (tree,ds,newtree,Set.insert path reads,bufftbl,memotbl,tmps)
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	forestIO $ writeIORef txlog (tree,ds,newtree,Set.insert path reads,bufftbl,memotbl,cantree,tmps)
 
 putTxNILFSTmp :: FilePath -> ForestM TxNILFS ()
 putTxNILFSTmp tmp = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
-	forestIO $ writeRef txlog (tree,ds,newtree,reads,bufftbl,memotbl,Set.insert tmp tmps)
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	forestIO $ writeRef txlog (tree,ds,newtree,reads,bufftbl,memotbl,cantree,Set.insert tmp tmps)
 
 -- writes to the next tree
 -- duplicate the action on both the relative deltas (sequence of primitve FSDelta) and the absolute deltas (FSTreeDelta)
 modifyTxNILFSTreeDeltas :: FSDelta -> ForestM TxNILFS ()
 modifyTxNILFSTreeDeltas d = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	delta <- forestIO $ fsTreeFSTreeDelta newtree
 	forestIO $ modifyIORef delta (appendToFSTreeDelta d)
 	sym <- forestIO $ fsTreeSym newtree
 	forestIO $ modifyIORef sym (\(ds,ts) -> (DList.snoc ds d,appendToFSTreeSym d ts))
-	forestIO $ writeIORef txlog (tree,DList.snoc ds d,newtree,reads,bufftbl,memotbl,tmps)
+	forestIO $ writeIORef txlog (tree,DList.snoc ds d,newtree,reads,bufftbl,memotbl,cantree,tmps)
 
 treeTxNILFSFSThunk :: (IncK (IncForest TxNILFS) a,Typeable l,Typeable a,TxNILFSLayer l) => ForestFSThunk TxNILFS l a -> ForestL TxNILFS l (FSTree TxNILFS)
 treeTxNILFSFSThunk var = do
@@ -351,7 +360,7 @@ instance FSRep TxNILFS where
 		liftM FSTreeTxNILFS $ forestIO $ newIORef t'
 	latestTree = do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 		return tree
 	
 	-- reads from the FS or from the modification log
@@ -360,7 +369,7 @@ instance FSRep TxNILFS where
 		canpath <- canonalizeDirectoryInTree path tree
 		-- mark the path as read
 		putTxNILFSRead canpath
-		(_,td) <- getTxNILFSChanges
+		td <- forestIO $ fsTreeFSTreeDelta tree >>= readIORef
 		let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 		ondisk <- case onDiskWriteMay path_td of
 			Nothing -> pathInSnapshot liveSnapshots nilfsData canpath =<< forestIO (fsTreeSnapshot tree) -- read the content from the original NILFS snapshot
@@ -368,31 +377,31 @@ instance FSRep TxNILFS where
 		virtualizeTxNILFS ondisk tree
 
 	stepPathInTree tree path rel = do
-		dir <- canonalizePathWithTree path tree
+		dir <- canonalizePathInTree path tree
 		return $ dir </> rel
 	
 	getDirectoryContentsInTree = getDirectoryContentsTxNILFS
 		
-	doesDirectoryExistInTree = doesExistTxNILFS doesDirectoryExist
-	doesFileExistInTree = doesExistTxNILFS doesFileExist
-	doesExistInTree = doesExistTxNILFS (\path -> doesDirectoryExist path >>= \isDir -> if isDir then return True else doesFileExist path)
+	doesDirectoryExistInTree = doesExistTxNILFS DirExists
+	doesFileExistInTree = doesExistTxNILFS FileExists
+	doesExistInTree = doesExistTxNILFS AnyExists
 	
-	canonalizePathWithTree = canonalizePathTxNILFS
+	canonalizePathInTree = canonalizePathTxNILFS
 
-	type FSTreeD TxNILFS = FSTreeDelta -- a delta fixed-point focused on the current path
+	type FSTreeD TxNILFS = FSTreeDeltaNodeMay -- a delta fixed-point focused on the current path
 
-	isEmptyFSTreeD _ = isEmptyFSTreeDelta
-	isEmptyTopFSTreeD _ = isEmptyTopFSTreeDelta
-	isChgFSTreeD _ = isChgFSTreeDelta
-	isMoveFSTreeD _ = isMoveFSTreeDelta
+	isEmptyFSTreeD _ = isEmptyFSTreeDeltaNodeMay
+	isEmptyTopFSTreeD _ = isEmptyTopFSTreeDeltaNodeMay
+	isChgFSTreeD _ = isChgFSTreeDeltaNodeMay
+	isMoveFSTreeD _ = isMoveFSTreeDeltaNodeMay
 
 	focusDiffFSTreeD tree path tree' path' = do
 		td <- focusDiffFSTreeDelta tree path tree' path'
 		syms <- forestIO $ findSymLinks path'
 		let fixtd = fixFSTreeDelta td syms
-		return fixtd
+		return $ focusFSTreeDeltaByRelativePathMay fixtd "/"
 		 
-	focusFSTreeD fs td path file pathfile = focusFSTreeDeltaByRelativePath td pathfile
+	focusFSTreeD fs td path file pathfile = focusFSTreeDeltaNodeMayByRelativePath td file
 
 	diffFS oldtree newtree path = do
 		(starttime,cp2,deltas,txlogs) <- Reader.ask
@@ -410,7 +419,7 @@ instance FSRep TxNILFS where
 						forestIO $ diffNILFS mount2 device cp1 cp2
 				syms <- forestIO $ readMVar symlinks
 				let fixtd = fixFSTreeDelta tdNILFS syms
-				let df = focusFSTreeDeltaByRelativePath fixtd path
+				let df = focusFSTreeDeltaByRelativePathMay fixtd path
 				return $ Just df
 			(NILFSTree cp1 _,TxTree ((==cp2) -> True) fs2 delta2 virtual2 sym2) -> do
 				-- difference between NILFS snapshots
@@ -427,7 +436,7 @@ instance FSRep TxNILFS where
 				let dfs = take fs2 $ Map.elems tds -- deltas since the beginning of the tx
 				syms <- liftM snd $ forestIO $ readRef sym2
 				let fixtd = fixFSTreeDelta (appendListToFSTreeDelta (DList.concat dfs) tdNILFS) syms
-				let df = focusFSTreeDeltaByRelativePath fixtd path
+				let df = focusFSTreeDeltaByRelativePathMay fixtd path
 				return $ Just df
 			(TxTree ((==cp2) -> True) fs1 delta1 virtual1 sym1,TxTree ((==cp2) -> True) fs2 delta2 virtual2 sym2) -> do
 				-- transaction-local difference
@@ -436,7 +445,7 @@ instance FSRep TxNILFS where
 				let dfs = drop (pred fs1) $ take fs2 $ Map.elems tds -- deltas since the beginning of the tx
 				syms <- liftM snd $ forestIO $ readRef sym2
 				let fixtd = fixFSTreeDelta (compressFSDeltas (DList.concat dfs)) syms
-				let df = focusFSTreeDeltaByRelativePath fixtd path
+				let df = focusFSTreeDeltaByRelativePathMay fixtd path
 				return $ Just df
 			otherwise -> return Nothing
 
@@ -493,62 +502,68 @@ virtualizeTxNILFS path tree = forestIO (fsTreeVirtual tree) >>= \virtual -> if v
 
 getDirectoryContentsTxNILFS :: FilePath -> FSTree TxNILFS -> ForestM TxNILFS [FileName]
 getDirectoryContentsTxNILFS path tree = do
-	canpath <- canonalizeDirectoryInTree path tree
+	canpath <- canonalizePathInTree path tree
 	putTxNILFSRead canpath
-	(_,td) <- getTxNILFSChanges
+	td <- forestIO $ fsTreeFSTreeDelta tree >>= readIORef
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	xs <- forestIO $ getContentsFSTreeDeltaNodeMay canpath path_td
 	return xs
 
-doesExistTxNILFS :: (FilePath -> IO Bool) -> FilePath -> FSTree TxNILFS -> ForestM TxNILFS Bool
-doesExistTxNILFS test path tree = do
+doesExistTxNILFS :: ExistFlag -> FilePath -> FSTree TxNILFS -> ForestM TxNILFS Bool
+doesExistTxNILFS flag path tree = do
 	canpath <- canonalizeDirectoryInTree path tree
 	putTxNILFSRead canpath
-	(_,td) <- getTxNILFSChanges
+	td <- forestIO $ fsTreeFSTreeDelta tree >>= readIORef
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	case path_td of
-		Just (FSTreeNew _ _ diskpath _) -> forestIO $ test diskpath
-		otherwise -> forestIO $ test canpath
+		Just (FSTreeNop _) -> return $ flag /= FileExists
+		Just (FSTreeChg _ _) -> return $ flag /= FileExists
+		Just (FSTreeNew _ _ diskpath _) -> forestIO $ doesExistShellFlag flag diskpath
+		otherwise -> forestIO $ doesExistShellFlag flag canpath
+memoCanonicalPath :: FilePath -> FilePath -> FSTree TxNILFS -> ForestM TxNILFS ()
+memoCanonicalPath src tgt fs = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	let cantree' = memoCanonicalTree src tgt fs cantree
+	forestIO $ writeIORef txlog (tree,ds,newtree,reads,bufftbl,memotbl,cantree',tmps)
+
+-- returns a canonical prefix, at a given tree, and a non-canonized suffix
+findCanonicalPath :: [FileName] -> ForestM TxNILFS (Maybe (FilePath,FSTree TxNILFS,[FileName]))
+findCanonicalPath dirs = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	return $ findCanonicalTree dirs cantree
 
 -- canonalizes a path, taking into account the buffered FSTreeDelta and logging reads of followed symlinks
 canonalizePathTxNILFS :: FilePath -> FSTree TxNILFS -> ForestM TxNILFS FilePath
 canonalizePathTxNILFS path tree = do
 	norm <- forestIO $ liftM normalise $ absolutePath path
-	let dirs = splitDirectories norm
-	follow "" dirs
+	let dirs = splitDirectories norm	
+	mb <- findCanonicalPath dirs
+	(_,syms) <- forestIO $ fsTreeSym tree >>= readIORef
+	can <- case mb of
+		Just (root,oldtree,suffix) -> do
+			cmp <- compareFSTree oldtree tree
+			if (cmp == EQ)
+				then follow (focusFSTreeSym root syms) root suffix
+				else follow syms "" dirs
+		otherwise -> follow syms "" dirs
+	memoCanonicalPath norm can tree
+	return can	
   where
-	follow root [] = return root
-	follow root (".":dirs) = follow root dirs
-	follow root ("..":dirs) = follow (takeDirectory root) dirs
-	follow root (dir:dirs) = do
-		(_,td) <- getTxNILFSChanges
+	follow :: FSTreeSym -> FilePath -> [FileName] -> ForestM TxNILFS FilePath
+	follow td root [] = return root
+	follow td root (".":dirs) = follow td root dirs
+	follow td root ("..":dirs) = follow td (takeDirectory root) dirs
+	follow td root (dir:dirs) = do
 		let rootdir = root </> dir
-		let td' = focusFSTreeDeltaByRelativePathMay td rootdir
-		case td' of
-			Just (FSTreeNewLink link _) -> do -- follow buffered links
+		case Map.lookup dir td of
+			Just (FSTreeSymLink tgt) -> do -- follow link
 				-- mark the symbolic link as read
 				putTxNILFSRead rootdir
-				canLink <- canonalizePathTxNILFS (root </> link) tree
-				follow canLink dirs
-			otherwise -> do -- follow FS links
-				rootdir_dsk <- flip virtualizeTxNILFS tree =<< case onDiskWriteMay td' of
-					Nothing -> pathInSnapshot liveSnapshots nilfsData rootdir =<< forestIO (fsTreeSnapshot tree)
-					Just ondisk -> return $ rootdir
-				e <- forestIO $ Exception.try $ liftM isSymbolicLink (getSymbolicLinkStatus rootdir_dsk)
-				case e of
-					Left (e::SomeException) -> follow rootdir dirs
-					Right isLink -> do
-						if isLink
-							then do
-								-- mark the symbolic link as read
-								putTxNILFSRead rootdir
-								e <- forestIO $ Exception.try $ readSymbolicLink rootdir_dsk
-								case e of
-									Left (e::SomeException) -> follow rootdir dirs
-									Right p -> do
-										canLink <- canonalizePathTxNILFS (root </> p) tree
-										follow canLink dirs
-							else follow rootdir dirs
+				canonalizePathTxNILFS (root </> tgt </> joinPath dirs) tree
+			Nothing -> do
+				follow (focusFSTreeSym dir td) rootdir dirs
 
 -- ** Incrementality
 
@@ -667,28 +682,13 @@ bufferTxNILFSThunk :: (IncK (IncForest TxNILFS) a,TxNILFSLayer l) => TxNILFSThun
 bufferTxNILFSThunk thunk buff = do
 	let uid = txNILFSId thunk
 	let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSBuff thunk
-	bufferTxNILFSThunk' thunk uid mkWeak buff
-
-bufferTxNILFSThunk' :: (IncK (IncForest TxNILFS) a,TxNILFSLayer l) => TxNILFSThunk l a -> Unique -> MkWeak -> BuffTxNILFSThunk l a -> ForestM TxNILFS ()
-bufferTxNILFSThunk' thunk uid mkWeak buff = bufferTxNILFSThunk'' uid (DynBuffTxNILFSThunk buff mkWeak thunk)
-
-bufferTxNILFSThunk'' :: Unique -> DynTxNILFSThunk -> ForestM TxNILFS ()
-bufferTxNILFSThunk'' uid dyn = do
+	let dyn = DynBuffTxNILFSThunk buff mkWeak thunk
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,delta,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
-	forestIO $ WeakTable.insertWithMkWeak bufftbl (dynTxMkWeak dyn) uid dyn
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
+	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak uid dyn
 
 bufferedTxNILFSThunk :: (IncK (IncForest TxNILFS) a,TxNILFSLayer l) => TxNILFSThunk l a -> ForestM TxNILFS (BuffTxNILFSThunk l a)
-bufferedTxNILFSThunk thunk = liftM fst $ bufferedTxNILFSThunk' thunk (txNILFSId thunk)
-
-bufferedTxNILFSThunk' :: (IncK (IncForest TxNILFS) a,TxNILFSLayer l) => TxNILFSThunk l a -> Unique -> ForestM TxNILFS (BuffTxNILFSThunk l a,MkWeak)
-bufferedTxNILFSThunk' thunk uid = do
-	dyn <- bufferedTxNILFSThunk'' thunk uid
-	case dyn of
-		(DynBuffTxNILFSThunk (cast -> Just buff) mkWeak thunk) -> return (buff,mkWeak)
-
-bufferedTxNILFSThunk'' :: (IncK (IncForest TxNILFS) a,TxNILFSLayer l) => TxNILFSThunk l a -> Unique -> ForestM TxNILFS DynTxNILFSThunk
-bufferedTxNILFSThunk'' thunk uid = do
+bufferedTxNILFSThunk thunk = do
 	(starttime,txid,deltas,txlogs) <- Reader.ask
 	-- read from the concurrent global thunk
 	let newBuff = do
@@ -696,14 +696,14 @@ bufferedTxNILFSThunk'' thunk uid = do
 		buff <- forestIO $ readIORef $ txNILFSBuff thunk
 		newParents <- forestIO $ copyWithKey snd (buffTxNILFSParents buff)
 		let buff' = buff { buffTxNILFSParents = newParents }
-		return $ DynBuffTxNILFSThunk buff' mkWeak thunk
+		return buff'
 	-- read from the local buffer
 	let find txlog m = do
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readRef txlog
-		mb <- forestIO $ WeakTable.lookup bufftbl uid
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+		mb <- forestIO $ WeakTable.lookup bufftbl (txNILFSId thunk)
 		case mb of
 			Nothing -> m
-			Just dyn -> return dyn
+			Just (DynBuffTxNILFSThunk (cast -> Just buff) mkWeak thunk) -> return buff
 	Foldable.foldr find newBuff txlogs
 
 dirtyTxNILFSParents :: FSTree TxNILFS -> TxNILFSParents -> ForestM TxNILFS ()
@@ -754,8 +754,10 @@ instance (ForestLayer TxNILFS l) => AddTxNILFSParent l Forest_err where
 	addTxNILFSParent proxy stone meta z x = return z
 instance (ForestLayer TxNILFS l) => AddTxNILFSParent l FileInfo where
 	addTxNILFSParent proxy stone meta z x = return z
-instance (ForestLayer TxNILFS l,AddTxNILFSParent l (ForestFSThunkI TxNILFS Forest_err)) => AddTxNILFSParent l (Forest_md TxNILFS) where
-	addTxNILFSParent proxy stone meta z fmd = addTxNILFSParent proxy stone meta z (errors fmd)
+instance (ForestLayer TxNILFS l,AddTxNILFSParent l (ForestFSThunkI TxNILFS Forest_err),AddTxNILFSParent l (ForestFSThunkI TxNILFS FileInfo)) => AddTxNILFSParent l (Forest_md TxNILFS) where
+	addTxNILFSParent proxy stone meta z fmd = do
+		z1 <- addTxNILFSParent proxy stone meta z (errors fmd)
+		addTxNILFSParent proxy stone meta z1 (fileInfo fmd)
 instance (ForestLayer TxNILFS l,MData (AddTxNILFSParentDict l) (ForestL TxNILFS l) a) => AddTxNILFSParent l a where
 	addTxNILFSParent proxy stone meta z x = do
 		let f t1 t2 = forestM $ maxFSTree t1 t2
@@ -835,7 +837,7 @@ instance ZippedICMemo TxNILFS where
 	addZippedMemo path proxy args rep mb_tree = do
 		let var = to iso_rep_thunk rep
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestM $ forestIO $ readRef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 		
 		-- remember the arguments (this is how we connect transactional arguments to transactional variables)
 		let txargs = (toDyn args,path)
@@ -846,20 +848,18 @@ instance ZippedICMemo TxNILFS where
 			Nothing -> return ()
 			Just tree -> do
 				let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
-				forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak)
+				forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak,tree)
 	
 	findZippedMemo args path (Proxy :: Proxy rep) = do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-		(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestM $ forestIO $ readRef txlog
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 		mb <- forestM $ forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
 		case mb of
 			Nothing -> return Nothing
-			Just (fromDynNILFS -> Just rep,mkWeak) -> do
+			Just (fromDynNILFS -> Just rep,mkWeak,tree) -> do
 				let var = to iso_rep_thunk rep
 				Just (fromDynamic -> Just txargs,_) <- forestM $ forestIO $ readRef $ txNILFSFSThunkArgs var
-				thunk <- forestM $ bufferedTxNILFSFSThunk var
- 				buff <- forestM $ bufferedTxNILFSThunk thunk
-				return $ Just (buffTxNILFSTree buff,txargs,rep)
+				return $ Just (tree,txargs,rep)
 
 argsTxNILFS :: (FTK TxNILFS args rep var content) => Proxy args -> rep -> ForestO TxNILFS (ForestVs args,FilePath)
 argsTxNILFS proxy rep = do
@@ -969,7 +969,7 @@ instance TxICForest TxNILFS where
 	retry = retryTxNILFS
 	orElse = orElseTxNILFS
 	throw = throwTxNILFS 
-	catch = catchTxNILFS 
+	catch = catchTxNILFS False
 	new = newTxNILFS Proxy
 	args = argsTxNILFS Proxy
 	read = readTxNILFS Proxy
@@ -984,7 +984,7 @@ deleteTxNILFS proxy (rep :: rep) = do
 		Nothing -> error "tried to write to a variable that is not connected to the FS"
 		Just (args,path) -> do
 			def_rep :: rep <- inside $ zdefaultScratchMemo proxy args path
-			content <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk def_rep
+			content <- inside $ BX.getM lens_content $ Inc.get $ to iso_rep_thunk def_rep
 			writeOrElseTxNILFS rep content () (error "failed to write")
 
 copyOrElseTxNILFS :: (FTK TxNILFS args rep var content) => Proxy args -> rep -> rep -> b -> ([ManifestError] -> TxNILFSFTM b) -> TxNILFSFTM b
@@ -996,7 +996,7 @@ copyOrElseTxNILFS proxy src tgt b f = do
 			-- XXX: this may fail if FileInfo paths are canonized...
 			let chgPath path = path_tgt </> (makeRelative path_src path)
 			tgt' <- copyFSThunks proxyTxNILFS proxyOutside chgPath src
-			content' <- liftM (BX.get lens_content) $ Inc.getOutside $ to iso_rep_thunk tgt'
+			content' <- inside $ BX.getM lens_content $ Inc.get $ to iso_rep_thunk tgt'
 			writeOrElseTxNILFS tgt content' b f
 		otherwise -> error "tried to write to a variable that is not connected to the FS"
 
@@ -1007,10 +1007,10 @@ newTxNILFS proxy args path = inside $ zload (vmonadArgs proxyTxNILFS proxy args)
 loadTxNILFS :: (ForestLayer TxNILFS l,FTK TxNILFS args rep var content) => Proxy args -> rep -> ForestL TxNILFS l ()
 loadTxNILFS proxy rep = do
 	let t = to iso_rep_thunk rep
-	(txargs,path) <- liftM fromJust $ forestM $ getFTVArgsNILFS proxy rep
+	(txargs,path) <- liftM (fromJustNote "loadTxNILFS1") $ forestM $ getFTVArgsNILFS proxy rep
 	oldtree <- inside $ treeTxNILFSFSThunk t
 	tree <- forestM latestTree
-	df <- liftM fromJust $ forestM $ diffFS oldtree tree path
+	df <- liftM (fromJustNote "loadTxNILFS2") $ forestM $ diffFS oldtree tree path
 	-- load incrementally at the latest tree
 	inside $ unsafeWorld $ do
 		dv <- diffValueThunk oldtree rep
@@ -1024,7 +1024,7 @@ readTxNILFS :: (ForestLayer TxNILFS l,FTK TxNILFS args rep var content) => Proxy
 readTxNILFS proxy rep = do
 	loadTxNILFS proxy rep
 	let t = to iso_rep_thunk rep
-	liftM (BX.get lens_content) $ inside $ Inc.get t
+	inside $ BX.getM lens_content $ Inc.get t
 
 data ManifestConflictTx = ManifestConflictTx [ManifestError] deriving (Show,Eq,Typeable)
 instance Exception ManifestConflictTx
@@ -1041,7 +1041,7 @@ writeOrElseTxNILFS rep content b f = do
 			let proxy = Proxy :: Proxy args
 			oldtree <- inside $ treeTxNILFSFSThunk t
 			tree <- forestM latestTree
-			df <- liftM fromJust $ forestM $ diffFS oldtree tree path
+			df <- liftM (fromJustNote "writeOrElseTxNILFS") $ forestM $ diffFS oldtree tree path
 			dv <- diffValueThunk oldtree rep
 			ds <- deltaArgs oldtree proxy txargs txargs
 			let deltas = (txargs,ds)
@@ -1052,8 +1052,9 @@ writeOrElseTxNILFS rep content b f = do
 			zloadDeltaMemo proxy deltas (return path) oldtree (rep,getForestMDInTree) path df tree dv
 			
 			let tryWrite = do
+				forestM nextTxNILFSTree
 				-- write the new content
-				modify t $ \s -> return $ BX.put lens_content s content
+				modify t $ \s -> BX.putM lens_content (return s) (return content)
 				
 				-- compute new value deltas for the write
 				newdv <- diffValueThunk tree rep
@@ -1074,7 +1075,7 @@ writeOrElseTxNILFS rep content b f = do
 				if List.null errors
 					then forestM latestTree >>= memos >> return b
 					else throwTxNILFS $ ManifestConflictTx errors
-			catchTxNILFS tryWrite (\(ManifestConflictTx errors) -> f errors)
+			catchTxNILFS True tryWrite (\(ManifestConflictTx errors) -> f errors)
 					
 atomicallyTxNILFS :: TxNILFSFTM b -> IO b
 atomicallyTxNILFS stm = initializeTxNILFS try where
@@ -1123,13 +1124,13 @@ orElseTxNILFS stm1 stm2 = do1 where
 throwTxNILFS :: Exception e => e -> TxNILFSFTM a
 throwTxNILFS = Catch.throwM
 
-catchTxNILFS :: Exception e => TxNILFSFTM a -> (e -> TxNILFSFTM a) -> TxNILFSFTM a
-catchTxNILFS stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxNILFS :: Exception e => Bool -> TxNILFSFTM a -> (e -> TxNILFSFTM a) -> TxNILFSFTM a
+catchTxNILFS doWrites stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
 	catchSome (e::SomeException) = do
-		validateCatchTxNILFS
-		h $ fromJust $ fromException e
+		validateCatchTxNILFS doWrites
+		h $ fromJustNote "catchTxNILFS" $ fromException e
 
 initializeTxNILFS :: TxNILFSFTM b -> IO b 
 initializeTxNILFS (TxNILFSForestO m) = do
@@ -1143,14 +1144,11 @@ initializeTxNILFS (TxNILFSForestO m) = do
 	treeDelta <- newIORef $ emptyFSTreeDelta
 	treeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
 	tree <- liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False
-	-- next tree
-	newtreeDelta <- newIORef $ emptyFSTreeDelta
-	newtreeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
-	newtree <- liftM FSTreeTxNILFS $ newIORef $ TxTree txid 1 newtreeDelta False newtreeSyms
 	-- tables
 	bufftbl <- WeakTable.new
 	memotbl <- WeakTable.new
-	txlog <- newIORef (tree,DList.empty,newtree,Set.empty,bufftbl,memotbl,Set.empty)
+	cantree <- readMVar canonicalTxNILFS
+	txlog <- newIORef (tree,DList.empty,tree,Set.empty,bufftbl,memotbl,cantree,Set.empty)
 	deltas <- newIORef Map.empty
 	debug ("initializeTxNILFS") $ Reader.runReaderT m (starttime,txid,deltas,SCons txlog SNil)
 	-- don't unmount AVFS, since multiple parallel txs may be using it
@@ -1162,14 +1160,11 @@ resetTxNILFS m = do
 	(_,txid,deltas,_) <- Reader.ask
 	-- current tree
 	tree <- forestM $ forestIO $ liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False
-	-- next tree
-	newtreeDelta <- forestM $ forestIO $ newIORef $ emptyFSTreeDelta
-	newtreeSyms <- forestM $ forestIO $ newIORef =<< liftM (DList.empty,) (readMVar symlinks)
-	newtree <- forestM $ forestIO $ liftM FSTreeTxNILFS $ newIORef $ TxTree txid 1 newtreeDelta False newtreeSyms
 	-- tables
 	bufftbl <- forestM $ forestIO $ WeakTable.new
 	memotbl <- forestM $ forestIO $ WeakTable.new
-	txlog <- forestM $ forestIO $ newIORef (tree,DList.empty,newtree,Set.empty,bufftbl,memotbl,Set.empty)
+	cantree <- forestM $ forestIO $ readMVar canonicalTxNILFS
+	txlog <- forestM $ forestIO $ newIORef (tree,DList.empty,tree,Set.empty,bufftbl,memotbl,cantree,Set.empty)
 	forestM $ forestIO $ writeIORef deltas Map.empty
 	debug ("resetTxNILFS") $ Reader.local (Prelude.const $ (now,txid,deltas,SCons txlog SNil)) m
 
@@ -1183,17 +1178,17 @@ startTxNILFS = getCurrentTime >>= \t -> addRunningTxNILFS t >> return t
 startNestedTxNILFS :: TxNILFSFTM a -> TxNILFSFTM a
 startNestedTxNILFS m = do
 	(starttime,txid,deltas,txlogs@(SCons txlog_parent _)) <- Reader.ask
-	(tree,delta,newtree,reads,_,_,tmps) <- inL $ readIORef txlog_parent
+	(tree,delta,newtree,reads,_,_,cantree,tmps) <- inL $ readIORef txlog_parent
 	bufftbl' <- forestM $ forestIO $ WeakTable.new
 	memotbl' <- forestM $ forestIO $ WeakTable.new
-	txlog_child <- inL $ newIORef (tree,delta,newtree,Set.empty,bufftbl',memotbl',Set.empty)
+	txlog_child <- inL $ newIORef (tree,delta,newtree,Set.empty,bufftbl',memotbl',cantree,Set.empty)
 	debug ("startNestedTxNILFS ") $ Reader.local (Prelude.const (starttime,txid,deltas,SCons txlog_child txlogs)) m
 
 -- remember to empty the next tree and delete the new versions in case nested txs fail
 dropChildTxNILFSLog :: TxNILFSFTM a -> TxNILFSFTM a
 dropChildTxNILFSLog m = do
 	(starttime,txid,deltas,(SCons txlog_child txlogs@(SCons txlog_parent _))) <- Reader.ask
-	(tree_parent,_,newtree_parent,_,_,_,_) <- inL $ readIORef txlog_parent
+	(tree_parent,_,newtree_parent,_,_,_,_,_) <- inL $ readIORef txlog_parent
 	-- forget newly created nested versions
 	tree_parentVersion <- forestM $ forestIO $ fsTreeFSVersion tree_parent
 	forestM $ forestIO $ modifyIORef deltas $ Map.filterWithKey (\version _ -> version <= tree_parentVersion)
@@ -1216,7 +1211,7 @@ validateAndCommitTopTxNILFS :: Bool -> TxNILFSFTM Bool
 validateAndCommitTopTxNILFS doWrites = do
 	-- update the memoized transactional variables to the latest fs tree (outside the locks)
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-	(tree,deltas,newtree,reads,bufftbl,memotbl,tmps) <- forestM $ forestIO $ readIORef txlog
+	(tree,deltas,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readIORef txlog
 	repairTxNILFSMemoTable memotbl
 	-- perform the actual commit
 	atomicTxNILFS "validateAndCommitTopTxNILFS" $ do
@@ -1269,7 +1264,7 @@ validateAndRetryTopTxNILFS = atomicTxNILFS "validateAndRetryTopTxNILFS" $ do
 --since we treat reads/writes separately, we don't need to wait on writes that have not been read
 retryTxNILFSLog :: Lock -> IORef UTCTime -> TxNILFSLog -> ForestM TxNILFS ()
 retryTxNILFSLog lck timeref txlog = do
-	(tree,delta,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	let retryPath path = do
 		-- the reference to the lock lives as long as the transaction
 		modifyMVar_ waitingTxsNILFS $ \xs -> do
@@ -1293,35 +1288,38 @@ validateAndRetryNestedTxNILFS = do
 			throwM InvalidTx
 
 -- validates the current log before catching an exception
-validateCatchTxNILFS :: TxNILFSFTM ()
-validateCatchTxNILFS = do
+validateCatchTxNILFS :: Bool -> TxNILFSFTM ()
+validateCatchTxNILFS doWrites = do
 	txenv@(timeref,txid,deltas,txlogs) <- Reader.ask
 	starttime <- inL $ readRef timeref
 	success <- forestM $ validateTxsNILFS starttime txlogs
 	case success of
 		Left _ -> do
 			-- in case the computation raises an exception, discard all its visible (write) effects
-			forestM unbufferTxNILFSWrites
+			unless doWrites $ forestM unbufferTxNILFSWrites
 		Right _ -> do
 			inL $ liftIO $ deleteRunningTxNILFS starttime
 			throwM InvalidTx
 
+parentCanonicalTree :: TxNILFSLogs -> ForestM TxNILFS (CanonicalTree TxNILFS)
+parentCanonicalTree SNil = forestIO $ readMVar canonicalTxNILFS
+parentCanonicalTree (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	return cantree
+
 -- we only unbuffer the child log
 unbufferTxNILFSWrites :: ForestM TxNILFS ()
 unbufferTxNILFSWrites = do
-	(starttime,txid,deltas,txlogs@(SCons txlog1 _)) <- Reader.ask
-	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,tmps1) <- forestIO $ readRef txlog1
+	(starttime,txid,deltas,txlogs@(SCons txlog1 txlogs_parent)) <- Reader.ask
+	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- forestIO $ readRef txlog1
 	bufftbl1' <- forestIO $ WeakTable.new
 	memotbl1' <- forestIO $ WeakTable.new
 	-- reset deltas
 	forestIO $ writeRef deltas Map.empty
 	-- current tree
 	tree1' <- forestIO $ liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False
-	-- next tree
-	newtreeDelta1' <- forestIO $ newIORef $ emptyFSTreeDelta
-	newtreeSym1' <- forestIO $ newIORef $ (DList.empty,Map.empty)
-	newtree1' <- forestIO $ liftM FSTreeTxNILFS $ newIORef $ TxTree txid 1 newtreeDelta1' False newtreeSym1'
-	forestIO $ writeRef txlog1 (tree1',DList.empty,newtree1',reads1,bufftbl1',memotbl1',tmps1)
+	cantree1' <- parentCanonicalTree txlogs_parent
+	forestIO $ writeRef txlog1 (tree1',DList.empty,tree1',reads1,bufftbl1',memotbl1',cantree1',tmps1)
 
 -- on success, returns True=read-only or False=read-write
 validateTxsNILFS :: UTCTime -> TxNILFSLogs -> ForestM TxNILFS (Either Bool ())
@@ -1343,7 +1341,7 @@ checkTxsNILFSBefore env@(SCons txlog txlogs) = do
 -- checks if the current txlog is consistent with a sequence of concurrent post-modifications
 checkTxNILFSBefore :: TxNILFSLog -> ForestM TxNILFS Bool
 checkTxNILFSBefore txlog = do
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	writes <- forestIO (readIORef =<< fsTreeFSTreeDelta tree)
 	return $ writes == emptyFSTreeDelta -- tx has no writes
 
@@ -1358,7 +1356,7 @@ checkTxsNILFSAfter env@(SCons txlog txlogs) finished = do
 checkTxNILFSAfter :: TxNILFSLog -> [(UTCTime,TxNILFSWrites)] -> ForestM TxNILFS Bool
 checkTxNILFSAfter txlog txchgs = do
 	let txwrites = mconcat $ List.map snd txchgs
-	(tree,ds,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	return $ (reads `Set.intersection` txwrites) == Set.empty -- no write-read conflicts
 
 -- finish a read-only transaction without commmitting modifications
@@ -1397,19 +1395,19 @@ commitNestedTxNILFS doWrites deltas txlog_child txlog_parent = if doWrites
 -- merges a nested txlog with its parent txlog
 mergeTxNILFSLog :: TxNILFSLog -> TxNILFSLog -> ForestM TxNILFS ()
 mergeTxNILFSLog txlog1 txlog2 = forestIO $ do
-	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,tmps1) <- readIORef txlog1
-	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,tmps2) <- readIORef txlog2
+	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- readIORef txlog1
+	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,cantree2,tmps2) <- readIORef txlog2
 	
 	WeakTable.mapM_ (\(uid,entry) -> WeakTable.insertWithMkWeak bufftbl2 (dynTxMkWeak entry) uid entry) bufftbl1
-	WeakTable.mapM_ (\(uid,entry) -> WeakTable.insertWithMkWeak memotbl2 (snd entry) uid entry) memotbl1
+	WeakTable.mapM_ (\(uid,entry@(_,mkWeak,_)) -> WeakTable.insertWithMkWeak memotbl2 mkWeak uid entry) memotbl1
 	
-	writeIORef txlog2 (tree1,delta1,newtree1,reads1 `Set.union` reads2,bufftbl2,memotbl2,tmps1 `Set.union` tmps2)
+	writeIORef txlog2 (tree1,delta1,newtree1,reads1 `Set.union` reads2,bufftbl2,memotbl2,cantree1,tmps1 `Set.union` tmps2)
 	
 -- does not commit writes, just merges reads
 extendTxNILFSLog :: TxNILFSTreeDeltas -> TxNILFSLog -> TxNILFSLog -> ForestM TxNILFS ()
 extendTxNILFSLog deltas txlog1 txlog2 = forestIO $ do
-	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,tmps1) <- readIORef txlog1
-	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,tmps2) <- readIORef txlog2
+	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- readIORef txlog1
+	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,cantree2,tmps2) <- readIORef txlog2
 	
 	-- forget newly created nested versions
 	version2 <- fsTreeFSVersion tree2
@@ -1417,16 +1415,7 @@ extendTxNILFSLog deltas txlog1 txlog2 = forestIO $ do
 	-- reset the next tree
 	fsTreeFSTreeDelta newtree2 >>= \d -> writeIORef d emptyFSTreeDelta
 	
-	writeIORef txlog2 (tree2,delta2,newtree2,reads1 `Set.union` reads2,bufftbl2,memotbl2,tmps1 `Set.union` tmps2)
-
--- locks on which retrying transactions will wait
-type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
-
--- a register of locks for retrying transactions
--- these paths should be canonical
-{-# NOINLINE waitingTxsNILFS #-}
-waitingTxsNILFS :: MVar (Map FilePath WaitQueue)
-waitingTxsNILFS = unsafePerformIO $ newMVar Map.empty
+	writeIORef txlog2 (tree2,delta2,newtree2,reads1 `Set.union` reads2,bufftbl2,memotbl2,cantree2,tmps1 `Set.union` tmps2)
 
 -- wakes up the locks waiting on a given set of paths
 wakeUpWaitsTxNILFS :: Set FilePath -> ForestM TxNILFS ()
@@ -1452,7 +1441,7 @@ tryReleaseTxNILFS lck = do
 commitTxNILFSLog :: UTCTime -> Bool -> TxNILFSLog -> ForestM TxNILFS TxNILFSWrites
 commitTxNILFSLog starttime doWrites txlog = do
 	-- no pending changes (deltas == DList.empty)
-	(tree,deltas,newtree,reads,bufftbl,memotbl,tmps) <- forestIO $ readIORef txlog
+	(tree,deltas,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	
 	wakes <- if doWrites
 		then do
@@ -1461,6 +1450,9 @@ commitTxNILFSLog starttime doWrites txlog = do
 			forestIO $ commitTxNILFSBuffTable bufftbl
 			-- commit the buffered memo table
 			forestIO $ commitTxNILFSMemoTable memotbl
+			-- commit the memoized canonical paths (don't merge but overwrite)
+			forestIO $ swapMVar canonicalTxNILFS cantree
+			
 			-- get writes since the beginning of the tx
 			writes <- forestIO (readIORef =<< fsTreeFSTreeDelta tree)
 			-- commits filesystem modifications over the latest NILFS snapshot
@@ -1489,6 +1481,7 @@ releaseFLock mv = do
 	b <- STM.tryPutTMVar mv ()
 	when (not b) $ error "Control.Concurrent.Lock.release: Can't release unlocked Lock!"
 
+{-# NOINLINE fileLocks #-}
 fileLocks :: CWeakMap.WeakMap FilePath FLock
 fileLocks = unsafePerformIO $ CWeakMap.empty
 
@@ -1523,24 +1516,19 @@ withFileLocks reads writes m = do
 {-# NOINLINE nilfsData #-}
 nilfsData :: NILFSData
 nilfsData = unsafePerformIO $ do
-	rootPath <- readIORef root
+	rootPath <- readMVar root
 	findRootDevice rootPath
 
 {-# NOINLINE liveSnapshots #-}
 liveSnapshots :: LiveSnapshots
 liveSnapshots = unsafePerformIO $ CWeakMap.empty
 
--- the root directory for transactional forest (it can't modify data not under this path)
-{-# NOINLINE root #-}
-root :: IORef FilePath
-root = unsafePerformIO $ newIORef "/"
-
 -- a global table of symbolic links that all transactions read from and keep updated
 -- this is used to explore the locality in FS modifications; without knowing the existing symlinks, there is no locality
 {-# NOINLINE symlinks #-}
 symlinks :: MVar FSTreeSym
 symlinks = unsafePerformIO $ do
-	path <- readIORef root
+	path <- readMVar root
 	putStrLn $ "Finding all symbolic links under... " ++ show path
 	syms <- findSymLinks path
 	putStrLn $ "Symbolic links calculated for " ++ show path

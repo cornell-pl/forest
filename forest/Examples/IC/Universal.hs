@@ -27,7 +27,7 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 
 [iforest|
 	
-	type Universal_d = Directory 
+	type Universal_d = Directory
              { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
              , binary_files is [ b :: BinaryFile   | b <- matches (GL "*"), (kind  b_att == BinaryK) ]
              , directories  is [ d :: Universal_d  | d <- matches (GL "*"), (kind  d_att == DirectoryK) ]

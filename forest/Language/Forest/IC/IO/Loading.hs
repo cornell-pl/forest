@@ -43,8 +43,6 @@ import Language.Forest.IC.ICRep
 --import Control.Monad.IO.Class
 import Data.WithClass.MData
 
-import Language.Forest.IC.IO.Memo
-
 import qualified Control.Exception as CE
 
 import Data.Data
@@ -60,7 +58,7 @@ doLoadArgs mode proxy args load = do
 
 -- | lazy file loading
 -- Pads errors contribute to the Forest error count
-doLoadFile :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (pads, md),IncK
+doLoadFile :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (pads, md),IncK
                         (IncForest fs)
                         (Forest_md fs, FSThunk fs Inside (IncForest fs) IORef IO md),ForestDefault fs Inside pads,ForestDefault fs Inside (Forest_md fs,ForestFSThunkI fs md),ICMemo fs,ForestInput fs FSThunk Inside,ICRep fs,Pads pads md,IncK (IncForest fs) pads,IncK (IncForest fs) md) =>
 	Proxy pads -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs pads,ForestFSThunkI fs (Forest_md fs,ForestFSThunkI fs md))
@@ -214,15 +212,16 @@ doLoadArchive' exts oldpath_f path  tree getMD load = checkPath' (Just False) pa
 	fmd' <- updateForestMDErrorsInsideWith fmd $ liftM (:[]) $ get_errors md_arch -- like a directory
 	return (rep,(fmd',md_arch))
 		
-doLoadSymLink :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) FilePath,
+doLoadSymLink :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) FilePath,
 	                      IncK (IncForest fs) (Forest_md fs, Base_md),
 	                      IncK (IncForest fs) (FilePath, (Forest_md fs, Base_md)),ForestDefault fs Inside (FilePath,(Forest_md fs,Base_md)),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs FilePath,ForestFSThunkI fs (Forest_md fs, Base_md))
 doLoadSymLink path tree getMD = mkThunks tree $ doLoadSymLink' path tree getMD
 
-doLoadSymLink' :: (IncK (IncForest fs) Forest_err,ForestDefault fs Inside (FilePath,(Forest_md fs,Base_md)),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (FilePath,(Forest_md fs,Base_md))
+doLoadSymLink' :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,ForestDefault fs Inside (FilePath,(Forest_md fs,Base_md)),ForestInput fs FSThunk Inside,ICRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (FilePath,(Forest_md fs,Base_md))
 doLoadSymLink' path tree getMD = checkPath' Nothing path tree $ do
 	md <- getMD path tree
-	case symLink (fileInfo md) of
+	info <- get_info md
+	case symLink info of
 		Just sym -> return (sym,(md,cleanBasePD))
 		Nothing -> do
 			md' <- updateForestMDErrorsInsideWith md $ return [Pure.ioExceptionForestErr]
@@ -258,12 +257,12 @@ doLoadNewPath pathfilter oldpath file tree getMD load = debug ("doLoadNewPath " 
 	newpath <- forestM $ stepPathInTree tree oldpath file -- changes the old path by a relative path, check the path traversal restrictions specific to each FS instantiation
 	load newpath getMD
 
-doLoadDirectory :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, md),IncK (IncForest fs) (rep, md),IncK (IncForest fs) rep,IncK (IncForest fs) md,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md),ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) rep,ICRep fs,MData NoCtx (ForestI fs) md)
+doLoadDirectory :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, md),IncK (IncForest fs) (rep, md),IncK (IncForest fs) rep,IncK (IncForest fs) md,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md),ForestInput fs FSThunk Inside,MData NoCtx (ForestI fs) rep,ICRep fs,MData NoCtx (ForestI fs) md)
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestFSThunkI fs rep,ForestFSThunkI fs (Forest_md fs,md))
 doLoadDirectory path tree collectMDErrors getMD load = mkThunksM tree $ doLoadDirectory' path tree collectMDErrors getMD load
 
 -- the error count of the directory is computed lazily, so that if we only want, e.g., the fileinfo of the directory we don't need to check its contents
-doLoadDirectory' :: (IncK (IncForest fs) Forest_err,IncK (IncForest fs) (rep, md),IncK (IncForest fs) rep,IncK (IncForest fs) md,ICRep fs,ForestInput fs FSThunk Inside,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md))
+doLoadDirectory' :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (rep, md),IncK (IncForest fs) rep,IncK (IncForest fs) md,ICRep fs,ForestInput fs FSThunk Inside,ForestDefault fs Inside rep,ForestDefault fs Inside (Forest_md fs,md))
 	=> FilePath -> FSTree fs -> (md -> ForestI fs Forest_err) -> GetForestMD fs -> ForestI fs (rep,md) -> ForestI fs (ForestI fs rep,ForestI fs (Forest_md fs,md))
 doLoadDirectory' path tree collectMDErrors getMD ifGood = debug ("doLoadDirectory: "++show path) $ do
 	ifGoodThunk <- hsThunk ifGood
@@ -326,7 +325,7 @@ doLoadCompound mode pathfilter path matchingM tree buildContainerRep buildContai
 	metadatas <- mapM (getRelForestMDInTree path tree) files
 	let filesmetas = zip files metadatas
 	let loadEach (n,n_md) = liftM (n,) $ doLoadFocus pathfilter path n tree (const2 $ return n_md) $ \newpath newGetMD -> do
-		fileInfo_thunk <- ref $ fileInfo n_md
+		let fileInfo_thunk = fileInfo n_md
 		(rep',md') <- load n fileInfo_thunk newpath newGetMD
 		return (rep',mkMDArgs mode md' $ fileInfo_thunk)
 	loadlist <- mapM loadEach filesmetas
@@ -348,7 +347,7 @@ doLoadCompoundWithConstraint mode pathfilter path matchingM tree pred buildConta
 	metadatas <- mapM (getRelForestMDInTree path tree) files
 	let filesmetas = zip files metadatas
 	let makeInfo (n,fmd) = do
-		t <- ref $ fileInfo fmd -- we store the @FileInfo@ in a @FSThunk@ to allow incremental evaluation of the constraint expression
+		let t = fileInfo fmd -- we store the @FileInfo@ in a @FSThunk@ to allow incremental evaluation of the constraint expression
 		u <- icThunk $ pred n t --the filename is a constant. during delta loading, whenever it changes we will load from scratch
 		return (n,(fmd,(t,u)))
 	filesmetasInfo <- mapM makeInfo filesmetas
