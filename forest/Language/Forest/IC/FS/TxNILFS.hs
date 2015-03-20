@@ -339,7 +339,7 @@ instance FSRep TxNILFS where
 	-- a modifiable reference to allow changing the FSTree on commits
 	newtype FSTree TxNILFS = FSTreeTxNILFS { unFSTreeTxNILFS :: IORef FSTreeTxNILFS' }
 	
-	showFSTree (FSTreeTxNILFS tree) = forestM $ liftM show $ readIORef tree
+	showFSTree (FSTreeTxNILFS tree) = forestIO $ liftM show $ readIORef tree
 	
 	compareFSTree (FSTreeTxNILFS r1) (FSTreeTxNILFS r2) = do
 		t1 <- forestIO $ readIORef r1
@@ -478,6 +478,10 @@ instance Ord FSTreeTxNILFS' where
 	(NILFSTree snap1 vir1 _) <= (NILFSTree snap2 vir2 _) = (snap1,vir1) <= (snap2,vir2)
 	(NILFSTree snap1 vir1 _) <= (TxTree snap2 v2 _ vir2 _) = (snap1,0,vir1) <= (snap2,v2,vir2)
 	(TxTree snap1 v1 _ vir1 _) <= (NILFSTree snap2 vir2 _) = (snap1,v1,vir1) <= (snap2,0,vir2)
+
+instance Show FSTreeTxNILFS' where
+	show (TxTree snap1 v1 _ vir1 _) = "(TxTree " ++ show snap1 ++" "++ show v1 ++" "++ show vir1 ++ ")"
+	show (NILFSTree snap1 vir1 _) = "(NILFSTree " ++ show snap1 ++" "++ show vir1 ++ ")"
 
 fsTreeSnapshot :: FSTree TxNILFS -> IO Snapshot
 fsTreeSnapshot (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
