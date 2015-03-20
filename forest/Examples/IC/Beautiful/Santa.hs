@@ -81,6 +81,12 @@ reindeerOutGate = reindeerGroupId </> "GateOut"
 
 reindeerGroup = GroupStore (reindeerGroupId,reindeerInGate,reindeerOutGate)
 
+elfGroupId = santaDir </> "GroupElf"
+elfInGate = elfGroupId </> "GateIn"
+elfOutGate = elfGroupId </> "GateOut"
+
+elfGroup = GroupStore (elfGroupId,elfInGate,elfOutGate)
+
 joinGroup :: GroupStore -> String -> IO (Maybe (GateID,GateID))
 joinGroup store name = do
   let GroupStore (grId,gIn,gOut) = store

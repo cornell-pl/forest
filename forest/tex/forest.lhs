@@ -546,27 +546,27 @@ We split our presentation into three possible designs, with increasing levels of
 \subsection{Transactional Forest}
 
 \paragraph{Original STM interface}
-We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a private log of reads and writes (including the tentatively-written data) to \emph{shared resources}, and reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed before its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
-These validate-and-commit operations are guaranteed to run |atomic|ally in respect to all other threads by relying on per-shared-resource locks (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
+We have implemented TxForest as a domain-specific variant of \texttt{STM} Haskell~\cite{HaskellSTM}, and inherit the same transactional mechanism based on \emph{optimistic concurrency control}: each transaction runs in a (possibly) different thread and keeps a private log of reads and writes (including the tentatively-written data) to \emph{shared resources}. Reads within a transaction first consult its log so that they see preceding writes. Once finished, each transaction validates its log against previous transactions that committed after its starting time and, only if no write-read conflicts are detected, commits its writes permanently; otherwise, it is re-executed.
+These validate-and-commit operations are guaranteed to run |atomic|ally with respect to all other threads by relying on per-shared-resource locks (no locks are used during the transaction's execution): the transaction waits on the sorted sequence of read resources to be free (to ensure that it sees the commits of concurrently writing transactions) and acquires the sorted sequence of written resources.
 They are \emph{disjoint-access parallel} (meaning that transactions with non-overlapping writes run in parallel) and \emph{read parallel} (meaning that transactions that only read from the same resources run in parallel).
 These wait-and-acquire sequences are repeatedly attempted atomically, without interruption from the Haskell scheduler, and implemented over GHC's lightweight concurrency substrate~\cite{HaskellLWC}.
 
-Blocking transactions (|retry|) validate their log and register themselves in wait-queues attached to each read resource; updating transactions unblock any pending waiters.
-Nested transactions (|orElse|) work similarly to normal transactions: writes are recorded only to a nested log and reads consult the logs of nested and all enclosing transactions. Validating a nested transaction also implies validating all enclosing transactions.
-If the first alternative retries, then the second alternative is attempted; if both retry, then both logs are validated and the thread will wait on the union of the read resources.
+Blocking transactions (|retry|) validate their log and register themselves in wait-queues attached to each read resource while updating transactions unblock any pending waiters.
+Nested transactions (|orElse|) work similarly to normal transactions except that writes are recorded only to a nested log and reads consult both the nested logs and those of all enclosing transactions. Validating a nested transaction also entails validating all enclosing transactions.
+If the first alternative retries, then the second alternative is attempted; if both retry, then both logs are validated (along with the enclosing transaction) and the thread will wait on the union of the read resources.
 Exceptional transactions (|throw|) must also validate the log before raising an exception to the outside world; on success, they rollback all modifications except for newly-created transactional variables; on failure, they retry.
 A more detailed account, including a complete formal semantics, is given in~\cite{HaskellSTM}.
 
 \paragraph{Transaction logs}
-The main difference from \texttt{STM} Haskell to TxForest is that the shared resources are not mutable memory cells in the traditional sense, but paths in the filesystem.
-\footnote{STM maintains a log with the old value held in a memory cell and the new value written to it by the transaction, and validation test if they are pointer-equal. We do not remember old content of file paths, nor test for equality.}
+The main difference from \texttt{STM} Haskell to TxForest is that the shared resources are not mutable memory cells in the traditional sense, but paths in a filesystem.
+\footnote{STM maintains a log with the old value held in a memory cell and the new value written to it by the transaction, and validation tests if they are pointer-equal. We do not remember the old content of file paths, nor test for equality.}
 This is to say that, although users manipulate structured filestores, all the in-memory data structures are local to each transaction, and only filesystem operations need to be logged for commit.
 
-The concurrent handling of file paths, however, is subtle in the presence of symbolic links --the identity of a path is not unique (as different paths may refer to the same real path) nor stable (since the real path depends on the current symbolic link configuration)-- making it harder to identify conflicts between transactions and to properly lock resources. For example, one transaction may read a file whose path is concurrently modified by other transaction.
+The concurrent handling of file paths, however, is subtle in the presence of symbolic links --the identity of a path is not unique (as different paths may refer to the same real path) nor stable (since the real path depends on the current symbolic link configuration)-- making it harder to identify conflicts between transactions and to properly lock resources. For example, one transaction may read a file whose path is concurrently modified by another transaction.
 Therefore, our transaction logs keep special track of symbolic link modifications and we perform all file operations over ``canonical'' file paths, calculated against the transaction log while marking each resolved link as read.
 
 \paragraph{Round-tripping functions}
-In TxForest, each transactional variable is an in-memory data structure that reflects the content of a particular filestore, declared from the respective Forest description type with given arguments and root path.
+In TxForest, each transactional variable is an in-memory data structure that reflects the content of a particular filestore, derived from a Forest description type with some given arguments and a root path.
 Behind the scenes, the transactional engine is responsible for preserving the abstraction, and keeping each variable ``in sync'' with the latest transactional snapshot of the filesystem, such that changes on the filesystem are propagated to the affected in-memory filestore variables, and writes to variables move the filesystem snapshot forward.
 
 This task is performed by a coupled pair of |loadSym| and |storeSym| functions. Their precise definitions and formal semantics is given in Appendix~\ref{sec:semantics}.
@@ -581,12 +581,12 @@ These two functions are carefully designed so that they preserve data on round t
 \paragraph{Transactional variables}
 In TxForest, each transaction keeps a local filesystem snapshot with a unique thread-local version number and a log of tentative updates over the real filesystem.
 
-When users create a |new| transactional variable, the |loadSym| function is called to create the corresponding thunk with a suspendend computation that always loads data from the latest version of the filesystem. Note that, due to laziness, no data is actually loaded.
+When users create a |new| transactional variable, the |loadSym| function is called to create the corresponding thunk with a suspended computation that always loads data from the latest version of the filesystem. Note that, due to laziness, no data is actually loaded.
 These thunks, acting as transactional variables, can be concurrently accessed by multiple transactions.
 Each transacation keeps a memoization table mapping variables to the latest read values at a particular filesystem version.
 We implement them as weak hash tables, allowing the Haskell garbage collector to purge older entries.
 
-When a transaction |read|s a transactional variable it first checks the memoization table for a value for the current filesystem, otherwise the associated level of data is loaded from the current filesystem snapshot, and adds a new memo entry with the read value at the current version. 
+When a transaction |read|s a transactional variable it first checks the memoization table for a value for the current filesystem, otherwise the associated level of data is loaded from the current filesystem snapshot, and adds a new table entry with the read value at the current version. 
 
 A call to |writeOrElse| starts by making a copy of the current filesystem snapshot and adding an entry to the memoization table of the respective variable mapping the next filesystem version to the newly written value.
 It then invokes the |storeSym| function (remembering the creation-time arguments and root path) to update the filesystem log under the new version and runs the resulting validator; on inconsistencies, the transaction rolls back to the backed up filesystem snapshot and executes the user-supplied alternative action instead.
