@@ -68,7 +68,7 @@ deriving instance Typeable TxNILFS
 deriving instance Typeable ForestM
 
 -- | Class that implements filesystem-specific operations
-class (Typeable fs,MonadLazy (ForestM fs),Show (FSTree fs)) => FSRep (fs :: FS) where
+class (Typeable fs,MonadLazy (ForestM fs)) => FSRep (fs :: FS) where
 	
 	-- | The forest monad
 	data ForestM fs a :: *
@@ -91,6 +91,7 @@ class (Typeable fs,MonadLazy (ForestM fs),Show (FSTree fs)) => FSRep (fs :: FS) 
 	-- A snapshot of a filesystem, possibly at a given moment in time if the FS support versioning
 	data FSTree fs :: *
 	
+	showFSTree :: FSTree fs -> ForestM fs String
 	compareFSTree :: FSTree fs -> FSTree fs -> ForestM fs Ordering
 	maxFSTree :: FSTree fs -> FSTree fs -> ForestM fs (FSTree fs)
 	maxFSTree t1 t2 = do

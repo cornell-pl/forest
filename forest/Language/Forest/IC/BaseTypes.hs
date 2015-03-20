@@ -54,11 +54,12 @@ import Data.Typeable
 import Data.IORef
 import Control.Monad.Incremental
 
+-- creates top-level variables
 [iforest|
-  type TextFile   = File Text
-  type BinaryFile = File Binary
-  type AnyFile    = File Binary
-  type Link       = SymLink
+  data TextFile   = File Text
+  data BinaryFile = File Binary
+  data AnyFile    = File Binary
+  data Link       = SymLink
 |]
 
 

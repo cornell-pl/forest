@@ -41,6 +41,10 @@ import Language.Forest.IC.MetaData
 import Language.Forest.IC.Default
 import Data.WithClass.MData
 
+doZDefaultNamed :: ZippedICForest fs args rep =>
+	Proxy args -> ForestIs fs args -> FilePath -> ForestI fs (ForestFSThunkI fs rep)
+doZDefaultNamed proxy args path = fsThunk $ zdefaultScratchGeneric proxy args path
+
 doZDefaultFile1 :: (IncK (IncForest fs) Pure.FileInfo,FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
 	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Pads1 arg pads md,Typeable arg,ZippedICMemo fs) => ForestI fs arg -> FilePath -> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZDefaultFile1 (marg :: ForestI fs arg) path = do

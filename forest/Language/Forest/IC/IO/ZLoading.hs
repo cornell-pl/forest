@@ -55,6 +55,10 @@ import Data.Maybe
 import System.Random
 import Data.Proxy
 
+doZLoadNamed :: ZippedICForest fs args rep =>
+	Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (ForestFSThunkI fs rep)
+doZLoadNamed proxy args pathfilter path tree getMD = fsThunk $ zloadScratchGeneric proxy args pathfilter path tree getMD
+
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- Pads errors contribute to the Forest error count

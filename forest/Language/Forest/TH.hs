@@ -125,7 +125,7 @@ forestTyVars (FMaybe ty) = forestTyVars ty
 forestTyVars FSymLink = Set.empty
 forestTyVars (FConstraint (VarP name) ty exp) = constraintVars name ty exp
 forestTyVars (Fapp ty exps) = Set.unions (map expVars exps) `Set.union` forestTyVars ty
---forestTyVars (FComp c) = fieldVars
+forestTyVars (FComp c) = fst $ fieldVars (Comp c)
 
 padsTyVars :: PadsTy -> Set Name
 padsTyVars = everything (Set.union) (mkQ Set.empty expVars)

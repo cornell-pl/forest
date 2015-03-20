@@ -55,8 +55,8 @@ import qualified Data.Map as Map
 import Control.Monad.State (State(..),StateT(..))
 import qualified Control.Monad.State as State
 
-genZLoadM :: Name -> ForestTy -> [(TH.Pat,TH.Type)] -> ZEnvQ Exp
-genZLoadM rep_name forestTy pat_infos = do
+genZLoadM :: Bool -> Name -> ForestTy -> [(TH.Pat,TH.Type)] -> ZEnvQ Exp
+genZLoadM isTop rep_name forestTy pat_infos = do
 	fsName <- lift $ newName "fs"
 	pathName    <- lift $ newName "path"
 	filterPathName    <- lift $ newName "filterPath"
@@ -75,7 +75,7 @@ genZLoadM rep_name forestTy pat_infos = do
 	
 	case pat_infos of
 		[] -> do
-			core_bodyE <- genZLoadBody filterPathE pathE treeE getMDE rep_name forestTy
+			core_bodyE <- genZLoadBody isTop filterPathE pathE treeE getMDE rep_name forestTy
 			return $ LamE [VarP argsName,TupP [],filterPathP,pathP,treeP,getMDP] core_bodyE
 		otherwise -> do
 			(argsP,stmts,argsThunksE,argThunkNames) <- genZLoadArgsE (zip [1..] pat_infos) treeE forestTy
@@ -83,7 +83,7 @@ genZLoadM rep_name forestTy pat_infos = do
 				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
 			Reader.local update $ do -- adds pattern variable deltas to the env.
 				(fs,_) <- Reader.ask
-				core_bodyE <- genZLoadBody filterPathE pathE treeE getMDE rep_name forestTy
+				core_bodyE <- genZLoadBody isTop filterPathE pathE treeE getMDE rep_name forestTy
 				return $ LamE [VarP argsName,argsP,filterPathP,pathP,treeP,getMDP] $ --DoE $ stmts ++ [NoBindS core_bodyE]
 					DoE $ stmts ++ [NoBindS core_bodyE]
 
@@ -92,12 +92,12 @@ genZLoadM rep_name forestTy pat_infos = do
   do (rep,md) <- rhsE
      return (Rep rep, md)
 -}
-genZLoadBody :: Exp -> Exp -> Exp -> Exp -> Name -> ForestTy -> ZEnvQ Exp
-genZLoadBody filterPathE pathE treeE getMDE repN ty = case ty of 
-	Directory _ -> zloadE True ty filterPathE pathE treeE getMDE
-	FConstraint _ (Directory _) _ -> zloadE True ty filterPathE pathE treeE getMDE
+genZLoadBody :: Bool -> Exp -> Exp -> Exp -> Exp -> Name -> ForestTy -> ZEnvQ Exp
+genZLoadBody isTop filterPathE pathE treeE getMDE repN ty = case ty of 
+	Directory _ -> zloadE isTop ty filterPathE pathE treeE getMDE
+	FConstraint _ (Directory _) _ -> zloadE isTop ty filterPathE pathE treeE getMDE
 	otherwise   -> do -- Add type constructor
-		rhsE <- zloadE True ty filterPathE pathE treeE getMDE
+		rhsE <- zloadE isTop ty filterPathE pathE treeE getMDE
 		return $ Pure.appE2 (VarE 'liftM) (ConE repN) rhsE 
 
 -- adds top-level arguments to the metadata
@@ -120,8 +120,8 @@ genZLoadArgE (i,(pat,pat_ty)) treeE forestTy = do
 
 zloadE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zloadE isTop ty filterPathE pathE treeE getMDE = case ty of
-	Named ty_name               -> zloadWithArgsE ty_name [] filterPathE pathE treeE getMDE
-	Fapp (Named ty_name) argEs  -> zloadWithArgsE ty_name argEs filterPathE pathE treeE getMDE
+	Named ty_name               -> zloadWithArgsE isTop ty_name [] filterPathE pathE treeE getMDE
+	Fapp (Named ty_name) argEs  -> zloadWithArgsE isTop ty_name argEs filterPathE pathE treeE getMDE
 	FFile (file_name, argEOpt) -> zloadFile isTop file_name argEOpt filterPathE pathE treeE getMDE
 	Archive archtype ty         -> zloadArchive isTop archtype ty filterPathE pathE treeE getMDE
 	FSymLink         -> zloadSymLink isTop pathE treeE getMDE
@@ -143,16 +143,18 @@ zloadFile isTop fileName (Just argE) pathFilterE pathE treeE getMDE = do
 		else return $ Pure.appE6 (VarE 'doZLoadFileInner1) proxy argE pathFilterE pathE treeE getMDE
 
 -- these are terminals in the spec
-zloadWithArgsE :: String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zloadWithArgsE ty_name [] filterPathE pathE treeE getMDE = do
+zloadWithArgsE :: Bool -> String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
+zloadWithArgsE isTop ty_name [] filterPathE pathE treeE getMDE = do
 	let proxyE = AppE (VarE 'proxyOf) $ TupE []
 	(fs,_) <- Reader.ask
-	return $ Pure.appE6 (VarE 'zloadScratchMemo) proxyE (TupE []) filterPathE pathE treeE getMDE
-zloadWithArgsE ty_name argEs filterPathE pathE treeE getMDE = do
+	let load = if isTop then VarE 'doZLoadNamed else VarE 'zloadScratchGeneric
+	return $ Pure.appE6 load proxyE (TupE []) filterPathE pathE treeE getMDE
+zloadWithArgsE isTop ty_name argEs filterPathE pathE treeE getMDE = do
 	(fs,_) <- Reader.ask
 	argsE <- mapM (\e -> forceVarsZEnvQ e return) argEs
 	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
-	return $ Pure.appE6 (VarE 'zloadScratchMemo) (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE filterPathE pathE treeE getMDE
+	let load = if isTop then VarE 'doZLoadNamed else VarE 'zloadScratchGeneric
+	return $ Pure.appE6 load (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE filterPathE pathE treeE getMDE
 
 zloadConstraint :: Bool -> Exp -> TH.Pat -> Exp -> ZEnvQ Exp -> ZEnvQ Exp
 zloadConstraint isTop treeE pat predE load = forceVarsZEnvQ predE $ \predE' -> do

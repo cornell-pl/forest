@@ -36,10 +36,10 @@ import Language.Forest.Pure.MetaData (cleanFileInfo)
 |]
 
 [iforest|
-	type Account_d = Directory {
+	data Account_d = Directory {
 		accs is [ f :: AccountFile | f <- matches (GL "*") ]
 	} 
-	type AccountFile = File Account
+	data AccountFile = File Account
 |]
 
 -- Change this to the forest directory to make the example work for you!

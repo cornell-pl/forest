@@ -61,50 +61,71 @@ import Examples.IC.Papers2
 
 
 papersDefaultRoot = "/Users/hpacheco/Documents/Papers2"
-papersNILFSRoot = "/media/hpacheco/nilfs/Papers2"
+papersNILFSRoot = "/media/hpacheco/nilfs/SmallPapers2"
 smallpapersNILFSRoot = "/media/hpacheco/nilfs/SmallPapers2"
 myDir = "/home/hpacheco/Forest"
 
 -- transactions
 
---articlesPaperNames :: Articles TxVarFS -> FTM TxVarFS [String]
---articlesPaperNames articles = do
+--articlesPaperNamesVar :: Articles TxVarFS -> FTM TxVarFS [String]
+--articlesPaperNamesVar articles = do
 --	years <- liftM (Map.elems) $ readData articles
---	liftM concat $ mapM yearPaperNames years
-	
-articlesPaperNamesIC :: Articles TxICFS -> FTM TxICFS [String]
-articlesPaperNamesIC articles = do
+--	liftM concat $ mapM yearPaperNamesVar years
+--	
+--articlesPaperNamesIC :: Articles TxICFS -> FTM TxICFS [String]
+--articlesPaperNamesIC articles = do
+--	years <- liftM (Map.elems) $ readData articles
+--	liftM concat $ mapM yearPaperNamesIC years
+
+articlesPaperNamesNILFS :: Articles TxNILFS -> FTM TxNILFS [String]
+articlesPaperNamesNILFS articles = do
 	years <- liftM (Map.elems) $ readData articles
-	liftM concat $ mapM yearPaperNamesIC years
+	liftM concat $ mapM yearPaperNamesNILFS years
 
---yearPaperNames :: Year TxVarFS -> FTM TxVarFS [String]
---yearPaperNames year = do
+--yearPaperNamesVar :: Year TxVarFS -> FTM TxVarFS [String]
+--yearPaperNamesVar year = do
 --	authors <- liftM (Map.elems . authors) $ readData year
---	liftM concat $ mapM authorPaperNames authors
+--	liftM concat $ mapM authorPaperNamesVar authors
+--
+--yearPaperNamesIC :: Year TxICFS -> FTM TxICFS [String]
+--yearPaperNamesIC year = do
+--	authors <- liftM (Map.elems . authors) $ readData year
+--	liftM concat $ mapM authorPaperNamesIC authors
 
-yearPaperNamesIC :: Year TxICFS -> FTM TxICFS [String]
-yearPaperNamesIC year = do
+yearPaperNamesNILFS :: Year TxNILFS -> FTM TxNILFS [String]
+yearPaperNamesNILFS year = do
 	authors <- liftM (Map.elems . authors) $ readData year
-	liftM concat $ mapM authorPaperNamesIC authors
+	liftM concat $ mapM authorPaperNamesNILFS authors
 
---authorPaperNames :: Author TxVarFS -> FTM TxVarFS [String]
---authorPaperNames author = liftM (Map.keys . authorPapers) (readData author)
+--authorPaperNamesVar :: Author TxVarFS -> FTM TxVarFS [String]
+--authorPaperNamesVar author = liftM (Map.keys . authorPapers) (readData author)
+--
+--authorPaperNamesIC :: Author TxICFS -> FTM TxICFS [String]
+--authorPaperNamesIC author = do
+--	liftM (Map.keys . authorPapers) (readData author)
 
-authorPaperNamesIC :: Author TxICFS -> FTM TxICFS [String]
-authorPaperNamesIC author = do
+authorPaperNamesNILFS :: Author TxNILFS -> FTM TxNILFS [String]
+authorPaperNamesNILFS author = do
 	liftM (Map.keys . authorPapers) (readData author)
 
---addArticle :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxVarFS ()
---addArticle year author name content = do
---	let path = papersDefaultRoot </> "Articles" </> show year </> show author </> name
+--addArticleVar :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxVarFS ()
+--addArticleVar year author name content = do
+--	let path = papersDefaultRoot </> "Articles" </> Pads.printRep year </> Pads.printRep author </> name
 --	paper :: Paper TxVarFS <- new (year :*: author) path
 --	let paper_md = (cleanFileInfo path,cleanBasePD)
 --	writeOrThrow paper (paper_md,content) E.Deadlock
+--
+--addArticleIC :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxICFS ()
+--addArticleIC year author name content = do
+--	let path = papersDefaultRoot </> "Articles" </> Pads.printRep year </> Pads.printRep author </> name
+--	paper :: Paper TxICFS <- new (year :*: author) path
+--	let paper_md = (cleanFileInfo path,cleanBasePD)
+--	writeOrThrow paper (paper_md,content) E.Deadlock
 
-addArticleIC :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxICFS ()
-addArticleIC year author name content = do
-	let path = papersDefaultRoot </> "Articles" </> Pads.printRep year </> Pads.printRep author </> name
-	paper :: Paper TxICFS <- new (year :*: author) path
+addArticleNILFS :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxNILFS ()
+addArticleNILFS year author name content = do
+	let path = papersNILFSRoot </> "Articles" </> Pads.printRep year </> Pads.printRep author </> name
+	paper :: Paper TxNILFS <- new (year :*: author) path
 	let paper_md = (cleanFileInfo path,cleanBasePD)
 	writeOrThrow paper (paper_md,content) E.Deadlock
 
@@ -112,31 +133,69 @@ addArticleIC year author name content = do
 --mainVar = timeIt $ do
 --	names <- atomically $ do
 --		papers2 :: Papers2 TxVarFS <- new () papersDefaultRoot
---		Just articles <- liftM articles $ readData papers2
---		names <- articlesPaperNames articles
+--		Just articles2 <- liftM articles $ readData papers2
+--		names <- articlesPaperNamesVar articles2
 ----		forestDrawToPDF "" proxyTxVarFS papers2 "/Users/hpacheco/Desktop/graph.pdf"
---		return names
+--
+--		addArticleVar (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
+--	
+--		Just articles2 <- liftM articles $ readData papers2
+--		names2 <- articlesPaperNamesVar articles2
+--
+--		return (names,names2)
+--
+----		return names
 --	print names
-
-mainIC :: IO ()
-mainIC = timeIt $ do
-	names <- atomicallyTxICFS papersDefaultRoot $ do
-		papers2 :: Papers2 TxICFS <- new () papersDefaultRoot
-		Just articles2 <- liftM articles $ readData papers2
-		names <- articlesPaperNamesIC articles2
---		forestDrawToPDF "" proxyTxVarFS papers2 "/Users/hpacheco/Desktop/graph.pdf"
-
+--
+--mainIC :: IO ()
+--mainIC = timeIt $ do
+--	names <- atomicallyTxICFS papersDefaultRoot $ do
+--		papers2 :: Papers2 TxICFS <- new () papersDefaultRoot
+--		Just articles2 <- liftM articles $ readData papers2
+--		names <- articlesPaperNamesIC articles2
+----		forestDrawToPDF "" proxyTxVarFS papers2 "/Users/hpacheco/Desktop/graph.pdf"
+--		
 --		addArticleIC (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
-  	
+--	
 --		Just articles2 <- liftM articles $ readData papers2
 --		names2 <- articlesPaperNamesIC articles2
-
+--
 --		return (names,names2)
+--
+----		return names
+--		
+--	print names
 
-		return names
-		
+--mainIC2 :: IO ()
+--mainIC2 = timeIt $ do
+--	names <- atomicallyTxICFS papersDefaultRoot $ do
+--		papers2 :: Papers2 TxICFS <- new () papersDefaultRoot
+--		Just articles2 <- liftM articles $ readData papers2
+--		articlesPaperNamesIC articles2
+--	print names
+--	
+--	names2 <- atomicallyTxICFS papersDefaultRoot $ do
+--		addArticleIC (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
+--		papers2 :: Papers2 TxICFS <- new () papersDefaultRoot
+--		Just articles2 <- liftM articles $ readData papers2
+--		articlesPaperNamesIC articles2
+--	print names2
+
+mainNILFS2 :: IO ()
+mainNILFS2 = timeIt $ do
+	names <- atomicallyTxNILFS papersNILFSRoot $ do
+		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
+		Just articles2 <- liftM articles $ readData papers2
+		articlesPaperNamesNILFS articles2
 	print names
+	
+	names2 <- atomicallyTxNILFS papersNILFSRoot $ do
+		addArticleNILFS (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
+		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
+		Just articles2 <- liftM articles $ readData papers2
+		articlesPaperNamesNILFS articles2
+	print names2
 
-main = mainIC
+main = mainNILFS2
 
 

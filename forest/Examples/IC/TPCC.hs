@@ -175,59 +175,59 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 |]
 
 [iforest|
-	type Company = Directory {
+	data Company = Directory {
 		  warehouses :: Warehouses
 		, items :: Items
 		, history :: History
 	} where <| liftM and $ sequence [consistentWarehouseHistory this,consistentDistrictHistory this,consistentBalance this] |>
 	
-	type Warehouses = Map [ w :: Warehouse | w :: Id <- matches (GL "*") ]
-	type Items = Map [ i :: Item | i :: Id <- matches (GL "*") ]
+	data Warehouses = Map [ w :: Warehouse | w :: Id <- matches (GL "*") ]
+	data Items = Map [ i :: Item | i :: Id <- matches (GL "*") ]
 	
-	type History = [ h :: HistoryEntry | h <- matches (GL "*") ]
-	type HistoryEntry = File HistoryEntryInfo
+	data History = [ h :: HistoryEntry | h <- matches (GL "*") ]
+	data HistoryEntry = File HistoryEntryInfo
 
-	type Warehouse = Directory {
+	data Warehouse = Directory {
 		  warehouseInfo :: File WarehouseInfo
 		, districts :: Districts
 		, stock :: Stock
 	} where <| consistentYTD this |>
 	
-	type Districts = Map [ d :: District | d :: Id <- matches (GL "*") ]
-	type Stock = Map [ s :: StockItem | s :: Id <- matches (GL "*") ]
+	data Districts = Map [ d :: District | d :: Id <- matches (GL "*") ]
+	data Stock = Map [ s :: StockItem | s :: Id <- matches (GL "*") ]
 	
-	type Item = File ItemInfo
+	data Item = File ItemInfo
 	
-	type District = Directory {
+	data District = Directory {
 		  districtInfo :: File DistrictInfo
 		, customers :: Customers
 		, newOrders :: NewOrders
 		, orders :: Orders
 	} where <| liftM and $ sequence [consistentNextOrder this,consistentOrdersNewOrders this,consistentCustomerBalance this] |>
 	
-	type Customers = Map [ c :: Customer | c :: Id <- matches (GL "*") ]
-	type NewOrders = Set [ no :: NewOrder | no :: Id <- matches (GL "*") ] where <| consistentNewOrders this |>
-	type Orders = Map [ o :: Order | o :: Id <- matches (GL "*") ]
+	data Customers = Map [ c :: Customer | c :: Id <- matches (GL "*") ]
+	data NewOrders = Set [ no :: NewOrder | no :: Id <- matches (GL "*") ] where <| consistentNewOrders this |>
+	data Orders = Map [ o :: Order | o :: Id <- matches (GL "*") ]
 	
-	type Customer = File CustomerInfo
+	data Customer = File CustomerInfo
 	
-	type NewOrder = SymLink where (foreignKey this_att $ parent 1 </> "orders")
+	data NewOrder = SymLink where (foreignKey this_att $ parent 1 </> "orders")
 	
-	type Order = Directory {
+	data Order = Directory {
 		  orderCustomer matches (RE "*.customer") :: SymLink where (foreignKey orderCustomer_att $ parent 2 </> "customers")
 		, orderLines :: OrderLines
 		, orderInfo :: File OrderInfo
 	} where <| liftM and $ sequence [consistentOrderLinesCount this,consistentOrderDelivery this] |>
 	
-	type OrderLines = Map [ l :: OrderLine | l :: Id <- matches (GL "*") ]
+	data OrderLines = Map [ l :: OrderLine | l :: Id <- matches (GL "*") ]
 	
-	type OrderLine = Directory {
+	data OrderLine = Directory {
 		  orderLineItem matches (RE "*.item") :: SymLink where (foreignKey orderLineItem_att $ parent 8 </> "stock")
 		, orderLineSupplyWarehouse matches (RE "*.warehouse") :: SymLink where (foreignKey orderLineSupplyWarehouse_att $ parent 8 </> "warehouses")
 		, orderLineInfo :: File OrderLineInfo
 	}
 	
-	type StockItem = File StockItemInfo
+	data StockItem = File StockItemInfo
 	
 |]
 

@@ -67,10 +67,10 @@ mountSnapshotIO forestDir ((rootPath,rootFolder),device) snapshot = do
 	ref <- newIORef (mountpoint)
 	return ref
 
-mountSnapshot :: FSRep fs => LiveSnapshots -> NILFSData -> Snapshot -> ForestM fs MountPoint
-mountSnapshot liveSnapshots nilfs@((rootPath,rootFolder),device) snapshot = do
+mountSnapshot :: FSRep fs => LiveSnapshots -> NILFSData -> Snapshot -> MkWeak -> ForestM fs MountPoint
+mountSnapshot liveSnapshots nilfs@((rootPath,rootFolder),device) snapshot mkWeak = do
 	forestDir <- getForestDirectory
-	ref <- forestIO $ CWeakMap.lookupOrInsertMkWeak liveSnapshots snapshot (mountSnapshotIO forestDir nilfs snapshot) (\v -> MkWeak $ mkWeakKey v)
+	ref <- forestIO $ CWeakMap.lookupOrInsertMkWeak liveSnapshots snapshot (mountSnapshotIO forestDir nilfs snapshot) (\v -> mkWeak)
 	mountpoint <- forestIO $ readIORef ref
 	return mountpoint
 
@@ -81,10 +81,10 @@ findRootDevice rootPathFolder = do
 	let rootFolder = makeRelative rootPath rootPathFolder
 	return ((rootPath,rootFolder),rootDevice)
 
-pathInSnapshot :: FSRep fs => LiveSnapshots -> NILFSData -> FilePath -> Snapshot -> ForestM fs FilePath
-pathInSnapshot liveSnapshots nilfs@((rootPath,rootFolder),device) path snapshot = do
+pathInSnapshot :: FSRep fs => LiveSnapshots -> NILFSData -> FilePath -> Snapshot -> MkWeak -> ForestM fs FilePath
+pathInSnapshot liveSnapshots nilfs@((rootPath,rootFolder),device) path snapshot mkWeak = do
 	forestDir <- getForestDirectory
-	ref <- forestIO $ CWeakMap.lookupOrInsertMkWeak liveSnapshots snapshot (mountSnapshotIO forestDir nilfs snapshot) (\v -> MkWeak $ mkWeakKey v)
+	ref <- forestIO $ CWeakMap.lookupOrInsertMkWeak liveSnapshots snapshot (mountSnapshotIO forestDir nilfs snapshot) (\v -> mkWeak)
 	mountpoint <- forestIO $ readIORef ref
 	let result = mountpoint </> makeRelative rootPath path
 	return result

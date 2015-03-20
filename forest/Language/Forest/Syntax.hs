@@ -58,7 +58,7 @@ import Data.WithClass.Derive.MData
 -- The mode in which forest is run, which affects parsing
 data ForestMode = PureForest | ICForest deriving (Eq,Show,Typeable,Data)
 
-newtype ForestDecl = ForestDecl (String,[TH.Pat], ForestTy)
+newtype ForestDecl = ForestDecl (Bool,String,[TH.Pat], ForestTy)
    deriving ( Eq, Data, Typeable, Show)
 
 data ForestTy = Directory DirectoryTy 

@@ -4,7 +4,7 @@
 -- NILFS filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse amoung transactions
 
 module Language.Forest.IC.FS.TxNILFS (
-	TxICForest(..)
+	TxICForest(..),FSRep(..),ForestCfg(..),atomicallyTxNILFS
 ) where
 
 import Language.Forest.Errors
@@ -84,7 +84,7 @@ import Data.DList as DList
 import Data.Global.TH as TH
 
 -- the root directory for transactional forest (it can't modify data not under this path)
-TH.declareMVar "root"  [t| FilePath |] [e| "/" |]
+TH.declareMVar "rootTxNILFS"  [t| FilePath |] [e| "/" |]
 
 -- locks on which retrying transactions will wait
 type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
@@ -201,7 +201,6 @@ bufferedTxNILFSFSThunk var = do
 	(starttime,txid,deltas,txlogs) <- Reader.ask
 	-- read from the concurrent global thunk
 	let newBuff = do
-		let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunk var
 		buff <- forestIO $ readMVar $ txNILFSFSThunk var
 		return buff
 	-- read from the local buffer
@@ -219,7 +218,6 @@ bufferedTxNILFSHSThunk var = do
 	(starttime,txid,deltas,txlogs) <- Reader.ask
 	-- read from the concurrent global thunk
 	let newBuff = do
-		let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSHSThunk var
 		buff <- forestIO $ readMVar $ txNILFSHSThunk var
 		return buff
 	-- read from the local buffer
@@ -238,7 +236,21 @@ getNextFSTree = do
 	return newtree
 
 nextTxNILFSTree :: MonadReader TxNILFSEnv (ForestM TxNILFS) => ForestM TxNILFS ()
-nextTxNILFSTree = undefined
+nextTxNILFSTree = do
+	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	
+	-- old tree
+	treeSnap <- forestIO $ fsTreeSnapshot tree
+	treeVersion <- forestIO $ fsTreeFSVersion tree
+	treeVirtual <- forestIO $ fsTreeVirtual tree
+	
+	-- next tree
+	newtreeDelta <- forestIO $ readTreeFSTreeDelta tree >>= newIORef 
+	newtreeSyms <- forestIO $ readTreeSym tree >>= newIORef
+	newtree <- forestIO $ liftM FSTreeTxNILFS $ newIORef $ TxTree treeSnap (succ treeVersion) newtreeDelta treeVirtual newtreeSyms
+	
+	forestIO $ writeRef txlog (tree,DList.empty,newtree,reads,bufftbl,memotbl,cantree,tmps)
 
 incrementTxNILFSTree :: MonadReader TxNILFSEnv (ForestM TxNILFS) => ForestM TxNILFS ()
 incrementTxNILFSTree = do
@@ -246,9 +258,6 @@ incrementTxNILFSTree = do
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	-- the new tree deltas are appended to the original deltas
 	newTreeVersion <- forestIO $ fsTreeFSVersion newtree
-	newTreeDelta <- forestIO $ fsTreeFSTreeDelta newtree
-	nextTreeDeltas <- forestIO $ readRef newTreeDelta >>= newRef
-	newTreeSym <- forestIO $ fsTreeSym newtree
 	-- add the relative deltas
 	tds <- forestIO $ readRef deltas
 	forestIO $ writeRef deltas $ Map.insert newTreeVersion ds tds
@@ -259,8 +268,7 @@ getTxNILFSChangesFlat :: ForestM TxNILFS TxNILFSChangesFlat
 getTxNILFSChangesFlat = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
-	d <- forestIO $ fsTreeFSTreeDelta tree
-	writes <- forestIO $ readRef d
+	writes <- forestIO $ readTreeFSTreeDelta tree
 	return (reads,fsTreeDeltaWrites "" writes)
 
 -- reads from the current tree
@@ -269,8 +277,7 @@ getTxNILFSChanges :: ForestM TxNILFS TxNILFSChanges
 getTxNILFSChanges = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
-	d <- forestIO $ fsTreeFSTreeDelta tree
-	writes <- forestIO $ readRef d
+	writes <- forestIO $ readTreeFSTreeDelta tree
 	return (reads,writes)
 
 putTxNILFSRead :: FilePath -> ForestM TxNILFS ()
@@ -313,9 +320,6 @@ type TxId = Unique
 instance MonadReader TxNILFSEnv (ForestM TxNILFS) where
 	ask = TxNILFSForestM ask
 	local f (TxNILFSForestM m) = TxNILFSForestM $ local f m
-
-instance Show (FSTree TxNILFS) where
-	show tree = "FSTreeTxNILFS"
 
 type FSVersion = Int
 
@@ -369,10 +373,12 @@ instance FSRep TxNILFS where
 		canpath <- canonalizeDirectoryInTree path tree
 		-- mark the path as read
 		putTxNILFSRead canpath
-		td <- forestIO $ fsTreeFSTreeDelta tree >>= readIORef
+		td <- forestIO $ readTreeFSTreeDelta tree
 		let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 		ondisk <- case onDiskWriteMay path_td of
-			Nothing -> pathInSnapshot liveSnapshots nilfsData canpath =<< forestIO (fsTreeSnapshot tree) -- read the content from the original NILFS snapshot
+			Nothing -> do
+				snap <- forestIO (fsTreeSnapshot tree)
+				pathInSnapshot liveSnapshots nilfsData canpath snap (MkWeak $ mkWeakKeyFSTree tree) -- read the content from the original NILFS snapshot
 			Just ondisk -> return ondisk -- return the written ondisk temporary file
 		virtualizeTxNILFS ondisk tree
 
@@ -408,26 +414,26 @@ instance FSRep TxNILFS where
 		ot <- forestIO $ readIORef (unFSTreeTxNILFS oldtree)
 		nt <- forestIO $ readIORef (unFSTreeTxNILFS newtree)
 		case (ot,nt) of
-			(NILFSTree cp1 _,NILFSTree cp2 _) -> do
+			(NILFSTree cp1 _ _,NILFSTree cp2 _ _) -> do
 				-- difference between NILFS snapshots
 				tdNILFS <- if cp1 == cp2
 					then return emptyFSTreeDelta -- nothing to do
 					else do
-						mount1 <- mountSnapshot liveSnapshots nilfsData cp1
-						mount2 <- mountSnapshot liveSnapshots nilfsData cp2
+						mount1 <- mountSnapshot liveSnapshots nilfsData cp1 (MkWeak $ mkWeakKeyFSTree oldtree)
+						mount2 <- mountSnapshot liveSnapshots nilfsData cp2 (MkWeak $ mkWeakKeyFSTree newtree)
 						let device = snd nilfsData
 						forestIO $ diffNILFS mount2 device cp1 cp2
 				syms <- forestIO $ readMVar symlinks
 				let fixtd = fixFSTreeDelta tdNILFS syms
 				let df = focusFSTreeDeltaByRelativePathMay fixtd path
 				return $ Just df
-			(NILFSTree cp1 _,TxTree ((==cp2) -> True) fs2 delta2 virtual2 sym2) -> do
+			(NILFSTree cp1 _ _,TxTree ((==cp2) -> True) fs2 delta2 virtual2 sym2) -> do
 				-- difference between NILFS snapshots
 				tdNILFS <- if cp1 == cp2
 					then return emptyFSTreeDelta -- nothing to do
 					else do
-						mount1 <- mountSnapshot liveSnapshots nilfsData cp1
-						mount2 <- mountSnapshot liveSnapshots nilfsData cp2
+						mount1 <- mountSnapshot liveSnapshots nilfsData cp1 (MkWeak $ mkWeakKeyFSTree oldtree)
+						mount2 <- mountSnapshot liveSnapshots nilfsData cp2 (MkWeak $ mkWeakKeyFSTree newtree)
 						let device = snd nilfsData
 						forestIO $ diffNILFS mount2 device cp1 cp2
 				-- transaction-local difference
@@ -449,6 +455,8 @@ instance FSRep TxNILFS where
 				return $ Just df
 			otherwise -> return Nothing
 
+mkWeakKeyFSTree (FSTreeTxNILFS tree) = mkWeakKey tree
+
 data FSTreeTxNILFS' = TxTree {
 		  txTreeSnapshot :: Snapshot -- original NILFS snapshot
 		, txTreeFSVersion :: FSVersion -- tx-local fsversion
@@ -456,36 +464,51 @@ data FSTreeTxNILFS' = TxTree {
 		, txTreeVirtual :: Bool -- virtual flag
 		, txTreeSym :: IORef (DList FSDelta,FSTreeSym) -- a sequence of symlink modifications since the start and the symlinks table at the time of this tree
 		}
-		| NILFSTree Snapshot Bool
+		| NILFSTree Snapshot Bool FSTreeSym
 
 instance Eq FSTreeTxNILFS' where
 	(TxTree snap1 v1 _ vir1 _) == (TxTree snap2 v2 _ vir2 _) = (snap1,v1,vir1) == (snap2,v2,vir2)
-	(NILFSTree snap1 vir1) == (NILFSTree snap2 vir2) = (snap1,vir1) == (snap2,vir2)
+	(NILFSTree snap1 vir1 _) == (NILFSTree snap2 vir2 _) = (snap1,vir1) == (snap2,vir2)
+	t1 == t2 = False
 
 instance Ord FSTreeTxNILFS' where
 	(TxTree snap1 v1 _ vir1 _) <= (TxTree snap2 v2 _ vir2 _) = (snap1,v1,vir1) <= (snap2,v2,vir2)
-	(NILFSTree snap1 vir1) <= (NILFSTree snap2 vir2) = (snap1,vir1) <= (snap2,vir2)
+	(NILFSTree snap1 vir1 _) <= (NILFSTree snap2 vir2 _) = (snap1,vir1) <= (snap2,vir2)
+	(NILFSTree snap1 vir1 _) <= (TxTree snap2 v2 _ vir2 _) = (snap1,0,vir1) <= (snap2,v2,vir2)
+	(TxTree snap1 v1 _ vir1 _) <= (NILFSTree snap2 vir2 _) = (snap1,v1,vir1) <= (snap2,0,vir2)
 
 fsTreeSnapshot :: FSTree TxNILFS -> IO Snapshot
 fsTreeSnapshot (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
 	TxTree snap fs delta virtual sym -> return snap
-	NILFSTree snap virtual -> return snap
+	NILFSTree snap virtual _ -> return snap
 fsTreeFSVersion :: FSTree TxNILFS -> IO FSVersion
 fsTreeFSVersion (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
 	TxTree snap fs delta virtual sym -> return fs
-	NILFSTree snap virtual -> error "no version"
+	NILFSTree snap virtual _ -> return 0
+readTreeFSTreeDelta :: FSTree TxNILFS -> IO FSTreeDelta
+readTreeFSTreeDelta (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
+	TxTree snap fs delta virtual sym -> readIORef delta
+	NILFSTree snap virtual _ -> return emptyFSTreeDelta
 fsTreeFSTreeDelta :: FSTree TxNILFS -> IO (IORef FSTreeDelta)
 fsTreeFSTreeDelta (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
 	TxTree snap fs delta virtual sym -> return delta
-	NILFSTree snap virtual -> error "no delta"
+	NILFSTree snap virtual _ -> error "no delta"
 fsTreeVirtual :: FSTree TxNILFS -> IO Bool
 fsTreeVirtual (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
 	TxTree snap fs delta virtual sym -> return virtual
-	NILFSTree snap virtual -> return virtual
+	NILFSTree snap virtual _ -> return virtual
+readTreeSym :: FSTree TxNILFS -> IO (DList FSDelta,FSTreeSym)
+readTreeSym (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
+	NILFSTree _ _ syms -> return (DList.empty,syms)
+	TxTree snap fs delta virtual sym -> readIORef sym
 fsTreeSym :: FSTree TxNILFS -> IO (IORef (DList FSDelta,FSTreeSym))
 fsTreeSym (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
 	TxTree snap fs delta virtual sym -> return sym
-	NILFSTree snap virtual -> error "no sym"
+	NILFSTree snap virtual _ -> error "no sym"
+isNILFSTree :: FSTree TxNILFS -> IO Bool
+isNILFSTree (FSTreeTxNILFS tree) = readIORef tree >>= \t -> case t of
+	TxTree _ _ _ _ _ -> return False
+	NILFSTree _ _ _ -> return True
 
 -- when we commit FS modifications we generate a new NILFS checkpoint and update the tx-local FSTree reference to a global NILFS tree
 newNILFSTree :: FSTree TxNILFS -> ForestM TxNILFS ()
@@ -493,8 +516,10 @@ newNILFSTree tree@(FSTreeTxNILFS ref) = forestIO $ do
 	cp <- newCheckpoint nilfsData
 	tree <- readIORef ref
 	case tree of
-		TxTree snap fs delta virtual sym -> writeIORef ref $ NILFSTree cp virtual
-		NILFSTree snap virtual -> return ()
+		TxTree snap fs delta virtual sym -> do
+			syms <- liftM snd $ readIORef sym
+			writeIORef ref $ NILFSTree cp virtual syms
+		NILFSTree snap virtual _ -> return ()
 
 virtualizeTxNILFS path tree = forestIO (fsTreeVirtual tree) >>= \virtual -> if virtual
 	then liftM (</> ".avfs" </> makeRelative "/" path) (forestIO getHomeDirectory)
@@ -504,7 +529,7 @@ getDirectoryContentsTxNILFS :: FilePath -> FSTree TxNILFS -> ForestM TxNILFS [Fi
 getDirectoryContentsTxNILFS path tree = do
 	canpath <- canonalizePathInTree path tree
 	putTxNILFSRead canpath
-	td <- forestIO $ fsTreeFSTreeDelta tree >>= readIORef
+	td <- forestIO $ readTreeFSTreeDelta tree
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	xs <- forestIO $ getContentsFSTreeDeltaNodeMay canpath path_td
 	return xs
@@ -513,7 +538,7 @@ doesExistTxNILFS :: ExistFlag -> FilePath -> FSTree TxNILFS -> ForestM TxNILFS B
 doesExistTxNILFS flag path tree = do
 	canpath <- canonalizeDirectoryInTree path tree
 	putTxNILFSRead canpath
-	td <- forestIO $ fsTreeFSTreeDelta tree >>= readIORef
+	td <- forestIO $ readTreeFSTreeDelta tree
 	let path_td = focusFSTreeDeltaByRelativePathMay td canpath
 	case path_td of
 		Just (FSTreeNop _) -> return $ flag /= FileExists
@@ -540,7 +565,7 @@ canonalizePathTxNILFS path tree = do
 	norm <- forestIO $ liftM normalise $ absolutePath path
 	let dirs = splitDirectories norm	
 	mb <- findCanonicalPath dirs
-	(_,syms) <- forestIO $ fsTreeSym tree >>= readIORef
+	(_,syms) <- forestIO $ readTreeSym tree
 	can <- case mb of
 		Just (root,oldtree,suffix) -> do
 			cmp <- compareFSTree oldtree tree
@@ -594,6 +619,8 @@ instance InLayer Inside (IncForest TxNILFS) IORef IO where
 	
 instance ICRep TxNILFS where
 
+	runIncrementalForest (TxNILFSForestCfg root) m = atomicallyTxNILFS root m
+
 	forestM = inside . TxNILFSForestI . runTxNILFSForestM
 	forestO = TxNILFSForestM . runTxNILFSForestO
 
@@ -633,7 +660,7 @@ diffValueThunkTxNILFS isTop oldtree rep = do
 		(buff :: BuffTxNILFSThunk Inside content) <- forestM $ bufferedTxNILFSThunk thunk
 		let newtree = if isTop then buffTxNILFSTree buff else buffTxNILFSDeltaTree buff
 		cmp <- forestM $ compareFSTree oldtree newtree
-		return $ ValueDeltaTxNILFS $ cmp == EQ
+		return $ ValueDeltaTxNILFS $ cmp /= LT
 	
 -- arguments passed to transactional variables
 type TxNILFSArgs = (Dynamic,FilePath)
@@ -835,20 +862,24 @@ overwriteTxNILFSThunk var ma = do
 instance ZippedICMemo TxNILFS where
 
 	addZippedMemo path proxy args rep mb_tree = do
-		let var = to iso_rep_thunk rep
-		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
-		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
-		
-		-- remember the arguments (this is how we connect transactional arguments to transactional variables)
-		let txargs = (toDyn args,path)
-		forestM $ forestIO $ writeRef (txNILFSFSThunkArgs var) $ Just txargs
-		
-		-- memoize the entry
-		case mb_tree of
-			Nothing -> return ()
-			Just tree -> do
-				let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
-				forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak,tree)
+		smb_tree <- case mb_tree of
+			Nothing -> return "Nothing"
+			Just tree -> forestM $ liftM ("Just "++) $ showFSTree tree
+		debug ("added memo "++show path ++ smb_tree) $ do
+			let var = to iso_rep_thunk rep
+			(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+			(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
+			
+			-- remember the arguments (this is how we connect transactional arguments to transactional variables)
+			let txargs = (toDyn args,path)
+			forestM $ forestIO $ writeRef (txNILFSFSThunkArgs var) $ Just txargs
+			
+			-- memoize the entry
+			case mb_tree of
+				Nothing -> return ()
+				Just tree -> do
+					let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
+					forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak,tree)
 	
 	findZippedMemo args path (Proxy :: Proxy rep) = do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
@@ -857,9 +888,11 @@ instance ZippedICMemo TxNILFS where
 		case mb of
 			Nothing -> return Nothing
 			Just (fromDynNILFS -> Just rep,mkWeak,tree) -> do
-				let var = to iso_rep_thunk rep
-				Just (fromDynamic -> Just txargs,_) <- forestM $ forestIO $ readRef $ txNILFSFSThunkArgs var
-				return $ Just (tree,txargs,rep)
+				stree <- forestM $ showFSTree tree
+				debug ("found memo " ++ show path ++ " " ++ stree) $ do
+					let var = to iso_rep_thunk rep
+					Just (fromDynamic -> Just txargs,_) <- forestM $ forestIO $ readRef $ txNILFSFSThunkArgs var
+					return $ Just (tree,txargs,rep)
 
 argsTxNILFS :: (FTK TxNILFS args rep var content) => Proxy args -> rep -> ForestO TxNILFS (ForestVs args,FilePath)
 argsTxNILFS proxy rep = do
@@ -965,7 +998,7 @@ type TxNILFSFTV a = FTV TxNILFS a
 
 instance TxICForest TxNILFS where
 	
-	atomically = atomicallyTxNILFS
+	atomically = atomicallyTxNILFS "/"
 	retry = retryTxNILFS
 	orElse = orElseTxNILFS
 	throw = throwTxNILFS 
@@ -1012,7 +1045,7 @@ loadTxNILFS proxy rep = do
 	tree <- forestM latestTree
 	df <- liftM (fromJustNote "loadTxNILFS2") $ forestM $ diffFS oldtree tree path
 	-- load incrementally at the latest tree
-	inside $ unsafeWorld $ do
+	inside $ unsafeWorld $ debug ("loadTxNILFS " ++ show path) $ do
 		dv <- diffValueThunk oldtree rep
 		ds <- deltaArgs oldtree proxy txargs txargs
 		let deltas = (txargs,ds)
@@ -1063,7 +1096,7 @@ writeOrElseTxNILFS rep content b f = do
 				
 				-- store incrementally at the latest tree (there are no filesystem modifications, since have only c hanged the value since loadDelta)
 				man <- forestM $ newManifestWith "/" tree
-				(mani,_,memos) <- RWS.runRWST (zupdateManifestDeltaMemo proxy newdeltas path path tree (emptyFSTreeD proxyTxNILFS) tree rep newdv man) True ()
+				(mani,_,memos) <- debug ("storing... " ++ show path) $ RWS.runRWST (zupdateManifestDeltaMemo proxy newdeltas path path tree (emptyFSTreeD proxyTxNILFS) tree rep newdv man) True ()
 				-- we need to store the errors to the (buffered) FS before validating
 				forestM $ storeManifest mani
 				-- commit the pending modifications
@@ -1077,8 +1110,8 @@ writeOrElseTxNILFS rep content b f = do
 					else throwTxNILFS $ ManifestConflictTx errors
 			catchTxNILFS True tryWrite (\(ManifestConflictTx errors) -> f errors)
 					
-atomicallyTxNILFS :: TxNILFSFTM b -> IO b
-atomicallyTxNILFS stm = initializeTxNILFS try where
+atomicallyTxNILFS :: FilePath -> TxNILFSFTM b -> IO b
+atomicallyTxNILFS root stm = updateRootTxNILFS root >> initializeTxNILFS try where
 	try = flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ do
 		-- run the tx
 		x <- stm
@@ -1125,25 +1158,25 @@ throwTxNILFS :: Exception e => e -> TxNILFSFTM a
 throwTxNILFS = Catch.throwM
 
 catchTxNILFS :: Exception e => Bool -> TxNILFSFTM a -> (e -> TxNILFSFTM a) -> TxNILFSFTM a
-catchTxNILFS doWrites stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxNILFS doWrites stm (h :: e -> TxNILFSFTM a) = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
-	catchSome (e::SomeException) = do
+	catchSome (e::e) = do
 		validateCatchTxNILFS doWrites
-		h $ fromJustNote "catchTxNILFS" $ fromException e
+		h e
 
 initializeTxNILFS :: TxNILFSFTM b -> IO b 
 initializeTxNILFS (TxNILFSForestO m) = do
 	starttime <- startTxNILFS >>= newIORef
 	mountAVFS -- should succeed even if AVFS is already mounted
-	forestDir <- getTemporaryDirectory
+	forestDir <- liftM (</> "Forest") getTemporaryDirectory
 	createDirectoryIfMissing True forestDir
 	createDirectoryIfMissing True (forestDir </> "Snapshots")
 	(txid,_,_) <- latestCheckpoint
 	-- current tree
 	treeDelta <- newIORef $ emptyFSTreeDelta
-	treeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
-	tree <- liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False
+	treeSyms <- (readMVar symlinks)
+	tree <- liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False treeSyms
 	-- tables
 	bufftbl <- WeakTable.new
 	memotbl <- WeakTable.new
@@ -1159,7 +1192,8 @@ resetTxNILFS m = do
 	now <- inL $ liftIO $ startTxNILFS >>= newIORef
 	(_,txid,deltas,_) <- Reader.ask
 	-- current tree
-	tree <- forestM $ forestIO $ liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False
+	treeSyms <- forestM $ forestIO $ readMVar symlinks
+	tree <- forestM $ forestIO $ liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False treeSyms
 	-- tables
 	bufftbl <- forestM $ forestIO $ WeakTable.new
 	memotbl <- forestM $ forestIO $ WeakTable.new
@@ -1306,20 +1340,47 @@ parentCanonicalTree SNil = forestIO $ readMVar canonicalTxNILFS
 parentCanonicalTree (SCons txlog _) = do
 	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	return cantree
+	
+parentSyms :: TxNILFSLogs -> ForestM TxNILFS (DList FSDelta,FSTreeSym)
+parentSyms SNil = forestIO $ liftM (DList.empty,) $ readMVar symlinks
+parentSyms (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	forestIO $ readTreeSym tree
+
+parentDelta :: TxNILFSLogs -> ForestM TxNILFS FSTreeDelta
+parentDelta SNil = return emptyFSTreeDelta
+parentDelta (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	forestIO $ fsTreeFSTreeDelta tree >>= readIORef
+
+parentVirtual :: TxNILFSLogs -> ForestM TxNILFS Bool
+parentVirtual SNil = return False
+parentVirtual (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	forestIO $ fsTreeVirtual tree
 
 -- we only unbuffer the child log
 unbufferTxNILFSWrites :: ForestM TxNILFS ()
 unbufferTxNILFSWrites = do
 	(starttime,txid,deltas,txlogs@(SCons txlog1 txlogs_parent)) <- Reader.ask
 	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- forestIO $ readRef txlog1
-	bufftbl1' <- forestIO $ WeakTable.new
-	memotbl1' <- forestIO $ WeakTable.new
-	-- reset deltas
-	forestIO $ writeRef deltas Map.empty
-	-- current tree
-	tree1' <- forestIO $ liftM FSTreeTxNILFS $ newIORef $ NILFSTree txid False
-	cantree1' <- parentCanonicalTree txlogs_parent
-	forestIO $ writeRef txlog1 (tree1',DList.empty,tree1',reads1,bufftbl1',memotbl1',cantree1',tmps1)
+	b <- forestIO $ isNILFSTree tree1
+	unless b $ do
+		bufftbl1' <- forestIO $ WeakTable.new
+		memotbl1' <- forestIO $ WeakTable.new
+		-- reset deltas
+		forestIO $ writeRef deltas Map.empty
+		-- current tree
+		treeVersion1 <- forestIO $ fsTreeFSVersion tree1
+		treeDelta1' <- parentDelta txlogs_parent >>= forestIO . newIORef
+		treeVirtual1' <- parentVirtual txlogs_parent
+		treeSym1 <- forestIO $ readTreeSym tree1
+		treeSym1' <- case treeSym1 of
+			((==DList.empty) -> True,syms) -> forestIO $ newIORef treeSym1
+			otherwise -> parentSyms txlogs_parent >>= forestIO . newIORef
+		tree1' <- forestIO $ liftM FSTreeTxNILFS $ newIORef $ TxTree txid treeVersion1 treeDelta1' treeVirtual1' treeSym1'
+		cantree1' <- parentCanonicalTree txlogs_parent
+		forestIO $ writeRef txlog1 (tree1',DList.empty,tree1',reads1,bufftbl1',memotbl1',cantree1',tmps1)
 
 -- on success, returns True=read-only or False=read-write
 validateTxsNILFS :: UTCTime -> TxNILFSLogs -> ForestM TxNILFS (Either Bool ())
@@ -1342,7 +1403,7 @@ checkTxsNILFSBefore env@(SCons txlog txlogs) = do
 checkTxNILFSBefore :: TxNILFSLog -> ForestM TxNILFS Bool
 checkTxNILFSBefore txlog = do
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
-	writes <- forestIO (readIORef =<< fsTreeFSTreeDelta tree)
+	writes <- forestIO (readTreeFSTreeDelta tree)
 	return $ writes == emptyFSTreeDelta -- tx has no writes
 
 checkTxsNILFSAfter :: TxNILFSLogs -> [(UTCTime,TxNILFSWrites)] -> ForestM TxNILFS Bool
@@ -1454,11 +1515,11 @@ commitTxNILFSLog starttime doWrites txlog = do
 			forestIO $ swapMVar canonicalTxNILFS cantree
 			
 			-- get writes since the beginning of the tx
-			writes <- forestIO (readIORef =<< fsTreeFSTreeDelta tree)
+			writes <- forestIO (readTreeFSTreeDelta tree)
 			-- commits filesystem modifications over the latest NILFS snapshot
 			wakes <- forestIO $ commitFSTreeDelta "" writes
 			-- get the symlink changes since the beginning of the tx
-			(syms,_) <- forestIO (readIORef =<< fsTreeSym tree)
+			(syms,_) <- forestIO (readTreeSym tree)
 			-- update the symlinks table (uses a global lock)
 			forestIO $ modifyMVar_ symlinks $ return . appendListToFSTreeSym syms
 			-- requests a new NILFS snapshot for the latest tree
@@ -1516,7 +1577,7 @@ withFileLocks reads writes m = do
 {-# NOINLINE nilfsData #-}
 nilfsData :: NILFSData
 nilfsData = unsafePerformIO $ do
-	rootPath <- readMVar root
+	rootPath <- readMVar rootTxNILFS
 	findRootDevice rootPath
 
 {-# NOINLINE liveSnapshots #-}
@@ -1528,10 +1589,29 @@ liveSnapshots = unsafePerformIO $ CWeakMap.empty
 {-# NOINLINE symlinks #-}
 symlinks :: MVar FSTreeSym
 symlinks = unsafePerformIO $ do
-	path <- readMVar root
+	syms <- computeSymlinks
+	newMVar syms
+
+updateSymlinks :: IO ()
+updateSymlinks = do
+	syms <- computeSymlinks
+	swapMVar symlinks syms
+	return ()
+
+computeSymlinks :: IO FSTreeSym
+computeSymlinks = do
+	path <- readMVar rootTxNILFS
 	putStrLn $ "Finding all symbolic links under... " ++ show path
 	syms <- findSymLinks path
 	putStrLn $ "Symbolic links calculated for " ++ show path
-	newMVar syms
+	return syms
 
 
+updateRootTxNILFS :: FilePath -> IO ()
+updateRootTxNILFS root = do
+	oldroot <- readMVar rootTxNILFS
+	if (oldroot `isParentPathOf` root)
+		then putStrLn $ "child root " ++ show root ++ " " ++ show oldroot
+		else updateSymlinks
+	swapMVar rootTxNILFS root
+	return ()

@@ -192,6 +192,8 @@ instance FSRep TxVarFS where
 	
 	data FSTree TxVarFS = TxVarFSTree | VirtualTxVarFSTree deriving Show
 	
+	showFSTree = return . show
+	
 	-- log the modifications
 	-- writes come from manifests only, that have already canonized the paths
 	deletePath path = modifyTxVarFSTreeDeltas $ appendToFSTreeDelta (Rem path)
@@ -548,12 +550,12 @@ throwTxVarFS :: Exception e => e -> TxVarFTM a
 throwTxVarFS = Catch.throwM
 
 catchTxVarFS :: Exception e => Bool -> TxVarFTM a -> (e -> TxVarFTM a) -> TxVarFTM a
-catchTxVarFS doWrites stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxVarFS doWrites stm (h :: e -> TxVarFTM a) = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
-	catchSome (e::SomeException) = do
+	catchSome (e::e) = do
 		validateCatchTxVarFS doWrites
-		h $ fromJustNote "catchTxICFS" $ fromException e
+		h e
 
 initializeTxVarFS :: TxVarFTM b -> IO b 
 initializeTxVarFS (TxVarFSForestO m) = do

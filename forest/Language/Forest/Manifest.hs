@@ -4,7 +4,6 @@ module Language.Forest.Manifest where
 
 import System.Directory
 import System.FilePath.Posix
-import System.Cmd
 import Language.Forest.IO.Shell
 import System.IO
 
@@ -93,8 +92,8 @@ data Manifest fs = MakeManifest
 deriving instance (Data (ForestM fs Status),Typeable fs,Data (FSTree fs)) => Data (Manifest fs)
 
 -- showing a manifest does not evaluate the tests
-instance Show (FSTree fs) => Show (Manifest fs) where
-	show man = "(MakeManifest " ++ show (pathRoot man) ++ " " ++ show (manifestTree man) ++ " " ++ show (entries man) ++ " " ++ show (map (Prelude.const "<test>") $ tests man) ++ ")"
+instance Show (Manifest fs) where
+	show man = "(MakeManifest " ++ show (pathRoot man) ++ show (entries man) ++ " " ++ show (map (Prelude.const "<test>") $ tests man) ++ ")"
 
 instance Monoid Status where
 	mempty = Valid

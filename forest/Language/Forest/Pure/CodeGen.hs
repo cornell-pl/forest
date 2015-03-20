@@ -80,7 +80,7 @@ make_forest_declarations :: [ForestDecl] -> Q [Dec]
 make_forest_declarations ds = fmap concat (mapM make_forest_declaration ds)
 
 make_forest_declaration :: ForestDecl -> Q [Dec]
-make_forest_declaration (ForestDecl (id, pats, forestTy)) = do
+make_forest_declaration (ForestDecl (_,id, pats, forestTy)) = do
    let ty_name    = getTyName    id
    let unty_name    = getUnTyName    id
    let md_ty_name = getMDName    id

@@ -79,6 +79,9 @@ mapNSValueDelta :: Lens a b -> NSValueDelta b -> NSValueDelta a
 mapNSValueDelta l (StableVD d) = StableVD $ mapSValueDelta d
 mapNSValueDelta l (Modify f) = Modify $ \s -> BX.put l s $ f $ BX.get l s
 
+isoNSValueDelta :: Iso a b -> NSValueDelta b -> NSValueDelta a
+isoNSValueDelta i = mapNSValueDelta (isoLens i)
+
 isEmptySValueDelta :: SValueDelta v -> Bool
 isEmptySValueDelta Id = True
 isEmptySValueDelta _ = False

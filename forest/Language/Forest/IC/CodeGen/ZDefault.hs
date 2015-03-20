@@ -64,8 +64,8 @@ forceVarsZEnvQ e f = do
 			otherwise -> f e
 	(Set.foldr forceVar f expvars) e
 
-genZDefaultM :: Name -> ForestTy -> [(TH.Pat,TH.Type)] -> ZEnvQ Exp
-genZDefaultM rep_name forestTy pat_infos = do
+genZDefaultM :: Bool -> Name -> ForestTy -> [(TH.Pat,TH.Type)] -> ZEnvQ Exp
+genZDefaultM isTop rep_name forestTy pat_infos = do
 	fsName <- lift $ newName "fs"
 	pathName    <- lift $ newName "path"
 	argsName <- lift $ newName "args"
@@ -74,7 +74,7 @@ genZDefaultM rep_name forestTy pat_infos = do
 	
 	case pat_infos of
 		[] -> do
-			core_bodyE <- genZDefaultBody pathE rep_name forestTy
+			core_bodyE <- genZDefaultBody isTop pathE rep_name forestTy
 			return $ LamE [VarP argsName,TupP [],pathP] core_bodyE
 		otherwise -> do
 			(argsP,stmts,argsThunksE,argThunkNames) <- genZDefaultArgsE (zip [1..] pat_infos) forestTy
@@ -82,7 +82,7 @@ genZDefaultM rep_name forestTy pat_infos = do
 				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
 			Reader.local update $ do -- adds pattern variable deltas to the env.
 				(fs,_) <- Reader.ask
-				core_bodyE <- genZDefaultBody pathE rep_name forestTy
+				core_bodyE <- genZDefaultBody isTop pathE rep_name forestTy
 				return $ LamE [VarP argsName,argsP,pathP] $
 					DoE $ stmts ++ [NoBindS core_bodyE]
 
@@ -91,12 +91,12 @@ genZDefaultM rep_name forestTy pat_infos = do
   do (rep,md) <- rhsE
      return (Rep rep, md)
 -}
-genZDefaultBody :: Exp -> Name -> ForestTy -> ZEnvQ Exp
-genZDefaultBody pathE repN ty = case ty of 
-	Directory _ -> zdefaultE True ty pathE
-	FConstraint _ (Directory _) _ -> zdefaultE True ty pathE
+genZDefaultBody :: Bool -> Exp -> Name -> ForestTy -> ZEnvQ Exp
+genZDefaultBody isTop pathE repN ty = case ty of 
+	Directory _ -> zdefaultE isTop ty pathE
+	FConstraint _ (Directory _) _ -> zdefaultE isTop ty pathE
 	otherwise   -> do -- Add type constructor
-		rhsE <- zdefaultE True ty pathE
+		rhsE <- zdefaultE isTop ty pathE
 		return $ Pure.appE2 (VarE 'liftM) (ConE repN) rhsE
 
 -- adds top-level arguments to the metadata
@@ -119,8 +119,8 @@ genZDefaultArgE (i,(pat,pat_ty)) forestTy = do
 
 zdefaultE :: Bool -> ForestTy -> Exp -> ZEnvQ Exp
 zdefaultE isTop ty pathE = case ty of
-	Named f_name               -> zdefaultWithArgsE f_name [] pathE
-	Fapp (Named f_name) argEs  -> zdefaultWithArgsE f_name argEs pathE
+	Named f_name               -> zdefaultWithArgsE isTop f_name [] pathE
+	Fapp (Named f_name) argEs  -> zdefaultWithArgsE isTop f_name argEs pathE
 	FFile (file_name, argEOpt) -> zdefaultFile isTop file_name argEOpt pathE
 	Archive archtype ty         -> zdefaultArchive isTop archtype ty pathE
 	FSymLink         -> zdefaultSymLink isTop pathE
@@ -148,16 +148,18 @@ zdefaultFile isTop fileName (Just argE) pathE = do
 		then return $ Pure.appE2 (VarE 'doZDefaultFile1) argE pathE
 		else return $ Pure.appE2 (VarE 'doZDefaultFileInner1) argE pathE
 
-zdefaultWithArgsE :: String -> [Exp] -> Exp -> ZEnvQ Exp
-zdefaultWithArgsE ty_name [] pathE = do
+zdefaultWithArgsE :: Bool -> String -> [Exp] -> Exp -> ZEnvQ Exp
+zdefaultWithArgsE isTop ty_name [] pathE = do
 	let proxyE = AppE (VarE 'proxyOf) $ TupE []
 	(fs,_) <- Reader.ask
-	return $ Pure.appE3 (VarE 'zdefaultScratchMemo) proxyE (TupE []) pathE
-zdefaultWithArgsE ty_name argEs pathE = do
+	let load = if isTop then VarE 'doZDefaultNamed else VarE 'zdefaultScratchGeneric
+	return $ Pure.appE3 load proxyE (TupE []) pathE
+zdefaultWithArgsE isTop ty_name argEs pathE = do
 	(fs,_) <- Reader.ask
 	argsE <- mapM (\e -> forceVarsZEnvQ e return) argEs
 	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
-	return $ Pure.appE3 (VarE 'zdefaultScratchMemo) (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE
+	let load = if isTop then VarE 'doZDefaultNamed else VarE 'zdefaultScratchGeneric
+	return $ Pure.appE3 load (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE
 
 zdefaultSymLink :: Bool -> Exp -> ZEnvQ Exp
 zdefaultSymLink isTop pathE = do

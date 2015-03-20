@@ -12,16 +12,15 @@ import Prelude
 catchIO :: IO a -> (Exception.IOException -> IO a) -> IO a
 catchIO = Exception.catch
 
-
 version :: Version
-version = Version {versionBranch = [0,1,0,3], versionTags = []}
+version = Version [0,1,0,3] []
 bindir, libdir, datadir, libexecdir, sysconfdir :: FilePath
 
-bindir     = "/Users/hpacheco/Library/Haskell/bin"
-libdir     = "/Users/hpacheco/Library/Haskell/ghc-7.8.3-x86_64/lib/ctrie-0.1.0.3"
-datadir    = "/Users/hpacheco/Library/Haskell/share/ghc-7.8.3-x86_64/ctrie-0.1.0.3"
-libexecdir = "/Users/hpacheco/Library/Haskell/libexec"
-sysconfdir = "/Users/hpacheco/Library/Haskell/etc"
+bindir     = "/home/hpacheco/.cabal/bin"
+libdir     = "/home/hpacheco/.cabal/lib/x86_64-linux-ghc-7.8.3/ctrie-0.1.0.3"
+datadir    = "/home/hpacheco/.cabal/share/x86_64-linux-ghc-7.8.3/ctrie-0.1.0.3"
+libexecdir = "/home/hpacheco/.cabal/libexec"
+sysconfdir = "/home/hpacheco/.cabal/etc"
 
 getBinDir, getLibDir, getDataDir, getLibexecDir, getSysconfDir :: IO FilePath
 getBinDir = catchIO (getEnv "ctrie_bindir") (\_ -> return bindir)

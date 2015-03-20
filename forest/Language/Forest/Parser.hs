@@ -95,13 +95,16 @@ forestDecls = do { decls <- many1 forestDecl
                          , remote is "remote.txt" :: Hosts_f }    |]
 -}
 
+forestDeclType :: Parser Bool
+forestDeclType = (reserved "type" >> return False) <|> (reserved "data" >> return True)
+
 forestDecl :: Parser ForestDecl
-forestDecl = do { reserved "type"
+forestDecl = do { isVarDecl <- forestDeclType
                 ; (id,pats) <- params
                 ; rawty <- forestTy
                 ; predM <- optionMaybe fieldPredicate
                 ; let ty = integratePred id rawty predM 
-                ; return (ForestDecl(id, pats, replaceName id ty))
+                ; return (ForestDecl(isVarDecl,id, pats, replaceName id ty))
                 } <?> "Forest Declaration"
 
 integratePred :: String -> ForestTy -> Maybe TH.Exp -> ForestTy

@@ -60,6 +60,13 @@ import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
 import Language.Pads.Generic as Pads
 
+doZDeltaManifestNamed :: ZippedICForest fs args rep =>
+	Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> (ForestFSThunkI fs rep) -> ValueDelta fs (ForestFSThunkI fs rep) -> Manifest fs -> MManifestForestO fs
+doZDeltaManifestNamed proxy (margs,dargs) path path' tree df tree' rep dv man = do
+	irep <- lift $ Inc.getOutside rep
+	idv <- lift $ diffValueBelow dv diffValue tree irep
+	zupdateManifestDeltaGeneric proxy (margs,dargs) path path' tree df tree' irep idv man
+
 -- updates the thunks that keep track of the arguments of a top-level declaration
 doZDeltaManifestArgs :: (ForestArgs fs args,ICRep fs) =>
 	Proxy args -> LoadDeltaArgs ICData fs args -> rep -> ValueDelta fs rep
@@ -107,7 +114,7 @@ doZDeltaManifestArchive isClosed archTy path path' (tree :: FSTree fs) df tree' 
 	if (not $ isIdValueDelta topdv) then mani_arch else do
 		isRepairMd <- Reader.ask
 		exists <- lift $ forestM $ doesFileExistInTree path tree
-		exists' <- lift $ forestM $ doesFileExistInTree path' tree'
+		exists' <- if isEmptyTopFSTreeD fs df then return exists else lift (forestM $ doesFileExistInTree path' tree')
 		(fmd,rep) <- lift $ Inc.getOutside arch_rep
 		err_t <- lift $ get_errors_thunk fmd
 		path_fmd <- lift $ get_fullpath fmd
@@ -174,7 +181,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' (tree :: FSTree fs) df t
 	let fs = Proxy :: Proxy fs
 	isRepairMd <- Reader.ask
 	exists <- lift $ forestM $ doesFileExistInTree path tree
-	exists' <- lift $ forestM $ doesFileExistInTree path' tree'
+	exists' <- if isEmptyTopFSTreeD fs df then return exists else lift (forestM $ doesFileExistInTree path' tree')
 	err_t <- lift $ get_errors_thunk fmd
 	path_fmd <- lift $ get_fullpath fmd
 	exists_dir <- lift $ doesFileExistInMD fmd
@@ -318,7 +325,7 @@ doZDeltaManifestDirectory path path' tree df (tree' :: FSTree fs) dirrep_t dv co
 	if (not $ isIdValueDelta topdv) then mani_dir else do
 		isRepairMd <- Reader.ask
 		exists <- lift $ forestM $ doesDirectoryExistInTree path tree
-		exists' <- lift $ forestM $ doesDirectoryExistInTree path' tree'
+		exists' <- if isEmptyTopFSTreeD fs df then return exists else lift (forestM $ doesDirectoryExistInTree path' tree')
 		(fmd,rep) <- lift $ Inc.getOutside dirrep_t
 		err_t <- lift $ get_errors_thunk fmd
 		path_fmd <- lift $ get_fullpath fmd
@@ -361,7 +368,7 @@ doZDeltaManifestDirectoryInner path path' tree df (tree' :: FSTree fs) (fmd,rep)
 	let fs = Proxy :: Proxy fs
 	isRepairMd <- Reader.ask
 	exists <- lift $ forestM $ doesDirectoryExistInTree path tree
-	exists' <- lift $ forestM $ doesDirectoryExistInTree path' tree'
+	exists' <- if isEmptyTopFSTreeD fs df then return exists else lift (forestM $ doesDirectoryExistInTree path' tree')
 	err_t <- lift $ get_errors_thunk fmd
 	path_fmd <- lift $ get_fullpath fmd
 	exists_dir <- lift $ doesDirectoryExistInMD fmd
@@ -404,7 +411,7 @@ doZDeltaManifestMaybe path path' tree df (tree' :: FSTree fs) mbrep_t dv manifes
 	if (not $ isIdValueDelta topdv) then mani_maybe else do
 		isRepairMd <- Reader.ask
 		exists <- lift $ forestM $ doesExistInTree path tree
-		exists' <- lift $ forestM $ doesExistInTree path' tree'
+		exists' <- if isEmptyTopFSTreeD fs df then return exists else lift (forestM $ doesExistInTree path' tree')
 		(fmd,mb_rep) <- lift $ Inc.getOutside mbrep_t
 		err_t <- lift $ get_errors_thunk fmd
 		path_fmd <- lift $ inside $ get_fullpath fmd
@@ -447,10 +454,11 @@ doZDeltaManifestMaybeInner :: (ForestMD fs rep,ICRep fs) =>
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs) -- inner incremental store function
 	-> (FSTree fs -> rep -> ForestO fs (ValueDelta fs rep))
 	-> Manifest fs -> MManifestForestO fs
-doZDeltaManifestMaybeInner path path' tree df tree' mb_rep dv manifest manifestD diffValue man = do
+doZDeltaManifestMaybeInner path path' tree df (tree' :: FSTree fs) mb_rep dv manifest manifestD diffValue man = do
 	isRepairMd <- Reader.ask
+	let fs = Proxy :: Proxy fs
 	exists <- lift $ forestM $ doesExistInTree path tree
-	exists' <- lift $ forestM $ doesExistInTree path' tree'
+	exists' <- if isEmptyTopFSTreeD fs df then return exists else lift (forestM $ doesExistInTree path' tree')
 	
 	case (exists,mb_rep,exists') of
 		(False,Nothing,False) -> do
@@ -573,10 +581,10 @@ doZDeltaManifestCompoundWithConstraint lens isoRep mkeyarg path path' matchingM 
 	let testm = testFocus path' matching (\file tree -> return True) new_files
 	liftM (addTestToManifest testm) $ foldr manifestEach (return man1) (zip new_fileskeys repinfos)
 
-zskipManifestIf :: (Typeable irep,IncK (IncForest fs) irep,ForestMD fs rep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),StableMD fs rep) =>
+zskipManifestIf :: (Typeable rep,Typeable irep,IncK (IncForest fs) irep,ForestMD fs rep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),StableMD fs rep,DeltaClass d) =>
 	Bool -> FilePath -> FilePath -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep
 	-> (FSTree fs -> ForestI fs rep)
-	-> (FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (SValueDelta rep)) -- delta loading function
+	-> (FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (d rep)) -- delta loading function
 	-> (rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs) -- delta storing function
 	-> Manifest fs -> MManifestForestO fs
 zskipManifestIf isEmptyEnv path path' df (tree' :: FSTree fs) rep dv load loadD manifestD man = do

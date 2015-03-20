@@ -49,9 +49,6 @@ import Language.Forest.FS.FSRep
 import Data.WithClass.MData
 import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
-
-
-
 import qualified Control.Exception as CE
 
 import Data.Data
@@ -59,6 +56,12 @@ import Data.Maybe
 import System.Random
 import Data.Proxy
 import Data.WithClass.MGenerics.Twins
+
+doZManifestNamed :: ZippedICForest fs args rep =>
+	Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> (ForestFSThunkI fs rep) -> Manifest fs -> MManifestForestO fs
+doZManifestNamed proxy args path tree rep man = do
+	irep <- lift $ Inc.getOutside rep
+	zupdateManifestScratchGeneric proxy args path tree irep man
 
 -- adds consistency checks for top-level specification arguments
 doZManifestArgs :: (ICRep fs,ForestArgs fs args) =>

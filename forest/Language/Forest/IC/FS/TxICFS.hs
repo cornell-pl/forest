@@ -331,6 +331,7 @@ instance FSRep TxICFS where
 		, fsTreeSym :: IORef (DList FSDelta,FSTreeSym) -- a sequence of symlink modifications since the start and the symlinks table at the time of this tree
 		}
 	
+	showFSTree = return . show
 	compareFSTree tree1 tree2 = return $ compare
 		(fsTreeTxId tree1,fsTreeFSVersion tree1,fsTreeVirtual tree1)
 		(fsTreeTxId tree2,fsTreeFSVersion tree2,fsTreeVirtual tree2)
@@ -586,14 +587,15 @@ instance ICRep TxICFS where
 			TxICThunkForce a stone -> return False
 
 -- tests for equality
-diffValueThunkTxICFS :: (IncK (IncForest TxICFS) content,Typeable content,ForestRep rep (ForestFSThunkI TxICFS content)) => Bool -> FSTree TxICFS -> rep -> ForestO TxICFS (ValueDelta TxICFS rep)
+diffValueThunkTxICFS :: (Typeable rep,IncK (IncForest TxICFS) content,Typeable content,ForestRep rep (ForestFSThunkI TxICFS content)) => Bool -> FSTree TxICFS -> rep -> ForestO TxICFS (ValueDelta TxICFS rep)
 diffValueThunkTxICFS isTop oldtree rep = do
 		thunk <- forestM $ bufferedTxICFSThunk $ to iso_rep_thunk rep
 		uid <- forestM $ forestIO $ readRef $ txICId thunk
 		(buff :: BuffTxICThunk Inside content) <- forestM $ bufferedTxICThunk thunk
 		let newtree = if isTop then buffTxICTree buff else buffTxICDeltaTree buff
 		cmp <- forestM $ compareFSTree oldtree newtree
-		return $ ValueDeltaTxICFS $ cmp == EQ
+		--debug ("diffValueThunkTxICFS " ++ show isTop ++" "++ show oldtree ++" "++ show newtree ++" "++ show (typeOf rep)) $
+		return $ ValueDeltaTxICFS $ cmp /= LT
 	
 -- arguments passed to transactional variables
 type TxICArgs = (Dynamic,FilePath)
@@ -818,7 +820,7 @@ instance ZippedICMemo TxICFS where
 		mb <- forestM $ forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
 		case mb of
 			Nothing -> return Nothing
-			Just (fromDynamic -> Just rep,mkWeak,tree) -> do
+			Just (fromDynamic -> Just rep,mkWeak,tree) -> debug ("found memo " ++ show path ++ " " ++ show tree) $ do
 				let var = to iso_rep_thunk rep
 				Just ((fromDynamic -> Just txargs,_),_) <- forestM $ forestIO $ readRef $ txICFSThunkArgs var
 				return $ Just (tree,txargs,rep)
@@ -1087,12 +1089,12 @@ throwTxICFS :: Exception e => e -> TxICFTM a
 throwTxICFS = Catch.throwM
 
 catchTxICFS :: Exception e => Bool -> TxICFTM a -> (e -> TxICFTM a) -> TxICFTM a
-catchTxICFS doWrites stm h = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxICFS doWrites stm (h :: e -> TxICFTM a) = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
-	catchSome (e::SomeException) = do
+	catchSome (e::e) = do
 		validateCatchTxICFS doWrites
-		h $ (fromJustNote "catchTxICFS") $ fromException e
+		h e
 
 -- the next tree is initialized as the same as the current tree
 initializeTxICFS :: TxICFTM b -> IO b 
@@ -1260,6 +1262,24 @@ parentCanonicalTree (SCons txlog _) = do
 	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	return cantree
 
+parentSyms :: TxICFSLogs -> ForestM TxICFS (DList FSDelta,FSTreeSym)
+parentSyms SNil = forestIO $ liftM (DList.empty,) $ readMVar symlinks
+parentSyms (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	forestIO $ readIORef $ fsTreeSym tree
+
+parentDelta :: TxICFSLogs -> ForestM TxICFS FSTreeDelta
+parentDelta SNil = return emptyFSTreeDelta
+parentDelta (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	forestIO $ readIORef $ fsTreeFSTreeDelta tree
+
+parentVirtual :: TxICFSLogs -> ForestM TxICFS Bool
+parentVirtual SNil = return False
+parentVirtual (SCons txlog _) = do
+	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+	return $ fsTreeVirtual tree
+
 -- we only unbuffer the child log
 unbufferTxICFSWrites :: ForestM TxICFS ()
 unbufferTxICFSWrites = do
@@ -1267,12 +1287,17 @@ unbufferTxICFSWrites = do
 	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- forestIO $ readRef txlog1
 	bufftbl1' <- forestIO $ WeakTable.new
 	memotbl1' <- forestIO $ WeakTable.new
+	
 	-- reset deltas
 	forestIO $ writeRef deltas Map.empty
 	-- current tree
-	treeDelta1' <- forestIO $ newIORef $ emptyFSTreeDelta
-	treeSym1' <- forestIO $ newIORef $ (DList.empty,Map.empty)
-	let tree1' = TxICFSTree txid 0 treeDelta1' False treeSym1'
+	treeDelta1' <- parentDelta txlogs_parent >>= forestIO . newIORef
+	treeVirtual1' <- parentVirtual txlogs_parent
+	treeSym1 <- forestIO $ readIORef $ fsTreeSym tree1
+	treeSym1' <- case treeSym1 of
+		((==DList.empty) -> True,syms) -> forestIO $ newIORef treeSym1
+		otherwise -> parentSyms txlogs_parent >>= forestIO . newIORef
+	let tree1' = TxICFSTree txid (fsTreeFSVersion tree1) treeDelta1' treeVirtual1' treeSym1'
 	cantree1' <- parentCanonicalTree txlogs_parent
 	forestIO $ writeRef txlog1 (tree1',DList.empty,tree1',reads1,bufftbl1',memotbl1',cantree1',tmps1)
 

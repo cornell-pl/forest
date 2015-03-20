@@ -186,8 +186,12 @@ readMeta = liftM fst . read
 
 class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK (IncForest fs) Forest_err,ICRep fs,ZippedICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep) => ZippedICForest fs args rep | rep -> args  where
 	
+	diffValue :: FSTree fs -> rep -> ForestO fs (ValueDelta fs rep)
+	
 	zload :: (Eq rep,FTK fs args rep var content) => ForestIs fs args -> FilePath -> ForestI fs rep
 	zload args path = forestM latestTree >>= \tree -> zloadScratchMemo Proxy args return path tree getForestMDInTree
+	
+	zloadScratchGeneric :: Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
 	
 	zloadScratch :: Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs rep
 	
@@ -216,13 +220,17 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 					Nothing -> load_scratch
 			Nothing -> load_scratch
 	
-	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
+	zloadDeltaGeneric :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
 	
-	zloadDeltaMemo :: (FTK fs args rep var content) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (SValueDelta rep)
+	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
+	
+	zloadDeltaMemo :: (FTK fs args rep var content) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
 	zloadDeltaMemo proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = do
 		drep <- zloadDelta proxy (args,dargs) path tree (rep,getMD) path' df tree' dv
 		inside $ addZippedMemo path' proxy args rep (Just tree')
 		return drep
+	
+	zupdateManifestScratchGeneric :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs
 	
 	-- returns a manifest and a computation that adds consistent entries to a memotable (to be run only when there are no fatal manifest errors)
 	zupdateManifestScratch :: Proxy args -> ForestIs fs args -> FilePath -> FSTree fs -> rep -> Manifest fs -> MManifestForestO fs
@@ -251,6 +259,8 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 					Nothing -> mani_scratch
 			Nothing -> mani_scratch
 	
+	zupdateManifestDeltaGeneric :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	
 	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	
 	zupdateManifestDeltaMemo :: (FTK fs args rep var content) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
@@ -264,6 +274,8 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 	
 	zmanifest' :: (FTK fs args rep var content) => Proxy args -> ForestIs fs args -> FilePath -> rep -> MManifestForestO fs
 	zmanifest' proxy args path rep = lift (forestM latestTree) >>= \tree -> lift (forestM (newManifestWith "/" tree)) >>= zupdateManifestScratchMemo proxy args path tree rep
+
+	zdefaultScratchGeneric :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
 
 	zdefaultScratch :: Proxy args -> ForestIs fs args -> FilePath -> ForestI fs rep
 	
@@ -381,7 +393,7 @@ data ForestDiffDict fs a = ForestDiffDict { forestDiffDict :: FSTree fs -> a -> 
 instance (ForestDiff fs a) => Sat (ForestDiffDict fs a) where
 	dict = ForestDiffDict { forestDiffDict = forestDiff }
 
-instance (ICRep fs,IncK (IncForest fs) a,Typeable a,ForestRep (ForestFSThunk fs l a) (ForestFSThunkI fs a)) => ForestDiff fs (ForestFSThunk fs l a) where
+instance (Typeable l,ICRep fs,IncK (IncForest fs) a,Typeable a,ForestRep (ForestFSThunk fs l a) (ForestFSThunkI fs a)) => ForestDiff fs (ForestFSThunk fs l a) where
 	forestDiff tree t = liftM isIdValueDelta $ diffValueThunk tree t
 
 instance (ICRep fs,MData (ForestDiffDict fs) (ForestO fs) a) => ForestDiff fs a where

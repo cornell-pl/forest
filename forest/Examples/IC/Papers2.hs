@@ -65,31 +65,31 @@ import Language.Forest.IC hiding (Id)
 |]
 
 [iforest|
-	type Paper (y :: YearId) (a :: AuthorId) = File Binary where (isPaperOf (fullpath this_att) y a)
+	data Paper (y :: YearId) (a :: AuthorId) = File Binary where (isPaperOf (fullpath this_att) y a)
 
-    type Supplemental (y :: YearId) (a :: AuthorId) = Directory {
+    data Supplemental (y :: YearId) (a :: AuthorId) = Directory {
 		supplementalFiles is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHidden p) ] 
 	} 
 
-	type Author (y :: YearId) (a :: AuthorId) = Directory {
+	data Author (y :: YearId) (a :: AuthorId) = Directory {
 		authorPapers is Map [ p :: Paper y a | p <- matches (GL "*"), (isNotHidden p) ] 
 	,   supplemental is "Supplemental" :: Maybe (Supplemental y a)
 	}
 
-	type Year (y :: YearId) = Directory {
+	data Year (y :: YearId) = Directory {
 		authors is Map [ a :: Author y a | a :: AuthorId <- matches (GL "*"), (isNotHidden $ show a) ]
 	}
 
-	type Articles = Map [ y :: Year y | y :: YearId <- matches yearRE ] where True
-	type Books    = Map [ y :: Year y | y :: YearId <- matches yearRE ]
-	type Media    = Map [ y :: Year y | y :: YearId <- matches yearRE ]
-	type Reports  = Map [ y :: Year y | y :: YearId <- matches yearRE ]
+	data Articles = Map [ y :: Year y | y :: YearId <- matches yearRE ] where True
+	data Books    = Map [ y :: Year y | y :: YearId <- matches yearRE ]
+	data Media    = Map [ y :: Year y | y :: YearId <- matches yearRE ]
+	data Reports  = Map [ y :: Year y | y :: YearId <- matches yearRE ]
 
-	type Library (articles :: [String]) = Directory {
+	data Library (articles :: [String]) = Directory {
 		database is "Database.papersdb" :: BinaryFile
 	}
 
-	type Papers2 = Directory {
+	data Papers2 = Directory {
 		articles is "Articles" :: Maybe Articles
 	,   books is "Books" :: Maybe Books
 	,   media is "Media" :: Maybe Media

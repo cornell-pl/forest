@@ -82,7 +82,7 @@ remove path = do
 
 pickFile :: [FilePath] -> FilePath
 pickFile files = case files of
-  [] -> "--NO FILE--"  -- an illegal file path
+  [] -> "--NOFILE--"  -- an illegal file path
   f:fs -> f
 
 mergeKeyedLists :: [(a,b)] -> [(a,c)] -> [(a,(b,c))]

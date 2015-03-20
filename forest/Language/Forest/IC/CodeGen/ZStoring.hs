@@ -58,8 +58,8 @@ import Language.Forest.IC.CodeGen.Loading
 import Language.Forest.IC.CodeGen.ZLoading
 import Language.Haskell.TH.Quote
 
-genZManifestM :: Name -> ForestTy -> [(TH.Pat,TH.Type)] -> ZEnvQ Exp
-genZManifestM rep_name forestTy pat_infos = do
+genZManifestM :: Bool -> Name -> ForestTy -> [(TH.Pat,TH.Type)] -> ZEnvQ Exp
+genZManifestM isTop rep_name forestTy pat_infos = do
 	fsName <- lift $ newName "fs"
 	treeName    <- lift $ newName "tree"
 	dtaName    <- lift $ newName "dta"
@@ -74,7 +74,7 @@ genZManifestM rep_name forestTy pat_infos = do
 	
 	case pat_infos of
 		[] -> do
-			core_bodyE <- genZManifestBody pathE treeE dtaE manE rep_name forestTy
+			core_bodyE <- genZManifestBody isTop pathE treeE dtaE manE rep_name forestTy
 			return $ LamE [VarP argsName,TupP [],pathP,treeP,dtaP,manP] core_bodyE
 		otherwise -> do
 			(targsP,argThunkNames) <- genZManifestArgsE (zip [1..] pat_infos) forestTy
@@ -90,18 +90,18 @@ genZManifestM rep_name forestTy pat_infos = do
 				let (margsE,margsP) = genPE margsName
 				let (newmanE,newmanP) = genPE newmanName
 				let (newdtaE,newdtaP) = genPE newdtaName
-				core_bodyE <- genZManifestBody pathE treeE newdtaE newmanE rep_name forestTy
+				core_bodyE <- genZManifestBody isTop pathE treeE newdtaE newmanE rep_name forestTy
 				return $ LamE [VarP argsName,margsP,pathP,treeP,VarP dtaName,manP] $ DoE [
 					BindS targsP $ AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE3 (VarE 'newArgs) (proxyN fs) proxyArgs margsE,
 					NoBindS $ Pure.appE5 (VarE 'doZManifestArgs) proxyArgs margsE dtaE (LamE [newdtaP,newmanP] core_bodyE) manE]
 
-genZManifestBody :: Exp -> Exp -> Exp -> Exp -> Name -> ForestTy -> ZEnvQ Exp
-genZManifestBody pathE treeE dtaE manE repN ty = case ty of 
-	Directory _ -> zmanifestE True ty pathE treeE dtaE manE
-	FConstraint _ (Directory _) _ -> zmanifestE True ty pathE treeE dtaE manE
+genZManifestBody :: Bool -> Exp -> Exp -> Exp -> Exp -> Name -> ForestTy -> ZEnvQ Exp
+genZManifestBody isTop pathE treeE dtaE manE repN ty = case ty of 
+	Directory _ -> zmanifestE isTop ty pathE treeE dtaE manE
+	FConstraint _ (Directory _) _ -> zmanifestE isTop ty pathE treeE dtaE manE
 	otherwise   -> do -- Decompose the representation type constructor
 		let dtaE' = AppE (VarE $ Pure.getUnTyName $ nameBase repN) dtaE
-		zmanifestE True ty pathE treeE dtaE' manE
+		zmanifestE isTop ty pathE treeE dtaE' manE
 
 -- loads top-level arguments into the environment
 genZManifestArgsE :: [(Int,(TH.Pat,TH.Type))] -> ForestTy -> ZEnvQ (Pat,[Name])
@@ -118,8 +118,8 @@ genZManifestArgE (i,(pat,pat_ty)) forestTy = do
 
 zmanifestE :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestE isTop ty pathE treeE dtaE manE = case ty of
-	Named f_name               -> zmanifestWithArgsE f_name [] pathE treeE dtaE manE
-	Fapp (Named f_name) argEs  -> zmanifestWithArgsE f_name argEs pathE treeE dtaE manE
+	Named f_name               -> zmanifestWithArgsE isTop f_name [] pathE treeE dtaE manE
+	Fapp (Named f_name) argEs  -> zmanifestWithArgsE isTop f_name argEs pathE treeE dtaE manE
 	FFile (file_name, argEOpt) -> zmanifestFile isTop file_name argEOpt pathE treeE dtaE manE
 	Archive archtype ty         -> zmanifestArchive isTop archtype ty pathE treeE dtaE manE
 	FSymLink         -> zmanifestSymLink isTop pathE treeE dtaE manE
@@ -129,14 +129,16 @@ zmanifestE isTop ty pathE treeE dtaE manE = case ty of
 	FComp cinfo     -> zmanifestComp isTop cinfo pathE treeE dtaE manE
 
 -- they are terminals in the spec
-zmanifestWithArgsE :: String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
-zmanifestWithArgsE ty_name [] pathE treeE dtaE manE = do
+zmanifestWithArgsE :: Bool -> String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
+zmanifestWithArgsE isTop ty_name [] pathE treeE dtaE manE = do
 	let proxyE = AppE (VarE 'proxyOf) $ TupE []
-	return $ Pure.appE6 (VarE 'zupdateManifestScratchMemo) proxyE (TupE []) pathE treeE dtaE manE
-zmanifestWithArgsE ty_name argsE pathE treeE dtaE manE = do
+	let manifest = if isTop then VarE 'doZManifestNamed else VarE 'zupdateManifestScratchGeneric
+	return $ Pure.appE6 manifest proxyE (TupE []) pathE treeE dtaE manE
+zmanifestWithArgsE isTop ty_name argsE pathE treeE dtaE manE = do
 	argsE <- mapM (\e -> forceVarsZEnvQ e return) argsE
 	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
-	return $ Pure.appE6 (VarE 'zupdateManifestScratchMemo) (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE treeE dtaE manE
+	let manifest = if isTop then VarE 'doZManifestNamed else VarE 'zupdateManifestScratchGeneric
+	return $ Pure.appE6 manifest (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE treeE dtaE manE
 
 zmanifestArchive :: Bool -> [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestArchive isTop archtype ty pathE treeE dtaE manE = do

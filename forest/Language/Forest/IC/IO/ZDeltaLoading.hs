@@ -60,6 +60,15 @@ import Data.Map (Map(..))
 import qualified Data.Map as Map
 import Language.Forest.IC.BX as BX
 
+doZLoadDeltaNamed :: (ZippedICForest fs args rep) =>
+	Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (ForestFSThunkI fs rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs rep) -> ForestO fs (SValueDelta (ForestFSThunkI fs rep))
+doZLoadDeltaNamed proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = do
+	irep <- Inc.getOutside rep
+	idv <- diffValueBelow dv diffValue tree irep
+	direp <- zloadDeltaGeneric proxy (args,dargs) path tree (irep,getMD) path' df tree' idv
+	Inc.set rep $ applyNSValueDelta direp irep
+	return Delta
+
 doZLoadDeltaFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
 	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),rept ~ ForestFSThunkI fs ((Forest_md fs,md),pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md)
 	=> Bool -> ForestI fs arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
@@ -292,8 +301,7 @@ doZLoadDeltaArgs :: (Typeable rep,ForestArgs fs args,ICRep fs) =>
 	-> ForestO fs (d rep)
 doZLoadDeltaArgs proxy (margs,_) (rep,getMD) (tree' :: FSTree fs) loadD = debug ("doLoadDeltaArgs") $ do
 	arg_thunks <- inside $ newArgs (Proxy :: Proxy fs) proxy margs -- creates new thunks to hold the new expressions
-	d <- loadD arg_thunks ((rep),getMD)
-	debug ("doZLoadDeltaArgs " ++ show (typeOf rep)) $ return d
+	loadD arg_thunks ((rep),getMD)
 
 doZLoadDeltaDirectory :: (IncK (IncForest fs) FileInfo,Typeable rep,IncK (IncForest fs) Forest_err,IncK (IncForest fs) (Forest_md fs, rep),DeltaClass d,ICRep fs) =>
 	ForestI fs FilePath -> (ForestFSThunkI fs (Forest_md fs,rep),GetForestMD fs) -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs
@@ -315,7 +323,7 @@ doZLoadDeltaDirectory mpath (rep_thunk,getMD) path' oldtree df (tree' :: FSTree 
 		path <- inside mpath
 		let fs = Proxy :: Proxy fs
 		exists <- forestM $ doesDirectoryExistInTree path oldtree
-		exists' <- forestM $ doesDirectoryExistInTree path' tree'
+		exists' <- if isEmptyTopFSTreeD fs df then return exists else forestM (doesDirectoryExistInTree path' tree')
 		debug ("doLoadDeltaDirectory: " ++ show (path,exists,path',exists')) $ case (exists,exists') of
 			(False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeD fs df) of
 				(True,True,True) -> return Id
@@ -373,7 +381,7 @@ doZLoadDeltaDirectoryInner mpath ((fmd,irep),getMD) path' oldtree df (tree' :: F
 	path <- inside mpath
 	let fs = Proxy :: Proxy fs
 	exists <- forestM $ doesDirectoryExistInTree path oldtree
-	exists' <- forestM $ doesDirectoryExistInTree path' tree'
+	exists' <- if isEmptyTopFSTreeD fs df then return exists else forestM (doesDirectoryExistInTree path' tree')
 	debug ("doLoadDeltaDirectory: " ++ show (path,exists,path',exists')) $ case (exists,exists') of
 		(False,False) -> case (path == path',isIdValueDelta dv,isEmptyTopFSTreeD fs df) of
 			(True,True,True) -> return $ StableVD Id
@@ -424,7 +432,7 @@ doZLoadDeltaMaybeInner mpath (mb_rep,getMD) path' (oldtree :: FSTree fs) df tree
 	let fs = Proxy :: Proxy fs
 	path <- inside mpath
 	exists <- forestM $ doesExistInTree path oldtree
-	exists' <- forestM $ doesExistInTree path' tree'
+	exists' <- if isEmptyTopFSTreeD fs df then return exists else forestM (doesExistInTree path' tree')
 	case (exists,mb_rep,exists') of
 		(False,Nothing,False) -> do
 			case (path == path',isIdValueDelta dv,isEmptyTopFSTreeD fs df) of
@@ -460,7 +468,7 @@ doZLoadDeltaMaybe mpath (rep_thunk,getMD) path' oldtree df (tree' :: FSTree fs) 
 	if (not $ isIdValueDelta topdv) then load_maybe else do
 		path <- inside mpath
 		exists <- forestM $ doesExistInTree path oldtree
-		exists' <- forestM $ doesExistInTree path' tree'
+		exists' <- if isEmptyTopFSTreeD fs df then return exists else forestM (doesExistInTree path' tree')
 		rep@(fmd,mb_rep) <- Inc.getOutside rep_thunk
 		case (exists,mb_rep,exists') of
 			(False,Nothing,False) -> do
@@ -701,6 +709,13 @@ doZLoadDeltaCompoundFileWithConstraint mpath path' file' key (Just rep) oldtree 
 			return (Just (key,rep'),repkind)
 		else return (Nothing,NonStable)
 
+zstopLoadIfNS :: (Typeable irep,IncK (IncForest fs) irep,ForestMD fs rep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),StableMD fs rep) =>
+	String -> Bool -> ForestI fs FilePath -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> (rep,GetForestMD fs)
+	-> (GetForestMD fs -> ForestI fs rep) -- static loading function
+	-> (ValueDelta fs rep -> (rep,GetForestMD fs) -> ForestO fs (SValueDelta rep)) -- delta loading function
+	-> ForestO fs (NSValueDelta rep)
+zstopLoadIfNS str isEmptyEnv mpath path' df tree' dv repmd load loadD = liftM toNSValueDelta $ zstopLoadIf str isEmptyEnv mpath path' df tree' dv repmd load loadD
+
 -- we try @skipUnevaluated@ first to avoid forcing unecessary original data
 zstopLoadIf :: (Typeable irep,IncK (IncForest fs) irep,ForestMD fs rep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),StableMD fs rep) =>
 	String -> Bool -> ForestI fs FilePath -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> (rep,GetForestMD fs)
@@ -717,6 +732,13 @@ zstopLoadIf str isEmptyEnv mpath path' df (tree' :: FSTree fs) dv repmd load loa
 		if (isEmptyEnv && samePath && noFSChange && noDataChange)
 			then debug ("skippedUpdate "++str) $ return Id
 			else loadD dv newrepmd
+
+zskipLoadUnevaluatedNS :: (Typeable irep,IncK (IncForest fs) irep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),ForestMD fs rep,StableMD fs rep) =>
+	String -> FilePath -> FSTree fs -> (rep,GetForestMD fs)
+	-> (GetForestMD fs -> ForestI fs rep) -- static loading function
+	-> ((rep,GetForestMD fs) -> ForestO fs (SValueDelta rep)) -- delta loading function
+	-> ForestO fs (NSValueDelta rep)
+zskipLoadUnevaluatedNS str path' tree' olddata load loadD = liftM toNSValueDelta $ zskipLoadUnevaluated str path' tree' olddata load loadD
 	
 zskipLoadUnevaluated :: (Typeable irep,IncK (IncForest fs) irep,ICRep fs,ForestRep rep (ForestFSThunkI fs irep),ForestMD fs rep,StableMD fs rep) =>
 	String -> FilePath -> FSTree fs -> (rep,GetForestMD fs)

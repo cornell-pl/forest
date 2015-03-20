@@ -60,6 +60,7 @@ type GetForestMD fs = (FilePath -> FSTree fs -> ForestI fs (Forest_md fs))
 data Forest_md fs = Forest_md { errors :: ForestFSThunkI fs Forest_err, fileInfo :: ForestFSThunkI fs FileInfo } deriving (Typeable)
 
 deriving instance (ICRep fs,ForestInput fs FSThunk Inside) => Eq (Forest_md fs)
+deriving instance (ICRep fs,ForestInput fs FSThunk Inside) => Ord (Forest_md fs)
 
 instance (DeepTypeable fs) => DeepTypeable (Forest_md fs) where
 	typeTree (_::Proxy (Forest_md fs)) = MkTypeTree (mkName "Language.Forest.FS.ICRep.Forest_md") [typeTree (Proxy::Proxy fs)] [MkConTree (mkName "Language.Forest.FS.ICRep.Forest_md") [typeTree (Proxy::Proxy (ForestFSThunkI fs Forest_err)),typeTree (Proxy::Proxy (ForestFSThunkI fs FileInfo))]]
