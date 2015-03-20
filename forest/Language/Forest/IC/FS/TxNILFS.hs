@@ -974,7 +974,8 @@ instance Thunk (FSThunk TxNILFS) Inside (IncForest TxNILFS) IORef IO where
 		tree <- forestM latestTree
 		v <- liftM fst $ readTxNILFSThunk thunk tree
 		b <- inside $ isUnevaluatedFSThunk var
-		debug ("read " ++ show (typeOf var) ++ show b) $ return v
+		let uid = txNILFSFSThunkId var
+		debug ("read " ++ show uid ++ " " ++ show (typeOf var) ++ show b) $ return v
 instance Thunk (FSThunk TxNILFS) Outside (IncForest TxNILFS) IORef IO where
 	new m = do
 		uid <- forestM $ forestIO newUnique
@@ -1061,12 +1062,13 @@ newTxNILFS proxy args path = inside $ zload (vmonadArgs proxyTxNILFS proxy args)
 loadTxNILFS :: (ForestLayer TxNILFS l,FTK TxNILFS args rep var content) => Proxy args -> rep -> ForestL TxNILFS l ()
 loadTxNILFS proxy rep = do
 	let t = to iso_rep_thunk rep
+	let uid = txNILFSFSThunkId t
 	(txargs,path) <- liftM (fromJustNote "loadTxNILFS1") $ forestM $ getFTVArgsNILFS proxy rep
 	oldtree <- inside $ treeTxNILFSFSThunk t
 	tree <- forestM latestTree
 	df <- liftM (fromJustNote "loadTxNILFS2") $ forestM $ diffFS oldtree tree path
 	-- load incrementally at the latest tree
-	inside $ unsafeWorld $ debug ("loadTxNILFS " ++ show path) $ do
+	inside $ unsafeWorld $ debug ("loadTxNILFS " ++ show path ++" "++ show uid) $ do
 		dv <- diffValueThunk oldtree rep
 		ds <- deltaArgs oldtree proxy txargs txargs
 		let deltas = (txargs,ds)
