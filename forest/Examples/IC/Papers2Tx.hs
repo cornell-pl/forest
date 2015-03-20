@@ -188,7 +188,7 @@ mainNILFS = timeIt $ do
 		Just articles2 <- liftM articles $ readData papers2
 		names <- articlesPaperNamesNILFS articles2
 	
-		addArticleNILFS (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
+--		addArticleNILFS (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
 		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
 		Just articles2 <- liftM articles $ readData papers2
 		names2 <- articlesPaperNamesNILFS articles2
