@@ -35,12 +35,12 @@
   (major1) == 3 && (major2) <  1 || \
   (major1) == 3 && (major2) == 1 && (minor) <= 3)
 
-/* tool cpphs-1.18.6 */
-#define TOOL_VERSION_cpphs "1.18.6"
+/* tool cpphs-1.18.5 */
+#define TOOL_VERSION_cpphs "1.18.5"
 #define MIN_TOOL_VERSION_cpphs(major1,major2,minor) (\
   (major1) <  1 || \
   (major1) == 1 && (major2) <  18 || \
-  (major1) == 1 && (major2) == 18 && (minor) <= 6)
+  (major1) == 1 && (major2) == 18 && (minor) <= 5)
 
 /* tool gcc-4.8 */
 #define TOOL_VERSION_gcc "4.8"
