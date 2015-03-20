@@ -831,7 +831,7 @@ readTxNILFSThunk t mtree = do
 			let uid = txNILFSId t
 			-- add current thunk as a parent of its content thunks
 			deltatree <- addTxNILFSParent Proxy stone uid mtree a
-			debug ("evaluated " ++ show (typeRep t)) $ return (buff { buffTxNILFSData = dta', buffTxNILFSDeltaTree = deltatree },(a,deltatree))
+			debug ("evaluated " ++ show (typeRep t) ++ " " ++ show uid) $ return (buff { buffTxNILFSData = dta', buffTxNILFSDeltaTree = deltatree },(a,deltatree))
 		TxNILFSThunkForce a stone -> return (buff,(a,mtree))
 	changeTxNILFSThunk t eval
 
@@ -899,8 +899,6 @@ instance ZippedICMemo TxNILFS where
 				Just tree -> do
 					let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
 					forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak,tree)
-					findZippedMemo proxy path (proxyOf rep) -- just for testing
-					return ()
 	
 	findZippedMemo args path proxy = debug ("finding "++show path) $ do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
