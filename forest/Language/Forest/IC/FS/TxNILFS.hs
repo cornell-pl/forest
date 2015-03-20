@@ -972,7 +972,9 @@ instance Thunk (FSThunk TxNILFS) Inside (IncForest TxNILFS) IORef IO where
 	read var = do
 		thunk <- forestM $ bufferedTxNILFSFSThunk var
 		tree <- forestM latestTree
-		liftM fst $ readTxNILFSThunk thunk tree
+		v <- liftM fst $ readTxNILFSThunk thunk tree
+		b <- inside $ isUnevaluatedFSThunk var
+		debug ("read " ++ show (typeOf var) ++ show b) $ return v
 instance Thunk (FSThunk TxNILFS) Outside (IncForest TxNILFS) IORef IO where
 	new m = do
 		uid <- forestM $ forestIO newUnique
