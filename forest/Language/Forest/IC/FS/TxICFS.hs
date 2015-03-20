@@ -130,6 +130,19 @@ type TxICFSReads = Set FilePath
 type TxICFSChanges = (TxICFSReads,FSTreeDelta)
 type TxICFSChangesFlat = (TxICFSReads,TxICFSWrites)
 
+findTxICMemo :: Typeable rep => FilePath -> Proxy rep -> ForestM TxICFS (Maybe (rep,MkWeak,FSTree TxICFS))
+findTxICMemo path (_ :: Proxy rep) = do
+	(starttime,txid,deltas,txlogs) <- Reader.ask
+	
+	let find txlog m = do
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+		mb <- forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
+		case mb of
+			Just (fromDynamic -> Just rep,mkWeak,tree) -> do
+				return $ Just (rep,mkWeak,tree)
+			otherwise -> m
+	Foldable.foldr find (return Nothing) txlogs
+
 bufferTxICFSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestFSThunk TxICFS l a -> TxICThunk l a -> ForestM TxICFS ()
 bufferTxICFSThunk var thunk = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
@@ -814,13 +827,13 @@ instance ZippedICMemo TxICFS where
 				let mkWeak = MkWeak $ mkWeakRefKey $ txICFSThunkArgs var
 				forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (toDyn rep,mkWeak,tree)
 	
-	findZippedMemo args path (Proxy :: Proxy rep) = do
+	findZippedMemo args path proxy = do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
-		mb <- forestM $ forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
+		mb <- forestM $ findTxICMemo path proxy
 		case mb of
 			Nothing -> return Nothing
-			Just (fromDynamic -> Just rep,mkWeak,tree) -> debug ("found memo " ++ show path ++ " " ++ show tree) $ do
+			Just (rep,mkWeak,tree) -> debug ("found memo " ++ show path ++ " " ++ show tree) $ do
 				let var = to iso_rep_thunk rep
 				Just ((fromDynamic -> Just txargs,_),_) <- forestM $ forestIO $ readRef $ txICFSThunkArgs var
 				return $ Just (tree,txargs,rep)

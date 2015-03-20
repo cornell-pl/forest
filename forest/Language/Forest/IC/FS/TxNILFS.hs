@@ -181,6 +181,19 @@ repairTxNILFSMemoTable = WeakTable.mapMGeneric__ (forestM . forestIO) repairTxNI
 	repairTxNILFSMemoEntry :: TxNILFSLayer l => ((FilePath,TypeRep),(DynamicNILFS,MkWeak,FSTree TxNILFS)) -> ForestL TxNILFS l ()
 	repairTxNILFSMemoEntry ((path,tyRep),(DynNILFS rep,mkWeak,tree)) = loadTxNILFS Proxy rep
 
+findTxNILFSMemo :: FTK TxNILFS args rep var content => FilePath -> Proxy rep -> ForestM TxNILFS (Maybe (rep,MkWeak,FSTree TxNILFS))
+findTxNILFSMemo path (_ :: Proxy rep) = do
+	(starttime,txid,deltas,txlogs) <- Reader.ask
+	
+	let find txlog m = do
+		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
+		mb <- forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
+		case mb of
+			Just (fromDynNILFS -> Just rep,mkWeak,tree) -> do
+				return $ Just (rep,mkWeak,tree)
+			otherwise -> m
+	Foldable.foldr find (return Nothing) txlogs
+
 bufferTxNILFSFSThunk :: (IncK (IncForest TxNILFS) a,AddTxNILFSParent l a,TxNILFSLayer l) => ForestFSThunk TxNILFS l a -> TxNILFSThunk l a -> ForestM TxNILFS ()
 bufferTxNILFSFSThunk var thunk = do
 	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
@@ -887,13 +900,13 @@ instance ZippedICMemo TxNILFS where
 					let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
 					forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak,tree)
 	
-	findZippedMemo args path (Proxy :: Proxy rep) = do
+	findZippedMemo args path proxy = debug ("finding "++show path) $ do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
-		mb <- forestM $ forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
+		mb <- forestM $ findTxNILFSMemo path proxy
 		case mb of
 			Nothing -> return Nothing
-			Just (fromDynNILFS -> Just rep,mkWeak,tree) -> do
+			Just (rep,mkWeak,tree) -> do
 				stree <- forestM $ showFSTree tree
 				debug ("found memo " ++ show path ++ " " ++ stree) $ do
 					let var = to iso_rep_thunk rep
