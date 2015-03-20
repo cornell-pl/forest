@@ -181,6 +181,20 @@ addArticleNILFS year author name content = do
 --		articlesPaperNamesIC articles2
 --	print names2
 
+mainNILFS :: IO ()
+mainNILFS = timeIt $ do
+	res <- atomicallyTxNILFS papersNILFSRoot $ do
+		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
+		Just articles2 <- liftM articles $ readData papers2
+		names <- articlesPaperNamesNILFS articles2
+	
+		addArticleNILFS (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
+		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
+		Just articles2 <- liftM articles $ readData papers2
+		names2 <- articlesPaperNamesNILFS articles2
+		return (names,names2)
+	print res
+
 mainNILFS2 :: IO ()
 mainNILFS2 = timeIt $ do
 	names <- atomicallyTxNILFS papersNILFSRoot $ do
@@ -196,6 +210,6 @@ mainNILFS2 = timeIt $ do
 		articlesPaperNamesNILFS articles2
 	print names2
 
-main = mainNILFS2
+main = mainNILFS
 
 
