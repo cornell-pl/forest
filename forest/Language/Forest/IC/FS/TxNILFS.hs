@@ -881,11 +881,11 @@ overwriteTxNILFSThunk var ma = do
 instance ZippedICMemo TxNILFS where
 
 	addZippedMemo path proxy args rep mb_tree = do
+		let var = to iso_rep_thunk rep
 		smb_tree <- case mb_tree of
 			Nothing -> return "Nothing"
 			Just tree -> forestM $ liftM ("Just "++) $ showFSTree tree
-		debug ("added memo "++show path ++ smb_tree) $ do
-			let var = to iso_rep_thunk rep
+		debug ("added memo "++show path ++ smb_tree ++" "++ show (txNILFSFSThunkId var) ++" "++ show (typeOf rep)) $ do
 			(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 			(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 			
@@ -900,7 +900,7 @@ instance ZippedICMemo TxNILFS where
 					let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
 					forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak,tree)
 	
-	findZippedMemo args path proxy = debug ("finding "++show path) $ do
+	findZippedMemo args path (proxy :: Proxy rep) = debug ("finding "++show path ++" "++ show (typeOf (undefined::rep))) $ do
 		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 		mb <- forestM $ findTxNILFSMemo path proxy
