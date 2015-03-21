@@ -897,7 +897,8 @@ instance ZippedICMemo TxNILFS where
 			case mb_tree of
 				Nothing -> return ()
 				Just tree -> do
-					let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
+					let mkWeak = MkWeak $ mkWeakKey memotbl
+					--let mkWeak = MkWeak $ mkWeakRefKey $ txNILFSFSThunkArgs var
 					forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (DynNILFS rep,mkWeak,tree)
 	
 	findZippedMemo args path (proxy :: Proxy rep) = debug ("finding "++show path ++" "++ show (typeOf (undefined::rep))) $ do
