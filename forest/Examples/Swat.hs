@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
-module Swat where
+module Main where
 import Language.Pads.Padsc hiding (take, rest, head)
 import Language.Pads.BaseTypes
 import Language.Forest.Forestc hiding (test, numErrors)
@@ -13,6 +13,7 @@ import Data.Set (Set(..))
 import Data.Char (isSpace)
 import Control.Monad
 import System.IO.Unsafe (unsafePerformIO)
+import System.Environment
 
 ws = REd "[ \t]*" " "
 fileName = REd "[a-zA-Z.0-9]*" "a"
@@ -246,6 +247,7 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
  |]
 
 dir = "/home/richard/Documents/forest/TxtInOut/"
+dir2 = "fig.fig"
 
 testSOL :: IO (SOL, SOL_md)
 testSOL = parseFile (dir ++ "000050001.sol")
@@ -293,11 +295,11 @@ testplant = parseFile (dir ++ "plant.dat")
 
 testplant_md = liftM snd testplant
 
-test :: IO (FIG, FIG_md)
-test = parseFile "/home/richard/Documents/forest/TxtInOut/fig.fig"
+test :: FilePath -> IO (FIG, FIG_md)
+test = parseFile
 
-test_rep = liftM fst test
-test_md = liftM snd test
+test_rep = liftM fst . test
+test_md = liftM snd . test
 
 isEntry :: SwatLine -> Bool
 isEntry (SwatLine l) = False
@@ -571,4 +573,13 @@ testSUB = do
   print $ concat $ map hruFiles hruInfo
   print $ chms swat
   return ()
+
+main :: IO ()
+main = do
+  file:_ <- getArgs
+  md <- test_md file
+  rep <- test_rep file
+  print md
+  print rep
+  print $ numErrors $ get_md_header md 
 	
