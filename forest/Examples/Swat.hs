@@ -13,15 +13,21 @@ import Data.Set (Set(..))
 import Data.Char (isSpace)
 import Control.Monad
 import System.IO.Unsafe (unsafePerformIO)
+
 ws = REd "[ \t]*" " "
 fileName = REd "[a-zA-Z.0-9]*" "a"
+alphaNum = REd "[a-zA-Z0-9]*" "a"
 uc = REd "[A-Z]+" "A"
+alpha = REd "[a-zA-Z]*" "a"
 
 trim :: String -> String
 trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
        removeWS . reverse . removeWS . reverse
 
--- Known issue: we assume unix line endings for fig file.
+-- Known issue: we assume unix line endings for files on system (pcp, fig).
+-- Note: doesn't work on default pcp.pcp or tmp.tmp file because it appears 
+--       those files are missing newlines at the end. Not sure if this is an 
+--       input error, or something I should take into account?
 [pads|
        data NumEntry = NumEntry {
              ws
@@ -42,6 +48,7 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
            }
            
        type SwatLines = [Line SwatLine] terminator EOF
+       data SwatFile = SwatFile {swatValues :: SwatLines}
        data SwatLine = SwatDouble NumEntry | SwatString StrEntry | SwatLine StringLn
        data Preamble = Preamble
            { f :: [Line StringLn] length 2
@@ -96,15 +103,195 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
               subLines :: SubLines
             , hruLines :: HruLines
             }
+
+        type HeaderLine = (alphaNum, ws, Double)
+        data PcpLine = PcpLine {
+              pcpYear :: [Char] length 4
+            , pcpDate :: [Char] length 3
+            , precip :: [Char] length 5
+            }
+
+        type PcpLines = [(PcpLine, EOR)] terminator EOF
+
+        data PCP = PCP {
+              Line StringLn
+            , [Line HeaderLine] length 3
+            , pcpLines :: PcpLines
+            }
+
+        data TmpLine = TmpLine {
+              tmpYear :: [Char] length 4
+            , tmpDate :: [Char] length 3
+            , maxTemp :: [Char] length 5
+            , minTemp :: [Char] length 5
+            }
+
+        type TmpLines = [(TmpLine, EOR)] terminator EOF
+        data TMP = TMP {
+              Line StringLn
+            , [Line HeaderLine] length 3
+            , tmpLines :: TmpLines
+            }
+
+        type WSDouble = (ws, Double)
+        type LabelDouble = ([Char] length 10, ws, "=", ws, Double)
+        type PLine1 = [WSDouble] length 10
+        type PLine2 = [WSDouble] length 5
+        data PEntry = PEntry {
+              ws, Int, ws, plantLabel :: StringME uc, ws, Int, EOR
+            , [Line PLine1] length 3
+            , PLine2
+            }
+        type PlantLines = [Line PEntry] terminator EOF
+        data PLANT = PLANT {plantLines :: PlantLines}
+
+        data TillLine = TillLine {
+              ws, Int, ws
+            , tillName :: [Char] length 8, ws
+            , tillEff :: Double, ws
+            , tillDepth :: Double, ws
+            , Double}
+        type TillLines = [Line TillLine] terminator EOF
+        data TILL = TILL {tillLines :: TillLines}
+
+        type ULine2 = [WSDouble] length 8
+        data ULine1 = Uline1 {ws, Int, ws, urbanLabel :: StringME uc 
+                           , [Char] length 56, WSDouble, WSDouble, EOR}
+        type UrbanLine = (ULine1, ULine2)
+        type UrbanLines = [Line UrbanLine] terminator EOF
+        data URBAN = URBAN {urbanLines :: UrbanLines}
+
+        type WusLine = [WSDouble] length 6
+        type WusLines = [Line WusLine] terminator EOF
+        data WUS = WUS {
+              [Line StringLn] length 3
+            , wusLines :: WusLines
+            }
+
+        type WGNLine = [WSDouble] length 12
+        type WGNLatLong = [LabelDouble] length 2
+        type WGNLines = [Line WGNLine] terminator EOF
+        data WGN = WGN {
+              Line StringLn
+            , wgnLatLong :: Line WGNLatLong
+            , wgnElev :: Line LabelDouble
+            , wgnRain :: Line LabelDouble
+            , wgnLines :: WGNLines
+            }
+
+        type ColonLabel = [Char] terminator ":"
+        type CLine1 = [WSDouble] length 10
+        type CHMLine = (ColonLabel, CLine1)
+        type CHMEndLine = [WSDouble] length 3
+        type CHMEndLines = [Line CHMEndLine] terminator EOF
+        data CHM = CHM {
+              [Line StringLn] length 2
+            , chmData :: [Line CHMLine] length 6
+            , [Line StringLn] length 3
+            , chmPestData :: CHMEndLines
+            }
+
+        data DateFloatLine = DateFloatLine {
+              year :: [Char] length 4
+            , date :: [Char] length 3
+            , info :: [Char] length 8
+            }
+
+        type DateFloatLines = [Line DateFloatLine] terminator EOF
+        data DateFloatFile = DateFloatFile {
+              Line StringLn
+            , dateFloatLines :: DateFloatLines
+            }
+
+        data PestLine = PestLine {
+              pestNum :: [Char] length 3
+            , pestName :: [Char] length 17
+            , pestSKOC :: [Char] length 10
+            , pestWOF :: [Char] length 5
+            , pestHLIFE_F :: [Char] length 8
+            , pestHLIFE_S :: [Char] length 8
+            , pestAP_EF :: [Char] length 5
+            , pestWSOL :: [Char] length 11
+            }
+        type PestLines = [Line PestLine] terminator EOF
+        data PEST = PEST {pestLines :: PestLines}
+
+        data FertLine = FertLine {
+              fertNum :: [Char] length 4, " "
+            , fertName :: [Char] length 8
+            , fertMineralN :: [Char] length 8
+            , fertMineralP :: [Char] length 8
+            , fertOrgN :: [Char] length 8
+            , fertOrgP :: [Char] length 8
+            , fertAmmN :: [Char] length 8
+            , bactPers :: [Char] length 8
+            , bactLP :: [Char] length 10
+            , bactPart :: [Char] length 10
+            }
+        type FertLines = [Line FertLine] terminator EOF
+        data FERT = FERT {fertLines :: FertLines}
+                 
+        type SolLineDesc = [Char] terminator ":"
+        type SolLineTopStr = (SolLineDesc,  ws, StringLn)
+        type SolLineTopVal = (SolLineDesc, ws, Double)
+        type SolLineBot = (SolLineDesc, WSDouble, WSDouble)
+        data SOL = SOL {
+              Line StringLn
+            , solDesc :: [Line SolLineTopStr] length 2
+            , solVals :: [Line SolLineTopVal] length 3
+            , Line StringLn
+            , solBotVals :: [Line SolLineBot] length 14
+            }
+
  |]
 
 dir = "/home/richard/Documents/forest/TxtInOut/"
 
-testsub :: IO (SUB, SUB_md)
-testsub = parseFile (dir ++ "000010000.sub")
+testSOL :: IO (SOL, SOL_md)
+testSOL = parseFile (dir ++ "000050001.sol")
 
-testsub_rep = liftM fst testsub
-testsub_md = liftM snd testsub
+testSOL_md = liftM snd testSOL
+
+testCHM :: IO (CHM, CHM_md)
+testCHM = parseFile (dir ++ "000050001.chm")
+
+testCHM_md = liftM snd testCHM
+
+testWGN :: IO (WGN, WGN_md)
+testWGN = parseFile (dir ++ "000050000.wgn")
+
+testwgn_md = liftM snd testWGN
+
+testWus :: IO (WUS, WUS_md)
+testWus = parseFile (dir ++ "000050000.wus")
+
+testwus_md = liftM snd testWus
+
+testurban :: IO (URBAN, URBAN_md)
+testurban = parseFile (dir ++ "urban.dat")
+
+testurban_md = liftM snd testurban
+
+testtill :: IO (TILL, TILL_md)
+testtill = parseFile (dir ++ "till.dat")
+
+testtill_md = liftM snd testtill
+
+testpcp :: IO (PCP, PCP_md)
+testpcp = parseFile (dir ++ "pcp1.pcp")
+
+testpcp_rep = liftM fst testpcp
+testpcp_md = liftM snd testpcp
+
+testtmp :: IO (TMP, TMP_md)
+testtmp = parseFile (dir ++ "tmp.tmp")
+
+testtmp_md = liftM snd testtmp
+
+testplant :: IO (PLANT, PLANT_md)
+testplant = parseFile (dir ++ "plant.dat")
+
+testplant_md = liftM snd testplant
 
 test :: IO (FIG, FIG_md)
 test = parseFile "/home/richard/Documents/forest/TxtInOut/fig.fig"
@@ -277,46 +464,34 @@ septValid sols hruLines =
     Set.fromList (map fst sols) == Set.fromList (concat (map solFiles hruLines))
 
 [forest|
-         type PCP = TextFile
          type CST = TextFile
-         type SLR = TextFile
-         type WND = TextFile
-         type RH = TextFile
-         type BSN = TextFile
-         type PLANT = TextFile
-         type TILL = TextFile
-         type PEST = TextFile
-         type FERT = TextFile
-         type URBAN = TextFile
-         type TMP = TextFile
-         type RTE = TextFile
-         type SWQ = TextFile
-         type HRU = TextFile
-         type MGT = TextFile
-         type SOL = TextFile
-         type CHM = TextFile
-         type GW = TextFile
-         type SEP = TextFile
-         type WUS = TextFile
-         type PND = TextFile
-         type WGN = TextFile
+         type SLR = File DateFloatFile
+         type WND = File DateFloatFile
+         type RH = File DateFloatFile
+         type BSN = File SwatFile
+         type RTE = File SwatFile
+         type SWQ = File SwatFile
+         type HRU = File SwatFile
+         type MGT = File SwatFile
+         type GW = File SwatFile
+         type SEP = File SwatFile
+         type PND = File SwatFile
 
          type Swat_d = Directory 
 	     { cio is "file.cio" :: File Preamble
-             , output is "output.sub" :: TextFile
-	     , pcps is [f :: PCP | f <- matches <|GL "*.pcp" |>]
-             , tmps is [f :: TMP | f <- matches <|GL "*.tmp" |>]
+	     , pcps is [f :: File PCP | f <- matches <|GL "*.pcp" |>]
+             , tmps is [f :: File TMP | f <- matches <|GL "*.tmp" |>]
              , fig is <| figFile $ swatLines cio |> :: File FIG
              , cst matches <| RE (cstFile $ swatLines cio) |> :: Maybe CST
              , wnd matches <| RE (wndFile $ swatLines cio) |> :: Maybe WND
              , rhf matches <| RE (rhFile $ swatLines cio) |> :: Maybe RH
              , slr matches <| RE (slrFile $ swatLines cio) |> :: Maybe SLR
              , bsn is <| bsnFile $ swatLines cio |> :: BSN
-             , plant is <| plantFile $ swatLines cio |> :: PLANT
-             , till is <| tillFile $ swatLines cio |> :: TILL
-             , pest is <| pestFile $ swatLines cio |> :: PEST
-             , fert is <| fertFile $ swatLines cio |> :: FERT
-             , urban is <| urbanFile $ swatLines cio |> :: URBAN
+             , plant is <| plantFile $ swatLines cio |> :: File PLANT
+             , till is <| tillFile $ swatLines cio |> :: File TILL
+             , pest is <| pestFile $ swatLines cio |> :: File PEST
+             , fert is <| fertFile $ swatLines cio |> :: File FERT
+             , urban is <| urbanFile $ swatLines cio |> :: File URBAN
 
              , subs is [f :: File SUB | f <- matches <|GL "*.sub" |>, <| f /= "output.sub" |>]
              , rtes is [f :: RTE | f <- matches <|GL "*.rte" |>]
@@ -324,13 +499,13 @@ septValid sols hruLines =
 
              , hrus is [f :: HRU | f <- matches <|GL "*.hru" |>, <| f /= "output.hru" |>]
              , mgts is [f :: MGT | f <- matches <|GL "*.mgt" |>]
-             , sols is [f :: SOL | f <- matches <|GL "*.sol" |>]
-             , chms is [f :: CHM | f <- matches <|GL "*.chm" |>]
+             , sols is [f :: File SOL | f <- matches <|GL "*.sol" |>]
+             , chms is [f :: File CHM | f <- matches <|GL "*.chm" |>]
              , gws is [f :: GW | f <- matches <|GL "*.gw" |>]
              , seps is [f :: SEP | f <- matches <|GL "*.sep" |>]
-             , wgns is [f :: WGN | f <- matches <|GL "*.wgn" |>]
+             , wgns is [f :: File WGN | f <- matches <|GL "*.wgn" |>]
              , pnds is [f :: PND | f <- matches <|GL "*.pnd" |>]
-             , wuss is [f :: WUS | f <- matches <|GL "*.wus" |>]
+             , wuss is [f :: File WUS | f <- matches <|GL "*.wus" |>]
 
              , all_files  is [ f :: TextFile     | f <- matches <|GL "*"|> ]
              } where <| pcpValid (pcps this) (swatLines $ cio this)
