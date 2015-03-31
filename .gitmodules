@@ -1,0 +1,3 @@
+[submodule "pads-haskell"]
+	path = pads-haskell
+	url = https://github.com/padsproj/pads-haskell
