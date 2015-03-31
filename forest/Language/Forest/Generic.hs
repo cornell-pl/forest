@@ -35,7 +35,7 @@ module Language.Forest.Generic   where
 
 import Data.Data
 import Data.Generics
-import Language.Pads.Generic
+import Language.Pads.Padsc
 import Language.Forest.MetaData
 import Language.Forest.Writing
 import System.FilePath.Posix

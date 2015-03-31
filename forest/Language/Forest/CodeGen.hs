@@ -669,7 +669,7 @@ filterWPred (~(name, action, pred):rest) = do
 
 
 
-insertRepMDsList :: ForestMD b => [(String, IO (a,b))] -> IO ([(String, a)], [(String, b)], Forest_md)
+insertRepMDsList :: ForestMD b => [(k, IO (a,b))] -> IO ([(k, a)], [(k, b)], Forest_md)
 insertRepMDsList inputs = do 
     let (paths, rep_mdIOs) = unzip inputs
     rep_mds <- sequence rep_mdIOs
@@ -681,12 +681,12 @@ insertRepMDsList inputs = do
     return (repList, mdList, bmd)
 
 
-insertRepMDsGeneric1 :: (ForestMD b, BuildContainer1 c a, BuildContainer1 c b) => [(FilePath, IO (a,b))] -> IO (c (FilePath, a), c (FilePath, b), Forest_md)
+insertRepMDsGeneric1 :: (ForestMD b, BuildContainer1 c k a, BuildContainer1 c k b) => [(k, IO (a,b))] -> IO (c (k, a), c (k, b), Forest_md)
 insertRepMDsGeneric1 inputs = do 
     (repList, mdList, bmd) <- insertRepMDsList inputs
     return (buildContainer1 repList, buildContainer1 mdList, bmd)
 
-insertRepMDsGeneric2 :: (ForestMD b, BuildContainer2 c a, BuildContainer2 c b) => [(FilePath, IO (a,b))] -> IO (c FilePath a, c FilePath b, Forest_md)
+insertRepMDsGeneric2 :: (ForestMD b, BuildContainer2 c k a, BuildContainer2 c k b) => [(k, IO (a,b))] -> IO (c k a, c k b, Forest_md)
 insertRepMDsGeneric2 inputs = do 
     (repList, mdList, bmd) <- insertRepMDsList inputs
     return (buildContainer2 repList, buildContainer2 mdList, bmd)

@@ -75,7 +75,7 @@ Library
                    Language.Forest.Writing
   
   -- Packages needed in order to build this package.
-  Build-depends: base >= 4, containers, pads-haskell <= 0.2.1,
+  Build-depends: base >= 4, containers, pads-haskell >= 1.1,
                  template-haskell, th-orphans,
                  haskell-src-meta, 
                  parsec, syb,
