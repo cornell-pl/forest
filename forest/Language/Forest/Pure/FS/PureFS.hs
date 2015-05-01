@@ -8,7 +8,7 @@ import Language.Forest.FS.FSRep
 import Control.Applicative
 import System.IO.Unsafe
 import Control.Monad
-import Control.Monad.Lazy
+
 import Data.Maybe
 import Data.List
 import Data.WithClass.MData
@@ -45,7 +45,9 @@ instance Eq (FSTree PureFS) where
 
 instance FSRep PureFS where
 	
-	newtype ForestM PureFS a = PureFSForestM { runPureFSForestM :: IO a } deriving (Monad,MonadIO,Functor,Applicative,MonadLazy)
+	unsafeInterleaveForestM (PureFSForestM m) = PureFSForestM $ unsafeInterleaveIO m
+	
+	newtype ForestM PureFS a = PureFSForestM { runPureFSForestM :: IO a } deriving (Monad,Functor,Applicative)
 	
 	data ForestCfg PureFS = PureFSForestCfg
 	

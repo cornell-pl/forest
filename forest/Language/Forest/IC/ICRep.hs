@@ -5,7 +5,7 @@
 module Language.Forest.IC.ICRep where
 
 import Prelude hiding (const,read,mod)
-import System.Mem.WeakKey
+
 import Control.Monad
 import Data.Maybe
 import Data.WithClass.MData
@@ -17,13 +17,13 @@ import qualified Data.List as List
 import Data.IORef
 import System.FilePath.Posix
 import System.Posix.IO
+import System.Mem.Weak.Exts
 import System.IO
 import Language.Forest.IO.Shell
 import Language.Forest.IO.Utils
-import Language.Forest.Pure.MetaData hiding (fileInfo,errors,Forest_md)
 
-import Language.Pads.MetaData hiding (numErrors)
-import Language.Pads.CoreBaseTypes
+--import Language.Pads.MetaData hiding (numErrors)
+--import Language.Pads.CoreBaseTypes
 import Language.Forest.Errors
 import Data.Data hiding (gmapT)
 import System.Posix.Types
@@ -52,6 +52,14 @@ import Data.WithClass.Derive.DeepTypeable
 import Language.Haskell.TH.Syntax hiding (Loc(..))
 import Language.Forest.FS.FSRep
 
+
+-- forest argument pairs
+fstStar (a :*: b) = a
+sndStar (a :*: b) = b
+infixr 5 :*:
+data a :*: b = a :*: b deriving (Typeable,Eq,Show,Ord) -- the forest datatype for pairs of arguments
+newtype Arg a = Arg a deriving Typeable
+
 -- class to traverse to the top-level thunk of a Forest representation, by dropping newtype tags
 class ForestRep rep thunk | rep -> thunk where
 	iso_rep_thunk :: Iso rep thunk
@@ -65,23 +73,23 @@ instance ForestRep (ForestFSThunk fs l rep) (ForestFSThunk fs l rep) where
 
 data IncForest (fs :: FS) deriving Typeable
 
-type ForestLayer fs l = (FSRep fs,Layer l (IncForest fs) IORef IO,Layer l Adapton IORef IO)
-type ForestL fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) = l (IncForest fs) IORef IO
+type ForestLayer fs l = (FSRep fs,Layer l (IncForest fs),Layer l Adapton)
+type ForestL fs (l :: * -> * -> *) = l (IncForest fs)
 
-type ForestFSThunk fs l = FSThunk fs l (IncForest fs) IORef IO
+type ForestFSThunk fs l = FSThunk fs l (IncForest fs)
 type ForestFSThunkI fs = ForestFSThunk fs Inside
 type ForestFSThunkO fs = ForestFSThunk fs Outside
 
-type ForestICThunk fs l = ICThunk fs l (IncForest fs) IORef IO
+type ForestICThunk fs l = ICThunk fs l (IncForest fs)
 type ForestICThunkI fs = ForestICThunk fs Inside
 type ForestICThunkO fs = ForestICThunk fs Outside
 
-type ForestHSThunk fs l = HSThunk fs l (IncForest fs) IORef IO
+type ForestHSThunk fs l = HSThunk fs l (IncForest fs)
 type ForestHSThunkI fs = ForestHSThunk fs Inside
 type ForestHSThunkO fs = ForestHSThunk fs Outside
 	
-type ForestO fs = Outside (IncForest fs) IORef IO
-type ForestI fs = Inside (IncForest fs) IORef IO
+type ForestO fs = Outside (IncForest fs)
+type ForestI fs = Inside (IncForest fs)
 
 instance ICRep fs => Eq (ForestFSThunk fs l a) where
 	t1 == t2 = eqFSThunk t1 t2
@@ -93,7 +101,7 @@ instance ICRep fs => Ord (ForestICThunk fs l a) where
 	compare t1 t2 = compareICThunk t1 t2
 
 -- | Class that implements IC-specific operations
-class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput fs ICThunk Outside,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside,ForestInput fs FSThunk Inside,FSRep fs,DeepTypeable fs,Incremental (IncForest fs) IORef IO) => ICRep (fs :: FS) where
+class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput fs ICThunk Outside,ForestOutput fs ICThunk Inside,ForestInput fs FSThunk Outside,ForestInput fs FSThunk Inside,FSRep fs,DeepTypeable fs,Incremental (IncForest fs)) => ICRep (fs :: FS) where
 	
 	runIncrementalForest :: ForestCfg fs -> ForestO fs a -> IO a
 	
@@ -105,21 +113,21 @@ class (ForestThunk fs HSThunk Inside,ForestThunk fs HSThunk Outside,ForestOutput
 	-- * IC thunks
 	
 	-- | unevaluated thunks that depend on the filesystem (but not on other thunks) and can be modified, but that do not depend on other thunks
-	data FSThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
+	data FSThunk fs (l :: * -> * -> *) (inc :: *) a :: *
 	
-	eqFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Bool
-	compareFSThunk :: FSThunk fs l inc r m a -> FSThunk fs l inc r m a -> Ordering
+	eqFSThunk :: FSThunk fs l inc a -> FSThunk fs l inc a -> Bool
+	compareFSThunk :: FSThunk fs l inc a -> FSThunk fs l inc a -> Ordering
 
 	isUnevaluatedFSThunk :: (IncK (IncForest fs) a,ForestLayer fs Inside) => ForestFSThunkI fs a -> ForestI fs Bool
 
 	-- | incremental computation thunks that depend on @FSThunk@s and cannot be directly modified, but are updated for changes on dependencies
-	data ICThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
+	data ICThunk fs (l :: * -> * -> *) (inc :: *) a :: *
 
-	eqICThunk :: ICThunk fs l inc r m a -> ICThunk fs l inc r m a -> Bool
-	compareICThunk :: ICThunk fs l inc r m a -> ICThunk fs l inc r m a -> Ordering
+	eqICThunk :: ICThunk fs l inc a -> ICThunk fs l inc a -> Bool
+	compareICThunk :: ICThunk fs l inc a -> ICThunk fs l inc a -> Ordering
 
 	-- | A plain thunk that simply stores a computation; cannot be mutated, and is not incrementally repaired
-	data HSThunk fs (l :: * -> (* -> *) -> (* -> *) -> * -> *) (inc :: *) (r :: * -> *) (m :: * -> *) a :: *
+	data HSThunk fs (l :: * -> * -> *) (inc :: *) a :: *
 
 -- * Value deltas
 
@@ -152,16 +160,16 @@ class ICRep fs => ICMemo (fs :: FS) where
 --	findMemoFile :: (Typeable rep,Typeable md,Typeable arg) => FilePath -> Proxy rep -> ForestI fs (Maybe ((ForestFSThunk fs Inside rep,ForestFSThunk fs Inside md,arg),FSTree fs))
 
 	-- | adds a finalizer to a Forest Input thunk to be run whenever it is modified
---	addUnmemoFSThunk :: ForestLayer fs l => FSThunk fs l (IncForest fs) IORef IO a -> IO () -> ForestL fs l ()
+--	addUnmemoFSThunk :: ForestLayer fs l => FSThunk fs l (IncForest fs) a -> IO () -> ForestL fs l ()
 	
 	addMemo :: (Typeable (ForestIs fs args),Typeable rep,Typeable md) => FilePath -> Proxy args -> ForestIs fs args -> (rep,md) -> FSTree fs -> ForestI fs ()
 	remMemo :: Proxy fs -> FilePath -> Proxy rep -> ForestI fs ()
 	findMemo :: Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep,md))
 	
 
-type ForestThunk fs mod l = Thunk (mod fs) l (IncForest fs) IORef IO
-type ForestOutput fs mod l = Output (mod fs) l (IncForest fs) IORef IO
-type ForestInput fs mod l = Input (mod fs) l (IncForest fs) IORef IO
+type ForestThunk fs mod l = Thunk (mod fs) l (IncForest fs)
+type ForestOutput fs mod l = Output (mod fs) l (IncForest fs)
+type ForestInput fs mod l = Input (mod fs) l (IncForest fs)
 
 fsRef :: (IncK (IncForest fs) a,FSRep fs,ForestInput fs FSThunk l) => a -> ForestL fs l (ForestFSThunk fs l a)
 fsRef = ref
@@ -234,22 +242,22 @@ type family ForestVs args :: * where
 proxyIncForest :: Proxy fs -> Proxy (IncForest fs)
 proxyIncForest fs = Proxy
 
-type ForestListICThunk fs l a = ListMod (ICThunk fs) l (IncForest fs) IORef IO a
-type ForestListICThunk' fs l a = ListMod' (ICThunk fs) l (IncForest fs) IORef IO a
+type ForestListICThunk fs l a = ListMod (ICThunk fs) l (IncForest fs) a
+type ForestListICThunk' fs l a = ListMod' (ICThunk fs) l (IncForest fs) a
 type ForestListICThunkI fs a = ForestListICThunk fs Inside a
 type ForestListICThunkO fs a = ForestListICThunk fs Outside a
 type ForestListICThunkI' fs a = ForestListICThunk' fs Inside a
 type ForestListICThunkO' fs a = ForestListICThunk' fs Outside a
 
-type ForestJoinListICThunk fs l a = JoinListMod (ICThunk fs) l (IncForest fs) IORef IO a
-type ForestJoinListICThunk' fs l a = JoinListMod' (ICThunk fs) l (IncForest fs) IORef IO a
+type ForestJoinListICThunk fs l a = JoinListMod (ICThunk fs) l (IncForest fs) a
+type ForestJoinListICThunk' fs l a = JoinListMod' (ICThunk fs) l (IncForest fs) a
 type ForestJoinListICThunkI fs a = ForestJoinListICThunk fs Inside a
 type ForestJoinListICThunkO fs a = ForestJoinListICThunk fs Outside a
 type ForestJoinListICThunkI' fs a = ForestJoinListICThunk' fs Inside a
 type ForestJoinListICThunkO' fs a = ForestJoinListICThunk' fs Outside a
 
-type ForestGenericQMemoBut ctx fs l b = GenericQMemoBut ctx (ICThunk fs) l (IncForest fs) IORef IO b
-type ForestGenericQMemo ctx fs l b = GenericQMemo ctx (ICThunk fs) l (IncForest fs) IORef IO b
+type ForestGenericQMemoBut ctx fs l b = GenericQMemoBut ctx (ICThunk fs) l (IncForest fs) b
+type ForestGenericQMemo ctx fs l b = GenericQMemo ctx (ICThunk fs) l (IncForest fs) b
 
 instance DeepTypeable fs => DeepTypeable (FSThunk fs) where
 	typeTree (_::Proxy (FSThunk fs)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.FSThunk") [typeTree (Proxy::Proxy fs)] []
@@ -260,17 +268,17 @@ instance DeepTypeable fs => DeepTypeable (ICThunk fs) where
 instance DeepTypeable fs => DeepTypeable (HSThunk fs) where
 	typeTree (_::Proxy (HSThunk fs)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.HSThunk") [typeTree (Proxy::Proxy fs)] []
 
-instance (DeepTypeable fs,DeepTypeable l,DeepTypeable inc,DeepTypeable r,DeepTypeable m,DeepTypeable a) => DeepTypeable (FSThunk fs l inc r m a) where
-	typeTree (_::Proxy (FSThunk fs l inc r m a)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.FSThunk") args [MkConTree (mkName "Language.Forest.FS.FSRep.fsthunk") [typeTree (Proxy::Proxy a)]]
-		where args = [typeTree (Proxy::Proxy fs),typeTree (Proxy::Proxy l),typeTree (Proxy::Proxy inc),typeTree (Proxy::Proxy r),typeTree (Proxy::Proxy r),typeTree (Proxy::Proxy m),typeTree (Proxy::Proxy a)]
+instance (DeepTypeable fs,DeepTypeable l,DeepTypeable inc,DeepTypeable a) => DeepTypeable (FSThunk fs l inc a) where
+	typeTree (_::Proxy (FSThunk fs l inc a)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.FSThunk") args [MkConTree (mkName "Language.Forest.FS.FSRep.fsthunk") [typeTree (Proxy::Proxy a)]]
+		where args = [typeTree (Proxy::Proxy fs),typeTree (Proxy::Proxy l),typeTree (Proxy::Proxy inc),typeTree (Proxy::Proxy a)]
 	
-instance (DeepTypeable fs,DeepTypeable l,DeepTypeable inc,DeepTypeable r,DeepTypeable m,DeepTypeable a) => DeepTypeable (ICThunk fs l inc r m a) where
-	typeTree (_::Proxy (ICThunk fs l inc r m a)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.ICThunk") args [MkConTree (mkName "Language.Forest.FS.FSRep.thunk") [typeTree (Proxy::Proxy a)]]
-		where args = [typeTree (Proxy::Proxy fs),typeTree (Proxy::Proxy l),typeTree (Proxy::Proxy inc),typeTree (Proxy::Proxy r),typeTree (Proxy::Proxy r),typeTree (Proxy::Proxy m),typeTree (Proxy::Proxy a)]
+instance (DeepTypeable fs,DeepTypeable l,DeepTypeable inc,DeepTypeable a) => DeepTypeable (ICThunk fs l inc a) where
+	typeTree (_::Proxy (ICThunk fs l inc a)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.ICThunk") args [MkConTree (mkName "Language.Forest.FS.FSRep.thunk") [typeTree (Proxy::Proxy a)]]
+		where args = [typeTree (Proxy::Proxy fs),typeTree (Proxy::Proxy l),typeTree (Proxy::Proxy inc),typeTree (Proxy::Proxy a)]
 
-instance (DeepTypeable fs,DeepTypeable l,DeepTypeable inc,DeepTypeable r,DeepTypeable m,DeepTypeable a) => DeepTypeable (HSThunk fs l inc r m a) where
-	typeTree (_::Proxy (HSThunk fs l inc r m a)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.HSThunk") args [MkConTree (mkName "Language.Forest.FS.FSRep.thunk") [typeTree (Proxy::Proxy a)]]
-		where args = [typeTree (Proxy::Proxy fs),typeTree (Proxy::Proxy l),typeTree (Proxy::Proxy inc),typeTree (Proxy::Proxy r),typeTree (Proxy::Proxy r),typeTree (Proxy::Proxy m),typeTree (Proxy::Proxy a)]
+instance (DeepTypeable fs,DeepTypeable l,DeepTypeable inc,DeepTypeable a) => DeepTypeable (HSThunk fs l inc a) where
+	typeTree (_::Proxy (HSThunk fs l inc a)) = MkTypeTree (mkName "Language.Forest.FS.FSRep.HSThunk") args [MkConTree (mkName "Language.Forest.FS.FSRep.thunk") [typeTree (Proxy::Proxy a)]]
+		where args = [typeTree (Proxy::Proxy fs),typeTree (Proxy::Proxy l),typeTree (Proxy::Proxy inc),typeTree (Proxy::Proxy a)]
 
 -- | A type for twin-traversals
 infixr 5 :.:
@@ -282,9 +290,9 @@ sndF (x :.: y) = y
 instance (Memo a,Memo b) => Memo (a :.: b) where
 	type Key (a :.: b) = (Key a,Key b)
 	{-# INLINE memoKey #-}
-	memoKey (x :.: y) = (andMkWeak wx wy,(kx,ky))
-		where (wx,kx) = memoKey x
-		      (wy,ky) = memoKey y
+	memoKey (x :.: y) = (memoKey x,memoKey y)
+	{-# INLINE memoWeak #-}
+	memoWeak (x :.: y) = memoWeak x `andMkWeak` memoWeak y
 
 -- * @DeepTypeable@
 
@@ -318,4 +326,5 @@ fsTreeDPathFilter fs df root path = if isParentPathOf root path
 			(isMoveFSTreeD fs -> Just from) -> return from
 			otherwise -> return path
 	else return path
-	
+
+

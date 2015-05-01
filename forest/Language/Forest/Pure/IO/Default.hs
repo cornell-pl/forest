@@ -32,7 +32,7 @@ import Data.Data
 import Data.Maybe
 import System.Random
 import Data.Proxy
-import Control.Monad.Lazy
+
 
 
 doDefaultFile :: (FSRep fs,Pads pads md) => pads -> FilePath -> ForestM fs (Forest_md,md)

@@ -20,11 +20,11 @@ import qualified Language.Pads.Padsc as Pads
 import Language.Forest.IC.MetaData
 import Language.Forest.IC.Default
 import Language.Forest.IC.Generic
-import Language.Forest.IC.IO.Storing
+--import Language.Forest.IC.IO.Storing
 import Language.Forest.Errors
 import Language.Forest.FS.FSDelta
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..))
-import qualified Language.Forest.Pure.MetaData as Pure
+--import Language.Forest.MetaData (FileInfo(..),FileType(..),(:*:)(..))
+--import qualified Language.Forest.MetaData as Pure
 import Control.Monad.Incremental as Inc hiding (memo)
 import Data.IORef
 import Data.List as List
@@ -61,7 +61,7 @@ import qualified Control.Monad.Reader as Reader
 import Language.Pads.Generic as Pads
 
 doZDeltaManifestNamed :: ZippedICForest fs args rep =>
-	Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> (ForestFSThunkI fs rep) -> ValueDelta fs (ForestFSThunkI fs rep) -> Manifest fs -> MManifestForestO fs
+	Proxy args -> LoadDeltaArgs fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> (ForestFSThunkI fs rep) -> ValueDelta fs (ForestFSThunkI fs rep) -> Manifest fs -> MManifestForestO fs
 doZDeltaManifestNamed proxy (margs,dargs) path path' tree df tree' rep dv man = do
 	irep <- lift $ Inc.getOutside rep
 	idv <- lift $ diffValueBelow dv diffValue tree irep
@@ -69,19 +69,19 @@ doZDeltaManifestNamed proxy (margs,dargs) path path' tree df tree' rep dv man = 
 
 -- updates the thunks that keep track of the arguments of a top-level declaration
 doZDeltaManifestArgs :: (ForestArgs fs args,ICRep fs) =>
-	Proxy args -> LoadDeltaArgs ICData fs args -> rep -> ValueDelta fs rep
+	Proxy args -> LoadDeltaArgs fs args -> rep -> ValueDelta fs rep
 	-> (ForestICThunksI fs args -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs)
 	->  Manifest fs -> MManifestForestO fs
 doZDeltaManifestArgs proxy (margs,_) rep dv manifestD (man :: Manifest fs) = debug ("doStoreDeltaArgs") $ do
 	arg_thunks <- lift $ inside $ newArgs (Proxy :: Proxy fs) proxy margs -- creates new thunks to hold the new expressions
 	manifestD arg_thunks rep dv man
 
-doZDeltaManifestFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+doZDeltaManifestFile1 :: (FTK fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((FileInfo,md),padsc)
 	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md) =>
 	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> ValueDelta fs (ForestFSThunkI fs ((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
 doZDeltaManifestFile1 isEmptyDArg marg path path' (tree :: FSTree fs) df tree' rep_t dv man = do
 	let fs = Proxy :: Proxy fs
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
 		(True,True,True,(isEmptyFSTreeD fs -> True)) -> do -- no conflict tests are issued
 			Writer.tell $ inside . addZippedMemo path' argProxy marg rep_t . Just
@@ -92,7 +92,7 @@ doZDeltaManifestFileInner1 :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) 
 	Bool -> ForestI fs arg -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ((Forest_md fs,md),pads) -> ValueDelta fs (((Forest_md fs,md),pads)) -> Manifest fs -> MManifestForestO fs
 doZDeltaManifestFileInner1 isEmptyDArg marg path path' (tree :: FSTree fs) df tree' rep_t dv man = do
 	let fs = Proxy :: Proxy fs
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
 		(True,True,True,(isEmptyFSTreeD fs -> True)) -> do -- no conflict tests are issued
 			return man -- nothing changed
@@ -128,7 +128,7 @@ doZDeltaManifestArchive isClosed archTy path path' (tree :: FSTree fs) df tree' 
 						status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 						status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 						return $ status1 `mappend` status2
-					Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+					Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (missingDirForestErr path `mergeForestErrs`) $ get_errors rep
 					return $ addTestToManifest testm man -- errors in the metadata must be consistent
 					
 			(True,True,True) -> do
@@ -194,7 +194,7 @@ doZDeltaManifestArchiveInner isClosed archTy path path' (tree :: FSTree fs) df t
 					status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
-				Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+				Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (missingDirForestErr path `mergeForestErrs`) $ get_errors rep
 				return $ addTestToManifest testm man -- errors in the metadata must be consistent
 				
 		(True,True,True) -> do
@@ -276,7 +276,7 @@ doZDeltaManifestConstraintInner emptyDArgs pred tree (err_t,rep) dv manifestD di
 		overwrite err_t $ do
 			err_cond <- predForestErr . pred =<< BX.getM lens_content (return rep)
 			err_inner <- get_errors rep
-			return $ Pure.mergeForestErrs err_cond err_inner
+			return $ mergeForestErrs err_cond err_inner
 	
 	case (emptyDArgs,isIdValueDelta idv) of
 		(True,True) -> return man1
@@ -286,7 +286,7 @@ doZDeltaManifestConstraintInner emptyDArgs pred tree (err_t,rep) dv manifestD di
 					err_cond <- predForestErr . pred =<< BX.getM lens_content (return rep)
 					err_inner <- get_errors rep
 					errors <- Inc.get err_t
-					return $ isValidForestErr errors == isValidForestErr (Pure.mergeForestErrs err_cond err_inner)
+					return $ isValidForestErr errors == isValidForestErr (mergeForestErrs err_cond err_inner)
 			return $ addTestToManifest testm man1
 	
 
@@ -339,7 +339,7 @@ doZDeltaManifestDirectory path path' tree df (tree' :: FSTree fs) dirrep_t dv co
 						status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 						status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 						return $ status1 `mappend` status2
-					Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
+					Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (missingDirForestErr path `mergeForestErrs`) $ collectMDErrors rep
 					return $ addTestToManifest testm man -- errors in the metadata must be consistent
 					
 			(True,True,True) -> do
@@ -381,7 +381,7 @@ doZDeltaManifestDirectoryInner path path' tree df (tree' :: FSTree fs) (fmd,rep)
 					status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 					status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 					return $ status1 `mappend` status2
-				Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
+				Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (missingDirForestErr path `mergeForestErrs`) $ collectMDErrors rep
 				return $ addTestToManifest testm man -- errors in the metadata must be consistent
 				
 		(True,True,True) -> do

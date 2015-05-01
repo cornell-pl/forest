@@ -67,7 +67,7 @@ buildDirectory dir nestedComponents  =
   let compList = Prelude.map (buildSimpleField 1) nestedComponents   -- make monadic to pass this state around
       (dirName,n) = (getHaskellId 2 (takeFileName dir))
       forestTy = Directory (Record dirName compList)
-      forestDecl = ForestDecl(dirName, [], forestTy)
+      forestDecl = ForestDecl(True,dirName, [], forestTy)
       refTy = Named dirName
   in (refTy, forestDecl)
 

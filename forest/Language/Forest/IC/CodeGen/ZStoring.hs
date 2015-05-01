@@ -10,14 +10,14 @@ import Language.Forest.IC.CodeGen.ZDefault
 
 import {-# SOURCE #-} Language.Forest.IC.CodeGen.ZDeltaStoring
 import Data.WithClass.MData
-import Language.Forest.IC.CodeGen.Default
-import Language.Forest.IC.IO.Storing
+--import Language.Forest.IC.CodeGen.Default
+--import Language.Forest.IC.IO.Storing
 import Language.Forest.IC.IO.ZStoring
 import Language.Forest.Syntax as PS
 import Language.Forest.IC.MetaData
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
-import qualified Language.Forest.Pure.MetaData as Pure
-import qualified Language.Forest.Pure.CodeGen.Utils as Pure
+import Language.Forest.IC.ICRep
+--import qualified Language.Forest.MetaData as Pure
+--import qualified Language.Forest.CodeGen.Utils as Pure
 import Language.Forest.Errors
 import Language.Forest.IC.Generic
 import qualified Language.Forest.Errors as E
@@ -27,7 +27,7 @@ import System.Directory
 import System.FilePath.Posix
 import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
-import qualified Language.Forest.Pure.MetaData as Pure
+--import qualified Language.Forest.MetaData as Pure
 import Language.Forest.IC.BX as BX
 
 import Language.Haskell.TH as TH
@@ -52,9 +52,9 @@ import Data.Map (Map(..))
 import qualified Data.Map as Map
 import Control.Monad.State (State(..),StateT(..))
 import qualified Control.Monad.State as State
-import {-# SOURCE #-} Language.Forest.IC.CodeGen.DeltaLoading
+--import {-# SOURCE #-} Language.Forest.IC.CodeGen.DeltaLoading
 import {-# SOURCE #-} Language.Forest.IC.CodeGen.ZDeltaLoading
-import Language.Forest.IC.CodeGen.Loading
+--import Language.Forest.IC.CodeGen.Loading
 import Language.Forest.IC.CodeGen.ZLoading
 import Language.Haskell.TH.Quote
 
@@ -78,7 +78,7 @@ genZManifestM isTop rep_name forestTy pat_infos = do
 			return $ LamE [VarP argsName,TupP [],pathP,treeP,dtaP,manP] core_bodyE
 		otherwise -> do
 			(targsP,argThunkNames) <- genZManifestArgsE (zip [1..] pat_infos) forestTy
-			let argsT = Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos
+			let argsT = forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos
 			let proxyArgs = SigE (ConE 'Proxy) $ AppT (ConT ''Proxy) argsT
 			let update (fs,env) = (fs,foldl updatePat env (zip argThunkNames pat_infos))
 				where updatePat env (thunkName,(pat,ty)) = Map.fromSet (\var -> Just (thunkName,pat)) (patPVars pat) `Map.union` env --left-biased union
@@ -92,15 +92,15 @@ genZManifestM isTop rep_name forestTy pat_infos = do
 				let (newdtaE,newdtaP) = genPE newdtaName
 				core_bodyE <- genZManifestBody isTop pathE treeE newdtaE newmanE rep_name forestTy
 				return $ LamE [VarP argsName,margsP,pathP,treeP,VarP dtaName,manP] $ DoE [
-					BindS targsP $ AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE3 (VarE 'newArgs) (proxyN fs) proxyArgs margsE,
-					NoBindS $ Pure.appE5 (VarE 'doZManifestArgs) proxyArgs margsE dtaE (LamE [newdtaP,newmanP] core_bodyE) manE]
+					BindS targsP $ AppE (VarE 'lift) $ AppE (VarE 'inside) $ appE3 (VarE 'newArgs) (proxyN fs) proxyArgs margsE,
+					NoBindS $ appE5 (VarE 'doZManifestArgs) proxyArgs margsE dtaE (LamE [newdtaP,newmanP] core_bodyE) manE]
 
 genZManifestBody :: Bool -> Exp -> Exp -> Exp -> Exp -> Name -> ForestTy -> ZEnvQ Exp
 genZManifestBody isTop pathE treeE dtaE manE repN ty = case ty of 
 	Directory _ -> zmanifestE isTop ty pathE treeE dtaE manE
 	FConstraint _ (Directory _) _ -> zmanifestE isTop ty pathE treeE dtaE manE
 	otherwise   -> do -- Decompose the representation type constructor
-		let dtaE' = AppE (VarE $ Pure.getUnTyName $ nameBase repN) dtaE
+		let dtaE' = AppE (VarE $ getUnTyName $ nameBase repN) dtaE
 		zmanifestE isTop ty pathE treeE dtaE' manE
 
 -- loads top-level arguments into the environment
@@ -133,12 +133,12 @@ zmanifestWithArgsE :: Bool -> String -> [Exp] -> Exp -> Exp -> Exp -> Exp -> ZEn
 zmanifestWithArgsE isTop ty_name [] pathE treeE dtaE manE = do
 	let proxyE = AppE (VarE 'proxyOf) $ TupE []
 	let manifest = if isTop then VarE 'doZManifestNamed else VarE 'zupdateManifestScratchGeneric
-	return $ Pure.appE6 manifest proxyE (TupE []) pathE treeE dtaE manE
+	return $ appE6 manifest proxyE (TupE []) pathE treeE dtaE manE
 zmanifestWithArgsE isTop ty_name argsE pathE treeE dtaE manE = do
 	argsE <- mapM (\e -> forceVarsZEnvQ e return) argsE
-	let tupArgsE = foldl1' (Pure.appE2 (ConE '(:*:))) argsE
+	let tupArgsE = foldl1' (appE2 (ConE '(:*:))) argsE
 	let manifest = if isTop then VarE 'doZManifestNamed else VarE 'zupdateManifestScratchGeneric
-	return $ Pure.appE6 manifest (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE treeE dtaE manE
+	return $ appE6 manifest (VarE $ mkName $ "proxyZArgs_"++ty_name) tupArgsE pathE treeE dtaE manE
 
 zmanifestArchive :: Bool -> [ArchiveType] -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestArchive isTop archtype ty pathE treeE dtaE manE = do
@@ -166,14 +166,14 @@ zmanifestArchive isTop archtype ty pathE treeE dtaE manE = do
 	exts <- lift $ dataToExpQ (\_ -> Nothing) archtype
 	isClosedE <- lift $ dataToExpQ (\_ -> Nothing) $ isClosedForestTy ty
 	if isTop
-		then return $ Pure.appE9 (VarE 'doZManifestArchive) isClosedE exts pathE treeE dtaE manifestContentsE manifestContentDeltaE (zdiffE ty) manE
-		else return $ Pure.appE6 (VarE 'doZManifestArchiveInner) exts pathE treeE dtaE manifestContentsE manE
+		then return $ appE9 (VarE 'doZManifestArchive) isClosedE exts pathE treeE dtaE manifestContentsE manifestContentDeltaE (zdiffE ty) manE
+		else return $ appE6 (VarE 'doZManifestArchiveInner) exts pathE treeE dtaE manifestContentsE manE
 
 zmanifestSymLink :: Bool -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestSymLink isTop pathE treeE dtaE manE = do
 	if isTop
-		then return $ Pure.appE4 (VarE 'doZManifestSymLink) pathE treeE dtaE manE
-		else return $ Pure.appE4 (VarE 'doZManifestSymLinkInner) pathE treeE dtaE manE
+		then return $ appE4 (VarE 'doZManifestSymLink) pathE treeE dtaE manE
+		else return $ appE4 (VarE 'doZManifestSymLinkInner) pathE treeE dtaE manE
 
 zmanifestConstraint :: Bool -> Exp -> TH.Pat -> Exp -> Exp -> Exp -> (Exp -> Exp -> ZEnvQ Exp) -> ZEnvQ Exp
 zmanifestConstraint isTop treeE pat predE dtaE manE manifest = forceVarsZEnvQ predE $ \predE' -> do
@@ -185,18 +185,18 @@ zmanifestConstraint isTop treeE pat predE dtaE manE manifest = forceVarsZEnvQ pr
 	let predFnE = zmodPredE pat predE'
 	manifestAction <- liftM (LamE [newdtaP,newmanP]) $ manifest newdtaE newmanE
 	if isTop
-		then return $ Pure.appE4 (VarE 'doZManifestConstraint) predFnE dtaE manifestAction manE
-		else return $ Pure.appE4 (VarE 'doZManifestConstraintInner) predFnE dtaE manifestAction manE
+		then return $ appE4 (VarE 'doZManifestConstraint) predFnE dtaE manifestAction manE
+		else return $ appE4 (VarE 'doZManifestConstraintInner) predFnE dtaE manifestAction manE
 
 zmanifestFile :: Bool -> String -> Maybe Exp -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestFile isTop fileName Nothing pathE treeE dtaE manE = do
 	if isTop
-		then return $ Pure.appE5 (VarE 'doZManifestFile1) (Pure.returnExp $ TupE []) pathE treeE dtaE manE
-		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) (Pure.returnExp $ TupE []) pathE treeE dtaE manE
+		then return $ appE5 (VarE 'doZManifestFile1) (returnExp $ TupE []) pathE treeE dtaE manE
+		else return $ appE5 (VarE 'doZManifestFileInner1) (returnExp $ TupE []) pathE treeE dtaE manE
 zmanifestFile isTop fileName (Just argE) pathE treeE dtaE manE = do
 	if isTop
-		then return $ Pure.appE5 (VarE 'doZManifestFile1) argE pathE treeE dtaE manE
-		else return $ Pure.appE5 (VarE 'doZManifestFileInner1) argE pathE treeE dtaE manE
+		then return $ appE5 (VarE 'doZManifestFile1) argE pathE treeE dtaE manE
+		else return $ appE5 (VarE 'doZManifestFileInner1) argE pathE treeE dtaE manE
 
 zmanifestMaybe :: Bool -> ForestTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestMaybe isTop ty pathE treeE dtaE manE = do 
@@ -210,8 +210,8 @@ zmanifestMaybe isTop ty pathE treeE dtaE manE = do
 	let (newpathE,newpathP) = genPE newpathName
 	doContentsE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestE False ty pathE treeE newdtaE newmanE
 	if isTop
-		then return $ Pure.appE5 (VarE 'doZManifestMaybe) pathE treeE dtaE doContentsE manE
-		else return $ Pure.appE5 (VarE 'doZManifestMaybeInner) pathE treeE dtaE doContentsE manE
+		then return $ appE5 (VarE 'doZManifestMaybe) pathE treeE dtaE doContentsE manE
+		else return $ appE5 (VarE 'doZManifestMaybeInner) pathE treeE dtaE doContentsE manE
 
 zmanifestDirectory :: Bool -> DirectoryTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestDirectory isTop dirTy@(Record id fields) pathE treeE dtaE manE = do
@@ -224,15 +224,15 @@ zmanifestDirectory isTop dirTy@(Record id fields) pathE treeE dtaE manE = do
 	doDirE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestDirectoryContents dirTy treeE pathE newdtaE newmanE
 	collectMDs <- lift $ zgenMergeFieldsMDErrors fields	
 	if isTop
-		then return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doDirE manE
-		else return $ Pure.appE6 (VarE 'doZManifestDirectoryInner) pathE treeE collectMDs dtaE doDirE manE
+		then return $ appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doDirE manE
+		else return $ appE6 (VarE 'doZManifestDirectoryInner) pathE treeE collectMDs dtaE doDirE manE
 
 zmanifestDirectoryContents :: DirectoryTy -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestDirectoryContents (Record id fields) treeE parentPathE dtaE manE = do
 	liftM DoE $ zmanifestFields fields treeE parentPathE dtaE manE
 
 zmanifestFields :: [Field] -> Exp -> Exp -> Exp -> Exp -> ZEnvQ [Stmt]
-zmanifestFields [] treeE parentPathE dtaE manE = return [NoBindS $ Pure.returnExp manE]
+zmanifestFields [] treeE parentPathE dtaE manE = return [NoBindS $ returnExp manE]
 zmanifestFields (field:fields) treeE parentPathE dtaE man0E = do
 	man1Name <- lift $ newName "man"
 	let (man1E,man1P) = genPE man1Name
@@ -258,15 +258,15 @@ zmanifestComp isTop cinfo pathE treeE dtaE manE = do
 	let collectMDs = zgenMergeFieldMDErrors (Comp cinfo)
 	doCompE <- liftM (LamE [newdtaP,newmanP]) $ zmanifestCompContents cinfo treeE pathE newdtaE newmanE
 	if isTop
-		then return $ Pure.appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doCompE manE
-		else return $ Pure.appE6 (VarE 'doZManifestDirectoryInner) pathE treeE collectMDs dtaE doCompE manE
+		then return $ appE6 (VarE 'doZManifestDirectory) pathE treeE collectMDs dtaE doCompE manE
+		else return $ appE6 (VarE 'doZManifestDirectoryInner) pathE treeE collectMDs dtaE doCompE manE
 
 zmanifestCompContents :: CompField -> Exp -> Exp -> Exp -> Exp -> ZEnvQ Exp
 zmanifestCompContents cinfo treeE parentPathE dtaE manE = do
 	man1Name <- lift $ newName "man1"
 	let (man1E,man1P) = genPE man1Name
 	(_,stmts) <- zmanifestCompound False cinfo treeE parentPathE dtaE manE man1P
-	let doCompE = DoE $ stmts ++ [NoBindS $ Pure.returnExp man1E]
+	let doCompE = DoE $ stmts ++ [NoBindS $ returnExp man1E]
 	return doCompE
 
 zmanifestSimple :: BasicField -> Exp -> Exp -> Exp -> Exp -> Pat -> ZEnvQ (Name,[Stmt])
@@ -286,13 +286,13 @@ zmanifestSimple (internal, isForm, externalE, forestTy, predM) treeE parentPathE
 	-- we need to name the variables after the field names
 	varName <- lift $ newName "var"
 	let (varE,varP) = genPE varName
-	let letRepS = [BindS varP (AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp innerRepE),LetS [ValD repP (NormalB varE) []]]
+	let letRepS = [BindS varP (AppE (VarE 'lift) $ AppE (VarE 'inside) $ appE2 (VarE 'BX.getM) (VarE 'lens_content) $ returnExp innerRepE),LetS [ValD repP (NormalB varE) []]]
 	
 	manifestFocusE <- do
 		manifestContentE <- liftM (LamE [newpathP,newdtaP,newmanP]) $ zmanifestE False forestTy newpathE treeE newdtaE newmanE
 		case predM of
-			Nothing -> return $ Pure.appE6 (VarE 'doZManifestSimple) parentPathE externalE treeE innerRepE manifestContentE man0E
-			Just pred -> return $ Pure.appE7 (VarE 'doZManifestSimpleWithConstraint) parentPathE externalE treeE (zmodPredE (VarP repName) pred) innerRepE manifestContentE man0E
+			Nothing -> return $ appE6 (VarE 'doZManifestSimple) parentPathE externalE treeE innerRepE manifestContentE man0E
+			Just pred -> return $ appE7 (VarE 'doZManifestSimpleWithConstraint) parentPathE externalE treeE (zmodPredE (VarP repName) pred) innerRepE manifestContentE man0E
 	let bindManS = BindS man1P manifestFocusE
 	return (repName,bindManS:letRepS)
 
@@ -308,7 +308,7 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 	newpathName <- lift $ newName "newpath"
 	let (newpathE,newpathP) = genPE newpathName
 	
-	let innerRepE = AppE (VarE 'lift) $ AppE (VarE 'inside) $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) $ Pure.returnExp $ if isNested then AppE repE dtaE else dtaE
+	let innerRepE = AppE (VarE 'lift) $ AppE (VarE 'inside) $ appE2 (VarE 'BX.getM) (VarE 'lens_content) $ returnExp $ if isNested then AppE repE dtaE else dtaE
 	
 	-- we need to name the variables after the field names
 --	let letRepS = LetS [ValD repP (NormalB innerRepE) []]
@@ -323,16 +323,16 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 
 	let keyArgE = case generatorTy of
 		Just (key_ty_name,Just argE) -> argE
-		otherwise -> Pure.returnExp $ TupE []
+		otherwise -> returnExp $ TupE []
 
 	forceVarsZEnvQ keyArgE $ \keyArgE -> forceVarsZEnvQ genE $ \genE -> do
 		-- optional filtering
-		let fileName = Pure.getCompName explicitName externalE
+		let fileName = getCompName explicitName externalE
 		let fileNameAtt = mkName $ nameBase fileName++"_att"
 		let fileNameAttThunk = mkName $ nameBase fileName++"_att_thunk"
 		
 		-- build representation and metadata containers from a list
-		destroyContainerE <- lift $ Pure.tyConNameOptToList tyConNameOpt
+		destroyContainerE <- lift $ tyConNameOptToList tyConNameOpt
 		
 		let update (fs,env) = (fs,Map.insert fileName Nothing $ Map.insert fileNameAtt (Just (fileNameAttThunk,VarP fileNameAtt)) env)  --force the @FileInfo@ thunk
 		
@@ -340,12 +340,12 @@ zmanifestCompound isNested (CompField internal tyConNameOpt explicitName externa
 		Reader.local update $ case predM of
 			Nothing -> do
 				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdtaP,newmanP]) $ zmanifestE False descTy newpathE treeE newdtaE newmanE
-				let manifestContainerE = Pure.appE8 (VarE 'doZManifestCompound) parentPathE genE treeE keyArgE destroyContainerE varE manifestSingleE man0E
+				let manifestContainerE = appE8 (VarE 'doZManifestCompound) parentPathE genE treeE keyArgE destroyContainerE varE manifestSingleE man0E
 				let bindManS = BindS man1P manifestContainerE
 				return (repName,letRepS++[bindManS])
 				
 			Just predE -> forceVarsZEnvQ predE $ \predE -> do
 				manifestSingleE <- liftM (LamE [VarP fileName,VarP fileNameAttThunk,newpathP,newdtaP,newmanP]) $ zmanifestE False descTy newpathE treeE newdtaE newmanE
-				let manifestContainerE = Pure.appE9 (VarE 'doZManifestCompoundWithConstraint) parentPathE genE treeE keyArgE destroyContainerE (modPredEComp (VarP fileName) predE) varE manifestSingleE man0E
+				let manifestContainerE = appE9 (VarE 'doZManifestCompoundWithConstraint) parentPathE genE treeE keyArgE destroyContainerE (modPredEComp (VarP fileName) predE) varE manifestSingleE man0E
 				let bindManS = BindS man1P manifestContainerE
 				return (repName,letRepS++[bindManS])

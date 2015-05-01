@@ -28,14 +28,13 @@ import Data.List as List hiding (delete)
 import Control.Monad.Incremental hiding (read,new)
 import Prelude hiding (read)
 import Language.Forest.IC hiding (writeFile)
-import Language.Forest.Pure.MetaData (cleanFileInfo)
 
 
 [ipads|
 	data Account = Account Int
 |]
 
-[iforest|
+[txforest|
 	data Account_d = Directory {
 		accs is [ f :: AccountFile | f <- matches (GL "*") ]
 	} 

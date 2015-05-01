@@ -7,12 +7,12 @@ import qualified Control.Exception as E
 import Data.Hashable
 import Prelude hiding (mod,read,const)
 import qualified Prelude
-import Control.Monad.Incremental.Adapton
-import Control.Monad.Lazy
+import Control.Monad.Incremental.Adapton hiding (new)
+
 import Control.Monad.Incremental.Display
 import Control.Monad.Reader (ReaderT(..))
 import qualified Control.Monad.Reader as Reader
-import Language.Forest.Pure.MetaData (cleanFileInfo)
+--import Language.Forest.Pure.MetaData (cleanFileInfo)
 import Data.List
 import Data.Char
 import Data.Maybe
@@ -20,7 +20,7 @@ import Data.Map (Map(..))
 import qualified Data.Map as Map
 import Data.List.Split
 import System.Posix.Types
-import System.Mem.WeakKey
+
 import Data.Int
 import Data.IORef
 import Control.Monad.Incremental as Inc hiding (new)
@@ -44,11 +44,12 @@ import Control.Monad.Incremental.Draw
 import Control.Exception.Base
 import Control.Monad.Incremental.Generics
 import Control.Monad.Incremental.List
-import System.Mem.MemoTable hiding (memo)
+
+--import qualified System.Mem.MemoTable as MemoTable
 import System.IO.Unsafe
 import System.Mem.StableName
 import System.Mem.Weak as Weak
-import qualified System.Mem.WeakTable as WeakTable
+--import qualified System.Mem.WeakTable as WeakTable
 import Language.Pads.Padsc as Pads hiding (numErrors)
 
 import Data.Typeable.Internal

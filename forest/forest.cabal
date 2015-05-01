@@ -70,6 +70,7 @@ Cabal-version:       >=1.2
 
 
 Library
+  GHC-Options: -fcontext-stack=60
   -- Modules exported by the library.
   Exposed-modules: Data.List.Diff
                    Language.Forest.Errors,
@@ -81,13 +82,9 @@ Library
                    Language.Forest.IC.BaseTypes,
                    Language.Forest.IC.Default
                    Language.Forest.IC.BX
-                   Language.Forest.IC.CodeGen.Default,
                    Language.Forest.IC.CodeGen.ZDefault,
-                   Language.Forest.IC.CodeGen.DeltaLoading,
                    Language.Forest.IC.CodeGen.ZDeltaLoading,
-                   Language.Forest.IC.CodeGen.Loading,
                    Language.Forest.IC.CodeGen.ZLoading,
-                   Language.Forest.IC.CodeGen.Storing,  
                    Language.Forest.IC.CodeGen.ZStoring,    
                    Language.Forest.IC.CodeGen.ZDeltaStoring,                   
                    Language.Forest.IC.CodeGen.Utils,
@@ -101,13 +98,9 @@ Library
                    Language.Forest.IC.FS.TxNILFS,
                    Language.Forest.IC.Generic,
                    Language.Forest.IC.ICRep,
-                   Language.Forest.IC.IO.Default,
                    Language.Forest.IC.IO.ZDefault,
-                   Language.Forest.IC.IO.DeltaLoading,
                    Language.Forest.IC.IO.ZDeltaLoading,
-                   Language.Forest.IC.IO.Loading,
                    Language.Forest.IC.IO.ZLoading,
-                   Language.Forest.IC.IO.Storing,
                    Language.Forest.IC.IO.ZStoring,
                    Language.Forest.IC.IO.ZDeltaStoring,
                    Language.Forest.IC.MetaData,
@@ -138,10 +131,10 @@ Library
                    Language.Forest.IC
   
   -- Packages needed in order to build this package.
-  Build-depends: base >= 4, containers, pads-haskell,
+  Build-depends: base >= 4, containers, pads-haskell >= 1.1, weak, weak-hashtables, weak-ctrie,
                  template-haskell, concurrent-extra, mtl, ref-fd, hashable,
                  haskell-src-meta, uuid, exceptions, abstract-deque, dlist, ctrie == 0.1.0.3, strict, atomic-primops,  
-                 parsec, adapton >= 0.0.2, syb-with-class-and-effects >= 0.3.7,
+                 parsec, adapton >= 0.0.3, syb-with-class-and-effects >= 0.3.7,
                  regex-compat, directory, process, unix, Glob, system-filepath, canonical-filepath, split,
                  filepath, mainland-pretty, derive >= 2.5.17, time, MissingH,
                  graphviz, fgl, random, text, safe, bytestring, transformers, array, syb, th-orphans, stm >= 2.4.4

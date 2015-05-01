@@ -42,7 +42,7 @@ import Data.ByteString.Char8 as B hiding (putStrLn)
 -- $( derive makeDeepTypeable ''Account_imd )
 
 -- TextFile = File Text
-[iforest|
+[txforest|
 	type Toy1_d = Directory {
 		a is "a" :: TextFile
               , b is "b" :: TextFile

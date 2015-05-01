@@ -44,7 +44,7 @@ import Data.Foldable as Foldable
 import Control.Monad.Trans
 import Language.Forest.IC.Default
 import Language.Forest.IC.IO.ZDefault
-import qualified Language.Forest.Pure.CodeGen.Utils as Pure
+--import qualified Language.Forest.CodeGen.Utils as Pure
 import Language.Forest.IC.ICRep
 import Data.DeepTypeable
 import Language.Forest.IC.BX as BX
@@ -62,7 +62,7 @@ import Language.Forest.IC.MetaData
 import Language.Forest.Errors
 import Language.Forest.IC.Generic as IC
 import qualified Language.Forest.Errors as E
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
+--import Language.Forest.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
 import Language.Forest.Manifest
 import Language.Forest.FS.FSDelta
 import System.Directory
@@ -97,147 +97,17 @@ import Control.Monad.Reader (Reader(..),ReaderT(..))
 import qualified Control.Monad.Reader as Reader
 
 import Language.Forest.IC.CodeGen.Utils
-import Language.Forest.IC.CodeGen.Loading
+--import Language.Forest.IC.CodeGen.Loading
 import Language.Forest.IC.CodeGen.ZLoading
-import Language.Forest.IC.CodeGen.Default
+--import Language.Forest.IC.CodeGen.Default
 import Language.Forest.IC.CodeGen.ZDefault
 import Data.Maybe
-import Language.Forest.IC.CodeGen.DeltaLoading
+--import Language.Forest.IC.CodeGen.DeltaLoading
 import Language.Forest.IC.CodeGen.ZDeltaLoading
-import Language.Forest.IC.CodeGen.Storing
+--import Language.Forest.IC.CodeGen.Storing
 import Language.Forest.IC.CodeGen.ZStoring
 
 type GenQ = StateT (Set Pred) Q
-
-{- Code generation routines -}
-make_forest_declarations :: Maybe ICMode -> [ForestDecl] -> Q [Dec]
-make_forest_declarations mode ds = fmap List.concat (mapM (make_forest_declaration mode) ds)
-
-make_forest_declaration :: Maybe ICMode -> ForestDecl -> Q [Dec]
-make_forest_declaration mb (ForestDecl (isTop,id, pats, forestTy)) = do
-	let isTop = True -- generate a top-level variable for each Forest type
-	let ty_name = Pure.getRepTyName id
-	let unty_name = Pure.getRepUnTyName id
-	let md_ty_name = Pure.getMDName id
-	fsName <- newName "fs"
-	modeName <- newName "mode"
-	let mode = maybe modeName modeN mb
-	let arg_infos = map (\pat -> (pat,patToTy pat)) pats
-	(ty_decl, md_ty_decls, md_ty) <- genRepMDDecl modeName fsName forestTy (unty_name,ty_name) md_ty_name arg_infos  -- Generate representation and meta-data decls for padsTy
-
-	loadM :: Exp <- Reader.runReaderT (genLoadM ty_name md_ty_name forestTy arg_infos) (mode,fsName,Map.empty)
-	loadDeltaM :: Exp <- Reader.runReaderT (genLoadDeltaM (unty_name,ty_name) md_ty_name forestTy arg_infos) (mode,fsName,Map.empty)
-	manifestM :: Exp <- Reader.runReaderT (genManifestM ty_name md_ty_name forestTy arg_infos) (mode,fsName,Map.empty)
-	defaultM :: Exp <- genDefaultM ty_name md_ty_name forestTy arg_infos
-	
-	let mkInst modeT = genFInst modeName modeT fsName  loadM loadDeltaM manifestM defaultM ty_name md_ty_name      forestTy arg_infos
-	
-	insts <- case mb of
-		Nothing -> do
-			inst1 <- mkInst $ PromotedT 'ICData
-			inst2 <- mkInst $ PromotedT 'ICExpr
-			return $ inst1++inst2
-		Just ICData -> mkInst $ PromotedT 'ICData
-		Just ICExpr -> mkInst $ PromotedT 'ICExpr
-
-	let args_ty = case arg_infos of
-		[] -> TupleT 0
-		otherwise -> Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) arg_infos
-	let loadDelta_alias = FunD (mkName $ "loadDelta_"++nameBase ty_name) [Clause [VarP modeName] (NormalB $ Pure.appE2 (VarE 'loadDelta) (VarE modeName) (proxyT args_ty)) []]
-	let proxyArgs_alias = FunD (mkName $ "proxyArgs_"++nameBase ty_name) [Clause [] (NormalB $ proxyT args_ty) []]
-
-	return $ ty_decl:md_ty_decls++insts++[loadDelta_alias,proxyArgs_alias]
-
-genFInst modeName modeT fsName loadM loadDeltaM manifestM defaultM ty_name md_ty_name forestTy pat_infos = do
-	mdName <- newName "md"
-	let (inst,mdT) = case pat_infos of
-		[] -> (Pure.appT5 (ConT ''ICForest) modeT (VarT fsName) (TupleT 0) (Pure.appTyFS fsName ty_name) (VarT mdName) , (appTyModeFS'' modeT fsName md_ty_name))  
-		otherwise -> (Pure.appT5 (ConT ''ICForest) modeT (VarT fsName) (Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) (Pure.appTyFS fsName ty_name) (VarT mdName) , (appTyModeFS'' modeT fsName md_ty_name))
-	let load_method = ValD (VarP 'loadScratch) (NormalB loadM) []
-	let loadDelta_method = ValD (VarP 'loadDelta) (NormalB loadDeltaM) []
-	let manifest_method = ValD (VarP 'updateManifestScratch) (NormalB manifestM) []
-	let default_method = ValD (VarP 'IC.defaultMd) (NormalB defaultM) []
-
-	let ctx = [ClassP ''Typeable [VarT fsName],ClassP ''ICMemo [VarT fsName]
-			,ClassP ''ForestMD [VarT fsName,(appTyModeFS'' modeT fsName md_ty_name)]
-			,ClassP ''ForestOutput [VarT fsName,ConT ''ICThunk,ConT ''Inside]
-			, (VarT mdName) ` EqualP` mdT
-			]
-	
-	return $ [InstanceD ctx inst [load_method,loadDelta_method,manifest_method,default_method]]
-
---forestName :: Q String
---forestName = do
---	id <- runIO $ newUnique
---	liftM show $ newName $ "ForestType" ++ show id
---
----- as an optimization for the code generator, split forest declarations with no arguments into auxiliary Forest types
---splitForestDecls :: [ForestDecl] -> Q [ForestDecl]
---splitForestDecls = liftM List.concat . mapM splitForestDecl
---
---splitForestDecl :: ForestDecl -> Q [ForestDecl]
---splitForestDecl (ForestDecl (isTop,id, pats, ty)) = do
---	(ty',decls) <- splitForestTy ty
---	let decl = ForestDecl (isTop,id, pats, ty')
---	return $ decl:decls
---
---splitForestTy :: ForestTy -> Q (ForestTy,[ForestDecl])
---splitForestTy (Directory (Record n fields)) = do
---	(fields',decls) <- splitForestFields fields
---	return (Directory (Record n fields'),decls)
---splitForestTy (Archive exts ty) = do
---	(ty',decls) <- splitForestTy ty
---	if Set.null (forestTyVars ty')
---		then do
---			tyname <- forestName
---			let decl = ForestDecl (False,tyname,[],ty')
---			return (Archive exts (Named tyname),decl:decls)
---		else return (Archive exts ty',decls)
---splitForestTy t@(FMaybe ty) = do
---	(ty',decls) <- splitForestTy ty
---	if Set.null (forestTyVars ty')
---		then do
---			tyname <- forestName
---			let decl = ForestDecl (False,tyname,[],ty')
---			return (FMaybe (Named tyname),decl:decls)
---		else return (FMaybe ty',decls)
---splitForestTy (FConstraint pat ty pred) = do
---	(ty',decls) <- splitForestTy ty
---	if Set.null (forestTyVars ty')
---		then do
---			tyname <- forestName
---			let decl = ForestDecl (False,tyname,[],ty')
---			return (FConstraint pat (Named tyname) pred,decl:decls)
---		else return (FConstraint pat ty' pred,decls)
---splitForestTy (FComp comp) = do
---	(Comp comp',decls) <- splitForestField (Comp comp)
---	return (FComp comp',decls)
---splitForestTy t = return (t,[])	
---
---splitForestFields :: [Field] -> Q ([Field],[ForestDecl])
---splitForestFields [] = return ([],[])
---splitForestFields (f:fs) = do
---	(f',decls) <- splitForestField f
---	(fs',decls') <- splitForestFields fs
---	return (f':fs',decls++decls')
---
---splitForestField :: Field -> Q (Field,[ForestDecl])
---splitForestField (Simple (internal, isForm, external, ty, predM)) = do
---	(ty',decls) <- splitForestTy ty
---	if Set.null (forestTyVars ty')
---		then do
---			tyname <- forestName
---			let decl = ForestDecl (False,tyname,[],ty')
---			return (Simple (internal, isForm, external, Named tyname, predM),decl:decls)
---		else return (Simple (internal, isForm, external, ty', predM),decls)
---splitForestField (Comp comp) = do
---	(ty',decls) <- splitForestTy (descTy comp)
---	if Set.null (forestTyVars ty')
---		then do
---			tyname <- forestName
---			let decl = ForestDecl (False,tyname,[],ty')
---			return (Comp (comp { descTy = Named tyname }),decl:decls)
---		else return (Comp (comp { descTy = ty' }),decls)
 
 make_zforest_declarations :: [ForestDecl] -> Q [Dec]
 make_zforest_declarations ds = make_zforest_declarations' ds Nothing
@@ -249,10 +119,10 @@ make_zforest_declarations' ds mb_fsTy = do
 
 make_zforest_declaration :: ForestDecl -> Maybe [Type] -> Q [Dec]
 make_zforest_declaration (ForestDecl (isTop,id, pats, forestTy)) mb_fsTy = do
-	let ty_name = Pure.getTyName id
+	let ty_name = getTyName id
 	ecName <- newName "ec"
 	fsName <- newName "fs"
-	let unty_name = Pure.getUnTyName id
+	let unty_name = getUnTyName id
 	let arg_infos = map (\pat -> (pat,patToTy pat)) pats
 	((ty_decl,aux_decls),ks) <- State.runStateT (genZRepMDDecl isTop ecName fsName forestTy (unty_name,ty_name) arg_infos) Set.empty -- Generate representation and meta-data decls for padsTy
 
@@ -266,7 +136,7 @@ make_zforest_declaration (ForestDecl (isTop,id, pats, forestTy)) mb_fsTy = do
 
 	let args_ty = case arg_infos of
 		[] -> TupleT 0
-		otherwise -> Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) arg_infos
+		otherwise -> forestTupleTy $ map (AppT (ConT ''Arg) . snd) arg_infos
 	let proxyArgs_alias = FunD (mkName $ "proxyZArgs_"++nameBase ty_name) [Clause [] (NormalB $ proxyT args_ty) []]
 
 	return $ ty_decl:aux_decls++inst++[proxyArgs_alias]
@@ -276,8 +146,8 @@ genZFInst isTop mb_fsTy ecName fsName loadM loadDeltaM manifestM manifestDeltaM 
 	repName <- newName "rep"
 	let tyName = AppT (ConT ty_name) (VarT fsName)
 	let inst = case pat_infos of
-		[] -> (Pure.appT3 (ConT ''ZippedICForest) (VarT fsName) (TupleT 0) tyName )  
-		otherwise -> (Pure.appT3 (ConT ''ZippedICForest) (VarT fsName) (Pure.forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) tyName )
+		[] -> (appT3 (ConT ''ZippedICForest) (VarT fsName) (TupleT 0) tyName )  
+		otherwise -> (appT3 (ConT ''ZippedICForest) (VarT fsName) (forestTupleTy $ map (AppT (ConT ''Arg) . snd) pat_infos) tyName )
 	let diff_value_method = ValD (VarP 'diffValue) (NormalB $ if isTop then VarE 'diffValueThunk else VarE 'diffValueAny) [] 
 	let load_method = ValD (VarP 'zloadScratch) (NormalB loadM) []
 	let load_method_gen = ValD (VarP 'zloadScratchGeneric) (NormalB $ if isTop then VarE 'zloadScratchMemo else VarE 'zloadScratch) [] 
@@ -329,10 +199,10 @@ genZRepMDDecl isTop ecName fsName ty (unty_name,ty_name) pat_infos = case ty of
 		let ty_decECK = unKind ty_decEC
 		
 		let ty_dec = if needsEC
-			then TySynD ty_name [KindedTV fsName (ConT ''FS)] $ Pure.appT2 (ConT tyNameEC) (PromotedT 'E) (VarT fsName)
+			then TySynD ty_name [KindedTV fsName (ConT ''FS)] $ appT2 (ConT tyNameEC) (PromotedT 'E) (VarT fsName)
 			else TySynD ty_name [KindedTV fsName (ConT ''FS)] $ AppT (ConT tyNameEC) (VarT fsName)
 		let ty_decC = if needsEC
-			then TySynD tyNameC [KindedTV fsName (ConT ''FS)] $ Pure.appT2 (ConT tyNameEC) (PromotedT 'C) (VarT fsName)
+			then TySynD tyNameC [KindedTV fsName (ConT ''FS)] $ appT2 (ConT tyNameEC) (PromotedT 'C) (VarT fsName)
 			else TySynD tyNameC [KindedTV fsName (ConT ''FS)] $ AppT (ConT tyNameEC) (VarT fsName)
 		mdataInstance <- lift $ deriveFromDec makeMData ty_decECK
 		deepTypeableInstance <- lift $ deriveFromDec makeDeepTypeable ty_decECK
@@ -340,22 +210,22 @@ genZRepMDDecl isTop ecName fsName ty (unty_name,ty_name) pat_infos = case ty of
 		eqInstance <- lift (makeForestECClass makeEq ''Eq ecName fsName ty_decECK) 
 		ordInstance <- lift (makeForestECClass makeOrd ''Ord ecName fsName ty_decECK)
 		let tyEC = if needsEC
-			then Pure.appT2 (ConT tyNameEC) (VarT ecName) (VarT fsName)
+			then appT2 (ConT tyNameEC) (VarT ecName) (VarT fsName)
 			else AppT (ConT tyNameEC) (VarT fsName)
 		let tyE = if needsEC
-			then Pure.appT2 (ConT tyNameEC) (PromotedT 'E) (VarT fsName)
+			then appT2 (ConT tyNameEC) (PromotedT 'E) (VarT fsName)
 			else AppT (ConT tyNameEC) (VarT fsName)
 		let tyC = if needsEC
-			then Pure.appT2 (ConT tyNameEC) (PromotedT 'C) (VarT fsName)
+			then appT2 (ConT tyNameEC) (PromotedT 'C) (VarT fsName)
 			else AppT (ConT tyNameEC) (VarT fsName)
 		-- identity or a lens
 		let ms = mkName "ms"
 		let mv = mkName "mv"
-		let getE = LamE [VarP ms] $ Pure.appE2 (VarE 'liftM) (ConE ty_name) $ AppE (AppE (VarE 'getM) (VarE 'lens_content)) $ Pure.appE2 (VarE 'liftM) (VarE unty_name) (VarE ms)
-		let putE = LamE [VarP ms,VarP mv] $ Pure.appE2 (VarE 'liftM) (ConE ty_name) $ Pure.appE2 (AppE (VarE 'putM) (VarE 'lens_content)) (Pure.appE2 (VarE 'liftM) (VarE unty_name) (VarE ms)) (Pure.appE2 (VarE 'liftM) (VarE unty_name) (VarE mv))
+		let getE = LamE [VarP ms] $ appE2 (VarE 'liftM) (ConE ty_name) $ AppE (AppE (VarE 'getM) (VarE 'lens_content)) $ appE2 (VarE 'liftM) (VarE unty_name) (VarE ms)
+		let putE = LamE [VarP ms,VarP mv] $ appE2 (VarE 'liftM) (ConE ty_name) $ appE2 (AppE (VarE 'putM) (VarE 'lens_content)) (appE2 (VarE 'liftM) (VarE unty_name) (VarE ms)) (appE2 (VarE 'liftM) (VarE unty_name) (VarE mv))
 		let forestContentInstance = if isTop
-			then [InstanceD [ClassP ''ICRep [VarT fsName]] (Pure.appT3 (ConT ''ForestContent) (VarT fsName) tyEC tyEC) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLensM) []]]
-			else [InstanceD [ClassP ''ICRep [VarT fsName],ClassP ''ForestContent [VarT fsName,repE,repC]] (Pure.appT3 (ConT ''ForestContent) (VarT fsName) tyE tyC) [ValD (VarP 'lens_content) (NormalB $ Pure.appE2 (ConE 'LensM) getE putE) []]]
+			then [InstanceD [ClassP ''ICRep [VarT fsName]] (appT3 (ConT ''ForestContent) (VarT fsName) tyEC tyEC) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLensM) []]]
+			else [InstanceD [ClassP ''ICRep [VarT fsName],ClassP ''ForestContent [VarT fsName,repE,repC]] (appT3 (ConT ''ForestContent) (VarT fsName) tyE tyC) [ValD (VarP 'lens_content) (NormalB $ appE2 (ConE 'LensM) getE putE) []]]
 		return (ty_decEC, ty_decC:ty_dec:forestRepInstance++mdataInstance++deepTypeableInstance++forestContentInstance++eqInstance++ordInstance)
 
 {- Generate a representation and meta-data type for maybe. -}
@@ -363,7 +233,7 @@ genZRepMDMaybe :: Bool -> Name -> Name -> ForestTy -> GenQ Type
 genZRepMDMaybe isTop ecName fsName ty = do
 	rep_orig <- genZRepMDTy False ecName fsName ty
 	let rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
-	let rep_ty'  = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) rep_ty  -- md is a pair of a base md for the maybe and the underlying md.
+	let rep_ty'  = appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) rep_ty  -- md is a pair of a base md for the maybe and the underlying md.
 	if isTop
 		then fsthunkTyQ fsName rep_ty'
 		else return rep_ty
@@ -377,7 +247,7 @@ genZRepMDDir isTop hasConstraint ecName fsName (Record _ fields) ty_name pat_inf
 	reps <- mapM (genZRepMDField ecName fsName) fields
 	let ty_nameEC = mkName $ nameBase ty_name ++ "EC"
 	let ty_nameC = mkName $ nameBase ty_name ++ "C"
-	let inner_ty_name = Pure.getStructInnerName ty_name
+	let inner_ty_name = getStructInnerName ty_name
 	let inner_ty_nameEC = mkName $ nameBase inner_ty_name ++ "EC"
 	let derives      = [''Typeable]
 	let needsEC = hasVar ecName reps
@@ -386,22 +256,22 @@ genZRepMDDir isTop hasConstraint ecName fsName (Record _ fields) ty_name pat_inf
 		then DataD [] inner_ty_nameEC [KindedTV ecName (ConT ''EC),KindedTV fsName (ConT ''FS)] [ty_con] derives
 		else DataD [] inner_ty_nameEC [KindedTV fsName (ConT ''FS)] [ty_con] derives
 	let ty = if needsEC
-		then Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ Pure.appT2 (ConT inner_ty_nameEC) (VarT ecName) (VarT fsName)
-		else Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ AppT (ConT inner_ty_nameEC) (VarT fsName)
+		then appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ appT2 (ConT inner_ty_nameEC) (VarT ecName) (VarT fsName)
+		else appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ AppT (ConT inner_ty_nameEC) (VarT fsName)
 	let tyE = if needsEC
-		then Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName) , Pure.appT2 (ConT inner_ty_nameEC) (PromotedT 'E) (VarT fsName) ]
-		else Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName) , AppT (ConT inner_ty_nameEC) (VarT fsName) ]
+		then tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName) , appT2 (ConT inner_ty_nameEC) (PromotedT 'E) (VarT fsName) ]
+		else tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName) , AppT (ConT inner_ty_nameEC) (VarT fsName) ]
 	let tyC = if needsEC
-		then Pure.tyListToTupleTy [(ConT ''FileInfo) , Pure.appT2 (ConT inner_ty_nameEC) (PromotedT 'C) (VarT fsName) ]
-		else Pure.tyListToTupleTy [(ConT ''FileInfo) , AppT (ConT inner_ty_nameEC) (VarT fsName) ]
+		then tyListToTupleTy [(ConT ''FileInfo) , appT2 (ConT inner_ty_nameEC) (PromotedT 'C) (VarT fsName) ]
+		else tyListToTupleTy [(ConT ''FileInfo) , AppT (ConT inner_ty_nameEC) (VarT fsName) ]
 	ty' <- if hasConstraint
-		then return $ Pure.appT3 (ConT ''ECErr) (VarT ecName) (VarT fsName) ty
+		then return $ appT3 (ConT ''ECErr) (VarT ecName) (VarT fsName) ty
 		else return ty
 	ty'' <- if isTop then fsthunkTyQ fsName ty' else return ty'
 	tyE' <- if hasConstraint
 		then do
 			err_ty <- fsthunkTyQ fsName (ConT ''Forest_err)
-			return $ Pure.tyListToTupleTy [ err_ty ,tyE ]
+			return $ tyListToTupleTy [ err_ty ,tyE ]
 		else return tyE
 	tyE'' <- if isTop then fsthunkTyQ fsName tyE' else return tyE'
 	tyC' <- if isTop then fsthunkTyQ fsName tyC else return tyC
@@ -443,27 +313,27 @@ makeForestECClass drv cls ecName fsName dec = do
 mkDirForestContentEC :: Bool -> Name -> Name -> Name -> Name -> [Field] -> GenQ [Dec]
 mkDirForestContentEC needsEC fsName ty_name inner_ty_name inner_ty_nameEC fields = do
 	let tyE = if needsEC
-		then Pure.appT2 (ConT inner_ty_nameEC) (PromotedT 'E) $ VarT fsName
+		then appT2 (ConT inner_ty_nameEC) (PromotedT 'E) $ VarT fsName
 		else AppT (ConT inner_ty_nameEC) $ VarT fsName
 	let tyC = if needsEC
-		then Pure.appT2 (ConT inner_ty_nameEC) (PromotedT 'C) $ VarT fsName
+		then appT2 (ConT inner_ty_nameEC) (PromotedT 'C) $ VarT fsName
 		else AppT (ConT inner_ty_nameEC) $ VarT fsName
-	let (es,map snd -> ps) = Pure.getPEforFields mkName fields
-	let (es',map snd -> ps') = Pure.getPEforFields (mkName . (++"'")) fields
-	let (es'',map snd -> ps'') = Pure.getPEforFields (mkName . (++"''")) fields
+	let (es,map snd -> ps) = getPEforFields mkName fields
+	let (es',map snd -> ps') = getPEforFields (mkName . (++"'")) fields
+	let (es'',map snd -> ps'') = getPEforFields (mkName . (++"''")) fields
 	let ms = mkName "ms"
 	let mv = mkName "mv"
 	let lns_get = LamE [VarP ms] $ DoE $
 		[BindS (SigP (ConP inner_ty_name ps) tyE) (VarE ms)] ++
-		map (\(s,v) -> BindS v $ Pure.appE2 (VarE 'BX.getM) (VarE 'lens_content) (Pure.returnExp s)) (zip es ps') ++
-		[NoBindS $ Pure.returnExp $ SigE (List.foldl AppE (ConE inner_ty_name) es') tyC ]	
+		map (\(s,v) -> BindS v $ appE2 (VarE 'BX.getM) (VarE 'lens_content) (returnExp s)) (zip es ps') ++
+		[NoBindS $ returnExp $ SigE (List.foldl AppE (ConE inner_ty_name) es') tyC ]	
 	let lns_put = LamE [VarP ms,VarP mv] $ DoE $
 		[BindS (SigP (ConP inner_ty_name ps) tyE) (VarE ms),BindS (SigP (ConP inner_ty_name ps') tyC) (VarE mv)] ++
-		map (\(s,v,s') -> BindS s' $ Pure.appE3 (VarE 'BX.putM) (VarE 'lens_content) (Pure.returnExp s) (Pure.returnExp v) ) (zip3 es es' ps'') ++
-		[NoBindS $ Pure.returnExp $ SigE (List.foldl AppE (ConE inner_ty_name) es'') tyE ]	
-	let lns = Pure.appE2 (ConE 'LensM) lns_get lns_put
+		map (\(s,v,s') -> BindS s' $ appE3 (VarE 'BX.putM) (VarE 'lens_content) (returnExp s) (returnExp v) ) (zip3 es es' ps'') ++
+		[NoBindS $ returnExp $ SigE (List.foldl AppE (ConE inner_ty_name) es'') tyE ]	
+	let lns = appE2 (ConE 'LensM) lns_get lns_put
 	let fun = FunD 'lens_content [Clause [] (NormalB lns) []]
-	let dec = InstanceD [ClassP ''ICRep [VarT fsName]] (Pure.appT3 (ConT ''ForestContent) (VarT fsName) tyE tyC) [fun]
+	let dec = InstanceD [ClassP ''ICRep [VarT fsName]] (appT3 (ConT ''ForestContent) (VarT fsName) tyE tyC) [fun]
 	return [dec]
 
 genZRepMDField :: Name -> Name -> Field -> GenQ (VST)
@@ -471,22 +341,22 @@ genZRepMDField ecName fsName (Simple (internal, isForm, external, ty, predM)) = 
 	(rep_ty) <- genZRepMDTy False ecName fsName ty
 	let rep_ty' = case predM of
 		Nothing -> rep_ty
-		Just _ -> Pure.appT3 (ConT ''ECErr) (VarT ecName) (VarT fsName) rep_ty
-	return (Pure.getFieldName   internal, TH.NotStrict, rep_ty')
+		Just _ -> appT3 (ConT ''ECErr) (VarT ecName) (VarT fsName) rep_ty
+	return (getFieldName   internal, TH.NotStrict, rep_ty')
 genZRepMDField ecName fsName (Comp (info @ CompField {internalName, tyConNameOpt, descTy, ..})) = do
 	(rep_ty) <- genZRepMDComp ecName fsName info
-	return (Pure.getFieldName   internalName, TH.NotStrict, {-fsthunkTyQ fsName -} rep_ty)
+	return (getFieldName   internalName, TH.NotStrict, {-fsthunkTyQ fsName -} rep_ty)
 
 genZRepMDComp :: Name -> Name -> CompField -> GenQ Type
 genZRepMDComp ecName fsName (CompField {internalName, tyConNameOpt, descTy, generatorTy, predEOpt, ..}) = do
 	(rng_rep_ty) <- genZRepMDTy False ecName fsName descTy
 	let key_ty = case generatorTy of
-		Just (key_ty_name,key_arg) -> ConT $ Pure.getTyName key_ty_name
+		Just (key_ty_name,key_arg) -> ConT $ getTyName key_ty_name
 		Nothing -> ConT ''String
 	(rep_ty) <- case tyConNameOpt of 
 		Nothing ->  return (mkKeyListTy key_ty rng_rep_ty)
 		Just str -> do
-			arity <- lift $ Pure.getTyConArity str
+			arity <- lift $ getTyConArity str
 			case arity of 
 				1 -> return (mkKeyConTupleTy (mkName str) key_ty rng_rep_ty) 
 				2 -> return (mkKeyConCurryTy (mkName str) key_ty rng_rep_ty) 
@@ -495,7 +365,7 @@ genZRepMDComp ecName fsName (CompField {internalName, tyConNameOpt, descTy, gene
 genZRepMDCompTy :: Bool -> Name -> Name -> CompField -> GenQ Type
 genZRepMDCompTy isTop ecName fsName info = do
 	(rep_ty) <- genZRepMDComp ecName fsName info
-	let rep_ty' = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) rep_ty
+	let rep_ty' = appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) rep_ty
 	if isTop
 		then fsthunkTyQ fsName rep_ty' 
 		else return rep_ty'
@@ -506,32 +376,32 @@ genZRepMDTy isTop ecName fsName ty = case ty of
 	Directory _          -> error "Forest: Directory declarations must appear at the top level."
 	FFile (ty_name,arg)   -> if isTop
 		then do
-			let con_ty = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT (Pure.getMDName ty_name)
-			fsthunkTyQ fsName $ Pure.tyListToTupleTy [ con_ty, ConT (Pure.getTyName ty_name) ] 
+			let con_ty = appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT (getMDName ty_name)
+			fsthunkTyQ fsName $ tyListToTupleTy [ con_ty, ConT (getTyName ty_name) ] 
 		else do
-			let con_ty = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT (Pure.getMDName ty_name)
-			return $ Pure.tyListToTupleTy [ con_ty, ConT (Pure.getTyName ty_name) ] 
+			let con_ty = appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT (getMDName ty_name)
+			return $ tyListToTupleTy [ con_ty, ConT (getTyName ty_name) ] 
 	Archive archtype ty              -> do
 		rep_ty <- genZRepMDTy False ecName fsName ty
-		let con_ty = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) rep_ty
+		let con_ty = appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) rep_ty
 		if isTop
 			then fsthunkTyQ fsName con_ty
 			else return con_ty
 	FSymLink -> if isTop
 		then do
-			let con_ty = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT ''Base_md
-			fsthunkTyQ fsName $ Pure.tyListToTupleTy [ con_ty, ConT ''FilePath ] 
+			let con_ty = appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT ''Base_md
+			fsthunkTyQ fsName $ tyListToTupleTy [ con_ty, ConT ''FilePath ] 
 		else do
-			let con_ty = Pure.appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT ''Base_md
-			return $ Pure.tyListToTupleTy [ con_ty, ConT ''FilePath ]
+			let con_ty = appT3 (ConT ''ECMd) (VarT ecName) (VarT fsName) $ ConT ''Base_md
+			return $ tyListToTupleTy [ con_ty, ConT ''FilePath ]
 	Named ty_name        -> do
 		argName <- lift $ newName "arg"
-		let name = Pure.getTyName ty_name
+		let name = getTyName ty_name
 		let rep_ty = AppT (ConT $ name) (VarT fsName)
 		if isTop then fsthunkTyQ fsName rep_ty else return rep_ty
 	FConstraint p ty pred -> do
 		rep_ty <- genZRepMDTy False ecName fsName ty
-		let con_ty = Pure.appT3 (ConT ''ECErr) (VarT ecName) (VarT fsName) rep_ty
+		let con_ty = appT3 (ConT ''ECErr) (VarT ecName) (VarT fsName) rep_ty
 		if isTop
 			then fsthunkTyQ fsName con_ty
 			else return con_ty
@@ -542,26 +412,26 @@ genZRepMDTy isTop ecName fsName ty = case ty of
 -- * Unzipped representation/metadata
 
 -- | Generates representation and metadata type declarations for a Forest specification
-genRepMDDecl :: Name -> Name -> ForestTy -> (Name,Name) -> Name -> [(Pat,Type)] -> Q (Dec, [Dec], Type)
-genRepMDDecl modeName fsName ty (unty_name,ty_name) md_ty_name pat_infos = case ty of
-	Directory dirTy -> genRepMDDir False modeName fsName dirTy ty_name md_ty_name pat_infos
-	(FConstraint _ (Directory dirTy) _) -> genRepMDDir True modeName fsName dirTy ty_name md_ty_name pat_infos
-	otherwise -> do
-		(rep,md) <- genRepMDTy modeName fsName ty
-		let ty_dec = mk_newTyD fsName (unty_name,ty_name) rep
-		mdataInstance <- deriveFromDec makeMData ty_dec
-		deepTypeableInstance <- deriveFromDec makeDeepTypeable ty_dec
-		forestRepInstance <- mkNewTypeForestRep fsName (unty_name,ty_name) rep
-		let md' = case pat_infos of
-			[] -> md
-			otherwise -> Pure.appT3 (ConT ''MDArgs) (VarT modeName) md (thunksTy fsName pat_infos) -- adds argument thunks to the metadata
-		return (ty_dec, forestRepInstance:mdataInstance++deepTypeableInstance++[mk_TySynDMode modeName fsName md_ty_name md'], md') 
+--genRepMDDecl :: Name -> Name -> ForestTy -> (Name,Name) -> Name -> [(Pat,Type)] -> Q (Dec, [Dec], Type)
+--genRepMDDecl modeName fsName ty (unty_name,ty_name) md_ty_name pat_infos = case ty of
+--	Directory dirTy -> genRepMDDir False modeName fsName dirTy ty_name md_ty_name pat_infos
+--	(FConstraint _ (Directory dirTy) _) -> genRepMDDir True modeName fsName dirTy ty_name md_ty_name pat_infos
+--	otherwise -> do
+--		(rep,md) <- genRepMDTy modeName fsName ty
+--		let ty_dec = mk_newTyD fsName (unty_name,ty_name) rep
+--		mdataInstance <- deriveFromDec makeMData ty_dec
+--		deepTypeableInstance <- deriveFromDec makeDeepTypeable ty_dec
+--		forestRepInstance <- mkNewTypeForestRep fsName (unty_name,ty_name) rep
+--		let md' = case pat_infos of
+--			[] -> md
+--			otherwise -> appT2 (ConT ''MDArgs) md (thunksTy fsName pat_infos) -- adds argument thunks to the metadata
+--		return (ty_dec, forestRepInstance:mdataInstance++deepTypeableInstance++[mk_TySynDMode fsName md_ty_name md'], md') 
 
 mkNewTypeForestRep :: Name -> (Name,Name) -> Type -> Q Dec
 mkNewTypeForestRep fsName (unty_name,ty_name) rep = do
 	thunkName <- newName "thunk"
-	let content = ValD (VarP 'iso_rep_thunk) (NormalB $ InfixE (Just $ Pure.appE2 (ConE 'Iso) (VarE unty_name) (ConE ty_name)) (VarE 'isoComp) (Just $ VarE 'iso_rep_thunk)) []
-	return $ InstanceD [ClassP ''ForestRep [rep,VarT thunkName]] (Pure.appT2 (ConT ''ForestRep) (AppT (ConT ty_name) (VarT fsName)) (VarT thunkName)) [content]
+	let content = ValD (VarP 'iso_rep_thunk) (NormalB $ InfixE (Just $ appE2 (ConE 'Iso) (VarE unty_name) (ConE ty_name)) (VarE 'isoComp) (Just $ VarE 'iso_rep_thunk)) []
+	return $ InstanceD [ClassP ''ForestRep [rep,VarT thunkName]] (appT2 (ConT ''ForestRep) (AppT (ConT ty_name) (VarT fsName)) (VarT thunkName)) [content]
 	
 mkNewTypeForestRepEC :: Bool -> Name -> Name -> Name -> Name -> Name -> (Name,Name) -> Type -> Q [Dec]
 mkNewTypeForestRepEC needsEC ecName fsName ty_nameEC ty_nameE ty_nameC (unty_name,ty_name) rep = do
@@ -570,145 +440,144 @@ mkNewTypeForestRepEC needsEC ecName fsName ty_nameEC ty_nameE ty_nameC (unty_nam
 	let repC = SYB.everywhere (SYB.mkT $ replaceEC ecName fsName C) rep
 	
 	thunkName <- newName "thunk"
-	let content = ValD (VarP 'iso_rep_thunk) (NormalB $ Pure.appE2 (ConE 'Iso) (VarE unty_name) (ConE ty_name)) []
-	--let content = ValD (VarP 'iso_rep_thunk) (NormalB $ InfixE (Just $ Pure.appE2 (ConE 'Iso) (VarE unty_name) (ConE ty_name)) (VarE 'isoComp) (Just $ VarE 'iso_rep_thunk)) []
+	let content = ValD (VarP 'iso_rep_thunk) (NormalB $ appE2 (ConE 'Iso) (VarE unty_name) (ConE ty_name)) []
+	--let content = ValD (VarP 'iso_rep_thunk) (NormalB $ InfixE (Just $ appE2 (ConE 'Iso) (VarE unty_name) (ConE ty_name)) (VarE 'isoComp) (Just $ VarE 'iso_rep_thunk)) []
 	let inst = if needsEC
 		then [
-			InstanceD [] (Pure.appT2 (ConT ''ForestRep) (Pure.appT2 (ConT ty_nameEC) (PromotedT 'E) (VarT fsName)) repE) [content],
-			InstanceD [] (Pure.appT2 (ConT ''ForestRep) (Pure.appT2 (ConT ty_nameEC) (PromotedT 'C) (VarT fsName)) repC) [content]]
-		else [InstanceD [] (Pure.appT2 (ConT ''ForestRep) (AppT (ConT ty_nameEC) (VarT fsName)) repE) [content]]
+			InstanceD [] (appT2 (ConT ''ForestRep) (appT2 (ConT ty_nameEC) (PromotedT 'E) (VarT fsName)) repE) [content],
+			InstanceD [] (appT2 (ConT ''ForestRep) (appT2 (ConT ty_nameEC) (PromotedT 'C) (VarT fsName)) repC) [content]]
+		else [InstanceD [] (appT2 (ConT ''ForestRep) (AppT (ConT ty_nameEC) (VarT fsName)) repE) [content]]
 	return inst
   where
 	replaceEC :: Name -> Name -> EC -> Type -> Type
 	replaceEC ec fs n (AppT (AppT (AppT (ConT ((==''ECErr) -> True)) (VarT ((==ec) -> True))) (VarT ((==fs) -> True))) a) = case n of
-		E -> Pure.appT2 (TupleT 2) (Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) (ConT ''Forest_err)) a
+		E -> appT2 (TupleT 2) (appT2 (ConT ''ForestFSThunkI) (VarT fsName) (ConT ''Forest_err)) a
 		C -> a
 	replaceEC ec fs n (AppT (AppT (AppT (ConT ((==''ECMd) -> True)) (VarT ((==ec) -> True))) (VarT ((==fs) -> True))) a) = case n of
-		E -> Pure.appT2 (TupleT 2) (AppT (ConT ''Forest_md) (VarT fsName)) a
-		C -> Pure.appT2 (TupleT 2) (ConT ''FileInfo) a
+		E -> appT2 (TupleT 2) (AppT (ConT ''Forest_md) (VarT fsName)) a
+		C -> appT2 (TupleT 2) (ConT ''FileInfo) a
 	replaceEC ec fs n t = t
 
-{- Generate a representation and meta-data type for maybe. -}
-genRepMDMaybe :: Name -> Name -> ForestTy -> Q (Type, Type)
-genRepMDMaybe modeName fsName ty = do
-	(rep_orig, md_orig) <- genRepMDTy modeName fsName ty
-	let rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
-	let md'_ty = AppT (ConT ''Maybe) md_orig                  -- underyling md is Maybe of md of nested type
-	let md_ty  = Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
-	return (fsthunkTy fsName rep_ty, fsthunkTy fsName md_ty)
+--{- Generate a representation and meta-data type for maybe. -}
+--genRepMDMaybe :: Name -> Name -> ForestTy -> Q (Type, Type)
+--genRepMDMaybe modeName fsName ty = do
+--	(rep_orig, md_orig) <- genRepMDTy modeName fsName ty
+--	let rep_ty = AppT (ConT ''Maybe) rep_orig                 -- rep is Maybe ty where ty is rep of nested type
+--	let md'_ty = AppT (ConT ''Maybe) md_orig                  -- underyling md is Maybe of md of nested type
+--	let md_ty  = tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
+--	return (fsthunkTy fsName rep_ty, fsthunkTy fsName md_ty)
 
-{- Generate a representation and meta-data type for a directory with named fields. -}
-genRepMDDir :: Bool -> Name -> Name -> DirectoryTy -> Name -> Name ->  [(Pat,Type)] -> Q (Dec, [Dec], Type)
-genRepMDDir hasConstraint modeName fsName (Record _ fields) ty_name md_ty_name pat_infos = do
-	reps <- mapM (genRepMDField modeName fsName) fields
-	let (vsts', md_vsts') = unzip reps
-	let inner_ty_name = Pure.getStructInnerName ty_name
-	let derives      = [''Typeable,''Eq]
-	let ty_con       = TH.RecC inner_ty_name vsts'
---	let ty_md_eq = map (ClassP ''Eq . (:[])) $ allMDArgs ty_con
-	let inner_ty_decl      = DataD [] inner_ty_name [PlainTV fsName] [ty_con] derives
-	let ty = fsthunkTy fsName $ AppT (ConT inner_ty_name) (VarT fsName)
-	let ty_decl = mk_TySynD fsName ty_name ty
-	let inner_md_name = Pure.getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
-	let imd_con       = TH.RecC inner_md_name md_vsts'
---	let imd_con_eq    = map (ClassP ''Eq . (:[])) $ allMDArgs imd_con
-	let imd_decl      = TH.DataD [] inner_md_name [PlainTV modeName,PlainTV fsName] [imd_con] [''Typeable]   -- declaration of line for nested components
-	let imd_ty        = appTyModeFS' modeName fsName inner_md_name
-	let md_ty         = fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), {-fsthunkTy fsName-} imd_ty]
-	let md_ty_thunk = case pat_infos of
-		[] -> md_ty
-		otherwise -> Pure.appT3 (ConT ''MDArgs) (VarT modeName) md_ty $ thunksTy fsName pat_infos -- adds argument thunks to the metadata
-	let md_ty_thunk' = if hasConstraint
-		then Pure.appT3 (ConT ''MDArgs) (VarT modeName) md_ty_thunk $ uTy fsName (ConT ''Bool)
-		else md_ty_thunk
-	let  md_decl       = mk_TySynDMode modeName fsName md_ty_name md_ty_thunk'
-	if length vsts' == 0
-		then error ("Error: Directory " ++ (show ty_name) ++ " must contain at least one named field.")
-		else do
-			eqInsts <- makeForestEq modeName imd_decl
-			mdataInstance_rep <- deriveFromDec makeMData inner_ty_decl
-			mdataInstance_md <- deriveFromDec makeMData imd_decl
-			deepTypeableRepInstance <- deriveFromDec makeDeepTypeable inner_ty_decl
-			deepTypeableMdInstance <- deriveFromDec makeDeepTypeable imd_decl
-			return (ty_decl, {-lenses++lenses_md++-} (inner_ty_decl:mdataInstance_rep++deepTypeableRepInstance)++(imd_decl:md_decl:eqInsts++mdataInstance_md++deepTypeableMdInstance), md_ty_thunk')
+--{- Generate a representation and meta-data type for a directory with named fields. -}
+--genRepMDDir :: Bool -> Name -> Name -> DirectoryTy -> Name -> Name ->  [(Pat,Type)] -> Q (Dec, [Dec], Type)
+--genRepMDDir hasConstraint modeName fsName (Record _ fields) ty_name md_ty_name pat_infos = do
+--	reps <- mapM (genRepMDField modeName fsName) fields
+--	let (vsts', md_vsts') = unzip reps
+--	let inner_ty_name = getStructInnerName ty_name
+--	let derives      = [''Typeable,''Eq]
+--	let ty_con       = TH.RecC inner_ty_name vsts'
+----	let ty_md_eq = map (ClassP ''Eq . (:[])) $ allMDArgs ty_con
+--	let inner_ty_decl      = DataD [] inner_ty_name [PlainTV fsName] [ty_con] derives
+--	let ty = fsthunkTy fsName $ AppT (ConT inner_ty_name) (VarT fsName)
+--	let ty_decl = mk_TySynD fsName ty_name ty
+--	let inner_md_name = getStructInnerMDName ty_name   -- ty name is the same as the declared pads type name
+--	let imd_con       = TH.RecC inner_md_name md_vsts'
+----	let imd_con_eq    = map (ClassP ''Eq . (:[])) $ allMDArgs imd_con
+--	let imd_decl      = TH.DataD [] inner_md_name [PlainTV modeName,PlainTV fsName] [imd_con] [''Typeable]   -- declaration of line for nested components
+--	let imd_ty        = appTyModeFS' modeName fsName inner_md_name
+--	let md_ty         = fsthunkTy fsName $ tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), {-fsthunkTy fsName-} imd_ty]
+--	let md_ty_thunk = case pat_infos of
+--		[] -> md_ty
+--		otherwise -> appT2 (ConT ''MDArgs) md_ty $ thunksTy fsName pat_infos -- adds argument thunks to the metadata
+--	let md_ty_thunk' = if hasConstraint
+--		then appT2 (ConT ''MDArgs) md_ty_thunk $ uTy fsName (ConT ''Bool)
+--		else md_ty_thunk
+--	let  md_decl       = mk_TySynDMode fsName md_ty_name md_ty_thunk'
+--	if length vsts' == 0
+--		then error ("Error: Directory " ++ (show ty_name) ++ " must contain at least one named field.")
+--		else do
+--			eqInsts <- makeForestEq modeName imd_decl
+--			mdataInstance_rep <- deriveFromDec makeMData inner_ty_decl
+--			mdataInstance_md <- deriveFromDec makeMData imd_decl
+--			deepTypeableRepInstance <- deriveFromDec makeDeepTypeable inner_ty_decl
+--			deepTypeableMdInstance <- deriveFromDec makeDeepTypeable imd_decl
+--			return (ty_decl, {-lenses++lenses_md++-} (inner_ty_decl:mdataInstance_rep++deepTypeableRepInstance)++(imd_decl:md_decl:eqInsts++mdataInstance_md++deepTypeableMdInstance), md_ty_thunk')
 
 makeForestEq :: Name -> Dec -> Q [Dec]
 makeForestEq modeName dec = do
 	[InstanceD _ (AppT (ConT eq) (AppT (AppT n mode) fs)) decs] <- deriveFromDec makeEq dec
-	let icDataInst = InstanceD [ClassP ''ICRep [fs]] (AppT (ConT eq) (AppT (AppT n (PromotedT 'ICData)) fs)) decs
-	let icExprInst = InstanceD [ClassP ''ICRep [fs]] (AppT (ConT eq) (AppT (AppT n (PromotedT 'ICExpr)) fs)) decs
-	return [icDataInst,icExprInst]
+	let icDataInst = InstanceD [ClassP ''ICRep [fs]] (AppT (ConT eq) (AppT n fs)) decs
+	return [icDataInst]
 
 thunksTy :: Name -> [(Pat,Type)] -> Type
-thunksTy fsName pat_infos = thunksTy' $ map (Pure.appT2 (ConT ''ForestICThunkI) (VarT fsName) . snd) pat_infos
+thunksTy fsName pat_infos = thunksTy' $ map (appT2 (ConT ''ForestICThunkI) (VarT fsName) . snd) pat_infos
 	where thunksTy' :: [Type] -> Type
-	      thunksTy' = foldl1' (Pure.appT2 (ConT ''(:*:)))
+	      thunksTy' = foldl1' (appT2 (ConT ''(:*:)))
 
 -- named comprehensions will be loaded as directories and get their own @Forest_md@, whereas inlined comprehensions inside Directorys do not get their own @Forest_md@
 type VST = (TH.Name, TH.Strict, Type)
 
-genRepMDField :: Name -> Name -> Field -> Q (VST, VST)
-genRepMDField modeName fsName (Simple (internal, isForm, external, ty, predM)) = do
-	(rep_ty,md_ty) <- genRepMDTy modeName fsName ty
-	let md_ty' = case predM of
-		Nothing -> md_ty
-		Just pred -> Pure.appT3 (ConT ''MDArgs) (VarT modeName) md_ty $ uTy fsName (ConT ''Bool)
-	return ((Pure.getFieldName   internal, TH.NotStrict, rep_ty),(Pure.getFieldMDName internal, TH.NotStrict, md_ty'))
-genRepMDField modeName fsName (Comp (info @ CompField {internalName, tyConNameOpt, descTy, ..})) = do
-	(rep_ty, md_ty) <- genRepMDComp modeName fsName info
-	return ((Pure.getFieldName   internalName, TH.NotStrict, {-fsthunkTy fsName -} rep_ty),(Pure.getFieldMDName internalName, TH.NotStrict, {-fsthunkTy fsName-} md_ty))
+--genRepMDField :: Name -> Name -> Field -> Q (VST, VST)
+--genRepMDField modeName fsName (Simple (internal, isForm, external, ty, predM)) = do
+--	(rep_ty,md_ty) <- genRepMDTy modeName fsName ty
+--	let md_ty' = case predM of
+--		Nothing -> md_ty
+--		Just pred -> appT3 (ConT ''MDArgs) (VarT modeName) md_ty $ uTy fsName (ConT ''Bool)
+--	return ((getFieldName   internal, TH.NotStrict, rep_ty),(getFieldMDName internal, TH.NotStrict, md_ty'))
+--genRepMDField modeName fsName (Comp (info @ CompField {internalName, tyConNameOpt, descTy, ..})) = do
+--	(rep_ty, md_ty) <- genRepMDComp modeName fsName info
+--	return ((getFieldName   internalName, TH.NotStrict, {-fsthunkTy fsName -} rep_ty),(getFieldMDName internalName, TH.NotStrict, {-fsthunkTy fsName-} md_ty))
+--
+--genRepMDComp modeName fsName (CompField {internalName, tyConNameOpt, descTy, predEOpt, ..}) = do
+--	(rng_rep_ty, rng_md_ty) <- genRepMDTy modeName fsName descTy
+--	let rng_md_ty' = if isJust predEOpt -- if there is a constraint
+--		then appT3 (ConT ''MDArgs) (VarT modeName) rng_md_ty $ tyListToTupleTy [appT2 (ConT ''ForestFSThunkI) (VarT fsName) (ConT ''FileInfo),appT2 (ConT ''ForestICThunkI) (VarT fsName) (ConT ''Bool)]
+--		else appT3 (ConT ''MDArgs) (VarT modeName) rng_md_ty $ appT2 (ConT ''ForestFSThunkI) (VarT fsName) (ConT ''FileInfo)
+--	(rep_ty, md_ty) <- case tyConNameOpt of 
+--		Nothing ->  return (mkStringListTy rng_rep_ty, mkStringListTy rng_md_ty')
+--		Just str -> do
+--			arity <- getTyConArity str
+--			case arity of 
+--				1 -> return (mkStringConTupleTy (mkName str) rng_rep_ty, mkStringConTupleTy (mkName str) rng_md_ty') 
+--				2 -> return (mkStringConCurryTy (mkName str) rng_rep_ty, mkStringConCurryTy (mkName str) rng_md_ty') 
+--	return (fsthunkTy fsName rep_ty,fsthunkTy fsName md_ty)
+--	
+--genRepMDCompTy modeName fsName info = do
+--	(rep_ty, md'_ty) <- genRepMDComp modeName fsName info
+--	let md_ty  = tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
+--	return (fsthunkTy fsName rep_ty,fsthunkTy fsName md_ty)
 
-genRepMDComp modeName fsName (CompField {internalName, tyConNameOpt, descTy, predEOpt, ..}) = do
-	(rng_rep_ty, rng_md_ty) <- genRepMDTy modeName fsName descTy
-	let rng_md_ty' = if isJust predEOpt -- if there is a constraint
-		then Pure.appT3 (ConT ''MDArgs) (VarT modeName) rng_md_ty $ Pure.tyListToTupleTy [Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) (ConT ''FileInfo),Pure.appT2 (ConT ''ForestICThunkI) (VarT fsName) (ConT ''Bool)]
-		else Pure.appT3 (ConT ''MDArgs) (VarT modeName) rng_md_ty $ Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) (ConT ''FileInfo)
-	(rep_ty, md_ty) <- case tyConNameOpt of 
-		Nothing ->  return (mkStringListTy rng_rep_ty, mkStringListTy rng_md_ty')
-		Just str -> do
-			arity <- Pure.getTyConArity str
-			case arity of 
-				1 -> return (mkStringConTupleTy (mkName str) rng_rep_ty, mkStringConTupleTy (mkName str) rng_md_ty') 
-				2 -> return (mkStringConCurryTy (mkName str) rng_rep_ty, mkStringConCurryTy (mkName str) rng_md_ty') 
-	return (fsthunkTy fsName rep_ty,fsthunkTy fsName md_ty)
-	
-genRepMDCompTy modeName fsName info = do
-	(rep_ty, md'_ty) <- genRepMDComp modeName fsName info
-	let md_ty  = Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), md'_ty ]    -- md is a pair of a base md for the maybe and the underlying md.
-	return (fsthunkTy fsName rep_ty,fsthunkTy fsName md_ty)
 
-
-mkStringConTupleTy con ty = AppT (ConT con)  (Pure.tyListToTupleTy [ConT ''String, ty])
+mkStringConTupleTy con ty = AppT (ConT con)  (tyListToTupleTy [ConT ''String, ty])
 mkStringConCurryTy con ty = AppT (AppT (ConT con) (ConT ''String)) ty
-mkStringListTy ty = AppT ListT (Pure.tyListToTupleTy [ConT ''String, ty])
+mkStringListTy ty = AppT ListT (tyListToTupleTy [ConT ''String, ty])
 
-mkKeyConTupleTy con key ty = AppT (ConT con)  (Pure.tyListToTupleTy [key, ty])
+mkKeyConTupleTy con key ty = AppT (ConT con)  (tyListToTupleTy [key, ty])
 mkKeyConCurryTy con key ty = AppT (AppT (ConT con) (key)) ty
-mkKeyListTy key ty = AppT ListT (Pure.tyListToTupleTy [key, ty])
+mkKeyListTy key ty = AppT ListT (tyListToTupleTy [key, ty])
 
 
 {- Generate type and meta-data representations. -}
-genRepMDTy :: Name -> Name -> ForestTy -> Q (Type, Type)
-genRepMDTy modeName fsName ty = case ty of
-	Directory _          -> error "Forest: Directory declarations must appear at the top level."
-	FFile (ty_name,arg)   -> do
-		let repTy = fsthunkTy fsName $ ConT (Pure.getTyName ty_name)
-		let mdTy = fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), fsthunkTy fsName $ ConT (Pure.getMDName ty_name)] 
-		return (repTy,mdTy) 
-	Archive archtype ty              -> do
-		(rep_ty,md_ty) <- genRepMDTy modeName fsName ty
-		return (fsthunkTy fsName rep_ty,fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName),md_ty])
-	FSymLink              -> return (fsthunkTy fsName $ ConT ''FilePath, fsthunkTy fsName $ Pure.tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), ConT ''Base_md])
-	Named ty_name        -> return (Pure.appTyFS fsName $ Pure.getTyName ty_name, appTyModeFS' modeName fsName $ Pure.getMDName ty_name)
-	FConstraint p ty pred -> do
-		(rep_ty,md_ty) <- genRepMDTy modeName fsName ty
-		return (rep_ty,Pure.appT3 (ConT ''MDArgs) (VarT modeName) md_ty $ uTy fsName $ ConT ''Bool)
-	FMaybe ty            -> genRepMDMaybe modeName fsName ty
-	Fapp ty arg          -> genRepMDTy modeName fsName ty
-	FComp cinfo          -> genRepMDCompTy modeName fsName cinfo
+--genRepMDTy :: Name -> Name -> ForestTy -> Q (Type, Type)
+--genRepMDTy modeName fsName ty = case ty of
+--	Directory _          -> error "Forest: Directory declarations must appear at the top level."
+--	FFile (ty_name,arg)   -> do
+--		let repTy = fsthunkTy fsName $ ConT (getTyName ty_name)
+--		let mdTy = fsthunkTy fsName $ tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), fsthunkTy fsName $ ConT (getMDName ty_name)] 
+--		return (repTy,mdTy) 
+--	Archive archtype ty              -> do
+--		(rep_ty,md_ty) <- genRepMDTy modeName fsName ty
+--		return (fsthunkTy fsName rep_ty,fsthunkTy fsName $ tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName),md_ty])
+--	FSymLink              -> return (fsthunkTy fsName $ ConT ''FilePath, fsthunkTy fsName $ tyListToTupleTy [AppT (ConT ''Forest_md) (VarT fsName), ConT ''Base_md])
+--	Named ty_name        -> return (appTyFS fsName $ getTyName ty_name, appTyModeFS' modeName fsName $ getMDName ty_name)
+--	FConstraint p ty pred -> do
+--		(rep_ty,md_ty) <- genRepMDTy modeName fsName ty
+--		return (rep_ty,appT3 (ConT ''MDArgs) (VarT modeName) md_ty $ uTy fsName $ ConT ''Bool)
+--	FMaybe ty            -> genRepMDMaybe modeName fsName ty
+--	Fapp ty arg          -> genRepMDTy modeName fsName ty
+--	FComp cinfo          -> genRepMDCompTy modeName fsName cinfo
 
 uTy :: Name -> Type -> Type
-uTy fsName ty = Pure.appT2 (ConT ''ForestICThunkI) (VarT fsName) ty
+uTy fsName ty = appT2 (ConT ''ForestICThunkI) (VarT fsName) ty
 
 fsthunkTyQ :: Name -> Type -> GenQ Type
 fsthunkTyQ fsName ty = do
@@ -716,7 +585,7 @@ fsthunkTyQ fsName ty = do
 	return $ fsthunkTy fsName ty
 
 fsthunkTy :: Name -> Type -> Type
-fsthunkTy fsName ty = Pure.appT2 (ConT ''ForestFSThunkI) (VarT fsName) ty
+fsthunkTy fsName ty = appT2 (ConT ''ForestFSThunkI) (VarT fsName) ty
 
 predTy :: Pred -> Type
 predTy (ClassP n tys) = appConT n tys

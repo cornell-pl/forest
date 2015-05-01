@@ -7,7 +7,7 @@ import Prelude hiding (mod,read,const)
 import qualified Prelude
 import Language.Forest.Pure
 import Language.Pads.Padsc hiding (take,numErrors,head,lift)
-import Control.Monad.Lazy
+
 import Data.List
 import Data.Char
 import Data.Maybe

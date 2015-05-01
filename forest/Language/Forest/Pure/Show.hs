@@ -9,7 +9,7 @@ module Language.Forest.Pure.Show where
 import System.Posix.Time
 import System.Posix.Types
 import Foreign.C.Types
-import Language.Pads.CoreBaseTypes
+import Language.Pads.Padsc
 import Control.Monad
 import Data.Data
 import Text.ParserCombinators.ReadP

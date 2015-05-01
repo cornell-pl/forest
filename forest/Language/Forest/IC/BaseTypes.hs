@@ -36,8 +36,8 @@ module Language.Forest.IC.BaseTypes where
 import Language.Forest.IC.Default
 import Data.DeepTypeable
 import Language.Haskell.TH.Syntax
-import Language.Forest.Pure.Generic
-import Language.Forest.Pure.MetaData hiding (Forest_md)
+--import Language.Forest.Pure.Generic
+--import Language.Forest.Pure.MetaData hiding (Forest_md)
 import Language.Forest.IC.MetaData 
 import Language.Forest.Quote
 import Language.Forest.Manifest hiding (Link)
@@ -55,7 +55,7 @@ import Data.IORef
 import Control.Monad.Incremental
 
 -- creates top-level variables
-[iforest|
+[txforest|
   data TextFile   = File Text
   data BinaryFile = File Binary
   data AnyFile    = File Binary

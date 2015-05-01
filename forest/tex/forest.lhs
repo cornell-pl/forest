@@ -679,7 +679,10 @@ even the Haskell STM is implemented in C
 
 transactional filesystems (user-space vs kernel-space)
 \url{http://www.fuzzy.cz/en/articles/transactional-file-systems}\\
-\url{http://www.fsl.cs.sunysb.edu/docs/valor/valor_fast2009.pdf}\\
+\url{http://www.fsl.cs.sunysb.edu/docs/valor/valor_fast2009.pdf} cooperate with pre-existing apps that are not transactional; extended mandatory locking. For
+transaction-oblivious processes, each individual
+system call is treated as a transaction; Extended mandatory locking ensures that
+all processes acquire locks before accessing these resources \\
 \url{http://www.fsl.cs.sunysb.edu/docs/amino-tos06/amino.pdf}
 
 libraries for transactional file operations:

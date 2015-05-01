@@ -34,15 +34,14 @@ import Data.Data
 import Data.Maybe
 import System.Random
 import Data.Proxy
-import Control.Monad.Lazy
 
 
 -- | lazy file loading
 -- Pads errors contribute to the Forest error count
-doLoadFile :: (MonadLazy (ForestM fs),Eq md,Eq pads,Data pads,Data md,FSRep fs,Pads pads md) => Proxy pads -> FilePath -> FSTree fs -> GetForestMD fs -> ForestM fs (pads,(Forest_md,md))
+doLoadFile :: (Eq md,Eq pads,Data pads,Data md,FSRep fs,Pads pads md) => Proxy pads -> FilePath -> FSTree fs -> GetForestMD fs -> ForestM fs (pads,(Forest_md,md))
 doLoadFile repProxy path tree getMD = debug ("doLoadFile " ++ show (path)) $ checkPath (Just False) path tree $ do
-	(rep,md) <- pathInTree path tree >>= lazily . forestIO . parseFile
-	fmd <- lazily $ getMD path tree
+	(rep,md) <- pathInTree path tree >>= unsafeInterleaveForestM . forestIO . parseFile
+	fmd <- unsafeInterleaveForestM $ getMD path tree
 	let fmd' = updateForestMDErrorsWithPadsMD fmd md 
 	return (rep,(fmd',md))
 
@@ -50,21 +49,21 @@ doLoadFile repProxy path tree getMD = debug ("doLoadFile " ++ show (path)) $ che
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- Pads errors contribute to the Forest error count
-doLoadFile1 :: (MonadLazy (ForestM fs),Eq arg,Eq pads,Eq md,Data pads,Data md,FSRep fs,Pads1 arg pads md) => Proxy pads -> arg -> FilePath -> FSTree fs -> GetForestMD fs -> ForestM fs (pads,(Forest_md,md))
+doLoadFile1 :: (Eq arg,Eq pads,Eq md,Data pads,Data md,FSRep fs,Pads1 arg pads md) => Proxy pads -> arg -> FilePath -> FSTree fs -> GetForestMD fs -> ForestM fs (pads,(Forest_md,md))
 doLoadFile1 repProxy arg path tree getMD = debug ("doLoadFile1 " ++ show (path)) $ checkPath (Just False) path tree $ do
-	(rep,md) <- pathInTree path tree >>= lazily . forestIO . parseFile1 arg
-	fmd <- lazily $ getMD path tree
+	(rep,md) <- pathInTree path tree >>= unsafeInterleaveForestM . forestIO . parseFile1 arg
+	fmd <- unsafeInterleaveForestM $ getMD path tree
 	let fmd' = updateForestMDErrorsWithPadsMD fmd md 
 	return (rep,(fmd',md))
 
 -- | compressed archive (tar,gz,zip)
 -- AVFS gives us some laziness guarantees; the archived is only decompressed on demand
-doLoadArchive :: (MonadLazy (ForestM fs),ForestMD md,Data rep,FSRep fs,Data md) =>
+doLoadArchive :: (ForestMD md,Data rep,FSRep fs,Data md) =>
 	[ArchiveType] -> FilePath -> FSTree fs -> GetForestMD fs
 	-> (FilePath -> GetForestMD fs -> FSTree fs -> ForestM fs (rep,md))
 	-> ForestM fs (rep,(Forest_md,md))
 doLoadArchive exts path tree getMD load = checkPath (Just False) path tree $ checkFileExtension (archiveExtension exts) path $ do
-	fmd <- lazily $ getMD path tree
+	fmd <- unsafeInterleaveForestM $ getMD path tree
 	let contentPath = cardinalPath path -- add a cardinal to the filepath to denote the contents of the archive, e.g., the path /a/b/file.tar.gz#/a.txt refers to file a.txt inside a tarball /a/b/file/tar.gz
 	avfsTree <- virtualTree tree -- enter AVFS filepath mode
 	
@@ -72,9 +71,9 @@ doLoadArchive exts path tree getMD load = checkPath (Just False) path tree $ che
 	let fmd' = updateForestMDErrorsWith fmd [get_errors md_arch]
 	return (rep,(fmd',md_arch))
 
-doLoadSymLink :: (MonadLazy (ForestM fs),FSRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestM fs (FilePath,(Forest_md,Base_md))
+doLoadSymLink :: (FSRep fs) => FilePath -> FSTree fs -> GetForestMD fs -> ForestM fs (FilePath,(Forest_md,Base_md))
 doLoadSymLink path tree getMD = checkPath Nothing path tree $ do
-	md <- lazily $ getMD path tree
+	md <- unsafeInterleaveForestM $ getMD path tree
 	case symLink (fileInfo md) of
 		Just sym -> return (sym,(md,cleanBasePD))
 		Nothing -> do

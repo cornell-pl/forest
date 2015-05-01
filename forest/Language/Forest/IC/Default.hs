@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, OverlappingInstances, KindSignatures, DataKinds, OverlappingInstances, UndecidableInstances, TypeOperators, ConstraintKinds, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE RankNTypes, TupleSections, OverlappingInstances, KindSignatures, DataKinds, OverlappingInstances, UndecidableInstances, TypeOperators, ConstraintKinds, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
 
 module Language.Forest.IC.Default where
 
@@ -9,16 +9,16 @@ import Language.Forest.Manifest
 import Data.Typeable
 import Control.Monad.Incremental.Display
 import Control.Monad.Incremental
-import Control.Monad.Incremental.Adapton.Types
-import Control.Monad.Incremental.Adapton.Layers
+import Control.Monad.Incremental.Internal.Adapton.Types
+import Control.Monad.Incremental.Internal.Adapton.Layers
 import Language.Forest.IC.MetaData
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
+--import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
 import Language.Forest.Errors
 
-import Language.Pads.Errors hiding (ErrMsg)
-import Language.Pads.MetaData
+--import Language.Pads.Errors hiding (ErrMsg)
+--import Language.Pads.MetaData
 import Language.Pads.Source
-import Language.Pads.CoreBaseTypes
+--import Language.Pads.CoreBaseTypes
 
 import System.Posix.Types
 import Control.Monad.Trans
@@ -29,6 +29,9 @@ import Data.Map (Map(..))
 import Data.WithClass.MData
 import Data.ByteString as B
 import Language.Haskell.TH.Syntax
+import Data.Set as Set
+import qualified Data.Data as Data
+import qualified Data.Generics as Data
 
 import Data.IORef
 
@@ -119,3 +122,45 @@ instance (ForestLayer fs l,MData (CopyFSThunksDict fs l) (ForestL fs l) a) => Co
 		if hasDeepTypeable hasFSThunk (proxyOf x)
 			then gmapT (copyFSThunksProxy fs l) (copyFSThunksDict dict fs l f) x
 			else return x
+
+
+
+forestdefault ::  Data.GenericB
+forestdefault = genericB forestdefault'
+
+genericB :: (forall a. Data.Data a => a -> a) -> Data.GenericB
+genericB gen = gen (error "genericB")
+
+forestdefault' :: (forall a. (Data.Data a) => a -> a)
+forestdefault' a = Data.ext1B (Data.ext2B (general a
+		`Data.extB` char 
+		`Data.extB` int
+		`Data.extB` integer
+		`Data.extB` float 
+		`Data.extB` double 
+		`Data.extB` coff
+		`Data.extB` epochTime
+		`Data.extB` fileMode
+		`Data.extB` byteString)
+		map)
+		(list) where
+	-- Generic case (does not guarantee termination for recursive types)
+	general :: (Data.Data a) => a -> a
+	general proxy = let d = Data.dataTypeOf proxy in Data.fromConstrB (forestdefault' (error "general")) (Data.indexConstr d 1)
+	
+	-- Base cases
+	char    = '\NUL'
+	int     = 0      :: Int
+	integer = 0      :: Integer
+	float   = 0.0    :: Float
+	double  = 0.0    :: Double
+	coff    = 0      :: COff
+	epochTime = 0    :: EpochTime
+	fileMode = 0     :: FileMode
+	byteString = B.empty     :: B.ByteString
+	list :: Data.Data b => [b]
+	list   = []
+	map :: (Map.Map k v)
+	map = Map.empty
+	set :: (Set.Set v)
+	set = Set.empty

@@ -19,11 +19,11 @@ import qualified Language.Pads.Padsc as Pads
 import Language.Forest.IC.MetaData
 import Language.Forest.IC.Default
 import Language.Forest.IC.Generic
-import Language.Forest.IC.IO.Storing
+--import Language.Forest.IC.IO.Storing
 import Language.Forest.Errors
 import Language.Forest.FS.FSDelta
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..))
-import qualified Language.Forest.Pure.MetaData as Pure
+--import Language.Forest.MetaData (FileInfo(..),FileType(..),(:*:)(..))
+--import qualified Language.Forest.MetaData as Pure
 import Control.Monad.Incremental as Inc hiding (memo)
 import Data.IORef
 import Data.List as List
@@ -72,12 +72,12 @@ doZManifestArgs :: (ICRep fs,ForestArgs fs args) =>
 doZManifestArgs proxy margs rep manifestContent man = do
 	manifestContent rep man
 
-doZManifestFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+doZManifestFile1 :: (FTK fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((FileInfo,md),padsc)
 	,MData NoCtx (ForestI fs) arg,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),Typeable arg,ZippedICMemo fs,ICRep fs,Pads1 arg pads md) => ForestI fs arg -> FilePath -> FSTree fs -> ForestFSThunkI fs ((Forest_md fs,md),pads) -> Manifest fs -> MManifestForestO fs
 doZManifestFile1 (marg :: ForestI fs arg) path tree rep_t man = do
 	
 	repairMd <- Reader.ask
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)
 	
@@ -109,7 +109,7 @@ doZManifestFileInner1 :: (IncK (IncForest fs) FileInfo,MData NoCtx (ForestI fs) 
 doZManifestFileInner1 (marg :: ForestI fs arg) path tree ((fmd,bmd),pads) man = do
 	
 	repairMd <- Reader.ask
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)
 	
@@ -140,7 +140,7 @@ doZManifestFileInner1 (marg :: ForestI fs arg) path tree ((fmd,bmd),pads) man = 
 				man1 <- if repairMd
 					then do
 						Writer.tell $ Prelude.const $ do
-							replaceForestMDErrorsWith fmd $ return [Pure.missingPathForestErr path]
+							replaceForestMDErrorsWith fmd $ return [missingPathForestErr path]
 							updateForestMDErrorsWithPadsMD fmd (return $ get_md_header bmd) -- adds the Pads errors
 						return man
 					else return $ addTestToManifest testm man
@@ -219,7 +219,7 @@ doZManifestArchive isClosed archTy path tree toprep manifest manifestD diffValue
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingPathForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (missingPathForestErr path `mergeForestErrs`) $ get_errors rep
 			return $ addTestToManifest testm man1
 
 doZManifestArchiveInner :: (ForestMD fs rep,ForestInput fs FSThunk Inside,ICRep fs) =>
@@ -266,7 +266,7 @@ doZManifestArchiveInner archTy path tree (fmd,rep) manifestContents man = do
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (get_errors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingPathForestErr path `Pure.mergeForestErrs`) $ get_errors rep
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (missingPathForestErr path `mergeForestErrs`) $ get_errors rep
 			return $ addTestToManifest testm man1
 
 doZManifestSymLink :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
@@ -290,7 +290,7 @@ doZManifestSymLink path tree (rep_t) man = do
 				status1 <- liftM (boolStatus $ ConflictingLink path tgt Nothing) $ return $ tgt == "" && base_md == cleanBasePD
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [Pure.ioExceptionForestErr]
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [ioExceptionForestErr]
 			lift $ forestM $ removePathFromManifestInTree path tree $ addTestToManifest testm man
 
 doZManifestSymLinkInner :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, Base_md), FilePath),ICRep fs) =>
@@ -313,7 +313,7 @@ doZManifestSymLinkInner path tree ((fmd,base_md), tgt) man = do
 				status1 <- liftM (boolStatus $ ConflictingLink path tgt Nothing) $ return $ tgt == "" && base_md == cleanBasePD
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [Pure.ioExceptionForestErr]
+			Writer.tell $ Prelude.const $ replaceForestMDErrorsWith fmd $ return [ioExceptionForestErr]
 			lift $ forestM $ removePathFromManifestInTree path tree $ addTestToManifest testm man
 
 doZManifestConstraint :: (ForestContent fs rep content,IncK (IncForest fs) (ForestFSThunkI fs Forest_err, rep),ForestMD fs rep,ICRep fs) =>
@@ -333,13 +333,13 @@ doZManifestConstraintInner pred (err_t,rep) manifestContent man = do
 			err_cond <- predForestErr . pred =<< BX.getM lens_content (return rep)
 			err_inner <- get_errors rep
 			errors <- Inc.get err_t
-			return $ isValidForestErr errors == isValidForestErr (Pure.mergeForestErrs err_cond err_inner)
+			return $ isValidForestErr errors == isValidForestErr (mergeForestErrs err_cond err_inner)
 	
 	Writer.tell $ \latest -> do
 		overwrite err_t $ do
 			err_cond <- predForestErr . pred =<< BX.getM lens_content (return rep)
 			err_inner <- get_errors rep
-			return $ Pure.mergeForestErrs err_cond err_inner
+			return $ mergeForestErrs err_cond err_inner
 	
 	manifestContent rep $ addTestToManifest testm man
 
@@ -389,7 +389,7 @@ doZManifestDirectoryInner path tree collectMDErrors (fmd,rep) manifestContent ma
 				status1 <- if isRepairMd then return Valid else liftM (boolStatus $ ConflictingMdValidity) $ forestO $ inside (collectMDErrors rep) >>= sameValidity' fmd
 				status2 <- liftM (boolStatus $ ConflictingPath path path_fmd) $ latestTree >>= sameCanonicalFullPathInTree path_fmd path
 				return $ status1 `mappend` status2
-			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (Pure.missingDirForestErr path `Pure.mergeForestErrs`) $ collectMDErrors rep
+			Writer.tell $ \latest -> replaceForestMDErrorsWith fmd $ liftM (:[]) $ liftM (missingDirForestErr path `mergeForestErrs`) $ collectMDErrors rep
 			return $ addTestToManifest testm man1
 
 doZManifestMaybe :: (IncK (IncForest fs) (Forest_md fs, Maybe rep),ForestMD fs rep,ICRep fs) =>
@@ -538,3 +538,15 @@ testZFocus key_arg root matching pred new_files = do
 		return $ canpath == new_canpath
 	same <- liftM and $ mapM testFile $ zip (List.sort new_files) (List.sort files)
 	return $ boolStatus (ConflictingMatching root (show matching) new_files files) $ (length files == length new_files) && same
+
+testFocus :: (FSRep fs,Matching fs a) => FilePath -> a -> (FileName -> FSTree fs -> ForestM fs Bool) -> [FileName] -> ForestM fs Status
+testFocus root matching pred new_files = do
+	tree <- latestTree
+	files <- filterM (flip pred tree) =<< getMatchingFilesInTree root matching tree
+	let testFile (file,new_file) = do
+		canpath <- canonalizePathInTree (root </> file) tree
+		new_canpath <- canonalizePathInTree (root </> new_file) tree
+		return $ canpath == new_canpath
+	same <- liftM and $ mapM testFile $ zip (List.sort new_files) (List.sort files)
+	return $ boolStatus (ConflictingMatching root (show matching) new_files files) $ (length files == length new_files) && same
+

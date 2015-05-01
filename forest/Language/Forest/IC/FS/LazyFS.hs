@@ -8,7 +8,8 @@ import Language.Forest.FS.FSRep
 import Language.Forest.IC.ICRep
 import System.IO.Unsafe
 import Control.Monad
-import Control.Monad.Lazy
+import Control.Applicative
+
 import Data.Maybe
 import Data.List
 import Data.WithClass.MData
@@ -18,7 +19,6 @@ import Data.List as List
 import Data.IORef
 import System.FilePath.Posix
 import Language.Forest.IO.Utils
-import qualified Language.Forest.Pure.MetaData as Pure
 import Control.Concurrent.Lock (Lock(..))
 import qualified Control.Concurrent.Lock as Lock
 import Control.Concurrent.MVar
@@ -26,6 +26,9 @@ import Control.Monad.Incremental as Inc
 import Language.Forest.IO.Shell
 import Language.Forest.IC.Generic
 import Control.Monad.Incremental.LazyNonInc
+import Control.Monad.Incremental.Internal.LazyNonInc.Algorithm
+import Control.Monad.Incremental.Internal.LazyNonInc.Layers
+import Control.Monad.Incremental.Internal.LazyNonInc.Types
 import Data.IORef
 import Control.Monad.Ref
 import Data.Map (Map(..))
@@ -43,10 +46,10 @@ import Safe
 type instance IncK (IncForest LazyFS) a = (Eq a,Typeable a)
 
 
-instance Incremental (IncForest LazyFS) IORef IO where
+instance Incremental (IncForest LazyFS) where
 	
-	newtype Outside (IncForest LazyFS) IORef IO a = LazyFSForestO { runLazyFSForestO :: Outside LazyNonInc IORef IO a } deriving (Monad,MonadLazy)
-	newtype Inside (IncForest LazyFS) IORef IO a = LazyFSForestI { runLazyFSForestI :: Inside LazyNonInc IORef IO a } deriving (Monad,MonadLazy)
+	newtype Outside (IncForest LazyFS) a = LazyFSForestO { runLazyFSForestO :: Outside LazyNonInc a } deriving (Monad,Applicative,Functor)
+	newtype Inside (IncForest LazyFS) a = LazyFSForestI { runLazyFSForestI :: Inside LazyNonInc a } deriving (Monad,Applicative,Functor)
 
 	world = LazyFSForestO . inside . runLazyFSForestI
 	unsafeWorld = LazyFSForestI . LazyNonIncInner . runLazyNonIncOuter . runLazyFSForestO
@@ -56,13 +59,8 @@ instance Incremental (IncForest LazyFS) IORef IO where
 		x <- runLazyNonIncOuter $ (runLazyFSForestO m) 
 		unmountAVFS
 		return x
-
-instance InLayer Outside (IncForest LazyFS) IORef IO where
-	inL = LazyFSForestO  . LazyNonIncOuter
-	{-# INLINE inL #-}
-instance InLayer Inside (IncForest LazyFS) IORef IO where
-	inL = LazyFSForestI  . LazyNonIncInner
-	{-# INLINE inL #-}
+	
+	unsafeIOToInc = inside . LazyFSForestI  . LazyNonIncInner
 
 instance Eq (FSTree LazyFS) where
 	t1 == t2 = False
@@ -73,9 +71,9 @@ instance Show (FSTree LazyFS) where
 
 instance FSRep LazyFS where
 	
-	newtype ForestM LazyFS a = LazyFSForestM { runLazyFSForestM :: Inside LazyNonInc IORef IO a } deriving (Monad,MonadLazy)
+	newtype ForestM LazyFS a = LazyFSForestM { runLazyFSForestM :: Inside LazyNonInc a } deriving (Monad,Applicative,Functor)
 	
-	forestIO =  LazyFSForestM . inL . liftIO where
+	forestIO =  LazyFSForestM . unsafeIOToInc where
 	
 	-- | returns the forest directory used to store auxiliary data
 	getForestDirectory = liftM (</> "Forest") $ forestIO getTemporaryDirectory
@@ -109,7 +107,7 @@ instance FSRep LazyFS where
 	
 instance ICRep LazyFS where
 
-	newtype FSThunk LazyFS l inc r m a = LazyFSFSThunk { unLazyFSFSThunk :: LazyNonIncL l (IncForest LazyFS) r m a }
+	newtype FSThunk LazyFS l inc a = LazyFSFSThunk { unLazyFSFSThunk :: LazyNonIncL l (IncForest LazyFS) a }
 
 	forestM = undefined 
 	forestO = undefined
@@ -117,12 +115,12 @@ instance ICRep LazyFS where
 	eqFSThunk = error "no equality for NOFSThunk"
 	isUnevaluatedFSThunk = error "isUnevaluatedFSThunk"
 	
-	data ICThunk LazyFS l inc r m a = LazyFSICThunk { unLazyFSICThunk :: LazyNonIncU l (IncForest LazyFS) r m a }
+	data ICThunk LazyFS l inc a = LazyFSICThunk { unLazyFSICThunk :: LazyNonIncU l (IncForest LazyFS) a }
 	
 	eqICThunk = error "eqICThunk"
 
 
-	data HSThunk LazyFS l inc r m a = LazyFSHSThunk { unLazyFSHSThunk :: T l inc r m a }
+	data HSThunk LazyFS l inc a = LazyFSHSThunk { unLazyFSHSThunk :: T l inc a }
 
 instance ICMemo LazyFS where
 
@@ -131,30 +129,30 @@ instance ICMemo LazyFS where
 	remMemo _ _ _ = return ()
 	findMemo _ _ _ = return Nothing
 
-instance ForestLayer LazyFS l => Thunk (HSThunk LazyFS) l (IncForest LazyFS) IORef IO where
+instance ForestLayer LazyFS l => Thunk (HSThunk LazyFS) l (IncForest LazyFS) where
 	new = liftM LazyFSHSThunk . Inc.new
 	read (LazyFSHSThunk t) = Inc.read t
 
-instance ForestLayer LazyFS l => Thunk (ICThunk LazyFS) l (IncForest LazyFS) IORef IO where
+instance ForestLayer LazyFS l => Thunk (ICThunk LazyFS) l (IncForest LazyFS) where
 	new = liftM LazyFSICThunk . thunkLazyNonIncU
 	read (LazyFSICThunk t) = forceLazyNonIncU t
 
-instance ForestLayer LazyFS l => Output (ICThunk LazyFS) l (IncForest LazyFS) IORef IO where
+instance ForestLayer LazyFS l => Output (ICThunk LazyFS) l (IncForest LazyFS) where
 	thunk = liftM LazyFSICThunk . thunkLazyNonIncU
 	force (LazyFSICThunk t) = forceLazyNonIncU t
 
-instance (Thunk LazyNonIncL l (IncForest LazyFS) IORef IO,ForestLayer LazyFS l) => Thunk (FSThunk LazyFS) l (IncForest LazyFS) IORef IO where
+instance (Thunk LazyNonIncL l (IncForest LazyFS),ForestLayer LazyFS l) => Thunk (FSThunk LazyFS) l (IncForest LazyFS) where
 	new = liftM LazyFSFSThunk . Inc.new
 	read (LazyFSFSThunk t) = Inc.read t
 	
-instance (Input LazyNonIncL l (IncForest LazyFS) IORef IO,ForestLayer LazyFS l) => Input (FSThunk LazyFS) l (IncForest LazyFS) IORef IO where
+instance (Input LazyNonIncL l (IncForest LazyFS),ForestLayer LazyFS l) => Input (FSThunk LazyFS) l (IncForest LazyFS) where
 	ref = liftM LazyFSFSThunk . ref
 	get (LazyFSFSThunk t) = Inc.get t
 	set (LazyFSFSThunk t) v = set t v
 
-instance LiftInc Inside LazyNonInc (IncForest LazyFS) IORef IO where
+instance LiftInc Inside LazyNonInc (IncForest LazyFS) where
 	liftInc = LazyFSForestI 
-instance LiftInc Outside LazyNonInc (IncForest LazyFS) IORef IO where
+instance LiftInc Outside LazyNonInc (IncForest LazyFS) where
 	liftInc = LazyFSForestO 
 
 

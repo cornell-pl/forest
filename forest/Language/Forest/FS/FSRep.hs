@@ -4,7 +4,7 @@
 
 module Language.Forest.FS.FSRep where
 
-import System.Mem.WeakKey
+
 import Language.Forest.FS.FSDelta
 import Control.Monad
 import Data.Maybe
@@ -19,13 +19,12 @@ import System.Posix.IO
 import System.IO
 import Language.Forest.IO.Shell
 import Language.Forest.IO.Utils
-import Control.Monad.Lazy
 import System.FilePath.Glob
 import Language.Pads.Padsc hiding (numErrors)
 import Data.Map as Map
 
-import Language.Pads.MetaData hiding (numErrors)
-import Language.Pads.CoreBaseTypes
+--import Language.Pads.MetaData hiding (numErrors)
+--import Language.Pads.CoreBaseTypes
 import Language.Forest.Errors
 import Data.Data hiding (gmapT)
 import System.Posix.Types
@@ -68,7 +67,9 @@ deriving instance Typeable TxNILFS
 deriving instance Typeable ForestM
 
 -- | Class that implements filesystem-specific operations
-class (Typeable fs,MonadLazy (ForestM fs)) => FSRep (fs :: FS) where
+class (Typeable fs,Monad (ForestM fs)) => FSRep (fs :: FS) where
+	
+	unsafeInterleaveForestM :: ForestM fs a -> ForestM fs a
 	
 	-- | The forest monad
 	data ForestM fs a :: *

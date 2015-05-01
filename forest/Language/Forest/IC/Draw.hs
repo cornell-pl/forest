@@ -7,7 +7,7 @@ module Language.Forest.IC.Draw where
 import System.Posix.Time
 import System.Posix.Types
 import Foreign.C.Types
-import Language.Pads.CoreBaseTypes
+--import Language.Pads.CoreBaseTypes
 import Language.Forest.Errors
 import Control.Monad.Incremental.Draw
 import Language.Forest.IC.ICRep
@@ -21,7 +21,7 @@ import qualified Data.ByteString as B
 import Language.Forest.FS.FSRep
 import Control.Monad.Incremental as Inc
 import Language.Forest.IO.Shell
-import Language.Forest.Pure.MetaData hiding (Forest_md(..))
+import Language.Forest.IC.MetaData
 import Control.Monad.Trans
 
 import Data.GraphViz.Types
@@ -53,18 +53,18 @@ import Language.Forest.IC.FS.NILFS
 
 ------------------------------------------------------------------------------
 
-type ForestDraw fs = Draw (IncForest fs) IORef IO
+type ForestDraw fs = Draw (IncForest fs)
 
 forestDrawToPDF :: ForestDraw fs a => String -> Proxy fs -> a -> FilePath ->  ForestO fs ()
-forestDrawToPDF label fs = drawToPDF label (proxyIncForest fs) Proxy Proxy
+forestDrawToPDF label fs = drawToPDF label (proxyIncForest fs)
 
 forestDrawToDot :: ForestDraw fs a => String -> Proxy fs -> a -> FilePath ->  ForestO fs ()
-forestDrawToDot label fs = drawToDot label (proxyIncForest fs) Proxy Proxy
+forestDrawToDot label fs = drawToDot label (proxyIncForest fs)
 
 forestDraw :: ForestDraw fs a => Proxy fs -> a -> ForestO fs DrawDot
-forestDraw fs = draw (proxyIncForest fs) Proxy Proxy
+forestDraw fs = draw (proxyIncForest fs)
 
-drawForestProxy :: Proxy fs -> Proxy (DrawDict (IncForest fs) IORef IO)
+drawForestProxy :: Proxy fs -> Proxy (DrawDict (IncForest fs))
 drawForestProxy _ = Proxy
 
 fSThunkNode :: Bool -> String -> DotNode String
@@ -73,41 +73,41 @@ fSThunkNode isUnevaluated thunkID = DotNode {nodeID = thunkID, nodeAttributes = 
 	      color = if isUnevaluated then X11Color Black else X11Color CadetBlue4
 
 -- special instance to avoid entering @Forest_md@
-instance (MonadIO m,Incremental inc r m) => Draw inc r m (Forest_err) where
-	draw inc r m fmd = do
+instance (Incremental inc) => Draw inc (Forest_err) where
+	draw inc fmd = do
 		let str = "Forest_err"
-		draw inc r m str
+		draw inc str
 
 -- special instance to avoid entering @FileInfo@
-instance (MonadIO m,Incremental inc r m) => Draw inc r m FileInfo where
-	draw inc r m fmd = do
+instance (Incremental inc) => Draw inc FileInfo where
+	draw inc fmd = do
 		let str = takeFileName (fullpath fmd) ++ "FileInfo"
-		draw inc r m str
+		draw inc str
 
-instance (MonadIO m,Incremental inc r m) => Draw inc r m ByteString where
-	draw inc r m fmd = draw inc r m "<Bytestring>"
-
--- for NILFS thunks, we also print IC information
-instance (Input L l (IncForest NILFS) IORef IO,ForestInput NILFS FSThunk l,Eq a,MData (DrawDict (IncForest NILFS) IORef IO) (ForestO NILFS) a) => Draw (IncForest NILFS) IORef IO (ForestFSThunk NILFS l a) where
-	draw inc r m = draw inc r m . adaptonThunk
+instance (Incremental inc) => Draw inc ByteString where
+	draw inc fmd = draw inc "<Bytestring>"
 
 -- for NILFS thunks, we also print IC information
-instance (Output U l (IncForest 'NILFS) IORef IO,ForestOutput NILFS ICThunk l,Eq a,MData (DrawDict (IncForest NILFS) IORef IO) (ForestO NILFS) a) => Draw (IncForest NILFS) IORef IO (ForestICThunk NILFS l a) where
-	draw inc r m = draw inc r m . adaptonU
+instance (Input L l (IncForest NILFS),ForestInput NILFS FSThunk l,Eq a,MData (DrawDict (IncForest NILFS)) (ForestO NILFS) a) => Draw (IncForest NILFS) (ForestFSThunk NILFS l a) where
+	draw inc = draw inc . adaptonThunk
+
+-- for NILFS thunks, we also print IC information
+instance (Output U l (IncForest 'NILFS),ForestOutput NILFS ICThunk l,Eq a,MData (DrawDict (IncForest NILFS)) (ForestO NILFS) a) => Draw (IncForest NILFS) (ForestICThunk NILFS l a) where
+	draw inc = draw inc . adaptonU
 
 
-instance (ICRep TxVarFS,IncK (IncForest 'TxVarFS) a,Input (FSThunk TxVarFS) Inside (IncForest TxVarFS) IORef IO,ForestLayer TxVarFS Inside,MData (DrawDict (IncForest TxVarFS) IORef IO) (ForestO TxVarFS) a) => Draw (IncForest TxVarFS) IORef IO (ForestFSThunkI TxVarFS a) where
-	draw inc r m t = do
+instance (ICRep TxVarFS,IncK (IncForest 'TxVarFS) a,Input (FSThunk TxVarFS) Inside (IncForest TxVarFS),ForestLayer TxVarFS Inside,MData (DrawDict (IncForest TxVarFS)) (ForestO TxVarFS) a) => Draw (IncForest TxVarFS) (ForestFSThunkI TxVarFS a) where
+	draw inc t = do
 		thunkID <- liftM show $ forestM $ forestIO $ newUnique
 		isUnevaluated <- inside $ isUnevaluatedFSThunk t
 		let thunkNode = lNode isUnevaluated thunkID
 		if isUnevaluated
-			then return ([thunkID],[DN thunkNode])
+			then return ([thunkID],[DN thunkNode],Map.empty)
 			else do
-				(childrenIDs,childrenDot) <- drawDict dict inc r m =<< Inc.getOutside t
+				(childrenIDs,childrenDot,html) <- drawDict dict inc =<< Inc.getOutside t
 				let childrenEdges = map (DE . constructorEdge thunkID) childrenIDs
 				let childrenRank = sameRank childrenIDs
-				return ([thunkID],DN thunkNode : childrenEdges ++ SG childrenRank : childrenDot)
+				return ([thunkID],DN thunkNode : childrenEdges ++ SG childrenRank : childrenDot,html)
 
 
 

@@ -3,7 +3,7 @@
 module Language.Forest.IC.ValueDelta where
 
 import Language.Forest.IC.ICRep
-import Language.Forest.Pure.MetaData hiding (Forest_md(..))
+--import Language.Forest.Pure.MetaData hiding (Forest_md(..))
 
 import Control.Monad.Incremental hiding (get)
 import Control.Monad

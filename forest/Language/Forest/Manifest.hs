@@ -8,7 +8,7 @@ import Language.Forest.IO.Shell
 import System.IO
 
 import Language.Forest.FS.FSRep as FSRep
-import Language.Forest.Pure.MetaData
+--import Language.Forest.Pure.MetaData
 import Language.Pads.Padsc
 import Language.Forest.Syntax
 

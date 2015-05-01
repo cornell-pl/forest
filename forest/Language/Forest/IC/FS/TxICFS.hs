@@ -4,11 +4,12 @@
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse within transactions
 
 module Language.Forest.IC.FS.TxICFS (
-	TxICForest(..),FSRep(..),ForestCfg(..),atomicallyTxICFS
+	TransactionalForest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
+	,FSRep(..),ForestCfg(..),atomicallyTxICFS
 ) where
 
 import Language.Forest.Errors
-import Language.Forest.Pure.MetaData (FileInfo)
+--import Language.Forest.Pure.MetaData (FileInfo)
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.RWS (RWS(..),RWST(..))
 import qualified Control.Monad.RWS as RWS
@@ -18,18 +19,21 @@ import Language.Forest.IC.Default
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Process
-import System.Mem.Weak as Weak
+import System.Mem.Weak.Exts as Weak
 import Control.Exception as Exception
 import Data.Strict.List
 import Unsafe.Coerce
 import Language.Forest.IC.ValueDelta
 import Language.Forest.IC.BX as BX
-import System.Mem.WeakKey
+import Control.Concurrent.Transactional
+
+import System.Mem.MemoTable (MemoTable(..))
+import qualified System.Mem.MemoTable as MemoTable
 import Data.Foldable as Foldable
 import Data.Concurrent.Deque.Class as Queue
 import Data.Concurrent.Deque.Reference.DequeInstance
-import qualified Control.Concurrent.Map as CMap
-import qualified Control.Concurrent.WeakMap as CWeakMap
+import qualified Control.Concurrent.Map.Exts as CMap
+import qualified Control.Concurrent.Weak.Map as CWeakMap
 import System.Posix.Files
 import Language.Forest.FS.Diff
 
@@ -37,7 +41,7 @@ import Language.Forest.FS.FSRep
 import Control.Applicative
 import System.IO.Unsafe
 import Control.Monad
-import Control.Monad.Lazy
+
 import Data.Maybe
 import Data.List
 import Data.WithClass.MData
@@ -45,7 +49,6 @@ import Data.Typeable
 import System.Directory
 import Data.List as List
 import Data.Dynamic
-import System.Mem.WeakTable as WeakTable
 import Data.IORef
 import System.FilePath.Posix
 import Language.Forest.IO.Utils
@@ -78,6 +81,7 @@ import Control.Monad.Catch as Catch
 import System.Mem.Concurrent.WeakMap as WeakMap
 import Data.DList as DList
 import Data.Global.TH as TH
+import Data.Strict.Tuple as Strict
 
 -- locks on which retrying transactions will wait
 type WaitQueue = Deque Threadsafe Threadsafe SingleEnd SingleEnd Grow Safe Lock
@@ -98,7 +102,7 @@ type TxICFSWrites = Set FilePath
 -- we use a @FSTreeDelta@ because the set of written paths may be infinite (like all paths under a given directory)
 declareMVar "doneTxsIC"  [t| (Map UTCTime TxICFSWrites) |] [e| Map.empty |]
 
-type TxICLayer l = (MonadReader TxICFSEnv (ForestL TxICFS l),ForestLayer TxICFS l)
+type TxICLayer l = (ForestLayer TxICFS l)
 
 type instance IncK (IncForest TxICFS) a = (Typeable a,Eq a,AddTxICParent Inside a,AddTxICParent Outside a)
 
@@ -114,8 +118,8 @@ deleteRunningTxIC time = modifyMVarMasked_ runningTxsIC (\xs -> return $ List.de
 -- latest tree,delta after the current tree,next tree,reads since the beginning, buffered variables, memoized forest transactional variables, temporary paths since the beginning
 type TxICFSLog = IORef (FSTree TxICFS,FSDeltas,FSTree TxICFS,TxICFSReads,TxICBuffTable,TxICMemoTable,CanonicalTree TxICFS,Set FilePath)
 
-type TxICBuffTable = WeakTable Unique DynTxICThunk
-type TxICMemoTable = WeakTable (FilePath,TypeRep) (Dynamic,MkWeak,FSTree TxICFS)
+type TxICBuffTable = MemoTable Unique DynTxICThunk
+type TxICMemoTable = MemoTable (FilePath,TypeRep) (Dynamic,MkWeak,FSTree TxICFS)
 
 -- nested logs for nested transactions
 type TxICFSLogs = SList TxICFSLog
@@ -124,7 +128,7 @@ type TxICFSLogs = SList TxICFSLog
 type TxICFSTreeDeltas = IORef (Map FSVersion FSDeltas)
 
 -- (starttime,tx id,register of deltas,nested logs)
-type TxICFSEnv = (IORef UTCTime,TxId,TxICFSTreeDeltas,TxICFSLogs)
+newtype TxICFSEnv = TxICFSEnv (IORef UTCTime :!: TxId :!: TxICFSTreeDeltas :!: TxICFSLogs) deriving Typeable
 
 type TxICFSReads = Set FilePath
 type TxICFSChanges = (TxICFSReads,FSTreeDelta)
@@ -132,11 +136,11 @@ type TxICFSChangesFlat = (TxICFSReads,TxICFSWrites)
 
 findTxICMemo :: Typeable rep => FilePath -> Proxy rep -> ForestM TxICFS (Maybe (rep,MkWeak,FSTree TxICFS))
 findTxICMemo path (_ :: Proxy rep) = do
-	(starttime,txid,deltas,txlogs) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs) <- TxICFSForestM Reader.ask
 	
 	let find txlog m = do
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
-		mb <- forestIO $ WeakTable.lookup memotbl (path,typeOf (undefined :: rep))
+		mb <- forestIO $ MemoTable.lookup memotbl (path,typeOf (undefined :: rep))
 		case mb of
 			Just (fromDynamic -> Just rep,mkWeak,tree) -> do
 				return $ Just (rep,mkWeak,tree)
@@ -145,26 +149,26 @@ findTxICMemo path (_ :: Proxy rep) = do
 
 bufferTxICFSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestFSThunk TxICFS l a -> TxICThunk l a -> ForestM TxICFS ()
 bufferTxICFSThunk var thunk = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	let mkWeak = MkWeak $ mkWeakRefKey $ txICFSThunkArgs var
-	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak (txICFSThunkId var) $ DynTxICThunk thunk mkWeak
+	forestIO $ MemoTable.insertWithMkWeak bufftbl (txICFSThunkId var) (DynTxICThunk thunk mkWeak) mkWeak
 	
 bufferTxICHSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestHSThunk TxICFS l a -> TxICThunk l a -> ForestM TxICFS ()
 bufferTxICHSThunk var thunk = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	let mkWeak = MkWeak $ mkWeakRefKey $ txICHSThunkArgs var
-	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak (txICHSThunkId var) $ DynTxICThunk thunk mkWeak
+	forestIO $ MemoTable.insertWithMkWeak bufftbl (txICHSThunkId var) (DynTxICThunk thunk mkWeak) mkWeak
 
 -- reads the pointer from a transactional variable to a thunk
 bufferedTxICFSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestFSThunk TxICFS l a -> ForestM TxICFS (TxICThunk l a)
 bufferedTxICFSThunk (var :: ForestFSThunk TxICFS l a) = do
-	(starttime,txid,deltas,txlogs) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs) <- TxICFSForestM Reader.ask
 	
 	let find txlog m = do
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
-		mb <- forestIO $ WeakTable.lookup bufftbl (txICFSThunkId var)
+		mb <- forestIO $ MemoTable.lookup bufftbl (txICFSThunkId var)
 		case mb of
 			Just (DynTxICThunk (cast -> Just thunk) _) -> return thunk
 			Just dyn -> error $ "type mismatch: " ++ show (typeOf (undefined :: (TxICThunk l a))) ++" "++show dyn
@@ -184,11 +188,11 @@ bufferedTxICFSThunk (var :: ForestFSThunk TxICFS l a) = do
 
 bufferedTxICHSThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => ForestHSThunk TxICFS l a -> ForestM TxICFS (TxICThunk l a)
 bufferedTxICHSThunk (var :: ForestHSThunk TxICFS l a) = do
-	(starttime,txid,deltas,txlogs) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs) <- TxICFSForestM Reader.ask
 	
 	let find txlog m = do
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
-		mb <- forestIO $ WeakTable.lookup bufftbl (txICHSThunkId var)
+		mb <- forestIO $ MemoTable.lookup bufftbl (txICHSThunkId var)
 		case mb of
 			Just (DynTxICThunk (cast -> Just thunk) _) -> return thunk
 			Just dyn -> error $ "type mismatch: " ++ show (typeOf (undefined :: (TxICThunk l a))) ++" "++show dyn
@@ -206,16 +210,16 @@ bufferedTxICHSThunk (var :: ForestHSThunk TxICFS l a) = do
 	
 	Foldable.foldr find global txlogs
 
-getNextFSTree :: MonadReader TxICFSEnv (ForestM TxICFS) => ForestM TxICFS (FSTree TxICFS)
+getNextFSTree :: ForestM TxICFS (FSTree TxICFS)
 getNextFSTree = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	return newtree
 
 -- creates the next tree (on writes)
-nextTxICFSTree :: MonadReader TxICFSEnv (ForestM TxICFS) => ForestM TxICFS ()
+nextTxICFSTree :: ForestM TxICFS ()
 nextTxICFSTree = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,_,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	
 	-- next tree
@@ -226,9 +230,9 @@ nextTxICFSTree = do
 	forestIO $ writeRef txlog (tree,DList.empty,newtree,reads,bufftbl,memotbl,cantree,tmps)
 	
 
-incrementTxICFSTree :: MonadReader TxICFSEnv (ForestM TxICFS) => ForestM TxICFS ()
+incrementTxICFSTree :: ForestM TxICFS ()
 incrementTxICFSTree = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	-- add the relative deltas
 	tds <- forestIO $ readRef deltas
@@ -238,7 +242,7 @@ incrementTxICFSTree = do
 -- only needs to read from the top-level log
 getTxICFSChangesFlat :: ForestM TxICFS TxICFSChangesFlat
 getTxICFSChangesFlat = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
 	writes <- forestIO $ readRef (fsTreeFSTreeDelta tree)
 	return (reads,fsTreeDeltaWrites "" writes)
@@ -247,27 +251,27 @@ getTxICFSChangesFlat = do
 -- only needs to read from the top-level log
 getTxICFSChanges :: ForestM TxICFS TxICFSChanges
 getTxICFSChanges = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	writes <- forestIO $ readRef (fsTreeFSTreeDelta tree)
 	return (reads,writes)
 	
 getTxICFSNextChanges :: ForestM TxICFS FSTreeDelta
 getTxICFSNextChanges = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	writes <- forestIO $ readRef (fsTreeFSTreeDelta newtree)
 	return writes
 
 putTxICFSRead :: FilePath -> ForestM TxICFS ()
 putTxICFSRead path = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	forestIO $ writeIORef txlog (tree,ds,newtree,Set.insert path reads,bufftbl,memotbl,cantree,tmps)
 
 putTxICFSTmp :: FilePath -> ForestM TxICFS ()
 putTxICFSTmp tmp = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	forestIO $ writeRef txlog (tree,ds,newtree,reads,bufftbl,memotbl,cantree,Set.insert tmp tmps)
 
@@ -275,7 +279,7 @@ putTxICFSTmp tmp = do
 -- duplicate the action on both the relative deltas (sequence of primitve FSDelta) and the absolute deltas (FSTreeDelta)
 modifyTxICFSTreeDeltas :: FSDelta -> ForestM TxICFS ()
 modifyTxICFSTreeDeltas d = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	forestIO $ modifyIORef (fsTreeFSTreeDelta newtree) (appendToFSTreeDelta d)
 	forestIO $ modifyIORef (fsTreeSym newtree) (\(ds,ts) -> (DList.snoc ds d,appendToFSTreeSym d ts))
@@ -295,10 +299,6 @@ treeTxICThunk thunk = do
 type TxId = Unique
 -- a transaction-local version number that is incremented on writes
 type FSVersion = Int
-
-instance MonadReader TxICFSEnv (ForestM TxICFS) where
-	ask = TxICFSForestM ask
-	local f (TxICFSForestM m) = TxICFSForestM $ local f m
 	
 instance Show (FSTree TxICFS) where
 	show tree = "(FSTreeTxICFS " ++ show (fsTreeTxId tree) ++" "++ show (fsTreeFSVersion tree) ++" "++ show (fsTreeVirtual tree) ++ ")"
@@ -327,7 +327,7 @@ computeSymlinks = do
 
 instance FSRep TxICFS where
 	
-	newtype ForestM TxICFS a = TxICFSForestM { runTxICFSForestM :: ReaderT TxICFSEnv IO a } deriving (Functor,Applicative,Monad,MonadLazy,MonadThrow,MonadCatch,MonadMask)
+	newtype ForestM TxICFS a = TxICFSForestM { runTxICFSForestM :: ReaderT TxICFSEnv IO a } deriving (Functor,Applicative,Monad)
 	
 	data ForestCfg TxICFS = TxICFSForestCfg FilePath
 	
@@ -365,7 +365,7 @@ instance FSRep TxICFS where
 	-- change into AVFS mode
 	virtualTree tree = return $ tree { fsTreeVirtual = True }
 	latestTree = do
-		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+		TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 		return tree
 	
@@ -412,10 +412,10 @@ instance FSRep TxICFS where
 	diffFS oldtree newtree path = do
 		if fsTreeTxId oldtree == fsTreeTxId newtree
 			then do
-				(starttime,txid,deltas,txlogs) <- Reader.ask
+				TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs) <- TxICFSForestM Reader.ask
 				tds <- forestIO $ readRef deltas
 				let dfs = drop (fsTreeFSVersion oldtree) $ take (fsTreeFSVersion newtree) $ Map.elems tds
-				syms <- liftM snd $ forestIO $ readRef (fsTreeSym newtree)
+				syms <- liftM Prelude.snd $ forestIO $ readRef (fsTreeSym newtree)
 				let fixtd = fixFSTreeDelta (compressFSDeltas $ DList.concat dfs) syms
 				let df = focusFSTreeDeltaByRelativePathMay fixtd path
 				return $ Just df
@@ -449,7 +449,7 @@ doesExistTxICFS flag path tree = do
 
 memoCanonicalPath :: FilePath -> FilePath -> FSTree TxICFS -> ForestM TxICFS ()
 memoCanonicalPath src tgt fs = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	let cantree' = memoCanonicalTree src tgt fs cantree
 	forestIO $ writeIORef txlog (tree,ds,newtree,reads,bufftbl,memotbl,cantree',tmps)
@@ -457,7 +457,7 @@ memoCanonicalPath src tgt fs = do
 -- returns a canonical prefix, at a given tree, and a non-canonized suffix
 findCanonicalPath :: [FileName] -> ForestM TxICFS (Maybe (FilePath,FSTree TxICFS,[FileName]))
 findCanonicalPath dirs = do
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
 	return $ findCanonicalTree dirs cantree
 
@@ -472,8 +472,8 @@ findCanonicalPath dirs = do
 --			mb <- diffFS oldtree tree ""
 --			case mb of
 --				Just df -> follow df root suffix
---				Nothing -> liftM snd getTxICFSChanges >>= \df -> follow df "" dirs
---		Nothing -> liftM snd getTxICFSChanges >>= \df -> follow df "" dirs
+--				Nothing -> liftM Prelude.snd getTxICFSChanges >>= \df -> follow df "" dirs
+--		Nothing -> liftM Prelude.snd getTxICFSChanges >>= \df -> follow df "" dirs
 --	memoCanonicalPath norm can tree
 --	return can	
 --  where
@@ -538,30 +538,29 @@ canonalizePathTxICFS path tree = {-debug ("canonalizePathTxICFS " ++ show path) 
 
 -- ** Incrementality
 
-instance MonadReader TxICFSEnv (ForestO TxICFS) where
-	ask = TxICFSForestO ask
-	local f (TxICFSForestO m) = TxICFSForestO $ local f m
-	
-instance MonadReader TxICFSEnv (ForestI TxICFS) where
-	ask = TxICFSForestI ask
-	local f (TxICFSForestI m) = TxICFSForestI $ local f m
+class TxICFSLayerImpl l where
+	unTxICFSLayer :: Proxy l -> l (IncForest TxICFS) a -> ReaderT TxICFSEnv IO a
+	txICFSLayer :: Proxy l -> ReaderT TxICFSEnv IO a -> l (IncForest TxICFS) a
 
-instance Incremental (IncForest TxICFS) IORef IO where
+instance TxICFSLayerImpl Outside where
+	unTxICFSLayer _ = runTxICFSForestO
+	txICFSLayer _ = TxICFSForestO
+
+instance TxICFSLayerImpl Inside where
+	unTxICFSLayer _ = runTxICFSForestI
+	txICFSLayer _ = TxICFSForestI
+
+instance Incremental (IncForest TxICFS) where
 	
-	newtype Outside (IncForest TxICFS) IORef IO a = TxICFSForestO { runTxICFSForestO :: ReaderT TxICFSEnv IO a } deriving (Functor,Applicative,Monad,MonadLazy,MonadThrow,MonadCatch,MonadMask)
-	newtype Inside (IncForest TxICFS) IORef IO a = TxICFSForestI { runTxICFSForestI :: ReaderT TxICFSEnv IO a } deriving (Functor,Applicative,Monad,MonadLazy,MonadThrow,MonadCatch,MonadMask)
+	newtype Outside (IncForest TxICFS) a = TxICFSForestO { runTxICFSForestO :: ReaderT TxICFSEnv IO a } deriving (Functor,Applicative,Monad)
+	newtype Inside (IncForest TxICFS) a = TxICFSForestI { runTxICFSForestI :: ReaderT TxICFSEnv IO a } deriving (Functor,Applicative,Monad)
 
 	world = TxICFSForestO . runTxICFSForestI
 	unsafeWorld = TxICFSForestI . runTxICFSForestO
 
 	runIncremental = error "please use atomically instead"
 
-instance InLayer Outside (IncForest TxICFS) IORef IO where
-	inL = TxICFSForestO . lift
-	{-# INLINE inL #-}
-instance InLayer Inside (IncForest TxICFS) IORef IO where
-	inL = TxICFSForestI . lift
-	{-# INLINE inL #-}
+	unsafeIOToInc = inside . TxICFSForestI . lift
 	
 instance ICRep TxICFS where
 
@@ -572,11 +571,11 @@ instance ICRep TxICFS where
 
 	-- arguments never change
 	-- global variables may be shared across transactions, and the argument computation creates new data if no buffered data is found in the tx log
-	data FSThunk TxICFS l inc r m a = TxICFSThunk { txICFSThunkId :: Unique, txICFSThunkArgs :: IORef (Maybe (TxICArgs,l inc r m a)) }
+	data FSThunk TxICFS l inc a = TxICFSThunk { txICFSThunkId :: Unique, txICFSThunkArgs :: IORef (Maybe (TxICArgs,l inc a)) }
 
-	data HSThunk TxICFS l inc r m a = TxICHSThunk { txICHSThunkId :: Unique, txICHSThunkArgs :: IORef (Maybe (TxICArgs,l inc r m a)) }
+	data HSThunk TxICFS l inc a = TxICHSThunk { txICHSThunkId :: Unique, txICHSThunkArgs :: IORef (Maybe (TxICArgs,l inc a)) }
 		
-	newtype ICThunk TxICFS l inc r m a = TxICICThunk (l inc r m a)
+	newtype ICThunk TxICFS l inc a = TxICICThunk (l inc a)
 
 	data ValueDelta TxICFS a = ValueDeltaTxICFS Bool -- True = identity
 	
@@ -636,10 +635,10 @@ data BuffTxICThunk l a = BuffTxICThunk {
 	} deriving Typeable
 
 -- buffered for nested transactions
-newtype TxICThunk (l :: * -> (* -> *) -> (* -> *) -> * -> *) a = TxICThunk { txICId :: IORef Unique } deriving Typeable
+newtype TxICThunk (l :: * -> * -> *) a = TxICThunk { txICId :: IORef Unique } deriving Typeable
 
 data TxICThunkData l a =
-		TxICThunkComp (l (IncForest TxICFS) IORef IO a)
+		TxICThunkComp (l (IncForest TxICFS) a)
 	| 	TxICThunkForce a TxICStone -- the stone is used to keep weak memoized entries as long as the thunk is not recomputed
 
 -- a dummy reference to be used as key for weak references
@@ -655,18 +654,18 @@ bufferTxICThunk thunk buff = do
 	uid <- forestIO $ readIORef (txICId thunk)
 	let mkWeak = MkWeak $ mkWeakRefKey $ txICId thunk
 	let dyn = DynBuffTxICThunk buff mkWeak
-	(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
 	(tree,delta,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readIORef txlog
-	forestIO $ WeakTable.insertWithMkWeak bufftbl mkWeak uid dyn
+	forestIO $ MemoTable.insertWithMkWeak bufftbl uid dyn mkWeak
 
 bufferedTxICThunk :: (IncK (IncForest TxICFS) a,ForestLayer TxICFS l) => TxICThunk l a -> ForestM TxICFS (BuffTxICThunk l a)
 bufferedTxICThunk thunk = do
 	uid <- forestIO $ readIORef (txICId thunk)
-	(starttime,txid,deltas,txlogs) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs) <- TxICFSForestM Reader.ask
 	let find mb txlog = case mb of
 		Nothing -> do
 			(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestIO $ readRef txlog
-			forestIO $ WeakTable.lookup bufftbl uid
+			forestIO $ MemoTable.lookup bufftbl uid
 		otherwise -> return mb
 	dyn <- liftM (fromJustNote $ "bufferedTxICThunk'' ") $ Foldable.foldlM find Nothing txlogs
 	
@@ -731,7 +730,7 @@ instance (ForestLayer TxICFS l,MData (AddTxICParentDict l) (ForestL TxICFS l) a)
 		let f t1 t2 = forestM $ maxFSTree t1 t2
 		gmapQr (addTxICParentProxy proxy) f z (addTxICParentDictDict dict proxy stone meta z) x
 
-newTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => l (IncForest TxICFS) IORef IO a -> FSTree TxICFS -> ForestM TxICFS (TxICThunk l a)
+newTxICThunk :: (IncK (IncForest TxICFS) a,TxICLayer l) => l (IncForest TxICFS) a -> FSTree TxICFS -> ForestM TxICFS (TxICThunk l a)
 newTxICThunk m tree = do
 	uid <- forestIO $ newUnique
 	stone <- forestIO $ newRef uid
@@ -787,7 +786,7 @@ writeTxICThunk var a = do
 	outside $ changeTxICThunk var set
 
 -- lazy variable write (expression)
-overwriteTxICThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => TxICThunk l a -> l (IncForest TxICFS) IORef IO a -> ForestO TxICFS ()
+overwriteTxICThunk :: (IncK (IncForest TxICFS) a,AddTxICParent l a,TxICLayer l) => TxICThunk l a -> l (IncForest TxICFS) a -> ForestO TxICFS ()
 overwriteTxICThunk var ma = do
 	newtree <- forestM getNextFSTree
 	let set buff = do
@@ -797,7 +796,7 @@ overwriteTxICThunk var ma = do
 		-- assuming that this is only used by loadDelta at the latest tree
 		return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = newtree },())
 		-- whenever we want to know the latest modification for the written thunk, we have to force a read and check its content thunks
-		--return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = join $ liftM snd $ readTxICThunk var (return newtree) },())
+		--return (buff { buffTxICData = dta', buffTxICTree = newtree, buffTxICDeltaTree = join $ liftM Prelude.snd $ readTxICThunk var (return newtree) },())
 	outside $ changeTxICThunk var set
 	
 
@@ -806,7 +805,7 @@ instance ZippedICMemo TxICFS where
 
 	addZippedMemo path proxy args (rep :: rep) mb_tree = debug ("added memo "++show path ++ show mb_tree) $ do
 		let var = to iso_rep_thunk rep
-		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+		TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- txICFSLayer Proxy Reader.ask
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 		
 		-- remember the arguments (this is how we connect transactional arguments to transactional variables)
@@ -824,11 +823,11 @@ instance ZippedICMemo TxICFS where
 		case mb_tree of
 			Nothing -> return ()
 			Just tree -> do
-				let mkWeak = MkWeak $ mkWeakRefKey $ txICFSThunkArgs var
-				forestM $ forestIO $ WeakTable.insertWithMkWeak memotbl mkWeak (path,typeOf rep) (toDyn rep,mkWeak,tree)
+				let mkWeak = MkWeak $ Weak.mkWeakRefKey $ txICFSThunkArgs var
+				forestM $ forestIO $ MemoTable.insertWithMkWeak memotbl (path,typeOf rep) (toDyn rep,mkWeak,tree) mkWeak
 	
 	findZippedMemo args path proxy = do
-		(starttime,txid,deltas,SCons txlog _) <- Reader.ask
+		TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestI Reader.ask
 		(tree,ds,newtree,reads,bufftbl,memotbl,cantree,tmps) <- forestM $ forestIO $ readRef txlog
 		mb <- forestM $ findTxICMemo path proxy
 		case mb of
@@ -854,7 +853,7 @@ getFTVArgsIC (proxy ::Proxy args) rep = forestIO $ do
 		otherwise -> return Nothing
 	
 
-instance Thunk (HSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
+instance Thunk (HSThunk TxICFS) Inside (IncForest TxICFS) where
 	new m = do
 		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
@@ -866,8 +865,8 @@ instance Thunk (HSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 	read var = do
 		thunk <- forestM $ bufferedTxICHSThunk var
 		tree <- forestM $ latestTree
-		liftM fst $ readTxICThunk thunk tree
-instance Thunk (HSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
+		liftM Prelude.fst $ readTxICThunk thunk tree
+instance Thunk (HSThunk TxICFS) Outside (IncForest TxICFS) where
 	new m = do
 		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
@@ -879,16 +878,16 @@ instance Thunk (HSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 	read var = do
 		thunk <- forestM $ bufferedTxICHSThunk var
 		tree <- forestM $ latestTree
-		liftM fst $ readTxICThunk thunk tree
+		liftM Prelude.fst $ readTxICThunk thunk tree
 
-instance TxICLayer l => Thunk (ICThunk TxICFS) l (IncForest TxICFS) IORef IO where
+instance TxICLayer l => Thunk (ICThunk TxICFS) l (IncForest TxICFS) where
 	new m = return $ TxICICThunk m
 	read (TxICICThunk m) = m
-instance TxICLayer l => Output (ICThunk TxICFS) l (IncForest TxICFS) IORef IO where
+instance TxICLayer l => Output (ICThunk TxICFS) l (IncForest TxICFS) where
 	thunk = Inc.new
 	force = Inc.read
 
-instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
+instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) where
 	new m = do
 		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
@@ -901,8 +900,8 @@ instance Thunk (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
 		tree <- forestM $ latestTree
-		liftM fst $ readTxICThunk thunk tree
-instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
+		liftM Prelude.fst $ readTxICThunk thunk tree
+instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) where
 	new m = do
 		tree <- forestM $ latestTree
 		uid <- forestM $ forestIO newUnique
@@ -915,9 +914,9 @@ instance Thunk (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
 	read var = do
 		thunk <- forestM $ bufferedTxICFSThunk var
 		tree <- forestM $ latestTree
-		liftM fst $ readTxICThunk thunk tree
+		liftM Prelude.fst $ readTxICThunk thunk tree
 
-instance Input (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
+instance Input (FSThunk TxICFS) Inside (IncForest TxICFS) where
 	ref c = Inc.new (return c)
 	mod = Inc.new
 	get = Inc.read
@@ -927,7 +926,7 @@ instance Input (FSThunk TxICFS) Inside (IncForest TxICFS) IORef IO where
 	overwrite (var :: ForestFSThunk TxICFS Inside a) mv = do
 		(thunk :: TxICThunk Inside a) <- forestM $ bufferedTxICFSThunk var
 		overwriteTxICThunk thunk mv
-instance Input (FSThunk TxICFS) Outside (IncForest TxICFS) IORef IO where
+instance Input (FSThunk TxICFS) Outside (IncForest TxICFS) where
 	ref c = Inc.new (return c)
 	mod = Inc.new
 	get = Inc.read
@@ -945,13 +944,16 @@ type TxICFTM = FTM TxICFS
 -- a Forest transactional variable
 type TxICFTV a = FTV TxICFS a
 
-instance TxICForest TxICFS where
-	
+instance Transactional (IncForest TxICFS) where
 	atomically = atomicallyTxICFS "/"
 	retry = retryTxICFS
 	orElse = orElseTxICFS
-	throw = throwTxICFS 
+instance MonadThrow (Outside (IncForest TxICFS)) where
+	throwM = throwTxICFS 
+instance MonadCatch (Outside (IncForest TxICFS)) where
 	catch = catchTxICFS False
+
+instance TransactionalForest TxICFS where	
 	new = newTxICFS Proxy
 	args = argsTxICFS Proxy
 	read = readTxICFS Proxy
@@ -1056,56 +1058,56 @@ writeOrElseTxICFS rep content b f = do
 					
 atomicallyTxICFS :: FilePath -> TxICFTM b -> IO b
 atomicallyTxICFS root stm = updateRootTxICFS root >> initializeTxICFS try where
-	try = flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ do
+	try = txICFSLayer proxyOutside $ flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ unTxICFSLayer proxyOutside $ do
 		-- run the tx
 		x <- stm
 		-- tries to commit the current tx, otherwise repairs it incrementally
 		success <- validateAndCommitTopTxICFS True
 		if success
 			then return x
-			else debug "throw InvalidTx" $ throwM InvalidTx
-	catchInvalid InvalidTx = debug "InvalidTx" $ do
+			else debug "throw InvalidTx" $ txICFSLayer proxyOutside $ throwM InvalidTx
+	catchInvalid InvalidTx = unTxICFSLayer proxyOutside $ debug "InvalidTx" $ do
 		resetTxICFS try
-	catchRetry BlockedOnRetry = debug "BlockedOnRetry" $ do
+	catchRetry BlockedOnRetry = unTxICFSLayer proxyOutside $ debug "BlockedOnRetry" $ do
 		-- if the retry was invoked on an inconsistent state, we incrementally repair and run again, otherwise we place the tx in the waiting queue
 		mbsuccess <- validateAndRetryTopTxICFS
 		case mbsuccess of
 			Just lck -> do -- retried txs are always in a consistent state, because we apply all affecting updates before releasing the lock
 				-- wait for the lock to be released (whenever some variables that it depends on are changed)
 				-- we don't consume the contents of the mvar to avoid further puts to succeeed; a new MVar is created for each retry
-				inL $ liftIO $ Lock.acquire lck
+				unsafeIOToInc $ Lock.acquire lck
 				resetTxICFS try
 			Nothing -> resetTxICFS try
-	catchSome (e::SomeException) = debug ("SomeException "++show e) $ do
+	catchSome (e::SomeException) = unTxICFSLayer proxyOutside $ debug ("SomeException "++show e) $ do
 		-- we still need to validate on exceptions, otherwise repair incrementally; transaction-local allocations still get committed
 		success <- validateAndCommitTopTxICFS False
 		if success
-			then throwM e
+			then txICFSLayer proxyOutside $ throwM e
 			else do
 				resetTxICFS try
 
 retryTxICFS :: TxICFTM a
-retryTxICFS = inL $ liftIO $ throwIO BlockedOnRetry
+retryTxICFS = unsafeIOToInc $ throwIO BlockedOnRetry
 
 orElseTxICFS :: TxICFTM a -> TxICFTM a -> TxICFTM a
 orElseTxICFS stm1 stm2 = do1 where
 	try1 = do { x <- stm1; validateAndCommitNestedTxICFS Nothing; return x }
 	try2 = do { x <- stm2; validateAndCommitNestedTxICFS Nothing; return x }
-	do1 = startNestedTxICFS $ try1 `Catch.catches` [Catch.Handler catchRetry1,Catch.Handler catchInvalid,Catch.Handler catchSome]
-	do2 = dropChildTxICLog $ startNestedTxICFS $ try2 `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
-	catchRetry1 BlockedOnRetry = validateAndRetryNestedTxICFS >> do2
-	catchRetry2 BlockedOnRetry = validateAndRetryNestedTxICFS >> throwM BlockedOnRetry
+	do1 = startNestedTxICFS $ txICFSLayer proxyOutside $ (unTxICFSLayer proxyOutside try1) `Catch.catches` [Catch.Handler catchRetry1,Catch.Handler catchInvalid,Catch.Handler catchSome]
+	do2 = dropChildTxICLog $ startNestedTxICFS $ txICFSLayer proxyOutside $ (unTxICFSLayer proxyOutside try2) `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
+	catchRetry1 BlockedOnRetry = unTxICFSLayer proxyOutside $ validateAndRetryNestedTxICFS >> do2
+	catchRetry2 BlockedOnRetry = unTxICFSLayer proxyOutside validateAndRetryNestedTxICFS >> throwM BlockedOnRetry
 	catchInvalid (e::InvalidTx) = throwM e
-	catchSome (e::SomeException) = validateAndCommitNestedTxICFS (Just e) >> throwM e
+	catchSome (e::SomeException) = unTxICFSLayer proxyOutside (validateAndCommitNestedTxICFS (Just e)) >> throwM e
 
 throwTxICFS :: Exception e => e -> TxICFTM a
-throwTxICFS = Catch.throwM
+throwTxICFS = txICFSLayer proxyOutside . Catch.throwM
 
 catchTxICFS :: Exception e => Bool -> TxICFTM a -> (e -> TxICFTM a) -> TxICFTM a
-catchTxICFS doWrites stm (h :: e -> TxICFTM a) = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxICFS doWrites stm (h :: e -> TxICFTM a) = txICFSLayer proxyOutside $ (unTxICFSLayer proxyOutside stm) `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
-	catchSome (e::e) = do
+	catchSome (e::e) = unTxICFSLayer proxyOutside $ do
 		validateCatchTxICFS doWrites
 		h e
 
@@ -1121,28 +1123,28 @@ initializeTxICFS (TxICFSForestO m) = do
 	treeSyms <- newIORef =<< liftM (DList.empty,) (readMVar symlinks)
 	let tree = TxICFSTree txid 0 treeDelta False treeSyms
 	-- tables
-	bufftbl <- WeakTable.new
-	memotbl <- WeakTable.new
+	bufftbl <- MemoTable.new
+	memotbl <- MemoTable.new
 	txlog <- newIORef (tree,DList.empty,tree,Set.empty,bufftbl,memotbl,CanonicalTree Map.empty,Set.empty)
 	deltas <- newIORef Map.empty
-	debug ("initializeTxICFS") $ Reader.runReaderT m (starttime,txid,deltas,SCons txlog SNil)
+	debug ("initializeTxICFS") $ Reader.runReaderT m $ TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog SNil)
 	-- don't unmount AVFS, since multiple parallel txs may be using it
 
 -- resets
 resetTxICFS :: TxICFTM a -> TxICFTM a
 resetTxICFS m = do
-	now <- inL $ liftIO $ startTxICFS >>= newIORef
-	(_,txid,deltas,_) <- Reader.ask
+	now <- unsafeIOToInc $ startTxICFS >>= newIORef
+	TxICFSEnv (_ :!: txid :!: deltas :!: _) <- TxICFSForestO Reader.ask
 	-- current tree
 	treeDelta <- forestM $ forestIO $ newIORef $ emptyFSTreeDelta
 	treeSyms <- forestM $ forestIO $ newIORef =<< liftM (DList.empty,) (readMVar symlinks)
 	let tree = TxICFSTree txid 0 treeDelta False treeSyms
 	-- tables
-	bufftbl <- forestM $ forestIO $ WeakTable.new
-	memotbl <- forestM $ forestIO $ WeakTable.new
+	bufftbl <- forestM $ forestIO $ MemoTable.new
+	memotbl <- forestM $ forestIO $ MemoTable.new
 	txlog <- forestM $ forestIO $ newIORef (tree,DList.empty,tree,Set.empty,bufftbl,memotbl,CanonicalTree Map.empty,Set.empty)
 	forestM $ forestIO $ writeIORef deltas Map.empty
-	debug ("resetTxICFS") $ Reader.local (Prelude.const $ (now,txid,deltas,SCons txlog SNil)) m
+	debug ("resetTxICFS") $ TxICFSForestO $ Reader.local (Prelude.const $ TxICFSEnv (now :!: txid :!: deltas :!: SCons txlog SNil)) $ runTxICFSForestO m
 
 -- we need to acquire a lock, but this should be minimal
 startTxICFS :: IO UTCTime
@@ -1153,23 +1155,23 @@ startTxICFS = getCurrentTime >>= \t -> addRunningTxIC t >> return t
 --we create a new fsversion reference
 startNestedTxICFS :: TxICFTM a -> TxICFTM a
 startNestedTxICFS m = do
-	(starttime,txid,deltas,txlogs@(SCons txlog_parent _)) <- Reader.ask
-	(tree,delta,newtree,reads,_,_,cantree,tmps) <- inL $ readIORef txlog_parent
-	bufftbl' <- forestM $ forestIO $ WeakTable.new
-	memotbl' <- forestM $ forestIO $ WeakTable.new
-	txlog_child <- inL $ newIORef (tree,delta,newtree,Set.empty,bufftbl',memotbl',cantree,Set.empty)
-	debug ("startNestedTxICFS ") $ Reader.local (Prelude.const (starttime,txid,deltas,SCons txlog_child txlogs)) m
+	TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs@(SCons txlog_parent _)) <- TxICFSForestO Reader.ask
+	(tree,delta,newtree,reads,_,_,cantree,tmps) <- unsafeIOToInc $ readIORef txlog_parent
+	bufftbl' <- forestM $ forestIO $ MemoTable.new
+	memotbl' <- forestM $ forestIO $ MemoTable.new
+	txlog_child <- unsafeIOToInc $ newIORef (tree,delta,newtree,Set.empty,bufftbl',memotbl',cantree,Set.empty)
+	debug ("startNestedTxICFS ") $ TxICFSForestO $ Reader.local (Prelude.const $ TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog_child txlogs)) $ runTxICFSForestO m
 
 -- remember to empty the next tree and delete the new versions in case nested txs fail
 dropChildTxICLog :: TxICFTM a -> TxICFTM a
 dropChildTxICLog m = do
-	(starttime,txid,deltas,(SCons txlog_child txlogs@(SCons txlog_parent _))) <- Reader.ask
-	(tree_parent,_,newtree_parent,_,_,_,_,_) <- inL $ readIORef txlog_parent
+	TxICFSEnv (starttime :!: txid :!: deltas :!: (SCons txlog_child txlogs@(SCons txlog_parent _))) <- TxICFSForestO Reader.ask
+	(tree_parent,_,newtree_parent,_,_,_,_,_) <- unsafeIOToInc $ readIORef txlog_parent
 	-- forget newly created nested versions
 	forestM $ forestIO $ modifyIORef deltas $ Map.filterWithKey (\version _ -> version <= fsTreeFSVersion tree_parent)
 	-- reset the next tree
 	forestM $ forestIO $ writeIORef (fsTreeFSTreeDelta newtree_parent) emptyFSTreeDelta
-	Reader.local (Prelude.const (starttime,txid,deltas,txlogs)) m
+	TxICFSForestO $ Reader.local (Prelude.const $ TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs)) $ runTxICFSForestO m
 
 -- if an inner tx validation fails, then we throw an @InvalidTx@ exception to retry the whole atomic block
 data InvalidTx = InvalidTx deriving (Typeable)
@@ -1183,21 +1185,21 @@ instance Exception BlockedOnRetry
 -- no exceptions should be raised inside this block
 validateAndCommitTopTxICFS :: Bool -> TxICFTM Bool
 validateAndCommitTopTxICFS doWrites = atomicTxICFS "validateAndCommitTopTxICFS" $ do
-	txenv@(timeref,txid,deltas,txlogs@(SCons txlog SNil)) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(TxICFSEnv (timeref :!: txid :!: deltas :!: txlogs@(SCons txlog SNil))) <- TxICFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	success <- forestM $ validateTxsICFS starttime txlogs
 	if success
 		then do
 			forestM $ commitTopTxICFS doWrites starttime txlog
 			return True
 		else do
-			inL $ liftIO $ deleteRunningTxIC starttime
+			unsafeIOToInc $ deleteRunningTxIC starttime
 			return False
 
 validateAndCommitNestedTxICFS :: Maybe SomeException -> TxICFTM ()
 validateAndCommitNestedTxICFS mbException = do
-	txenv@(timeref,txid,deltas,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(TxICFSEnv (timeref :!: txid :!: deltas :!: txlogs@(SCons txlog1 (SCons txlog2 _)))) <- TxICFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	case mbException of
 		Just e -> do -- throwing an exception exits the chain of txs one by one
 			forestM $ commitNestedTxICFS False deltas txlog1 txlog2 -- does not perform @Write@s
@@ -1208,24 +1210,24 @@ validateAndCommitNestedTxICFS mbException = do
 				then do
 					forestM $ commitNestedTxICFS True deltas txlog1 txlog2 -- performs @Write@s
 				else do
-					inL $ liftIO $ deleteRunningTxIC starttime
-					throwM InvalidTx
+					unsafeIOToInc $ deleteRunningTxIC starttime
+					txICFSLayer proxyOutside $ throwM InvalidTx
 
 -- validates a transaction and places it into the waiting queue for retrying
 validateAndRetryTopTxICFS :: TxICFTM (Maybe Lock)
 validateAndRetryTopTxICFS = atomicTxICFS "validateAndRetryTopTxICFS" $ do
-	txenv@(timeref,txid,deltas,txlogs@(SCons txlog SNil)) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(TxICFSEnv (timeref :!: txid :!: deltas :!: txlogs@(SCons txlog SNil))) <- TxICFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	-- validates the current and enclosing txs up the tx tree
 	success <- forestM $ validateTxsICFS starttime txlogs
 	if success
 		then do
-			lck <- inL $ liftIO $ Lock.newAcquired -- sets the tx lock as acquired; the tx will be resumed when the lock is released
+			lck <- unsafeIOToInc $ Lock.newAcquired -- sets the tx lock as acquired; the tx will be resumed when the lock is released
 			forestM $ commitTopTxICFS False starttime txlog
 			forestM $ retryTxICFSLog lck timeref txlog -- wait on changes to retry (only registers waits, does not actually wait)
 			return $ Just lck
 		else do
-			inL $ liftIO $ deleteRunningTxIC starttime
+			unsafeIOToInc $ deleteRunningTxIC starttime
 			return Nothing
 
 --registers waits for all the filepaths read by a txlog
@@ -1245,29 +1247,29 @@ retryTxICFSLog lck timeref txlog = do
 -- note that retrying discards the tx's writes
 validateAndRetryNestedTxICFS :: TxICFTM ()
 validateAndRetryNestedTxICFS = do
-	txenv@(timeref,txid,deltas,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(TxICFSEnv (timeref :!: txid :!: deltas :!: txlogs@(SCons txlog1 (SCons txlog2 _)))) <- TxICFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	success <- forestM $ validateTxsICFS starttime txlogs
 	if success
 		then do
 			forestM $ commitNestedTxICFS False deltas txlog1 txlog2 -- does not perform @Write@s on @retry@
 		else do
-			inL $ liftIO $ deleteRunningTxIC starttime
-			throwM InvalidTx
+			unsafeIOToInc $ deleteRunningTxIC starttime
+			txICFSLayer proxyOutside $ throwM InvalidTx
 
 -- validates the current log before catching an exception
 validateCatchTxICFS :: Bool -> TxICFTM ()
 validateCatchTxICFS doWrites = do
-	txenv@(timeref,txid,deltas,txlogs) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(TxICFSEnv (timeref :!: txid :!: deltas :!: txlogs)) <- TxICFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	success <- forestM $ validateTxsICFS starttime txlogs
 	if success
 		then do
 			-- in case the computation raises an exception, discard all its visible (write) effects
 			unless doWrites $ forestM unbufferTxICFSWrites
 		else do
-			inL $ liftIO $ deleteRunningTxIC starttime
-			throwM InvalidTx
+			unsafeIOToInc $ deleteRunningTxIC starttime
+			txICFSLayer proxyOutside $ throwM InvalidTx
 
 parentCanonicalTree :: TxICFSLogs -> ForestM TxICFS (CanonicalTree TxICFS)
 parentCanonicalTree SNil = return $ CanonicalTree Map.empty
@@ -1296,10 +1298,10 @@ parentVirtual (SCons txlog _) = do
 -- we only unbuffer the child log
 unbufferTxICFSWrites :: ForestM TxICFS ()
 unbufferTxICFSWrites = do
-	(starttime,txid,deltas,txlogs@(SCons txlog1 txlogs_parent)) <- Reader.ask
+	TxICFSEnv (starttime :!: txid :!: deltas :!: txlogs@(SCons txlog1 txlogs_parent)) <- TxICFSForestM Reader.ask
 	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- forestIO $ readRef txlog1
-	bufftbl1' <- forestIO $ WeakTable.new
-	memotbl1' <- forestIO $ WeakTable.new
+	bufftbl1' <- forestIO $ MemoTable.new
+	memotbl1' <- forestIO $ MemoTable.new
 	
 	-- reset deltas
 	forestIO $ writeRef deltas Map.empty
@@ -1331,7 +1333,7 @@ checkTxsICFS env@(SCons txlog txlogs) finished = do
 checkTxICFS :: TxICFSLog -> [(UTCTime,TxICFSWrites)] -> ForestM TxICFS Bool
 checkTxICFS txlog wrts = liftM List.and $ Prelude.mapM (checkTxICFS' txlog) wrts where
 	checkTxICFS' txlog (txtime,paths) = do
-		(starttime_ref,txid,_,SCons txlog _) <- Reader.ask
+		TxICFSEnv (starttime_ref :!: txid :!: _ :!: SCons txlog _) <- TxICFSForestM Reader.ask
 		starttime <- forestIO $ readIORef starttime_ref
 		forestIO $ putStrLn $ "checking " ++ show starttime ++ " against " ++ show txtime
 		Foldable.foldrM (\path b -> liftM (b &&) $ checkTxICFSWrite txlog path) True paths
@@ -1367,8 +1369,8 @@ mergeTxICFSLog txlog1 txlog2 = forestIO $ do
 	(tree1,delta1,newtree1,reads1,bufftbl1,memotbl1,cantree1,tmps1) <- readIORef txlog1
 	(tree2,delta2,newtree2,reads2,bufftbl2,memotbl2,cantree2,tmps2) <- readIORef txlog2
 	
-	WeakTable.mapM_ (\(uid,entry) -> WeakTable.insertWithMkWeak bufftbl2 (dynTxMkWeak entry) uid entry) bufftbl1
-	WeakTable.mapM_ (\(uid,entry@(_,mkWeak,_)) -> WeakTable.insertWithMkWeak memotbl2 mkWeak uid entry) memotbl1
+	MemoTable.mapM_ (\(uid,entry) -> MemoTable.insertWithMkWeak bufftbl2 uid entry (dynTxMkWeak entry)) bufftbl1 
+	MemoTable.mapM_ (\(uid,entry@(_,mkWeak,_)) -> MemoTable.insertWithMkWeak memotbl2 uid entry mkWeak) memotbl1
 	
 	writeIORef txlog2 (tree1,delta1,newtree1,reads1 `Set.union` reads2,bufftbl2,memotbl2,cantree1,tmps1 `Set.union` tmps2)
 	
@@ -1457,17 +1459,17 @@ atomicTxICFS msg m = do
 
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
 withFileLocks :: Set FilePath -> Set FilePath -> TxICFTM a -> TxICFTM a
-withFileLocks reads writes m = do
-	rcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList reads
-	wcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList writes
+withFileLocks reads writes m = txICFSLayer proxyOutside $ do
+	rcks <- lift $ State.mapM fileLock $ Set.toAscList reads
+	wcks <- lift $ State.mapM fileLock $ Set.toAscList writes
 		
-	let waitAndAcquire wcks = inL $ liftIO $ STM.atomically $ do
+	let waitAndAcquire wcks = lift $ STM.atomically $ do
 		-- wait on read locks
 		Foldable.mapM_ waitOrRetryFLock rcks
 		-- acquire write locks or retry
 		Foldable.mapM_ acquireOrRetryFLock wcks
 		
-	liftA2 Catch.bracket_ waitAndAcquire (inL . liftIO . STM.atomically . Foldable.mapM_ releaseFLock) wcks m
+	liftA2 Catch.bracket_ waitAndAcquire (lift . STM.atomically . Foldable.mapM_ releaseFLock) wcks (unTxICFSLayer proxyOutside m)
 
 updateRootTxICFS :: FilePath -> IO ()
 updateRootTxICFS root = do

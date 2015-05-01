@@ -32,10 +32,10 @@
 -}
 
 module Language.Forest.Quote
-    (ipads,forest,iforest)
+    (ipads,forest,iforest,txforest,txicforest,txnilfsforest)
     where
 
-import Language.Forest.Pure.CodeGen.Utils as Pure
+--import Language.Forest.Pure.CodeGen.Utils as Pure
 import Language.Forest.IC.BX
 import Data.WithClass.Derive.DeepTypeable
 import Data.WithClass.Derive.MData
@@ -49,8 +49,9 @@ import Language.Forest.IC.Generic
 import Language.Forest.IC.ICRep
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 
-import Language.Forest.Pure.CodeGen as Pure
+import Language.Forest.IC.CodeGen.Utils
 import Language.Forest.IC.CodeGen as IC
+import Language.Forest.Pure.CodeGen as Pure
 import qualified Language.Forest.Parser as P
 import Language.Pads.Quote as P
 
@@ -80,12 +81,6 @@ fquasiquote1 mode p = QuasiQuoter
 	(error "parse type")
 	(fparse1 mode p $ make_decls mode)
 
-fquasiquote1IC mb p = QuasiQuoter
-	(error "parse expression")
-	(error "parse pattern")
-	(error "parse type")
-	(fparse1 ICForest p $ IC.make_forest_declarations mb)
-
 fquasiquote1z fsTys p = QuasiQuoter
 	(error "parse expression")
 	(error "parse pattern")
@@ -94,7 +89,6 @@ fquasiquote1z fsTys p = QuasiQuoter
 
 make_decls PureForest = Pure.make_forest_declarations
 make_decls ICForest = do
---	unzipped <- IC.make_forest_declarations Nothing
 	zipped <- IC.make_zforest_declarations
 	return $ {-unzipped ++ -} zipped
 
@@ -107,7 +101,7 @@ ipads = P.padsDerivation $ \dec -> do
 	deep <- deriveFromDec makeDeepTypeable dec
 	let decty = foldl AppT (ConT n) tyargs
 	let fsName = mkName "fs"
-	let forestContent = InstanceD [ClassP ''ICRep [VarT fsName]] (Pure.appT3 (ConT ''ForestContent) (VarT fsName) decty decty) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLensM) []]
+	let forestContent = InstanceD [ClassP ''ICRep [VarT fsName]] (appT3 (ConT ''ForestContent) (VarT fsName) decty decty) [ValD (VarP 'lens_content) (NormalB $ VarE 'idLensM) []]
 	return $ mdata ++ deep ++ [forestContent]
 
 tyVarBndrName :: TyVarBndr -> Name
@@ -121,16 +115,16 @@ forest  = fquasiquote1 PureForest P.forestDecls
 -- | A quasi-quoter for Forest with IC-specific data structures
 iforest :: QuasiQuoter
 --iforest  = fquasiquote1 ICForest P.forestDecls
-iforest = fquasiquote1z [{-ConT 'TxVarFS,ConT 'TxICFS,-}ConT 'TxNILFS] P.forestDecls
+iforest = fquasiquote1z [ConT 'TxVarFS,ConT 'TxICFS,ConT 'TxNILFS] P.forestDecls
 	
---txforest :: QuasiQuoter
---txforest = fquasiquote1z (ConT 'TxVarFS) P.forestDecls
-	
--- | A quasi-quoter for incremental forest with data thunks
-idforest :: QuasiQuoter
-idforest  = fquasiquote1IC (Just ICData) P.forestDecls
+txforest :: QuasiQuoter
+txforest = fquasiquote1z [ConT 'TxVarFS] P.forestDecls
 
--- | A quasi-quoter for incremental forest with data and expression thunks
-ieforest :: QuasiQuoter
-ieforest  = fquasiquote1IC (Just ICExpr) P.forestDecls
+txicforest :: QuasiQuoter
+txicforest = fquasiquote1z [ConT 'TxVarFS] P.forestDecls
+
+txnilfsforest :: QuasiQuoter
+txnilfsforest = fquasiquote1z [ConT 'TxVarFS] P.forestDecls
+	
+
     

@@ -37,8 +37,8 @@ import Control.Exception
 import Language.Forest.IO.Utils
 import Data.Word
 import Data.Int
-import Language.Pads.CoreBaseTypes
-import Language.Pads.MetaData hiding (numErrors)
+import Language.Pads.Padsc as Pads (get_md_header,PadsMD(..))
+--import Language.Pads.MetaData hiding (numErrors)
 import Data.Maybe
 import Control.Monad
 import System.Posix.Files

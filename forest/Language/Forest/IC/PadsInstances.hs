@@ -10,10 +10,13 @@ import Data.Word
 import Foreign.ForeignPtr
 import qualified Data.Data as Data
 
-import Language.Pads.Errors
-import Language.Pads.MetaData
+import Data.Memo
+import Data.Derive.Memo
+import System.Mem.Weak.Exts as Weak
+--import Language.Pads.Errors
+--import Language.Pads.MetaData
 import Language.Pads.Source
-import Language.Pads.CoreBaseTypes
+--import Language.Pads.CoreBaseTypes
 import Language.Pads.Padsc
 
 
@@ -27,9 +30,8 @@ import qualified Data.ByteString as B
 import System.IO.Unsafe
 import System.Mem.StableName
 import System.Mem.Weak as Weak
-import System.Mem.WeakTable as WeakTable
 import System.Mem.MemoTable
-import System.Mem.WeakKey
+
 import Language.Pads.BaseTypes
 import Data.Time
 import Data.Time.Clock.POSIX
@@ -72,41 +74,6 @@ instance Hashable DiffTime where
 	
 instance Hashable UTCTime where
 	hashWithSalt i = hashWithSalt i . fromEnum . utcTimeToPOSIXSeconds
-
-instance Memo Day where
-	type Key Day = Day
-	{-# INLINE memoKey #-}
-	memoKey d = (MkWeak $ Weak.mkWeak d,d)
-
-instance Memo DiffTime where
-	type Key DiffTime = DiffTime
-	{-# INLINE memoKey #-}
-	memoKey d = (MkWeak $ Weak.mkWeak d,d)
-
-instance Memo UTCTime where
-	type Key UTCTime = UTCTime
-	{-# INLINE memoKey #-}
-	memoKey d = (MkWeak $ Weak.mkWeak d,d)
-
-instance Memo ByteString where
-	type Key ByteString = ByteString
-	{-# INLINE memoKey #-}
-	memoKey d = (MkWeak $ Weak.mkWeak d,d)
-
-instance Memo Binary where
-	type Key Binary = StableName Binary
-	{-# INLINE memoKey #-}
-	memoKey x = (MkWeak $ mkWeak x,unsafePerformIO $ makeStableName x)
-
-instance Memo Base_md where
-	type Key Base_md = StableName Base_md
-	{-# INLINE memoKey #-}
-	memoKey x = (MkWeak $ mkWeak x,unsafePerformIO $ makeStableName x)
-	
-instance Memo Loc where
-	type Key Loc = StableName Loc
-	{-# INLINE memoKey #-}
-	memoKey x = (MkWeak $ mkWeak x,unsafePerformIO $ makeStableName x)
 	
 $( derive makeDeepTypeableAbstract ''ByteString )
 
@@ -115,20 +82,16 @@ instance (Monad m,Sat (ctx ByteString)) => MData ctx m ByteString where
   gunfold ctx _ z c = error "Data.MData.gunfold(ByteString)"
   dataTypeOf ctx _ = return $ mkNoRepType "Data.ByteString.ByteString"
 
-instance Memo ErrMsg where
-	type Key ErrMsg = StableName ErrMsg
-	{-# INLINE memoKey #-}
-	memoKey x = (MkWeak $ Weak.mkWeak x,unsafePerformIO $ makeStableName x)
-	
-instance Memo Pos where
-	type Key Pos = StableName Pos
-	{-# INLINE memoKey #-}
-	memoKey x = (MkWeak $ Weak.mkWeak x,unsafePerformIO $ makeStableName x)
-
-instance Memo ErrInfo where
-	type Key ErrInfo = StableName ErrInfo
-	{-# INLINE memoKey #-}
-	memoKey x = (MkWeak $ Weak.mkWeak x,unsafePerformIO $ makeStableName x)
+$(deriveMemoId ''Day)
+$(deriveMemoId ''DiffTime)
+$(deriveMemoId ''UTCTime)
+$(deriveMemoId ''ByteString)
+$(deriveMemo ''Binary)
+$(deriveMemo ''Base_md)
+$(deriveMemo ''Loc)
+$(deriveMemo ''ErrMsg)
+$(deriveMemo ''Pos)
+$(deriveMemo ''ErrInfo)
 
 
 

@@ -4,10 +4,11 @@
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and no incrementality
 
 module Language.Forest.IC.FS.TxVarFS (
-	TxICForest(..)
+	TransactionalForest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
 	, proxyTxVarFS
 	) where
 	
+import Control.Concurrent.Transactional
 import Data.Global.TH as TH
 import Control.Monad.Incremental.Display
 import Control.Monad.RWS (RWS(..),RWST(..))
@@ -18,26 +19,26 @@ import Language.Forest.IC.Default
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Cmd
-import System.Mem.Weak as Weak
+import System.Mem.Weak.Exts as Weak
 import Control.Exception as Exception
 import Data.Strict.List
 import Unsafe.Coerce
 import Language.Forest.IC.ValueDelta
 import Language.Forest.IC.BX as BX
-import System.Mem.WeakKey
+
 --import System.Posix.FileLock as FileLock
 import Data.Foldable as Foldable
 import Data.Concurrent.Deque.Class as Queue
 import Data.Concurrent.Deque.Reference.DequeInstance
-import qualified Control.Concurrent.Map as CMap
-import qualified Control.Concurrent.WeakMap as CWeakMap
+import qualified Control.Concurrent.Map.Exts as CMap
+import qualified Control.Concurrent.Weak.Map as CWeakMap
 import System.Posix.Files
 
 import Language.Forest.FS.FSRep
 import Control.Applicative
 import System.IO.Unsafe
 import Control.Monad
-import Control.Monad.Lazy
+
 import Data.Maybe
 import Data.List
 import Data.WithClass.MData
@@ -45,7 +46,6 @@ import Data.Typeable
 import System.Directory
 import Data.List as List
 import Data.Dynamic
-import System.Mem.WeakTable as WeakTable
 import Data.IORef
 import System.FilePath.Posix
 import Language.Forest.IO.Utils
@@ -128,13 +128,13 @@ declareMVar "waitingTxs"  [t| (Map FilePath WaitQueue) |] [e| Map.empty |]
 -- only needs to read from the top-level log
 getTxVarFSChangesFlat :: ForestM TxVarFS TxVarFSChangesFlat
 getTxVarFSChangesFlat = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	return (reads,fsTreeDeltaWrites "" writes)
 
 getFSVersionTxVarFS :: ForestM TxVarFS FSVersion
 getFSVersionTxVarFS = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	return fsversion
 
@@ -145,32 +145,32 @@ incrementFSVersionTxVarFS = do
 
 setFSVersionTxVarFS :: FSVersion -> ForestM TxVarFS ()
 setFSVersionTxVarFS new_fsversion = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	forestIO $ writeRef txlog (new_fsversion,(reads,writes),tmps)
 
 -- only needs to read from the top-level log
 getTxVarFSChanges :: ForestM TxVarFS TxVarFSChanges
 getTxVarFSChanges = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	return (reads,writes)
 
 putTxVarFSRead :: FilePath -> ForestM TxVarFS ()
 putTxVarFSRead path = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	forestIO $ writeRef txlog (fsversion,(Set.insert path reads,writes),tmps)
 
 putTxVarFSTmp :: FilePath -> ForestM TxVarFS ()
 putTxVarFSTmp tmp = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	forestIO $ writeRef txlog (fsversion,(reads,writes),Set.insert tmp tmps)
 
 modifyTxVarFSTreeDeltas :: (FSTreeDelta -> FSTreeDelta) -> ForestM TxVarFS ()
 modifyTxVarFSTreeDeltas f = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestIO $ readRef txlog
 	forestIO $ writeRef txlog (fsversion,(reads,f writes),tmps)
 
@@ -179,7 +179,7 @@ instance Eq (FSTree TxVarFS) where
 
 instance FSRep TxVarFS where
 	
-	newtype ForestM TxVarFS a = TxVarFSForestM { runTxVarFSForestM :: ReaderT TxVarFSEnv IO a } deriving (Functor,Applicative,Monad,MonadReader TxVarFSEnv,MonadLazy,MonadThrow,MonadCatch,MonadMask)
+	newtype ForestM TxVarFS a = TxVarFSForestM { runTxVarFSForestM :: ReaderT TxVarFSEnv IO a } deriving (Functor,Applicative,Monad)
 	
 	data ForestCfg TxVarFS = TxVarFSForestCfg
 	
@@ -298,22 +298,29 @@ canonalizePathTxVarFS path = do
 
 -- ** Incrementality
 
-instance Incremental (IncForest TxVarFS) IORef IO where
+class TxVarFSLayerImpl l where
+	unTxVarFSLayer :: Proxy l -> l (IncForest TxVarFS) a -> ReaderT TxVarFSEnv IO a
+	txVarFSLayer :: Proxy l -> ReaderT TxVarFSEnv IO a -> l (IncForest TxVarFS) a
+
+instance TxVarFSLayerImpl Outside where
+	unTxVarFSLayer _ = runTxVarFSForestO
+	txVarFSLayer _ = TxVarFSForestO
+
+instance TxVarFSLayerImpl Inside where
+	unTxVarFSLayer _ = runTxVarFSForestI
+	txVarFSLayer _ = TxVarFSForestI
+
+instance Incremental (IncForest TxVarFS) where
 	
-	newtype Outside (IncForest TxVarFS) IORef IO a = TxVarFSForestO { runTxVarFSForestO :: ReaderT TxVarFSEnv IO a } deriving (Monad,MonadLazy,MonadReader TxVarFSEnv,MonadThrow,MonadCatch,MonadMask)
-	newtype Inside (IncForest TxVarFS) IORef IO a = TxVarFSForestI { runTxVarFSForestI :: ReaderT TxVarFSEnv IO a } deriving (Monad,MonadLazy,MonadReader TxVarFSEnv,MonadThrow,MonadCatch,MonadMask)
+	newtype Outside (IncForest TxVarFS) a = TxVarFSForestO { runTxVarFSForestO :: ReaderT TxVarFSEnv IO a } deriving (Monad,Functor,Applicative)
+	newtype Inside (IncForest TxVarFS) a = TxVarFSForestI { runTxVarFSForestI :: ReaderT TxVarFSEnv IO a } deriving (Monad,Functor,Applicative)
 
 	world = TxVarFSForestO . runTxVarFSForestI
 	unsafeWorld = TxVarFSForestI . runTxVarFSForestO
 
 	runIncremental = error "please use atomically instead"
-
-instance InLayer Outside (IncForest TxVarFS) IORef IO where
-	inL = TxVarFSForestO . lift
-	{-# INLINE inL #-}
-instance InLayer Inside (IncForest TxVarFS) IORef IO where
-	inL = TxVarFSForestI . lift
-	{-# INLINE inL #-}
+	
+	unsafeIOToInc = inside . TxVarFSForestI . lift
 	
 instance ICRep TxVarFS where
 
@@ -321,14 +328,14 @@ instance ICRep TxVarFS where
 	forestO = TxVarFSForestM . runTxVarFSForestO
 
 	-- stores a computation and a concurrent map from @FSVersion@s to computed values
-	newtype FSThunk TxVarFS l inc r m a = TxVarFSThunk (IORef (Dynamic,FilePath),l inc r m a,WeakMap FSVersion a)
+	newtype FSThunk TxVarFS l inc a = TxVarFSThunk (IORef (Dynamic,FilePath),l inc a,WeakMap FSVersion a)
 
 	-- a rough estimate
 	isUnevaluatedFSThunk (TxVarFSThunk (args,m,entries)) = liftM Map.null $ forestM $ forestIO $ WeakMap.toMap entries
 
-	newtype HSThunk TxVarFS l inc r m a = TxVarHSThunk (IORef (Dynamic,FilePath),l inc r m a,WeakMap FSVersion a)
+	newtype HSThunk TxVarFS l inc a = TxVarHSThunk (IORef (Dynamic,FilePath),l inc a,WeakMap FSVersion a)
 	
-	newtype ICThunk TxVarFS l inc r m a = TxVarICThunk (l inc r m a)
+	newtype ICThunk TxVarFS l inc a = TxVarICThunk (l inc a)
 
 instance ZippedICMemo TxVarFS where
 
@@ -355,7 +362,7 @@ getFTVArgs (proxy ::Proxy args) rep = forestIO $ do
 		Just args -> return $ Just (args,path)
 	
 
-instance ForestLayer TxVarFS l => Thunk (HSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
+instance ForestLayer TxVarFS l => Thunk (HSThunk TxVarFS) l (IncForest TxVarFS) where
 	new m = do
 		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"--NOFILE--")
 		tbl <- forestM $ forestIO $ WeakMap.new
@@ -366,18 +373,18 @@ instance ForestLayer TxVarFS l => Thunk (HSThunk TxVarFS) l (IncForest TxVarFS) 
 		case mb of
 			Nothing -> do
 				v <- m
-				forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v
+				forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ Weak.mkWeakRefKey rdyn) fsversion v
 				return v
 			Just v -> return v
 
-instance ForestLayer TxVarFS l => Thunk (ICThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
+instance ForestLayer TxVarFS l => Thunk (ICThunk TxVarFS) l (IncForest TxVarFS) where
 	new m = return $ TxVarICThunk m
 	read (TxVarICThunk m) = m
-instance ForestLayer TxVarFS l => Output (ICThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
+instance ForestLayer TxVarFS l => Output (ICThunk TxVarFS) l (IncForest TxVarFS) where
 	thunk = Inc.new
 	force = Inc.read
 
-instance (ForestLayer TxVarFS l) => Thunk (FSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
+instance (ForestLayer TxVarFS l) => Thunk (FSThunk TxVarFS) l (IncForest TxVarFS) where
 	new m = do
 		rdyn <- forestM $ forestIO $ newIORef (toDyn (),"--NOFILE--")
 		tbl <- forestM $ forestIO $ WeakMap.new
@@ -388,17 +395,17 @@ instance (ForestLayer TxVarFS l) => Thunk (FSThunk TxVarFS) l (IncForest TxVarFS
 		case mb of
 			Nothing -> do
 				v <- m
-				forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v
+				forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ Weak.mkWeakRefKey rdyn) fsversion v
 				return v
 			Just v -> return v
 
-instance (ForestLayer TxVarFS l) => Input (FSThunk TxVarFS) l (IncForest TxVarFS) IORef IO where
+instance (ForestLayer TxVarFS l) => Input (FSThunk TxVarFS) l (IncForest TxVarFS) where
 	ref c = Inc.new (return c)
 	mod = Inc.new
 	get = Inc.read
 	set (TxVarFSThunk (rdyn,m,tbl)) v = do
 		fsversion <- forestM getFSVersionTxVarFS
-		forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v
+		forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ Weak.mkWeakRefKey rdyn) fsversion v
 
 -- ** Transactions
 
@@ -407,13 +414,17 @@ type TxVarFTM = FTM TxVarFS
 -- a Forest transactional variable
 type TxVarFTV a = FTV TxVarFS a
 
-instance TxICForest TxVarFS where
-	
+instance Transactional (IncForest TxVarFS) where
 	atomically = atomicallyTxVarFS
 	retry = retryTxVarFS
 	orElse = orElseTxVarFS
-	throw = throwTxVarFS 
-	catch = catchTxVarFS False
+
+instance MonadThrow (Outside (IncForest TxVarFS)) where
+	throwM = throwTxVarFS 
+instance MonadCatch (Outside (IncForest TxVarFS)) where
+	catch = catchTxVarFS False	
+	
+instance TransactionalForest TxVarFS where
 	new = newTxVarFS Proxy
 	args = argsTxVarFS Proxy
 	read = readTxVarFS Proxy
@@ -460,7 +471,7 @@ readTxVarFS proxy (rep :: rep) = do
 		Nothing -> do
 			(rep' :: rep) <- inside $ zload (vmonadArgs proxyTxVarFS proxy txargs) path
 			v' <- inside $ Inc.get (to iso_rep_thunk rep')
-			forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ mkWeakRefKey rdyn) fsversion v'
+			forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ Weak.mkWeakRefKey rdyn) fsversion v'
 			inside $ BX.getM lens_content (return v')
 		Just v -> inside $ BX.getM lens_content (return v)
 
@@ -473,7 +484,7 @@ writeOrElseTxVarFS rep content b f = do
 writeOrElseTxVarFS' :: (FTK TxVarFS args rep var content) => rep -> var -> b -> ([ManifestError] -> TxVarFTM b) -> TxVarFTM b
 writeOrElseTxVarFS' rep var b f = do
 	let t = to iso_rep_thunk rep
-	(starttime,old_fsversion,SCons fslog_ref _) <- Reader.ask
+	(starttime,old_fsversion,SCons fslog_ref _) <- TxVarFSForestO Reader.ask
 	old_fslog <- forestM $ forestIO $ readIORef fslog_ref
 	forestM incrementFSVersionTxVarFS
 	set t var
@@ -503,57 +514,57 @@ writeOrElseTxVarFS' rep var b f = do
 
 atomicallyTxVarFS :: TxVarFTM b -> IO b
 atomicallyTxVarFS stm = initializeTxVarFS try where
-	try = flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ do
+	try = txVarFSLayer proxyOutside $ flip Catch.catches [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] $ unTxVarFSLayer proxyOutside $ do
 		-- run the tx
 		x <- stm
 		-- tries to commit the current tx, otherwise repairs it incrementally
 		success <- validateAndCommitTopTxVarFS True
 		if success
 			then return x
-			else debug "throw InvalidTx" $ throwM InvalidTx
-	catchInvalid InvalidTx = debug "InvalidTx" $ do
+			else debug "throw InvalidTx" $ txVarFSLayer proxyOutside $ throwM InvalidTx
+	catchInvalid InvalidTx = unTxVarFSLayer proxyOutside $ debug "InvalidTx" $ do
 		resetTxVarFS try
-	catchRetry BlockedOnRetry = debug "BlockedOnRetry" $ do
+	catchRetry BlockedOnRetry = unTxVarFSLayer proxyOutside $ debug "BlockedOnRetry" $ do
 		-- if the retry was invoked on an inconsistent state, we incrementally repair and run again, otherwise we place the tx in the waiting queue
 		mbsuccess <- validateAndRetryTopTxVarFS
 		case mbsuccess of
 			Just lck -> do -- retried txs are always in a consistent state, because we apply all affecting updates before releasing the lock
 				-- wait for the lock to be released (whenever some variables that it depends on are changed)
 				-- we don't consume the contents of the mvar to avoid further puts to succeeed; a new MVar is created for each retry
-				inL $ liftIO $ Lock.acquire lck
+				unsafeIOToInc $ Lock.acquire lck
 				resetTxVarFS try
 			Nothing -> resetTxVarFS try
-	catchSome (e::SomeException) = debug ("SomeException "++show e) $ do
+	catchSome (e::SomeException) = unTxVarFSLayer proxyOutside $ debug ("SomeException "++show e) $ do
 		-- we still need to validate on exceptions, otherwise repair incrementally; transaction-local allocations still get committed
 		success <- validateAndCommitTopTxVarFS False
 		if success
-			then throwM e
+			then txVarFSLayer proxyOutside $ throwM e
 			else do
 				resetTxVarFS try
 
 
 retryTxVarFS :: TxVarFTM a
-retryTxVarFS = inL $ liftIO $ throwIO BlockedOnRetry
+retryTxVarFS = unsafeIOToInc $ throwIO BlockedOnRetry
 
 orElseTxVarFS :: TxVarFTM a -> TxVarFTM a -> TxVarFTM a
 orElseTxVarFS stm1 stm2 = do1 where
 	try1 = do { x <- stm1; validateAndCommitNestedTxVarFS Nothing; return x }
 	try2 = do { x <- stm2; validateAndCommitNestedTxVarFS Nothing; return x }
-	do1 = startNestedTxVarFS $ try1 `Catch.catches` [Catch.Handler catchRetry1,Catch.Handler catchInvalid,Catch.Handler catchSome]
-	do2 = dropChildTxLog $ startNestedTxVarFS $ try2 `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
-	catchRetry1 BlockedOnRetry = validateAndRetryNestedTxVarFS >> do2
-	catchRetry2 BlockedOnRetry = validateAndRetryNestedTxVarFS >> throwM BlockedOnRetry
+	do1 = startNestedTxVarFS $ txVarFSLayer proxyOutside $ (unTxVarFSLayer proxyOutside try1) `Catch.catches` [Catch.Handler catchRetry1,Catch.Handler catchInvalid,Catch.Handler catchSome]
+	do2 = dropChildTxLog $ startNestedTxVarFS $ txVarFSLayer proxyOutside $ (unTxVarFSLayer proxyOutside try2) `Catch.catches` [Catch.Handler catchRetry2,Catch.Handler catchInvalid,Catch.Handler catchSome]
+	catchRetry1 BlockedOnRetry = unTxVarFSLayer proxyOutside $ validateAndRetryNestedTxVarFS >> do2
+	catchRetry2 BlockedOnRetry = unTxVarFSLayer proxyOutside validateAndRetryNestedTxVarFS >> throwM BlockedOnRetry
 	catchInvalid (e::InvalidTx) = throwM e
-	catchSome (e::SomeException) = validateAndCommitNestedTxVarFS (Just e) >> throwM e
+	catchSome (e::SomeException) = unTxVarFSLayer proxyOutside (validateAndCommitNestedTxVarFS (Just e)) >> throwM e
 
 throwTxVarFS :: Exception e => e -> TxVarFTM a
-throwTxVarFS = Catch.throwM
+throwTxVarFS = txVarFSLayer proxyOutside . Catch.throwM
 
 catchTxVarFS :: Exception e => Bool -> TxVarFTM a -> (e -> TxVarFTM a) -> TxVarFTM a
-catchTxVarFS doWrites stm (h :: e -> TxVarFTM a) = stm `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome] where
+catchTxVarFS doWrites stm (h :: e -> TxVarFTM a) = txVarFSLayer proxyOutside ((unTxVarFSLayer proxyOutside stm) `Catch.catches` [Catch.Handler catchInvalid,Catch.Handler catchRetry,Catch.Handler catchSome]) where
 	catchInvalid (e::InvalidTx) = throwM e
 	catchRetry (e::BlockedOnRetry) = throwM e
-	catchSome (e::e) = do
+	catchSome (e::e) = unTxVarFSLayer proxyOutside $ do
 		validateCatchTxVarFS doWrites
 		h e
 
@@ -569,10 +580,10 @@ initializeTxVarFS (TxVarFSForestO m) = do
 -- resets
 resetTxVarFS :: TxVarFTM a -> TxVarFTM a
 resetTxVarFS m = do
-	now <- inL $ liftIO $ startTxVarFS >>= newIORef
-	fsversion <- inL $ liftIO $ newUnique
-	txlog <- inL $ liftIO $ newIORef (fsversion,(Set.empty,emptyFSTreeDelta),Set.empty)
-	debug ("resetTxVarFS") $ Reader.local (\_ -> (now , fsversion,SCons txlog SNil)) m
+	now <- unsafeIOToInc $ startTxVarFS >>= newIORef
+	fsversion <- unsafeIOToInc $ newUnique
+	txlog <- unsafeIOToInc $ newIORef (fsversion,(Set.empty,emptyFSTreeDelta),Set.empty)
+	debug ("resetTxVarFS") $ TxVarFSForestO $ Reader.local (\_ -> (now , fsversion,SCons txlog SNil)) $ runTxVarFSForestO m
 
 -- we need to acquire a lock, but this should be minimal
 startTxVarFS :: IO UTCTime
@@ -583,13 +594,13 @@ startTxVarFS = getCurrentTime >>= \t -> addRunningTx t >> return t
 --we create a new fsversion reference
 startNestedTxVarFS :: TxVarFTM a -> TxVarFTM a
 startNestedTxVarFS m = do
-	(starttime,startversion,txlogs@(SCons txlog_parent _)) <- Reader.ask
-	(fsversion,chgs,tmps) <- inL $ readRef txlog_parent
-	txlog_child <- inL $ newRef (fsversion,chgs,tmps) -- copy the parent's status; we will append modifications to it
-	debug ("startNestedTxVarFS ") $ Reader.local (Prelude.const (starttime,startversion,SCons txlog_child txlogs)) m
+	(starttime,startversion,txlogs@(SCons txlog_parent _)) <- TxVarFSForestO Reader.ask
+	(fsversion,chgs,tmps) <- unsafeIOToInc $ readIORef txlog_parent
+	txlog_child <- unsafeIOToInc $ newIORef (fsversion,chgs,tmps) -- copy the parent's status; we will append modifications to it
+	debug ("startNestedTxVarFS ") $ TxVarFSForestO $ Reader.local (Prelude.const (starttime,startversion,SCons txlog_child txlogs)) $ runTxVarFSForestO m
 
 dropChildTxLog :: TxVarFTM a -> TxVarFTM a
-dropChildTxLog m = Reader.local (\(starttime,startversion,SCons _ txlogs) -> (starttime,startversion,txlogs)) m
+dropChildTxLog m = TxVarFSForestO $ Reader.local (\(starttime,startversion,SCons _ txlogs) -> (starttime,startversion,txlogs)) $ runTxVarFSForestO m
 
 -- if an inner tx validation fails, then we throw an @InvalidTx@ exception to retry the whole atomic block
 data InvalidTx = InvalidTx deriving (Typeable)
@@ -603,21 +614,21 @@ instance Exception BlockedOnRetry
 -- no exceptions should be raised inside this block
 validateAndCommitTopTxVarFS :: Bool -> TxVarFTM Bool
 validateAndCommitTopTxVarFS doWrites = atomicTxVarFS "validateAndCommitTopTxVarFS" $ do
-	txenv@(timeref,startversion,txlogs@(SCons txlog SNil)) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(timeref,startversion,txlogs@(SCons txlog SNil)) <- TxVarFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
 	if success
 		then do
 			forestM $ commitTopTxVarFS doWrites starttime txlog
 			return True
 		else do
-			inL $ liftIO $ deleteRunningTx starttime
+			unsafeIOToInc $ deleteRunningTx starttime
 			return False
 
 validateAndCommitNestedTxVarFS :: Maybe SomeException -> TxVarFTM ()
 validateAndCommitNestedTxVarFS mbException = do
-	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- TxVarFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	case mbException of
 		Just e -> do -- throwing an exception exits the chain of txs one by one
 			forestM $ commitNestedTxVarFS False txlog1 txlog2 -- does not perform @Write@s
@@ -628,24 +639,24 @@ validateAndCommitNestedTxVarFS mbException = do
 				then do
 					forestM $ commitNestedTxVarFS True txlog1 txlog2 -- performs @Write@s
 				else do
-					inL $ liftIO $ deleteRunningTx starttime
-					throwM InvalidTx
+					unsafeIOToInc $ deleteRunningTx starttime
+					txVarFSLayer proxyOutside $ throwM InvalidTx
 
 -- validates a transaction and places it into the waiting queue for retrying
 validateAndRetryTopTxVarFS :: TxVarFTM (Maybe Lock)
 validateAndRetryTopTxVarFS = atomicTxVarFS "validateAndRetryTopTxVarFS" $ do
-	txenv@(timeref,startversion,txlogs@(SCons txlog SNil)) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(timeref,startversion,txlogs@(SCons txlog SNil)) <- TxVarFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	-- validates the current and enclosing txs up the tx tree
 	success <- forestM $ validateTxsVarFS starttime txlogs
 	if success
 		then do
-			lck <- inL $ liftIO $ Lock.newAcquired -- sets the tx lock as acquired; the tx will be resumed when the lock is released
+			lck <- unsafeIOToInc $ Lock.newAcquired -- sets the tx lock as acquired; the tx will be resumed when the lock is released
 			forestM $ commitTopTxVarFS False starttime txlog
 			forestM $ retryTxVarFSLog lck timeref txlog -- wait on changes to retry (only registers waits, does not actually wait)
 			return $ Just lck
 		else do
-			inL $ liftIO $ deleteRunningTx starttime
+			unsafeIOToInc $ deleteRunningTx starttime
 			return Nothing
 
 --registers waits for all the filepaths read by a txlog
@@ -665,33 +676,34 @@ retryTxVarFSLog lck timeref txlog = do
 -- note that retrying discards the tx's writes
 validateAndRetryNestedTxVarFS :: TxVarFTM ()
 validateAndRetryNestedTxVarFS = do
-	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(timeref,startversion,txlogs@(SCons txlog1 (SCons txlog2 _))) <- TxVarFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
 	if success
 		then do
 			forestM $ commitNestedTxVarFS False txlog1 txlog2 -- does not perform @Write@s on @retry@
 		else do
-			inL $ liftIO $ deleteRunningTx starttime
-			throwM InvalidTx
+			unsafeIOToInc $ deleteRunningTx starttime
+			txVarFSLayer proxyOutside $ throwM InvalidTx
 
 -- validates the current log before catching an exception
 validateCatchTxVarFS :: Bool -> TxVarFTM ()
 validateCatchTxVarFS doWrites = do
-	txenv@(timeref,startversion,txlogs) <- Reader.ask
-	starttime <- inL $ readRef timeref
+	txenv@(timeref,startversion,txlogs) <- TxVarFSForestO Reader.ask
+	starttime <- unsafeIOToInc $ readIORef timeref
 	success <- forestM $ validateTxsVarFS starttime txlogs
 	if success
 		then do
 			-- in case the computation raises an exception, discard all its visible (write) effects
 			unless doWrites $ forestM $ unbufferTxVarFSWrites
 		else do
-			inL $ liftIO $ deleteRunningTx starttime
-			throwM InvalidTx
+			unsafeIOToInc $ deleteRunningTx starttime
+			txVarFSLayer proxyOutside $ throwM InvalidTx
 
+-- unbuffers only the top-level writes
 unbufferTxVarFSWrites :: ForestM TxVarFS ()
 unbufferTxVarFSWrites = do
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 	let unbufferTxVarFSLog txlog1 = do
 		(fsversion1,(reads1,chgs1),tmps1) <- readRef txlog1
 		writeRef txlog1 (startversion,(reads1,emptyFSTreeDelta),tmps1)
@@ -714,7 +726,7 @@ checkTxsVarFS env@(SCons txlog txlogs) finished = do
 checkTxVarFS :: TxVarFSLog -> [(UTCTime,TxVarFSWrites)] -> ForestM TxVarFS Bool
 checkTxVarFS txlog wrts = liftM List.and $ Prelude.mapM (checkTxVarFS' txlog) wrts where
 	checkTxVarFS' txlog (txtime,paths) = do
-		(starttime_ref,startversion,SCons txlog _) <- Reader.ask
+		(starttime_ref,startversion,SCons txlog _) <- TxVarFSForestM Reader.ask
 		starttime <- forestIO $ readIORef starttime_ref
 		forestIO $ putStrLn $ "checking " ++ show starttime ++ " against " ++ show txtime
 		Foldable.foldrM (\path b -> liftM (b &&) $ checkTxVarFSWrite txlog path) True paths
@@ -822,22 +834,22 @@ atomicTxVarFS msg m = do
 
 -- acquiring the locks in sorted order is essential to avoid deadlocks!
 withFileLocks :: Set FilePath -> Set FilePath -> TxVarFTM a -> TxVarFTM a
-withFileLocks reads writes m = do
-	rcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList reads
-	wcks <- inL $ liftIO $ State.mapM fileLock $ Set.toAscList writes
+withFileLocks reads writes m = txVarFSLayer proxyOutside $ do
+	rcks <- lift $ State.mapM fileLock $ Set.toAscList reads
+	wcks <- lift $ State.mapM fileLock $ Set.toAscList writes
 		
-	let waitAndAcquire wcks = inL $ liftIO $ STM.atomically $ do
+	let waitAndAcquire wcks = lift $ STM.atomically $ do
 		-- wait on read locks
 		Foldable.mapM_ waitOrRetryFLock rcks
 		-- acquire write locks or retry
 		Foldable.mapM_ acquireOrRetryFLock wcks
 		
-	liftA2 Catch.bracket_ waitAndAcquire (inL . liftIO . STM.atomically . Foldable.mapM_ releaseFLock) wcks m
+	liftA2 Catch.bracket_ waitAndAcquire (lift . STM.atomically . Foldable.mapM_ releaseFLock) wcks (unTxVarFSLayer proxyOutside m)
 
 debugChanges :: String -> TxVarFTM a -> TxVarFTM a
 debugChanges str m = do
 	r <- m
-	(starttime,startversion,SCons txlog _) <- Reader.ask
+	(starttime,startversion,SCons txlog _) <- txVarFSLayer Proxy $ Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestM $ forestIO $ readRef txlog
 	forestM $ forestIO $ putStrLn $ show fsversion ++ " changes!! "++ str ++ " "++ show reads ++ "\n" ++ show writes
 	return r

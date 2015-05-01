@@ -2,10 +2,15 @@
 
 module Language.Forest.IC.FS.NILFS where
 
+import System.Mem.StableName.Exts as StableName
 import qualified Prelude
 import Prelude hiding (read,mod,const)
-import Control.Monad.Incremental.Adapton.Memo
-import Filesystem.Path.CurrentOS hiding (FilePath,concat,(</>))
+import Control.Monad.Incremental.Internal.Adapton.Memo
+import Control.Monad.Incremental.Internal.Adapton.Algorithm as Adapton
+import Control.Monad.Incremental.Internal.Adapton.Types as Adapton
+import Control.Monad.Incremental.Internal.Adapton.Layers as Adapton
+import Control.Applicative
+--import Filesystem.Path.CurrentOS hiding (FilePath,concat,(</>))
 import Language.Forest.FS.FSDelta
 import Language.Forest.IO.Utils
 --import System.FSNotify
@@ -17,7 +22,9 @@ import Control.Concurrent.MVar
 import Control.Concurrent
 import Control.Exception
 --import Control.Concurrent.Async
-import System.Mem.WeakKey
+
+import System.Mem.Weak.Exts (WeakRef(..))
+import System.Mem.Weak.Exts as Weak
 --import Control.Lens hiding (runIdentity,inside)
 import Data.Maybe
 import Data.Hashable
@@ -25,7 +32,7 @@ import Data.List
 import Data.WithClass.MData
 --import Data.Functor.Identity
 import Data.List.Split
-import Language.Forest.Pure.MetaData
+--import Language.Forest.Pure.MetaData
 import Data.Typeable
 import System.Directory
 import System.IO.Unsafe
@@ -35,8 +42,6 @@ import Data.IORef
 import Data.Unique
 import Data.Time.Clock
 import System.IO
-import System.Mem.WeakTable (WeakTable(..))
-import qualified System.Mem.WeakTable as WeakTable
 import Data.Map (Map(..))
 import qualified Data.Map as Map
 import Data.Set (Set(..))
@@ -47,7 +52,7 @@ import Data.Text (Text(..))
 import System.FilePath
 import Safe
 
-import Control.Monad.Incremental.Adapton (GenericQMemoU(..),L(..),U(..),Inner(..),Outer(..),Adapton,runInner,runOuter,memoU,gmemoQU,addFinalizerU)
+import Control.Monad.Incremental.Adapton
 import qualified Control.Monad.Incremental.Adapton as Adapton
 import Control.Monad.Incremental as Inc
 import System.Process
@@ -58,35 +63,31 @@ import Control.Monad.Ref
 import Control.Monad.Incremental as Inc
 import Data.Time.LocalTime
 import Language.Forest.FS.NILFS hiding (LiveSnapshots,findRootDevice,MountPoint,mountSnapshot,Snapshot,readNILFSTime)
-import System.Mem.MemoTable
-import Control.Monad.Lazy
+import System.Mem.MemoTable (MemoTable(..))
+import qualified System.Mem.MemoTable as MemoTable
+
 import Control.Monad.Reader (Reader(..),ReaderT(..),MonadReader(..))
 import qualified Control.Monad.Reader as Reader
 import Data.Global.Dynamic as Dyn
 
 type instance IncK (IncForest NILFS) a = (Typeable a,Eq a)
 
-instance LiftInc Inside Adapton (IncForest NILFS) IORef IO where
+instance LiftInc Inside Adapton (IncForest NILFS) where
 	liftInc = NILFSForestI . lift
-instance LiftInc Outside Adapton (IncForest NILFS) IORef IO where
+instance LiftInc Outside Adapton (IncForest NILFS) where
 	liftInc = NILFSForestO . lift
 
-instance Incremental (IncForest NILFS) IORef IO where
+instance Incremental (IncForest NILFS) where
 	
-	newtype Outside (IncForest NILFS) IORef IO a = NILFSForestO { adaptonOuter :: ReaderT (LiveSnapshots,Bool,ForestData) (Outer IORef IO) a } deriving (Monad,MonadLazy,MonadReader (LiveSnapshots,Bool,ForestData))
-	newtype Inside (IncForest NILFS) IORef IO a = NILFSForestI { adaptonInner :: ReaderT (LiveSnapshots,Bool,ForestData) (Inner IORef IO) a } deriving (Monad,MonadLazy,MonadReader (LiveSnapshots,Bool,ForestData))
+	newtype Outside (IncForest NILFS) a = NILFSForestO { adaptonOuter :: ReaderT (LiveSnapshots,Bool,ForestData) (Outer) a } deriving (Monad,Functor,Applicative)
+	newtype Inside (IncForest NILFS) a = NILFSForestI { adaptonInner :: ReaderT (LiveSnapshots,Bool,ForestData) (Inner) a } deriving (Monad,Functor,Applicative)
 	
 	world = NILFSForestO . Reader.mapReaderT inside . adaptonInner
 	unsafeWorld = NILFSForestI . Reader.mapReaderT (Adapton.Inner . runOuter) . adaptonOuter
 	
 	runIncremental m = error "use runForest instead"
 	
-instance InLayer Outside (IncForest NILFS) IORef IO where
-	inL = NILFSForestO . lift . Adapton.Outer
-	{-# INLINE inL #-}
-instance InLayer Inside (IncForest NILFS) IORef IO where
-	inL = NILFSForestI . lift . Adapton.Inner
-	{-# INLINE inL #-}
+	unsafeIOToInc = inside . NILFSForestI . lift . Adapton.Inner
 
 nilfsTreeTime :: FSTree NILFS -> UTCTime
 nilfsTreeTime (NILFSTree _ t) = t
@@ -112,15 +113,15 @@ instance FSRep NILFS where
 
 	runForest = error "use runIncrementalForest instead"
 
-	forestIO = liftAdaptonNILFS . inL . liftIO where
-		liftAdaptonNILFS :: Inside Adapton IORef IO a -> ForestM NILFS a
+	forestIO = liftAdaptonNILFS . unsafeIOToInc where
+		liftAdaptonNILFS :: Inside Adapton a -> ForestM NILFS a
 		liftAdaptonNILFS = NILFSForestM . lift
 
 	-- the same as the inner layer
-	newtype ForestM NILFS a = NILFSForestM { runNILFSForestM :: ReaderT (LiveSnapshots,Bool,ForestData) (Inner IORef IO) a } deriving (Monad,MonadLazy,MonadReader (LiveSnapshots,Bool,ForestData))
+	newtype ForestM NILFS a = NILFSForestM { runNILFSForestM :: ReaderT (LiveSnapshots,Bool,ForestData) Inner a } deriving (Monad,Functor,Applicative)
 
 	getForestDirectory = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
+		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
 		return forestDir
 
 	data FSTree NILFS = NILFSTree Snapshot UTCTime | VirtualNILFSTree Snapshot UTCTime deriving (Show)
@@ -131,8 +132,8 @@ instance FSRep NILFS where
 	latestTree = forestIO latestNILFSTree >>= \tree@(NILFSTree snap time) -> testAndMountSnapshot snap >> return tree
 
 	pathInTree path tree@(NILFSTree snapshot time) = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-		mb <- forestIO $ WeakTable.lookup liveSnapshots snapshot
+		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
+		mb <- forestIO $ MemoTable.lookup (unLiveSnapshots liveSnapshots) snapshot
 		case mb of
 			Just ref -> do
 				(mountpoint) <- forestIO $ readIORef ref
@@ -140,8 +141,8 @@ instance FSRep NILFS where
 				return $ {-debug ("pathInTree: "++show path ++ " " ++ show (snapshot,mountpoint,rootPath) ++ " -> " ++ show result) -} result
 			Nothing -> mountSnapshot snapshot >> pathInTree path tree
 	pathInTree path tree@(VirtualNILFSTree snapshot time) = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-		mb <- forestIO $ WeakTable.lookup liveSnapshots snapshot
+		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
+		mb <- forestIO $ MemoTable.lookup (unLiveSnapshots liveSnapshots) snapshot
 		case mb of
 			Just ref -> do
 				(mountpoint) <- forestIO $ readIORef ref
@@ -150,16 +151,16 @@ instance FSRep NILFS where
 				return $ {-debug ("pathInTree: "++show path ++ " " ++ show (snapshot,mountpoint,rootPath) ++ " -> " ++ show result) -} result
 			Nothing -> mountSnapshot snapshot >> pathInTree path tree
 	pathFromTree path tree@(NILFSTree snapshot time) = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-		mb <- forestIO $ WeakTable.lookup liveSnapshots snapshot
+		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
+		mb <- forestIO $ MemoTable.lookup (unLiveSnapshots liveSnapshots) snapshot
 		case mb of
 			Just ref -> do
 				(mountpoint) <- forestIO $ readIORef ref
 				return $ rootPath </> makeRelative mountpoint path
 			Nothing -> mountSnapshot snapshot >> pathFromTree path tree
 	pathFromTree path tree@(VirtualNILFSTree snapshot time) = do
-		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-		mb <- forestIO $ WeakTable.lookup liveSnapshots snapshot
+		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
+		mb <- forestIO $ MemoTable.lookup (unLiveSnapshots liveSnapshots) snapshot
 		case mb of
 			Just ref -> do
 				(mountpoint) <- forestIO $ readIORef ref
@@ -182,12 +183,12 @@ instance ICRep NILFS where
 	
 	forestM = inside . NILFSForestI . runNILFSForestM
 	
-	data FSThunk NILFS l inc r m a = NILFSFSThunk { adaptonThunk :: (L l (IncForest NILFS) r m a), unmemoNILFS :: r (IO ()) } -- a set of snapshots on which the FSThunk depends and a lazy Adapton modifiable
+	data FSThunk NILFS l inc a = NILFSFSThunk { adaptonThunk :: (L l (IncForest NILFS) a), unmemoNILFS :: IORef (IO ()) } -- a set of snapshots on which the FSThunk depends and a lazy Adapton modifiable
 	
-	newtype ICThunk NILFS l inc r m a = NILFSU { adaptonU :: U l (IncForest NILFS) r m a }
+	newtype ICThunk NILFS l inc a = NILFSU { adaptonU :: U l (IncForest NILFS) a }
 
 	
-	newtype HSThunk NILFS l inc r m a = NILFSThunk { unNILFSThunk :: T l inc r m a }
+	newtype HSThunk NILFS l inc a = NILFSThunk { unNILFSThunk :: T l inc a }
 
 
 instance ICMemo NILFS where
@@ -202,48 +203,48 @@ instance ICMemo NILFS where
 --		(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
 --		if moves then lookupmemoForest path rep else return Nothing
 
-instance ForestLayer NILFS l => Thunk (HSThunk NILFS) l (IncForest NILFS) IORef IO where
+instance ForestLayer NILFS l => Thunk (HSThunk NILFS) l (IncForest NILFS) where
 	new = liftM NILFSThunk . new
 	read (NILFSThunk t) = Inc.read t
 
-instance (Output U l (IncForest 'NILFS) IORef IO,ForestLayer NILFS l) => Thunk (ICThunk NILFS) l (IncForest NILFS) IORef IO where
+instance (Output U l (IncForest 'NILFS),ForestLayer NILFS l) => Thunk (ICThunk NILFS) l (IncForest NILFS) where
 	new = liftM NILFSU . thunk
 	read (NILFSU t) = force t
 
-instance (Output U Outside (IncForest 'NILFS) IORef IO,ForestLayer NILFS Outside) => Output (ICThunk NILFS) Outside (IncForest NILFS) IORef IO where
+instance (Output U Outside (IncForest 'NILFS),ForestLayer NILFS Outside) => Output (ICThunk NILFS) Outside (IncForest NILFS) where
 	thunk = liftM NILFSU . thunk
 	force (NILFSU t) = force t
 
-instance (Output U Inside (IncForest 'NILFS) IORef IO,ForestLayer NILFS Inside) => Output (ICThunk NILFS) Inside (IncForest NILFS) IORef IO where
+instance (Output U Inside (IncForest 'NILFS),ForestLayer NILFS Inside) => Output (ICThunk NILFS) Inside (IncForest NILFS) where
 	thunk = liftM NILFSU . thunk
 	force (NILFSU t) = force t
 	memo rec = liftM NILFSU . Inc.memo (\f -> rec (liftM NILFSU . f))
-	gmemoQ ctx (f :: (GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b)) =
-		let memo_func :: GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
+	gmemoQ ctx (f :: (GenericQMemoNILFSU ctx Inside (IncForest NILFS) b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) b)) =
+		let memo_func :: GenericQMemoNILFSU ctx Inside (IncForest NILFS) b
 		    memo_func = gmemoNonRecNILFSU ctx (f memo_func)
 		in memo_func
 
-type GenericQMemoNILFSU ctx l inc r m b = GenericQMemo ctx (ICThunk NILFS) l inc r m b
-type NewGenericQMemoNILFSU ctx l inc r m b = NewGenericQMemo ctx (ICThunk NILFS) l inc r m b
+type GenericQMemoNILFSU ctx l inc b = GenericQMemo ctx (ICThunk NILFS) l inc b
+type NewGenericQMemoNILFSU ctx l inc b = NewGenericQMemo ctx (ICThunk NILFS) l inc b
 
 -- we just repeat the code from adapton here as workaround. revise this!
-gmemoNonRecNILFSU :: (Typeable ctx,Typeable b) => Proxy ctx -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
+gmemoNonRecNILFSU :: (Typeable ctx,Typeable b) => Proxy ctx -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) b -> GenericQMemoNILFSU ctx Inside (IncForest NILFS) b
 gmemoNonRecNILFSU ctx f = unNewGenericQ (newGmemoNonRecNILFSU ctx (NewGenericQ f)) where
-	newGmemoNonRecNILFSU ctx f = gmemoNonRecNILFSU' ctx f (Dyn.declareWeakTable f)
+	newGmemoNonRecNILFSU ctx f = gmemoNonRecNILFSU' ctx f (Dyn.declareWeakBasicHashTable (10^3) (stableName f))
 
-gmemoNonRecNILFSU' :: Proxy ctx -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b -> MemoTable (TypeRep,KeyDynamic) (U Inside (IncForest NILFS) IORef IO b) -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) IORef IO b
+gmemoNonRecNILFSU' :: Proxy ctx -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) b -> MemoTable (TypeRep,KeyDynamic) (U Inside (IncForest NILFS) b) -> NewGenericQMemoNILFSU ctx Inside (IncForest NILFS) b
 gmemoNonRecNILFSU' ctx (NewGenericQ f) tbl = NewGenericQ $ \arg -> do
-	let (mkWeak,k) = memoKeyCtx dict ctx $! arg
+	let (mkWeak,k) = memoWeakKeyCtx dict ctx $! arg
 	let tyk = (typeRepOf arg,keyDynamicCtx dict ctx (proxyOf arg) k)
-	lkp <- debug ("memo search ") $ inL $ liftIO $ WeakTable.lookup tbl tyk
+	lkp <- debug ("memo search ") $ unsafeIOToInc $ MemoTable.lookup tbl tyk
 	case lkp of
 		Nothing -> do
 			NILFSU thunk <- f arg
-			inL $ liftIO $ WeakTable.insertWithMkWeak tbl mkWeak tyk thunk
+			unsafeIOToInc $ MemoTable.insertWithMkWeak tbl tyk thunk mkWeak
 			debug (" => "++show thunk) $ return $ NILFSU thunk
 		Just thunk -> debug ("memo hit " ++ " " ++ show thunk) $ return $ NILFSU thunk
 
-instance Thunk (FSThunk 'NILFS) Inside (IncForest 'NILFS) IORef IO where
+instance Thunk (FSThunk 'NILFS) Inside (IncForest 'NILFS) where
 	newc v = do
 		a <- Inc.ref v
 		f <- forestM $ forestIO $ newIORef (return ())
@@ -256,7 +257,7 @@ instance Thunk (FSThunk 'NILFS) Inside (IncForest 'NILFS) IORef IO where
 		return t
 	read t = Inc.get $ adaptonThunk t
 
-instance Input (FSThunk NILFS) Inside (IncForest NILFS) IORef IO where
+instance Input (FSThunk NILFS) Inside (IncForest NILFS) where
 	ref = newc
 	mod = new
 	set t v' = do
@@ -273,21 +274,21 @@ instance Input (FSThunk NILFS) Inside (IncForest NILFS) IORef IO where
 		forestM $ forestIO f
 	get = read
 
-instance Thunk U Outside (IncForest NILFS) IORef IO where
+instance Thunk U Outside (IncForest NILFS) where
 
-instance Output U Outside (IncForest NILFS) IORef IO where
+instance Output U Outside (IncForest NILFS) where
 
-instance Thunk U Inside (IncForest NILFS) IORef IO where
+instance Thunk U Inside (IncForest NILFS) where
 
-instance Thunk L Inside (IncForest NILFS) IORef IO where
+instance Thunk L Inside (IncForest NILFS) where
 
-instance Output U Inside (IncForest NILFS) IORef IO where
+instance Output U Inside (IncForest NILFS) where
 
-instance Input L Inside (IncForest NILFS) IORef IO where
+instance Input L Inside (IncForest NILFS) where
 
-instance Thunk (FSThunk 'NILFS) Outside (IncForest NILFS) IORef IO where
+instance Thunk (FSThunk 'NILFS) Outside (IncForest NILFS) where
 
-instance Input (FSThunk NILFS) Outside (IncForest NILFS) IORef IO where
+instance Input (FSThunk NILFS) Outside (IncForest NILFS) where
 
 idNILFSFSThunk :: ForestFSThunk NILFS l a -> ThunkId
 idNILFSFSThunk t = Adapton.idNM $ Adapton.metaL $ adaptonThunk t
@@ -299,7 +300,7 @@ type ThunkId = Unique
 
 -- map from snapshot ids to the filepath where its root directory is mounted on the disk and a record of unevaluated thunks depending on the snapshot
 -- a weak table to avoid keeping thunks alive
-type LiveSnapshots = WeakTable Snapshot (IORef MountPoint)
+newtype LiveSnapshots = LiveSnapshots { unLiveSnapshots :: MemoTable Snapshot (IORef MountPoint) }
 
 -- the forest temporary directory, the root path being monitored, and its corresponding device
 type ForestData = (FilePath,((FilePath,FilePath),FilePath))
@@ -323,18 +324,18 @@ readNILFSTime str = do
 -- mounts a NILFS snapshot, adding it to the live snapshots, and making sure that it is actually a NILFS snapshot (not a checkpoint)
 mountSnapshot :: Snapshot -> ForestM NILFS ()
 mountSnapshot snapshot = do
-	(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
+	(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
 	let mountpoint = forestDir </> "Snapshots" </> show snapshot
 	forestIO $ sudoShellCommand_ $ "chcp ss "++show snapshot
 	forestIO $ createDirectoryIfMissing False mountpoint
 	forestIO $ sudoShellCommand_ $ "mount.nilfs2 -r "++device++" "++mountpoint++" -o cp="++show snapshot
 	ref <- forestIO $ newIORef (mountpoint)
-	forestIO $ WeakTable.insert liveSnapshots snapshot ref
+	forestIO $ MemoTable.insert (unLiveSnapshots liveSnapshots) snapshot ref
 
 testAndMountSnapshot :: Snapshot -> ForestM NILFS ()
 testAndMountSnapshot snapshot = do
-	(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
-	mb <- forestIO $ WeakTable.lookup liveSnapshots snapshot
+	(liveSnapshots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
+	mb <- forestIO $ MemoTable.lookup (unLiveSnapshots liveSnapshots) snapshot
 	case mb of
 		Just ref -> return ()
 		Nothing -> mountSnapshot snapshot
@@ -342,7 +343,7 @@ testAndMountSnapshot snapshot = do
 			
 unmountSnapshot' :: LiveSnapshots -> Snapshot -> (MountPoint) -> IO ()
 unmountSnapshot' liveSnapshots snapshot (mountpoint) = do
-	WeakTable.delete liveSnapshots snapshot
+	MemoTable.delete (unLiveSnapshots liveSnapshots) snapshot
 	sudoShellCommand_ $ "umount "++mountpoint
 	removeDirectory mountpoint
 	sudoShellCommand_ $ "chcp cp "++show snapshot
@@ -360,7 +361,7 @@ unmountAllSnapshots liveSnapshots (forestDir,((rootPath,rootFolder),device)) = d
 runNILFSForest :: ForestCfg NILFS -> ForestO NILFS a -> IO a
 runNILFSForest cfg (NILFSForestO m) = do
 	-- create temporary Forest directory
-	liveSnapshots <- WeakTable.new
+	liveSnapshots <- liftM LiveSnapshots $ MemoTable.new
 	forestData <- createForestData cfg
 	
 	-- initialize FS monitor in a separate thread and run the computation (note that the monitor never ends by itself, so it always loses the race)
@@ -385,7 +386,7 @@ findRootDevice rootPathFolder = do
 removeForestData :: LiveSnapshots -> ForestData -> ForestCfg NILFS -> IO ()
 removeForestData liveSnapshots forestData (NILFSForestConfig moves rootPath forestDir) = flip finally (return ()) $ do
 	putStrLn "removing forest data..."
-	WeakTable.mapM_ (\(snapshot,ref) -> readIORef ref >>= unmountSnapshot' liveSnapshots snapshot) liveSnapshots
+	MemoTable.mapM_ (\(snapshot,ref) -> readIORef ref >>= unmountSnapshot' liveSnapshots snapshot) (unLiveSnapshots liveSnapshots)
 	unmountAllSnapshots liveSnapshots forestData-- just to make sure that there are no mounts left
 	removeDirectoryRecursive forestDir
 	unmountAVFS
@@ -393,7 +394,7 @@ removeForestData liveSnapshots forestData (NILFSForestConfig moves rootPath fore
 
 changesBetweenNILFS :: FSTree NILFS -> FSTree NILFS -> ForestM NILFS FSTreeDelta
 changesBetweenNILFS tree tree' = do
-	(liveSnapsots,moves,(forestDir,((rootPath,rootFolder),device))) <- Reader.ask
+	(liveSnapsots,moves,(forestDir,((rootPath,rootFolder),device))) <- NILFSForestM Reader.ask
 	td <- forestIO $ diffNILFS rootPath device (nilfsTreeSnapshot tree) (nilfsTreeSnapshot tree')
 	let report = "NILFS changes between " ++ show tree ++ " and " ++ show tree' ++ ": " ++ show td
 	debug report $ return td
@@ -418,21 +419,21 @@ makeNewNILFSCheckpoint isSS = do
 proxyNILFS :: Proxy NILFS
 proxyNILFS = Proxy
 
-instance (Typeable l,Typeable r,Typeable m,Typeable a,WeakRef r,Memo (L l Adapton r m a)) => Memo (FSThunk NILFS l (IncForest NILFS) r m a) where
-	type Key (FSThunk NILFS l (IncForest NILFS) r m a) = Key (L l Adapton r m a)
+instance (Typeable l,Typeable a,Memo (L l Adapton a)) => Memo (FSThunk NILFS l (IncForest NILFS) a) where
+	type Key (FSThunk NILFS l (IncForest NILFS) a) = Key (L l Adapton a)
 	{-# INLINE memoKey #-}
 	memoKey = memoKey . adaptonThunk
 
-instance Hashable (L l Adapton r m a) => Hashable (FSThunk NILFS l (IncForest NILFS) r m a) where
+instance Hashable (L l Adapton a) => Hashable (FSThunk NILFS l (IncForest NILFS) a) where
 	hashWithSalt i = hashWithSalt i . adaptonThunk
 
-instance (Typeable l,Typeable r,Typeable m,Typeable a,WeakRef r,Memo (U l Adapton r m a)) => Memo (ICThunk NILFS l (IncForest NILFS) r m a) where
-	type Key (ICThunk NILFS l (IncForest NILFS) r m a) = Key (U l Adapton r m a)
+instance (Typeable l,Typeable a,Memo (U l Adapton a)) => Memo (ICThunk NILFS l (IncForest NILFS) a) where
+	type Key (ICThunk NILFS l (IncForest NILFS) a) = Key (U l Adapton a)
 	{-# INLINE memoKey #-}
 	memoKey = memoKey . adaptonU
 
-instance Hashable (U l Adapton r m a) => Hashable (ICThunk NILFS l (IncForest NILFS) r m a) where
+instance Hashable (U l Adapton a) => Hashable (ICThunk NILFS l (IncForest NILFS) a) where
 	hashWithSalt i = hashWithSalt i . adaptonU
 
-instance WeakRef (FSThunk NILFS l (IncForest NILFS) IORef IO) where
+instance WeakRef (FSThunk NILFS l (IncForest NILFS)) where
 	mkWeakRefKey t v f = mkWeakRefKey (Adapton.dataL $ adaptonThunk t) v f

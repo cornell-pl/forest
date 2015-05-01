@@ -33,9 +33,8 @@
 
 
 module Language.Forest.Errors where
-import Language.Pads.Errors as Pads (ErrInfo)
 import Language.Pads.Source as Pads
-import Language.Pads.MetaData as Pads
+import Language.Pads.Padsc as Pads hiding (ErrMsg)
 import Text.PrettyPrint.Mainland as PP
 import Data.Data
 import Data.WithClass.MData

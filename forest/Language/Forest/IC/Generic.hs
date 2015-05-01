@@ -33,6 +33,7 @@
 
 module Language.Forest.IC.Generic   where
 
+import Control.Concurrent.Transactional
 import Control.Monad.RWS (RWS(..),RWST(..))
 import qualified Control.Monad.RWS as RWS
 import Control.Monad.Trans
@@ -45,8 +46,6 @@ import Data.Monoid
 import Data.WithClass.MData
 import Language.Pads.Generic
 import Control.Monad.Incremental as Inc hiding (read)
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),Arg(..),(:*:)(..))
-import qualified Language.Forest.Pure.MetaData as Pure
 import Language.Forest.Manifest
 import Language.Forest.FS.FSDelta
 import System.FilePath.Posix
@@ -124,16 +123,7 @@ class ICRep fs => ZippedICMemo fs where
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
 
-class TxICForest fs where
-
-	atomically :: FTM fs b -> IO b
-	
-	retry :: FTM fs a
-	
-	orElse :: FTM fs a -> FTM fs a -> FTM fs a
-	
-	throw :: Exception e => e -> FTM fs a
-	catch :: Exception e => FTM fs a -> (e -> FTM fs a) -> FTM fs a
+class Transactional (IncForest fs) => TransactionalForest fs where
 	
 	new :: FTK fs args rep var content => ForestVs args -> FilePath -> FTM fs rep
 	
@@ -158,28 +148,28 @@ class TxICForest fs where
 	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
 	copyOrElse :: (FTK fs args rep var content) => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
-unsafeIOToFTM :: (TxICForest fs,ICRep fs) => IO a -> FTM fs a
+unsafeIOToFTM :: (TransactionalForest fs,ICRep fs) => IO a -> FTM fs a
 unsafeIOToFTM = forestM . forestIO
 	
-tryWrite :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
+tryWrite :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
 
-writeOrRetry :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
+writeOrRetry :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
 writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
 
-writeOrShow :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
+writeOrShow :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
 writeOrShow t v = writeOrElse t v "" (return . show)
 
-writeOrThrow :: (Display Outside (IncForest fs) IORef IO rep,TxICForest fs,FTK fs args rep var content,Exception e) => rep -> content -> e -> FTM fs ()
+writeOrThrow :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content,Exception e) => rep -> content -> e -> FTM fs ()
 writeOrThrow t v e = writeOrElse t v () (Prelude.const $ throw e)
 
 -- * Data/Metadata only functions
 -- we don't provide data/metadata only write functions because writeData >> writeMeta would not be the same as write, thus misleading.
 
-readData :: (TxICForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l rep_content
+readData :: (TransactionalForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l rep_content
 readData = liftM snd . read
 	
-readMeta :: (TxICForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l md_content
+readMeta :: (TransactionalForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l md_content
 readMeta = liftM fst . read
 
 -- * Zipped Incremental Forest interface
@@ -220,11 +210,11 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 					Nothing -> load_scratch
 			Nothing -> load_scratch
 	
-	zloadDeltaGeneric :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
+	zloadDeltaGeneric :: Proxy args -> LoadDeltaArgs fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
 	
-	zloadDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
+	zloadDelta :: Proxy args -> LoadDeltaArgs fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
 	
-	zloadDeltaMemo :: (FTK fs args rep var content) => Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
+	zloadDeltaMemo :: (FTK fs args rep var content) => Proxy args -> LoadDeltaArgs fs args -> ForestI fs FilePath -> FSTree fs -> (rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs rep -> ForestO fs (NSValueDelta rep)
 	zloadDeltaMemo proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = do
 		drep <- zloadDelta proxy (args,dargs) path tree (rep,getMD) path' df tree' dv
 		inside $ addZippedMemo path' proxy args rep (Just tree')
@@ -259,11 +249,11 @@ class (ForestMD fs rep,IncK (IncForest fs) rep,Typeable (ForestIs fs args),IncK 
 					Nothing -> mani_scratch
 			Nothing -> mani_scratch
 	
-	zupdateManifestDeltaGeneric :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestDeltaGeneric :: Proxy args -> LoadDeltaArgs fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	
-	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestDelta :: Proxy args -> LoadDeltaArgs fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	
-	zupdateManifestDeltaMemo :: (FTK fs args rep var content) => Proxy args -> LoadDeltaArgs ICData fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
+	zupdateManifestDeltaMemo :: (FTK fs args rep var content) => Proxy args -> LoadDeltaArgs fs args -> FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> rep -> ValueDelta fs rep -> Manifest fs -> MManifestForestO fs
 	zupdateManifestDeltaMemo proxy (margs,dargs) path path' tree df tree' rep dv man = do
 		man1 <- zupdateManifestDelta proxy (margs,dargs) path path' tree df tree' rep dv man
 		Writer.tell $ inside . addZippedMemo path proxy margs rep . Just
@@ -298,87 +288,7 @@ instance Monad m => Monoid (m ()) where
 
 -- * Incremental Forest interface
 
--- (root path,current tree)
-type family LoadInfo (ic :: ICMode) (fs :: FS) (args :: *) :: * where
-	LoadInfo ICExpr fs args = ForestFSThunk fs Inside (FilePath,FSTree fs) -- we store the root path to avoid forcing the metadata thunk
-	LoadInfo ICData fs args = (ForestICThunksI fs args,ForestFSThunk fs Inside (FilePath,FSTree fs))
-
--- we follow a closed-world assumption: the computations of the top-level arguments of a specification cannot be modified; nevertheless, they may depend on modifiables and their values are updated accordingly.
-
--- * Automatically generated "not to be seen" Forest class
-
--- A Class for the types of Forest specifications
-class (IncK (IncForest fs) rep,IncK (IncForest fs) md,IncK (IncForest fs) (rep,md),ICMemo fs,ForestArgs fs args,MData NoCtx (ForestO fs) rep,ForestMD fs md) => ICForest (mode :: ICMode) fs args rep md | mode rep -> md, rep -> args  where
-	
-	load :: LiftedICMode mode -> ForestIs fs args -> FilePath -> ForestO fs (rep,md)
-	load mode args path = liftM fst $ loadFwd mode args path
-	
-	-- loads a specification at the most recent FS snapshot
-	loadFwd :: LiftedICMode mode -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo mode fs args)
-	loadFwd mode args path = forestM latestTree >>= \t -> loadTree mode t args path
-	
-	-- loads a specification at a given FS snapshot
-	loadTree :: LiftedICMode mode -> FSTree fs -> ForestIs fs args -> FilePath -> ForestO fs ((rep,md),LoadInfo mode fs args)
-	loadTree mode tree margs path = do undefined
---		(rep,md) <- inside $ loadScratch mode Proxy margs path tree Nothing tree getForestMDInTree -- for batch loading we use the same tree and assume that nothing changed
---		loadInfo <- inside $ ref (path,tree)
---		return ((rep,md),loadInfo)
-	
-	-- incrementally reloads a specification given older data and the most recent FS snapshot
-	reload :: LiftedICMode mode -> FilePath -> ((rep,md),LoadInfo mode fs args) -> ForestO fs ()
-	reload mode path info = forestM latestTree >>= \t -> reloadTree mode t Proxy path info
-	
-	-- incrementally reloads a specification given older data and a newer FS snapshot
-	reloadTree :: LiftedICMode mode -> FSTree fs -> Proxy args -> FilePath -> ((rep,md),LoadInfo mode fs args) -> ForestO fs ()
-	reloadTree mode newTree proxy path ((rep,md),loadInfo) = debug ("reloading") $ do undefined
---		(originalPath,originalTree) <- inside $ get loadInfo
---		treeDelta <- debug ("loadedInfo") $ changesBetween originalTree newTree -- assume that the @FSTreeDelta@ is absolute
---		let relTreeDelta = focusFSTreeDeltaByRelativePathMay treeDelta path
---		let dargs = (deltaArgs (Proxy::Proxy fs) proxy) -- we assume that top-level arguments always change, since we don't track their modifications
---		(drep,dmd) <- debug ("initial FSDelta: "++ show path ++" --> "++ show relTreeDelta) $ loadDelta mode proxy dargs (return originalPath) originalTree ((rep,md),getForestMDInTree) path relTreeDelta newTree -- we can discard the top-level deltas
---		set loadInfo (path,newTree)
-	
-	
-	-- batch non-incremental load (takes a a function on FilePaths to handle moves whenever the old and new values are not in sync)
-	loadScratch :: LiftedICMode mode -> Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
-	
-	loadScratchMemo :: (Typeable md,Typeable (ForestLs fs Inside args)) =>
-		LiftedICMode mode -> Proxy args -> ForestIs fs args -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs -> ForestI fs (rep,md)
-	loadScratchMemo mode proxy args oldpathM path (tree :: FSTree fs) getMD = do
-		let fs = Proxy :: Proxy fs
-		let proxyRep = Proxy
-		oldpath <- oldpathM path
-		mb <- findMemo proxy path proxyRep
-		case mb of
-			Just (memo_tree,memo_args,memo_rep,memo_md) -> do
-				mb_df <- forestM $ diffFS memo_tree tree path
-				case mb_df of
-					Just df -> do
-						-- XXX: how safe is this?
-						unsafeWorld $ do
-							ds <- deltaArgs memo_tree proxy memo_args args
-							let deltas = mkLoadDeltaArgs mode fs proxy args ds
-							loadDelta mode proxy deltas (return oldpath) memo_tree ((memo_rep,memo_md),getMD) path df tree
-						unless (oldpath==path) $ remMemo fs oldpath proxyRep
-						addMemo path proxy args (memo_rep,memo_md) tree
-						return (memo_rep,memo_md)
-					Nothing -> loadScratch mode proxy args oldpathM path tree getMD
-			Nothing -> loadScratch mode proxy args oldpathM path tree getMD
-	
-	-- | incremental load function that considers the original source data and returns a stable delta
-	-- expects the old data to be consistent with the old path and the old tree
-	-- invariant: the FSTreeDelta is always relative to the updated root filepath
-	-- the original root path is given as a computation (possibly over the original data), so that we can delay its evaluation
-	loadDelta :: LiftedICMode mode -> Proxy args -> LoadDeltaArgs mode fs args -> ForestI fs FilePath -> FSTree fs -> OldData fs rep md -> FilePath -> FSTreeD fs -> FSTree fs -> ForestO fs (SValueDelta rep,SValueDelta md)
-
-	-- | Writes the data to a private Forest on-disk location and generates a manifest file
-	generateManifestScratch :: LiftedICMode mode -> ForestIs fs args -> FilePath -> FSTree fs -> (rep,md) -> ForestO fs (Manifest fs)
-	generateManifestScratch mode args path tree dta = forestM (newManifestWith "/" tree) >>= updateManifestScratch mode args path tree dta
-	
-	updateManifestScratch :: LiftedICMode mode -> ForestIs fs args -> FilePath -> FSTree fs -> (rep,md) -> Manifest fs -> ForestO fs (Manifest fs)
-
-	-- | generates default metadata based on the specification
-	defaultMd :: ForestIs fs args -> rep -> FilePath -> ForestI fs md
+type LoadInfo fs args = (ForestICThunksI fs args,ForestFSThunk fs Inside (FilePath,FSTree fs))
 
 -- performs a diff on all top-level forest thunks found in a value
 -- returns true if no thunks are found
@@ -457,10 +367,10 @@ instance (ICRep fs,ForestArgs fs a,ForestArgs fs b) => ForestArgs (fs :: FS) (a 
 		arg2 <- vArgs fs (Proxy :: Proxy arg2) marg2
 		return (arg1 :*: arg2)
 
-type family SValueDeltas  args :: * where
+type family SValueDeltas args :: * where
 	SValueDeltas (a :*: b) = (SValueDeltas a :*: SValueDeltas b)
 	SValueDeltas (Arg a) = SValueDelta a
-	SValueDeltas (ICThunk fs l inc r m a) = SValueDelta (ICThunk fs l inc r m a)
+	SValueDeltas (ICThunk fs l inc a) = SValueDelta (ICThunk fs l inc a)
 	SValueDeltas () = ()
 
 type OldData fs rep md = ((rep,md),GetForestMD fs)
@@ -500,48 +410,29 @@ mapInfoFiles md = do
   let keyedInfos = map (\finfo -> (fullpath finfo, finfo)) fileInfos
   return $ Data.Map.fromList keyedInfos
 
-type family LoadDeltaArgs (mode :: ICMode) (fs :: FS) args :: * where
-	LoadDeltaArgs ICData fs args = (ForestIs fs args,SValueDeltas (ForestICThunksI fs args)) -- they are not in fact stable deltas, but we store the new computations separately
-	LoadDeltaArgs ICExpr fs args = SValueDeltas (ForestICThunksI fs args)
+type LoadDeltaArgs fs args = (ForestIs fs args,SValueDeltas (ForestICThunksI fs args)) -- they are not in fact stable deltas, but we store the new computations separately
 
-mkEmptyLoadDeltaArgs :: LiftedICMode mode -> Proxy fs -> LoadDeltaArgs mode fs ()
-mkEmptyLoadDeltaArgs LiftedICData fs = ((),())
-mkEmptyLoadDeltaArgs LiftedICExpr fs = ()
+mkEmptyLoadDeltaArgs ::  Proxy fs -> LoadDeltaArgs fs ()
+mkEmptyLoadDeltaArgs  fs = ((),())
 
-mkLoadDeltaArgs :: LiftedICMode mode -> Proxy fs -> Proxy args -> ForestIs fs args -> SValueDeltas (ForestICThunksI fs args) -> LoadDeltaArgs mode fs args
-mkLoadDeltaArgs LiftedICData fs args margs dargs = (margs,dargs)
-mkLoadDeltaArgs LiftedICExpr fs args margs dargs = dargs
 
-getLoadDeltaArgs :: LiftedICMode mode -> Proxy fs -> Proxy args -> LoadDeltaArgs mode fs args -> SValueDeltas (ForestICThunksI fs args)
-getLoadDeltaArgs LiftedICData fs args (margs,dargs) = dargs
-getLoadDeltaArgs LiftedICExpr fs args dargs = dargs
+mkLoadDeltaArgs :: Proxy fs -> Proxy args -> ForestIs fs args -> SValueDeltas (ForestICThunksI fs args) -> LoadDeltaArgs  fs args
+mkLoadDeltaArgs  fs args margs dargs = (margs,dargs)
 
-type family MDArgs (mode :: ICMode) md args :: * where
-	MDArgs ICData md args = md
-	MDArgs ICExpr md args = (md,args)
 
-data LiftedICMode (mode :: ICMode) where
-	LiftedICData :: LiftedICMode ICData
-	LiftedICExpr :: LiftedICMode ICExpr
+getLoadDeltaArgs :: Proxy fs -> Proxy args -> LoadDeltaArgs  fs args -> SValueDeltas (ForestICThunksI fs args)
+getLoadDeltaArgs  fs args (margs,dargs) = dargs
 
-mkMDArgs :: LiftedICMode mode -> md -> args -> MDArgs mode md args
-mkMDArgs LiftedICData md args = md
-mkMDArgs LiftedICExpr md args = (md,args)
 
-patMDArgs :: Monad m => LiftedICMode mode -> MDArgs mode md args -> (md -> m args) -> m (md,args)
-patMDArgs LiftedICData md fargs = liftM (md,) (fargs md)
-patMDArgs LiftedICExpr imd fargs = return imd
+type MDArgs md args = md
 
--- whether only forest data representations are incremental or even the expressions whitin a forest specifications are incrementally replayed
-data ICMode = ICData | ICExpr deriving Typeable
-deriving instance Typeable ICData
-deriving instance Typeable ICExpr
-$( derive makeDeepTypeable ''ICMode )
+mkMDArgs :: md -> args -> MDArgs md args
+mkMDArgs md args = md
 
-instance DeepTypeable ICData where
-	typeTree (_::Proxy ICData) = MkTypeTree (mkName "Language.Forest.IC.Generic.ICData") [] []
-instance DeepTypeable ICExpr where
-	typeTree (_::Proxy ICExpr) = MkTypeTree (mkName "Language.Forest.IC.Generic.ICExpr") [] []
+patMDArgs :: Monad m => MDArgs md args -> (md -> m args) -> m (md,args)
+patMDArgs md fargs = liftM (md,) (fargs md)
+
+
 
 
 

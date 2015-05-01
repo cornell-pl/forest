@@ -1,4 +1,4 @@
-{-# LANGUAGE ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell,  ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- Regular filesystem with optimistic concurrency support for transactions, with purely functional data structures
 
@@ -7,12 +7,13 @@ module Language.Forest.Pure.FS.TxFS where
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Cmd
+import Data.Global.TH as TH
 
 import Language.Forest.FS.FSRep
 import Control.Applicative
 import System.IO.Unsafe
 import Control.Monad
-import Control.Monad.Lazy
+
 import Data.Maybe
 import Data.List
 import Data.WithClass.MData
@@ -41,6 +42,7 @@ import Control.Monad.Trans
 import qualified Control.Monad.State as State
 import Language.Forest.Manifest
 import Data.Time.Clock
+import Control.Monad.Catch as Catch
 import Safe
 import Data.Global.TH
 
@@ -54,15 +56,18 @@ TODO:
 -- NOW WITH MVARS?!
 -}
 
+type TxFSReads = Set FilePath
+type TxFSWrites = Set FilePath
+
 -- a list of the starting times of running transactions sorted from newest to oldest
 TH.declareMVar "runningTransactions"  [t| [UTCTime] |] [e| [] |]
 
 -- a map with commit times of committed transactions and their performed changes
 TH.declareMVar "doneTransactions"  [t| (Map UTCTime TxFSWrites) |] [e| Map.empty |]
 
-startTxFSTransaction ::(MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS UTCTime
+startTxFSTransaction :: ForestM TxFS UTCTime
 startTxFSTransaction = do
-  State.modify  $ \_ -> ((Set.empty,Map.empty),Set.empty)
+  TxFSForestM $ State.modify  $ \_ -> ((Set.empty,Map.empty),Set.empty)
   forestIO $ modifyMVar runningTransactions (\xs -> getCurrentTime >>= \t -> return (t:xs,t))
 
 -- validates and commits a transaction as a single atomic operation
@@ -155,20 +160,18 @@ noFSLock :: Lock
 noFSLock = unsafePerformIO $ Lock.new
 
 instance TransactionalPureForest TxFS where
-
 	atomically = atomicallyTxFS
-        retry = retryTxFS
-        orElse = orElseTxFS
-        catch = catchTxFS
-        throw = throwTxFS
+	retry = retryTxFS
+	orElse = orElseTxFS
+	throw = throwTxFS
+	catch = catchTxFS
 
 -- we remember a set of read files
 -- we use an absolute tree delta (starting at the filesystem's root) to keep track of the filesystem modifications performed by the transaction, to be committed at the end
 -- we keep a set of temporary files/directories used  by the transaction, that are purged after commit
 type TxFSLog = (TxFSChanges,Set FilePath)
 
-type TxFSReads = Set FilePath
-type TxFSWrites = Set FilePath
+
 -- changes just as a set of reads and a set of writes
 type TxFSChangesFlat = (TxFSReads,TxFSWrites)
 -- changes as a set of reads and a modification tree
@@ -177,23 +180,23 @@ data TxExcep = TxExcep TxFSLog deriving (Show, Typeable)
 
 instance Exception TxExcep
 
-getTxFSChanges :: (MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS TxFSChanges
-getTxFSChanges = liftM fst State.get
+getTxFSChanges ::  ForestM TxFS TxFSChanges
+getTxFSChanges = liftM fst $ TxFSForestM State.get
 
-putTxFSRead :: (MonadState TxFSLog (ForestM TxFS)) => FilePath -> ForestM TxFS ()
-putTxFSRead path = State.modify $ \((paths,y),z) -> ((Set.insert path paths,y),z)
+putTxFSRead :: FilePath -> ForestM TxFS ()
+putTxFSRead path = TxFSForestM $ State.modify $ \((paths,y),z) -> ((Set.insert path paths,y),z)
 
-getTxFSTmp :: (MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS (Set FilePath)
-getTxFSTmp = liftM snd State.get
+getTxFSTmp ::  ForestM TxFS (Set FilePath)
+getTxFSTmp = liftM snd $ TxFSForestM State.get
 
-putTxFSTmp :: (MonadState TxFSLog (ForestM TxFS)) => FilePath -> ForestM TxFS ()
-putTxFSTmp tmp = State.modify $ \(x,tmps) -> (x,Set.insert tmp tmps)
+putTxFSTmp :: FilePath -> ForestM TxFS ()
+putTxFSTmp tmp = TxFSForestM $ State.modify $ \(x,tmps) -> (x,Set.insert tmp tmps)
 
-getTxFSTreeDeltas :: (MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS FSTreeDelta
-getTxFSTreeDeltas = State.get >>= \((_,td),_) -> return td
+getTxFSTreeDeltas ::  ForestM TxFS FSTreeDelta
+getTxFSTreeDeltas = TxFSForestM $ State.get >>= \((_,td),_) -> return td
 
-modifyTxFSTreeDeltas :: (MonadState TxFSLog (ForestM TxFS)) => (FSTreeDelta -> FSTreeDelta) -> ForestM TxFS ()
-modifyTxFSTreeDeltas f = State.modify $ \((x,td),z) -> ((x,f td),z)
+modifyTxFSTreeDeltas :: (FSTreeDelta -> FSTreeDelta) -> ForestM TxFS ()
+modifyTxFSTreeDeltas f = TxFSForestM $ State.modify $ \((x,td),z) -> ((x,f td),z)
 
 atomicallyTxFS :: ForestM TxFS a -> IO a
 atomicallyTxFS t =
@@ -212,7 +215,7 @@ atomicallyTxFS t =
   let tryIt = do
         {
           time <- startTxFSTransaction;
-          result <- try t;
+          result <- TxFSForestM $ Catch.try (runTxFSForestM t);
           case result of
             Right x -> do
               {
@@ -241,10 +244,10 @@ atomicallyTxFS t =
     
 -- Assume always called in atomically
 -- Throw exception, catch in atomically or orElse.        
-retryTxFS :: (MonadState TxFSLog (ForestM TxFS)) => ForestM TxFS a
+retryTxFS ::  ForestM TxFS a
 retryTxFS = do
-  x <- State.get
-  throwM (TxExcep x)
+  x <- TxFSForestM State.get
+  TxFSForestM $ throwM (TxExcep x)
 
 -- Assume always called in atomically
 -- Needs to be able to 'catch' retries somehow
@@ -252,7 +255,7 @@ retryTxFS = do
 -- If a1 retries (catch)
 --    Do a2
 orElseTxFS :: ForestM TxFS a -> ForestM TxFS a -> ForestM TxFS a 
-orElseTxFS a1 a2 = Control.Monad.Catch.catch a1 (\ (ex :: TxExcep) -> a2)
+orElseTxFS a1 a2 = TxFSForestM $ Catch.catch (runTxFSForestM a1) (\ (ex :: TxExcep) -> runTxFSForestM a2)
 
 
 catchTxFS :: Exception e => FTM fs a -> (e -> FTM fs a) -> FTM fs a
@@ -267,7 +270,13 @@ instance Eq (FSTree TxFS) where
 
 instance FSRep TxFS where
 	
-	newtype ForestM TxFS a = TxFSForestM { runTxFSForestM :: StateT TxFSLog IO a } deriving (Functor,Applicative,Monad,MonadState TxFSLog,MonadLazy,MonadThrow,MonadCatch)
+	unsafeInterleaveForestM (TxFSForestM m) = TxFSForestM $ do
+		st <- State.get
+		(a,st') <- lift $ unsafeInterleaveIO $ State.runStateT m st
+		State.put st'
+		return a
+	
+	newtype ForestM TxFS a = TxFSForestM { runTxFSForestM :: StateT TxFSLog IO a } deriving (Functor,Applicative,Monad)
 	
 	data ForestCfg TxFS = TxFSForestCfg
 	

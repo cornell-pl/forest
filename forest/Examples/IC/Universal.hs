@@ -25,7 +25,7 @@ import Data.List as List
 import Safe
 import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 
-[iforest|
+[txforest|
 	
 	data Universal_d = Directory
              { ascii_files  is [ f :: TextFile     | f <- matches (GL "*"), (kind  f_att == AsciiK) ]
@@ -35,7 +35,7 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
              }
 |]
 
-[iforest| type Universal_zip = Maybe (Gzip (Tar Universal_d)) |]
+[txforest| type Universal_zip = Maybe (Gzip (Tar Universal_d)) |]
 
 generateTest :: IO ()
 generateTest = do

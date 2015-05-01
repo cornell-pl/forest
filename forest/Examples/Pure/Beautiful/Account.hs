@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
 module Examples.Pure.Beautiful.Account where
 
@@ -47,7 +47,7 @@ pureWithdraw acc amount = do
 --          listPrintt (accs_md (snd md))
           mani <- manifest () ((Account_d_inner result),md)
           forestIO $ print (acc ++ " had " ++ show newbal ++ " and changed by " ++ (show (- amount)))
-          store mani
+          storeManifest mani
          else forestIO $ print "The account does not have enough money"
       _ -> forestIO $ print "The account does not exist"
   }
@@ -99,7 +99,7 @@ transWithdraw acc amount = do
         let result = map (\ (name, a) -> if name == acc then (acc, (Account $ newbal-amount)) else (name,a)) (accs rep)
         mani <- manifest () ((Account_d_inner result),md)
         forestIO $ print (acc ++ " had " ++ show newbal ++ " and changed by " ++ (show (- amount)))
-        store mani
+        storeManifest mani
       _ -> forestIO $ print "The account does not exist"
   }
 
@@ -159,7 +159,7 @@ transRemTop = do
   let x:lst = reverse (accs rep)
   let y:mdlst = reverse (accs_md (snd md))
   mani <- manifest () ((Account_d_inner lst),((fst md),(Account_d_inner_md mdlst)))
-  store mani
+  storeManifest mani
 
 -- Changes MetaData
 transMeta :: ForestM TxFS ()
@@ -171,7 +171,7 @@ transMeta = do
 --  listPrintt (accs_md (snd md))
   mani <- manifest () (rep,((fst md),(Account_d_inner_md (newm:mdlst))))
   forestIO $ print "YAY"
-  store mani
+  storeManifest mani
 
 
 

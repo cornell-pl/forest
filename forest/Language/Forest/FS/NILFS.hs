@@ -8,11 +8,12 @@ import Language.Forest.IO.Shell
 import qualified Data.Map as Map
 import System.FilePath
 import Data.List.Split
-import qualified Control.Concurrent.Map as CMap
-import qualified Control.Concurrent.WeakMap as CWeakMap
+import qualified Control.Concurrent.Map.Exts as CMap
+import qualified Control.Concurrent.Weak.Map as CWeakMap
 import Language.Forest.FS.FSRep
 import Data.IORef
-import System.Mem.WeakKey
+import System.Mem.Weak.Exts as Weak
+
 import System.Directory
 import Control.Monad
 import Data.Time.Clock

@@ -33,7 +33,7 @@ import Language.Forest.IC hiding (writeFile)
        data Max = Max Int
 |]
 
-[iforest|
+[txforest|
           type MaxFile = File Max
           type Inactive = Directory {
               reindeerI  is [ r :: TextFile | r <- matches (GL "Rein*") ]
@@ -95,7 +95,7 @@ joinGroup store name = do
     (meta, contents) <- read group
     let max =  maxGr contents
     test <- read max
-    status <- showInc max
+    status <- display max
     return (status, False)
     -- let lst = memGr contents
     -- check (length lst < max)

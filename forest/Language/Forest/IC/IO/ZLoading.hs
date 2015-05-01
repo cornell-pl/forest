@@ -15,8 +15,8 @@ import Language.Forest.IO.Shell
 import Language.Forest.Syntax
 import Language.Forest.FS.Diff
 import Language.Forest.IC.ValueDelta
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..))
-import qualified Language.Forest.Pure.MetaData as Pure
+--import Language.Forest.MetaData (FileInfo(..),FileType(..))
+--import qualified Language.Forest.MetaData as Pure
 import Language.Pads.Padsc
 import Language.Forest.IC.MetaData
 import Language.Forest.IC.Generic
@@ -62,12 +62,12 @@ doZLoadNamed proxy args pathfilter path tree getMD = fsThunk $ zloadScratchGener
 -- | lazy file loading
 -- XXX: Pads specs currently accept a single optional argument and have no incremental loading, so a change in the argument's value requires recomputation
 -- Pads errors contribute to the Forest error count
-doZLoadFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+doZLoadFile1 :: (FTK fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((FileInfo,md),padsc)
 	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),ICRep fs,ZippedICMemo fs,MData NoCtx (ForestI fs) arg,Typeable arg,Eq arg,FSRep fs,Pads1 arg pads md) =>
 	Proxy pads -> ForestI fs arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs (ForestFSThunkI fs ((Forest_md fs,md),pads))
 doZLoadFile1 (repProxy :: Proxy pads) (marg :: ForestI fs arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1 " ++ show path) $ do
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
@@ -127,7 +127,7 @@ doZLoadFile1' :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Forest_err,In
 	Proxy pads -> ForestI fs arg -> FilePathFilter fs -> FilePath -> FSTree fs -> GetForestMD fs
 	-> ForestI fs ((Forest_md fs,md),pads)
 doZLoadFile1' (repProxy :: Proxy pads) (marg :: ForestI fs arg) oldpath_f path (tree :: FSTree fs) getMD = debug ("doLoadFile1' " ++ show path) $ do
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	let fsrepProxy = Proxy
 	let fs = (Proxy::Proxy fs)
 	-- default static loading
@@ -232,7 +232,7 @@ doZLoadSymLink' path tree getMD = do
 		case symLink info of
 			Just sym -> return ((md,cleanBasePD), sym)
 			Nothing -> do
-				md' <- updateForestMDErrorsInsideWith md $ return [Pure.ioExceptionForestErr]
+				md' <- updateForestMDErrorsInsideWith md $ return [ioExceptionForestErr]
 				return ((md',cleanBasePD), "")
 				
 	let linkBad = doZDefaultSymLink' path
@@ -251,7 +251,7 @@ doZLoadConstraintInner tree pred load = do -- note that constraints do not consi
 	err_t <- fsThunk $ do
 		err_cond <- predForestErr . pred =<< BX.getM lens_content (return rep)
 		err_inner <- get_errors rep
-		return $ Pure.mergeForestErrs err_cond err_inner
+		return $ mergeForestErrs err_cond err_inner
 	return (err_t,rep)
 
 -- changes the current path

@@ -27,10 +27,10 @@ data LensM m s v = LensM { getM :: m s -> m v, putM :: m s -> m v -> m s }
 lensM :: Monad m => Lens s v -> LensM m s v
 lensM (Lens get put) = LensM (liftM get) (\ms mv -> ms >>= \s -> mv >>= \v -> return $ put s v)
 
-icThunkLensI :: (IncK inc a,FSRep fs,Output (ICThunk fs) Inside inc r m) => LensM (Inside inc r m) (ICThunk fs Inside inc r m a) a
+icThunkLensI :: (IncK inc a,FSRep fs,Output (ICThunk fs) Inside inc) => LensM (Inside inc) (ICThunk fs Inside inc a) a
 icThunkLensI = LensM (\mt -> mt >>= force) (\s -> thunk)
 
-fsThunkLensI :: (IncK inc a,FSRep fs,Input (FSThunk fs) Inside inc r m) => LensM (Inside inc r m) (FSThunk fs Inside inc r m a) a
+fsThunkLensI :: (IncK inc a,FSRep fs,Input (FSThunk fs) Inside inc) => LensM (Inside inc) (FSThunk fs Inside inc a) a
 fsThunkLensI = LensM (\mt -> mt >>= IC.get) (\s -> mod)
 
 idLens :: Lens a a

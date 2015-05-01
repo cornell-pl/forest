@@ -12,7 +12,7 @@ import Data.Bits
 import Prelude hiding (mod,read,const)
 import qualified Prelude
 import Control.Monad.Incremental.Adapton
-import Control.Monad.Lazy
+
 import Control.Monad.Incremental.Display
 import Control.Monad.Reader (ReaderT(..))
 import qualified Control.Monad.Reader as Reader
@@ -174,7 +174,7 @@ import Language.Forest.Pure.MetaData (cleanSymLinkFileInfo,cleanFileInfo)
 	}
 |]
 
-[iforest|
+[txforest|
 	data Company = Directory {
 		  warehouses :: Warehouses
 		, items :: Items

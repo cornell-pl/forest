@@ -6,8 +6,8 @@ import Language.Pads.Generic as Pads
 import Language.Forest.Syntax
 import Language.Forest.IC.Default
 import Language.Forest.IC.IO.ZLoading
-import Language.Forest.IC.IO.Loading
-import Language.Forest.IC.IO.DeltaLoading
+--import Language.Forest.IC.IO.Loading
+--import Language.Forest.IC.IO.DeltaLoading
 import Language.Forest.IO.Utils
 import Language.Forest.IC.ValueDelta
 import Language.Pads.Padsc
@@ -16,8 +16,8 @@ import Language.Forest.IC.Generic
 import Language.Forest.Errors
 import Language.Forest.IC.ICRep
 import Language.Forest.FS.FSDelta
-import qualified Language.Forest.Pure.MetaData as Pure
-import Language.Forest.Pure.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
+--import qualified Language.Forest.MetaData as Pure
+--import Language.Forest.MetaData (FileInfo(..),FileType(..),(:*:)(..),Arg(..))
 import Data.List.Diff
 import Data.List as List
 import Data.IORef
@@ -61,7 +61,7 @@ import qualified Data.Map as Map
 import Language.Forest.IC.BX as BX
 
 doZLoadDeltaNamed :: (ZippedICForest fs args rep) =>
-	Proxy args -> LoadDeltaArgs ICData fs args -> ForestI fs FilePath -> FSTree fs -> (ForestFSThunkI fs rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs rep) -> ForestO fs (SValueDelta (ForestFSThunkI fs rep))
+	Proxy args -> LoadDeltaArgs fs args -> ForestI fs FilePath -> FSTree fs -> (ForestFSThunkI fs rep,GetForestMD fs) -> FilePath -> FSTreeD fs -> FSTree fs -> ValueDelta fs (ForestFSThunkI fs rep) -> ForestO fs (SValueDelta (ForestFSThunkI fs rep))
 doZLoadDeltaNamed proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = do
 	irep <- Inc.getOutside rep
 	idv <- diffValueBelow dv diffValue tree irep
@@ -69,13 +69,13 @@ doZLoadDeltaNamed proxy (args,dargs) path tree (rep,getMD) path' df tree' dv = d
 	Inc.set rep $ applyNSValueDelta direp irep
 	return Delta
 
-doZLoadDeltaFile1 :: (FTK fs (Pure.Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((Pure.FileInfo,md),padsc)
+doZLoadDeltaFile1 :: (FTK fs (Arg arg) (ForestFSThunkI fs ((Forest_md fs,md),pads)) ((Forest_md fs,md),pads) ((FileInfo,md),padsc)
 	,IncK (IncForest fs) Forest_err,IncK (IncForest fs) ((Forest_md fs, md), pads),rept ~ ForestFSThunkI fs ((Forest_md fs,md),pads),ZippedICMemo fs,MData NoCtx (ForestI fs) arg,ForestInput fs FSThunk Inside,Eq arg,Typeable arg,ICRep fs,Pads1 arg pads md)
 	=> Bool -> ForestI fs arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
 	-> ForestO fs (SValueDelta rept)
 doZLoadDeltaFile1 isEmptyDArg (marg' :: ForestI fs arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
 	
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	let fs = Proxy :: Proxy fs
 	
 	let load_file = debug "constant1 changed" $ do
@@ -99,7 +99,7 @@ doZLoadDeltaFileInner1 :: (IncK (IncForest fs) FileInfo,IncK (IncForest fs) Fore
 	=> Bool -> ForestI fs arg -> ForestI fs FilePath -> FilePath -> FSTree fs -> FSTreeD fs -> FSTree fs -> ValueDelta fs rept -> (rept,GetForestMD fs)
 	-> ForestO fs (NSValueDelta rept)
 doZLoadDeltaFileInner1 isEmptyDArg (marg' :: ForestI fs arg) mpath path' oldtree df tree' dv (rep_thunk,getMD) = do
-	let argProxy = Proxy :: Proxy (Pure.Arg arg)
+	let argProxy = Proxy :: Proxy (Arg arg)
 	let fs = Proxy :: Proxy fs
 	path <- inside mpath
 	case (isEmptyDArg,path == path',isIdValueDelta dv,df) of
@@ -289,14 +289,14 @@ doZLoadDeltaConstraintInner emptyDArgs oldtree dv ((err_t,rep),getMD) pred loadD
 			overwrite err_t $ do
 				err_cond <- predForestErr . pred =<< BX.getM lens_content (return rep)
 				err_inner <- get_errors rep
-				return $ Pure.mergeForestErrs err_cond err_inner
+				return $ mergeForestErrs err_cond err_inner
 			if isStableDelta direp
 				then return $ fromSValueDelta Delta
 				else return $ mapDelta sndLens direp
 
 -- updates the thunks that keep track of the arguments of a top-level declaration
 doZLoadDeltaArgs :: (Typeable rep,ForestArgs fs args,ICRep fs) =>
-	Proxy args -> LoadDeltaArgs ICData fs args -> (rep,GetForestMD fs) -> FSTree fs
+	Proxy args -> LoadDeltaArgs fs args -> (rep,GetForestMD fs) -> FSTree fs
 	-> (ForestICThunksI fs args -> (rep,GetForestMD fs) -> ForestO fs (d rep))
 	-> ForestO fs (d rep)
 doZLoadDeltaArgs proxy (margs,_) (rep,getMD) (tree' :: FSTree fs) loadD = debug ("doLoadDeltaArgs") $ do
