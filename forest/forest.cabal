@@ -133,7 +133,7 @@ Library
   -- Packages needed in order to build this package.
   Build-depends: base >= 4, containers, pads-haskell >= 1.1, weak, weak-hashtables, weak-ctrie,
                  template-haskell, concurrent-extra, mtl, ref-fd, hashable,
-                 haskell-src-meta, uuid, exceptions, abstract-deque, dlist, ctrie == 0.1.0.3, strict, atomic-primops,  
+                 haskell-src-meta, uuid, exceptions, abstract-deque, dlist, ctrie, strict, atomic-primops,  
                  parsec, adapton >= 0.0.3, syb-with-class-and-effects >= 0.3.7,
                  regex-compat, directory, process, unix, Glob, system-filepath, canonical-filepath, split,
                  filepath, mainland-pretty, derive >= 2.5.17, time, MissingH,
