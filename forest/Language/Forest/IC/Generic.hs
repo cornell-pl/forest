@@ -121,6 +121,7 @@ class ICRep fs => ZippedICMemo fs where
 	findZippedMemo :: (FTK fs args rep var content) => Proxy args -> FilePath -> Proxy rep -> ForestI fs (Maybe (FSTree fs,ForestIs fs args,rep))
 
 type FTM fs = ForestO fs
+type ReadOnlyFTM fs = ForestI fs
 type FTV fs a = ForestFSThunkI fs a
 
 class Forest fs where
