@@ -123,7 +123,7 @@ class ICRep fs => ZippedICMemo fs where
 type FTM fs = ForestO fs
 type FTV fs a = ForestFSThunkI fs a
 
-class Transactional (IncForest fs) => TransactionalForest fs where
+class Forest fs where
 	
 	new :: FTK fs args rep var content => ForestVs args -> FilePath -> FTM fs rep
 	
@@ -148,28 +148,28 @@ class Transactional (IncForest fs) => TransactionalForest fs where
 	-- recursively copies the content of a variable into another; it may fail if the copied data is not consistent with the arguments and filepath of the target variable
 	copyOrElse :: (FTK fs args rep var content) => rep -> rep -> b -> ([ManifestError] -> FTM fs b) -> FTM fs b
 	
-unsafeIOToFTM :: (TransactionalForest fs,ICRep fs) => IO a -> FTM fs a
+unsafeIOToFTM :: (Forest fs,ICRep fs) => IO a -> FTM fs a
 unsafeIOToFTM = forestM . forestIO
 	
-tryWrite :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
+tryWrite :: (Display Outside (IncForest fs) rep,Forest fs,FTK fs args rep var content) => rep -> content -> FTM fs ()
 tryWrite t v = writeOrElse t v () (Prelude.const $ return ())
 
-writeOrRetry :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
+writeOrRetry :: (Transactional (IncForest fs),Display Outside (IncForest fs) rep,Forest fs,FTK fs args rep var content) => rep -> content -> b -> FTM fs b
 writeOrRetry t v b = writeOrElse t v b (Prelude.const retry)
 
-writeOrShow :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
+writeOrShow :: (Display Outside (IncForest fs) rep,Forest fs,FTK fs args rep var content) => rep -> content -> FTM fs String
 writeOrShow t v = writeOrElse t v "" (return . show)
 
-writeOrThrow :: (Display Outside (IncForest fs) rep,TransactionalForest fs,FTK fs args rep var content,Exception e) => rep -> content -> e -> FTM fs ()
+writeOrThrow :: (MonadThrow (Outside (IncForest fs)),Display Outside (IncForest fs) rep,Forest fs,FTK fs args rep var content,Exception e) => rep -> content -> e -> FTM fs ()
 writeOrThrow t v e = writeOrElse t v () (Prelude.const $ throw e)
 
 -- * Data/Metadata only functions
 -- we don't provide data/metadata only write functions because writeData >> writeMeta would not be the same as write, thus misleading.
 
-readData :: (TransactionalForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l rep_content
+readData :: (Forest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l rep_content
 readData = liftM snd . read
 	
-readMeta :: (TransactionalForest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l md_content
+readMeta :: (Forest fs,ForestLayer fs l,FTK fs args rep var (md_content,rep_content)) => rep -> ForestL fs l md_content
 readMeta = liftM fst . read
 
 -- * Zipped Incremental Forest interface

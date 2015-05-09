@@ -4,7 +4,7 @@
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse within transactions
 
 module Language.Forest.IC.FS.TxICFS (
-	TransactionalForest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
+	Forest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
 	,FSRep(..),ForestCfg(..),atomicallyTxICFS
 ) where
 
@@ -229,7 +229,6 @@ nextTxICFSTree = do
 	
 	forestIO $ writeRef txlog (tree,DList.empty,newtree,reads,bufftbl,memotbl,cantree,tmps)
 	
-
 incrementTxICFSTree :: ForestM TxICFS ()
 incrementTxICFSTree = do
 	TxICFSEnv (starttime :!: txid :!: deltas :!: SCons txlog _) <- TxICFSForestM Reader.ask
@@ -953,7 +952,7 @@ instance MonadThrow (Outside (IncForest TxICFS)) where
 instance MonadCatch (Outside (IncForest TxICFS)) where
 	catch = catchTxICFS False
 
-instance TransactionalForest TxICFS where	
+instance Forest TxICFS where	
 	new = newTxICFS Proxy
 	args = argsTxICFS Proxy
 	read = readTxICFS Proxy

@@ -4,7 +4,7 @@
 -- NILFS filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and incremental reuse amoung transactions
 
 module Language.Forest.IC.FS.TxNILFS (
-	TransactionalForest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
+	Forest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
 	,FSRep(..),ForestCfg(..),atomicallyTxNILFS
 ) where
 
@@ -1030,7 +1030,7 @@ instance MonadThrow (Outside (IncForest TxNILFS)) where
 instance MonadCatch (Outside (IncForest TxNILFS)) where
 	catch = catchTxNILFS False
 
-instance TransactionalForest TxNILFS where
+instance Forest TxNILFS where
 	new = newTxNILFS Proxy
 	args = argsTxNILFS Proxy
 	read = readTxNILFS Proxy

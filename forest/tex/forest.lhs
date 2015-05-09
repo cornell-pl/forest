@@ -555,14 +555,14 @@ Blocking transactions (|retry|) validate their log and register themselves in wa
 Nested transactions (|orElse|) work similarly to normal transactions except that writes are recorded only to a nested log and reads consult both the nested logs and those of all enclosing transactions. Validating a nested transaction also entails validating all enclosing transactions.
 If the first alternative retries, then the second alternative is attempted; if both retry, then both logs are validated (along with the enclosing transaction) and the thread will wait on the union of the read resources.
 Exceptional transactions (|throw|) must also validate the log before raising an exception to the outside world; on success, they rollback all modifications except for newly-created transactional variables; on failure, they retry.
-A more detailed account, including a complete formal semantics, is given in~\cite{HaskellSTM}.
+A more detailed account of the general STM interface, including a complete formal semantics, is given in~\cite{HaskellSTM}.
 
 \paragraph{Transaction logs}
 The main difference from \texttt{STM} Haskell to TxForest is that the shared resources are not mutable memory cells in the traditional sense, but paths in a filesystem.
 \footnote{STM maintains a log with the old value held in a memory cell and the new value written to it by the transaction, and validation tests if they are pointer-equal. We do not remember the old content of file paths, nor test for equality.}
 This is to say that, although users manipulate structured filestores, all the in-memory data structures are local to each transaction, and only filesystem operations need to be logged for commit.
 
-The concurrent handling of file paths, however, is subtle in the presence of symbolic links --the identity of a path is not unique (as different paths may refer to the same real path) nor stable (since the real path depends on the current symbolic link configuration)-- making it harder to identify conflicts between transactions and to properly lock resources. For example, one transaction may read a file whose path is concurrently modified by another transaction.
+The concurrent handling of file paths, however, is subtle in the presence of symbolic links --the identity of a path is not unique (as different paths may refer to the same physical address) nor stable (since the path resolution depends on the current symbolic link configuration)-- making it harder to identify conflicts between transactions and to properly lock resources. For example, one transaction may read a file whose path is concurrently modified by another transaction that changes a symbolic link.
 Therefore, our transaction logs keep special track of symbolic link modifications and we perform all file operations over ``canonical'' file paths, calculated against the transaction log while marking each resolved link as read.
 
 \paragraph{Round-tripping functions}
@@ -636,7 +636,7 @@ The |loadDeltaSym| function strictly traverses the filesystem and the in-memory 
 
 When writing to a variable (|writeOrElse|), we first search for a memoized value; if none is found, we write the new contents as before.
 If an old value is found, we compute the updates since the memoized value and invoke |loadDeltaSym| to make sure that all memoized data for the filestore is up-to-date with the current filesystem version.
-We then backup the transaction log, increment the filesystem version, write the new content to the variable and invoke |storeDeltaSym| (with empty filesystem updates and only the user's write to the top-level variable as a data update) to incrementally repair the filesystem.
+We then backup the transaction log, increment the filesystem version, write the new content to the variable and invoke |storeDeltaSym| (with empty filesystem updates and only the user's writes to the top-level variable as a data update) to incrementally repair the filesystem.
 Likewise, the |storeDeltaSym| function strictly traverses the filesystem and the in-memory data according to the Forest description: if there are no updates, it stops; otherwise, it modifies the filesystem to conform to the new content and proceeds recursively. Note that, in the general case, when |storeDeltaSym| stops the generated validator still needs to verify that the unmodified fragment of the filesystem is consistent with other |storeDeltaSym| traversals that may have modified overlapping fragments of the filesystem ---in order to guarantee that arbitrary data dependencies in a Forest specification are correctly enforced. We can skip these checks in our particular application, as long as we only call |storeDeltaSym| with a top-level data modification.
 
 \subsection{Log-structured Transactional Forest}
@@ -646,7 +646,7 @@ This has the potential to greatly speed-up larger transactions that combine seve
 It is also non-optimal for more common scenarios that involve multiple concurrent transactions trying to access a shared resource, e.g., a set of configuration files: each transaction will have to load all necessary files into memory, perform the respective modifications, and discard all the in-memory data at the end; such loading work is often redundant, even more for workloads dominated by read-only transactions where the filesystem seldom changes between consecutive transactions.
 
 Unfortunately, this is how far TxForest can reasonably go on top of a conventional filesystem.
-As in any OCC method, each transaction builds an interim timeline of filesystem updates that is preserved for the duration of concurrently running transactions.
+As a traditional optimistic concurrency method, each transaction builds an interim timeline of filesystem updates that is preserved for the duration of concurrently running transactions.
 Consequently, there is no global timeline that records the history of filesystem modifications to which in-memory data can be chronologically affixed across transactions.
 
 \paragraph{Log-structured filesystem}
@@ -667,6 +667,14 @@ A side-benefit of using a snapshotting filesystem is that every transaction star
 Following this observation, read-only transactions can be optimized to bypass all the logging, validation and committing mechanisms, as if they happened to run before all other concurrent transactions~\cite{TxCache}.
 Read-write transactions need to anyway validate their read file paths against concurrent writes, to guarantee that they are assigned a position in the serial order.
 
+\subsection{Isolated Transactional Forest}
+
+extended mandatory locking could provide native filesystem support for locks on files/directories.
+
+TxForest, however, is only serializable with respect to Forest transactions, and transaction-oblivious applications that may be concurrently modifying the filesystem.
+This is a disadvantage of implementing the transactional abstraction in software, independently of the characteristics underlying filesystem.
+We can provide stronger isolation if we assume additional control over the filesystem, as common for transactional filesystem implementations.
+Our locks are purely in-memory. extended mandatory locks from ~\cite{Valor}: ability to lock files and directories and modify the standard POSIX system calls used by unmodified applications to perform the necessary locking.
 
 \section{Evaluation}
 

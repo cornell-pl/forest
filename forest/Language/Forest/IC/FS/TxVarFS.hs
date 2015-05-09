@@ -4,7 +4,7 @@
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and no incrementality
 
 module Language.Forest.IC.FS.TxVarFS (
-	TransactionalForest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
+	Forest(..),Transactional(..),MonadThrow(..),MonadCatch(..)
 	, proxyTxVarFS
 	) where
 	
@@ -424,7 +424,7 @@ instance MonadThrow (Outside (IncForest TxVarFS)) where
 instance MonadCatch (Outside (IncForest TxVarFS)) where
 	catch = catchTxVarFS False	
 	
-instance TransactionalForest TxVarFS where
+instance Forest TxVarFS where
 	new = newTxVarFS Proxy
 	args = argsTxVarFS Proxy
 	read = readTxVarFS Proxy
