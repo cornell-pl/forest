@@ -1,0 +1,71 @@
+Master Watershed File file.cio
+Project Description:
+General Input/Output section (file.cio):
+Monday, March 21, 2011 6:57:24 PM MapWindow - SWAT interface
+
+General Information/Watershed Configuration:
+fig.fig
+              10    | NBYR : Number of years simulated
+            1995    | IYR : Beginning year of simulation
+               1    | IDAF : Beginning julian day of simulation
+             365    | IDAL : Ending julian day of simulation
+Climate:
+               0    | IGEN : Random number seed cycle code
+               1    | PCPSIM : precipitation simulation code: 1=measured, 2=simulated
+               0    | IDT : Rainfall data time step
+               0    | IDIST : rainfall distribution code: 0 skewed, 1 exponential
+             1.3    | REXP : Exponent for IDIST=1
+               1    | NRGAGE: number of pcp files used in simulation
+               1    | NRTOT: number of precip gage records used in simulation
+               1    | NRGFIL: number of gage records in each pcp file
+               1    | TMPSIM: temperature simulation code: 1=measured, 2=simulated
+               1    | NTGAGE: number of tmp files used in simulation
+               1    | NTTOT: number of temp gage records used in simulation
+               1    | NTGFIL: number of gage records in each tmp file
+               2    | SLRSIM : Solar radiation simulation Code: 1=measured, 2=simulated
+               0    | NSTOT: number of solar radiation records in slr file
+               2    | RHSIM : relative humidity simulation code: 1=measured, 2=simulated
+               0    | NHTOT: number of relative humidity records in hmd file
+               2    | WNDSIM : Windspeed simulation code: 1=measured, 2=simulated
+               0    | NWTOT: number of wind speed records in wnd file
+               0    | FCSTYR: beginning year of forecast period
+               0    | FCSTDAY: beginning julian date of forecast period
+               0    | FCSTCYCLES: number of time to simulate forecast period
+Precipitation Files:
+pcp.pcp     
+
+
+Temperature Files:
+tmp.tmp     
+
+
+                    | SLRFILE: name of solar radiation file
+                    | RHFILE: name of relative humidity file
+                    | WNDFILE: name of wind speed file
+                    | FCSTFILE: name of forecast data file
+Watershed Modeling Options:
+basins.bsn          | BSNFILE: name of basin input file
+Database Files:
+crop.dat            | PLANTDB: name of plant growth database file
+till.dat            | TILLDB: name of tillage database file
+pest.dat            | PESTDB: name of pesticide database file
+fert.dat            | FERTDB: name of fertilizer database file
+urban.dat           | URBANDB: name of urban database file
+Special Projects:
+               0    | ISPROJ: special project: 1=repeat simulation
+               0    | ICLB: auto-calibration option: 0=no, 1=yes
+                    | CALFILE: auto-calibration parameter file
+Output Information:
+               1    | IPRINT: print code (month, day, year)
+               0    | NYSKIP: number of years to skip output printing/summarization
+               0    | ILOG: streamflow print code: 1=print log of streamflow
+               0    | IPRP: print code for output.pst file: 1= print pesticide output
+               0    | IPRS: print code for final soil chemical data (.chm format)
+Reach output variables:
+   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+Subbasin output variables:
+   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+HRU output variables:
+   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+HRU data to be printed:
+   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0

@@ -1,0 +1,14 @@
+ .gw file Subbasin: 2 HRU: 2 Luse: SHRB Soil: Kl30-2bc-4832 Slope: 0-5 Monday, March 21, 2011 6:57:24 PM MapWindow - SWAT interface
+             0.5    | SHALLST : Initial depth of water in the shallow aquifer [mm]
+            1000    | DEEPST : Initial depth of water in the deep aquifer [mm]
+              31    | GW_DELAY : Groundwater delay [days]
+           0.048    | ALPHA_BF : BAseflow alpha factor [days]
+               0    | GWQMN : Threshold depth of water in the shallow aquifer required for return flow to occur [mm]
+            0.02    | GW_REVAP : Groundwater "revap" coefficient
+               1    | REVAPMN: Threshold depth of water in the shallow aquifer for "revap" to occur [mm]
+            0.05    | RCHRG_DP : Deep aquifer percolation fraction
+               1    | GWHT : Initial groundwater height [m]
+           0.003    | GW_SPYLD : Specific yield of the shallow aquifer [m3/m3]
+               0    | SHALLST_N : Initial concentration of nitrate in shallow aquifer [mg N/l]
+               0    | GWSOLP : Concentration of soluble phosphorus in groundwater contribution to streamflow from subbasin [mg P/l]
+               0    | HLIFE_NGW : Half-life of nitrate in the shallow aquifer [days]
