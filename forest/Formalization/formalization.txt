@@ -1,0 +1,292 @@
+Setup:
+n \in N - an integer
+i \in N - Thread Id (or could be an arbitrary enumerable set)
+fd \in N - File Descriptor (could also be an arbitrary enumerable set)
+ts \in N - Time (any set with a total ordering is fine basically)
+s \in L^n - String (where L^n is n letters from the alphabet L)
+p \in P - paths (where P is the enumerable set of all paths)
+b \in B - Booleans
+md - MetaData (which is returned from the stat command)
+
+Type Defs:
+o    ::= R(p) | W(p,s) | Mk(p) | Rm(p) | M(p,p')
+v    ::= s | n | b | l | md | o | T
+l    ::= [] | v :: l
+
+BExp ::= b | b_1 OR b_2 | NOT b | e_1 = e_2 | e_1 > e_2 
+FTC  ::= Atomic(c) | LockPhase(l) | CheckPhase(l) | WritePhase(l) | UnlockPhase(l) | HWrite(p,s) | HRead(p)
+ComC ::= Write(fd,s) | Mkdir(p) | Rename(p,p') | Lock(p) | Unlock (p) | Remove(p)
+ComE ::= Open(p) | Close(fd) | Read(fd,n) | Readdir(fd,n) | Stat(p) | Lseek(fd,n)
+fsv  ::= File(s) | Dir(l)
+t    ::= <\sigma,D,c,i,ForS>
+
+e    ::= v | x | f(e) | BExp | ComE
+c    ::= skip | c_1;c_2 | x := e | if BExp then c_1 else c_2 | ComC | FTC
+
+where 
+- Open returns a file descriptor
+- Read returns the bits read
+- Readdir returns a list of directory entries
+- Stat(p) returns the metadata stat(p)
+- t is a thread containing state (\sigma), a partial mapping from variables to values (x -> v),
+  File descriptor state (D), a partial mapping from file descriptors to tuples of paths and integers representing offsets (fd -> (p,i)),
+  the command the thread will execute (c), its thread id (i) and finally Forest State, which is a (possibly empty, if not in a Forest Transaction) 
+  stack of tuples containing the thread state at the start of the transaction, a start transaction time stamp, a log of reads and writes and a boolean
+  noting if we're in the commit or pre-commit phase of the transaction (t,ts,l,b)
+- f(e) is basically an arbitrary pure computation (well, the function, not the e necessarily)
+- HWrite and HRead are Haskell reads and writes (which can decompose to POSIX ones), reading or writing whole files
+
+Global structures:
+F (the filesystem) is a partial mapping from paths to filesystem values (p -> fsv)
+M is a multiset of running threads
+L (lock state) is a partial mapping from paths to thread ids (p -> i) indicating if a path is locked and if so by what thread
+
+Note about locks:
+- These are mandatory locks (you can get them in Linux by mounting your FS with -o mand)
+  This means that nothing can write, read or interact with files or directories locked, whether or not
+  they try to lock the resources themselves
+- The locks work on directories as well as normal files (and we'll cross the symlink bridge when we get to it)
+  which does exist research-wise apparently, but is far from the norm.
+  For now, we will consider them recursive, so any resource under the directory is also locked
+
+Random functions used in the Rules below:
+unlocked: P x N -> B
+unlocked(p,i) tells you if path p is not locked or locked by this thread (checking all subpaths as well)
+
+freshF: P -> P
+freshF(p) gets a fresh filename in directory p (which is concurrency proof?)
+
+dirname: P -> P
+dirname(p) returns the directory that the path is in 
+
+sortP: o list -> p list
+sortP(l) turns a log into a path list while sorting it in a global path order
+
+time: unit -> N
+time() returns the current time (which is forever increasing)
+
+last: P x o list -> o
+last(p,l) gets the first o (most recent) containing p in l or None if there is none.
+
+modified: md -> N
+modified(md) takes metadata and returns the last modified time
+
+Theorems (using the rules below):
+
+If F is the filesystem before executing Atomic(c) || c_1;...;c_k and F' is the filesystem after,
+then \exists a 0 <= j <= k s.t. starting from F and executing c_1;...;c_j;c;c_j+1;...;c_k gets us filesystem F'. 
+Proof: We can construct it by considering what really happened (or could possibly). Let's call c_j the last command that was executed before the
+CheckPhase started. Now there are two possibilities, either the CheckPhase decides to restart the transaction (in which case
+it starts over with the same state it used to have and has made no changes to the filesystem (by Lemma 3)) or it doesn't.
+
+If it does, then move j up to the last command executed before the new CheckPhase starts. Then repeat.
+Note, that j monotonically increases and can't go beyond k. If j didn't change, then the CheckPhase would
+not restart the transaction since nothing has changed since its start (by lemma 2).
+
+If it does not restart the transaction, then keep that j and that is a correct serial ordering.
+Notably, by Lemma 2, nothing c read from the filesystem could have been changed until we got to
+the CheckPhase. Thus, all of its reads can be considered to have been done in one unit, since they didn't change
+anyway. By Lemma 3, it has not changed anything until the WritePhase. By Lemma 4, nothing it changes at that
+point can be changed by any other threads. So anything that happens after j, either doesn't change
+the same part of the filesystem, or does so after the WritePhase has completed, meaning that it is as though all
+of the writing of c was already done. 
+
+- Supporting Lemmas:
+1. In precommit F never changes.
+Proof: This is self-evident by the semantics of the commands since there are none that modify the filesystem.
+
+2. If any resource read is changed between the start of the transaction and the end of the LockPhase, the transaction
+restarts without changing the filesystem and reverts to its previous state. If not, it continues.
+Proof: CheckPhase checks exactly this
+
+3. Any changes to F made by the Atomic(c) command are made in the WritePhase
+Proof: By lemma 1 and the readily apparent fact that it doesn't change in Lock, Check, or Unlock
+(as clearly seen in the rules).
+
+4. In the WritePhase and CheckPhase, nothing else can read or change the files the WritePhase is changing.
+Proof: All files and directories changed by the WritePhase are locked by the thread in the LockPhase, which happens before
+Writing and Checking (by construction). Mandatory locks ensure that nothing can touch these files or directories (or anything under the directories).
+
+
+Forest Rules:
+
+Atomic:
+
+t = <\sigma,D,Atomic(c_1),i,ForS>
+<L,F,M \uplus {<\sigma,D,c_1,i,(t,time(),[],true) :: ForS>}> -->* 
+<L',F',M' \uplus {<\sigma',D',skip,i,(t,ts,l,true) :: ForS>}>
+sl = sortP(l)
+ForS'=(t,ts,l,false)::ForS
+t_1= <\sigma',D',LockPhase(sl);CheckPhase(sl);WritePhase(l);UnlockPhase(sl),i,ForS'>
+<L',F',M' \uplus {t_1}> -->* <L'',F'',M'' \uplus {t'}>
+t'= <\sigma'',D'',skip,i,ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L'',F'',M'' \uplus {t'}>
+
+//Needs changing. Checking the log for changes is entirely too cumbersome for these rules. Perhaps an internal FS or something like that is the way to go.
+Precommit:
+
+//Not quite correct, needs to look at subpaths of p recursively
+t = <\sigma,D,Mkdir(p),i,(t_ft,ts,l,true)::ForS>
+unlocked(p)
+p \not \in F AND last(p,l) = None OR last(p,l) = Rm(p) OR last(p,l) = M(p,\_)
+F(dirname(p))= Dir(_)
+t'= <\sigma,D,skip,i,(t_ft,ts,Mk(p) :: l,true)::ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+
+//Doesn't take log into account
+t = <\sigma,D,Rename(p,p'),i,(t_ft,ts,l,true)::ForS>
+unlocked(p)
+unlocked(p')
+p' \not \in F OR (F(p) = File(_) AND F(p') = File(_)) OR (F(p) = Dir(_) AND F(p') = Dir([]))
+t'= <\sigma,D,skip,i,(t_ft,ts,M(p,p') :: l,true)::ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+Commit:
+
+LockPhase:
+
+t = <\sigma,D,LockPhase(l),i,ForS>
+l = p :: l'
+t'= <\sigma,D,Lock(p);LockPhase(l'),i,ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+
+_________________________________________________________
+<L,F,M \uplus {<\sigma,D,LockPhase([]),i,ForS>}> --> <L,F,M \uplus {<\sigma,D,skip,i,ForS>}
+
+CheckPhase:
+
+t = <\sigma,D,CheckPhase(l),i,(t_ft,ts,log,false)::ForS>
+l = o :: l'
+o=R(p) OR o=M(p,_)
+t,L,F |- Stat(p) --> (md,t)
+ts > modified(md)
+t'= <\sigma,D,CheckPhase(l'),i,(t_ft,ts,log,false)::ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+
+t = <\sigma,D,CheckPhase(l),i,(t_ft,ts,log,false)::ForS>
+l = o :: l'
+NOT (o=R(p) OR o=M(p,_))
+t'= <\sigma,D,CheckPhase(l'),i,(t_ft,ts,log,false)::ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+
+t = <\sigma,D,CheckPhase(l),i,(t_ft,ts,log,false)::ForS>
+l = o :: l'
+o=R(p) OR o=M(p,_)
+t,L,F |- Stat(p) --> (md,t)
+ts <= modified(md)
+t_1 = <\sigma,D,UnlockPhase(sortP(log)),i,(t_ft,ts,log,false)::ForS>
+<L,F,M \uplus {t_1}> -->* <L',F',M' \uplus {<\sigma,D,skip,i,ForS>}>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L',F',M' \uplus {t_ft}
+
+
+_________________________________________________________
+<L,F,M \uplus {<\sigma,D,CheckPhase([]),i,ForS>}> --> <L,F,M \uplus {<\sigma,D,skip,i,ForS>}
+
+WritePhase:
+
+t = <\sigma,D, WritePhase(l),i,(t_ft,ts,log,false)::ForS>
+l = o :: l'
+(o=R(p)    AND t' = <\sigma,D,WritePhase(l'),i,(t_ft,ts,log,false)::ForS>)              OR
+(o=W(p,s)  AND t' = <\sigma,D,WritePhase(l');HWrite(p,s),i,(t_ft,ts,log,false)::ForS>)  OR
+(o=Mk(p)   AND t' = <\sigma,D,WritePhase(l');MkDir(p),i,(t_ft,ts,log,false)::ForS>)     OR
+(o=Rm(p)   AND t' = <\sigma,D,WritePhase(l');Remove(p),i,(t_ft,ts,log,false)::ForS>)    OR
+(o=M(p,p') AND t' = <\sigma,D,WritePhase(l');Rename(p,p'),i,(t_ft,ts,log,false)::ForS>) OR
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+
+t = <\sigma,D,WritePhase([]),i,(t_ft,ts,log,false)::ForS>
+t'= <\sigma,D,skip,i,(t_ft,ts,log,false)::ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+UnlockPhase:
+
+t = <\sigma,D,UnlockPhase(l),i,ForS>
+l = p :: l'
+t'= <\sigma,D,Unlock(p);UnlockPhase(l'),i,ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+
+t = <\sigma,D,UnlockPhase([]),i,(_,_,_,false)::ForS>
+t'= <\sigma,D,skip,i,ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+
+POSIX Rules:
+
+Lock:
+
+t = <\sigma,D,Lock(p),i,ForS>
+unlocked(p,i)
+t'= <\sigma,D,skip,i,ForS>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L \uplus {p -> i},F,M \uplus {t'}
+
+Unlock:
+
+t = <\sigma,D,Unlock(p),i,ForS>
+t'= <\sigma,D,skip,i,ForS>
+_________________________________________________________
+<L \uplus {p -> i},F,M \uplus {t}> --> <L,F,M \uplus {t'}
+
+Sequence:
+
+t = <\sigma,D,c_1;c_2,i,ForS>
+<L,F,M \uplus {<\sigma,D,c_1,i,ForS>}> -->* <L',F',M' \uplus {<\sigma',D',skip,i,ForS'>}>
+<L',F',M' \uplus {<\sigma',D',c_2,i,ForS'>}> -->* <L'',F'',M'' \uplus {t'}>
+t'= <\sigma'',D'',skip,i,ForS''>
+_________________________________________________________
+<L,F,M \uplus {t}> --> <L'',F'',M'' \uplus {t'}>
+
+Skip:
+
+_________________________________________________________
+<L,F,M \uplus {<_,_,skip,_,_>}> --> <L,F,M>
+
+_________________________________________________________
+<L,F,M \uplus {<\sigma,D,skip;c,i,ForS>}> --> <L,F,M \uplus {<\sigma,D,c,i,ForS>}>
+
+
+- Will add more of these later, but should be close to the same as they were in the pdf
+
+TODO:
+- Think about how permissive/close to real locks we could be to get this
+-- What happens if we have other lock models (which ones do we need if we only want serializability within Forest for example)
+-- What happens if we just have a swap space that we have exclusive access to, etc.
+
+- Ask Hakim about FS locks (how do these really work, are there ones for directories that are well known, etc.)
+
+- If we ever need freshF, then check whether it is in fact concurrency proof
+
+- Fix Forest Semantics
+-- Everything in precommit needs to check log before they check FS
+-- Add HWrite + HRead and decide how they translate to normal reads and writes
+-- Need to maybe disallow locks during pre-commit or think of something else o.w. theorem doesn't hold
+- Fix POSIX Semantics
+-- Fix up the type definitions
+-- Move some stuff to expressions
+-- Unify renames with conjunction
+-- Make everything go to skip
+-- Decide how to shorten a file using Write
+
+- Add Link(p) to fsv (Symlinks)
+
+
+-Define a threat model
+-Check how well the semantics correspond to real world behavior
+-Unatomicize reads and writes (?)
+-Add an arbitrary value Havoc (?)
