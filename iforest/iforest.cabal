@@ -63,11 +63,13 @@ Cabal-version:       >=1.2
 
 
 Library
+  Hs-Source-Dirs: src
   GHC-Options: -fcontext-stack=60
   -- Modules exported by the library.
   Exposed-modules: Data.List.Diff
                    Language.Forest.Errors,
                    Language.Forest.FS.FSRep,
+                   Language.Forest.FS.FileLock,
                    Language.Forest.FS.Diff,
                    Language.Forest.FS.FSDelta,
                    Language.Forest.FS.NILFS,
@@ -104,7 +106,10 @@ Library
                    Language.Forest.Manifest,
                    Language.Forest.Quote,
                    Language.Forest.Syntax,
-                   Language.Forest.IC
+                   Language.Forest.Parser,
+                   Language.Forest.Pretty,
+                   Language.Forest.IC,
+                   Language.Forest.TH
   
   -- Packages needed in order to build this package.
   Build-depends: base >= 4, containers, pads-haskell >= 1.1, weak, weak-hashtables, weak-ctrie,

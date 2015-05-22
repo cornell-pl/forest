@@ -2,17 +2,19 @@ update:
 	cd ../syb-with-class-and-effects; cabal install syb-with-class-and-effects.cabal --force-reinstalls -j1
 	cd ../../HsAdapton; cabal install adapton.cabal --force-reinstalls -j1
 icpapers2:
-	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Papers2.hs
+	ghci -isrc -ddump-splices -fcontext-stack=60 Examples/IC/Papers2.hs
 icpapers2tx:
-	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Papers2Tx.hs
+	ghci -isrc -ddump-splices -fcontext-stack=60 Examples/IC/Papers2Tx.hs
 icpapers2x:
-	ghc --make -ddump-splices -fcontext-stack=60 Examples/IC/Papers2Tx.hs -o Papers2Tx
+	ghc -ddump-splices -fcontext-stack=60 Examples/IC/Papers2Tx.hs -o Papers2Tx
 icuniversal:
-	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Universal.hs
+	ghci -isrc -ddump-splices -fcontext-stack=60 Examples/IC/Universal.hs
 pureaccount:
 	ghci -ddump-splices -fcontext-stack=60 Examples/Pure/Beautiful/Account.hs
 icaccount:
 	ghci -ddump-splices -fcontext-stack=60 Examples/IC/Beautiful/Account.hs
+icaccounts:
+	ghci -isrc -ddump-splices -fcontext-stack=60 Examples/IC/Beautiful/Accounts.hs
 ictpcc:
 	ghci -ddump-splices -fcontext-stack=60 Examples/IC/TPCC.hs
 icsanta:

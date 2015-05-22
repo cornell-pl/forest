@@ -5,6 +5,7 @@ module Main where
 import qualified Data.ByteString as B
 import qualified Control.Exception as E
 import Data.Hashable
+import System.Process
 import Prelude hiding (mod,read,const)
 import qualified Prelude
 import Control.Monad.Incremental.Adapton hiding (new)
@@ -62,71 +63,30 @@ import Examples.IC.Papers2
 
 
 papersDefaultRoot = "/Users/hpacheco/Documents/Papers2"
-papersNILFSRoot = "/media/hpacheco/nilfs/SmallPapers2"
+papersNILFSRoot = "/media/hpacheco/nilfs/Papers2"
 smallpapersNILFSRoot = "/media/hpacheco/nilfs/SmallPapers2"
 myDir = "/home/hpacheco/Forest"
 
 -- transactions
 
---articlesPaperNamesVar :: Articles TxVarFS -> FTM TxVarFS [String]
---articlesPaperNamesVar articles = do
---	years <- liftM (Map.elems) $ readData articles
---	liftM concat $ mapM yearPaperNamesVar years
---	
---articlesPaperNamesIC :: Articles TxICFS -> FTM TxICFS [String]
---articlesPaperNamesIC articles = do
---	years <- liftM (Map.elems) $ readData articles
---	liftM concat $ mapM yearPaperNamesIC years
-
-articlesPaperNamesNILFS :: Articles TxNILFS -> FTM TxNILFS [String]
-articlesPaperNamesNILFS articles = do
+articlesPaperNames :: (FTK fs (Articles fs),FTK fs (Year fs),FTK fs (Author fs),Forest fs,ForestLayer fs l) => Articles fs -> ForestL fs l [String]
+articlesPaperNames articles = do
 	years <- liftM (Map.elems) $ readData articles
-	liftM concat $ mapM yearPaperNamesNILFS years
+	liftM concat $ mapM yearPaperNames years
 
---yearPaperNamesVar :: Year TxVarFS -> FTM TxVarFS [String]
---yearPaperNamesVar year = do
---	authors <- liftM (Map.elems . authors) $ readData year
---	liftM concat $ mapM authorPaperNamesVar authors
---
---yearPaperNamesIC :: Year TxICFS -> FTM TxICFS [String]
---yearPaperNamesIC year = do
---	authors <- liftM (Map.elems . authors) $ readData year
---	liftM concat $ mapM authorPaperNamesIC authors
-
-yearPaperNamesNILFS :: Year TxNILFS -> FTM TxNILFS [String]
-yearPaperNamesNILFS year = do
+yearPaperNames :: (FTK fs (Year fs),FTK fs (Author fs),Forest fs,ForestLayer fs l) => Year fs -> ForestL fs l [String]
+yearPaperNames year = do
 	authors <- liftM (Map.elems . authors) $ readData year
-	liftM concat $ mapM authorPaperNamesNILFS authors
+	liftM concat $ mapM authorPaperNames authors
 
---authorPaperNamesVar :: Author TxVarFS -> FTM TxVarFS [String]
---authorPaperNamesVar author = liftM (Map.keys . authorPapers) (readData author)
---
---authorPaperNamesIC :: Author TxICFS -> FTM TxICFS [String]
---authorPaperNamesIC author = do
---	liftM (Map.keys . authorPapers) (readData author)
-
-authorPaperNamesNILFS :: Author TxNILFS -> FTM TxNILFS [String]
-authorPaperNamesNILFS author = do
+authorPaperNames :: (FTK fs (Author fs),Forest fs,ForestLayer fs l) => Author fs -> ForestL fs l [String]
+authorPaperNames author = do
 	liftM (Map.keys . authorPapers) (readData author)
 
---addArticleVar :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxVarFS ()
---addArticleVar year author name content = do
---	let path = papersDefaultRoot </> "Articles" </> Pads.printRep year </> Pads.printRep author </> name
---	paper :: Paper TxVarFS <- new (year :*: author) path
---	let paper_md = (cleanFileInfo path,cleanBasePD)
---	writeOrThrow paper (paper_md,content) E.Deadlock
---
---addArticleIC :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxICFS ()
---addArticleIC year author name content = do
---	let path = papersDefaultRoot </> "Articles" </> Pads.printRep year </> Pads.printRep author </> name
---	paper :: Paper TxICFS <- new (year :*: author) path
---	let paper_md = (cleanFileInfo path,cleanBasePD)
---	writeOrThrow paper (paper_md,content) E.Deadlock
-
-addArticleNILFS :: YearId -> AuthorId -> FilePath -> Binary -> FTM TxNILFS ()
-addArticleNILFS year author name content = do
+addArticle :: (Forest fs,Transactional (IncForest fs),FTK fs (Paper fs)) => Proxy fs -> YearId -> AuthorId -> FilePath -> Binary -> FTM fs ()
+addArticle (Proxy::Proxy fs) year author name content = do
 	let path = papersNILFSRoot </> "Articles" </> Pads.printRep year </> Pads.printRep author </> name
-	paper :: Paper TxNILFS <- new (year :*: author) path
+	paper :: Paper fs <- new (year :*: author) path
 	let paper_md = (cleanFileInfo path,cleanBasePD)
 	writeOrThrow paper (paper_md,content) E.Deadlock
 
@@ -187,12 +147,12 @@ mainNILFS = timeIt $ do
 	res <- atomicallyTxNILFS papersNILFSRoot $ do
 		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
 		Just articles2 <- liftM articles $ readData papers2
-		names <- articlesPaperNamesNILFS articles2
+		names <- articlesPaperNames articles2
 	
---		addArticleNILFS (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
+--		addArticle (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
 		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
 		Just articles2 <- liftM articles $ readData papers2
-		names2 <- articlesPaperNamesNILFS articles2
+		names2 <- articlesPaperNames articles2
 		return (names,names2)
 	print res
 
@@ -201,14 +161,14 @@ mainNILFS2 = timeIt $ do
 	names <- atomicallyTxNILFS papersNILFSRoot $ do
 		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
 		Just articles2 <- liftM articles $ readData papers2
-		articlesPaperNamesNILFS articles2
+		articlesPaperNames articles2
 	print names
 	
 	names2 <- atomicallyTxNILFS papersNILFSRoot $ do
-		addArticleNILFS (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
+		addArticle Proxy (Id 2015) (Id "Forest") "forest.pdf" (Binary B.empty)
 		papers2 :: Papers2 TxNILFS <- new () papersNILFSRoot
 		Just articles2 <- liftM articles $ readData papers2
-		articlesPaperNamesNILFS articles2
+		articlesPaperNames articles2
 	print names2
 
 --main = mainNILFS
@@ -220,6 +180,15 @@ mainGen :: IO ()
 mainGen = runIncrementalWithParams (NILFSIncParams nilfsCfg) $ do
 	papers2 :: Papers2 NILFS <- new () papersNILFSRoot
 	topk <- inside $ topkProlificAuthors 3 papers2
+	str <- display topk
+	forestM $ forestIO $ putStrLn str
+	
+	
+	changeFS $ do
+		system $ "cp " ++ show "/media/hpacheco/nilfs/Papers2/Articles/2011/Cunha/2011 Cunha.pdf" ++ " " ++ show "/media/hpacheco/nilfs/Papers2/Articles/2011/Cunha/2 2011 Cunha.pdf" 
+	
+	forestM $ forestIO $ putStrLn "Press ENTER for reloading"
+	forestM $ forestIO $ getLine
 	str <- display topk
 	forestM $ forestIO $ putStrLn str
 

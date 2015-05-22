@@ -679,9 +679,9 @@ This is because our transactional commit phase is implemented in software and pr
 Unfortunately, the POSIX standard does not provide support for directory locks nor mandatory locks as necessary for implementing our locking scheme at the level of the filesystem.
 
 We can provide stronger isolation guarantees if we assume additional control over the filesystem, as common for transactional filesystem implementations.
-For example, we could build TxForest on top of the \emph{extended mandatory locking} support from~\cite{Valor}: providing the ability to lock entire files and directories and featuring a modified set of the standard POSIX system calls that force the kernel to verify if a file operation operation isn't violating a lock on the given file.
+For example, we could build TxForest over the \emph{extended mandatory locking} support from~\cite{Valor}: providing the ability to lock entire files and directories and featuring a modified set of the standard POSIX system calls that force the kernel to verify if a file operation operation isn't violating a lock on the given file.
 
-Another option would be to implement TxForest directly on top of a transactional filesystem, providing native support for logging and validating filesystem modifications.
+Another option would be to implement TxForest directly on top of a transactional filesystem, enjoying native support for logging and validation of filesystem modifications.
 \hugo{Use Hakim's work?}
 
 \section{Evaluation}
@@ -695,10 +695,6 @@ even the Haskell STM is implemented in C
 
 transactional filesystems (user-space vs kernel-space)
 \url{http://www.fuzzy.cz/en/articles/transactional-file-systems}\\
-\url{http://www.fsl.cs.sunysb.edu/docs/valor/valor_fast2009.pdf} cooperate with pre-existing apps that are not transactional; extended mandatory locking. For
-transaction-oblivious processes, each individual
-system call is treated as a transaction; Extended mandatory locking ensures that
-all processes acquire locks before accessing these resources \\
 \url{http://www.fsl.cs.sunysb.edu/docs/amino-tos06/amino.pdf}
 
 libraries for transactional file operations:
