@@ -1,0 +1,23 @@
+ .rte file Subbasin: 2 Monday, March 21, 2011 6:57:24 PM MapWindow - SWAT interface
+9.3638387596228    | CH_W2 : Main channel width [m]
+.304414007785773    | CH_D : Main channel depth [m]
+0.03293296544532192    | CH_S2 : Main channel slope [m/m]
+          2.2057    | CH_L2 : Main channel length [km]
+           0.014    | CH_N2 : Manning's nvalue for main channel
+               0    | CH_K2 : Effective hydraulic conductivity [mm/hr]
+               0    | CH_EROD: Channel erodibility factor
+               0    | CH_COV : Channel cover factor
+28.1225090218438    | CH_WDR : Channel width:depth ratio [m/m]
+               0    | ALPHA_BNK : Baseflow alpha factor for bank storage [days]
+               0    | ICANAL : Code for irrigation canal
+               0    | CH_ONCO : Organic nitrogen concentration in the channel [ppm]
+               0    | CH_OPCO : Organic phosphorus concentration in the channel [ppm]
+               0    | CH_SAN : Fraction of sand in channel bed materials
+               0    | CH_SIL : Fraction of silt in channel bed materials
+               0    | CH_CLA : Fraction of clay in channel bed materials
+               0    | CH_VEG : Vegetative cover factor
+               0    | CH_RCUR :
+               0    | CH_SS : Channel side slope
+               0    | CH_FPR :
+               0    | CH_EQN : Equation for channel routing
+               0    | CH_CRHT : Channel critical height [m]

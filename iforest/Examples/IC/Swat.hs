@@ -38,6 +38,7 @@ ws = REd "[ \t]*" " "
 fileName = REd "[a-zA-Z.0-9]*" "a"
 alphaNum = REd "[a-zA-Z0-9]*" "a"
 uc = REd "[A-Z]+" "A"
+label = REd "[A-Z0-9_]+" "A"
 alpha = REd "[a-zA-Z]*" "a"
 
 trim :: String -> String
@@ -50,20 +51,24 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
 --       input error, or something I should take into account?
 [ipads|
        data NumEntry = NumEntry {
-             ws
+             numJunkWS :: StringME ws
            , numVal :: Double
-           , ws, "|", ws
-           , numTag :: StringME uc
-           , ws, ":", ws
+           , numJunkWS2 :: StringME ws, "|" 
+           , numJunkWS3 :: StringME ws
+           , numTag :: StringME label
+           , numJunkWS4 :: StringME ws, ":" 
+           , numJunkWS5 :: StringME ws
            , numDesc :: StringLn
            } 
 
        data StrEntry = StrEntry {
-             ws
+             strWS :: StringME ws
            , strVal :: StringME fileName
-           , ws, "|", ws
-           , strTag :: StringME uc
-           , ws, ":", ws
+           , strWS2 :: StringME ws, "|"
+           , strWS3 :: StringME ws
+           , strTag :: StringME label
+           , strWS4 :: StringME ws, ":"
+           , strWS5 :: StringME ws
            , strDesc :: StringLn
            }
            
@@ -76,7 +81,8 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
            , c :: Line StringLn
            , swatLines :: SwatLines
            }
-       type CIO = (Preamble, EOF)
+       type CIO_unix = (Preamble, EOF)
+       type CIO = partition CIO_unix using windows
 
        data SubComm = SubComm {
              "subbasin", Line StringLn, ws
@@ -104,7 +110,8 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
 
        data FigLine = Sub SubComm | Route RouteComm | Add AddComm | SaveConc SaveConcComm | Finish FinishComm
        type FigLines = [Line FigLine] terminator EOF
-       data FIG = FIG {figLines :: FigLines}
+       data FIG_unix = FIG {figLines :: FigLines}
+       type FIG = partition FIG_unix using windows
 
        data HruFiles = HruFiles {
              hruFile :: [Char] length 13
@@ -119,10 +126,11 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
 
         type SubLines = [Line SwatLine] terminator ("HRU: General", EOR)
         type HruLines = [Line HruFiles] terminator EOF
-        data SUB = SUB {
+        data SUB_unix = SUB {
               subLines :: SubLines
             , hruLines :: HruLines
             }
+        type SUB = partition SUB_unix using windows
 
         type HeaderLine = (alphaNum, ws, Double)
         data PcpLine = PcpLine {
@@ -133,11 +141,12 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
 
         type PcpLines = [(PcpLine, EOR)] terminator EOF
 
-        data PCP = PCP {
+        data PCP_unix = PCP {
               Line StringLn
             , [Line HeaderLine] length 3
             , pcpLines :: PcpLines
             }
+        type PCP = partition PCP_unix using windows
 
         data TmpLine = TmpLine {
               tmpYear :: [Char] length 4
@@ -147,11 +156,12 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
             }
 
         type TmpLines = [(TmpLine, EOR)] terminator EOF
-        data TMP = TMP {
+        data TMP_unix = TMP {
               Line StringLn
             , [Line HeaderLine] length 3
             , tmpLines :: TmpLines
             }
+        type TMP = partition TMP_unix using windows
 
         type WSDouble = (ws, Double)
         type LabelDouble = ([Char] length 10, ws, "=", ws, Double)
@@ -163,7 +173,8 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
             , PLine2
             }
         type PlantLines = [Line PEntry] terminator EOF
-        data PLANT = PLANT {plantLines :: PlantLines}
+        data PLANT_unix = PLANT {plantLines :: PlantLines}
+        type PLANT = partition PLANT_unix using windows
 
         data TillLine = TillLine {
               ws, Int, ws
@@ -172,44 +183,49 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
             , tillDepth :: Double, ws
             , Double}
         type TillLines = [Line TillLine] terminator EOF
-        data TILL = TILL {tillLines :: TillLines}
+        data TILL_unix = TILL {tillLines :: TillLines}
+        type TILL = partition TILL_unix using windows
 
         type ULine2 = [WSDouble] length 8
         data ULine1 = Uline1 {ws, Int, ws, urbanLabel :: StringME uc 
                            , [Char] length 56, WSDouble, WSDouble, EOR}
         type UrbanLine = (ULine1, ULine2)
         type UrbanLines = [Line UrbanLine] terminator EOF
-        data URBAN = URBAN {urbanLines :: UrbanLines}
+        data URBAN_unix = URBAN {urbanLines :: UrbanLines}
+        type URBAN = partition URBAN_unix using windows
 
         type WusLine = [WSDouble] length 6
         type WusLines = [Line WusLine] terminator EOF
-        data WUS = WUS {
+        data WUS_unix = WUS {
               [Line StringLn] length 3
             , wusLines :: WusLines
             }
+        type WUS = partition WUS_unix using windows
 
         type WGNLine = [WSDouble] length 12
         type WGNLatLong = [LabelDouble] length 2
         type WGNLines = [Line WGNLine] terminator EOF
-        data WGN = WGN {
+        data WGN_unix = WGN {
               Line StringLn
             , wgnLatLong :: Line WGNLatLong
             , wgnElev :: Line LabelDouble
             , wgnRain :: Line LabelDouble
             , wgnLines :: WGNLines
             }
+        type WGN = partition WGN_unix using windows
 
         type ColonLabel = [Char] terminator ":"
         type CLine1 = [WSDouble] length 10
         type CHMLine = (ColonLabel, CLine1)
-        type CHMEndLine = [WSDouble] length 3
+        type CHMEndLine = [WSDouble] length 4
         type CHMEndLines = [Line CHMEndLine] terminator EOF
-        data CHM = CHM {
+        data CHM_unix = CHM {
               [Line StringLn] length 2
-            , chmData :: [Line CHMLine] length 6
-            , [Line StringLn] length 3
+            , chmData :: [Line CHMLine] length 5
+            , [Line StringLn] length 4
             , chmPestData :: CHMEndLines
             }
+        type CHM = partition CHM_unix using windows
 
         data DateFloatLine = DateFloatLine {
               year :: [Char] length 4
@@ -218,10 +234,11 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
             }
 
         type DateFloatLines = [Line DateFloatLine] terminator EOF
-        data DateFloatFile = DateFloatFile {
+        data DateFloatFile_unix = DateFloatFile {
               Line StringLn
             , dateFloatLines :: DateFloatLines
             }
+        type DateFloatFile = partition DateFloatFile_unix using windows
 
         data PestLine = PestLine {
               pestNum :: [Char] length 3
@@ -234,7 +251,8 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
             , pestWSOL :: [Char] length 11
             }
         type PestLines = [Line PestLine] terminator EOF
-        data PEST = PEST {pestLines :: PestLines}
+        data PEST_unix = PEST {pestLines :: PestLines}
+        type PEST = partition PEST_unix using windows
 
         data FertLine = FertLine {
               fertNum :: [Char] length 4, " "
@@ -249,19 +267,21 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
             , bactPart :: [Char] length 10
             }
         type FertLines = [Line FertLine] terminator EOF
-        data FERT = FERT {fertLines :: FertLines}
+        data FERT_unix = FERT {fertLines :: FertLines}
+        type FERT = partition FERT_unix using windows
                  
         type SolLineDesc = [Char] terminator ":"
         type SolLineTopStr = (SolLineDesc,  ws, StringLn)
         type SolLineTopVal = (SolLineDesc, ws, Double)
         type SolLineBot = (SolLineDesc, WSDouble, WSDouble)
-        data SOL = SOL {
+        data SOL_unix = SOL {
               Line StringLn
             , solDesc :: [Line SolLineTopStr] length 2
             , solVals :: [Line SolLineTopVal] length 3
             , Line StringLn
             , solBotVals :: [Line SolLineBot] length 14
             }
+        type SOL = partition SOL_unix using windows
 
         type SLR = DateFloatFile
         type WND = DateFloatFile
@@ -276,61 +296,64 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
         type PND = SwatFile
  |]
 
+testBSN :: IO (BSN, BSN_md)
+testBSN = parseFile "/home/vagrant/forest/forest/Examples/IC/bolo_arriba/basins.bsn"
 
-dir = "/home/richard/Documents/forest/TxtInOut/"
-dir2 = "fig.fig"
 
-testSOL :: IO (SOL, SOL_md)
-testSOL = parseFile (dir ++ "000050001.sol")
+--dir = "/home/richard/Documents/forest/TxtInOut/"
+--dir2 = "fig.fig"
 
-testSOL_md = liftM snd testSOL
+--testSOL :: IO (SOL, SOL_md)
+--testSOL = parseFile (dir ++ "000050001.sol")
 
-testCHM :: IO (CHM, CHM_md)
-testCHM = parseFile (dir ++ "000050001.chm")
+--testSOL_md = liftM snd testSOL
 
-testCHM_md = liftM snd testCHM
+--testCHM :: IO (CHM, CHM_md)
+--testCHM = parseFile (dir ++ "000050001.chm")
 
-testWGN :: IO (WGN, WGN_md)
-testWGN = parseFile (dir ++ "000050000.wgn")
+--testCHM_md = liftM snd testCHM
 
-testwgn_md = liftM snd testWGN
+--testWGN :: IO (WGN, WGN_md)
+--testWGN = parseFile (dir ++ "000050000.wgn")
 
-testWus :: IO (WUS, WUS_md)
-testWus = parseFile (dir ++ "000050000.wus")
+--testwgn_md = liftM snd testWGN
 
-testwus_md = liftM snd testWus
+--testWus :: IO (WUS, WUS_md)
+--testWus = parseFile (dir ++ "000050000.wus")
 
-testurban :: IO (URBAN, URBAN_md)
-testurban = parseFile (dir ++ "urban.dat")
+--testwus_md = liftM snd testWus
 
-testurban_md = liftM snd testurban
+--testurban :: IO (URBAN, URBAN_md)
+--testurban = parseFile (dir ++ "urban.dat")
 
-testtill :: IO (TILL, TILL_md)
-testtill = parseFile (dir ++ "till.dat")
+--testurban_md = liftM snd testurban
 
-testtill_md = liftM snd testtill
+--testtill :: IO (TILL, TILL_md)
+--testtill = parseFile (dir ++ "till.dat")
 
-testpcp :: IO (PCP, PCP_md)
-testpcp = parseFile (dir ++ "pcp1.pcp")
+--testtill_md = liftM snd testtill
 
-testpcp_rep = liftM fst testpcp
-testpcp_md = liftM snd testpcp
+--testpcp :: IO (PCP, PCP_md)
+--testpcp = parseFile (dir ++ "pcp1.pcp")
 
-testtmp :: IO (TMP, TMP_md)
-testtmp = parseFile (dir ++ "tmp.tmp")
+--testpcp_rep = liftM fst testpcp
+--testpcp_md = liftM snd testpcp
 
-testtmp_md = liftM snd testtmp
+--testtmp :: IO (TMP, TMP_md)
+--testtmp = parseFile (dir ++ "tmp.tmp")
 
-testplant :: IO (PLANT, PLANT_md)
-testplant = parseFile (dir ++ "plant.dat")
+--testtmp_md = liftM snd testtmp
 
-testplant_md = liftM snd testplant
+--testplant :: IO (PLANT, PLANT_md)
+--testplant = parseFile (dir ++ "plant.dat")
 
-test :: FilePath -> IO (FIG, FIG_md)
-test = parseFile
+--testplant_md = liftM snd testplant
 
-test_rep = liftM fst . test
-test_md = liftM snd . test
+--test :: FilePath -> IO (FIG, FIG_md)
+--test = parseFile
+
+--test_rep = liftM fst . test
+--test_md = liftM snd . test
 
 isEntry :: SwatLine -> Bool
 isEntry (SwatLine l) = False
@@ -590,3 +613,93 @@ validSwat (swat_md, swat) = do
 		&& (chmValid chm (map (hruLines . snd) sub))
 		&& (gwValid gw (map (hruLines . snd) sub))
 		&& (septValid sep (map (hruLines . snd) sub)))
+
+rootDir = "."
+optDir = rootDir </> "Examples/IC/bolo_arriba"
+
+type Interval = (Double, Double)
+type OptFunc = Double -> Double -> Double -> Double
+
+getVar1 :: SwatLines -> Double
+getVar1 lines =
+  case lines !! 3 of
+    SwatDouble d -> numVal d
+    _ -> 0
+
+getVar2 :: SwatLines -> Double
+getVar2 lines =
+  case lines !! 6 of
+    SwatDouble d -> numVal d
+    _ -> 0
+
+getVar3 :: SwatLines -> Double
+getVar3 lines =
+  case lines !! 7 of
+    SwatDouble d -> numVal d
+    _ -> 0
+
+setVar1 :: SwatLines -> Double -> SwatLines
+setVar1 lines newDouble =
+  let start = take 3 lines in
+  let end = drop 4 lines in
+  case lines !! 3 of
+    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
+    x -> lines
+
+setVar2 :: SwatLines -> Double -> SwatLines
+setVar2 lines newDouble =
+  let start = take 6 lines in
+  let end = drop 7 lines in
+  case lines !! 7 of
+    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
+    x -> lines
+
+setVar3 :: SwatLines -> Double -> SwatLines
+setVar3 lines newDouble =
+  let start = take 7 lines in
+  let end = drop 8 lines in
+  case lines !! 8 of
+    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
+    x -> lines
+
+checkOne :: OptFunc -> Double -> Double -> Double -> IO ()
+checkOne f x y z = do
+  shouldUpdate <- atomically $ do
+    (rep :: Swat_d TxVarFS) <- new () optDir
+    (main_fmd, dir) <- read rep
+    ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
+    let v1 = getVar1 bsnVals
+    let v2 = getVar2 bsnVals
+    let v3 = getVar3 bsnVals
+    return $ (f x y z) > (f v1 v2 v3)
+  case shouldUpdate of
+    True -> do
+      status <- atomically $ do
+        (rep :: Swat_d TxVarFS) <- new () optDir
+        (main_fmd, dir) <- read rep
+        ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
+        let v1 = getVar1 bsnVals
+        let v2 = getVar2 bsnVals
+        let v3 = getVar3 bsnVals
+        let updated = setVar3 (setVar2 (setVar1 bsnVals x) y) z
+        case (f x y z) > (f v1 v2 v3) of
+          True -> do
+            _ <- writeOrElse (bsn dir) ((file1_fmd, file1_md), SwatFile updated) ("") (return . show)
+            return "updated"
+          False -> return "not updated"
+      putStrLn status
+    False -> putStrLn "not updated"
+
+getBest :: OptFunc -> Interval -> Interval -> Interval -> IO ()
+getBest f i1 i2 i3 =
+  let ((l1, h1), (l2, h2), (l3, h3)) = (i1, i2, i3) in
+  let trips = [(i, j, k) | i <- [l1..h1], j <- [l2..h2], k <- [l3..h3]] in
+  do
+    _ <- mapM_ (\(x,y,z) -> forkIO $ checkOne f x y z) trips
+    return ()
+
+test = getBest (\x y z -> x + y - z) (1,5) (1,5) (1,5)
+
+getErrors = atomically $ do
+  (rep :: Swat_d TxVarFS) <- new () optDir
+  read rep
