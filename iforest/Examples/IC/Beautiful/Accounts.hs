@@ -32,6 +32,8 @@ import Language.Forest.IC hiding (writeFile)
 import Data.Map as Map
 import Data.WithClass.MGenerics
 
+-- * Specification
+
 [ipads|
 	data AccInfo = AccInfo { accBalance :: Int }
 |]
@@ -46,61 +48,68 @@ import Data.WithClass.MGenerics
 	data Account = File AccInfo
 |]
 
-main = race_ (forever $ atomically $ balance "nate") (forever $ atomically $ withdraw "nate" 200)
+-- * Manipulation functions
 
-bankClient :: String -> FTM TxVarFS (Client TxVarFS)
 bankClient clientid = do
-	bank :: Bank TxVarFS <- new () "."
-	Bank_inner clients <- readData bank
-	return (clients!clientid)
+	bank :: Bank TxVarFS <- new () "bank"
+	liftM ((!clientid) . clients) (readData bank)
 
 balance :: String -> FTM TxVarFS Int
-balance clientid = do
-	client <- bankClient clientid
-	totalBalance client
+balance clientid = bankClient clientid >>= gbalance
 	
 withdraw :: String -> Int -> FTM TxVarFS ()
 withdraw clientid amount = do
 	client <- bankClient clientid
-	client_info <- readData client
-	let clientSavings = savings client_info
-	let clientChecking = checking client_info
-	totalChecking <- totalBalance clientChecking
-	unless (totalChecking >= amount) $ transferMany clientSavings clientChecking (amount - totalChecking)
-	withdrawMany clientChecking amount
+	c <- readData client
+	totalChecking <- gbalance (checking c)
+	unless (totalChecking >= amount) $ transferMany (savings c) (checking c) (amount - totalChecking)
+	withdrawMany (checking c) amount
 
--- transfers money from savings to checking accounts, for a given minimal amount
-transferMany :: Accounts TxVarFS -> Accounts TxVarFS -> Int -> FTM TxVarFS ()
+-- transfers money from savings accounts to the first checking account, for a given minimal amount; moves savings balance in its entirety
 transferMany savings checking amount = do
-	savings_info <- readData savings
-	checking_info <- readData checking
-	let checkingAcc = snd $ findMin checking_info
-	go (Map.elems savings_info) checkingAcc amount
+	ss <- readData savings
+	cs <- readData checking
+	go (Map.elems ss) (snd $ findMin cs) amount
   where
 	go [] c a = return ()
 	go (s:ss) c a = when (a > 0) $ do
-		s_balance <- liftM accBalance (readData s)
+		(s_md,s_d) <- read s
+		let s_balance = accBalance s_d
+		writeOrError s (s_md,s_d { accBalance = 0 }) ""
 		(c_md,c_d) <- read c
-		writeOrRetry c (c_md,c_d { accBalance = accBalance c_d + s_balance }) ()
+		writeOrError c (c_md,c_d { accBalance = accBalance c_d + s_balance }) ""
 		go ss c (a-s_balance)
 
 -- withdraws money from a series of accounts
-withdrawMany :: Accounts TxVarFS -> Int -> FTM TxVarFS ()
 withdrawMany accounts amount = do
-	accs_info <- readData accounts
-	go (Map.elems accs_info) amount
+	as <- readData accounts
+	go (Map.elems as) amount
   where
 	go [] i = unless (i == 0) $ error "not enough funds"
 	go (a:as) i = when (i >= 0) $ do
 		(a_md,a_d) <- read a
 		if (accBalance a_d >= i)
-			then writeOrRetry a (a_md,a_d { accBalance = accBalance a_d - i }) ()
-			else writeOrRetry a (a_md,a_d { accBalance = 0 }) () >> go as (i - accBalance a_d)
+			then writeOrError a (a_md,a_d { accBalance = accBalance a_d - i }) ""
+			else writeOrError a (a_md,a_d { accBalance = 0 }) "" >> go as (i - accBalance a_d)
 		
+gbalance :: (MData NoCtx (l inc) a) => a -> l inc Int
+gbalance = everything proxyNoCtx (\x y -> return (x+y)) (mkQ 0 (return . accBalance))
 
-totalBalance :: (MData NoCtx (l inc) a) => a -> l inc Int
-totalBalance = everything proxyNoCtx
-	(\x y -> return (x+y))
-	(mkQ 0 (return . accBalance))
+-- * Threads
 
+main = race_
+	(forever $ putStrLn "balance" >> atomically (balance "nate") >>= print)
+	(forever $ putStrLn "withdraw" >> threadDelay 100 >> atomically (withdraw "nate" 200))
 
+-- * Data Generation
+
+genBank = do
+	createDirectoryIfMissing True "bank"
+	createDirectoryIfMissing True "bank/nate"
+	createDirectoryIfMissing True "bank/nate/savings"
+	writeFile "bank/nate/savings/s1.acc" "5000"
+	writeFile "bank/nate/savings/s2.acc" "5000"
+	createDirectoryIfMissing True "bank/nate/checking"
+	writeFile "bank/nate/checking/c1.acc" "500"
+	writeFile "bank/nate/checking/c2.acc" "500"
+	

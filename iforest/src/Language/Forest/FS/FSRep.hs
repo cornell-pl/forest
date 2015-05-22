@@ -1,4 +1,4 @@
-{-# LANGUAGE EmptyDataDecls, DoAndIfThenElse, OverlappingInstances, TypeOperators, FunctionalDependencies, UndecidableInstances, ConstraintKinds,ScopedTypeVariables, TemplateHaskell, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, EmptyDataDecls, DoAndIfThenElse, OverlappingInstances, TypeOperators, FunctionalDependencies, UndecidableInstances, ConstraintKinds,ScopedTypeVariables, TemplateHaskell, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
 
 -- A module for filesystem-specific operations
 
@@ -47,7 +47,12 @@ import Language.Haskell.TH.Syntax hiding (Loc(..))
 
 import Debug.Trace
 
+#ifdef DEBUG
 debug str = trace str
+#endif
+#ifndef DEBUG
+debug str = id
+#endif
 
 ---------------------------------------------------------------
 

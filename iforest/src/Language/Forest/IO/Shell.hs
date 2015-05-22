@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, ViewPatterns #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, ViewPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
@@ -21,6 +21,7 @@ import Control.Monad.Incremental.Draw
 import Control.Concurrent
 import Data.UUID
 import Data.UUID.V1
+import System.IO.Silently
 
 -- gets the physical device on which a path is mounted (linux-specific)
 pathDevice :: String -> IO String
@@ -38,21 +39,22 @@ devicePathMay device = liftM (headMay . words) $ runShellCommand $ "mount | egre
 
 -- mounts the avfs filesystem that allows to look inside compressed files via a virtual filesystem mount at root ~/.avfs without extracting them
 mountAVFS :: IO ExitCode
-mountAVFS = runShellCommand_ "mountavfs"
+mountAVFS = silentShellCommand_ "mountavfs"
 
 unmountAVFS :: IO ExitCode
-unmountAVFS = runShellCommand_ "umountavfs"
+unmountAVFS = silentShellCommand_ "umountavfs"
 
--- runs an arbitrary command and returns the stdout
---runShellCommand :: String -> IO String
---runShellCommand cmd = do
---	tempDir <- getTemporaryDirectory
---	(fp,handle) <- openTempFile tempDir "ForestResultFile"
---	system $ cmd ++ " > ForestResultFile"
---	result <- hGetContents handle
---	hClose handle
---	removeFile fp
---	return result
+silently :: IO a -> IO a
+#ifdef DEBUG
+silently = id
+#endif
+#ifndef DEBUG
+silently = hSilence [stdout,stderr]
+#endif
+
+silentShellCommand_ :: String -> IO ExitCode
+silentShellCommand_ cmd = runShellCommand_ cmd
+
 
 sudoShellCommand :: String -> IO String
 sudoShellCommand cmd = runShellCommand $ "sudo "++cmd
@@ -61,11 +63,17 @@ sudoShellCommand_ :: String -> IO ExitCode
 sudoShellCommand_ cmd = runShellCommand_ $ "sudo "++cmd
 
 runShellCommand_ :: String -> IO ExitCode
-runShellCommand_ cmd = putStrLn ("Running command: "++show cmd) >> system cmd
+runShellCommand_ cmd = do
+#ifdef DEBUG
+	putStrLn ("Running command: "++show cmd)
+#endif
+	system cmd
 
 runShellCommand :: String -> IO String
 runShellCommand cmd = do
+#ifdef DEBUG
 	putStrLn ("Running command: "++ cmd)
+#endif
 	let process = (shell cmd) { std_out = CreatePipe }
 	(_,Just hout,_,ph) <- createProcess process
 	result <- hGetContents hout

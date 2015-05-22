@@ -1,4 +1,4 @@
-{-# LANGUAGE EmptyDataDecls, DoAndIfThenElse, OverlappingInstances, TypeOperators, FunctionalDependencies, UndecidableInstances, ConstraintKinds,ScopedTypeVariables, TemplateHaskell, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, EmptyDataDecls, DoAndIfThenElse, OverlappingInstances, TypeOperators, FunctionalDependencies, UndecidableInstances, ConstraintKinds,ScopedTypeVariables, TemplateHaskell, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable #-}
 
 -- A module for incremental computation support
 
@@ -46,12 +46,23 @@ import Control.Monad.Incremental.Generics
 import Language.Forest.FS.FSDelta
 import Data.Word
 import Data.Time.Clock
+import Control.Monad.IO.Class
 
 import Data.DeepTypeable
 import Data.WithClass.Derive.DeepTypeable
 import Language.Haskell.TH.Syntax hiding (Loc(..))
 import Language.Forest.FS.FSRep
 
+debugForestL :: (ICRep fs,ForestLayer fs l) => String -> l (IncForest fs) ()
+debugIO :: MonadIO m => String -> m ()
+#ifdef DEBUG
+debugForestL str = forestM $ forestIO $ putStrLn str
+debugIO str = liftIO $ putStrLn str
+#endif
+#ifndef DEBUG
+debugForestL str = return ()
+debugIO str = return ()
+#endif
 
 -- forest argument pairs
 fstStar (a :*: b) = a

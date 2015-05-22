@@ -1,5 +1,5 @@
 
-{-# LANGUAGE TemplateHaskell, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, TemplateHaskell, TypeOperators, ConstraintKinds, UndecidableInstances, TupleSections, FlexibleInstances, MultiParamTypeClasses, StandaloneDeriving, GeneralizedNewtypeDeriving, FlexibleContexts, DataKinds, TypeFamilies, Rank2Types, GADTs, ViewPatterns, DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- Regular filesystem with optimistic concurrency support for transactions, with mutable transactional variables structures mapped to specifications, and no incrementality
 
@@ -19,6 +19,7 @@ import Language.Forest.IC.Default
 import Control.Monad.Catch
 import Control.Concurrent
 import System.Cmd
+import Control.Monad.IO.Class
 import System.Mem.Weak.Exts as Weak
 import Control.Exception as Exception
 import qualified Data.Strict.List as Strict
@@ -342,7 +343,7 @@ instance ZippedICMemo TxVarFS where
 
 	addZippedMemo path args rep _ = forestM $ forestIO $ do
 		let (TxVarFSThunk (dyn,_,_)) = to (iso_rep_thunk proxyTxVarFS) rep
-		putStrLn $ "adding args " ++ show (typeOf rep) ++ " " ++ show (typeOf args)
+		debugIO $ "adding args " ++ show (typeOf rep) ++ " " ++ show (typeOf args)
 		writeIORef dyn (toDyn args,path)
 		
 	findZippedMemo path rep = return Nothing
@@ -403,6 +404,7 @@ instance (ForestLayer TxVarFS l) => ForestInput TxVarFS FSThunk l where
 	fsSet tree (TxVarFSThunk (rdyn,m,tbl)) v = do
 		fsversion <- forestM getFSVersionTxVarFS -- sets the new value at the latest fs version
 		forestM $ forestIO $ WeakMap.insertWithMkWeak tbl (MkWeak $ Weak.mkWeakRefKey rdyn) fsversion v
+	fsTree var = return $ TxVarFSTree
 
 -- ** Transactions
 
@@ -501,14 +503,12 @@ writeOrElseTxVarFS' (rep::rep) var b f = do
 	case mb of
 		Nothing -> rollback [ConflictingArguments] -- the top-level arguments of a variable don't match the spec
 		Just (args,path) -> do
---			str <- showInc rep
---			forestM $ forestIO $ putStrLn $ "mani  " ++ show str
 			(mani,_,memos) <- RWS.runRWST (zmanifest args path rep) True ()
 			-- we need to store the changes to the (buffered) FS before validating
 			forestM $ storeManifest mani
 			
-			forestM $ forestIO $ putStrLn "Manifest!"
-			forestM $ forestIO $ print mani
+			debugForestL "Manifest!"
+			debugForestL $ show mani
 			errors <- forestM $ manifestErrors mani
 			if List.null errors
 				then forestM latestTree >>= memos >> return b
@@ -574,7 +574,7 @@ catchTxVarFS doWrites stm (h :: e -> TxVarFTM a) = txVarFSLayer proxyOutside ((u
 initializeTxVarFS :: TxVarFTM b -> IO b 
 initializeTxVarFS (TxVarFSForestO m) = do
 	starttime <- startTxVarFS >>= newIORef
-	mountAVFS -- should succeed even if AVFS is already mounted
+	--mountAVFS -- should succeed even if AVFS is already mounted
 	fsversion <- newUnique
 	txlog <- newIORef (fsversion,(Set.empty,emptyFSTreeDelta),Set.empty)
 	debug ("initializeTxVarFS") $ Reader.runReaderT m (starttime,fsversion,Strict.Cons txlog Strict.Nil)
@@ -731,7 +731,7 @@ checkTxVarFS txlog wrts = liftM List.and $ Prelude.mapM (checkTxVarFS' txlog) wr
 	checkTxVarFS' txlog (txtime,paths) = do
 		(starttime_ref,startversion,Strict.Cons txlog _) <- TxVarFSForestM Reader.ask
 		starttime <- forestIO $ readIORef starttime_ref
-		forestIO $ putStrLn $ "checking " ++ show starttime ++ " against " ++ show txtime
+		forestIO $ debugIO $ "checking " ++ show starttime ++ " against " ++ show txtime
 		Foldable.foldrM (\path b -> liftM (b &&) $ checkTxVarFSWrite txlog path) True paths
 	checkTxVarFSWrite txlog path = do
 		-- we only check for write-read conflicts
@@ -810,15 +810,20 @@ atomicTxVarFS msg m = do
 	-- get the changes of the innermost txlog
 	(reads,writes) <- forestM getTxVarFSChangesFlat
 	-- wait on currently acquired read locks (to ensure that concurrent writes are seen by this tx's validation step)
-	forestM $ forestIO $ print $ "entering atomic " ++ msg
-	x <- txVarFSLayer proxyOutside $ withFileLocks reads writes $ unTxVarFSLayer proxyOutside $ forestM (forestIO $ print $ "entered atomic " ++ msg) >> m
-	forestM $ forestIO $ print $ "left atomic " ++ msg
+	debugForestL $ "entering atomic " ++ msg
+	x <- txVarFSLayer proxyOutside $ withFileLocks reads writes $ unTxVarFSLayer proxyOutside $ debugForestL ("entered atomic " ++ msg) >> m
+	debugForestL $ "left atomic " ++ msg
 	return x
 
 debugChanges :: String -> TxVarFTM a -> TxVarFTM a
+#ifdef DEBUG
 debugChanges str m = do
 	r <- m
 	(starttime,startversion,Strict.Cons txlog _) <- txVarFSLayer Proxy $ Reader.ask
 	(fsversion,(reads,writes),tmps) <- forestM $ forestIO $ readRef txlog
-	forestM $ forestIO $ putStrLn $ show fsversion ++ " changes!! "++ str ++ " "++ show reads ++ "\n" ++ show writes
+	debugForestL $ show fsversion ++ " changes!! "++ str ++ " "++ show reads ++ "\n" ++ show writes
 	return r
+#endif
+#ifndef DEBUG
+debugChanges str m = m
+#endif

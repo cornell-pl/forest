@@ -985,6 +985,7 @@ instance ForestInput TxNILFS FSThunk Inside where
 	fsOverwrite tree (var :: ForestFSThunk TxNILFS Inside a) mv = do
 		(thunk :: TxNILFSThunk Inside a) <- forestM $ bufferedTxNILFSFSThunk var
 		overwriteTxNILFSThunk tree thunk mv
+	fsTree = treeTxNILFSFSThunk
 instance ForestInput TxNILFS FSThunk Outside where
 	fsRef tree c = fsThunk tree (return c)
 	fsThunk tree m = do
@@ -1003,7 +1004,7 @@ instance ForestInput TxNILFS FSThunk Outside where
 	fsOverwrite tree (var :: ForestFSThunk TxNILFS Outside a) mv = do
 		(thunk :: TxNILFSThunk Outside a) <- forestM $ bufferedTxNILFSFSThunk var
 		overwriteTxNILFSThunk tree thunk mv
-
+	fsTree = treeTxNILFSFSThunk
 -- ** Transactions
 
 -- the Forest transactional monad

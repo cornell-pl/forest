@@ -180,6 +180,9 @@ writeOrShow t v = writeOrElse t v "" (return . show)
 writeOrThrow :: (MonadThrow (Outside (IncForest fs)),Display Outside (IncForest fs) rep,Forest fs,FTK fs rep,Exception e) => rep -> ForestContentTy fs (ForestRepTy fs rep) -> e -> FTM fs ()
 writeOrThrow t v e = writeOrElse t v () (Prelude.const $ throw e)
 
+writeOrError :: (MonadThrow (Outside (IncForest fs)),Display Outside (IncForest fs) rep,Forest fs,FTK fs rep) => rep -> ForestContentTy fs (ForestRepTy fs rep) -> String -> FTM fs ()
+writeOrError t v e = writeOrElse t v () (Prelude.const $ error e)
+
 -- * Data/Metadata only functions
 -- we don't provide data/metadata only write functions because writeData >> writeMeta would not be the same as write, thus misleading.
 

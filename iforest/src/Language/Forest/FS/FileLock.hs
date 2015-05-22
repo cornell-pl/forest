@@ -87,9 +87,11 @@ fileLock isWrite path mlcks = fileLock' (Strict.fst fileLocks) "" (splitDirector
 acquireFileLocks :: Map FilePath (Lock :!: Bool) -> IO ([Lock],[Lock])
 acquireFileLocks lcks = Map.foldr acquireFileLock (return ([],[])) lcks
 	where
-	acquireFileLock (lck :!: isWrite) m = if isWrite
-		then liftM (\(waiting,acquired) -> (waiting,lck:acquired)) m
-		else liftM (\(waiting,acquired) -> (lck:waiting,acquired)) m
+	acquireFileLock (lck :!: isWrite) m = do
+		Lock.acquire lck
+		if isWrite
+			then liftM (\(waiting,acquired) -> (waiting,lck : acquired)) m
+			else liftM (\(waiting,acquired) -> (lck : waiting,acquired)) m
 
 -- acquisition is done in sorted order of filepaths
 withFileLocks :: (MonadIO m,MonadMask m) => Set FilePath -> Set FilePath -> m a -> m a
