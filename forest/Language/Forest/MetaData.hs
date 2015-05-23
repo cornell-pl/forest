@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables, DoAndIfThenElse,
+{-# LANGUAGE CPP, NamedFieldPuns, RecordWildCards, FlexibleInstances, DeriveDataTypeable, TemplateHaskell,ScopedTypeVariables, DoAndIfThenElse,
     TypeSynonymInstances #-}
 {-
 ** *********************************************************************
@@ -33,6 +33,7 @@
 
 module Language.Forest.MetaData where
 
+import Control.Monad.IO.Class
 import System.Posix.Files
 import System.Posix.User
 import System.Posix.Types
@@ -493,19 +494,25 @@ getFiles' path = do
 
 doShellCmd :: String -> IO String
 doShellCmd cmd = do 
-  { -- print "Executing cmd: "
---  ; print cmd
---  ; print "\n"
-  ; (_, Just hout, _, ph) <-
-       createProcess (shell cmd){ std_out = CreatePipe }
-  ; isEof <- hIsEOF hout
-  ; if isEof 
-    then do { waitForProcess ph
-            ; return ""
-            }
-    else do { result <- hGetLine hout
-            ; hClose hout
-            ; waitForProcess ph
-            ; return result
-            }
-  }
+	debugIO $ "Executing cmd: " ++ cmd
+	(_, Just hout, _, ph) <- createProcess (shell cmd){ std_out = CreatePipe }
+	isEof <- hIsEOF hout
+	if isEof 
+		then do
+			waitForProcess ph
+			return ""
+	else do
+		result <- hGetLine hout
+		hClose hout
+		waitForProcess ph
+		return result
+
+debugIO :: MonadIO m => String -> m ()
+#ifdef DEBUG
+debugIO str = putStrLn str
+#endif
+#ifndef DEBUG
+debugIO str = return ()
+#endif
+
+

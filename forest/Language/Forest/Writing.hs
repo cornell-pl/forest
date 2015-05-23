@@ -269,77 +269,71 @@ getClipPathFromTarManifest manifest scratchDir =
       
 getTempForestManifestDirectory :: IO FilePath
 getTempForestManifestDirectory = do 
-  { tempDir <- getTempForestDirectory 
-  ; let forestManifestDir = combine tempDir "Manifests"
-  ; createDirectoryIfMissing False forestManifestDir
---  ; (suffix :: Int) <- randomIO
---  ; let fp = "Manifest_"  ++ (show suffix)
-  ; (fp, handle) <- openTempFile forestManifestDir "Manifest"
-  ; hClose handle
-  ; system ("rm -f " ++ fp)
-  ; print ("temp directory name is: " ++ fp)
-  ; createDirectoryIfMissing False fp
-  ; return fp
-  }
+	tempDir <- getTempForestDirectory 
+	let forestManifestDir = combine tempDir "Manifests"
+	createDirectoryIfMissing False forestManifestDir
+--	(suffix :: Int) <- randomIO
+--	let fp = "Manifest_"  ++ (show suffix)
+	(fp, handle) <- openTempFile forestManifestDir "Manifest"
+	hClose handle
+	system ("rm -f " ++ fp)
+	debugIO ("temp directory name is: " ++ fp)
+	createDirectoryIfMissing False fp
+	return fp
+	
 
 
 getTempForestListDirectory :: IO FilePath
 getTempForestListDirectory = do 
-  { tempDir <- getTempForestDirectory 
-  ; let forestManifestDir = combine tempDir "Lists"
-  ; createDirectoryIfMissing False forestManifestDir
-  ; (fp, handle) <- openTempFile forestManifestDir "List"
-  ; hClose handle
-  ; system ("rm -f " ++ fp)
-  ; print ("temp list directory name is: " ++ fp)
-  ; createDirectoryIfMissing False fp
-  ; return fp
-  }
+	tempDir <- getTempForestDirectory 
+	let forestManifestDir = combine tempDir "Lists"
+	createDirectoryIfMissing False forestManifestDir
+	(fp, handle) <- openTempFile forestManifestDir "List"
+	hClose handle
+	system ("rm -f " ++ fp)
+	debugIO ("temp list directory name is: " ++ fp)
+	createDirectoryIfMissing False fp
+	return fp
+	
 
 
 storeManifestEntryAt :: FilePath -> FilePath -> FilePath -> (FilePath, ManifestEntry) -> IO ()
 storeManifestEntryAt destDir clipPath tempDir (canonPath, (ManifestEntry {content, ..}))  = do
-  { let targetPath = getTargetPath' destDir clipPath canonPath
-  ; print ("DestDir = " ++ destDir)
-  ; print ("canonPath = " ++ canonPath)
-  ; print ("clipPath = " ++ clipPath)
-  ; print ("targetPath = " ++ targetPath)
-  ; createDirectoryIfMissing True (takeDirectory targetPath)
-  ; case List.head content of 
-      Local localName -> do 
-        { let srcPath = combine tempDir localName
-        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
-        ; return ()
-        }
-      LocalTar localName -> do 
-        { let srcPath = combine tempDir localName
-        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
-        ; return ()
-        }
-      LocalGzip localName -> do 
-        { let srcPath = combine tempDir localName
-        ; doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
-        ; return ()
-        }
-      Link linkDest -> do
-        { doShellCmd ("ln -s " ++ linkDest ++ " " ++ targetPath)
-        ; return ()
-        }
-      Dir -> return ()  -- Nothing needs to be done in this case because dir is already created
-      ListComp files -> return () -- Nothing needs to be done in this case because files are listed separately
-      None -> do
-        { doShellCmd ("rm -rf "  ++ targetPath)
-        ; return ()
-        } 
-
-  }
+	let targetPath = getTargetPath' destDir clipPath canonPath
+	debugIO ("DestDir = " ++ destDir)
+	debugIO ("canonPath = " ++ canonPath)
+	debugIO ("clipPath = " ++ clipPath)
+	debugIO ("targetPath = " ++ targetPath)
+	createDirectoryIfMissing True (takeDirectory targetPath)
+	case List.head content of 
+		Local localName -> do 
+			let srcPath = combine tempDir localName
+			doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
+			return ()
+		LocalTar localName -> do 
+			let srcPath = combine tempDir localName
+			doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
+			return ()
+		LocalGzip localName -> do 
+			let srcPath = combine tempDir localName
+			doShellCmd ("cp " ++ srcPath ++ " " ++ targetPath )
+			return ()
+		Link linkDest -> do
+			doShellCmd ("ln -s " ++ linkDest ++ " " ++ targetPath)
+			return ()	
+		Dir -> return ()  -- Nothing needs to be done in this case because dir is already created
+		ListComp files -> return () -- Nothing needs to be done in this case because files are listed separately
+		None -> do
+			doShellCmd ("rm -rf "  ++ targetPath)
+			return ()
+			
 
 
 gzipManifestEntry :: ForestMD fmd => fmd -> Manifest -> IO Manifest
 gzipManifestEntry fmd (Manifest {count, pathToRoot, tempDir, entries}) = do
   { fp <- canonicalizePath (get_fullpath fmd)
   ; let fp_noZip = dropExtension fp
-  ; print ("gzipping filepath: " ++ fp_noZip)
+  ; debugIO ("gzipping filepath: " ++ fp_noZip)
   ; let (ManifestEntry {content = (c1:cs), sources, status=orig_status}) = entries Map.! fp_noZip
   ; entry' <-  case c1 of 
                 Local localName -> do 
@@ -397,7 +391,7 @@ updateManifestWith :: ForestMD fmd => (FilePath -> payload -> IO ()) -> payload 
 updateManifestWith printF payload fmd manifest0 = do
    { let fullPath = get_fullpath fmd
    ; let isLink   = get_symLink fmd
-   ; if Maybe.isJust isLink then print ("found symlink:" ++ fullPath) else print ("not symlink: " ++ fullPath)
+   ; if Maybe.isJust isLink then debugIO ("found symlink:" ++ fullPath) else debugIO ("not symlink: " ++ fullPath)
    ; canonPath <- canonicalizePath fullPath
    ; mostlyCanonPath <- mostlyCanonicalizeLink fullPath
    ; let baseName = takeBaseName canonPath
@@ -522,7 +516,7 @@ updateManifestWithLink fmd manifest = case get_symLink fmd of
   Nothing ->  return manifest
   Just linkTarget -> do 
     { let fullPath = get_fullpath fmd
-    ; print ("entering symlink: source = " ++ fullPath ++ " Target = " ++ linkTarget)
+    ; debugIO ("entering symlink: source = " ++ fullPath ++ " Target = " ++ linkTarget)
     ; updateManifestWithLinkRaw fullPath linkTarget manifest   
     }
 
@@ -561,7 +555,7 @@ updateManifestWithComp :: ForestMD fmd => fmd -> [FilePath] -> Manifest -> IO Ma
 updateManifestWithComp fmd files manifest = do
     { let fullPath = get_fullpath fmd
     ; canonPath <- canonicalizePath fullPath
-    ; print ("entering comprehension in directory  " ++ canonPath)
+    ; debugIO ("entering comprehension in directory  " ++ canonPath)
     ; updateManifestWithCompRaw canonPath files manifest   
     }
 

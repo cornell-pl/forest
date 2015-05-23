@@ -44,27 +44,39 @@ import Data.Set hiding (map)
 import qualified Data.List as L
 
 class (Data rep, ForestMD md) => Forest rep md | rep -> md  where
- load :: FilePath -> IO(rep, md)
- generateManifest :: (rep,md) -> IO Manifest
- updateManifest :: (rep,md) -> Manifest -> IO Manifest
- fdef :: rep
- fdef = myempty
- defaultMd :: rep -> FilePath -> md
+	load :: FilePath -> IO (rep, md)
+	generateManifest :: (rep,md) -> IO Manifest
+	updateManifest :: (rep,md) -> Manifest -> IO Manifest
+	fdef :: rep
+	fdef = myempty
+	defaultMd :: rep -> FilePath -> md
 
  
-class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep->arg  where
- load1 :: arg -> FilePath -> IO(rep, md)
- generateManifest1 :: arg -> (rep,md) -> IO Manifest
- fdef1 :: arg -> rep
- fdef1 = \s-> myempty
- updateManifest1 :: arg -> (rep,md) -> Manifest -> IO Manifest
+class (Data rep, ForestMD md) => Forest1 arg rep md | rep -> md, rep -> arg  where
+	load1 :: arg -> FilePath -> IO (rep, md)
+	generateManifest1 :: arg -> (rep,md) -> IO Manifest
+	fdef1 :: arg -> rep
+	fdef1 = \s -> myempty
+	updateManifest1 :: arg -> (rep,md) -> Manifest -> IO Manifest
+	defaultMd1 :: arg -> rep -> FilePath -> md
 
 class File rep md where
-  fileLoad :: FilePath -> IO (rep, (Forest_md, md))
+	fileLoad :: FilePath -> IO (rep, (Forest_md, md))
 
 class File1 arg rep md where
-  fileLoad1 :: arg -> FilePath -> IO (rep, (Forest_md, md))
+	fileLoad1 :: arg -> FilePath -> IO (rep, (Forest_md, md))
 
+store :: Forest rep md => (rep,md) -> IO ()
+store repmd = generateManifest repmd >>= storeManifest
+
+storeAt :: Forest rep md => (rep,md) -> FilePath -> IO ()
+storeAt repmd path = generateManifest repmd >>= storeManifestAt path
+
+store1 :: Forest1 arg rep md => arg -> (rep,md) -> IO ()
+store1 arg repmd = generateManifest1 arg repmd >>= storeManifest
+
+storeAt1 :: Forest1 arg rep md => arg -> (rep,md) -> FilePath -> IO ()
+storeAt1 arg repmd path = generateManifest1 arg repmd >>= storeManifestAt path
 
 validateLists
   :: (FilePath -> IO a)
@@ -76,7 +88,7 @@ validateLists  load updateMan (m @ Manifest {tempDir, pathToRoot, entries, count
   ; storeManifestAt listValidDir m
   ; let fileName = case pathToRoot of { Nothing -> error "pathToRoot should not be null." ; Just p -> takeFileName p}
   ; let pathToDir = combine listValidDir fileName
-  ; print ("loading from: "++pathToDir)
+  ; debugIO ("loading from: "++pathToDir)
   ; testResult <- load pathToDir
   ; emptyManifest <- newManifest
   ; testManifest <- updateMan testResult emptyManifest
