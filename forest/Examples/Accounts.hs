@@ -97,7 +97,7 @@ gbalance = everything (+) (mkQ 0 accBalance)
 --- * Threads
 
 main = race_
-	(forever $ threadDelay 100 >> putStrLn "balance" >> balance "nate" >>= print)
+	(forever $ threadDelay 100 >> balance "nate" >>= print)
 	(forever $ threadDelay 100 >> withdraw "nate" 200)
 
 -- * Data Generation
