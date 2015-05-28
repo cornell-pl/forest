@@ -580,6 +580,14 @@ septValid sols hruLines =
              } where <| validSwat this |>
  |]
 
+[ipads|
+  data Max = Max Double
+|]
+
+[txforest|
+  data MaxFile = File Max
+|]
+
 cioFile :: (SwatLines -> FilePath) -> FPreamble TxVarFS -> ReadOnlyFTM TxVarFS FilePath
 cioFile f cio = liftM (f . swatLines) $ readData cio
 
@@ -617,6 +625,8 @@ validSwat (swat_md, swat) = do
 rootDir = "."
 optDir = rootDir </> "Examples/IC/bolo_arriba"
 
+maxFile = "/tmp/maxOpt"
+
 type Interval = (Double, Double)
 type OptFunc = Double -> Double -> Double -> Double
 
@@ -650,7 +660,7 @@ setVar2 :: SwatLines -> Double -> SwatLines
 setVar2 lines newDouble =
   let start = take 6 lines in
   let end = drop 7 lines in
-  case lines !! 7 of
+  case lines !! 6 of
     SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
     x -> lines
 
@@ -658,43 +668,49 @@ setVar3 :: SwatLines -> Double -> SwatLines
 setVar3 lines newDouble =
   let start = take 7 lines in
   let end = drop 8 lines in
-  case lines !! 8 of
+  case lines !! 7 of
     SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
     x -> lines
 
 checkOne :: OptFunc -> Double -> Double -> Double -> IO ()
 checkOne f x y z = do
-  shouldUpdate <- atomically $ do
-    (rep :: Swat_d TxVarFS) <- new () optDir
-    (main_fmd, dir) <- read rep
+  status <- atomically $ do
+    (maxInfo :: MaxFile TxVarFS) <- new () maxFile
+    ((max_fmd, max_md), Max m) <- read maxInfo
+    let candidate = f x y z
+    case candidate > m of
+      True -> do
+        (swatInfo :: Swat_d TxVarFS) <- new () optDir
+        (main_fmd, dir) <- read swatInfo
+        ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
+        let updated = setVar3 (setVar2 (setVar1 bsnVals x) y) z
+        _ <- writeOrElse (bsn dir) ((file1_fmd, file1_md), SwatFile updated) ("") (return . show)
+        _ <- writeOrElse (maxInfo) ((max_fmd, max_md), Max candidate) ("") (return . show)
+        return "updated"
+      False -> return "not updated"
+  putStrLn status
+
+writeCurrent :: OptFunc -> IO ()
+writeCurrent f = do
+  _ <- atomically $ do
+    (rep :: MaxFile TxVarFS) <- new () maxFile
+    (swatRep :: Swat_d TxVarFS) <- new () optDir
+    (main_fmd, dir) <- read swatRep
     ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
     let v1 = getVar1 bsnVals
     let v2 = getVar2 bsnVals
     let v3 = getVar3 bsnVals
-    return $ (f x y z) > (f v1 v2 v3)
-  case shouldUpdate of
-    True -> do
-      status <- atomically $ do
-        (rep :: Swat_d TxVarFS) <- new () optDir
-        (main_fmd, dir) <- read rep
-        ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
-        let v1 = getVar1 bsnVals
-        let v2 = getVar2 bsnVals
-        let v3 = getVar3 bsnVals
-        let updated = setVar3 (setVar2 (setVar1 bsnVals x) y) z
-        case (f x y z) > (f v1 v2 v3) of
-          True -> do
-            _ <- writeOrElse (bsn dir) ((file1_fmd, file1_md), SwatFile updated) ("") (return . show)
-            return "updated"
-          False -> return "not updated"
-      putStrLn status
-    False -> putStrLn "not updated"
+    ((max_fmd, max_md), Max m) <- read rep
+    _ <- writeOrElse (rep) ((max_fmd, max_md), Max (f v1 v2 v3)) ("") (return . show)
+    return ()
+  return ()
 
 getBest :: OptFunc -> Interval -> Interval -> Interval -> IO ()
 getBest f i1 i2 i3 =
   let ((l1, h1), (l2, h2), (l3, h3)) = (i1, i2, i3) in
   let trips = [(i, j, k) | i <- [l1..h1], j <- [l2..h2], k <- [l3..h3]] in
   do
+    _ <- writeCurrent f
     _ <- mapM_ (\(x,y,z) -> forkIO $ checkOne f x y z) trips
     return ()
 
