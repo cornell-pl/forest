@@ -1,0 +1,371 @@
+--------------------------------------------------------------------------------
+Built-in POSIX functions and their semantics
+--------------------------------------------------------------------------------
+
+-- JDL: Add lookup_log + readl_og
+-- JDL: Decide what error cases to add
+
+-- Errs:
+-- path must exist
+
+[[ open ]] (F,H,p) = 
+   let S = H(posix_fds) in 
+   let n = gensym(S) in 
+   let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+   (F,H',n)
+
+[[ close ]] (F,H,n) =
+   let S = H(posix_fds) in
+   if n in dom(S) then 
+      let H' = H \ n
+      (F, H', 0)
+   else
+      (F,H,-1)
+
+-- Errs:
+-- n isn't open
+-- p is not a file
+
+[[ read ]] (F,H,n) =
+   let (p,i) = H(posix_fds)(n) in
+   let File(w) = F(p) in
+   let c = w[i,i+1] in 
+   let H' = H[posix_fds(n) :=  (p,i+1)] in 
+   (F,H',c)
+
+-- Errs:
+-- n isn't open
+-- p is not a file
+
+[[ write ]] (F,H,(n,w)) =
+   let (p,i) = H(posix_fds)(n) in
+   let File(u) = F(p) in
+   let F' = F[p := (u[i] := w)] in             -- JDL: Better way to write this?
+   let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
+   (F',H',0)
+
+-- Errs:
+-- p doesn't exist
+-- n < 0?
+
+[[ truncate ]] (F,H,(p,n)) =
+   let File(w) = F(p) in
+   let F' = 
+       if n=0 then          F[p := '']
+       else if |w| > n then F[p := w[0:n-1]]
+            else            F[p := w @ (0 X n-|w|)] -- JDL: n-|w| zeroes, fix?
+   in
+   (F',H,0)
+
+[[ rename ]] (F,H,(p,p')) =
+   if (F(p) = File(_) && F(p') = File(_)) ||
+      (F(p) = Dir(_)  && F(p') = Dir([]))
+   then
+      let F' = F(p') := F(p) in
+      let F' = F' \ p in
+      (F',H,0)
+   else
+      (F,H,-1)
+
+-- Errs:
+-- n isn't open
+-- p is not a directory
+
+[[ readdir ]] (F,H, n) =
+   let (p,i) = H(posix_fds)(n) in
+   let Dir(l) = F(p) in
+   let f = l[i,i+1] in 
+   let H' = H[posix_fds(n) :=  (p,i+1)] in 
+   (F,H',f)
+   
+
+-- Errs:
+-- n isn't open
+
+[[ lseek ]] (F,H,(n,m)) =
+   let (p,_) = H(posix_fds)(n) in
+   let H' = H[posix_fds(n) :=  (p,m)] in
+   (F,H',0)
+
+[[ remove ]] (F,H,p) =
+   if F(p) = File(_) ||  F(p) = Dir([]) then
+      let F' = F \ p in
+      (F',H,0)
+   else
+      (F,H,-1)
+
+-- Elided Stat and locks
+
+--------------------------------------------------------------------------------
+Built-in Helper functions and their semantics
+--------------------------------------------------------------------------------
+
+[[ lookup_log ]] (F,H,n) = 
+   let (p,_) = H(posix_fds)(n) in
+   let b = p in H(log) in
+   (F,H,b)
+
+[[ read_log ]] (F,H,n) = 
+   let (p,i) = H(posix_fds)(n) in
+   let w  = H(log)(p) in
+   let H' = H[posix_fds(n) :=  (p,i+1)] in
+   (F,H',w[i])
+
+[[ record_read ]] (F,H,(n,v)) = 
+   let (p,_) = H(posix_fds)(n) in
+   let rs = H(r_string) in
+   let l  = H(log) in
+   let H' =
+      if v = '' then 
+      	 let H'' = H[log := l @ (p |-> ('R',rs) :: l(p))] in
+	     	   H''[rstring := '']
+      else   	   H[rstring := rstring @ v]
+   in 
+   (F,H',0)
+
+--------------------------------------------------------------------------------
+Syntax
+--------------------------------------------------------------------------------
+
+(* Metavariable Conventions *)
+n in Integer
+p in Path
+w in String
+F in FileStore
+ 
+(* Values *)
+v ::= n
+    | p
+    | w
+    | (v1,...,vn)
+    | l
+
+l ::= v :: l | []
+
+(* Expressions *)
+e ::= x
+    | v
+    | f(e)
+
+(* Commands *)
+c ::= skip
+    | c1; c2
+    | x := e
+    | if e then c1 else c2
+    | while e do c
+    | atomic c
+
+(* Heaps *)
+H in Var |-> Value
+
+(* Threads *)
+t ::= <H,c>
+
+M ::= {t1,...,tk}
+
+--------------------------------------------------------------------------------
+SEMANTICS
+--------------------------------------------------------------------------------
+
+(* Evaluation Contexts *)
+E ::= . 
+    | open(E) 
+    | close(E)  
+    | read(E)
+    | write(E,e) 
+    | write(v,E)
+
+(* Expression evaluation: (F,H,e) -> (F',H',e') *)
+
+H(x) = v
+-------------- E-Var
+(F,H,x) -> (F,H,v)
+
+(F',H',v') = [[ f ]] (F,H,v)
+------------------------ E-Call
+(F,H,f(v)) -> (F',H',v')
+
+(F,H,e) -> (F',H',e')
+--------------------------- E-Context
+(F,H,E[e]) -> (F',H',E[e'])
+
+(* Command evaluation: (F,H,c) -> (F',H',c') *)
+
+C ::= . 
+     | x := C
+     | if C then c1 else c2
+     | while C do c
+     | C ; c
+
+t ::= e | c 
+
+C[t] needs to be well-formed...
+
+(F,H,t) -> (F',H',t')
+--------------------------- C-Context
+(F,H,C[t]) -> (F',H',C[t'])
+     
+-------------------------- C-SkipSeq
+(F,H,skip;c2) -> (F,H,c2)
+
+H' = H[x:=v]
+-------------------------C-Assgn
+(F,H,x:=v) -> (F,H',skip)
+
+--------------------------------------C-IfFalse
+(F,H,if 0 then c1 else c2) -> (F,H,c2)
+
+n <> 0
+--------------------------------------C-IfTrue
+(F,H,if n then c1 else c2) -> (F,H,c1)
+
+
+--------------------------------C-WhileFalse
+(F,H,while 0 do c) -> (F,H,skip)
+
+n <> 0
+------------------------------------------C-WhileTrue
+(F,H,while n do c) -> (F,H,c;while n do c)
+
+--------------------------------------------------------------------------------
+Concurrent Operational Semantics
+--------------------------------------------------------------------------------
+
+(F,H,c) -> (F',H',c')
+----------------------------------------- M-step
+(F,M U { <H,c> }) -> (F',M U { <H',c'> })
+
+----------------------------------------- M-skip
+(F,M U { <H,skip> }) -> (F,M)
+
+(F,H,c) ->* (F',H',skip)
+---------------------------------------------- M-atomic
+(F,M U { <H,C[atomic c]> }) -> (F',M',C[skip])
+
+--------------------------------------------------------------------------------
+Optimistic Compilation
+--------------------------------------------------------------------------------
+
+(* ([ e ]) : Com * Exp *)
+
+([ open(e) ]) = 
+   let c',e' = ([[e]]) in 
+   (c', open(e'))
+
+([ close(e) ]) = 
+   let c',e' = ([[e]]) in 
+   (c', close(e'))
+
+([ lseek(e,e') ]) =
+   let c1, e1 = ([ e  ]) in
+   let c2, e2 = ([ e' ]) in
+   (c1;c2, lseek(e1,e2))
+
+-- Both read and readdir rely on the fact that 
+-- Haskell reads/writes an entire file at once
+
+-- JDL: How does it 'know' to get the right value from the return values
+-- of functions (which are tuples of the form (F,H,VALUE WE WANT))
+
+([ read(e) ]) = 
+  let c',e' = ([ e ]) in 
+  (c';
+   if lookup_log(e') then {
+     r := read_log(e')
+   } else { 
+     r := read(e');
+     _ := record_read(e',r);
+   }, 
+   r)
+   where r is a fresh variable
+
+([ readdir(e) ]) =
+  let c',e' = ([ e ]) in 
+  (c';
+   if lookup_log(e') then {
+     r := read_log(e')
+   } else { 
+     r := readdir(e');
+     _ := record_read(e',r);
+   }, 
+   r)
+   where r is a fresh variable
+
+([ write(e,e') ]) =
+   let c1, e1 = ([ e  ]) in
+   let c2, e2 = ([ e' ]) in
+   (c1;c2;
+   
+
+-- Errs:
+-- n isn't open
+-- p is not a file
+
+[[ write ]] (F,H,(e,e')) =
+   let (p,i) = H(n) in
+   let File(u) = F(p) in
+   let F' = F[p := (u[i] := w)] in             -- JDL: Better way to write this?
+   let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
+   (F',H',0)
+
+-- Errs:
+-- p doesn't exist
+-- n < 0?
+
+[[ truncate ]] (F,H,(p,n)) =
+   let File(w) = F(p) in
+   let F' = 
+       if n=0 then          F[p := '']
+       else if |w| > n then F[p := w[0:n-1]]
+            else            F[p := w @ (0 X n-|w|)] -- JDL: n-|w| zeroes, fix?
+   in
+   (F',H,0)
+
+[[ rename ]] (F,H,(p,p')) =
+   if (F(p) = File(_) && F(p') = File(_)) ||
+      (F(p) = Dir(_)  && F(p') = Dir([]))
+   then
+      let F' = F(p') := F(p) in
+      let F' = F' \ p in
+      (F',H,0)
+   else
+      (F,H,-1)
+
+[[ remove ]] (F,H,p) =
+   if F(p) = File(_) ||  F(p) = Dir([]) then
+      let F' = F \ p in
+      (F',H,0)
+   else
+      (F,H,-1)
+  ...
+   
+(* ([ c ]) : Com \ {atomic c} *)
+
+([ skip ]) = skip
+
+([ x := e ]) = 
+   let c',e' = ([ e ]) in 
+   c'; x := e'
+
+([ c1; c2 ]) = ([ c1 ]); ([ c2 ])
+
+([ if e then c1 else c2 ]) = 
+   let c',e' = ([ e ]) in 
+   c'; if e' then ([ c1 ]) else ([ c2 ])
+
+([ while e do c ]) = 
+   let c',e' = ([ e ]) in 
+   c'; while e' do ([ c ])
+
+-- Currently using a global log lock, may swtich to fancy data structure
+
+([ atomic c ]) = 
+   f := 1;
+   while f do {
+     log := [];
+     ([ c ]);
+     lock();
+     f := check_error();
+     if not f then write_log(log) else skip;     	
+     unlock()
+   }
