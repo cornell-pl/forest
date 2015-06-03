@@ -100,27 +100,142 @@ Built-in POSIX functions and their semantics
 Built-in Helper functions and their semantics
 --------------------------------------------------------------------------------
 
-[[ lookup_log ]] (F,H,n) = 
-   let (p,_) = H(posix_fds)(n) in
-   let b = p in H(log) in
+-- logList is the list of all commands that have been run (plus some extra info)
+-- logFS is a portion of the FS built up from logList
+-- H(logFS)(p) maps to an option
+
+-- JDL: Strong assumptions made + problems o.w.:
+-- Reads are always in a loop that reads the whole file
+-- * At the very least a hassle, don't remember exactly the necessity though
+-- Writes are always the whole file, + a truncate at end
+-- * How does an open work? Could be part virtual, how do we know?
+
+
+-- Builds logFS
+-- Depending on entry found (starting from beginning)
+-- Reads:    RF(p,w)   makes p F(w)
+-- ReadDirs: RD(p,l)   makes p D(l,true)
+-- Writes:   W(p,w)    makes p F(w) and possibly adds p to p's directory
+-- Renames:  Rn(p1,p2) makes p1 Rm and removes it from p1's directory
+   	     	       and p2 what was at p1 (possibly adding p2 to p2's dir)
+-- Removes:  Rm(p)     makes p Rm and removes it from p's dir
+-- Truncate: T(p,n)    removes or extends F(w) at p, or makes p T(n)
+
+let build_fs log =
+    ...
+
+-- Lookup log for opens
+-- Do different things depending on type of File found
+-- Files    (F)  Virtual open
+-- Dirs	    (D)	 Virtual open
+-- Removes  (Rm) Fail
+-- Truncate (T)  Real open
+-- None	    	 Real open
+
+-- JDL: Make it correctly open a virtual fd (which we treat as realish)
+-- let S = H(posix_fds) in 
+-- let n = gensym(S) in 
+-- let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+
+[[ lookup_logO ]] (F,H,p) = 
+   let b = 
+      match H(logFS)(p) with
+      |	Some(Rm)	       -> -1
+      |	Some(F(_))	       
+      |	Some(D(_,true))	       -> 0
+      |	Some(T(_))	       
+      |	Some(D(_,false))       
+      | None		       -> 1
+   in
+   let H' = if b
+      then H
+      else H[]
+   in
+   (F,H',b)
+
+-- Lookup log for reads etc.
+-- Do different things depending on type of file found
+-- Files    (F)  always contain the byte
+-- Dirs	    (D)	 always contain the byte, but may not know right byte
+-- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
+-- Truncate (T)  may know the byte (0 if it's beyond truncation)
+-- None	    	 doesn't contain byte
+
+[[ lookup_logR ]] (F,H,n) = 
+   let (p,i) = H(posix_fds)(n) in
+   let b = 
+      match H(logFS)(p) with
+      |	Some(Rm)	       -> failwith "Should never happen"
+      |	Some(F(_))
+      |	Some(D(_,true))
+      |	Some(T(j)) when j <= i -> 1
+      |	Some(T(_))	       
+      |	Some(D(_,false))       
+      | None		       -> 0
+   in
    (F,H,b)
 
-[[ read_log ]] (F,H,n) = 
-   let (p,i) = H(posix_fds)(n) in
-   let w  = H(log)(p) in
-   let H' = H[posix_fds(n) :=  (p,i+1)] in
-   (F,H',w[i])
+-- JDL: PARTS BELOW THIS NOT YET UPDATED TO NEW REGIME
 
-[[ record_read ]] (F,H,(n,v)) = 
+-- Do different things depending on type of file found
+-- Files    (F)  always contain the byte
+-- Dirs	    (D)	 always contain the byte, but may not know right byte
+-- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
+-- Truncate (T)  may contain the byte
+-- None	    	 doesn't contain byte
+
+[[ read_log ]] (F,H,n) = 
+   let rec log_helper llist path i =
+      match llist with
+      | hd :: tl ->
+      	match hd with
+	| R(w)				   -> 
+	| W(j,w) when j <= i && i <= j+|w| ->
+	| ('Rn',j,w) ->
+	| ('Rm',j,w) ->
+	| ('T' ,j,w) ->
+	| _ ->
+      | [] -> 
+   in
+   let (p,i) = H(posix_fds)(n) in
+   let rs = H(rstring) in
+   let llist  = H(log)(p) in
+   let H' = H[posix_fds(n) :=  (p,i+1)] in
+   let c = log_helper list p i in
+   (F,H',c)
+
+
+-- JDL: Indexing the rstring by path might reduce assumptions somewhat
+
+[[ record_readFile ]] (F,H,(n,v)) = 
    let (p,_) = H(posix_fds)(n) in
-   let rs = H(r_string) in
+   let rs = H(rstring) in
    let l  = H(log) in
    let H' =
       if v = '' then 
-      	 let H'' = H[log := l @ (p |-> ('R',rs) :: l(p))] in
+      	 let H'' = H[log := l \ p U {p |-> R(rs) :: l(p)}] in
 	     	   H''[rstring := '']
       else   	   H[rstring := rstring @ v]
    in 
+   (F,H',0)
+
+
+[[ record_readDir ]] (F,H,(n,v)) = 
+   let (p,_) = H(posix_fds)(n) in
+   let rs = H(rstring) in
+   let l  = H(log) in
+   let H' =
+      if v = '' then 
+      	 let H'' = H[log := l \ p U {p |-> R(rs) :: l(p)}] in
+	     	   H''[rstring := '']
+      else   	   H[rstring := rstring @ v]
+   in 
+   (F,H',0)
+
+[[ record_write ]] (F,H,(n,w)) = 
+   let (p,i) = H(posix_fds)(n) in
+   let l = H(log) in
+   let H' = H[log := l \ p @ (p |-> W(i,w) :: l(p))] in
    (F,H',0)
 
 --------------------------------------------------------------------------------
@@ -249,8 +364,14 @@ Optimistic Compilation
 (* ([ e ]) : Com * Exp *)
 
 ([ open(e) ]) = 
-   let c',e' = ([[e]]) in 
-   (c', open(e'))
+   let c',e' = ([[e]]) in
+   (c';
+    b := lookup_logO(e');
+    if b
+    then b:= open(e')
+    else skip,
+    b)
+   where b is a fresh variable
 
 ([ close(e) ]) = 
    let c',e' = ([[e]]) in 
@@ -264,8 +385,9 @@ Optimistic Compilation
 -- Both read and readdir rely on the fact that 
 -- Haskell reads/writes an entire file at once
 
--- JDL: How does it 'know' to get the right value from the return values
--- of functions (which are tuples of the form (F,H,VALUE WE WANT))
+-- We assume that assignment grabs the third part
+-- of the tuple returned instead of just assigning
+-- to (_,_,r) because it looks cleaner.
 
 ([ read(e) ]) = 
   let c',e' = ([ e ]) in 
@@ -295,6 +417,10 @@ Optimistic Compilation
    let c1, e1 = ([ e  ]) in
    let c2, e2 = ([ e' ]) in
    (c1;c2;
+    if   lookup_log(e1) 
+    then r := record_writeR(e1,e2)
+    else r := record_writeN(e1,e2), 
+    r)
    
 
 -- Errs:
