@@ -94,6 +94,25 @@ Built-in POSIX functions and their semantics
    else
       (F,H,-1)
 
+-- Mostly added to be able to check the existence of a file
+-- Errs:
+-- p doesn't exist
+
+
+[[ read ]] (F,H,n) =
+   let (p,i) = H(posix_fds)(n) in
+   let File(w) = F(p) in
+   let c = w[i,i+1] in 
+   let H' = H[posix_fds(n) :=  (p,i+1)] in 
+   (F,H',c)
+
+[[ test ]] (F,H,p) = 
+   if F(p) = File(_)
+   then (F,H,0)      
+   else if (F(p) = Dir(_))
+      then (F,H,1)
+      else (F,H,-1)
+   
 -- Elided Stat and locks
 
 --------------------------------------------------------------------------------
@@ -104,8 +123,8 @@ Built-in Helper functions and their semantics
 -- logFS is a portion of the FS built up from logList
 -- H(logFS)(p) maps to an option
 
--- JDL: Strong assumptions made + problems o.w.:
--- Reads are always in a loop that reads the whole file
+-- JDL: Strong (but probably true) assumptions made + problems o.w.:
+-- Reads are always in a loop that reads the whole file/directory
 -- * At the very least a hassle, don't remember exactly the necessity though
 -- Writes are always the whole file, + a truncate at end
 -- * How does an open work? Could be part virtual, how do we know?
@@ -121,7 +140,7 @@ Built-in Helper functions and their semantics
 -- Removes:  Rm(p)     makes p Rm and removes it from p's dir
 -- Truncate: T(p,n)    removes or extends F(w) at p, or makes p T(n)
 
-let build_fs log =
+let build_fs () =
     ...
 
 -- Lookup log for opens
@@ -175,67 +194,81 @@ let build_fs log =
    in
    (F,H,b)
 
--- JDL: PARTS BELOW THIS NOT YET UPDATED TO NEW REGIME
+-- Lookup log for existence etc.
+-- Do different things depending on type of file found
+-- Files    (F)  exist
+-- Dirs	    (D)	 exist, but may or may not be empty
+-- Removes  (Rm) truly don't exist
+-- Truncate (T)  exist
+-- None	    	 doesn't contain byte
+
+-- Results:
+-- 0 = File
+-- 1 = Non-empty dir
+-- 2 = Empty dir
+-- -1 = File not in log
+-- -2 = File definitely doesn't exist
+
+[[ lookup_logE ]] (F,H,p) = 
+   let b = 
+      match H(logFS)(p) with
+      |	Some(F(_))
+      |	Some(T(_))                   ->  0
+      |	Some(D(_,false))            
+      |	Some(D(l,true)) when l <> [] ->  1
+      |	Some(D(_))                   ->  2
+      |	Some(Rm)	             -> -2
+      | None		             -> -1
+   in
+   (F,H,b)
 
 -- Do different things depending on type of file found
 -- Files    (F)  always contain the byte
 -- Dirs	    (D)	 always contain the byte, but may not know right byte
 -- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
--- Truncate (T)  may contain the byte
+-- Truncate (T)  always contains the byte
 -- None	    	 doesn't contain byte
 
 [[ read_log ]] (F,H,n) = 
-   let rec log_helper llist path i =
-      match llist with
-      | hd :: tl ->
-      	match hd with
-	| R(w)				   -> 
-	| W(j,w) when j <= i && i <= j+|w| ->
-	| ('Rn',j,w) ->
-	| ('Rm',j,w) ->
-	| ('T' ,j,w) ->
-	| _ ->
-      | [] -> 
-   in
    let (p,i) = H(posix_fds)(n) in
-   let rs = H(rstring) in
-   let llist  = H(log)(p) in
    let H' = H[posix_fds(n) :=  (p,i+1)] in
-   let c = log_helper list p i in
+   let c = 
+      match H(logFS)(p) with
+      |	Some(Rm)	       
+      |	Some(T(j)) when j <= i -> ''
+      |	Some(F(w)) 	       
+      |	Some(D(w,true))	       -> w[i]
+      |	Some(T(_))	       
+      |	Some(D(_,false))       
+      | None		       -> failwith "lookup_logR would've failed"
+   in 
    (F,H',c)
 
 
 -- JDL: Indexing the rstring by path might reduce assumptions somewhat
 
-[[ record_readFile ]] (F,H,(n,v)) = 
-   let (p,_) = H(posix_fds)(n) in
+[[ record ]] (F,H,t) = 
    let rs = H(rstring) in
    let l  = H(log) in
    let H' =
-      if v = '' then 
-      	 let H'' = H[log := l \ p U {p |-> R(rs) :: l(p)}] in
-	     	   H''[rstring := '']
-      else   	   H[rstring := rstring @ v]
+      match t with
+      | Read(fd,v,d) ->
+      	 let (p,_) = H(posix_fds)(fd) in
+      	 if v = '' then 
+      	    let ele = if d then RD(p,rs) else RF(p,rs) in
+      	    let H'' = H[log := ele :: l] in
+	    	      H''[rstring := '']
+      	 else         H  [rstring := rstring @ v]
+      |	Write(fd,w)  ->  
+      	 let (p,_) = H(posix_fds)(fd) in
+	 H[log := W(p,w) :: l]
+      |	Trunc(fd,len)  ->  
+      	 let (p,_) = H(posix_fds)(fd) in
+	 H[log := T(p,len) :: l]
+      |	Rename(p,p')   -> H[log := Rn(p,p') :: l]
+      | Remove(p)      -> H[log := Rm(p)    :: l]
    in 
-   (F,H',0)
-
-
-[[ record_readDir ]] (F,H,(n,v)) = 
-   let (p,_) = H(posix_fds)(n) in
-   let rs = H(rstring) in
-   let l  = H(log) in
-   let H' =
-      if v = '' then 
-      	 let H'' = H[log := l \ p U {p |-> R(rs) :: l(p)}] in
-	     	   H''[rstring := '']
-      else   	   H[rstring := rstring @ v]
-   in 
-   (F,H',0)
-
-[[ record_write ]] (F,H,(n,w)) = 
-   let (p,i) = H(posix_fds)(n) in
-   let l = H(log) in
-   let H' = H[log := l \ p @ (p |-> W(i,w) :: l(p))] in
+   let _     = build_fs () in
    (F,H',0)
 
 --------------------------------------------------------------------------------
@@ -363,6 +396,10 @@ Optimistic Compilation
 
 (* ([ e ]) : Com * Exp *)
 
+-- We assume that assignment grabs the third part
+-- of the tuple returned instead of just assigning
+-- to (_,_,r) because it looks cleaner.
+
 ([ open(e) ]) = 
    let c',e' = ([[e]]) in
    (c';
@@ -377,6 +414,10 @@ Optimistic Compilation
    let c',e' = ([[e]]) in 
    (c', close(e'))
 
+([ test(e) ]) = 
+   let c',e' = ([[e]]) in 
+   (c', test(e'))
+
 ([ lseek(e,e') ]) =
    let c1, e1 = ([ e  ]) in
    let c2, e2 = ([ e' ]) in
@@ -385,18 +426,14 @@ Optimistic Compilation
 -- Both read and readdir rely on the fact that 
 -- Haskell reads/writes an entire file at once
 
--- We assume that assignment grabs the third part
--- of the tuple returned instead of just assigning
--- to (_,_,r) because it looks cleaner.
-
 ([ read(e) ]) = 
   let c',e' = ([ e ]) in 
   (c';
-   if lookup_log(e') then {
+   if lookup_logR(e') then {
      r := read_log(e')
    } else { 
      r := read(e');
-     _ := record_read(e',r);
+     _ := record(Read(e',r,false));
    }, 
    r)
    where r is a fresh variable
@@ -404,11 +441,11 @@ Optimistic Compilation
 ([ readdir(e) ]) =
   let c',e' = ([ e ]) in 
   (c';
-   if lookup_log(e') then {
+   if lookup_logR(e') then {
      r := read_log(e')
    } else { 
      r := readdir(e');
-     _ := record_read(e',r);
+     _ := record(Read(e',r,true));
    }, 
    r)
    where r is a fresh variable
@@ -416,54 +453,114 @@ Optimistic Compilation
 ([ write(e,e') ]) =
    let c1, e1 = ([ e  ]) in
    let c2, e2 = ([ e' ]) in
-   (c1;c2;
-    if   lookup_log(e1) 
-    then r := record_writeR(e1,e2)
-    else r := record_writeN(e1,e2), 
+   (c1;c2; 
+    r := record(Write(e1,e2)),
     r)
-   
+    where r is a fresh variable
 
--- Errs:
--- n isn't open
--- p is not a file
+-- For the next 3 we need to know that the file exists
+-- whether virtually, or for real
 
-[[ write ]] (F,H,(e,e')) =
-   let (p,i) = H(n) in
-   let File(u) = F(p) in
-   let F' = F[p := (u[i] := w)] in             -- JDL: Better way to write this?
-   let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
-   (F',H',0)
+-- If the file exists and is a normal file, then we truncate
+-- o.w. we return -1 and do nothing
 
--- Errs:
--- p doesn't exist
--- n < 0?
+([ truncate(e,e') ]) =
+   let c1, e1 = ([ e  ]) in
+   let c2, e2 = ([ e' ]) in
+   (c1;c2; 
+    t := lookup_logE(e);
+    if t = 0
+    then r := record(Trunc(e1,e2))
+    else 
+       if t = -1 then {
+         b := ([ test e1 ]);
+         if b = 0
+         then r := record(Trunc(e1,e2))
+         else r := -1
+       }
+       else   r := -1,
+    r)
+    where r,b,t are fresh variables
 
-[[ truncate ]] (F,H,(p,n)) =
-   let File(w) = F(p) in
-   let F' = 
-       if n=0 then          F[p := '']
-       else if |w| > n then F[p := w[0:n-1]]
-            else            F[p := w @ (0 X n-|w|)] -- JDL: n-|w| zeroes, fix?
-   in
-   (F',H,0)
+-- If From exists:
+-- * Normal file implies (To doesn't exist or is a normal file)
+-- * Directory implies (To doesn't exist or is empty directory)
+-- o.w. we return -1 and do nothing
 
-[[ rename ]] (F,H,(p,p')) =
-   if (F(p) = File(_) && F(p') = File(_)) ||
-      (F(p) = Dir(_)  && F(p') = Dir([]))
-   then
-      let F' = F(p') := F(p) in
-      let F' = F' \ p in
-      (F',H,0)
-   else
-      (F,H,-1)
+([ rename(e,e') ]) =
+   let c1, e1 = ([ e  ]) in
+   let c2, e2 = ([ e' ]) in
+   (c1;c2; 
+    from := lookup_logE(e1);
+    to := lookup_logE(e2);
+    if from = -1
+    then from := ([ test e1])
+    else skip;
+    if from := -1 || from := -2
+    then r := -1
+    else -- from exists
+    {
+       r := -1;
+       if to = -1
+       then
+       { 
+          b := 1;
+          to := ([ test e1 ])
+       }
+       else b := 0;
+       -- to doesn't exist?
+       if to = -1
+       then r := record(Rename(e1,e2))
+       else skip;
+       -- Both files?
+       if from = 0 && to = 0
+       then r := record(Rename(e1,e2))
+       else skip;
+       -- Both folders and to is empty?
+       if (from = 1 || from = 2) && to = 2
+       then r := record(Rename(e1,e2))
+       else skip;
+       -- Both folders, but we don't know if to is empty?
+       if (from = 1 || from = 2) && to = 1 && b
+       then
+       {
+          b := ([ n := open(e2); readdir(n) ]);
+          if b = ''
+          then r := record(Rename(e1,e2))
+          else skip
+       }
+       else skip
+    },
+    r)
+    where r,b,from,to are fresh variables
 
-[[ remove ]] (F,H,p) =
-   if F(p) = File(_) ||  F(p) = Dir([]) then
-      let F' = F \ p in
-      (F',H,0)
-   else
-      (F,H,-1)
-  ...
+-- If file is a directory and is empty
+-- or if file is not a directory, but exists
+-- we remove it, o.w. we return -1 and do nothing
+
+([ remove(e) ]) =
+   let c', e' = ([ e  ]) in
+   (c; 
+    t := lookup_logE(e);
+    if t = 0 || t = 2
+    then r := record(Remove(e'))
+    else 
+       if t = -1 then {
+         b := ([ test e1 ]);
+         if b = -1
+         then r := -1
+         else if b = 0 
+            then r := record(Remove(e'))
+            else {
+               b := ([ n := open(e'); readdir(n) ]);
+               if b = ''
+               then r := record(Remove(e'))
+               else r := -1
+            }
+       }
+       else   r := -1,
+    r)
+    where r,b,t,n are fresh variables
    
 (* ([ c ]) : Com \ {atomic c} *)
 
