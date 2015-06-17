@@ -1,0 +1,78 @@
+\newif\ifdraft\drafttrue
+\newif\ifcolor\colortrue
+
+% For per-person control of tex'ing, put commands like \twocolfalse
+% in a file called texdirectives.tex, which we read at this point (if
+% it exists).  Note that this file should be left out of the SVN
+% repository. 
+\makeatletter \@input{texdirectives} \makeatother
+
+\documentclass[nocopyrightspace]{sigplanconf}
+
+\usepackage{alltt}
+\usepackage{balance}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{tikz}
+\usepackage[normalem]{ulem}
+\usepackage{url}
+
+\title{Transactional Forest}
+
+\authorinfo{Submission \#XXX}{}{\vspace*{-4cm}}
+
+\begin{document}
+
+\maketitle
+
+
+\begin{abstract}
+Hello.
+\end{abstract}
+
+\begin{itemize}
+\item Introduction
+\begin{itemize}
+\item PADS/Forest manifesto
+\item Problems with Forest 1.0
+\item Running example informally
+\item Our approach
+\item Challenges
+\item Contributions and Outline
+\end{itemize}
+\item Background
+\begin{itemize}
+\item Forest Language (primitives, load, store)
+\item Running example 
+\item Problems with naive semantics
+\item Transactions to the rescue
+\end{itemize}
+\item TxForest Language
+\begin{itemize}
+\item Atomic construct 
+\item Transaction monad
+\item Varieties of failure
+\item Revised running example
+\item Guarantees
+\end{itemize}
+\item Featherweight POSIX
+\begin{itemize}
+\item Discussion of Sewell-eque formalism vs. core calculi  
+\item Showcase subtlety (e.g., weak locking primitives?)
+\item Define translation from TxForest to IMPOSIX (defines TxForest's semantics)
+\item Reference implementations (data structure locks, lockf, etc.)
+\item Prove serializability for fully Forested programs
+\end{itemize}
+\item Implementation
+\item SWAT Case Study
+\item Related Work
+\item Conclusion
+\end{itemize}
+
+\bibliographystyle{plain} 
+\balance  
+\bibliography{main}
+
+\end{document}
