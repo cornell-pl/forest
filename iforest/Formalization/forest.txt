@@ -2,7 +2,6 @@
 Built-in POSIX functions and their semantics
 --------------------------------------------------------------------------------
 
--- JDL: Add lookup_log + readl_og
 -- JDL: Decide what error cases to add
 
 -- Errs:
@@ -119,8 +118,8 @@ Built-in POSIX functions and their semantics
 Built-in Helper functions and their semantics
 --------------------------------------------------------------------------------
 
--- logList is the list of all commands that have been run (plus some extra info)
--- logFS is a portion of the FS built up from logList
+-- log is (roughly) the list of all commands that have been run
+-- logFS is a portion of the FS built up from log
 -- H(logFS)(p) maps to an option
 
 -- JDL: Strong (but probably true) assumptions made + problems o.w.:
@@ -133,23 +132,95 @@ Built-in Helper functions and their semantics
 -- Builds logFS
 -- Depending on entry found (starting from beginning)
 -- Reads:    RF(p,w)   makes p F(w)
--- ReadDirs: RD(p,l)   makes p D(l,true)
+-- ReadDirs: RD(p,l)   makes p D(l,true) (barring previous modifications)
 -- Writes:   W(p,w)    makes p F(w) and possibly adds p to p's directory
 -- Renames:  Rn(p1,p2) makes p1 Rm and removes it from p1's directory
-   	     	       and p2 what was at p1 (possibly adding p2 to p2's dir)
+                       and p2 what was at p1 (possibly adding p2 to p2's dir)
+                   Or if there was nothing, then Rn(p1)
 -- Removes:  Rm(p)     makes p Rm and removes it from p's dir
 -- Truncate: T(p,n)    removes or extends F(w) at p, or makes p T(n)
 
+
+let get_fd n =
+   match H(virtual_fds)(n) with
+   | Some(x) -> x
+   | None    -> H(posix_fds)(n)
+
 let build_fs () =
-    ...
+   let l = rev H(log) in
+   let rec helper lst map =
+   match lst with
+      | hd :: tl ->
+         helper tl
+         (match hd with
+         | RF(p,w)  -> add p F(w) map
+         | T(p,n)   -> 
+            match map(p) with
+            | None       -> add p T(n) map
+            | Some(F(w)) -> 
+               if n < len(w) 
+               then add p F(sub w 0 n) map
+               else add p F(fill w len(w) (n-len(w)) '0') map
+            | Some(Rn(p,_)) -> 
+               if n < len(w) 
+               then add p F(sub w 0 n) map
+               else add p F(fill w len(w) (n-len(w)) '0') map
+            | _          -> failwith "Truncate should've failed"
+         | W(p,w)   ->
+            match map(dir(p)) with
+            | None         -> add dir(p) (makeDir hd) (add p F(w) map)
+            | Some(D(l,b)) -> add dir(p) (addDir hd D(l,b)) (add p F(w) map)
+            | _            -> failwith "Path directory isn't a directory?"
+         | Rn(p,p') -> 
+            let map' =
+               match map(dir(p)) with
+               | None         -> add dir(p) (makeDir Rm(p)) (add p Rm map)
+               | Some(D(l,b)) -> add dir(p) (addDir Rm(p) D(l,b)) (add p Rm map)
+               | _            -> failwith "Path directory isn't a directory?"
+            in
+            match map'(p),map'(dir(p')) with
+            | None   , None                                          -> 
+               add dir(p') (makeDir hd) (add p' Rn(p,0) map')
+            | Some(Rn(p'',0), None when p'' = p'                     -> 
+               add dir(p') (makeDir hd) (remove p' map')
+            | Some(Rn(p'',n), None when p'' = p'                     -> 
+               add dir(p') (makeDir hd) (add p' T(n) map')
+            | Some(x), None                                          -> 
+               add dir(p') (makeDir hd) (add p' x map')
+            | None   , Some(D(l,b))                                  -> 
+               add dir(p') (addDir hd D(l,b)) (add p' Rn(p,0) map')
+            | Some(Rn(p'',0), Some(D(l,b)) when p'' = p'             -> 
+               add dir(p') (addDir hd D(l,b)) (remove p' map')
+            | Some(Rn(p'',n), Some(D(l,b)) when p'' = p'             -> 
+               add dir(p') (addDir hd D(l,b)) (add p' T(n) map')
+            | Some(x), Some(D(l,b))                                  -> 
+               add dir(p') (addDir hd D(l,b)) (add p' x map')
+            | _ -> failwith "Path directory isn't a directory?"
+         | Rm(p)    -> 
+            match map(dir(p)) with
+            | None         -> add dir(p) (makeDir hd) (add p Rm map)
+            | Some(D(l,b)) -> add dir(p) (addDir hd D(l,b)) (add p Rm map)
+            | _            -> failwith "Path directory isn't a directory?"
+         | RD(p,l)  -> add p 
+            match map(p) with
+            | None          -> add p D(l,true) map
+            | Some(D(l',b)) -> add p (mergeDirs D(l',b) D(l,true)) map
+            | _             -> failwith "Path directory isn't a directory?"
+         )
+      | [] -> map
+   in 
+   let H' = H[logFS := helper l empty] in
+   (F,H',())
+   
 
 -- Lookup log for opens
 -- Do different things depending on type of File found
 -- Files    (F)  Virtual open
--- Dirs	    (D)	 Virtual open
+-- Dirs    (D)  Virtual open
 -- Removes  (Rm) Fail
 -- Truncate (T)  Real open
--- None	    	 Real open
+-- Rn       (p)  Rerun operation, but for p
+-- None           Real open
 
 -- JDL: Make it correctly open a virtual fd (which we treat as realish)
 -- let S = H(posix_fds) in 
@@ -159,48 +230,54 @@ let build_fs () =
 [[ lookup_logO ]] (F,H,p) = 
    let b = 
       match H(logFS)(p) with
-      |	Some(Rm)	       -> -1
-      |	Some(F(_))	       
-      |	Some(D(_,true))	       -> 0
-      |	Some(T(_))	       
-      |	Some(D(_,false))       
-      | None		       -> 1
+      | Some(Rm)         -> -1
+      | Some(F(_))             
+      | Some(D(_,true))  -> 0
+      | Some(T(_))              
+      | Some(D(_,false))      
+      | None             -> 1
+      | Some(Rn(_))      -> 5
    in
-   let H' = if b
-      then H
-      else H[]
-   in
-   (F,H',b)
+   if b
+   then (F,H,b)
+   else 
+      let S = H(posix_fds) in    
+      let n = gensym(S) in 
+      let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+      (F,H',n)
 
 -- Lookup log for reads etc.
 -- Do different things depending on type of file found
 -- Files    (F)  always contain the byte
--- Dirs	    (D)	 always contain the byte, but may not know right byte
+-- Dirs     (D)  always contain the byte, but may not know right byte
 -- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
 -- Truncate (T)  may know the byte (0 if it's beyond truncation)
--- None	    	 doesn't contain byte
+-- Rn       (p)  Rerun operation, but for p
+-- None          doesn't contain byte
 
 [[ lookup_logR ]] (F,H,n) = 
-   let (p,i) = H(posix_fds)(n) in
+   let (p,i) = get_fd(n) in
    let b = 
       match H(logFS)(p) with
-      |	Some(Rm)	       -> failwith "Should never happen"
-      |	Some(F(_))
-      |	Some(D(_,true))
-      |	Some(T(j)) when j <= i -> 1
-      |	Some(T(_))	       
-      |	Some(D(_,false))       
-      | None		       -> 0
+      | Some(Rm)                        -> failwith "Should never happen"
+      | Some(F(_))
+      | Some(D(_,true))
+      | Some(Rn(_,j)) when j <= i           
+      | Some(T(j)) when j <= i    -> 1
+      | Some(T(_))             
+      | Some(D(_,false))       
+      | Some(Rn(_))            
+      | None                            -> 0
    in
    (F,H,b)
 
 -- Lookup log for existence etc.
 -- Do different things depending on type of file found
 -- Files    (F)  exist
--- Dirs	    (D)	 exist, but may or may not be empty
+-- Dirs     (D)  exist, but may or may not be empty
 -- Removes  (Rm) truly don't exist
 -- Truncate (T)  exist
--- None	    	 doesn't contain byte
+-- None          doesn't contain byte
 
 -- Results:
 -- 0 = File
@@ -212,64 +289,174 @@ let build_fs () =
 [[ lookup_logE ]] (F,H,p) = 
    let b = 
       match H(logFS)(p) with
-      |	Some(F(_))
-      |	Some(T(_))                   ->  0
-      |	Some(D(_,false))            
-      |	Some(D(l,true)) when l <> [] ->  1
-      |	Some(D(_))                   ->  2
-      |	Some(Rm)	             -> -2
-      | None		             -> -1
+      | Some(F(_))
+      | Some(Rn(_))                  
+      | Some(T(_))                   ->  0
+      | Some(D(_,false))            
+      | Some(D(l,true)) when l <> [] ->  1
+      | Some(D(_))                   ->  2
+      | Some(Rm)                           -> -2
+      | None                               -> -1
    in
    (F,H,b)
 
 -- Do different things depending on type of file found
 -- Files    (F)  always contain the byte
--- Dirs	    (D)	 always contain the byte, but may not know right byte
+-- Dirs    (D)  always contain the byte, but may not know right byte
 -- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
 -- Truncate (T)  always contains the byte
--- None	    	 doesn't contain byte
+-- None           doesn't contain byte
+
+-- Gets real path where the file in p is stored
+
+[[ get_rn ]] (F,H,p) =
+   match H(logFS)(p) with
+   | Some(Rn(np,_)) -> (F,H,np)  
+   | _            -> failwith "Expected Rn"
+   
+-- In the case of a rename, the fd path is not
+-- the path that we want to store it to.
+   
+[[ link_fd ]] (F,H,(n,p)) =
+   let S  = H(virtual_fds) in
+   let H' = H[virtual_fds := S U { n |-> (p,0)}] in
+   (F,H',())
+   
+[[ close_fd ]] (F,H,n) =
+   match H(virtual_fds)(n) with
+   | Some(_) -> (F,H \ n, ())
+   | None    -> (F,H,())
 
 [[ read_log ]] (F,H,n) = 
-   let (p,i) = H(posix_fds)(n) in
-   let H' = H[posix_fds(n) :=  (p,i+1)] in
+   let (p,i,H') = 
+      match H(virtual_fds)(n) with
+      | Some(p,i) -> (p,i,H[virtual_fds(n) := (p,i+1)])
+      | None -> let (p,i) = H(posix_fds)(n) in
+         (p,i,H[posix_fds(n) :=  (p,i+1)])
+   in
    let c = 
       match H(logFS)(p) with
-      |	Some(Rm)	       
-      |	Some(T(j)) when j <= i -> ''
-      |	Some(F(w)) 	       
-      |	Some(D(w,true))	       -> w[i]
-      |	Some(T(_))	       
-      |	Some(D(_,false))       
-      | None		       -> failwith "lookup_logR would've failed"
+      | Some(Rm)               
+      | Some(T(j)) when j <= i
+      | Some(Rn(_,j)) when j <= i -> ''
+      | Some(F(w))             
+      | Some(D(w,true))           -> w[i]
+      | Some(T(_))             
+      | Some(D(_,false))       
+      | Some(Rn(_))            
+      | None                            -> failwith "lookup_logR would've failed"
    in 
    (F,H',c)
-
-
--- JDL: Indexing the rstring by path might reduce assumptions somewhat
 
 [[ record ]] (F,H,t) = 
    let rs = H(rstring) in
    let l  = H(log) in
    let H' =
       match t with
-      | Read(fd,v,d) ->
-      	 let (p,_) = H(posix_fds)(fd) in
-      	 if v = '' then 
-      	    let ele = if d then RD(p,rs) else RF(p,rs) in
-      	    let H'' = H[log := ele :: l] in
-	    	      H''[rstring := '']
-      	 else         H  [rstring := rstring @ v]
-      |	Write(fd,w)  ->  
-      	 let (p,_) = H(posix_fds)(fd) in
-	 H[log := W(p,w) :: l]
-      |	Trunc(fd,len)  ->  
-      	 let (p,_) = H(posix_fds)(fd) in
-	 H[log := T(p,len) :: l]
-      |	Rename(p,p')   -> H[log := Rn(p,p') :: l]
+      | Read(fd,v,d)   ->
+        let (p,_) = get_fd n in
+        if v = '' then 
+           let ele = if d then RD(p,rs) else RF(p,rs) in
+           let H'' = H[log := ele :: l] in
+                       H''[rstring := '']
+        else   H  [rstring := rstring @ v]
+      | Write(fd,w)    ->  
+         let (p,_) = get_fd n in
+         H[log := W(p,w) :: l]
+      | Trunc(fd,len)  ->  
+         let (p,_) = get_fd n in
+         H[log := T(p,len) :: l]
+      | Rename(p,p')   -> H[log := Rn(p,p') :: l]
       | Remove(p)      -> H[log := Rm(p)    :: l]
    in 
    let _     = build_fs () in
    (F,H',0)
+   
+-- In atomic translation
+
+-- H(transState) starts out as [(0,[],0)]
+-- H(log) starts out as []
+
+[[ trans_start ]] (F,H,()) =
+   let tstate = H(transState) in
+   let n,_,_ = hd(tstate) in
+   let H'  = H [trans := ((n+1),H(log),time()) :: tstack] in
+   let H'' = H'[log := []] in
+   (F,H'',n)
+
+-- We need a global log of (time, path) pairs
+-- We'll just use some reserved name in the FileStore for now,
+-- but could easily be added in a shared memory structure (which is what it is)
+   
+[[ check_error ]] (F,H,()) =
+   let tstate = H(transState) in
+   let n,tlog,t = hd(tstate) in
+   let glog = 
+      fold (fun acc (t',p) -> if t > t' then p :: acc else acc) F(glog)
+   in
+   let rec err_help l =
+      match l with
+      | hd :: tl ->
+         match hd with
+         | RD(p,_) 
+         | RF(p,_) 
+         | Rn(p,_) -> if exists (= p) glog then 1 else err_help tl
+         | _       -> err_help tl
+      | [] -> 0
+   in
+   let l = H(log) in
+   let b = err_help l in
+   if b then
+      let H'  = H[log := tlog] in
+      let H'' = H[transState := tl(tstate)] in
+      (F,H'',b)
+   else (F,H,b)
+   
+-- Either use the FS, allowing for fewer operations
+-- or just do all the operations of the log.
+-- Starting with log because it's more obviously correct
+
+-- If we're here, then we've passed the check_error, so depending
+-- on if n > 1 or not, we append log or do FS writes
+
+-- JDL: Maybe add in error checking?
+
+[[ write_log ]] (F,H,()) =
+   let t = time() in
+   let tstate = H(transState) in
+   let n,tlog,_ = hd(tstate) in
+   let rec writer l acc =
+      let F',H',lst = acc in
+      match l with
+      | hd :: tl ->
+         match hd with
+         | W(p,w)   -> 
+            let F',H',fd = open (F',H',p) in
+            let F',H',_  = write(F',H',(fd,w)) in
+            let F',H',_  = close(F',H',fd) in
+            writer tl (F',H',(t,p) :: lst)
+         | Rm(p)    ->
+            let F',H',_  = remove(F',H',p) in
+            writer tl (F',H',(t,p) :: lst)
+         | T(p,n)   ->
+            let F',H',_  = truncate(F',H',(p,n)) in
+            writer tl (F',H',(t,p) :: lst)
+         | Rn(p,p') -> 
+            let F',H',_  = rename(F',H',(p,p')) in
+            writer tl (F',H',(t,p) :: (t,p') :: lst)
+         | _        -> writer tl acc
+      | [] -> acc
+   in
+   let l = H(log) in
+   if n > 1 then
+      let H'  = H[log := H(log) @ tlog] in
+      let H'' = H[transState := tl(tstate)] in
+      (F,H'',())
+   else
+      let (F',H',l) = writer (rev H(log)) (F,H,[]) in
+      let H''       = H'[transState := tl(tstate)] in
+      (F',H'',())
+
 
 --------------------------------------------------------------------------------
 Syntax
@@ -404,15 +591,21 @@ Optimistic Compilation
    let c',e' = ([[e]]) in
    (c';
     b := lookup_logO(e');
-    if b
+    if b = 5
+    then {
+      p := get_rn(e');
+      b := open(p);
+      _ := link_fd(b,e')
+    }
+    else if b
     then b:= open(e')
     else skip,
     b)
-   where b is a fresh variable
+   where b,p are fresh variables
 
 ([ close(e) ]) = 
    let c',e' = ([[e]]) in 
-   (c', close(e'))
+   (c'; _ := close_fd(e'), close(e'))
 
 ([ test(e) ]) = 
    let c',e' = ([[e]]) in 
@@ -429,11 +622,11 @@ Optimistic Compilation
 ([ read(e) ]) = 
   let c',e' = ([ e ]) in 
   (c';
-   if lookup_logR(e') then {
-     r := read_log(e')
-   } else { 
-     r := read(e');
-     _ := record(Read(e',r,false));
+   if lookup_logR(e')
+   then r := read_log(e')
+   else { 
+      r := read(e');
+      _ := record(Read(e',r,false));
    }, 
    r)
    where r is a fresh variable
@@ -441,9 +634,9 @@ Optimistic Compilation
 ([ readdir(e) ]) =
   let c',e' = ([ e ]) in 
   (c';
-   if lookup_logR(e') then {
-     r := read_log(e')
-   } else { 
+   if lookup_logR(e')
+   then r := read_log(e')
+   else { 
      r := readdir(e');
      _ := record(Read(e',r,true));
    }, 
@@ -580,15 +773,106 @@ Optimistic Compilation
    let c',e' = ([ e ]) in 
    c'; while e' do ([ c ])
 
--- Currently using a global log lock, may swtich to fancy data structure
+-- Currently using a global log lock, may switch to fancy data structure
 
 ([ atomic c ]) = 
    f := 1;
    while f do {
-     log := [];
+     l := trans_start();
      ([ c ]);
-     lock();
+     if l then skip else lock();
      f := check_error();
-     if not f then write_log(log) else skip;     	
-     unlock()
+     if not f then write_log() else skip;       
+     if l then skip else unlock()
    }
+   where l is fresh.
+
+--------------------------------------------------------------------------------
+Theorems
+--------------------------------------------------------------------------------
+
+-- Problems: We don't really have serializability, because H can change and if
+-- the transaction does different things depending on H and restarts, then...
+-- That said, this is probably what we want. Not sure what a good way of
+-- phrasing serializability modulo H is.
+-- That said, we can solve this by pushing H to the stack for the time being
+
+-- For all compilations of the form ([ atomic(c) ]):
+-- We require reads in c to be in a while loop, reading until EOF.
+-- We require writes of string s to path p in c to be from position 0 in the fd
+-- and to be followed by a truncate(p,|s|).
+
+Given some starting filesystem F, executing ([ atomic(c) ]) || ([ atomic(d) ])
+will generate a filesystem F', s.t. there exists a serializable order,
+c;d or d;c where such that starting from filesystem F and executing one of the
+two will also generate F' as long as atomic(e) is not a sub-command of c or d.
+
+Proof of theorem:
+Assume not. Then c = c_1;...;c_n and d=d_1;...;d_m and there is some
+interleaving of them which creates F' (since by lemma 2, o.w. c;d or d;c would
+generate F').
+Consider the cases where c and d do not overlap (in the files they read/modify)
+(I), where c modifies files read by d (II), where d modifies files read by c 
+(II by symmetry), and where they both modify files read by each other (III).
+
+(I)   : If they don't overlap, then any interleaving is equivalent to c;d
+(II)  : If any modifications of files that d reads occurs after d has completed,
+        then this is clearly equivalent to d;c.
+        O.w., since all modifications to the filesystem happen in write_log,
+        by Lemma 1, ([ atomic(c) ]) must have gotten the lock before
+        ([ atomic(d) ]). Then, when it releases the lock and d does a 
+        check_error, it will detect that c has run, thus restarting, which
+        means that we have c;d.
+(III) : Either c or d will acquire the lock first. By Lemma 1, we know that
+        neither will change the FS before then. Assume WLOG that c gets it.
+        Then, c can't be in conflict with anything (because the FS hasn't
+        been changed) and thus commits his changes in write_log before
+        releasing the lock. Then, since d read files modified by c,
+        he will restart the transaction, thus resulting in c;d.
+        
+Since in all cases, we get either c;d or d;c, the theorem holds.
+
+Lemma 1: Does not exist a c (except atomic) s.t. (F,H,([ c ])) ->* (F',H',_)
+         and F <> F'.
+Proof: By induction on the compilation of expressions, commands, and the rules
+       of the functions and commands they compile to:
+       - All commands just compile to themselves, with subcommands and
+         expressions compiled.
+       - The small step operational semantics governing commands clearly
+         show that they do not change the filesystem (barring the context
+         ones). Only function calls change the filesystem.
+       - By inspection, expressions compile into one of the various commands,
+         themselves, and/or possibly a variety of function calls
+         (exhaustively named below):
+         - open
+         - close
+         - test
+         - lseek
+         - read
+         - readdir
+         - lookup_logO
+         - lookup_logR
+         - lookup_logE
+         - read_log
+         - record
+       - Notably, the set of function calls above is disjoint from the
+         set of function calls that modify the filesystem (listed below)
+         as seen in the function semantics:
+         - write
+         - truncate
+         - rename
+         - remove
+         - write_log
+       Thus, since none of the possible functions that modify the filesystem
+       are invoked, the filesystem clearly doesn't change.
+       
+
+Lemma 2: Given some starting filesystem F and sequence of commands c, if
+         running c generates F', then so does running ([ atomic(c) ]).
+Proof: The compilation of c logs exactly what it does that changes
+       the filesystem (only writes, renames, removes, and truncates) by the
+       definition of the record function.
+       Then these operations are carried out in the same order with the same 
+       arguments they would have had (given that nothing else is changing
+       the filesystem and they don't by lemma 1).
+         
