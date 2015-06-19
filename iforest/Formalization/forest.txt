@@ -4,14 +4,14 @@ Built-in POSIX functions and their semantics
 
 -- JDL: Decide what error cases to add
 
--- Errs:
--- path must exist
-
 [[ open ]] (F,H,p) = 
-   let S = H(posix_fds) in 
-   let n = gensym(S) in 
-   let H' = H[posix_fds := S U { n |-> (p,0) }] in 
-   (F,H',n)
+   if p \in F 
+   then
+      let S = H(posix_fds) in 
+      let n = gensym(S) in 
+      let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+      (F,H',n)
+   else (F,H,-1)
 
 [[ close ]] (F,H,n) =
    let S = H(posix_fds) in
@@ -21,16 +21,22 @@ Built-in POSIX functions and their semantics
    else
       (F,H,-1)
 
--- Errs:
--- n isn't open
--- p is not a file
 
 [[ read ]] (F,H,n) =
-   let (p,i) = H(posix_fds)(n) in
-   let File(w) = F(p) in
-   let c = w[i,i+1] in 
-   let H' = H[posix_fds(n) :=  (p,i+1)] in 
-   (F,H',c)
+   if n \in H(posix_fds)
+   then
+      let (p,i) = H(posix_fds)(n) in
+      match F(p) with
+      | File(w) -> 
+         let H' = H[posix_fds(n) :=  (p,i+1)] in
+      	 let c = w[i,i+1] in
+      	 (F,H',c) 
+      | _ 	->
+      	 let H' = H[ERRFLAG := -2] in --n doesn't point to a file
+      	 (F,H','')
+   else
+      let H' = H[ERRFLAG := -1] -- n isn't open
+      (F,H','')
 
 -- Errs:
 -- n isn't open
@@ -795,7 +801,7 @@ Theorems
 -- the transaction does different things depending on H and restarts, then...
 -- That said, this is probably what we want. Not sure what a good way of
 -- phrasing serializability modulo H is.
--- That said, we can solve this by pushing H to the stack for the time being
+-- We can solve this by pushing H to the stack for the time being
 
 -- For all compilations of the form ([ atomic(c) ]):
 -- We require reads in c to be in a while loop, reading until EOF.
@@ -804,8 +810,8 @@ Theorems
 
 Given some starting filesystem F, executing ([ atomic(c) ]) || ([ atomic(d) ])
 will generate a filesystem F', s.t. there exists a serializable order,
-c;d or d;c where such that starting from filesystem F and executing one of the
-two will also generate F' as long as atomic(e) is not a sub-command of c or d.
+c;d or d;c where starting from filesystem F and executing one of the
+two will also generate F'.
 
 Proof of theorem:
 Assume not. Then c = c_1;...;c_n and d=d_1;...;d_m and there is some
@@ -818,12 +824,13 @@ Consider the cases where c and d do not overlap (in the files they read/modify)
 (I)   : If they don't overlap, then any interleaving is equivalent to c;d
 (II)  : If any modifications of files that d reads occurs after d has completed,
         then this is clearly equivalent to d;c.
-        O.w., since all modifications to the filesystem happen in write_log,
-        by Lemma 1, ([ atomic(c) ]) must have gotten the lock before
+        O.w., since all modifications to the filesystem happen in the final
+	write_log (that is, when it's not a nested transaction),
+        by Lemmas 1 and 3, ([ atomic(c) ]) must have gotten the lock before
         ([ atomic(d) ]). Then, when it releases the lock and d does a 
         check_error, it will detect that c has run, thus restarting, which
         means that we have c;d.
-(III) : Either c or d will acquire the lock first. By Lemma 1, we know that
+(III) : Either c or d will acquire the lock first. By Lemma 1 and 3, we know that
         neither will change the FS before then. Assume WLOG that c gets it.
         Then, c can't be in conflict with anything (because the FS hasn't
         been changed) and thus commits his changes in write_log before
@@ -832,15 +839,15 @@ Consider the cases where c and d do not overlap (in the files they read/modify)
         
 Since in all cases, we get either c;d or d;c, the theorem holds.
 
-Lemma 1: Does not exist a c (except atomic) s.t. (F,H,([ c ])) ->* (F',H',_)
-         and F <> F'.
+Lemma 1: There does not exist a c where atomic(d) \not \in c s.t. (F,H,([ c ])) ->*
+         (F',H',_) and F <> F'.
 Proof: By induction on the compilation of expressions, commands, and the rules
        of the functions and commands they compile to:
        - All commands just compile to themselves, with subcommands and
          expressions compiled.
        - The small step operational semantics governing commands clearly
-         show that they do not change the filesystem (barring the context
-         ones). Only function calls change the filesystem.
+         show that they do not change the filesystem except function calls.
+	 Only function calls change the filesystem.
        - By inspection, expressions compile into one of the various commands,
          themselves, and/or possibly a variety of function calls
          (exhaustively named below):
@@ -853,6 +860,9 @@ Proof: By induction on the compilation of expressions, commands, and the rules
          - lookup_logO
          - lookup_logR
          - lookup_logE
+	 - get_rn
+	 - link_fd
+	 - close_fd
          - read_log
          - record
        - Notably, the set of function calls above is disjoint from the
@@ -865,7 +875,6 @@ Proof: By induction on the compilation of expressions, commands, and the rules
          - write_log
        Thus, since none of the possible functions that modify the filesystem
        are invoked, the filesystem clearly doesn't change.
-       
 
 Lemma 2: Given some starting filesystem F and sequence of commands c, if
          running c generates F', then so does running ([ atomic(c) ]).
@@ -875,4 +884,20 @@ Proof: The compilation of c logs exactly what it does that changes
        Then these operations are carried out in the same order with the same 
        arguments they would have had (given that nothing else is changing
        the filesystem and they don't by lemma 1).
-         
+
+Lemma 3: For all atomic(d) \in c such that atomic(c) is compiled,
+         we have (F,H,([ atomic(d) ])) ->* (F',H',_) and F <> F'.
+Proof: By induction on the number of nested atomic statements (n).
+       For n=0, the filesystem changes and for n>0 it does not.
+       Induction Hypothesis: If it holds for n, then it holds for n+1.
+       Base case: n=1. When n=1 at the start of the transaction,
+       it is incremented to 2. Commands are run (shown by Lemma 1 and Lemma 3
+       (inductively) to not affect the filesystem). It skips instead of
+       acquiring a lock, then runs check_error, which does not modify
+       the filesystem. Then it may run write_log. n is now 2 and thus n > 1
+       meaning that we will take the first if-branch, which does not modify F.
+       Inductive case: Holds for n, we show n+1.
+       At the start of the transaction n=n+1 then we increment to n+2.
+       The only part that could have changed the filesystem was write_log from 
+       above. We know n+1 > 1, by IH. Thus, n+2 must be greater than 1 as well
+       and the filesystem remains unmodified.
