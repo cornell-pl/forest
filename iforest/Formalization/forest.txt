@@ -878,12 +878,27 @@ Proof: By induction on the compilation of expressions, commands, and the rules
 
 Lemma 2: Given some starting filesystem F and sequence of commands c, if
          running c generates F', then so does running ([ atomic(c) ]).
-Proof: The compilation of c logs exactly what it does that changes
-       the filesystem (only writes, renames, removes, and truncates) by the
-       definition of the record function.
-       Then these operations are carried out in the same order with the same 
-       arguments they would have had (given that nothing else is changing
-       the filesystem and they don't by lemma 1).
+Proof: By lemma 1, the only part of the compiled atomic(c) that can change the
+       filesystem is write_log. It suffices to show that the combination of
+       additions made to the log during the execution and then their
+       subsequent writing to the filesystem faithfully reproduces what c does.
+       
+       We will start with the second part. There are four different functions
+       in the log, which are written to the FS. They are rename, truncate,
+       remove, and write. All but the final one record all the information
+       required to call the original function and thus are no different.
+       The write is a bit different in that it takes a path and a string.
+       However, this is easily translated to an open, write, and close,
+       which is correct since we know that our translation to IMPOSIX only
+       ever writes an entire file.
+
+       The first part is a bit more subtle since we need to essentially build
+       a virtual filesystem that we're operating on and make sure that all
+       of our reads, renames, truncates, removes, etc. are operating on the
+       correct data. This is what build_fs does for us. By actually building
+       a virtual filesystem, it can deal with most of the cumbersome parts
+       letting us basically treat it as the normal filesystem, with a few,
+       rather simple, changes.
 
 Lemma 3: For all atomic(d) \in c such that atomic(c) is compiled,
          we have (F,H,([ atomic(d) ])) ->* (F',H',_) and F <> F'.
