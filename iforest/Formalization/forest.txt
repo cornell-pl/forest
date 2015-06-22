@@ -29,11 +29,11 @@ Built-in POSIX functions and their semantics
       match F(p) with
       | File(w) -> 
          let H' = H[posix_fds(n) :=  (p,i+1)] in
-      	 let c = w[i,i+1] in
-      	 (F,H',c) 
-      | _ 	->
-      	 let H' = H[ERRFLAG := -2] in --n doesn't point to a file
-      	 (F,H','')
+         let c = w[i,i+1] in
+         (F,H',c) 
+      | _       ->
+         let H' = H[ERRFLAG := -2] in --n doesn't point to a file
+         (F,H','')
    else
       let H' = H[ERRFLAG := -1] -- n isn't open
       (F,H','')
@@ -138,7 +138,7 @@ Built-in Helper functions and their semantics
 -- Builds logFS
 -- Depending on entry found (starting from beginning)
 -- Reads:    RF(p,w)   makes p F(w)
--- ReadDirs: RD(p,l)   makes p D(l,true) (barring previous modifications)
+-- ReadDirs: RD(p,l)   makes p D(l,[],true) (barring previous modifications)
 -- Writes:   W(p,w)    makes p F(w) and possibly adds p to p's directory
 -- Renames:  Rn(p1,p2) makes p1 Rm and removes it from p1's directory
                        and p2 what was at p1 (possibly adding p2 to p2's dir)
@@ -160,6 +160,7 @@ let build_fs () =
          helper tl
          (match hd with
          | RF(p,w)  -> add p F(w) map
+         | RD(p,l)  -> add p D(l,[],true) map
          | T(p,n)   -> 
             match map(p) with
             | None       -> add p T(n) map
@@ -167,51 +168,39 @@ let build_fs () =
                if n < len(w) 
                then add p F(sub w 0 n) map
                else add p F(fill w len(w) (n-len(w)) '0') map
-            | Some(Rn(p,_)) -> 
-               if n < len(w) 
-               then add p F(sub w 0 n) map
-               else add p F(fill w len(w) (n-len(w)) '0') map
+            | Some(Rn(p',_)) -> add p Rn(p',n) map
             | _          -> failwith "Truncate should've failed"
          | W(p,w)   ->
             match map(dir(p)) with
-            | None         -> add dir(p) (makeDir hd) (add p F(w) map)
-            | Some(D(l,b)) -> add dir(p) (addDir hd D(l,b)) (add p F(w) map)
-            | _            -> failwith "Path directory isn't a directory?"
+            | None            -> add dir(p) D([p],[],false) (add p F(w) map)
+            | Some(D(l,l',b)) -> add dir(p) D(sort (p :: l),l',b) (add p F(w) map)
+            | _               -> failwith "Path directory isn't a directory?"
          | Rn(p,p') -> 
             let map' =
                match map(dir(p)) with
-               | None         -> add dir(p) (makeDir Rm(p)) (add p Rm map)
-               | Some(D(l,b)) -> add dir(p) (addDir Rm(p) D(l,b)) (add p Rm map)
-               | _            -> failwith "Path directory isn't a directory?"
+               | None               -> add dir(p) D([],[p],false) (add p Rm map)
+               | Some(D(l,l',false))-> add dir(p) D(l,sort (p::l'),false)) (add p Rm map)
+               | Some(D(l,l',true)) -> add dir(p) D(rem p l,l',true)) (add p Rm map)
+               | _               -> failwith "Path directory isn't a directory?"
             in
             match map'(p),map'(dir(p')) with
-            | None   , None                                          -> 
-               add dir(p') (makeDir hd) (add p' Rn(p,0) map')
-            | Some(Rn(p'',0), None when p'' = p'                     -> 
-               add dir(p') (makeDir hd) (remove p' map')
-            | Some(Rn(p'',n), None when p'' = p'                     -> 
-               add dir(p') (makeDir hd) (add p' T(n) map')
-            | Some(x), None                                          -> 
-               add dir(p') (makeDir hd) (add p' x map')
-            | None   , Some(D(l,b))                                  -> 
-               add dir(p') (addDir hd D(l,b)) (add p' Rn(p,0) map')
-            | Some(Rn(p'',0), Some(D(l,b)) when p'' = p'             -> 
-               add dir(p') (addDir hd D(l,b)) (remove p' map')
-            | Some(Rn(p'',n), Some(D(l,b)) when p'' = p'             -> 
-               add dir(p') (addDir hd D(l,b)) (add p' T(n) map')
-            | Some(x), Some(D(l,b))                                  -> 
-               add dir(p') (addDir hd D(l,b)) (add p' x map')
+            | None, None                         -> add dir(p') D([p'],[],false) (add p' Rn(p,0) map')
+            | Some(Rn(p'',0), None when p'' = p' -> remove p' map'   -- Should never happen
+            | Some(Rn(p'',n), None when p'' = p' -> add p' T(n) map' -- Should never happen
+            | Some(x), None                      -> add dir(p') D([p'],[],false) (add p' x map')
+
+            | None, Some(D(l,l',b))                         -> add dir(p') D(sort (p'::l),l',b)) (add p' Rn(p,0) map')
+            | Some(Rn(p'',0), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(sort (p'::l),rem p' l',b) (remove p' map')
+            | Some(Rn(p'',n), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(sort (p'::l),rem p' l',b) (add p' T(n) map')
+            | Some(x), Some(D(l,l',b))                      -> add dir(p') D(sort (p'::l),rem p' l',b) (add p' x map')
+
             | _ -> failwith "Path directory isn't a directory?"
          | Rm(p)    -> 
             match map(dir(p)) with
-            | None         -> add dir(p) (makeDir hd) (add p Rm map)
-            | Some(D(l,b)) -> add dir(p) (addDir hd D(l,b)) (add p Rm map)
-            | _            -> failwith "Path directory isn't a directory?"
-         | RD(p,l)  -> add p 
-            match map(p) with
-            | None          -> add p D(l,true) map
-            | Some(D(l',b)) -> add p (mergeDirs D(l',b) D(l,true)) map
-            | _             -> failwith "Path directory isn't a directory?"
+            | None               -> add dir(p) D([],[p],false) (add p Rm map)
+            | Some(D(l,l',false))-> add dir(p) D(l,sort (p::l'),false)) (add p Rm map)
+            | Some(D(l,l',true)) -> add dir(p) D(rem p l,l',true)) (add p Rm map)
+            | _                  -> failwith "Path directory isn't a directory?"
          )
       | [] -> map
    in 
@@ -233,9 +222,9 @@ let build_fs () =
       match H(logFS)(p) with
       | Some(Rm)         -> -1
       | Some(F(_))             
-      | Some(D(_,true))  -> 0
+      | Some(D(_,_,true))  -> 0
       | Some(T(_))              
-      | Some(D(_,false))      
+      | Some(D(_,_,false))      
       | None             -> 1
       | Some(Rn(_))      -> 5
    in
@@ -262,10 +251,10 @@ let build_fs () =
       match H(logFS)(p) with
       | Some(Rm)                        -> failwith "Should never happen"
       | Some(F(_))
-      | Some(D(_,true))
+      | Some(D(_,_,true))
       | Some(Rn(_,j)) when j <= i           
-      | Some(T(j)) when j <= i    	-> 1       
-      | Some(D(_,false))     		-> 2
+      | Some(T(j)) when j <= i          -> 1       
+      | Some(D(_,_,false))              -> 2
       | Some(T(_))             
       | Some(Rn(_))            
       | None                            -> 0
@@ -292,12 +281,12 @@ let build_fs () =
       match H(logFS)(p) with
       | Some(F(_))
       | Some(Rn(_))                  
-      | Some(T(_))                   ->  0
-      | Some(D(_,false))            
-      | Some(D(l,true)) when l <> [] ->  1
-      | Some(D(_))                   ->  2
-      | Some(Rm)                           -> -2
-      | None                               -> -1
+      | Some(T(_))                     ->  0
+      | Some(D(_,_,false))            
+      | Some(D(l,_,true)) when l <> [] ->  1
+      | Some(D(_))                     ->  2
+      | Some(Rm)                       -> -2
+      | None                           -> -1
    in
    (F,H,b)
 
@@ -341,9 +330,9 @@ let build_fs () =
       | Some(T(j)) when j <= i
       | Some(Rn(_,j)) when j <= i -> ''
       | Some(F(w))             
-      | Some(D(w,true))           -> w[i]
+      | Some(D(w,_,true))           -> w[i]
       | Some(T(_))             
-      | Some(D(_,false))       
+      | Some(D(_,_,false))       
       | Some(Rn(_))            
       | None                      -> failwith "lookup_logR would've failed"
    in 
@@ -351,20 +340,27 @@ let build_fs () =
 
 [[ read_and_check ]] (F,H,(n,e)) =
    let (p,i) = get_fd n in
-   let rec get_correct e last l =
-   match l with
-   | [] -> (F,H,e)
-   | hd :: tl ->
+   let rec get_correct e last l l' =
+   match l,l' with
+   | [],[] -> (F,H,e)
+   | [], hd :: tl ->
+     if hd = e
+     then let F',H',r = readdir(F,H,n) in
+          read_and_check(F',H',(n,r)) 
+     else get_correct e last l tl
+   | hd :: tl,_ ->
      if hd > last && hd < e
      then (F,H[posix_fds(n) := (p,i-1)],hd)
-     else get_correct e last tl
+     else if hd = e
+     then (F,H,hd)
+     else get_correct e last tl l'
    in
    match H(logFS)(p) with
-   | D(l,false) -> 
+   | D(lE,lNE,false) -> 
      match H(rstring) with
-     | last :: _ -> get_correct e last l
-     | []        -> get_correct e '' l
-   | _ 		-> failwith "Would never get to here"
+     | last :: _ -> get_correct e last lE lNE
+     | []        -> get_correct e '' lE lNE
+   | _          -> failwith "Would never get to here"
 
 [[ record ]] (F,H,t) = 
    let l  = H(log) in
@@ -373,7 +369,7 @@ let build_fs () =
       | Read(fd,v,d)   ->
         let (p,_) = get_fd n in
         if v = '' then 
-   	   let rs = rev H(rstring) in
+           let rs = rev H(rstring) in
            let ele = if d then RD(p,rs) else RF(p,rs) in
            let H'' = H[log := ele :: l] in
                      H''[rstring := '']
@@ -843,7 +839,7 @@ Consider the cases where c and d do not overlap (in the files they read/modify)
 (II)  : If any modifications of files that d reads occurs after d has completed,
         then this is clearly equivalent to d;c.
         O.w., since all modifications to the filesystem happen in the final
-	write_log (that is, when it's not a nested transaction),
+        write_log (that is, when it's not a nested transaction),
         by Lemmas 1 and 3, ([ atomic(c) ]) must have gotten the lock before
         ([ atomic(d) ]). Then, when it releases the lock and d does a 
         check_error, it will detect that c has run, thus restarting, which
@@ -854,7 +850,7 @@ Consider the cases where c and d do not overlap (in the files they read/modify)
         been changed) and thus commits his changes in write_log before
         releasing the lock. Then, since d read files modified by c,
         he will restart the transaction, thus resulting in c;d
-	(again, with a possibly different heap).
+        (again, with a possibly different heap).
         
 Since in all cases, we get either c;d or d;c, the theorem holds.
 
@@ -866,7 +862,7 @@ Proof: By induction on the compilation of expressions, commands, and the rules
          expressions compiled.
        - The small step operational semantics governing commands clearly
          show that they do not change the filesystem except function calls.
-	 Only function calls change the filesystem.
+         Only function calls change the filesystem.
        - By inspection, expressions compile into one of the various commands,
          themselves, and/or possibly a variety of function calls
          (exhaustively named below):
@@ -879,9 +875,9 @@ Proof: By induction on the compilation of expressions, commands, and the rules
          - lookup_logO
          - lookup_logR
          - lookup_logE
-	 - get_rn
-	 - link_fd
-	 - close_fd
+         - get_rn
+         - link_fd
+         - close_fd
          - read_log
          - record
        - Notably, the set of function calls above is disjoint from the
