@@ -228,11 +228,6 @@ let build_fs () =
 -- Rn       (p)  Rerun operation, but for p
 -- None           Real open
 
--- JDL: Make it correctly open a virtual fd (which we treat as realish)
--- let S = H(posix_fds) in 
--- let n = gensym(S) in 
--- let H' = H[posix_fds := S U { n |-> (p,0) }] in 
-
 [[ lookup_logO ]] (F,H,p) = 
    let b = 
       match H(logFS)(p) with
@@ -269,9 +264,9 @@ let build_fs () =
       | Some(F(_))
       | Some(D(_,true))
       | Some(Rn(_,j)) when j <= i           
-      | Some(T(j)) when j <= i    -> 1
+      | Some(T(j)) when j <= i    	-> 1       
+      | Some(D(_,false))     		-> 2
       | Some(T(_))             
-      | Some(D(_,false))       
       | Some(Rn(_))            
       | None                            -> 0
    in
@@ -350,22 +345,39 @@ let build_fs () =
       | Some(T(_))             
       | Some(D(_,false))       
       | Some(Rn(_))            
-      | None                            -> failwith "lookup_logR would've failed"
+      | None                      -> failwith "lookup_logR would've failed"
    in 
    (F,H',c)
 
+[[ read_and_check ]] (F,H,(n,e)) =
+   let (p,i) = get_fd n in
+   let rec get_correct e last l =
+   match l with
+   | [] -> (F,H,e)
+   | hd :: tl ->
+     if hd > last && hd < e
+     then (F,H[posix_fds(n) := (p,i-1)],hd)
+     else get_correct e last tl
+   in
+   match H(logFS)(p) with
+   | D(l,false) -> 
+     match H(rstring) with
+     | last :: _ -> get_correct e last l
+     | []        -> get_correct e '' l
+   | _ 		-> failwith "Would never get to here"
+
 [[ record ]] (F,H,t) = 
-   let rs = H(rstring) in
    let l  = H(log) in
    let H' =
       match t with
       | Read(fd,v,d)   ->
         let (p,_) = get_fd n in
         if v = '' then 
+   	   let rs = rev H(rstring) in
            let ele = if d then RD(p,rs) else RF(p,rs) in
            let H'' = H[log := ele :: l] in
-                       H''[rstring := '']
-        else   H  [rstring := rstring @ v]
+                     H''[rstring := '']
+        else         H  [rstring := v :: H(rstring)]
       | Write(fd,w)    ->  
          let (p,_) = get_fd n in
          H[log := W(p,w) :: l]
@@ -640,7 +652,14 @@ Optimistic Compilation
 ([ readdir(e) ]) =
   let c',e' = ([ e ]) in 
   (c';
-   if lookup_logR(e')
+   r := lookup_logR(e');
+   if r=2 --Partial directory
+   then {
+     r := readdir(e');
+     r := read_and_check(e',r);
+     _ := record(Read(e',r,true));
+   }
+   else if r 
    then r := read_log(e')
    else { 
      r := readdir(e');
@@ -797,21 +816,20 @@ Optimistic Compilation
 Theorems
 --------------------------------------------------------------------------------
 
--- Problems: We don't really have serializability, because H can change and if
--- the transaction does different things depending on H and restarts, then...
--- That said, this is probably what we want. Not sure what a good way of
--- phrasing serializability modulo H is.
--- We can solve this by pushing H to the stack for the time being
-
 -- For all compilations of the form ([ atomic(c) ]):
 -- We require reads in c to be in a while loop, reading until EOF.
 -- We require writes of string s to path p in c to be from position 0 in the fd
 -- and to be followed by a truncate(p,|s|).
 
+Theorem:
 Given some starting filesystem F, executing ([ atomic(c) ]) || ([ atomic(d) ])
 will generate a filesystem F', s.t. there exists a serializable order,
 c;d or d;c where starting from filesystem F and executing one of the
-two will also generate F'.
+two will also generate F'. Note that we do not restrict ourselves to
+a particular heap. If both c and d run to completion on some 
+(possibly different) heap, in effectively serial order, then we consider
+it a success.
+
 
 Proof of theorem:
 Assume not. Then c = c_1;...;c_n and d=d_1;...;d_m and there is some
@@ -829,13 +847,14 @@ Consider the cases where c and d do not overlap (in the files they read/modify)
         by Lemmas 1 and 3, ([ atomic(c) ]) must have gotten the lock before
         ([ atomic(d) ]). Then, when it releases the lock and d does a 
         check_error, it will detect that c has run, thus restarting, which
-        means that we have c;d.
+        means that we have c;d (though changes to the heap could have been made).
 (III) : Either c or d will acquire the lock first. By Lemma 1 and 3, we know that
         neither will change the FS before then. Assume WLOG that c gets it.
         Then, c can't be in conflict with anything (because the FS hasn't
         been changed) and thus commits his changes in write_log before
         releasing the lock. Then, since d read files modified by c,
-        he will restart the transaction, thus resulting in c;d.
+        he will restart the transaction, thus resulting in c;d
+	(again, with a possibly different heap).
         
 Since in all cases, we get either c;d or d;c, the theorem holds.
 
