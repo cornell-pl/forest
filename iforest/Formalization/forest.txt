@@ -134,6 +134,11 @@ Built-in Helper functions and their semantics
 -- Writes are always the whole file, + a truncate at end
 -- * How does an open work? Could be part virtual, how do we know?
 
+let get_fd n =
+   match H(virtual_fds)(n) with
+   | Some(x) -> x
+   | None    -> H(posix_fds)(n)
+
 
 -- Builds logFS
 -- Depending on entry found (starting from beginning)
@@ -142,15 +147,11 @@ Built-in Helper functions and their semantics
 -- Writes:   W(p,w)    makes p F(w) and possibly adds p to p's directory
 -- Renames:  Rn(p1,p2) makes p1 Rm and removes it from p1's directory
                        and p2 what was at p1 (possibly adding p2 to p2's dir)
-                   Or if there was nothing, then Rn(p1)
+                       Or if there was nothing, then Rn(p1)
 -- Removes:  Rm(p)     makes p Rm and removes it from p's dir
 -- Truncate: T(p,n)    removes or extends F(w) at p, or makes p T(n)
 
-
-let get_fd n =
-   match H(virtual_fds)(n) with
-   | Some(x) -> x
-   | None    -> H(posix_fds)(n)
+-- souq here is sort and unique at the same time.
 
 let build_fs () =
    let l = rev H(log) in
@@ -173,13 +174,13 @@ let build_fs () =
          | W(p,w)   ->
             match map(dir(p)) with
             | None            -> add dir(p) D([p],[],false) (add p F(w) map)
-            | Some(D(l,l',b)) -> add dir(p) D(sort (p :: l),l',b) (add p F(w) map)
+            | Some(D(l,l',b)) -> add dir(p) D(souq (p :: l),l',b) (add p F(w) map)
             | _               -> failwith "Path directory isn't a directory?"
          | Rn(p,p') -> 
             let map' =
                match map(dir(p)) with
                | None               -> add dir(p) D([],[p],false) (add p Rm map)
-               | Some(D(l,l',false))-> add dir(p) D(l,sort (p::l'),false)) (add p Rm map)
+               | Some(D(l,l',false))-> add dir(p) D(l,souq (p::l'),false)) (add p Rm map)
                | Some(D(l,l',true)) -> add dir(p) D(rem p l,l',true)) (add p Rm map)
                | _               -> failwith "Path directory isn't a directory?"
             in
@@ -189,18 +190,17 @@ let build_fs () =
             | Some(Rn(p'',n), None when p'' = p' -> add p' T(n) map' -- Should never happen
             | Some(x), None                      -> add dir(p') D([p'],[],false) (add p' x map')
 
-            | None, Some(D(l,l',b))                         -> add dir(p') D(sort (p'::l),l',b)) (add p' Rn(p,0) map')
-            | Some(Rn(p'',0), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(sort (p'::l),rem p' l',b) (remove p' map')
-            | Some(Rn(p'',n), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(sort (p'::l),rem p' l',b) (add p' T(n) map')
-            | Some(x), Some(D(l,l',b))                      -> add dir(p') D(sort (p'::l),rem p' l',b) (add p' x map')
+            | None, Some(D(l,l',b))                         -> add dir(p') D(souq (p'::l),l',b)) (add p' Rn(p,0) map')
+            | Some(Rn(p'',0), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(souq (p'::l),rem p' l',b) (remove p' map')
+            | Some(Rn(p'',n), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(souq (p'::l),rem p' l',b) (add p' T(n) map')
+            | Some(x), Some(D(l,l',b))                      -> add dir(p') D(souq (p'::l),rem p' l',b) (add p' x map')
 
             | _ -> failwith "Path directory isn't a directory?"
          | Rm(p)    -> 
             match map(dir(p)) with
-            | None               -> add dir(p) D([],[p],false) (add p Rm map)
-            | Some(D(l,l',false))-> add dir(p) D(l,sort (p::l'),false)) (add p Rm map)
-            | Some(D(l,l',true)) -> add dir(p) D(rem p l,l',true)) (add p Rm map)
-            | _                  -> failwith "Path directory isn't a directory?"
+            | None            -> add dir(p) D([],[p],false) (add p Rm map)
+            | Some(D(l,l',b)) -> add dir(p) D(rem p l,souq (p::l'),b)) (add p Rm map)
+            | _               -> failwith "Path directory isn't a directory?"
          )
       | [] -> map
    in 
@@ -267,7 +267,7 @@ let build_fs () =
 -- Dirs     (D)  exist, but may or may not be empty
 -- Removes  (Rm) truly don't exist
 -- Truncate (T)  exist
--- None          doesn't contain byte
+-- None          may or may not exist
 
 -- Results:
 -- 0 = File
@@ -591,6 +591,66 @@ Concurrent Operational Semantics
 ---------------------------------------------- M-atomic
 (F,M U { <H,C[atomic c]> }) -> (F',M',C[skip])
 
+
+--------------------------------------------------------------------------------
+Translation from TxForest to IMPOSIX
+--------------------------------------------------------------------------------
+
+-- Where ret is the return value
+
+[[ new ]]  args p = ret := Rep(p)
+[[ read ]] Rep(p) = 
+   type := test(p);
+   if type = -1
+   then --JDL: Add failure case?!
+   else skip;
+   ret := [];
+   if type 
+   then {  --Directory
+      r := 1;
+      fd := open(p);
+      while r do {
+        r   := readdir(fd); 
+        ret := r :: H(ret)
+      };
+      ret := rev H(ret);
+      _ := close(fd)
+   }
+   else {  --File
+      r := 1;
+      fd := open(p);
+      while r do {
+        r   := read(fd); 
+        ret := r :: H(ret)
+      };
+      ret := rev H(ret);
+      _ := close(fd)
+   };
+where r and fd are fresh
+
+[[ delete ]] Rep(p) =
+   ret := ();
+   list := [p];
+   while list <> [] do {
+      x := hd H(list);
+      r := remove(x);
+      if r then {
+         fd := open(x);
+         while r do {
+            r    := readdir(fd); 
+            list := r :: H(list)
+         };
+         _ := close(fd)
+      } 
+      else list := tl H(list)
+   }
+where list, fd, x, and r are fresh.
+
+[[ writeOrElse ]] Rep(p) x b func =
+   let rec writer
+
+[[ copyOrElse ]] Rep(p) Rep(p') b func =
+
 --------------------------------------------------------------------------------
 Optimistic Compilation
 --------------------------------------------------------------------------------
@@ -621,9 +681,16 @@ Optimistic Compilation
    let c',e' = ([[e]]) in 
    (c'; _ := close_fd(e'), close(e'))
 
+--JDL: Fix test to take changes into account.
+
 ([ test(e) ]) = 
    let c',e' = ([[e]]) in 
-   (c', test(e'))
+   (c';
+    r := lookup_logE(e');
+    if r = -1 then r := test(e') else skip;
+    if r = -2 then r := -1 else skip;
+    if r =  2 then r :=  1 else skip;
+    , r)
 
 ([ lseek(e,e') ]) =
    let c1, e1 = ([ e  ]) in
@@ -915,6 +982,70 @@ Proof: By lemma 1, the only part of the compiled atomic(c) that can change the
        letting us basically treat it as the normal filesystem, with a few,
        rather simple, changes.
 
+More tedious proof: 
+       Here we wish to show that the compilations still do the right thing. 
+       We do this by mutually recursive induction on all built-in helper
+       functions and compilations.
+
+       We will start with the meanings of various constructs that can
+       be in the log as they are important for the rest of this:
+       RF(p,w)  means we read a file at path p and it contained w.
+       RD(p,l)  means we read a directory at path p and it contained l.
+       T(p,n)   means we truncated a file at path p to length n.
+       W(p,w)   means we wrote w to a file at path p.
+       Rm(p)    means we removed whatever was at path p.
+       Rn(p,p') means we moved whatever was at path p to path p'.
+       
+       Now we look at the build_fs function as that is the lynchpin
+       of all the other functions:
+       Assuming all other functions and compilations are correct,
+       calling build_fs builds up a virtual representation of 
+       what we currently know about the filesystem (we call this VFS).
+       In particular, if the transaction has not touched the path or
+       something beneath it in some manner, we know nothing, otherwise
+       the VFS has whatever we know, represented in the following
+       manner:
+       F(w) is a file containing string w.
+       T(n) means that the path contains a file and it is truncated
+       to length n.
+       Rm means whatever was there is now removed (so nothing is there).
+       Rn(p,n) means that the path contains whatever is at path p,
+       but truncated to length n (or not if n is 0).
+       D(l,l',b) means that the path is a directory containing
+       exactly what is in l (if b is true) and o.w.
+       at least what is in l minus what is in l', but we have yet
+       to read it so there could be more things.
+
+       Starting from the first piece of the log and going to the last one,
+       build_fs updates the VFS depending on what it sees as follows:
+       RF(p,w)  - Makes path p map to F(w)
+       RD(p,l)  - Makes path p map to D(l,[],true)
+       T(p,n)   - 
+       	  If p doesn't map to anything then it makes path p map to T(n)
+	  O.w. if p maps to F(w) it makes path p map to F(s) where 
+	     s is w correctly truncated to n characters.
+	  O.w. if p maps to some renamed file Rn(p',n') we make p map to Rn(p',n)
+       W(p,w)   -
+       	  If the path of the directory of p (dir(p)) doesn't map to anything
+	     it makes p map to F(w) and dir(p) map to D([p],[],false) (since we 
+	     now know a p is in dir(p), but haven't read it).
+	  O.w. if dir(p) maps to D(l,l',b), it adds p into the sorted list of
+	     paths l at the correct position if it's not in there already.
+	     It then makes dir(p) map to that construct and makes p map to F(w).
+	     Regardless of whether we had the complete list (b is true) or not
+	     we continue to stay in that state since we just add what we know is
+	     now there (or nothing if it already was).
+       Rm(p)	-
+          It maps p to Rm, then:
+       	  If dir(p) doesn't map to anything, it makes it map to D([],[p],false)
+	     since the only thing we know about the directory is that it no
+	     longer contains p.
+	  O.w. if it maps to D(l,l',b), it removes p from list l and adds it
+	     (in unique sorted order) to l'. It will be more clear why this
+	     is correct when we get to reading directories, but basically
+	     regardless how 
+       Rn(p,p')	-
+
 Lemma 3: For all atomic(d) \in c such that atomic(c) is compiled,
          we have (F,H,([ atomic(d) ])) ->* (F',H',_) and F <> F'.
 Proof: By induction on the number of nested atomic statements (n).
@@ -931,3 +1062,8 @@ Proof: By induction on the number of nested atomic statements (n).
        The only part that could have changed the filesystem was write_log from 
        above. We know n+1 > 1, by IH. Thus, n+2 must be greater than 1 as well
        and the filesystem remains unmodified.
+
+
+
+
+
