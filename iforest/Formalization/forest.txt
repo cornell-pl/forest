@@ -29,7 +29,8 @@ Built-in POSIX functions and their semantics
       match F(p) with
       | File(w) -> 
          let H' = H[posix_fds(n) :=  (p,i+1)] in
-         let c = w[i,i+1] in
+	 let c = w[i,i+1] in
+	 let H' = H[rl := RF(p,c,i) :: H(rl)] in
          (F,H',c) 
       | _       ->
          let H' = H[ERRFLAG := -2] in --n doesn't point to a file
@@ -47,6 +48,7 @@ Built-in POSIX functions and their semantics
    let File(u) = F(p) in
    let F' = F[p := (u[i] := w)] in             -- JDL: Better way to write this?
    let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
+   let H' = H[rl := W(p,w,i) :: H(rl)] in 
    (F',H',0)
 
 -- Errs:
@@ -60,7 +62,8 @@ Built-in POSIX functions and their semantics
        else if |w| > n then F[p := w[0:n-1]]
             else            F[p := w @ (0 X n-|w|)] -- JDL: n-|w| zeroes, fix?
    in
-   (F',H,0)
+   let H' = H[rl := T(p,n) :: H(rl)] in 
+   (F',H',0)
 
 [[ rename ]] (F,H,(p,p')) =
    if (F(p) = File(_) && F(p') = File(_)) ||
@@ -68,7 +71,8 @@ Built-in POSIX functions and their semantics
    then
       let F' = F(p') := F(p) in
       let F' = F' \ p in
-      (F',H,0)
+      let H' = H[rl := Rn(p,p') :: H(rl)] in 
+      (F',H',0)
    else
       (F,H,-1)
 
@@ -80,7 +84,8 @@ Built-in POSIX functions and their semantics
    let (p,i) = H(posix_fds)(n) in
    let Dir(l) = F(p) in
    let f = l[i,i+1] in 
-   let H' = H[posix_fds(n) :=  (p,i+1)] in 
+   let H' = H[posix_fds(n) :=  (p,i+1)] in
+   let H' = H[rl := RD(p,f,i) :: H(rl)] in 
    (F,H',f)
    
 
@@ -95,21 +100,14 @@ Built-in POSIX functions and their semantics
 [[ remove ]] (F,H,p) =
    if F(p) = File(_) ||  F(p) = Dir([]) then
       let F' = F \ p in
-      (F',H,0)
+      let H' = H[rl := Rm(p) :: H(rl)] in 
+      (F',H',0)
    else
       (F,H,-1)
 
 -- Mostly added to be able to check the existence of a file
 -- Errs:
 -- p doesn't exist
-
-
-[[ read ]] (F,H,n) =
-   let (p,i) = H(posix_fds)(n) in
-   let File(w) = F(p) in
-   let c = w[i,i+1] in 
-   let H' = H[posix_fds(n) :=  (p,i+1)] in 
-   (F,H',c)
 
 [[ test ]] (F,H,p) = 
    if F(p) = File(_)
@@ -155,13 +153,19 @@ let get_fd n =
 
 let build_fs () =
    let l = rev H(log) in
-   let rec helper lst map =
+   let rec helper lst map acc =
    match lst with
       | hd :: tl ->
-         helper tl
+         let map,acc =
          (match hd with
-         | RF(p,w)  -> add p F(w) map
-         | RD(p,l)  -> add p D(l,[],true) map
+         | RF(p,c,i)  ->
+	    if c = ''
+	    then add p F(acc) map
+	    else map
+         | RD(p,d,i)  -> 
+	    if d = ''
+	    then add p D(acc,[],true) map
+	    else map
          | T(p,n)   -> 
             match map(p) with
             | None       -> add p T(n) map
@@ -179,32 +183,40 @@ let build_fs () =
          | Rn(p,p') -> 
             let map' =
                match map(dir(p)) with
-               | None               -> add dir(p) D([],[p],false) (add p Rm map)
-               | Some(D(l,l',false))-> add dir(p) D(l,souq (p::l'),false)) (add p Rm map)
-               | Some(D(l,l',true)) -> add dir(p) D(rem p l,l',true)) (add p Rm map)
+               | None            -> add dir(p) D([],[p],false) map
+               | Some(D(l,l',b)) -> add dir(p) D(rem p l,souq (p::l'),b)) map
                | _               -> failwith "Path directory isn't a directory?"
             in
-            match map'(p),map'(dir(p')) with
-            | None, None                         -> add dir(p') D([p'],[],false) (add p' Rn(p,0) map')
-            | Some(Rn(p'',0), None when p'' = p' -> remove p' map'   -- Should never happen
-            | Some(Rn(p'',n), None when p'' = p' -> add p' T(n) map' -- Should never happen
-            | Some(x), None                      -> add dir(p') D([p'],[],false) (add p' x map')
-
-            | None, Some(D(l,l',b))                         -> add dir(p') D(souq (p'::l),l',b)) (add p' Rn(p,0) map')
-            | Some(Rn(p'',0), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(souq (p'::l),rem p' l',b) (remove p' map')
-            | Some(Rn(p'',n), Some(D(l,l',b)) when p'' = p' -> add dir(p') D(souq (p'::l),rem p' l',b) (add p' T(n) map')
-            | Some(x), Some(D(l,l',b))                      -> add dir(p') D(souq (p'::l),rem p' l',b) (add p' x map')
-
-            | _ -> failwith "Path directory isn't a directory?"
+	    let map' = 
+               match map'(dir(p')) with
+               | Some(D(l,l',b)) -> add dir(p') D(souq (p'::l),rem p' l',b) map'
+               | None	       	 -> add dir(p') D([p'],[],false) map'
+               | _               -> failwith "Path directory isn't a directory?"
+	    in
+	    let map' =
+	    	match map'(p) with
+            	| None    -> add p' Rn(p,0) map'
+            	| Some(x) -> add p' x map' 	 
+	    in
+	    (add p Rm map')
          | Rm(p)    -> 
             match map(dir(p)) with
             | None            -> add dir(p) D([],[p],false) (add p Rm map)
             | Some(D(l,l',b)) -> add dir(p) D(rem p l,souq (p::l'),b)) (add p Rm map)
             | _               -> failwith "Path directory isn't a directory?"
-         )
+         ),(match hd with
+	 | RF(p,c,i) 
+         | RD(p,c,i)  -> 
+	    if c = ''
+	    then []
+	    else c :: acc
+         | _   -> acc
+	 )
+	 in
+	 helper tl map acc
       | [] -> map
    in 
-   let H' = H[logFS := helper l empty] in
+   let H' = H[logFS := helper l empty ""] in
    (F,H',())
    
 
@@ -357,23 +369,19 @@ let build_fs () =
    in
    match H(logFS)(p) with
    | D(lE,lNE,false) -> 
-     match H(rstring) with
-     | last :: _ -> get_correct e last lE lNE
-     | []        -> get_correct e '' lE lNE
-   | _          -> failwith "Would never get to here"
+     match H(log) with
+     | RD(p',last,_) :: _ where p = p' -> get_correct e last lE lNE
+     | _               	       	       -> get_correct e ''   lE lNE
+   | _               -> failwith "Would never get to here"
 
 [[ record ]] (F,H,t) = 
    let l  = H(log) in
    let H' =
       match t with
       | Read(fd,v,d)   ->
-        let (p,_) = get_fd n in
-        if v = '' then 
-           let rs = rev H(rstring) in
-           let ele = if d then RD(p,rs) else RF(p,rs) in
-           let H'' = H[log := ele :: l] in
-                     H''[rstring := '']
-        else         H  [rstring := v :: H(rstring)]
+        let (p,i) = get_fd n in
+        let ele   = if d then RD(p,v,i) else RF(p,v,i) in
+        H[log := ele :: l]
       | Write(fd,w)    ->  
          let (p,_) = get_fd n in
          H[log := W(p,w) :: l]
@@ -412,8 +420,8 @@ let build_fs () =
       match l with
       | hd :: tl ->
          match hd with
-         | RD(p,_) 
-         | RF(p,_) 
+         | RD(p,_,_) 
+         | RF(p,_,_) 
          | Rn(p,_) -> if exists (= p) glog then 1 else err_help tl
          | _       -> err_help tl
       | [] -> 0
@@ -529,6 +537,10 @@ E ::= .
 H(x) = v
 -------------- E-Var
 (F,H,x) -> (F,H,v)
+
+(F',H',v') = [[ f ]] (F,H,v)
+------------------------ E-Call
+(F,H,f(v)) -> (F',H',v')
 
 (F',H',v') = [[ f ]] (F,H,v)
 ------------------------ E-Call
@@ -705,10 +717,8 @@ Optimistic Compilation
   (c';
    if lookup_logR(e')
    then r := read_log(e')
-   else { 
-      r := read(e');
-      _ := record(Read(e',r,false));
-   }, 
+   else r := read(e')
+   _ := record(Read(e',r,false)), 
    r)
    where r is a fresh variable
 
@@ -720,14 +730,11 @@ Optimistic Compilation
    then {
      r := readdir(e');
      r := read_and_check(e',r);
-     _ := record(Read(e',r,true));
    }
    else if r 
    then r := read_log(e')
-   else { 
-     r := readdir(e');
-     _ := record(Read(e',r,true));
-   }, 
+   else r := readdir(e');
+   _ := record(Read(e',r,true)), 
    r)
    where r is a fresh variable
 
@@ -958,8 +965,7 @@ Proof: By induction on the compilation of expressions, commands, and the rules
        Thus, since none of the possible functions that modify the filesystem
        are invoked, the filesystem clearly doesn't change.
 
-Lemma 2: Given some starting filesystem F and sequence of commands c, if
-         running c generates F', then so does running ([ atomic(c) ]).
+Lemma 2: <F,c> —> * <F’, skip> iff <F,([ atomic c ])> —> * <F’, skip>
 Proof: By lemma 1, the only part of the compiled atomic(c) that can change the
        filesystem is write_log. It suffices to show that the combination of
        additions made to the log during the execution and then their
@@ -989,12 +995,13 @@ More tedious proof:
 
        We will start with the meanings of various constructs that can
        be in the log as they are important for the rest of this:
-       RF(p,w)  means we read a file at path p and it contained w.
-       RD(p,l)  means we read a directory at path p and it contained l.
-       T(p,n)   means we truncated a file at path p to length n.
-       W(p,w)   means we wrote w to a file at path p.
-       Rm(p)    means we removed whatever was at path p.
-       Rn(p,p') means we moved whatever was at path p to path p'.
+       RF(p,c,i) means we read location i of a file at path p and it contained c.
+       RD(p,d,i) means we read location i of a directory at path p and it 
+        	 contained d.
+       T(p,n)    means we truncated a file at path p to length n.
+       W(p,w)    means we wrote w to a file at path p.
+       Rm(p)     means we removed whatever was at path p.
+       Rn(p,p')  means we moved whatever was at path p to path p'.
        
        Now we look at the build_fs function as that is the lynchpin
        of all the other functions:
@@ -1018,8 +1025,10 @@ More tedious proof:
 
        Starting from the first piece of the log and going to the last one,
        build_fs updates the VFS depending on what it sees as follows:
-       RF(p,w)  - Makes path p map to F(w)
-       RD(p,l)  - Makes path p map to D(l,[],true)
+       RF(p,c,i) - Accumulates all characters into acc until it gets the empty
+       		   character at which point it makes p map to F(acc)
+       RD(p,d,i) - Accumulates all entries into acc until it gets the empty
+       		   entry at which point it makes p map to D(acc,[],true)
        T(p,n)   - 
        	  If p doesn't map to anything then it makes path p map to T(n)
 	  O.w. if p maps to F(w) it makes path p map to F(s) where 
@@ -1043,8 +1052,63 @@ More tedious proof:
 	  O.w. if it maps to D(l,l',b), it removes p from list l and adds it
 	     (in unique sorted order) to l'. It will be more clear why this
 	     is correct when we get to reading directories, but basically
-	     regardless how 
+	     regardless if b is true, it will only ever check l,
+	     which is fine since we removed it.
+	     If b is false, it'll check l first (and not find it there) then l',
+	     where it'll see that it's been removed.
        Rn(p,p')	-
+          It does Rm(p) (as above, but mapping p to Rm happens last), then:
+	  If dir(p') doesnt' map to anything it makes it map to
+	     D([p'],[],false) since we know there is a p' in the directory.
+	  O.w. if it maps to D(l,l',b) we make it map to 
+	     D(souq (p'::l),rem p' l',b).
+	  If p originally mapped to some x, it makes p' map to x.
+	  O.w. it makes p' map to Rn(p,0), signifying that it holds whatever
+	     is in p, unchanged.
+
+
+-- JDL to JNF: Start of proof of induction for property we want below.
+
+       WTS: If H(log) = l', H(rl) = l, ([ c ]) = c’, c does not contain
+       atomic, <F',H,c’> —>* <F',H1,c1'> and H1(log) = x :: l' for some x,
+       then \exists c2 s.t. <F,H,c> —>* <F2,H2,c2> and H2(rl) = y :: l \implies
+       x=y where F is the result of applying l' to F'.
+       Proof: By induction on the length of the log in H and structure of the
+       commands and functions.
+
+       Base case: Length = 0
+       Note that F' = F. Now, we restrict ourselves to the portion of c that
+       changes H(rl). So, consider all possible functions that change
+       H(rl) noting that we need exactly one such change. Further, note that
+       the functions that modify the filesystem is a subset of those
+       modifying H(rl): c calls:
+
+       read (F,H,n) adding RF(p,c,i) to rl where (p,i) = H(posix_fds)(n)
+       and c = w[i] for some w s.t. F(p) = File(w).
+
+       readdir (F,H,n) adding RD(p,d,i) to rl where (p,i) = H(posix_fds)(n)
+       and d = l[i] for some l s.t. F(p) = Dir(l).
+
+       write (F,H,(n,w)) adding W(p,w,i) to rl where (p,i) = H(posix_fds)(n).
+
+       truncate (F,H,(p,n)) adding T(p,n) to rl.
+
+       rename (F,H,(p,p')) adding Rn(p,p') to rl.
+
+
+       -- Remove doesn't hold because it needs to read the directory to see if
+       it's empty. And in hindsight, it's possible test should 
+       remove (F,H,p) adding Rm(p) to rl. so y = Rm(p). ([ remove(p) ]) looks up
+       if p is in the log, which it isn't. It checks if p exists and is either
+       a file or an empty directory. 
+
+       -- Not strictly true
+       Note that if any of them fail, nothing is added, so we won't consider
+       that case.
+
+       Inductive case: Holds for n, show for n+1
+       
+       
 
 Lemma 3: For all atomic(d) \in c such that atomic(c) is compiled,
          we have (F,H,([ atomic(d) ])) ->* (F',H',_) and F <> F'.
