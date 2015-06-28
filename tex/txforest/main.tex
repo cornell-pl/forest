@@ -15,10 +15,13 @@
 \usepackage{amsthm}
 \usepackage{amssymb}
 \usepackage{color}
+\usepackage{code}
 \usepackage{tikz}
 \usepackage[normalem]{ulem}
 \usepackage{url}
 
+\newcommand{\bftt}[1]{{\ttfamily\bfseries{}#1}}
+\newcommand{\kw}[1]{\bftt{#1}}
 \title{Transactional Forest}
 
 \authorinfo{Submission \#XXX}{}{\vspace*{-4cm}}
@@ -35,7 +38,7 @@ Hello.
 \begin{itemize}
 \item Introduction
 \begin{itemize}
-\item PADS/Forest manifesto
+\item PADS/Forest manifesto  (include term filestore)
 \item Problems with Forest 1.0
 \item Running example informally
 \item Our approach
@@ -70,6 +73,8 @@ Hello.
 \item Related Work
 \item Conclusion
 \end{itemize}
+
+\input{background}
 
 \bibliographystyle{plain} 
 \balance  
