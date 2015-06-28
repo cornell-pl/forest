@@ -1,3 +1,14 @@
+(* JNF: 
+
+1. Decide what fragment of POSIX File Systems we need. It's fine to
+only handle a fragment but we need to be consistent.
+
+2. Decide what to do with errors.
+
+3. Let's not bake our use of the operations (e.g., reading the whole
+file) into the calculus. If it is tailored to our use, it is less of a
+contribution.
+
 --------------------------------------------------------------------------------
 Special types in functions below
 --------------------------------------------------------------------------------
@@ -10,6 +21,8 @@ c in Character
 b in Boolean
 l in List
 F in FileStore
+
+(* JNF: explain the following types and constructors in comments? *)
 
 logT := Test(p)
      |	RF(p,c,n)
@@ -25,8 +38,6 @@ logFST := Rm
        |  T(n)
        |  Rn(p,n)
 
-
-
 --------------------------------------------------------------------------------
 Built-in POSIX functions and their semantics
 --------------------------------------------------------------------------------
@@ -34,35 +45,33 @@ Built-in POSIX functions and their semantics
 -- JDL: Decide what error cases to add
 
 [[ open ]] (F,H,p) = 
-   if p \in F 
-   then
-      let S = H(posix_fds) in 
-      let n = gensym(S) in 
-      let H' = H[posix_fds := S U { n |-> (p,0) }] in 
-      (F,H',n, None)
-   else (F,H,-1,Some(Test(x)))
+   if p \in F then
+     let S = H(posix_fds) in 
+     let n = gensym(S) in 
+     let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+     (F,H',n, None)
+   else 
+     (F,H,-1,Some(Test(x)))
 
 [[ close ]] (F,H,n) =
    let S = H(posix_fds) in
-   if n in dom(S) then 
-      let H' = H \ n
-      (F, H', 0, None)
+   if n in dom(S) then
+     let H' = H \ n
+     (F,H',0,None)
    else
-      (F,H,-1, None)
-
+     (F,H,-1, None)
 
 [[ read ]] (F,H,n) =
-   if n \in H(posix_fds)
-   then
-      let (p,i) = H(posix_fds)(n) in
-      match F(p) with
-      | File(w) -> 
-         let H' = H[posix_fds(n) :=  (p,i+1)] in
-	 let c = w[i,i+1] in
-         (F,H',c, Some(RF(p,c,i)))
-      | _       ->
-         let H' = H[ERRFLAG := -2] in --n doesn't point to a file
-         (F,H',EOF,None)
+   if n \in H(posix_fds) then
+     let (p,i) = H(posix_fds)(n) in
+     match F(p) with
+     | File(w) -> 
+        let H' = H[posix_fds(n) :=  (p,i+1)] in
+        let c = w[i,i+1] in
+        (F,H',c, Some(RF(p,c,i)))
+     | _       ->
+        let H' = H[ERRFLAG := -2] in --n doesn't point to a file
+        (F,H',EOF,None)
    else
       let H' = H[ERRFLAG := -1] -- n isn't open
       (F,H',EOF,None)
@@ -78,6 +87,8 @@ Built-in POSIX functions and their semantics
    let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
    (F',H',0,Some(W(p,w,i)))
 
+(* JNF: don't we need the same error conditions here? *)
+
 -- Errs:
 -- p doesn't exist
 -- n < 0?
@@ -85,21 +96,23 @@ Built-in POSIX functions and their semantics
 [[ truncate ]] (F,H,(p,n)) =
    let File(w) = F(p) in
    let F' = 
-       if n=0 then          F[p := '']
-       else if |w| > n then F[p := w[0:n-1]]
-            else            F[p := w @ (0 X n-|w|)] -- JDL: n-|w| zeroes, fix?
-   in
+     if n=0 then
+       F[p := '']
+     else if |w| > n then 
+       F[p := w[0:n-1]]
+     else 
+       F[p := w @ (0 X n-|w|)] in -- JDL: n-|w| zeroes, fix? 
    (F',H',0,Some(T(p,n)))
 
 [[ rename ]] (F,H,(p,p')) =
    if (F(p) = File(_) && F(p') = File(_)) ||
       (F(p) = Dir(_)  && F(p') = Dir([]))
    then
-      let F' = F(p') := F(p) in
-      let F' = F' \ p in
-      (F',H',0,Some(Rn(p,p')))
+     let F' = F(p') := F(p) in
+     let F' = F' \ p in
+     (F',H',0,Some(Rn(p,p')))
    else
-      (F,H,-1, None)
+     (F,H,-1, None)
 
 -- Errs:
 -- n isn't open
@@ -111,7 +124,6 @@ Built-in POSIX functions and their semantics
    let f = l[i,i+1] in 
    let H' = H[posix_fds(n) :=  (p,i+1)] in
    (F,H',f,Some(RD(p,f,i)))
-   
 
 -- Errs:
 -- n isn't open
@@ -135,14 +147,14 @@ Built-in POSIX functions and their semantics
 -- JDL: add check if directory is empty?
 
 [[ test ]] (F,H,p) = 
-   let ret =
-      if F(p) = File(_)
-      then 0
-      else if (F(p) = Dir(_))
-      then 1
-      else -1
-   in
-   (F,H,ret,Some(Test(x)))
+   let b =
+     if F(p) = File(_) then
+        0
+     else if (F(p) = Dir(_)) then 
+        1
+     else 
+        -1 in 
+   (F,H,b,Some(Test(x)))
    
 -- Elided Stat and locks
 
@@ -161,10 +173,9 @@ Built-in Helper functions and their semantics
 -- * How does an open work? Could be part virtual, how do we know?
 
 let get_fd n =
-   match H(virtual_fds)(n) with
-   | Some(x) -> x
-   | None    -> H(posix_fds)(n)
-
+  match H(virtual_fds)(n) with
+  | Some(x) -> x
+  | None    -> H(posix_fds)(n)
 
 -- Builds logFS
 -- Depending on entry found (starting from beginning)
@@ -258,8 +269,9 @@ let build_fs () =
 -- Rn       (p)  Rerun operation, but for p
 -- None           Real open
 
+(* JNF; what does 1 vs -1 vs 5 mean? Are some of these POSIX error codes?*)
 [[ lookup_logO ]] (F,H,p) = 
-   let b = 
+   let b =
       match H(logFS)(p) with
       | Some(Rm)         -> -1
       | Some(F(_))             
@@ -267,15 +279,14 @@ let build_fs () =
       | Some(T(_))              
       | Some(D(_,_,false))      
       | None             -> 1
-      | Some(Rn(_))      -> 5
-   in
-   if b
-   then (F,H,b)
-   else 
-      let S = H(posix_fds) in    
-      let n = gensym(S) in 
-      let H' = H[posix_fds := S U { n |-> (p,0) }] in 
-      (F,H',n)
+      | Some(Rn(_))      -> 5 in 
+   if b then 
+     (F,H,b)
+   else
+     let S = H(posix_fds) in    
+     let n = gensym(S) in 
+     let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+     (F,H',n)
 
 -- Lookup log for reads etc.
 -- Do different things depending on type of file found
@@ -290,16 +301,15 @@ let build_fs () =
    let (p,i) = get_fd(n) in
    let b = 
       match H(logFS)(p) with
-      | Some(Rm)                        -> failwith "Should never happen"
+      | Some(Rm) -> failwith "Should never happen"
       | Some(F(_))
       | Some(D(_,_,true))
       | Some(Rn(_,j)) when j <= i           
-      | Some(T(j)) when j <= i          -> 1       
-      | Some(D(_,_,false))              -> 2
+      | Some(T(j)) when j <= i -> 1       
+      | Some(D(_,_,false)) -> 2
       | Some(T(_))             
       | Some(Rn(_))            
-      | None                            -> 0
-   in
+      | None -> 0 in 
    (F,H,b)
 
 -- Lookup log for existence etc.
@@ -322,13 +332,12 @@ let build_fs () =
       match H(logFS)(p) with
       | Some(F(_))
       | Some(Rn(_))                  
-      | Some(T(_))                     ->  0
+      | Some(T(_)) ->  0
       | Some(D(_,_,false))            
       | Some(D(l,_,true)) when l <> [] ->  1
-      | Some(D(_))                     ->  2
-      | Some(Rm)                       -> -2
-      | None                           -> -1
-   in
+      | Some(D(_)) ->  2
+      | Some(Rm) -> -2
+      | None -> -1 in 
    (F,H,b)
 
 -- Do different things depending on type of file found
@@ -363,8 +372,7 @@ let build_fs () =
       match H(virtual_fds)(n) with
       | Some(p,i) -> (p,i,H[virtual_fds(n) := (p,i+1)])
       | None -> let (p,i) = H(posix_fds)(n) in
-         (p,i,H[posix_fds(n) :=  (p,i+1)])
-   in
+         (p,i,H[posix_fds(n) :=  (p,i+1)]) in 
    let c = 
       match H(logFS)(p) with
       | Some(Rm)               
@@ -426,6 +434,8 @@ let build_fs () =
    
 -- In atomic translation
 
+(* JNF: what does the triple represent? *)
+
 -- H(transState) starts out as [(0,[],0)]
 -- H(log) starts out as []
 
@@ -455,8 +465,7 @@ let build_fs () =
          | Rn(p,_) 
 	 | Test(p) -> if exists (= p) glog then 1 else err_help tl
          | _       -> err_help tl
-      | [] -> 0
-   in
+      | [] -> 0 in 
    let l = H(log) in
    let b = err_help l in
    if b then
@@ -502,14 +511,13 @@ let build_fs () =
    in
    let l = H(log) in
    if n > 1 then
-      let H'  = H[log := H(log) @ tlog] in
-      let H'' = H[transState := tl(tstate)] in
-      (F,H'',())
+     let H'  = H[log := H(log) @ tlog] in
+     let H'' = H[transState := tl(tstate)] in
+     (F,H'',())
    else
-      let (F',H',l) = writer (rev H(log)) (F,H,[]) in
-      let H''       = H'[transState := tl(tstate)] in
-      (F',H'',())
-
+     let (F',H',l) = writer (rev H(log)) (F,H,[]) in
+     let H''       = H'[transState := tl(tstate)] in
+     (F',H'',())
 
 --------------------------------------------------------------------------------
 Syntax
@@ -528,6 +536,9 @@ v ::= n
     | (v1,...,vn)
     | l
 
+o ::= Some v 
+    | None
+
 l ::= v :: l | []
 
 (* Expressions *)
@@ -541,7 +552,7 @@ c ::= skip
     | x := e
     | if e then c1 else c2
     | while e do c
-    | atomic c
+    | atomic c1
 
 (* Heaps *)
 H in Var |-> Value
@@ -550,6 +561,8 @@ H in Var |-> Value
 t ::= <H,c>
 
 M ::= {t1,...,tk}
+
+(* JNF: Hmm... But we sometimes use a global heap below. *)
 
 --------------------------------------------------------------------------------
 SEMANTICS
@@ -563,25 +576,32 @@ E ::= .
     | write(E,e) 
     | write(v,E)
 
-(* Expression evaluation: (F,H,e) -> (F',H',e') *)
+(* JNF: don't we need expressions for all of the POSIX commands
+supported above? Either that, or we should streamline and support
+fewer. *)
+
+(* Expression evaluation: (F,H,e) - o -> (F',H',e') *)
+
+(* Notational convention: 
+   write 
+     (F,H,e) - None -> (F',H',e') 
+   as 
+     (F,H,e) --> (F',H',e') 
+*)  
 
 H(x) = v
 -------------- E-Var
 (F,H,x) -> (F,H,v)
 
-(F',H',v',None) = [[ f ]] (F,H,v)
------------------------- E-Call
-(F,H,f(v)) -> (F',H',v')
+(F',H',v',o) = [[ f ]] (F,H,v)
+--------------------------------- E-Call
+(F,H,f(v)) - o -> (F',H',v')
 
-(F',H',v',Some(x)) = [[ f ]] (F,H,v)
------------------------- E-Call
-(F,H,f(v)) -x-> (F',H',v')
-
-(F,H,e) -x-> (F',H',e')
+(F,H,e) - o -> (F',H',e')
 --------------------------- E-Context
-(F,H,E[e]) -x-> (F',H',E[e'])
+(F,H,E[e]) - o -> (F',H',E[e'])
 
-(* Command evaluation: (F,H,c) -> (F',H',c') *)
+(* Command evaluation: (F,H,c) - o -> (F',H',c') *)
 
 C ::= . 
      | x := C
@@ -593,43 +613,46 @@ t ::= e | c
 
 C[t] needs to be well-formed...
 
-(F,H,t) -x-> (F',H',t')
+(F,H,t) - o -> (F',H',t')
 --------------------------- C-Context
-(F,H,C[t]) -x-> (F',H',C[t'])
+(F,H,C[t]) - o -> (F',H',C[t'])
      
 -------------------------- C-SkipSeq
-(F,H,skip;c2) -> (F,H,c2)
+(F,H,skip;c2) --> (F,H,c2)
 
 H' = H[x:=v]
 -------------------------C-Assgn
-(F,H,x:=v) -> (F,H',skip)
+(F,H,x:=v) --> (F,H',skip)
 
 --------------------------------------C-IfFalse
-(F,H,if 0 then c1 else c2) -> (F,H,c2)
+(F,H,if 0 then c1 else c2) --> (F,H,c2)
 
 n <> 0
 --------------------------------------C-IfTrue
-(F,H,if n then c1 else c2) -> (F,H,c1)
+(F,H,if n then c1 else c2) --> (F,H,c1)
 
 
 --------------------------------C-WhileFalse
-(F,H,while 0 do c) -> (F,H,skip)
+(F,H,while 0 do c) --> (F,H,skip)
 
 n <> 0
 ------------------------------------------C-WhileTrue
-(F,H,while n do c) -> (F,H,c;while n do c)
+(F,H,while n do c) --> (F,H,c;while n do c)
 
-(* Augmented semantics *)
+(* Multi-step command evaluation: (F,H,c) - l -> (F',H',c') *)
 
-----------------------T-Refl
-(F,H,c) -[]->* (F,H,c)
+------------------------T-Refl
+(F,H,c) - [] ->* (F,H,c)
 
+(* JNF: NB, I flipped T-Step around so the effects are accumulated in
+order *)
 
-(F,H,c)    -l->* (F',H',c')
-(F',H',c') -o->  (F'',H'',c'')
-------------------------------- T-Step
-(F,H,c) -o :: l-> (F'',H'',c'')
+(* JNF: NB, I generalized this to "terms" which are either c or e. *)
 
+(F,H,t) - o ->  (F',H',t')
+(F',H',t') - l ->* (F'',H'',t'')
+--------------------------------- T-Step
+(F,H,t) - o :: l -> (F'',H'',t'')
 
 --------------------------------------------------------------------------------
 Concurrent Operational Semantics
@@ -646,14 +669,19 @@ Concurrent Operational Semantics
 ---------------------------------------------- M-atomic
 (F,M U { <H,C[atomic c]> }) -> (F',M',C[skip])
 
-
 --------------------------------------------------------------------------------
 Translation from TxForest to IMPOSIX
 --------------------------------------------------------------------------------
 
+(* JNF: Let's define the syntax of the subset of Haskell that we're
+using here? I think this includes new, read, write, etc. Should also
+define data structures like Rep(p). *)
+
 -- Where ret is the return value
 
-[[ new ]]  args p = ret := Rep(p)
+[[ new ]] args p = 
+  ret := Rep(p)
+
 [[ read ]] Rep(p) = 
    type := test(p);
    if type = -1
@@ -712,12 +740,21 @@ Optimistic Compilation
 
 (* ([ e ]) : Com * Exp *)
 
--- We assume that assignment grabs the third part
--- of the tuple returned instead of just assigning
--- to (_,_,r) because it looks cleaner.
+-- We assume that assignment grabs the third part of the tuple
+-- returned instead of just assigning to (_,_,r) because it looks
+-- cleaner.
+
+(* JNF: Let's explicitly define a notational convention for this ^^^,
+or maybe just do the less clean thing if it's not too ugly. *)
+
+(* JNF: Also, I think we can elide the { .. } below. We weren't using
+them previously and Haskell/Python-esque whitespace conventions work
+well enough. *)
+
+(* JNF: NB, the translation is ([ . ]) and not ([[ ]]). *)
 
 ([ open(e) ]) = 
-   let c',e' = ([[e]]) in
+   let c',e' = ([ e ]) in
    (c';
     b := lookup_logO(e');
     if b = 5
@@ -736,13 +773,13 @@ Optimistic Compilation
    where b,p are fresh variables
 
 ([ close(e) ]) = 
-   let c',e' = ([[e]]) in 
+   let c',e' = ([ e ]) in 
    (c'; _ := close_fd(e'), close(e'))
 
 --JDL: Fix test to take changes into account.
 
 ([ test(e) ]) = 
-   let c',e' = ([[e]]) in 
+   let c',e' = ([ e ]) in 
    (c';
     _ := record(Test(e'));
     r := lookup_logE(e');
@@ -762,36 +799,37 @@ Optimistic Compilation
 ([ read(e) ]) = 
   let c',e' = ([ e ]) in 
   (c';
-   if lookup_logR(e')
-   then r := read_log(e')
-   else r := read(e')
+   if lookup_logR(e') then
+     r := read_log(e')
+   else 
+     r := read(e');
    _ := record(Read(e',r,false)), 
    r)
-   where r is a fresh variable
+   where r is fresh
 
 ([ readdir(e) ]) =
   let c',e' = ([ e ]) in 
   (c';
    r := lookup_logR(e');
-   if r=2 --Partial directory
-   then {
+   if r=2 then 
      r := readdir(e');
      r := read_and_check(e',r);
-   }
-   else if r 
-   then r := read_log(e')
-   else r := readdir(e');
+   else if r then
+     r := read_log(e')
+   else 
+     r := readdir(e');
    _ := record(Read(e',r,true)), 
    r)
-   where r is a fresh variable
+   where r is fresh
 
 ([ write(e,e') ]) =
    let c1, e1 = ([ e  ]) in
    let c2, e2 = ([ e' ]) in
-   (c1;c2; 
+   (c1;
+    c2; 
     r := record(Write(e1,e2)),
     r)
-    where r is a fresh variable
+    where r is fresh
 
 -- For the next 3 we need to know that the file exists
 -- whether virtually, or for real
@@ -917,6 +955,8 @@ Optimistic Compilation
 
 -- Currently using a global log lock, may switch to fancy data structure
 
+(* What is l? Why would it be zero? *)
+
 ([ atomic c ]) = 
    f := 1;
    while f do {
@@ -927,7 +967,7 @@ Optimistic Compilation
      if not f then write_log() else skip;       
      if l then skip else unlock()
    }
-   where l is fresh.
+   where l and f are fresh
 
 --------------------------------------------------------------------------------
 Theorems
@@ -974,6 +1014,118 @@ Consider the cases where c and d do not overlap (in the files they read/modify)
         (again, with a possibly different heap).
         
 Since in all cases, we get either c;d or d;c, the theorem holds.
+
+******* SOME JNF PROOFS *******
+
+Lemma 0a [Inversion of single-step relation]
+
+* Not (F,H,skip) - o -> (F',H',c').
+
+* If (F,H,skip;c1) - o -> (F',H',c') then 
+    F=F' and H=H' and c'=c2 and o = None.
+
+* If (F,H,c1;c2) - o -> (F',H',c') and c1 != skip, then 
+    (F,H,c1) - o -> (F',H',c1') and c' = c1';c2
+
+* ...
+
+Lemma 0b [Inversion of multi-step relation]:
+
+* If (F,H,skip) - l ->* (F',H',c') then 
+    F=F' and H=H' and c'=skip and l = [].
+
+* If (F,H,c1;c2) -l ->* (F',H',c') then either
+  - c' = c1';c2 and (F,H,c1) - l ->* (F',H',c1')
+  - c' = c2' and (F,H,c1) - l1 ->* (F0,H0,skip) and (F0,H0,c2) - l2 ->* (F',H',c2') and l = l1@l2
+
+* If (F,H,x := e) - l ->* (F',H',c') then either
+  - c' = x := e' and (F,H,e) - l ->* (F',H',e') or
+  - c' = skip and (F,H,x := e) - l1 ->* (F',H0, x:=v) and H' = H0[x:=v]
+
+* ...
+
+Lemma 1a[Compiled Expression Effects]:
+  Let c0,e0 = ([ e ]). 
+  * If (F,H,c0) - l ->* (F',H',c') then F=F'.
+  * If (F,H,e0) - l ->* (F',H',e') then F=F'.
+
+Lemma 1b[Compiled Command Effects]. 
+  Let c be a command that does not contain any sub-commands of the
+  form atomic(_) and let c0 = ([c]). If (F,H,([c])) - l ->* (F',H',c')
+  then F=F'.
+
+Proof. 
+
+By induction on c.
+
+Case c = skip:
+
+  By the definition of ([ . ]) we have ([ skip ]) = skip
+
+  By Lemma 0b, case for skip, we have F=F'=F''.
+
+Case c = c1;c2:
+
+  By definition of ([ . ]) we have ([ c1;c2 ]) = ([ c1 ]); ([ c2 ]).
+
+  By Lemma 0b, case for sequence, there are two subcases.
+
+  Subcase c' = c1';([c2]) and (F,H,([c1])) - l ->* (F',H',c1'): 
+
+    By the induction hypothesis applied to c1 we immediately have F=F'.
+
+  Subcase c' = c2' and (F,H,([c1])) - l1 ->* (F0,H0,skip) and (F0,H0,([c2])) - l2 ->* (F',H',c2'):
+
+    By the induction hypothesis applied to c1 we have F=F0 and by the
+    induction hypothesis applied to c2 we have F0=F'. By transitivity,
+    we have F=F', as required.
+
+Case c = x := e:
+
+  By definition of ([ . ]) we have ([ x := e ]) = c1; x := e1 where c1,e1 = ([e])
+
+  By Lemma 0b, case for sequence, there are two subcases. 
+
+  Subcase c' = c1'; x:= e1 and (F,H,c1) - l ->* (F',H',c1'): 
+
+    By Lemma 1a, case for commands, we immediately have F=F'.
+
+  Subcase c' = c2' and (F,H,c1) - l1 ->* (F0,H0,skip) and (F0,H0,x := e1) - l2 ->* (F',H',c2'):
+
+    By Lemma 1a, case for commands, we have F=F0.
+
+    By Lemma 0b, case for assignment, applied to 
+
+       (F0,H0,x := e1) - l2 ->* (F',H',c2')
+
+    there are two further subcases.
+
+    Subsubcase c2 = x := e1' and (F0,H0,e1) - l2 ->* (F',H',e1'): 
+
+      By Lemma 1a, case for expressions, we have that F0=F'. By
+      transitivity, we have F=F', as required.
+
+    Subsubcase c2 = skip and (F0,H0,e1) - l2 ->* (F',H1,v) and H' = H1[x:=v].
+
+      By Lemma 1a, case for expressions, we have that F0=F'. By
+      transitivity, we have F=F', as required.
+
+*** JNF RAGGED HERE ***
+
+Case c = if e then c1 else c2:
+
+  TBD
+
+Case c = while e do c:
+
+  TBD
+
+Case c = atomic c1:
+
+  The result vacuously holds since c contains a sub-command of the
+  form atomic(_).
+
+
 
 Lemma 1: There does not exist a c where atomic(d) \not \in c s.t. (F,H,([ c ])) ->*
          (F',H',_) and F <> F'.
