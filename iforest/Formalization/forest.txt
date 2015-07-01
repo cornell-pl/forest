@@ -1,3 +1,52 @@
+(*
+-- TODOS:
+-- Finish Lemma 1
+-- Make just one error type (ERROR or -1)
+-- Write opsem induction
+-- Go through whole thing
+-- Fix translation to IMPOSIX
+-- Add more data type comments (especially in helper functions)
+-- Do we need to add a mkdir?
+
+-- If anything becomes vastly easier because of it,
+-- maybe make read and write work on a whole file in POSIX
+
+-- Low priority:
+-- Minimize how much we need 'read whole file' and 'write whole file' assumptions
+-- Add errors into theorem?
+
+-- Super low:
+-- Change from global lock to something fancier (like one of those cool data structures?)
+
+Questions:
+-- JDL to JNF: Not quite sure how to include datatypes, but I need their evaluation order.
+-- Search "dtype" for current attempt ;D
+-- Pairs are particularly annoying
+
+-- Look at Lemma 1a, write case. This will become super tedious soon. Is this how I should be doing
+-- this or should I figure out something more clever? (You were talking about assuming something?)
+-- Maybe some sort of sequential independence so I can treat each piece of the sequence separately
+-- (which I sort of do, but have to add 2 extra cases per real case)? 
+
+-- Look at Lemma 0b and 1b, while case, is it fine to stop where I stopped with loop unrolling?
+
+-- Sanity check, case x := e, subsubcases, c2' rather than c2, yeah?
+
+-- Where to put info about dedicated space?
+
+Done:
+- Added lockf and made locks work OK
+- Got rid of renames and truncate
+- Got rid of nested transactions
+- Finished Lemma 1b
+- Did some stuff on Lemma 1a
+- Added a bunch of datatypes
+- Figured out most/much of what would need to happen to relax 
+  constraints about writing/reading whole files
+
+
+*)
+
 (* JNF: 
 
 1. Decide what fragment of POSIX File Systems we need. It's fine to
@@ -8,6 +57,24 @@ only handle a fragment but we need to be consistent.
 3. Let's not bake our use of the operations (e.g., reading the whole
 file) into the calculus. If it is tailored to our use, it is less of a
 contribution.
+
+-- JDL: If things go wrong, make an ERROR (or -1) not multiple different ones
+
+-- JDL: Make Data types for errors for the built-in helper functions
+
+-- JDL: Skip errors initially and prove the main part of the theorem (non-transaction errors)
+-- only skip in the theorem
+
+-- JDL: Figure out if you need read/write atomic on whole files
+-- If it cuts down complexity and it's fast, do it
+
+--------------------------------------------------------------------------------
+Dedicated Space
+--------------------------------------------------------------------------------
+
+Some file 'filelock' and some file 'glog'
+
+--JDL: Not sure where to put this info
 
 --------------------------------------------------------------------------------
 Special types in functions below
@@ -22,21 +89,32 @@ b in Boolean
 l in List
 F in FileStore
 
-(* JNF: explain the following types and constructors in comments? *)
+testCond := TFile    --It is a file
+         |  TDir(b)  --It is a possibly empty directory (b=true \implies empty)
+         |  TNone    --No file there
+	 |  TUnknown --Need to check
 
-logT := Test(p)
-     |	RF(p,c,n)
-     |	RD(p,w,n)
-     |	T(p,n)
-     |	W(p,w,n)
-     |	Rn(p,p')
-     |	Rm(p)
+openCond := OKnown   --We have the entirety of the file/dir in log
+	 |  OUnknown --We have none of a portion in log
+	 |  OErr     --No file/dir there anymore
 
-logFST := Rm
-       |  F(w)
-       |  D(l,l',b)
-       |  T(n)
-       |  Rn(p,n)
+readCond := RKnown   --Reading from a file/dir where we have it all
+	 |  RUnknown --Reading from a file/dir where we have none of it
+	 |  RPartial --Reading from a dir where we have part of it
+
+logT := Test(p)    -- We've run 'test' on p
+     |  RF(p,c,n)  -- We read from file p at index n and got c
+     |  RD(p,w,n)  -- We read from dir p at index n and got d
+     |  W(p,w,n)   -- We wrote w to file p at index n 
+     |  Rm(p)      -- We removed file/dir p
+
+logFST := Rem       -- Whatever was at this path has been removed
+       |  F(w)      -- This path has a file containing w in it
+       |  D(l,l',b) -- This is explained just below
+
+-- D(l,l',b) means that the path is a directory containing the entries in list l
+-- and not containing the entries in list l'. If b is true, then l is the complete
+-- list of entries in the directory, otherwise we don't know and need to check.
 
 --------------------------------------------------------------------------------
 Built-in POSIX functions and their semantics
@@ -51,7 +129,7 @@ Built-in POSIX functions and their semantics
      let H' = H[posix_fds := S U { n |-> (p,0) }] in 
      (F,H',n, None)
    else 
-     (F,H,-1,Some(Test(x)))
+     (F,H,-1,None) --JDL: Needs changing if we want to include errors in theorems
 
 [[ close ]] (F,H,n) =
    let S = H(posix_fds) in
@@ -71,10 +149,10 @@ Built-in POSIX functions and their semantics
         (F,H',c, Some(RF(p,c,i)))
      | _       ->
         let H' = H[ERRFLAG := -2] in --n doesn't point to a file
-        (F,H',EOF,None)
+        (F,H',ERR,None)
    else
       let H' = H[ERRFLAG := -1] -- n isn't open
-      (F,H',EOF,None)
+      (F,H',ERR,None)
 
 -- Errs:
 -- n isn't open
@@ -90,31 +168,6 @@ Built-in POSIX functions and their semantics
 (* JNF: don't we need the same error conditions here? *)
 
 -- Errs:
--- p doesn't exist
--- n < 0?
-
-[[ truncate ]] (F,H,(p,n)) =
-   let File(w) = F(p) in
-   let F' = 
-     if n=0 then
-       F[p := '']
-     else if |w| > n then 
-       F[p := w[0:n-1]]
-     else 
-       F[p := w @ (0 X n-|w|)] in -- JDL: n-|w| zeroes, fix? 
-   (F',H',0,Some(T(p,n)))
-
-[[ rename ]] (F,H,(p,p')) =
-   if (F(p) = File(_) && F(p') = File(_)) ||
-      (F(p) = Dir(_)  && F(p') = Dir([]))
-   then
-     let F' = F(p') := F(p) in
-     let F' = F' \ p in
-     (F',H',0,Some(Rn(p,p')))
-   else
-     (F,H,-1, None)
-
--- Errs:
 -- n isn't open
 -- p is not a directory
 
@@ -127,11 +180,6 @@ Built-in POSIX functions and their semantics
 
 -- Errs:
 -- n isn't open
-
-[[ lseek ]] (F,H,(n,m)) =
-   let (p,_) = H(posix_fds)(n) in
-   let H' = H[posix_fds(n) :=  (p,m)] in
-   (F,H',0,None)
 
 [[ remove ]] (F,H,p) =
    if F(p) = File(_) ||  F(p) = Dir([]) then
@@ -155,8 +203,20 @@ Built-in POSIX functions and their semantics
      else 
         -1 in 
    (F,H,b,Some(Test(x)))
+
+
    
--- Elided Stat and locks
+[[ lockf ]] (F,H,(p,n)) =
+   if n then
+      if F(p) = Lock(_) then
+      	 (F,H,-1,None)
+      else
+         let F' = F[p := Lock(F(p))] in
+	 (F',H,0,None)
+   else
+      let Lock(x) = F(p) in
+      let F' = F[p := x] in
+      (F',H,0,None)
 
 --------------------------------------------------------------------------------
 Built-in Helper functions and their semantics
@@ -172,21 +232,49 @@ Built-in Helper functions and their semantics
 -- Writes are always the whole file, + a truncate at end
 -- * How does an open work? Could be part virtual, how do we know?
 
-let get_fd n =
-  match H(virtual_fds)(n) with
-  | Some(x) -> x
-  | None    -> H(posix_fds)(n)
+-- JDL: I don't think any of these are strictly necessary. If we
+-- skipped making an FS, and instead walked through the entire log, we could
+-- see if we've read that particular bit before or written to it
+-- Or if the whole file has been removed, etc.
+
+-- JDL: To think about if so:
+-- 1. Record if we've encountered any sort of write
+-- 2. If we hit a remove, we have an error (not if we've already hit a write)
+-- 3. Since all fds are handled as though they're real, we shouldn't have a
+--    problem there
+-- 4. Open normally unless there's a remove (in which case fail) or
+--    a write, in which case just open manually since we don't know if it
+--    exists in the real FS.
+-- 5. Close works normally
+-- 6. If we open, then remove before closing, we'll need to have reads
+--    return ERR
+-- 7. Test will have to check log first as expected
+-- 8. As will remove. This part will be harder with directories and checking
+--    their emptiness because we now have to take those removes and writes into
+--    account. Should not need recursiveness though.
+-- 9. Writes will have to check to make sure the directory under them exists
+-- 10. Reading directories becomes a super pain. Solution:
+--     - Check and collect all writes and removes right below it
+--     	 only keeping the last for each entry
+--     - If there's a remove of directory, then we fail
+--     - Then actually read what's there and check if it's actually supposed
+--       to be at that spot. If it's not, it's either because of a write or remove.
+--	 Keep a special counter that you add to index and increase it with removes,
+--	 while reducing it with writes.
+--     - If an RD of that spot is after any write/remove, then take that
+--	 Else, check what's supposed to be there (with RD) and then compare
+--	 with newer writes/removes.
+--     - What if there's a write/remove after RDs, but we haven't read FDs in order?
+--     	 Maybe look at all the RDs before and determine where it should be removed
+--	 and if it's before, update when doing write/remove?
+--	 Need reverse path to fd lookup then
 
 -- Builds logFS
 -- Depending on entry found (starting from beginning)
--- Reads:    RF(p,c,i) Adds c to accumulator or makes p F(acc) if c=EOF
--- ReadDirs: RD(p,d,i) Adds d to accumulator or makes p D(acc,[],true) if c=EOF
+-- Reads:    RF(p,c,i) Adds c to accumulator or makes p F(acc) if c=ERR
+-- ReadDirs: RD(p,d,i) Adds d to accumulator or makes p D(acc,[],true) if c=ERR
 -- Writes:   W(p,w,i)  makes p F(w) and possibly adds p to p's directory
--- Renames:  Rn(p1,p2) makes p1 Rm and removes it from p1's directory
-                       and p2 what was at p1 (possibly adding p2 to p2's dir)
-                       Or if there was nothing, then Rn(p1)
 -- Removes:  Rm(p)     makes p Rm and removes it from p's dir
--- Truncate: T(p,n)    removes or extends F(w) at p, or makes p T(n)
 
 -- souq here is sort and unique at the same time.
 
@@ -198,62 +286,34 @@ let build_fs () =
          let map,acc =
          (match hd with
          | RF(p,c,i)  ->
-	    if c = EOF
-	    then add p F(acc) map
-	    else map
+            if c = ERR
+            then add p F(acc) map
+            else map
          | RD(p,d,i)  -> 
-	    if d = EOF
-	    then add p D(acc,[],true) map
-	    else map
-         | T(p,n)   -> 
-            match map(p) with
-            | None       -> add p T(n) map
-            | Some(F(w)) -> 
-               if n < len(w) 
-               then add p F(sub w 0 n) map
-               else add p F(fill w len(w) (n-len(w)) '0') map
-            | Some(Rn(p',_)) -> add p Rn(p',n) map
-            | _          -> failwith "Truncate should've failed"
+            if d = ERR
+            then add p D(acc,[],true) map
+            else map
          | W(p,w,_)   ->
             match map(dir(p)) with
             | None            -> add dir(p) D([p],[],false) (add p F(w) map)
-            | Some(D(l,l',b)) -> add dir(p) D(souq (p :: l),l',b) (add p F(w) map)
+            | Some(D(l,l',b)) -> add dir(p) D(souq (p :: l),rem p l',b) (add p F(w) map)
             | _               -> failwith "Path directory isn't a directory?"
-         | Rn(p,p') -> 
-            let map' =
-               match map(dir(p)) with
-               | None            -> add dir(p) D([],[p],false) map
-               | Some(D(l,l',b)) -> add dir(p) D(rem p l,souq (p::l'),b)) map
-               | _               -> failwith "Path directory isn't a directory?"
-            in
-	    let map' = 
-               match map'(dir(p')) with
-               | Some(D(l,l',b)) -> add dir(p') D(souq (p'::l),rem p' l',b) map'
-               | None	       	 -> add dir(p') D([p'],[],false) map'
-               | _               -> failwith "Path directory isn't a directory?"
-	    in
-	    let map' =
-	    	match map'(p) with
-            	| None    -> add p' Rn(p,0) map'
-            	| Some(x) -> add p' x map' 	 
-	    in
-	    (add p Rm map')
          | Rm(p)    -> 
             match map(dir(p)) with
             | None            -> add dir(p) D([],[p],false) (add p Rm map)
             | Some(D(l,l',b)) -> add dir(p) D(rem p l,souq (p::l'),b)) (add p Rm map)
             | _               -> failwith "Path directory isn't a directory?"
-	 | _ -> map -- This is test
+         | _ -> map -- This is Test
          ),(match hd with
-	 | RF(p,c,i) 
+         | RF(p,c,i) 
          | RD(p,c,i)  -> 
-	    if c = EOF
-	    then []
-	    else c :: acc
+            if c = EOF
+            then []
+            else c :: acc
          | _   -> acc
-	 )
-	 in
-	 helper tl map acc
+         )
+         in
+         helper tl map acc
       | [] -> map
    in 
    let H' = H[logFS := helper l empty ""] in
@@ -263,53 +323,42 @@ let build_fs () =
 -- Lookup log for opens
 -- Do different things depending on type of File found
 -- Files    (F)  Virtual open
--- Dirs    (D)  Virtual open
+-- Dirs    (D)  Virtual open+Real open
 -- Removes  (Rm) Fail
--- Truncate (T)  Real open
--- Rn       (p)  Rerun operation, but for p
 -- None           Real open
 
-(* JNF; what does 1 vs -1 vs 5 mean? Are some of these POSIX error codes?*)
+-- -1 means open will return -1
+-- 0  will tell open to actually do a real open
+-- o.w. it is a file descriptor
+
 [[ lookup_logO ]] (F,H,p) = 
-   let b =
-      match H(logFS)(p) with
-      | Some(Rm)         -> -1
-      | Some(F(_))             
-      | Some(D(_,_,true))  -> 0
-      | Some(T(_))              
-      | Some(D(_,_,false))      
-      | None             -> 1
-      | Some(Rn(_))      -> 5 in 
-   if b then 
-     (F,H,b)
-   else
-     let S = H(posix_fds) in    
-     let n = gensym(S) in 
-     let H' = H[posix_fds := S U { n |-> (p,0) }] in 
-     (F,H',n)
+    match H(logFS)(p) with
+    | Some(Rm)          -> (F,H,-1)
+    | Some(F(_))             
+    | Some(D(_,_,true)) -> 
+       let S = H(posix_fds) in    
+       let n = gensym(S) in 
+       let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+       (F,H',n)
+    | Some(D(_,_,false))      
+    | None              -> (F,H,0) 
 
 -- Lookup log for reads etc.
 -- Do different things depending on type of file found
 -- Files    (F)  always contain the byte
 -- Dirs     (D)  always contain the byte, but may not know right byte
 -- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
--- Truncate (T)  may know the byte (0 if it's beyond truncation)
--- Rn       (p)  Rerun operation, but for p
 -- None          doesn't contain byte
 
 [[ lookup_logR ]] (F,H,n) = 
-   let (p,i) = get_fd(n) in
+   let (p,i) = H(posix_fds)(n) in
    let b = 
       match H(logFS)(p) with
       | Some(Rm) -> failwith "Should never happen"
       | Some(F(_))
-      | Some(D(_,_,true))
-      | Some(Rn(_,j)) when j <= i           
-      | Some(T(j)) when j <= i -> 1       
-      | Some(D(_,_,false)) -> 2
-      | Some(T(_))             
-      | Some(Rn(_))            
-      | None -> 0 in 
+      | Some(D(_,_,true))  -> RKnown       
+      | Some(D(_,_,false)) -> RPartial
+      | None -> RUnknown in 
    (F,H,b)
 
 -- Lookup log for existence etc.
@@ -317,27 +366,20 @@ let build_fs () =
 -- Files    (F)  exist
 -- Dirs     (D)  exist, but may or may not be empty
 -- Removes  (Rm) truly don't exist
--- Truncate (T)  exist
 -- None          may or may not exist
 
--- Results:
--- 0 = File
--- 1 = Non-empty dir
--- 2 = Empty dir
--- -1 = File not in log
--- -2 = File definitely doesn't exist
+-- JDL: Look at forest.oldest.txt
+-- Think this is wrong
 
 [[ lookup_logE ]] (F,H,p) = 
    let b = 
       match H(logFS)(p) with
-      | Some(F(_))
-      | Some(Rn(_))                  
-      | Some(T(_)) ->  0
+      | Some(F(_)) ->  TFile
+      | Some(D(l,_,_)) when l <> [] -> TDir(false)
       | Some(D(_,_,false))            
-      | Some(D(l,_,true)) when l <> [] ->  1
-      | Some(D(_)) ->  2
-      | Some(Rm) -> -2
-      | None -> -1 in 
+      | None 		   -> TUnknown
+      | Some(D(_)) ->  TDir(true)
+      | Some(Rm) -> -TNone in 
    (F,H,b)
 
 -- Do different things depending on type of file found
@@ -347,68 +389,43 @@ let build_fs () =
 -- Truncate (T)  always contains the byte
 -- None           doesn't contain byte
 
--- Gets real path where the file in p is stored
-
-[[ get_rn ]] (F,H,p) =
-   match H(logFS)(p) with
-   | Some(Rn(np,_)) -> (F,H,np)  
-   | _            -> failwith "Expected Rn"
-   
--- In the case of a rename, the fd path is not
--- the path that we want to store it to.
-   
-[[ link_fd ]] (F,H,(n,p)) =
-   let S  = H(virtual_fds) in
-   let H' = H[virtual_fds := S U { n |-> (p,0)}] in
-   (F,H',())
-   
-[[ close_fd ]] (F,H,n) =
-   match H(virtual_fds)(n) with
-   | Some(_) -> (F,H \ n, ())
-   | None    -> (F,H,())
-
 [[ read_log ]] (F,H,n) = 
-   let (p,i,H') = 
-      match H(virtual_fds)(n) with
-      | Some(p,i) -> (p,i,H[virtual_fds(n) := (p,i+1)])
-      | None -> let (p,i) = H(posix_fds)(n) in
-         (p,i,H[posix_fds(n) :=  (p,i+1)]) in 
+   let (p,i,) =H(posix_fds)(n) in
+   let H' = H[posix_fds(n) :=  (p,i+1)]) in 
    let c = 
       match H(logFS)(p) with
-      | Some(Rm)               
-      | Some(T(j)) when j <= i
-      | Some(Rn(_,j)) when j <= i -> EOF
+      | Some(Rm) -> ERR
       | Some(F(w))             
-      | Some(D(w,_,true))           -> w[i]
-      | Some(T(_))             
-      | Some(D(_,_,false))       
-      | Some(Rn(_))            
-      | None                      -> failwith "lookup_logR would've failed"
+      | Some(D(w,_,true))  -> w[i]    
+      | Some(D(_,_,false))     
+      | None               -> failwith "lookup_logR would've failed"
    in 
    (F,H',c)
 
+-- JDL: Check over this function to make sure it needs to be this complex
+
 [[ read_and_check ]] (F,H,(n,e)) =
-   let (p,i) = get_fd n in
+   let (p,i) = H(posix_fds)(n) in
    let rec get_correct e last l l' =
-   match l,l' with
-   | [],[] -> (F,H,e)
-   | [], hd :: tl ->
-     if hd = e
-     then let F',H',r = readdir(F,H,n) in
+      match l,l' with
+      | [],[] -> (F,H,e)
+      | [], hd :: tl ->
+        if hd = e
+        then let F',H',r = readdir(F,H,n) in
           read_and_check(F',H',(n,r)) 
-     else get_correct e last l tl
-   | hd :: tl,_ ->
-     if hd > last && hd < e
-     then (F,H[posix_fds(n) := (p,i-1)],hd)
-     else if hd = e
-     then (F,H,hd)
-     else get_correct e last tl l'
+        else get_correct e last l tl
+      | hd :: tl,_ ->
+        if hd > last && hd < e
+        then (F,H[posix_fds(n) := (p,i-1)],hd)
+        else if hd = e
+        then (F,H,hd)
+        else get_correct e last tl l'
    in
    match H(logFS)(p) with
-   | D(lE,lNE,false) -> 
+   | D(l,l',false) -> 
      match H(log) with
-     | RD(p',last,_) :: _ where p = p' -> get_correct e last lE lNE
-     | _               	       	       -> get_correct e ""   lE lNE
+     | RD(p',last,_) :: _ where p = p' -> get_correct e last l l'
+     | _                               -> get_correct e ""   l l'
    | _               -> failwith "Would never get to here"
 
 [[ record ]] (F,H,t) = 
@@ -416,63 +433,43 @@ let build_fs () =
    let H' =
       match t with
       | Read(fd,v,d)   ->
-        let (p,i) = get_fd n in
+        let (p,i) = H(posix_fds)(n) in
         let ele   = if d then RD(p,v,i) else RF(p,v,i) in
         H[log := ele :: l]
       | Write(fd,w)    ->  
-         let (p,i) = get_fd n in
+         let (p,i) = H(posix_fds)(n) in
          H[log := W(p,w,i) :: l]
-      | Trunc(fd,len)  ->  
-         let (p,_) = get_fd n in
-         H[log := T(p,len) :: l]
-      | Rename(p,p')   -> H[log := Rn(p,p') :: l]
       | Remove(p)      -> H[log := Rm(p)    :: l]
-      | Test(p)	       -> H[log := Test(p)  :: l]
+      | Test(p)        -> H[log := Test(p)  :: l]
    in 
    let _     = build_fs () in
    (F,H',0)
    
 -- In atomic translation
 
-(* JNF: what does the triple represent? *)
-
--- H(transState) starts out as [(0,[],0)]
 -- H(log) starts out as []
-
-[[ trans_start ]] (F,H,()) =
-   let tstate = H(transState) in
-   let n,_,_ = hd(tstate) in
-   let H'  = H [trans := ((n+1),H(log),time()) :: tstack] in
-   let H'' = H'[log := []] in
-   (F,H'',n)
 
 -- We need a global log of (time, path) pairs
 -- We'll just use some reserved name in the FileStore for now,
 -- but could easily be added in a shared memory structure (which is what it is)
    
 [[ check_error ]] (F,H,()) =
-   let tstate = H(transState) in
-   let n,tlog,t = hd(tstate) in
-   let glog = 
-      fold (fun acc (t',p) -> if t > t' then p :: acc else acc) F(glog)
+   let t = H(tstart) in
+   let glog = 	     -- We add all the changes that happened post tstart
+      fold (fun acc (t',p) -> if t < t' then p :: acc else acc) F(glog)
    in
    let rec err_help l =
       match l with
       | hd :: tl ->
          match hd with
          | RD(p,_,_) 
-         | RF(p,_,_) 
-         | Rn(p,_) 
-	 | Test(p) -> if exists (= p) glog then 1 else err_help tl
+         | RF(p,_,_)
+         | Test(p) -> if exists (= p) glog then 1 else err_help tl
          | _       -> err_help tl
       | [] -> 0 in 
    let l = H(log) in
    let b = err_help l in
-   if b then
-      let H'  = H[log := tlog] in
-      let H'' = H[transState := tl(tstate)] in
-      (F,H'',b)
-   else (F,H,b)
+   (F,H,b)
    
 -- Either use the FS, allowing for fewer operations
 -- or just do all the operations of the log.
@@ -484,9 +481,6 @@ let build_fs () =
 -- JDL: Maybe add in error checking?
 
 [[ write_log ]] (F,H,()) =
-   let t = time() in
-   let tstate = H(transState) in
-   let n,tlog,_ = hd(tstate) in
    let rec writer l acc =
       let F',H',lst = acc in
       match l with
@@ -496,28 +490,19 @@ let build_fs () =
             let F',H',fd = open (F',H',p) in
             let F',H',_  = write(F',H',(fd,w)) in
             let F',H',_  = close(F',H',fd) in
-            writer tl (F',H',(t,p) :: lst)
+            writer tl (F',H',p :: lst)
          | Rm(p)    ->
             let F',H',_  = remove(F',H',p) in
-            writer tl (F',H',(t,p) :: lst)
-         | T(p,n)   ->
-            let F',H',_  = truncate(F',H',(p,n)) in
-            writer tl (F',H',(t,p) :: lst)
-         | Rn(p,p') -> 
-            let F',H',_  = rename(F',H',(p,p')) in
-            writer tl (F',H',(t,p) :: (t,p') :: lst)
+            writer tl (F',H',p :: lst)
          | _        -> writer tl acc
       | [] -> acc
    in
-   let l = H(log) in
-   if n > 1 then
-     let H'  = H[log := H(log) @ tlog] in
-     let H'' = H[transState := tl(tstate)] in
-     (F,H'',())
-   else
-     let (F',H',l) = writer (rev H(log)) (F,H,[]) in
-     let H''       = H'[transState := tl(tstate)] in
-     (F',H'',())
+   let l	     = H(log) in
+   let (F',H',clist) = writer (rev H(log)) (F,H,[]) in
+   let t 	     = time() in
+   let clist         = map (fun p -> (t,p)) clist in
+   let F''           = F(glog := F(glog) @ clist) in
+   (F',H'',())
 
 --------------------------------------------------------------------------------
 Syntax
@@ -535,11 +520,20 @@ v ::= n
     | w
     | (v1,...,vn)
     | l
+    | dtype0
+    | dtype1(v)
+    | dtype2(v)
+    | dtype3(v)  
 
 o ::= Some v 
     | None
 
 l ::= v :: l | []
+
+-- Things that can exist in filesystem
+lf ::= File(w)
+   | Dir(l)
+   | Lock(lf)
 
 (* Expressions *)
 e ::= x
@@ -562,8 +556,6 @@ t ::= <H,c>
 
 M ::= {t1,...,tk}
 
-(* JNF: Hmm... But we sometimes use a global heap below. *)
-
 --------------------------------------------------------------------------------
 SEMANTICS
 --------------------------------------------------------------------------------
@@ -574,11 +566,18 @@ E ::= .
     | close(E)  
     | read(E)
     | write(E,e) 
-    | write(v,E)
-
-(* JNF: don't we need expressions for all of the POSIX commands
-supported above? Either that, or we should streamline and support
-fewer. *)
+    | write(v,E) 
+    | readdir(E) 
+    | remove(E)
+    | test(E) 
+    | lockf(E,e)
+    | lockf(v,E)
+    | dtype1(E)
+    | dtype2(E,e)
+    | dtype2(v,E)
+    | dtype3(E,e1,e2)
+    | dtype3(v1,E,e2)
+    | dtype3(v1,v2,E)
 
 (* Expression evaluation: (F,H,e) - o -> (F',H',e') *)
 
@@ -642,15 +641,17 @@ n <> 0
 (* Multi-step command evaluation: (F,H,c) - l -> (F',H',c') *)
 
 ------------------------T-Refl
-(F,H,c) - [] ->* (F,H,c)
+(F,H,t) - [] ->* (F,H,t)
 
 (* JNF: NB, I flipped T-Step around so the effects are accumulated in
 order *)
 
-(* JNF: NB, I generalized this to "terms" which are either c or e. *)
+-- JDL: I reflipped it. The other log is collected in opposite order,
+-- so I figure we may as well make this one the same.
+-- Although it is a bit weird
 
-(F,H,t) - o ->  (F',H',t')
-(F',H',t') - l ->* (F'',H'',t'')
+(F,H,t) - l ->*  (F',H',t')
+(F',H',t') - o -> (F'',H'',t'')
 --------------------------------- T-Step
 (F,H,t) - o :: l -> (F'',H'',t'')
 
@@ -740,41 +741,32 @@ Optimistic Compilation
 
 (* ([ e ]) : Com * Exp *)
 
--- We assume that assignment grabs the third part of the tuple
--- returned instead of just assigning to (_,_,r) because it looks
--- cleaner.
-
-(* JNF: Let's explicitly define a notational convention for this ^^^,
-or maybe just do the less clean thing if it's not too ugly. *)
-
-(* JNF: Also, I think we can elide the { .. } below. We weren't using
-them previously and Haskell/Python-esque whitespace conventions work
-well enough. *)
-
-(* JNF: NB, the translation is ([ . ]) and not ([[ ]]). *)
+(* Notational convention: 
+   write 
+     (_,_,x,_) := F(e) -- For posix functions
+     or
+     (_,_,x)   := F(e) -- For non-posix functions
+   as 
+     x := F(e) 
+*)  
+-- JDL: Could also do the less clean thing if you like.
 
 ([ open(e) ]) = 
    let c',e' = ([ e ]) in
    (c';
     b := lookup_logO(e');
-    if b = 5
-    then {
-      p := get_rn(e');
-      b := open(p);
-      _ := link_fd(b,e')
-    }
-    else if b
+    if not b
     then b:= open(e')
     else skip;
     if b = -1
     then _ := record(Test(e'))
     else skip,
     b)
-   where b,p are fresh variables
+   where b is fresh
 
 ([ close(e) ]) = 
    let c',e' = ([ e ]) in 
-   (c'; _ := close_fd(e'), close(e'))
+   (c', close(e'))
 
 --JDL: Fix test to take changes into account.
 
@@ -782,16 +774,14 @@ well enough. *)
    let c',e' = ([ e ]) in 
    (c';
     _ := record(Test(e'));
-    r := lookup_logE(e');
-    if r = -1 then r := test(e') else skip;
-    if r = -2 then r := -1 else skip;
-    if r =  2 then r :=  1 else skip;
+    b := lookup_logE(e');
+    if b = TFile then r := 0 else skip;
+    if b = TNone then r :=  -1 else skip;
+    if b = TDir(true) then r :=  2 else skip;
+    if b = TDir(false) then r :=  1 else skip;
+    if b = TUnknown then r := test(e') else skip;
     , r)
-
-([ lseek(e,e') ]) =
-   let c1, e1 = ([ e  ]) in
-   let c2, e2 = ([ e' ]) in
-   (c1;c2, lseek(e1,e2))
+    where r,b are fresh
 
 -- Both read and readdir rely on the fact that 
 -- Haskell reads/writes an entire file at once
@@ -799,28 +789,29 @@ well enough. *)
 ([ read(e) ]) = 
   let c',e' = ([ e ]) in 
   (c';
-   if lookup_logR(e') then
+   b := lookup_logR(e'); 
+   if b=RKnown then
      r := read_log(e')
    else 
      r := read(e');
    _ := record(Read(e',r,false)), 
    r)
-   where r is fresh
+   where r,b are fresh
 
 ([ readdir(e) ]) =
   let c',e' = ([ e ]) in 
   (c';
-   r := lookup_logR(e');
-   if r=2 then 
+   b := lookup_logR(e');
+   if b=RPartial then 
      r := readdir(e');
      r := read_and_check(e',r);
-   else if r then
+   else if r=RKnown then
      r := read_log(e')
    else 
      r := readdir(e');
-   _ := record(Read(e',r,true)), 
+     _ := record(Read(e',r,true)), 
    r)
-   where r is fresh
+   where r,b is fresh
 
 ([ write(e,e') ]) =
    let c1, e1 = ([ e  ]) in
@@ -831,110 +822,31 @@ well enough. *)
     r)
     where r is fresh
 
--- For the next 3 we need to know that the file exists
+-- For remove we need to know that the file exists
 -- whether virtually, or for real
-
--- If the file exists and is a normal file, then we truncate
--- o.w. we return -1 and do nothing
-
-([ truncate(e,e') ]) =
-   let c1, e1 = ([ e  ]) in
-   let c2, e2 = ([ e' ]) in
-   (c1;c2; 
-    t := lookup_logE(e);
-    if t = 0
-    then r := record(Trunc(e1,e2))
-    else 
-       if t = -1 then {
-         b := ([ test e1 ]);
-         if b = 0
-         then r := record(Trunc(e1,e2))
-         else r := -1
-       }
-       else   r := -1,
-    r)
-    where r,b,t are fresh variables
-
--- If From exists:
--- * Normal file implies (To doesn't exist or is a normal file)
--- * Directory implies (To doesn't exist or is empty directory)
--- o.w. we return -1 and do nothing
-
-([ rename(e,e') ]) =
-   let c1, e1 = ([ e  ]) in
-   let c2, e2 = ([ e' ]) in
-   (c1;c2; 
-    from := lookup_logE(e1);
-    to := lookup_logE(e2);
-    if from = -1
-    then from := ([ test e1])
-    else skip;
-    if from := -1 || from := -2
-    then r := -1
-    else -- from exists
-    {
-       r := -1;
-       if to = -1
-       then
-       { 
-          b := 1;
-          to := ([ test e1 ])
-       }
-       else b := 0;
-       -- to doesn't exist?
-       if to = -1
-       then r := record(Rename(e1,e2))
-       else skip;
-       -- Both files?
-       if from = 0 && to = 0
-       then r := record(Rename(e1,e2))
-       else skip;
-       -- Both folders and to is empty?
-       if (from = 1 || from = 2) && to = 2
-       then r := record(Rename(e1,e2))
-       else skip;
-       -- Both folders, but we don't know if to is empty?
-       if (from = 1 || from = 2) && to = 1 && b
-       then
-       {
-          b := ([ n := open(e2); readdir(n) ]);
-          if b = ''
-          then r := record(Rename(e1,e2))
-          else skip
-       }
-       else skip
-    },
-    r)
-    where r,b,from,to are fresh variables
 
 -- If file is a directory and is empty
 -- or if file is not a directory, but exists
 -- we remove it, o.w. we return -1 and do nothing
 
+-- JDL: May need to record failure to get conflicts right
+
 ([ remove(e) ]) =
    let c', e' = ([ e  ]) in
    (c; 
     t := lookup_logE(e);
-    if t = 0 || t = 2
+    if t = TDir(true) || t = TFile)
     then r := record(Remove(e'))
+    else if t = TNone || t = TDir(false)
+    then r := -1
     else 
-       if t = -1 then {
-         b := ([ test e1 ]);
-         if b = -1
-         then r := -1
-         else if b = 0 
-            then r := record(Remove(e'))
-            else {
-               b := ([ n := open(e'); readdir(n) ]);
-               if b = ''
-               then r := record(Remove(e'))
-               else r := -1
-            }
-       }
-       else   r := -1,
+       t := test(e');
+       if t = 0 || t = 2
+       then r := record(Remove(e')
+       else r := -1,
     r)
-    where r,b,t,n are fresh variables
-   
+    where r and t are fresh variables
+
 (* ([ c ]) : Com \ {atomic c} *)
 
 ([ skip ]) = skip
@@ -953,21 +865,20 @@ well enough. *)
    let c',e' = ([ e ]) in 
    c'; while e' do ([ c ])
 
--- Currently using a global log lock, may switch to fancy data structure
-
-(* What is l? Why would it be zero? *)
-
 ([ atomic c ]) = 
    f := 1;
    while f do {
-     l := trans_start();
+     tstart := time(); -- Gets current time
+     log := [];
      ([ c ]);
-     if l then skip else lock();
+     lsucc := -1;
+     while lsucc = -1 do -- Did we acquire lock successfully?
+     	lsucc := lockf(lockfile,1);
      f := check_error();
      if not f then write_log() else skip;       
-     if l then skip else unlock()
+     _ := lockf(lockfile,0)
    }
-   where l and f are fresh
+   where f is fresh and atomic is not a subcommand of c
 
 --------------------------------------------------------------------------------
 Theorems
@@ -986,7 +897,6 @@ two will also generate F'. Note that we do not restrict ourselves to
 a particular heap. If both c and d run to completion on some 
 (possibly different) heap, in effectively serial order, then we consider
 it a success.
-
 
 Proof of theorem:
 Assume not. Then c = c_1;...;c_n and d=d_1;...;d_m and there is some
@@ -1022,7 +932,7 @@ Lemma 0a [Inversion of single-step relation]
 * Not (F,H,skip) - o -> (F',H',c').
 
 * If (F,H,skip;c1) - o -> (F',H',c') then 
-    F=F' and H=H' and c'=c2 and o = None.
+    F=F' and H=H' and c'=c1 and o = None.
 
 * If (F,H,c1;c2) - o -> (F',H',c') and c1 != skip, then 
     (F,H,c1) - o -> (F',H',c1') and c' = c1';c2
@@ -1031,23 +941,155 @@ Lemma 0a [Inversion of single-step relation]
 
 Lemma 0b [Inversion of multi-step relation]:
 
+Commands:
+
 * If (F,H,skip) - l ->* (F',H',c') then 
     F=F' and H=H' and c'=skip and l = [].
 
 * If (F,H,c1;c2) -l ->* (F',H',c') then either
   - c' = c1';c2 and (F,H,c1) - l ->* (F',H',c1')
-  - c' = c2' and (F,H,c1) - l1 ->* (F0,H0,skip) and (F0,H0,c2) - l2 ->* (F',H',c2') and l = l1@l2
+  - c' = c2' and (F,H,c1) - l1 ->* (F0,H0,skip) and (F0,H0,c2) - l2 ->* (F',H',c2') and l = l2@l1
 
 * If (F,H,x := e) - l ->* (F',H',c') then either
   - c' = x := e' and (F,H,e) - l ->* (F',H',e') or
   - c' = skip and (F,H,x := e) - l1 ->* (F',H0, x:=v) and H' = H0[x:=v]
 
-* ...
+* If (F,H,if e then c1 else c2) - l ->* (F',H',c') then either
+  - c' = if e' then c1 else c2 and (F,H,e) - l ->* (F',H',e') or
+  - c' = c1' and (F,H,e) - l1 ->* (F0,H0,n) where n <> 0 and (F0,H0,c1) - l2 ->* (F',H',c1') and l = l2@l1 or
+  - c' = c2' and (F,H,e) - l1 ->* (F0,H0,n) where n = 0 and (F0,H0,c2) - l2 ->* (F',H',c2') and l = l2@l1
+
+* If (F,H,while e do c) - l ->* (F',H',c') then either
+  - c' = while e' do c and (F,H,e) - l ->* (F',H',e') or
+  - c' = c1;while e do c and (F,H,e) - l1 ->* (F0,H0,n) where n <> 0 and (F0,H0,c) - l2 ->* (F',H',c1) and l= l2@l1 or
+  - c' = skip (F,H,e) - l ->* (F',H',n) where n = 0 
+
+Expressions:
+
+* If (F,H,f(e)) - l ->* (F',H',e') then either
+  - e' = f(e0) and (F,H,e) - l ->* (F',H',e0) or
+  - e' = v' and (F,H,e) - l1 ->* (F0,H0,v) and (F0,H0,f(v)) - o -> (F',H',v') and l = o::l1
+
+* If (F,H,dtype2(e1,e2)) - l ->* (F',H',e') then either
+  - e' = dtype2(e1',e2) and (F,H,e1) - l ->* (F',H',e1') or
+  - e' = dtype2(v1,e2') and (F,H,e1) - l1 ->* (F0,H0,v1) and (F0,H0,e2) - l2 -> (F',H',e2') and l = l2@l1
 
 Lemma 1a[Compiled Expression Effects]:
   Let c0,e0 = ([ e ]). 
   * If (F,H,c0) - l ->* (F',H',c') then F=F'.
   * If (F,H,e0) - l ->* (F',H',e') then F=F'.
+
+Proof.
+
+By induction on e.
+
+Case e = close(e0):
+
+  By the definition of ([ . ]) we have ([ close(e0) ]) =
+  (c1, close(e1)) where c1,e1 = ([ e' ]).
+
+  Part 1: If (F,H,c1) - l ->* (F',H',c') then F=F'
+
+    By the inductive hypothesis, part 1, applied to e0, we have F=F'
+
+  Part 2: If (F,H,close(e1)) - l ->* (F',H',e') then F=F'
+
+    By Lemma 0b, case for functions, there are two subcases.
+    
+    Subcase e' = f(e0) and (F,H,e1) - l ->* (F',H',e0)
+
+      By the inductive hypothesis, part 2, applied to e0, we have F=F'
+
+    Subcase e' = v' and (F,H,e0) - l1 ->* (F0,H0,v) and (F0,H0,close(v)) - o -> (F',H',v') and l = o::l1
+
+      By the inductive hypothesis, part 2, applied to e0, we have F=F0.
+      By inspection of the close function, we have F0 = F'. By transitivity,
+      we have F=F'.
+
+Case e = write(e1,e2):
+
+  By the definition of ([ . ]) we have ([ write(e1,e2) ]) =
+  (c1';
+   c2'; 
+   r := record(Write(e1',e2')),
+   r)
+  where r is fresh, (c1',e1') = ([ e1 ]), and (c2',e2') = ([ e2 ])
+
+  Part 1: If (F,H,c1';c2';r := record(Write(e1',e2'))) - l ->* (F',H',c') then F = F'
+
+    By Lemma 0b, case for sequences, there are two subcases.
+
+    Subcase c' = c1'';c2';r := record(Write(e1',e2')) and (F,H,c1') - l ->* (F',H',c1'')
+
+      By the inductive hypothesis applied to e1, we have F=F'
+
+    Subcase c' = c3 and (F,H,c1') - l1 ->* (F0,H0,skip) and 
+       	       	 (F0,H0,c2';r := record(Write(e1',e2'))) - l2 ->* (F',H',c3) and l = l2@l1
+
+      By the inductive hypothesis applied to e1, we have F=F0.
+
+      By Lemma 0b, case for sequences, there are two further subcases.
+
+      Subsubcase c3 = c2'';r := record(Write(e1',e2')) and (F0,H0,c2') - l ->* (F',H',c2'')
+
+        By the inductive hypothesis applied to e2, we have F0=F'.
+	By transitivity, we have F=F', as required.
+
+      Subsubcase c3 = c4 and (F0,H0,c2') - l3 ->* (F1,H1,skip) and 
+           	      (F1,H1,r := record(Write(e1',e2'))) - l4 ->* (F',H',c4) and l2 = l4@l3
+
+	By the inductive hypothesis applied to e2, we have F0=F1.
+
+	By Lemma 0b, case for assignment, there are two further subcases.
+	
+	Subsubsubcase c4 = r := e3 and (F1,H1,record(Write(e1',e2'))) - l4 ->* (F',H',e3)
+
+	  By Lemma 0b, case for functions, there are two further subcases.
+	  
+	  Sub^4case e3 = record(e4) and (F1,H1,Write(e1',e2')) - l4 ->* (F',H',e4)
+
+	    By Lemma 0b, case for dtype2, there are two further subcases.
+
+	    Sub^5case e4 = Write(e1'',e2') and (F1,H1,e1') - l4 ->* (F',H',e1'')
+
+	      By inductive hypothesis applied to e1, we have F1=F'.
+	      By transitivity, we have F=F', as required.
+
+	    Sub^5case e4 = Write(v1,e2'') and (F1,H1,e1') - l5 ->* (F2,H2,v1) and (F2,H2,e2') - l6 ->* (F',H',e2'') and l4=l6@l5
+
+	      By inductive hypothesis applied to e1, we have F1=F2.
+	      By inductive hypothesis applied to e2, we have F2=F'.
+	      By transitivity, we have F=F', as required.
+
+	  Sub^4case e3 = v' and (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v) and (F2,H2,record(v)) - l6 ->* (F',H',v') and l4=l6@l5
+	 
+	    By the semantic rule, E-Context, if (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v), then 
+	    (F1,H1,e1') - l7 ->* (F1',H1',v1) and (F1',H1',e2') - l8 ->* (F2,H2,v2) and l5 = l8@l7.
+	    
+	    By inductive hypothesis applied to e1, we have F1=F1'.
+	    By inductive hypothesis applied to e2, we have F1'=F2.
+	    By inspection of the record function, we have F2=F'.
+	    By transitivity, we have F=F', as required.
+
+	Subsubsubcase c4 = skip and (F1,H1,r := record(Write(e1',e2'))) - l4 ->* (F',H0,r := v') and H' = H0[r:=v']
+	
+	  By Lemma 0b, case for functions, there is now only one possible subcase.
+	  
+	  Sub^4case (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v) and (F2,H2,record(v)) - l6 ->* (F',H',v') and l4=l6@l5
+	 
+	    By the semantic rule, E-Context, if (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v), then 
+	    (F1,H1,e1') - l7 ->* (F1',H1',v1) and (F1',H1',e2') - l8 ->* (F2,H2,v2) and l5 = l8@l7.
+	    
+	    By inductive hypothesis applied to e1, we have F1=F1'.
+	    By inductive hypothesis applied to e2, we have F1'=F2.
+	    By inspection of the record function, we have F2=F'.
+	    By transitivity, we have F=F', as required.
+
+  Part 2: If (F,H,r) - l ->* (F',H',e') then F= F'
+
+    By the semantic rule, E-var, we have F=F'.
+
+Case e = ??
 
 Lemma 1b[Compiled Command Effects]. 
   Let c be a command that does not contain any sub-commands of the
@@ -1100,6 +1142,8 @@ Case c = x := e:
 
     there are two further subcases.
 
+    -- JDL to JNF: This should be c2', yeah?
+
     Subsubcase c2 = x := e1' and (F0,H0,e1) - l2 ->* (F',H',e1'): 
 
       By Lemma 1a, case for expressions, we have that F0=F'. By
@@ -1110,21 +1154,93 @@ Case c = x := e:
       By Lemma 1a, case for expressions, we have that F0=F'. By
       transitivity, we have F=F', as required.
 
-*** JNF RAGGED HERE ***
-
 Case c = if e then c1 else c2:
 
-  TBD
+  By definition of ([ . ]) we have ([ if e then c1 else c2 ]) = c0; if e0 then ([ c1 ]) else ([ c2 ])
+  where c0,e0 = ([e])
+
+  By Lemma 0b, case for sequence, there are two subcases.
+
+  Subcase c' = c3; if e0 then ([ c1 ]) else ([ c2 ]) and (F,H,c0) - l ->* (F',H',c3): 
+
+    By Lemma 1a, case for commands, we immediately have F=F'.
+
+  Subcase c' = c3 and (F,H,c0) - l1 ->* (F0,H0,skip) and (F0,H0, if e0 then ([ c1 ]) else ([ c2 ])) - l2 ->* (F',H',c3):
+
+    By Lemma 1a, case for commands, we have F=F0.
+
+    By Lemma 0b, case for if-clause, applied to 
+
+       (F0,H0, if e0 then ([ c1 ]) else ([ c2 ])) - l2 ->* (F',H',c3)
+
+    there are three further subcases.
+
+    Subsubcase c3 = if e' then ([ c1 ]) else ([ c2 ]) and (F0,H0,e0) - l2 ->* (F',H',e')
+    
+      By Lemma 1a, case for expressions, we have that F0=F'. By
+      transitivity, we have F=F', as required.
+
+    Subsubcase c3 = c1' and (F0,H0,e0) - l3 ->* (F1,H1,n) where n <> 0 and (F1,H1,([ c1 ])) - l4 ->* (F',H',c1') and l2 = l4@l3
+    
+      By Lemma 1a, case for expressions, we have that F0=F1. By the induction
+      hypothesis applied to c1, we have F1=F'. By transitivity,
+      we have F=F', as required.
+
+    Subsubcase c3 = c2' and (F0,H0,e0) - l3 ->* (F1,H1,n) where n = 0 and (F1,H1,([ c2 ])) - l4 ->* (F',H',c2') and l2 = l4@l3
+    
+      By Lemma 1a, case for expressions, we have that F0=F1. By the induction
+      hypothesis applied to c2, we have F1=F'. By transitivity,
+      we have F=F', as required.
 
 Case c = while e do c:
 
-  TBD
+  By definition of ([ . ]) we have ([ while e do c ]) = c1; while e1 do ([ c ])
+  where c1,e1 = ([e])
+
+  By Lemma 0b, case for sequence, there are two subcases.
+
+  Subcase c' = c1'; while e1 do ([ c ]) and (F,H,c1) - l ->* (F',H',c1')
+  
+    By Lemma 1a, case for commands, we immediately have F=F'.
+
+  Subcase c' = c2' and (F,H,c1) - l1 ->* (F0,H0,skip) and (F0,H0,while e1 do ([ c ])) - l2 ->* (F',H',c2')
+
+    By Lemma 1a, case for commands, we have F=F0.
+
+    By Lemma 0b, case for while-loops, applied to 
+    
+       (F0,H0,while e1 do ([ c ])) - l2 ->* (F',H',c2')
+
+    there are three further subcases.
+
+    Subsubcase c2' = while e' do ([ c ]) and (F0,H0,e1) - l2 ->* (F',H',e'')
+    
+      By Lemma 1a, case for expressions, we have that F0=F'. By
+      transitivity, we have F=F', as required.
+    
+    Subsubcase c2' = c1';while e1 do ([ c ]) and (F0,H0,e1) - l3 ->* (F1,H1,n) where n <> 0 and 
+    	       	     (F1,H1,([ c ])) - l4 ->* (F',H',c1') and l2 = l4@l3
+    
+      By Lemma 1a, case for expressions, we have that F0=F1. By the inductive hypothesis on c1 we have
+      F1 = F'. By transitivity, we have F=F', as required and we're back to the beginning of
+      the while case.
+      
+    Subsubcase c2' = skip and (F0,H0,e1) - l2 ->* (F',H',n) where n = 0
+    
+      By Lemma 1a, case for expressions, we have that F0=F'. By
+      transitivity, we have F=F', as required.
+
 
 Case c = atomic c1:
 
   The result vacuously holds since c contains a sub-command of the
   form atomic(_).
 
+So, having proved it for all cases, we conclude that Lemma 1b holds.
+
+
+-- What's important is the structure of the induction hypothesis
+-- 
 
 
 Lemma 1: There does not exist a c where atomic(d) \not \in c s.t. (F,H,([ c ])) ->*
@@ -1196,7 +1312,7 @@ More tedious proof:
        be in the log as they are important for the rest of this:
        RF(p,c,i) means we read location i of a file at path p and it contained c.
        RD(p,d,i) means we read location i of a directory at path p and it 
-        	 contained d.
+                 contained d.
        T(p,n)    means we truncated a file at path p to length n.
        W(p,w)    means we wrote w to a file at path p.
        Rm(p)     means we removed whatever was at path p.
@@ -1225,45 +1341,45 @@ More tedious proof:
        Starting from the first piece of the log and going to the last one,
        build_fs updates the VFS depending on what it sees as follows:
        RF(p,c,i) - Accumulates all characters into acc until it gets the empty
-       		   character at which point it makes p map to F(acc)
+                   character at which point it makes p map to F(acc)
        RD(p,d,i) - Accumulates all entries into acc until it gets the empty
-       		   entry at which point it makes p map to D(acc,[],true)
+                   entry at which point it makes p map to D(acc,[],true)
        T(p,n)   - 
-       	  If p doesn't map to anything then it makes path p map to T(n)
-	  O.w. if p maps to F(w) it makes path p map to F(s) where 
-	     s is w correctly truncated to n characters.
-	  O.w. if p maps to some renamed file Rn(p',n') we make p map to Rn(p',n)
+          If p doesn't map to anything then it makes path p map to T(n)
+          O.w. if p maps to F(w) it makes path p map to F(s) where 
+             s is w correctly truncated to n characters.
+          O.w. if p maps to some renamed file Rn(p',n') we make p map to Rn(p',n)
        W(p,w)   -
-       	  If the path of the directory of p (dir(p)) doesn't map to anything
-	     it makes p map to F(w) and dir(p) map to D([p],[],false) (since we 
-	     now know a p is in dir(p), but haven't read it).
-	  O.w. if dir(p) maps to D(l,l',b), it adds p into the sorted list of
-	     paths l at the correct position if it's not in there already.
-	     It then makes dir(p) map to that construct and makes p map to F(w).
-	     Regardless of whether we had the complete list (b is true) or not
-	     we continue to stay in that state since we just add what we know is
-	     now there (or nothing if it already was).
-       Rm(p)	-
+          If the path of the directory of p (dir(p)) doesn't map to anything
+             it makes p map to F(w) and dir(p) map to D([p],[],false) (since we 
+             now know a p is in dir(p), but haven't read it).
+          O.w. if dir(p) maps to D(l,l',b), it adds p into the sorted list of
+             paths l at the correct position if it's not in there already.
+             It then makes dir(p) map to that construct and makes p map to F(w).
+             Regardless of whether we had the complete list (b is true) or not
+             we continue to stay in that state since we just add what we know is
+             now there (or nothing if it already was).
+       Rm(p)    -
           It maps p to Rm, then:
-       	  If dir(p) doesn't map to anything, it makes it map to D([],[p],false)
-	     since the only thing we know about the directory is that it no
-	     longer contains p.
-	  O.w. if it maps to D(l,l',b), it removes p from list l and adds it
-	     (in unique sorted order) to l'. It will be more clear why this
-	     is correct when we get to reading directories, but basically
-	     regardless if b is true, it will only ever check l,
-	     which is fine since we removed it.
-	     If b is false, it'll check l first (and not find it there) then l',
-	     where it'll see that it's been removed.
-       Rn(p,p')	-
+          If dir(p) doesn't map to anything, it makes it map to D([],[p],false)
+             since the only thing we know about the directory is that it no
+             longer contains p.
+          O.w. if it maps to D(l,l',b), it removes p from list l and adds it
+             (in unique sorted order) to l'. It will be more clear why this
+             is correct when we get to reading directories, but basically
+             regardless if b is true, it will only ever check l,
+             which is fine since we removed it.
+             If b is false, it'll check l first (and not find it there) then l',
+             where it'll see that it's been removed.
+       Rn(p,p') -
           It does Rm(p) (as above, but mapping p to Rm happens last), then:
-	  If dir(p') doesnt' map to anything it makes it map to
-	     D([p'],[],false) since we know there is a p' in the directory.
-	  O.w. if it maps to D(l,l',b) we make it map to 
-	     D(souq (p'::l),rem p' l',b).
-	  If p originally mapped to some x, it makes p' map to x.
-	  O.w. it makes p' map to Rn(p,0), signifying that it holds whatever
-	     is in p, unchanged.
+          If dir(p') doesnt' map to anything it makes it map to
+             D([p'],[],false) since we know there is a p' in the directory.
+          O.w. if it maps to D(l,l',b) we make it map to 
+             D(souq (p'::l),rem p' l',b).
+          If p originally mapped to some x, it makes p' map to x.
+          O.w. it makes p' map to Rn(p,0), signifying that it holds whatever
+             is in p, unchanged.
 
 
 -- JDL to JNF: Start of proof of induction for property we want below.
