@@ -1,6 +1,6 @@
 (*
 -- TODOS:
--- Finish Lemma 1
+-- Finish Lemma 1a
 -- Make just one error type (ERROR or -1)
 -- Write opsem induction
 -- Go through whole thing
@@ -88,6 +88,11 @@ c in Character
 b in Boolean
 l in List
 F in FileStore
+
+recType := Read(n,c,b) -- Read character c from fd n, which is a dir if b and file o.w.
+	|  Write(n,w)  -- Wrote string w to fd n  
+	|  Remove(p)   -- Removed path p
+	|  Test(p)     -- Tested path p
 
 testCond := TFile    --It is a file
          |  TDir(b)  --It is a possibly empty directory (b=true \implies empty)
