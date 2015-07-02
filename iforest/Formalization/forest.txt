@@ -1,5 +1,12 @@
 (*
 -- TODOS:
+-- - Make read_log/read_and_check also return the correct option
+-- -- Make sure read_and_check correctly deals with readdir's update to index 
+
+-- Lemma 1a. Claim primitive functions translated to don't change FS
+-- - Obvious by inspection
+-- Redo Lemma 1b by inducting on the structure of the derivation
+
 -- Finish Lemma 1a
 -- Make just one error type (ERROR or -1)
 -- Write opsem induction
@@ -19,30 +26,15 @@
 -- Change from global lock to something fancier (like one of those cool data structures?)
 
 Questions:
--- JDL to JNF: Not quite sure how to include datatypes, but I need their evaluation order.
--- Search "dtype" for current attempt ;D
--- Pairs are particularly annoying
-
--- Look at Lemma 1a, write case. This will become super tedious soon. Is this how I should be doing
--- this or should I figure out something more clever? (You were talking about assuming something?)
--- Maybe some sort of sequential independence so I can treat each piece of the sequence separately
--- (which I sort of do, but have to add 2 extra cases per real case)? 
-
--- Look at Lemma 0b and 1b, while case, is it fine to stop where I stopped with loop unrolling?
-
--- Sanity check, case x := e, subsubcases, c2' rather than c2, yeah?
-
 -- Where to put info about dedicated space?
 
-Done:
-- Added lockf and made locks work OK
-- Got rid of renames and truncate
-- Got rid of nested transactions
-- Finished Lemma 1b
-- Did some stuff on Lemma 1a
-- Added a bunch of datatypes
-- Figured out most/much of what would need to happen to relax 
-  constraints about writing/reading whole files
+-- Compilation look kinda like what you were thinking?
+-- Lambdas look like you were thinking? Should I also remove f(e) and make everything lambdas?
+-- - Alright to have them take in F,H,[whatever is actually passed in]?
+
+
+Notes:
+-- Data type constructors are implicit functions that construct them in the obvious way.
 
 
 *)
@@ -191,7 +183,7 @@ Built-in POSIX functions and their semantics
       let F' = F \ p in
       (F',H',0,Some(Rm(p)))
    else
-      (F,H,-1,None)
+      (F,H,-1,Some(Test(p)))
 
 -- Mostly added to be able to check the existence of a file
 -- Errs:
@@ -525,10 +517,7 @@ v ::= n
     | w
     | (v1,...,vn)
     | l
-    | dtype0
-    | dtype1(v)
-    | dtype2(v)
-    | dtype3(v)  
+    | fun x -> e
 
 o ::= Some v 
     | None
@@ -544,6 +533,8 @@ lf ::= File(w)
 e ::= x
     | v
     | f(e)
+    | e e
+    | (e1,...,en)
 
 (* Commands *)
 c ::= skip
@@ -577,12 +568,12 @@ E ::= .
     | test(E) 
     | lockf(E,e)
     | lockf(v,E)
-    | dtype1(E)
-    | dtype2(E,e)
-    | dtype2(v,E)
-    | dtype3(E,e1,e2)
-    | dtype3(v1,E,e2)
-    | dtype3(v1,v2,E)
+    | E e
+    | v E
+    | (E,e2,...,en)
+    | (v1,E,e3,...,en)
+    | ...
+    | (v1,...,v(n-1),E)
 
 (* Expression evaluation: (F,H,e) - o -> (F',H',e') *)
 
@@ -600,6 +591,11 @@ H(x) = v
 (F',H',v',o) = [[ f ]] (F,H,v)
 --------------------------------- E-Call
 (F,H,f(v)) - o -> (F',H',v')
+
+v1 = fun x -> e
+e' = e[x -> v2]
+--------------------------------- E-Lambda
+(F,H,v1 v2) -> (F',H',e')
 
 (F,H,e) - o -> (F',H',e')
 --------------------------- E-Context
@@ -744,7 +740,7 @@ where list, fd, x, and r are fresh.
 Optimistic Compilation
 --------------------------------------------------------------------------------
 
-(* ([ e ]) : Com * Exp *)
+(* ([ e ]) : Exp *)
 
 (* Notational convention: 
    write 
@@ -756,101 +752,81 @@ Optimistic Compilation
 *)  
 -- JDL: Could also do the less clean thing if you like.
 
-([ open(e) ]) = 
-   let c',e' = ([ e ]) in
-   (c';
-    b := lookup_logO(e');
-    if not b
-    then b:= open(e')
-    else skip;
-    if b = -1
-    then _ := record(Test(e'))
-    else skip,
-    b)
-   where b is fresh
+([ x ]) = x
+([ v ]) = v
+([ e1 e2 ]) =
+   let e1' = ([ e1 ]) in
+   let e2' = ([ e2 ]) in
+   e1' e2'
 
-([ close(e) ]) = 
-   let c',e' = ([ e ]) in 
-   (c', close(e'))
+([ (e1,...,en) ]) =
+   let e1' = ([ e1 ]) in
+   ...
+   let en' = ([ en ]) in
+   (e1',...,en')
 
---JDL: Fix test to take changes into account.
+([ open ]) = fun (F,H,p) ->
+   let (_,H',b) = lookup_logO(p) in
+   let (_,H',b,x) = if not b then open(p) else (F,H',b,None) in
+   let (_,H',_),x = if b = -1 then record(Test(p)),Test(p) else (),x in
+   (F,H',b,x)
 
-([ test(e) ]) = 
-   let c',e' = ([ e ]) in 
-   (c';
-    _ := record(Test(e'));
-    b := lookup_logE(e');
-    if b = TFile then r := 0 else skip;
-    if b = TNone then r :=  -1 else skip;
-    if b = TDir(true) then r :=  2 else skip;
-    if b = TDir(false) then r :=  1 else skip;
-    if b = TUnknown then r := test(e') else skip;
-    , r)
-    where r,b are fresh
+([ close ]) = fun (F,H,n) ->  close(n)
 
--- Both read and readdir rely on the fact that 
--- Haskell reads/writes an entire file at once
+([ test ]) = fun (F,H,p) ->
+   let (_,H',_) = record(Test(p)) in
+   match lookup_logE(p) with
+   | TFile 	 -> (F,H',0,Test(p))
+   | TNone	 -> (F,H',-1,Test(p))
+   | TDir(true)  -> (F,H',2,Test(p))
+   | TDir(false) -> (F,H',1,Test(p))
+   | TUnknown    -> test(p)
 
-([ read(e) ]) = 
-  let c',e' = ([ e ]) in 
-  (c';
-   b := lookup_logR(e'); 
-   if b=RKnown then
-     r := read_log(e')
-   else 
-     r := read(e');
-   _ := record(Read(e',r,false)), 
-   r)
-   where r,b are fresh
+([ read ]) = fun (F,H,n) ->
+   match lookup_logR(n) with
+   | RKnown   -> 
+      let (_,H',r,x) = read_log(n) in
+      (F,H',r,x)
+   | RUnknown ->
+      let (_,H',r,x) = read(n) in
+      let (_,H',_) = record(Read(n,r,false)) in
+      (F,H',r,x)
+   | RPartial -> (F,H,-1,None)
 
-([ readdir(e) ]) =
-  let c',e' = ([ e ]) in 
-  (c';
-   b := lookup_logR(e');
-   if b=RPartial then 
-     r := readdir(e');
-     r := read_and_check(e',r);
-   else if r=RKnown then
-     r := read_log(e')
-   else 
-     r := readdir(e');
-     _ := record(Read(e',r,true)), 
-   r)
-   where r,b is fresh
+([ readdir ]) =  fun (F,H,n) ->
+   match lookup_logR(n) with
+   | RKnown   -> 
+      let (_,H',r,x) = read_log(n) in
+      (F,H',r,x)
+   | RUnknown ->
+      let (_,H',r,x) = readdir(n) in
+      let (_,H',_) = record(Read(n,r,true)) in
+      (F,H',r,x)
+   | RPartial ->
+      let (_,H',r,_) = readdir(n) in
+      let (_,H',r,x) = read_and_check(n,r) in
+      let (_,H',_) = record(Read(n,r,true)) in
+      (F,H',r,x)
 
-([ write(e,e') ]) =
-   let c1, e1 = ([ e  ]) in
-   let c2, e2 = ([ e' ]) in
-   (c1;
-    c2; 
-    r := record(Write(e1,e2)),
-    r)
-    where r is fresh
+([ write ]) = fun (F,H,(n,w)) ->
+   let (_,H',x) = record(Write(n,w)) in
+   (F,H',x)
 
--- For remove we need to know that the file exists
--- whether virtually, or for real
-
--- If file is a directory and is empty
--- or if file is not a directory, but exists
--- we remove it, o.w. we return -1 and do nothing
-
--- JDL: May need to record failure to get conflicts right
-
-([ remove(e) ]) =
-   let c', e' = ([ e  ]) in
-   (c; 
-    t := lookup_logE(e);
-    if t = TDir(true) || t = TFile)
-    then r := record(Remove(e'))
-    else if t = TNone || t = TDir(false)
-    then r := -1
-    else 
-       t := test(e');
-       if t = 0 || t = 2
-       then r := record(Remove(e')
-       else r := -1,
-    r)
-    where r and t are fresh variables
+([ remove ]) = fun (F,H,p) ->
+   match lookup_logE(p) with
+   | TFile 	 
+   | TDir(true)  -> 
+      let (_,H',t) = record(Remove(p)) in
+      (F,H',t,Some(Rem(p)))
+   | TNone	 
+   | TDir(false) -> (F,H,-1,None)
+   | TUnknown    -> 
+      let (_,H',t,x) = test(p) in
+      let (_,H',t),x   = if t = 0 || t = 2
+         then record(Remove(p)),Some(Rem(p))
+	 else (t,H',-1),x
+      in
+      (F,H',t,x)
 
 (* ([ c ]) : Com \ {atomic c} *)
 
@@ -1102,6 +1078,8 @@ Lemma 1b[Compiled Command Effects].
   then F=F'.
 
 Proof. 
+
+-- By induction on the derivation of the 
 
 By induction on c.
 
@@ -1449,5 +1427,102 @@ Proof: By induction on the number of nested atomic statements (n).
 
 
 
+(* OLD:
 
+([ open(e) ]) = 
+   let c',e' = ([ e ]) in
+   (c';
+    b := lookup_logO(e');
+    if not b
+    then b:= open(e')
+    else skip;
+    if b = -1
+    then _ := record(Test(e'))
+    else skip,
+    b)
+   where b is fresh
+
+([ close(e) ]) = 
+   let c',e' = ([ e ]) in 
+   (c', close(e'))
+
+--JDL: Fix test to take changes into account.
+
+([ test(e) ]) = 
+   let c',e' = ([ e ]) in 
+   (c';
+    _ := record(Test(e'));
+    b := lookup_logE(e');
+    if b = TFile then r := 0 else skip;
+    if b = TNone then r :=  -1 else skip;
+    if b = TDir(true) then r :=  2 else skip;
+    if b = TDir(false) then r :=  1 else skip;
+    if b = TUnknown then r := test(e') else skip;
+    , r)
+    where r,b are fresh
+
+-- Both read and readdir rely on the fact that 
+-- Haskell reads/writes an entire file at once
+
+([ read(e) ]) = 
+  let c',e' = ([ e ]) in 
+  (c';
+   b := lookup_logR(e'); 
+   if b=RKnown then
+     r := read_log(e')
+   else 
+     r := read(e');
+   _ := record(Read(e',r,false)), 
+   r)
+   where r,b are fresh
+
+([ readdir(e) ]) =
+  let c',e' = ([ e ]) in 
+  (c';
+   b := lookup_logR(e');
+   if b=RPartial then 
+     r := readdir(e');
+     r := read_and_check(e',r);
+   else if r=RKnown then
+     r := read_log(e')
+   else 
+     r := readdir(e');
+     _ := record(Read(e',r,true)), 
+   r)
+   where r,b is fresh
+
+([ write(e,e') ]) =
+   let c1, e1 = ([ e  ]) in
+   let c2, e2 = ([ e' ]) in
+   (c1;
+    c2; 
+    r := record(Write(e1,e2)),
+    r)
+    where r is fresh
+
+-- For remove we need to know that the file exists
+-- whether virtually, or for real
+
+-- If file is a directory and is empty
+-- or if file is not a directory, but exists
+-- we remove it, o.w. we return -1 and do nothing
+
+-- JDL: May need to record failure to get conflicts right
+
+([ remove(e) ]) =
+   let c', e' = ([ e  ]) in
+   (c; 
+    t := lookup_logE(e);
+    if t = TDir(true) || t = TFile)
+    then r := record(Remove(e'))
+    else if t = TNone || t = TDir(false)
+    then r := -1
+    else 
+       t := test(e');
+       if t = 0 || t = 2
+       then r := record(Remove(e')
+       else r := -1,
+    r)
+    where r and t are fresh variables
+*)
 
