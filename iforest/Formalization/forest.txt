@@ -1058,9 +1058,7 @@ Lemma 1b[Compiled Command Effects].
 
 Proof. 
 
--- By induction on the derivation of the 
-
-By induction on the structure of the derivation of the operational semantics rules
+By induction on the derivation of (F,H,([c])) - l ->* (F',H',c')
 
 Case c = skip:
 
