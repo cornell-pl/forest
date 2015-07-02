@@ -41,8 +41,8 @@ import Data.WithClass.MGenerics
 [iforest|
 	data Bank = Directory { clients is Map [c :: Client | c <- matches (GL "*") ] }
 	data Client = Directory {
-		  savings :: Accounts
-		, checking :: Accounts
+		  checking :: Accounts
+		, savings :: Accounts
 	}
 	data Accounts = Map [ acc :: Account | acc <- matches (GL "*.acc") ]
 	data Account = File AccInfo
@@ -55,7 +55,7 @@ bankClient clientid = do
 	liftM ((!clientid) . clients) (readData bank)
 
 balance :: String -> FTM TxVarFS Int
-balance clientid = bankClient clientid >>= gbalance
+balance clientid = gbalance =<< bankClient clientid
 	
 withdraw :: String -> Int -> FTM TxVarFS ()
 withdraw clientid amount = do
@@ -78,7 +78,7 @@ transferMany savings checking amount = do
 		writeOrError s (s_md,s_d { accBalance = 0 }) ""
 		(c_md,c_d) <- read c
 		writeOrError c (c_md,c_d { accBalance = accBalance c_d + s_balance }) ""
-		go ss c (a-s_balance)
+		go ss c (a - s_balance)
 
 -- withdraws money from a series of accounts
 withdrawMany accounts amount = do
@@ -98,8 +98,8 @@ gbalance = everything proxyNoCtx (\x y -> return (x+y)) (mkQ 0 (return . accBala
 -- * Threads
 
 main = race_
-	(forever $ putStrLn "balance" >> atomically (balance "nate") >>= print)
-	(forever $ putStrLn "withdraw" >> threadDelay 100 >> atomically (withdraw "nate" 200))
+	(forever $ atomically (balance "nate") >>= print)
+	(forever $ atomically (withdraw "nate" 200))
 
 -- * Data Generation
 

@@ -112,7 +112,7 @@ Library
                    Language.Forest.TH
   
   -- Packages needed in order to build this package.
-  Build-depends: base >= 4, containers, pads-haskell >= 1.1, weak, weak-hashtables, weak-ctrie, filently,
+  Build-depends: base >= 4, containers, pads-haskell >= 1.1, weak, weak-hashtables, weak-ctrie, silently,
                  template-haskell, concurrent-extra, mtl, ref-fd, hashable,
                  haskell-src-meta, uuid, exceptions, abstract-deque, dlist, strict, atomic-primops,  
                  parsec, adapton >= 0.0.3, syb-with-class-and-effects >= 0.3.7,
