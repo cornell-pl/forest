@@ -1,7 +1,5 @@
 (*
 -- TODOS:
--- - Make read_log/read_and_check also return the correct option
--- -- Make sure read_and_check correctly deals with readdir's update to index 
 
 -- Lemma 1a. Claim primitive functions translated to don't change FS
 -- - Obvious by inspection
@@ -31,6 +29,10 @@ Questions:
 -- Compilation look kinda like what you were thinking?
 -- Lambdas look like you were thinking? Should I also remove f(e) and make everything lambdas?
 -- - Alright to have them take in F,H,[whatever is actually passed in]?
+-- Not sure how I want to formulate Lemma 0c. I don't quite like the current one because it looks
+   too much like the 1a case
+
+-- Tuple case seems shaky. I feel like I need tuples in expression too though, non?
 
 
 Notes:
@@ -389,15 +391,15 @@ let build_fs () =
 [[ read_log ]] (F,H,n) = 
    let (p,i,) =H(posix_fds)(n) in
    let H' = H[posix_fds(n) :=  (p,i+1)]) in 
-   let c = 
+   let c,x = 
       match H(logFS)(p) with
-      | Some(Rm) -> ERR
+      | Some(Rm) -> ERR,None
       | Some(F(w))             
-      | Some(D(w,_,true))  -> w[i]    
+      | Some(D(w,_,true))  -> w[i],Some(RF(p,c,i))    
       | Some(D(_,_,false))     
       | None               -> failwith "lookup_logR would've failed"
    in 
-   (F,H',c)
+   (F,H',c,x)
 
 -- JDL: Check over this function to make sure it needs to be this complex
 
@@ -405,7 +407,7 @@ let build_fs () =
    let (p,i) = H(posix_fds)(n) in
    let rec get_correct e last l l' =
       match l,l' with
-      | [],[] -> (F,H,e)
+      | [],[] -> (F,H,e,RD(p,e,i-1))
       | [], hd :: tl ->
         if hd = e
         then let F',H',r = readdir(F,H,n) in
@@ -415,7 +417,7 @@ let build_fs () =
         if hd > last && hd < e
         then (F,H[posix_fds(n) := (p,i-1)],hd)
         else if hd = e
-        then (F,H,hd)
+        then (F,H,hd,RD(p,hd,i-1))
         else get_correct e last tl l'
    in
    match H(logFS)(p) with
@@ -951,126 +953,103 @@ Expressions:
   - e' = f(e0) and (F,H,e) - l ->* (F',H',e0) or
   - e' = v' and (F,H,e) - l1 ->* (F0,H0,v) and (F0,H0,f(v)) - o -> (F',H',v') and l = o::l1
 
-* If (F,H,dtype2(e1,e2)) - l ->* (F',H',e') then either
-  - e' = dtype2(e1',e2) and (F,H,e1) - l ->* (F',H',e1') or
-  - e' = dtype2(v1,e2') and (F,H,e1) - l1 ->* (F0,H0,v1) and (F0,H0,e2) - l2 -> (F',H',e2') and l = l2@l1
+* If (F,H,e1 e2) - l ->* (F',H',e') then either
+  - e' = e1' e2 and (F,H,e1) - l ->* (F',H',e1') or
+  - e' = v1 e2' and (F,H,e1) - l1 ->* (F0,H0,v1) and (F0,H0,e2) - l2 ->* (F',H',e2') and l = l2@l1 or
+  - e' = e3 and (F,H,e1) - l1 ->* (F0,H0,fun x -> e) and (F0,H0,e2) - l2 ->* (F',H',v2)
+    and e3 = e[x -> v2] and l = l2@l1 or
+  - e' = e3 and (F,H,e1) - l1 ->* (F0,H0,fun x -> e) and (F0,H0,e2) - l2 ->* (F1,H1,v2)
+    and (F1,H1,e[x -> v2]) - l3 ->* (F',H',e3) and l = l3@l2@l1
+
+
+Lemma 0c [Translated function effects]:
+  For any e1 and e2, such that ([ e1 ]) = fun x -> e',
+  if (F,H,([ e1 e2 ])) - l ->* (F',H',e3) then F=F'.
+
+Proof:
+  This is obvious by inspection of the functions.
+  They return the same F that they received.
 
 Lemma 1a[Compiled Expression Effects]:
-  Let c0,e0 = ([ e ]). 
-  * If (F,H,c0) - l ->* (F',H',c') then F=F'.
-  * If (F,H,e0) - l ->* (F',H',e') then F=F'.
+  If (F,H,([ e ])) - l ->* (F',H',e') then F=F'.
 
 Proof.
 
 By induction on e.
 
-Case e = close(e0):
+Case e = x:
 
-  By the definition of ([ . ]) we have ([ close(e0) ]) =
-  (c1, close(e1)) where c1,e1 = ([ e' ]).
+  By the definition of ([ . ]) we have ([ x ]) = x
 
-  Part 1: If (F,H,c1) - l ->* (F',H',c') then F=F'
+  By the semantic rule E-var, if (F,H,x) -> (F',H',e'), then e'=v and F=F'
 
-    By the inductive hypothesis, part 1, applied to e0, we have F=F'
+Case e = v 
 
-  Part 2: If (F,H,close(e1)) - l ->* (F',H',e') then F=F'
+  By the definition of ([ . ]) we have ([ v ]) = v
 
-    By Lemma 0b, case for functions, there are two subcases.
-    
-    Subcase e' = f(e0) and (F,H,e1) - l ->* (F',H',e0)
+  We are then stuck so F=F' trivially.
 
-      By the inductive hypothesis, part 2, applied to e0, we have F=F'
+Case e = e1 e2
 
-    Subcase e' = v' and (F,H,e0) - l1 ->* (F0,H0,v) and (F0,H0,close(v)) - o -> (F',H',v') and l = o::l1
+  By the definition of ([ . ]) we have ([ e1 e2 ]) = e1' e2'
+  where e1' = ([ e1 ]) and e2' = ([ e2 ]).
 
-      By the inductive hypothesis, part 2, applied to e0, we have F=F0.
-      By inspection of the close function, we have F0 = F'. By transitivity,
-      we have F=F'.
+  By Lemma 0b, case for lambdas, there are four subcases:
+  
+  Subcase e' = e1'' e2' and (F,H,e1') - l ->* (F',H',e1'')
 
-Case e = write(e1,e2):
+    By inductive hypothesis applied to e1, we have F = F' as required.
 
-  By the definition of ([ . ]) we have ([ write(e1,e2) ]) =
-  (c1';
-   c2'; 
-   r := record(Write(e1',e2')),
-   r)
-  where r is fresh, (c1',e1') = ([ e1 ]), and (c2',e2') = ([ e2 ])
+  Subcase e' = v1 e2'' and (F,H,e1') - l1 ->* (F0,H0,v1) and (F0,H0,e2') - l2 ->* (F',H',e2'') and l = l2@l1
 
-  Part 1: If (F,H,c1';c2';r := record(Write(e1',e2'))) - l ->* (F',H',c') then F = F'
+    By the inductive hypothesis applied to e1, we have F = F0.
+    By the inductive hypothesis applied to e2, we have F0 = F'.
+    By transitivity, we have F=F' as required.
 
-    By Lemma 0b, case for sequences, there are two subcases.
+  Subcase e' = e3 and (F,H,e1') - l1 ->* (F0,H0,fun x -> e) and (F0,H0,e2') - l2 ->* (F',H',v2)
+  	       and e3 = e[x -> v2] and l = l2@l1
 
-    Subcase c' = c1'';c2';r := record(Write(e1',e2')) and (F,H,c1') - l ->* (F',H',c1'')
+    By the inductive hypothesis applied to e1, we have F = F0.
+    By the inductive hypothesis applied to e2, we have F0 = F'.
+    By transitivity, we have F=F' as required.
 
-      By the inductive hypothesis applied to e1, we have F=F'
-
-    Subcase c' = c3 and (F,H,c1') - l1 ->* (F0,H0,skip) and 
-       	       	 (F0,H0,c2';r := record(Write(e1',e2'))) - l2 ->* (F',H',c3) and l = l2@l1
-
-      By the inductive hypothesis applied to e1, we have F=F0.
-
-      By Lemma 0b, case for sequences, there are two further subcases.
-
-      Subsubcase c3 = c2'';r := record(Write(e1',e2')) and (F0,H0,c2') - l ->* (F',H',c2'')
-
-        By the inductive hypothesis applied to e2, we have F0=F'.
-	By transitivity, we have F=F', as required.
-
-      Subsubcase c3 = c4 and (F0,H0,c2') - l3 ->* (F1,H1,skip) and 
-           	      (F1,H1,r := record(Write(e1',e2'))) - l4 ->* (F',H',c4) and l2 = l4@l3
-
-	By the inductive hypothesis applied to e2, we have F0=F1.
-
-	By Lemma 0b, case for assignment, there are two further subcases.
-	
-	Subsubsubcase c4 = r := e3 and (F1,H1,record(Write(e1',e2'))) - l4 ->* (F',H',e3)
-
-	  By Lemma 0b, case for functions, there are two further subcases.
-	  
-	  Sub^4case e3 = record(e4) and (F1,H1,Write(e1',e2')) - l4 ->* (F',H',e4)
-
-	    By Lemma 0b, case for dtype2, there are two further subcases.
-
-	    Sub^5case e4 = Write(e1'',e2') and (F1,H1,e1') - l4 ->* (F',H',e1'')
-
-	      By inductive hypothesis applied to e1, we have F1=F'.
-	      By transitivity, we have F=F', as required.
-
-	    Sub^5case e4 = Write(v1,e2'') and (F1,H1,e1') - l5 ->* (F2,H2,v1) and (F2,H2,e2') - l6 ->* (F',H',e2'') and l4=l6@l5
-
-	      By inductive hypothesis applied to e1, we have F1=F2.
-	      By inductive hypothesis applied to e2, we have F2=F'.
-	      By transitivity, we have F=F', as required.
-
-	  Sub^4case e3 = v' and (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v) and (F2,H2,record(v)) - l6 ->* (F',H',v') and l4=l6@l5
-	 
-	    By the semantic rule, E-Context, if (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v), then 
-	    (F1,H1,e1') - l7 ->* (F1',H1',v1) and (F1',H1',e2') - l8 ->* (F2,H2,v2) and l5 = l8@l7.
+  Subcase e' = e3 and (F,H,e1') - l1 ->* (F0,H0,fun x -> e) and (F0,H0,e2') - l2 ->* (F1,H1,v2) 
+  	       and (F1,H1,e[x -> v2]) - l3 ->* (F',H',e3) and l = l3@l2@l1
 	    
-	    By inductive hypothesis applied to e1, we have F1=F1'.
-	    By inductive hypothesis applied to e2, we have F1'=F2.
-	    By inspection of the record function, we have F2=F'.
-	    By transitivity, we have F=F', as required.
+    By the inductive hypothesis applied to e1, we have F = F0.
+    By the inductive hypothesis applied to e2, we have F0 = F'.
+    By Lemma 0c, we have F1=F'.
+    By transitivity, we have F=F' as required.
 
-	Subsubsubcase c4 = skip and (F1,H1,r := record(Write(e1',e2'))) - l4 ->* (F',H0,r := v') and H' = H0[r:=v']
-	
-	  By Lemma 0b, case for functions, there is now only one possible subcase.
-	  
-	  Sub^4case (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v) and (F2,H2,record(v)) - l6 ->* (F',H',v') and l4=l6@l5
-	 
-	    By the semantic rule, E-Context, if (F1,H1,Write(e1',e2')) - l5 ->* (F2,H2,v), then 
-	    (F1,H1,e1') - l7 ->* (F1',H1',v1) and (F1',H1',e2') - l8 ->* (F2,H2,v2) and l5 = l8@l7.
-	    
-	    By inductive hypothesis applied to e1, we have F1=F1'.
-	    By inductive hypothesis applied to e2, we have F1'=F2.
-	    By inspection of the record function, we have F2=F'.
-	    By transitivity, we have F=F', as required.
+Case e = (e1,...,en)
 
-  Part 2: If (F,H,r) - l ->* (F',H',e') then F= F'
+  By the definition of ([ . ]) we have ([ (e1,...,en) ]) = (e1',...,en')
+  where e1' = ([ e1 ]),..., and en' = ([ en ]).
 
-    By the semantic rule, E-var, we have F=F'.
+  We proceed by induction on n:
+  
+    Base case: n=1
 
-Case e = ??
+      e = e1.
+      By the inductive hypothesis applied to e1, we have F = F' as required.
+
+    Inductive case: n=n+1
+
+      e = (e1,...,en,e(n+1)).
+      Consider the two cases where e(n+1) is reduced and where it isn't.
+      Case e(n+1) is not reduced:
+
+        Then, by the 2nd inductive hypothesis applied to the first n expressions of the n+1-tuple,
+	F=F'.
+
+      Case e(n+1) is reduced:
+
+        By the semantic rule E-Context, e(n+1) can not be reduced until all previous components are.
+	(F,H,(e1,...,en,e(n+1))) - l ->* (F0,H0,(v1,...,vn,e(n+1)))
+      	By the 2nd inductive hypothesis applied to the first n expressions of the (n+1)-tuple, F=F0.
+        Then, (F0,H0,e(n+1)) - l' ->* (F',H',e(n+1)').
+	By the inductive hypothesis applied to e(n+1), F0=F'
+	By transitivity F=F'.  
 
 Lemma 1b[Compiled Command Effects]. 
   Let c be a command that does not contain any sub-commands of the
@@ -1081,7 +1060,7 @@ Proof.
 
 -- By induction on the derivation of the 
 
-By induction on c.
+By induction on the structure of the derivation of the operational semantics rules
 
 Case c = skip:
 
