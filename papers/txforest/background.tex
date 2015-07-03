@@ -1,0 +1,90 @@
+\section{Background}
+\label{sec:Background}
+
+%%\item Background
+%%\begin{itemize}
+%%\item Forest Language (primitives, load, store)
+%%\item Running example 
+%%\item Problems with naive semantics
+%%\item Transactions to the rescue
+%%\end{itemize}
+
+The Forest language includes primitives for describing files,
+directories, symbolic links, and associated meta-data.  Meta-data
+includes names, owners, permissions, sizes, and timestamps.  File
+contents may be represented as simple strings or as structured data
+using Pads descriptions~\cite{pads}.  We implemented Forest using
+Haskell's quasi-quotation mechanism~\cite{haskell-quasi-quote}.
+Figure~\ref{fig:SWAT-description} shows a simple Forest
+description of the running example we will use throughout this paper.
+
+Given such a description, the Forest compiler generates functions for
+(lazily) loading the contents of the filestore into a Haskell data
+structure and for writing a Haskell data structure back to disk.
+Writing structures to disk is a two-step process.  In step one, a
+\textit{manifest} function writes the structure into a temporary space
+and notes any errors.  In step two, a \textit{store} function copies
+the temporary store into the correct location.  This two-step process
+allows Forest to detect errors without corrupting the mainline
+filestore and lets users determine whether the errors should halt the
+writing process.
+
+The initial version of Forest did not attempt to ensure that 
+concurrent loads and stores did not cause inconsistencies or
+corruption.  As the number of users manipulating the file store grows,
+this laissez-faire approach becomes untenable.  To address this
+weekness, this paper integrates transactions into Forest.  With
+Transactional Forest (TxForest) we ensure that all accesses to the
+filestore mediated by a Forest description will see and maintain a
+consistent view by aborting and restarting transactions that would
+otherwise have observed a conflict.
+
+To explain the design of TxForest, we will use the following running
+example, drawn from the field of agriculture science.  Specifically,
+there is a large community centered on SWAT, a Soil and Water
+Assessment Tool~\cite{SWAT}(\url{http://swat.tamu.edu}).  Members of
+this community use SWAT to explore tradeoffs related to different uses
+of land in a given watershed.  The model includes data related to the
+topology of the watershed, current land use of regions within the
+watershed, historic precipitation and temperature levels, measurements
+of water purity at various locations, etc.  This data is stored in a
+large collection of files and directories in the filesystem (XXX:how
+many files? how much data?).
+
+An example query that researchers using this tool might ask is
+``what type of land use assignment to a given area of a watershed
+keeps corn yield above a threshold, maintains housing capacity above
+another threshold, and minimizes nitrate levels in nearby streams.''
+The SWAT approach to solving such queries involves a concurrent black-box
+optimization process in which each thread reads the current values of
+all relevant parameters from the file system, computes the current
+value of the optimization function, and makes local changes, and re-runs
+the optimization function. If the new result is higher than the old
+one, the tool writes those changes back into the file system.  Figure
+~\ref{fig:SWAT-opt-code} shows Forest code that replicates this process.
+
+\begin{figure}
+\begin{code}
+Update with relevant parts of SWAT forest description    
+[forest|
+ \kw{type} Stats = \kw{Directory}
+   \{ last :: File Last, topk :: File Topk \}
+ \kw{type} Dat   = [ s :: Site | s <- \kw{matches} site ]
+ \kw{type} Site  = [ d :: Log  | d <- \kw{matches} time ]
+ \kw{data} Log = \kw{Directory}
+   \{ log \kw{is} coralwebsrv :: Gzip (File CoralLog) \} |]
+\end{code}
+\caption{Forest SWAT description. }
+\label{fig:SWAT-description}
+\end{figure}
+
+\begin{figure}
+\begin{code}
+Update with relevant parts of SWAT optimization code
+\end{code}
+\caption{Forest SWAT description. }
+\label{fig:SWAT-opt-code}
+\end{figure}
+
+
+
