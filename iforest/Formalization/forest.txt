@@ -1,15 +1,8 @@
 (*
 -- TODOS:
--- Let open and whatnot work on non-existent files (fixing all that goes with that)
-
--- Get rid of f(v) expression?
-
--- Finish Lemma 1a
--- Make just one error type (ERROR or -1)
 -- Write opsem induction
 -- Go through whole thing
 -- Fix translation to IMPOSIX
--- Add more data type comments (especially in helper functions)
 -- Do we need to add a mkdir?
 
 -- If anything becomes vastly easier because of it,
@@ -39,8 +32,11 @@ Questions:
 
 -- Lemma 1b can't possibly be right.
 
+-- Should I put in in some way that it runs the function after functional application?
+
 Notes:
 -- Data type constructors are implicit functions that construct them in the obvious way.
+-- w[i,i+1] returns ERR if it's outside range
 
 
 *)
@@ -97,10 +93,6 @@ testCond := TFile    --It is a file
          |  TNone    --No file there
 	 |  TUnknown --Need to check
 
-openCond := OKnown   --We have the entirety of the file/dir in log
-	 |  OUnknown --We have none of a portion in log
-	 |  OErr     --No file/dir there anymore
-
 readCond := RKnown   --Reading from a file/dir where we have it all
 	 |  RUnknown --Reading from a file/dir where we have none of it
 	 |  RPartial --Reading from a dir where we have part of it
@@ -123,18 +115,14 @@ logFST := Rem       -- Whatever was at this path has been removed
 Built-in POSIX functions and their semantics
 --------------------------------------------------------------------------------
 
--- JDL: Decide what error cases to add
 
-[[ open ]] (F,H,p) = 
-   if p \in F then
-     let S = H(posix_fds) in 
-     let n = gensym(S) in 
-     let H' = H[posix_fds := S U { n |-> (p,0) }] in 
-     (F,H',n, None)
-   else 
-     (F,H,-1,None) --JDL: Needs changing if we want to include errors in theorems
+[[ open ]] = fun (F,H,p) -> 
+   let S = H(posix_fds) in 
+   let n = gensym(S) in 
+   let H' = H[posix_fds := S U { n |-> (p,0) }] in 
+   (F,H',n, None)
 
-[[ close ]] (F,H,n) =
+[[ close ]] = fun (F,H,n) ->
    let S = H(posix_fds) in
    if n in dom(S) then
      let H' = H \ n
@@ -142,84 +130,82 @@ Built-in POSIX functions and their semantics
    else
      (F,H,-1, None)
 
-[[ read ]] (F,H,n) =
+[[ read ]] = fun (F,H,n) ->
    if n \in H(posix_fds) then
      let (p,i) = H(posix_fds)(n) in
      match F(p) with
-     | File(w) -> 
+     | Some(File(w)) -> 
         let H' = H[posix_fds(n) :=  (p,i+1)] in
         let c = w[i,i+1] in
         (F,H',c, Some(RF(p,c,i)))
-     | _       ->
-        let H' = H[ERRFLAG := -2] in --n doesn't point to a file
-        (F,H',ERR,None)
+     | _       -> (F,H,ERR,None)
    else
-      let H' = H[ERRFLAG := -1] -- n isn't open
-      (F,H',ERR,None)
+      (F,H,ERR,None)
 
--- Errs:
--- n isn't open
--- p is not a file
+[[ write ]] = fun (F,H,(n,w)) ->
+   if n \in H(posix_fds) then
+     let (p,i) = H(posix_fds)(n) in
+     match F(p) with
+     | Some(File(u)) ->
+        let F' = F[p := File(u[i] := w)] in             -- JDL: Better way to write this?
+        let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
+        (F',H',0,Some(W(p,w,i)))
+     | None          ->
+        let F' = F[p := File(w)] in             
+        let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
+        (F',H',0,Some(W(p,w,i)))
+     | _	     -> (F,H,-1,None)
+   else
+     (F,H,-1,None)
 
-[[ write ]] (F,H,(n,w)) =
-   let (p,i) = H(posix_fds)(n) in
-   let File(u) = F(p) in
-   let F' = F[p := (u[i] := w)] in             -- JDL: Better way to write this?
-   let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
-   (F',H',0,Some(W(p,w,i)))
+[[ readdir ]] = fun (F,H, n) ->
+   if n \in H(posix_fds) then
+     let (p,i) = H(posix_fds)(n) in
+     match F(p) with
+     | Some(Dir(l)) -> 
+        let H' = H[posix_fds(n) :=  (p,i+1)] in
+        let f = l[i,i+1] in
+        (F,H',f, Some(RD(p,f,i)))
+     | _            -> (F,H,ERR,None)
+   else
+     (F,H,ERR,None)
 
-(* JNF: don't we need the same error conditions here? *)
-
--- Errs:
--- n isn't open
--- p is not a directory
-
-[[ readdir ]] (F,H, n) =
-   let (p,i) = H(posix_fds)(n) in
-   let Dir(l) = F(p) in
-   let f = l[i,i+1] in 
-   let H' = H[posix_fds(n) :=  (p,i+1)] in
-   (F,H',f,Some(RD(p,f,i)))
-
--- Errs:
--- n isn't open
-
-[[ remove ]] (F,H,p) =
-   if F(p) = File(_) ||  F(p) = Dir([]) then
+[[ remove ]] = fun (F,H,p) ->
+   match F(p) with
+   | Some(File(_)) 
+   | Some(Dir([])) ->
       let F' = F \ p in
-      (F',H',0,Some(Rm(p)))
-   else
-      (F,H,-1,Some(Test(p)))
+      (F',H',0,Some(Rm(p))) 
+   | _		   -> 
+      (F,H,-1,Some(Test(p))
 
--- Mostly added to be able to check the existence of a file
--- Errs:
--- p doesn't exist
 
 -- JDL: add check if directory is empty?
 
-[[ test ]] (F,H,p) = 
-   let b =
-     if F(p) = File(_) then
-        0
-     else if (F(p) = Dir(_)) then 
-        1
-     else 
-        -1 in 
+[[ test ]] = fun (F,H,p) ->
+   let b = 
+     match F(p) with
+     | Some(File(_)) -> 0
+     | Some(Dir([])) -> 2
+     | Some(Dir(_))  -> 1
+     | _ -> -1
+   in 
    (F,H,b,Some(Test(x)))
-
-
    
-[[ lockf ]] (F,H,(p,n)) =
+[[ lockf ]] = fun (F,H,(p,n)) ->
    if n then
-      if F(p) = Lock(_) then
-      	 (F,H,-1,None)
-      else
-         let F' = F[p := Lock(F(p))] in
+      match F(p) with
+      | None	      
+      | Some(Lock(_)) -> (F,H,-1,None)
+      | Some(x)       -> 
+         let F' = F[p := Lock(x)] in
 	 (F',H,0,None)
    else
-      let Lock(x) = F(p) in
-      let F' = F[p := x] in
-      (F',H,0,None)
+      match F(p) with
+      | Lock(x) -> 
+         let F' = F[p := x] in
+         (F',H,0,None)
+      | _	-> (F,H,-1,None)
 
 --------------------------------------------------------------------------------
 Built-in Helper functions and their semantics
@@ -330,76 +316,72 @@ let build_fs () =
 -- Removes  (Rm) Fail
 -- None           Real open
 
--- -1 means open will return -1
--- 0  will tell open to actually do a real open
--- o.w. it is a file descriptor
+-- 0 will tell open to actually do a real open
+-- O.w. it returns a virtual (in that it will read from log) file descriptor
 
-[[ lookup_logO ]] (F,H,p) = 
+[[ lookup_logO ]] = fun (F,H,p) -> 
     match H(logFS)(p) with
-    | Some(Rm)          -> (F,H,-1)
     | Some(F(_))             
     | Some(D(_,_,true)) -> 
-       let S = H(posix_fds) in    
-       let n = gensym(S) in 
+       let S  = H(posix_fds) in    
+       let n  = gensym(S) in 
        let H' = H[posix_fds := S U { n |-> (p,0) }] in 
        (F,H',n)
     | Some(D(_,_,false))      
+    | Some(Rm)          
     | None              -> (F,H,0) 
 
 -- Lookup log for reads etc.
 -- Do different things depending on type of file found
--- Files    (F)  always contain the byte
--- Dirs     (D)  always contain the byte, but may not know right byte
--- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
--- None          doesn't contain byte
+-- Files    (F)  always contain the byte, we read normally
+-- Dirs     (D)  always contain the byte, but may not know right byte, do something fancy
+-- Removes  (Rm) Will just return ERR when read normally
+-- None          We don't know anything about it, needs to be read normally
 
-[[ lookup_logR ]] (F,H,n) = 
+[[ lookup_logR ]] = fun (F,H,n) -> 
    let (p,i) = H(posix_fds)(n) in
    let b = 
       match H(logFS)(p) with
-      | Some(Rm) -> failwith "Should never happen"
       | Some(F(_))
       | Some(D(_,_,true))  -> RKnown       
       | Some(D(_,_,false)) -> RPartial
-      | None -> RUnknown in 
+      | Some(Rm) 
+      | None    -> RUnknown in 
    (F,H,b)
 
--- Lookup log for existence etc.
+-- Lookup log for existence and type etc.
 -- Do different things depending on type of file found
--- Files    (F)  exist
--- Dirs     (D)  exist, but may or may not be empty
--- Removes  (Rm) truly don't exist
--- None          may or may not exist
+-- Files    (F)  exists and is TFile
+-- Dirs     (D)  exist, but may or may not be empty, TDir(true) or TDir(false)
+-- Removes  (Rm) truly don't exist, TNone
+-- None          may or may not exist, TUnknown
 
--- JDL: Look at forest.oldest.txt
--- Think this is wrong
 
-[[ lookup_logE ]] (F,H,p) = 
+[[ lookup_logE ]] = fun (F,H,p) -> 
    let b = 
       match H(logFS)(p) with
-      | Some(F(_)) ->  TFile
+      | Some(F(_))		    -> TFile
       | Some(D(l,_,_)) when l <> [] -> TDir(false)
       | Some(D(_,_,false))            
-      | None 		   -> TUnknown
-      | Some(D(_)) ->  TDir(true)
-      | Some(Rm) -> -TNone in 
+      | None 		   	    -> TUnknown
+      | Some(D(_)) 		    -> TDir(true)
+      | Some(Rm) 		    -> TNone in 
    (F,H,b)
 
 -- Do different things depending on type of file found
 -- Files    (F)  always contain the byte
--- Dirs    (D)  always contain the byte, but may not know right byte
--- Removes  (Rm) doesn't exist so we're hosed (should be caught at open)
--- Truncate (T)  always contains the byte
--- None           doesn't contain byte
+-- Dirs     (D)  only works if we know we have it all
+-- Removes  (Rm) doesn't contain byte
+-- None          doesn't contain byte
 
-[[ read_log ]] (F,H,n) = 
-   let (p,i,) =H(posix_fds)(n) in
+[[ read_log ]] = fun (F,H,n) ->
+   let (p,i) = H(posix_fds)(n) in
    let H' = H[posix_fds(n) :=  (p,i+1)]) in 
    let c,x = 
       match H(logFS)(p) with
-      | Some(Rm) -> ERR,None
-      | Some(F(w))             
-      | Some(D(w,_,true))  -> w[i],Some(RF(p,c,i))    
+      | Some(F(w))         -> w[i],Some(RF(p,w[i],i))
+      | Some(D(w,_,true))  -> w[i],Some(RD(p,w[i],i))    
+      | Some(Rm)	   
       | Some(D(_,_,false))     
       | None               -> failwith "lookup_logR would've failed"
    in 
@@ -407,15 +389,15 @@ let build_fs () =
 
 -- JDL: Check over this function to make sure it needs to be this complex
 
-[[ read_and_check ]] (F,H,(n,e)) =
+[[ read_and_check ]] = fun (F,H,(n,e)) ->
    let (p,i) = H(posix_fds)(n) in
    let rec get_correct e last l l' =
       match l,l' with
       | [],[] -> (F,H,e,RD(p,e,i-1))
       | [], hd :: tl ->
         if hd = e
-        then let F',H',r = readdir(F,H,n) in
-          read_and_check(F',H',(n,r)) 
+        then let _,H',r,_ = readdir n in
+          read_and_check (n,r) 
         else get_correct e last l tl
       | hd :: tl,_ ->
         if hd > last && hd < e
@@ -431,7 +413,7 @@ let build_fs () =
      | _                               -> get_correct e ""   l l'
    | _               -> failwith "Would never get to here"
 
-[[ record ]] (F,H,t) = 
+[[ record ]] = fun (F,H,t) -> 
    let l  = H(log) in
    let H' =
       match t with
@@ -456,7 +438,7 @@ let build_fs () =
 -- We'll just use some reserved name in the FileStore for now,
 -- but could easily be added in a shared memory structure (which is what it is)
    
-[[ check_error ]] (F,H,()) =
+[[ check_error ]] = fun (F,H,()) ->
    let t = H(tstart) in
    let glog = 	     -- We add all the changes that happened post tstart
       fold (fun acc (t',p) -> if t < t' then p :: acc else acc) F(glog)
@@ -481,21 +463,19 @@ let build_fs () =
 -- If we're here, then we've passed the check_error, so depending
 -- on if n > 1 or not, we append log or do FS writes
 
--- JDL: Maybe add in error checking?
-
-[[ write_log ]] (F,H,()) =
+[[ write_log ]] = fun (F,H,()) ->
    let rec writer l acc =
       let F',H',lst = acc in
       match l with
       | hd :: tl ->
          match hd with
          | W(p,w,_)   -> 
-            let F',H',fd = open (F',H',p) in
-            let F',H',_  = write(F',H',(fd,w)) in
-            let F',H',_  = close(F',H',fd) in
+            let F',H',fd = open p in
+            let F',H',_  = write (fd,w) in
+            let F',H',_  = close fd in
             writer tl (F',H',p :: lst)
          | Rm(p)    ->
-            let F',H',_  = remove(F',H',p) in
+            let F',H',_  = remove p in
             writer tl (F',H',p :: lst)
          | _        -> writer tl acc
       | [] -> acc
@@ -538,7 +518,7 @@ lf ::= File(w)
 (* Expressions *)
 e ::= x
     | v
-    | f(e)
+    | f e
     | e e
     | (e1,...,en)
 
@@ -564,16 +544,7 @@ SEMANTICS
 
 (* Evaluation Contexts *)
 E ::= . 
-    | open(E) 
-    | close(E)  
-    | read(E)
-    | write(E,e) 
-    | write(v,E) 
-    | readdir(E) 
-    | remove(E)
-    | test(E) 
-    | lockf(E,e)
-    | lockf(v,E)
+    | f E
     | E e
     | v E
     | (E,e2,...,en)
@@ -595,8 +566,13 @@ H(x) = v
 (F,H,x) -> (F,H,v)
 
 (F',H',v',o) = [[ f ]] (F,H,v)
---------------------------------- E-Call
-(F,H,f(v)) - o -> (F',H',v')
+--------------------------------- E-Call1
+(F,H,f v) - o -> (F',H',v')
+
+
+(F',H',v') = [[ f ]] (F,H,v)
+--------------------------------- E-Call2
+(F,H,f v) --> (F',H',v')
 
 v1 = fun x -> e
 e' = e[x -> v2]
@@ -691,7 +667,7 @@ define data structures like Rep(p). *)
   ret := Rep(p)
 
 [[ read ]] Rep(p) = 
-   type := test(p);
+   type := test p;
    if type = -1
    then --JDL: Add failure case?!
    else skip;
@@ -699,23 +675,23 @@ define data structures like Rep(p). *)
    if type 
    then {  --Directory
       r := 1;
-      fd := open(p);
+      fd := open p;
       while r do {
-        r   := readdir(fd); 
+        r   := readdir fd; 
         ret := r :: H(ret)
       };
       ret := rev H(ret);
-      _ := close(fd)
+      _ := close fd
    }
    else {  --File
       r := 1;
-      fd := open(p);
+      fd := open p;
       while r do {
-        r   := read(fd); 
+        r   := read fd; 
         ret := r :: H(ret)
       };
       ret := rev H(ret);
-      _ := close(fd)
+      _ := close fd
    };
 where r and fd are fresh
 
@@ -726,12 +702,12 @@ where r and fd are fresh
       x := hd H(list);
       r := remove(x);
       if r then {
-         fd := open(x);
+         fd := open (x);
          while r do {
-            r    := readdir(fd); 
+            r    := readdir fd; 
             list := r :: H(list)
          };
-         _ := close(fd)
+         _ := close fd
       } 
       else list := tl H(list)
    }
@@ -748,16 +724,6 @@ Optimistic Compilation
 
 (* ([ e ]) : Exp *)
 
-(* Notational convention: 
-   write 
-     (_,_,x,_) := F(e) -- For posix functions
-     or
-     (_,_,x)   := F(e) -- For non-posix functions
-   as 
-     x := F(e) 
-*)  
--- JDL: Could also do the less clean thing if you like.
-
 ([ x ]) = x
 ([ v ]) = v
 ([ e1 e2 ]) =
@@ -772,64 +738,63 @@ Optimistic Compilation
    (e1',...,en')
 
 ([ open ]) = fun (F,H,p) ->
-   let (_,H',b) = lookup_logO(p) in
-   let (_,H',b,x) = if not b then open(p) else (F,H',b,None) in
-   let (_,H',_),x = if b = -1 then record(Test(p)),Test(p) else (),x in
+   let (_,H',b)   = lookup_logO p in
+   let (_,H',b,x) = if not b then open p else (F,H',b,None) in
    (F,H',b,x)
 
-([ close ]) = fun (F,H,n) ->  close(n)
+([ close ]) = fun (F,H,n) -> close n
 
 ([ test ]) = fun (F,H,p) ->
-   let (_,H',_) = record(Test(p)) in
-   match lookup_logE(p) with
+   let (_,H',_) = record Test(p) in
+   match lookup_logE p with
    | TFile 	 -> (F,H',0,Test(p))
    | TNone	 -> (F,H',-1,Test(p))
    | TDir(true)  -> (F,H',2,Test(p))
    | TDir(false) -> (F,H',1,Test(p))
-   | TUnknown    -> test(p)
+   | TUnknown    -> test p
 
 ([ read ]) = fun (F,H,n) ->
-   match lookup_logR(n) with
+   match lookup_logR n with
    | RKnown   -> 
-      let (_,H',r,x) = read_log(n) in
+      let (_,H',r,x) = read_log n in
       (F,H',r,x)
    | RUnknown ->
-      let (_,H',r,x) = read(n) in
-      let (_,H',_) = record(Read(n,r,false)) in
+      let (_,H',r,x) = read n in
+      let (_,H',_)   = record Read(n,r,false) in
       (F,H',r,x)
    | RPartial -> (F,H,-1,None)
 
 ([ readdir ]) =  fun (F,H,n) ->
-   match lookup_logR(n) with
+   match lookup_logR n with
    | RKnown   -> 
-      let (_,H',r,x) = read_log(n) in
+      let (_,H',r,x) = read_log n in
       (F,H',r,x)
    | RUnknown ->
-      let (_,H',r,x) = readdir(n) in
-      let (_,H',_) = record(Read(n,r,true)) in
+      let (_,H',r,x) = readdir n in
+      let (_,H',_) = record Read(n,r,true) in
       (F,H',r,x)
    | RPartial ->
-      let (_,H',r,_) = readdir(n) in
-      let (_,H',r,x) = read_and_check(n,r) in
-      let (_,H',_) = record(Read(n,r,true)) in
+      let (_,H',r,_) = readdir n in
+      let (_,H',r,x) = read_and_check (n,r) in
+      let (_,H',_) = record Read(n,r,true)  in
       (F,H',r,x)
 
 ([ write ]) = fun (F,H,(n,w)) ->
-   let (_,H',x) = record(Write(n,w)) in
+   let (_,H',x) = record Write(n,w) in
    (F,H',x)
 
 ([ remove ]) = fun (F,H,p) ->
-   match lookup_logE(p) with
+   match lookup_logE p with
    | TFile 	 
    | TDir(true)  -> 
-      let (_,H',t) = record(Remove(p)) in
+      let (_,H',t) = record Remove(p) in
       (F,H',t,Some(Rem(p)))
    | TNone	 
    | TDir(false) -> (F,H,-1,None)
    | TUnknown    -> 
-      let (_,H',t,x) = test(p) in
+      let (_,H',t,x) = test p in
       let (_,H',t),x   = if t = 0 || t = 2
-         then record(Remove(p)),Some(Rem(p))
+         then (record Remove(p)),Some(Rem(p))
 	 else (t,H',-1),x
       in
       (F,H',t,x)
@@ -852,15 +817,15 @@ Optimistic Compilation
 ([ atomic c ]) = 
    f := 1;
    while f do {
-     tstart := time(); -- Gets current time
+     tstart := time (); -- Gets current time
      log := [];
      ([ c ]);
      lsucc := -1;
      while lsucc = -1 do -- Did we acquire lock successfully?
-     	lsucc := lockf(lockfile,1);
-     f := check_error();
-     if not f then write_log() else skip;       
-     _ := lockf(lockfile,0)
+     	lsucc := lockf (lockfile,1);
+     f := check_error ();
+     if not f then _ := write_log () else skip;       
+     _ := lockf (lockfile,0)
    }
    where f is fresh and atomic is not a subcommand of c
 
@@ -1338,7 +1303,7 @@ More tedious proof:
 
        -- Remove doesn't hold because it needs to read the directory to see if
        it's empty. And in hindsight, it's possible test should 
-       remove (F,H,p) adding Rm(p) to rl. so y = Rm(p). ([ remove(p) ]) looks up
+       remove (F,H,p) adding Rm(p) to rl. so y = Rm(p). ([ remove p ]) looks up
        if p is in the log, which it isn't. It checks if p exists and is either
        a file or an empty directory. 
 
@@ -1347,124 +1312,3 @@ More tedious proof:
        that case.
 
        Inductive case: Holds for n, show for n+1
-       
-       
-
-Lemma 3: For all atomic(d) \in c such that atomic(c) is compiled,
-         we have (F,H,([ atomic(d) ])) ->* (F',H',_) and F <> F'.
-Proof: By induction on the number of nested atomic statements (n).
-       For n=0, the filesystem changes and for n>0 it does not.
-       Induction Hypothesis: If it holds for n, then it holds for n+1.
-       Base case: n=1. When n=1 at the start of the transaction,
-       it is incremented to 2. Commands are run (shown by Lemma 1 and Lemma 3
-       (inductively) to not affect the filesystem). It skips instead of
-       acquiring a lock, then runs check_error, which does not modify
-       the filesystem. Then it may run write_log. n is now 2 and thus n > 1
-       meaning that we will take the first if-branch, which does not modify F.
-       Inductive case: Holds for n, we show n+1.
-       At the start of the transaction n=n+1 then we increment to n+2.
-       The only part that could have changed the filesystem was write_log from 
-       above. We know n+1 > 1, by IH. Thus, n+2 must be greater than 1 as well
-       and the filesystem remains unmodified.
-
-
-
-(* OLD:
-
-([ open(e) ]) = 
-   let c',e' = ([ e ]) in
-   (c';
-    b := lookup_logO(e');
-    if not b
-    then b:= open(e')
-    else skip;
-    if b = -1
-    then _ := record(Test(e'))
-    else skip,
-    b)
-   where b is fresh
-
-([ close(e) ]) = 
-   let c',e' = ([ e ]) in 
-   (c', close(e'))
-
---JDL: Fix test to take changes into account.
-
-([ test(e) ]) = 
-   let c',e' = ([ e ]) in 
-   (c';
-    _ := record(Test(e'));
-    b := lookup_logE(e');
-    if b = TFile then r := 0 else skip;
-    if b = TNone then r :=  -1 else skip;
-    if b = TDir(true) then r :=  2 else skip;
-    if b = TDir(false) then r :=  1 else skip;
-    if b = TUnknown then r := test(e') else skip;
-    , r)
-    where r,b are fresh
-
--- Both read and readdir rely on the fact that 
--- Haskell reads/writes an entire file at once
-
-([ read(e) ]) = 
-  let c',e' = ([ e ]) in 
-  (c';
-   b := lookup_logR(e'); 
-   if b=RKnown then
-     r := read_log(e')
-   else 
-     r := read(e');
-   _ := record(Read(e',r,false)), 
-   r)
-   where r,b are fresh
-
-([ readdir(e) ]) =
-  let c',e' = ([ e ]) in 
-  (c';
-   b := lookup_logR(e');
-   if b=RPartial then 
-     r := readdir(e');
-     r := read_and_check(e',r);
-   else if r=RKnown then
-     r := read_log(e')
-   else 
-     r := readdir(e');
-     _ := record(Read(e',r,true)), 
-   r)
-   where r,b is fresh
-
-([ write(e,e') ]) =
-   let c1, e1 = ([ e  ]) in
-   let c2, e2 = ([ e' ]) in
-   (c1;
-    c2; 
-    r := record(Write(e1,e2)),
-    r)
-    where r is fresh
-
--- For remove we need to know that the file exists
--- whether virtually, or for real
-
--- If file is a directory and is empty
--- or if file is not a directory, but exists
--- we remove it, o.w. we return -1 and do nothing
-
--- JDL: May need to record failure to get conflicts right
-
-([ remove(e) ]) =
-   let c', e' = ([ e  ]) in
-   (c; 
-    t := lookup_logE(e);
-    if t = TDir(true) || t = TFile)
-    then r := record(Remove(e'))
-    else if t = TNone || t = TDir(false)
-    then r := -1
-    else 
-       t := test(e');
-       if t = 0 || t = 2
-       then r := record(Remove(e')
-       else r := -1,
-    r)
-    where r and t are fresh variables
-*)
-
