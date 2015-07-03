@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections, ConstraintKinds, TypeFamilies, DataKinds, UndecidableInstances, FlexibleContexts, TypeSynonymInstances, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FlexibleInstances, DeriveDataTypeable, ScopedTypeVariables #-}
 
-module Examples.IC.Beautiful.Swat where
+module Examples.IC.Swat where
 import Language.Pads.Padsc hiding (take, rest, head, numErrors)
 import Language.Forest.IC hiding (writeFile)
 
@@ -33,6 +33,8 @@ import Data.Set (Set(..))
 import Data.Char (isSpace)
 import Control.Monad
 import System.Environment
+import System.IO.Temp
+import System.Process
 
 ws = REd "[ \t]*" " "
 fileName = REd "[a-zA-Z.0-9]*" "a"
@@ -299,62 +301,6 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
 testBSN :: IO (BSN, BSN_md)
 testBSN = parseFile "/home/vagrant/forest/forest/Examples/IC/bolo_arriba/basins.bsn"
 
-
---dir = "/home/richard/Documents/forest/TxtInOut/"
---dir2 = "fig.fig"
-
---testSOL :: IO (SOL, SOL_md)
---testSOL = parseFile (dir ++ "000050001.sol")
-
---testSOL_md = liftM snd testSOL
-
---testCHM :: IO (CHM, CHM_md)
---testCHM = parseFile (dir ++ "000050001.chm")
-
---testCHM_md = liftM snd testCHM
-
---testWGN :: IO (WGN, WGN_md)
---testWGN = parseFile (dir ++ "000050000.wgn")
-
---testwgn_md = liftM snd testWGN
-
---testWus :: IO (WUS, WUS_md)
---testWus = parseFile (dir ++ "000050000.wus")
-
---testwus_md = liftM snd testWus
-
---testurban :: IO (URBAN, URBAN_md)
---testurban = parseFile (dir ++ "urban.dat")
-
---testurban_md = liftM snd testurban
-
---testtill :: IO (TILL, TILL_md)
---testtill = parseFile (dir ++ "till.dat")
-
---testtill_md = liftM snd testtill
-
---testpcp :: IO (PCP, PCP_md)
---testpcp = parseFile (dir ++ "pcp1.pcp")
-
---testpcp_rep = liftM fst testpcp
---testpcp_md = liftM snd testpcp
-
---testtmp :: IO (TMP, TMP_md)
---testtmp = parseFile (dir ++ "tmp.tmp")
-
---testtmp_md = liftM snd testtmp
-
---testplant :: IO (PLANT, PLANT_md)
---testplant = parseFile (dir ++ "plant.dat")
-
---testplant_md = liftM snd testplant
-
---test :: FilePath -> IO (FIG, FIG_md)
---test = parseFile
-
---test_rep = liftM fst . test
---test_md = liftM snd . test
-
 isEntry :: SwatLine -> Bool
 isEntry (SwatLine l) = False
 isEntry (_) = True
@@ -520,8 +466,6 @@ septValid sols hruLines =
     Set.fromList (map fst sols) == Set.fromList (concat (map solFiles hruLines))
 
 [txforest|
-         data CST = TextFile
-
          data FPreamble = File Preamble
          data FPCP = File PCP
          data FTMP = File TMP
@@ -553,7 +497,7 @@ septValid sols hruLines =
          , pcps is [f :: FPCP | f <- matches (GL "*.pcp") ]
          , tmps is [f :: FTMP | f <- matches (GL "*.tmp") ]
          , fig is <| cioFile figFile cio |> :: FFIG
-         , cst matches <| cioFileRE cstFile cio |> :: Maybe CST
+         , cst matches <| cioFileRE cstFile cio |> :: Maybe TextFile
          , wnd matches <| cioFileRE wndFile cio |> :: Maybe (FWND)
          , rh matches <| cioFileRE rhFile cio |> :: Maybe (FRH)
          , slr matches <| cioFileRE slrFile cio |> :: Maybe (FSLR)
@@ -577,16 +521,8 @@ septValid sols hruLines =
          , wgns is [f :: FWGN | f <- matches (GL "*.wgn")]
          , pnds is [f :: FPND | f <- matches (GL "*.pnd")]
          , wuss is [f :: FWUS | f <- matches (GL "*.wus")]
-             } where <| validSwat this |>
+             }
  |]
-
-[ipads|
-  data Max = Max Double
-|]
-
-[txforest|
-  data MaxFile = File Max
-|]
 
 cioFile :: (SwatLines -> FilePath) -> FPreamble TxVarFS -> ReadOnlyFTM TxVarFS FilePath
 cioFile f cio = liftM (f . swatLines) $ readData cio
@@ -621,101 +557,3 @@ validSwat (swat_md, swat) = do
 		&& (chmValid chm (map (hruLines . snd) sub))
 		&& (gwValid gw (map (hruLines . snd) sub))
 		&& (septValid sep (map (hruLines . snd) sub)))
-
-rootDir = "."
-optDir = rootDir </> "Examples/IC/bolo_arriba"
-
-maxFile = "/tmp/maxOpt"
-
-type Interval = (Double, Double)
-type OptFunc = Double -> Double -> Double -> Double
-
-getVar1 :: SwatLines -> Double
-getVar1 lines =
-  case lines !! 3 of
-    SwatDouble d -> numVal d
-    _ -> 0
-
-getVar2 :: SwatLines -> Double
-getVar2 lines =
-  case lines !! 6 of
-    SwatDouble d -> numVal d
-    _ -> 0
-
-getVar3 :: SwatLines -> Double
-getVar3 lines =
-  case lines !! 7 of
-    SwatDouble d -> numVal d
-    _ -> 0
-
-setVar1 :: SwatLines -> Double -> SwatLines
-setVar1 lines newDouble =
-  let start = take 3 lines in
-  let end = drop 4 lines in
-  case lines !! 3 of
-    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
-    x -> lines
-
-setVar2 :: SwatLines -> Double -> SwatLines
-setVar2 lines newDouble =
-  let start = take 6 lines in
-  let end = drop 7 lines in
-  case lines !! 6 of
-    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
-    x -> lines
-
-setVar3 :: SwatLines -> Double -> SwatLines
-setVar3 lines newDouble =
-  let start = take 7 lines in
-  let end = drop 8 lines in
-  case lines !! 7 of
-    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
-    x -> lines
-
-checkOne :: OptFunc -> Double -> Double -> Double -> IO ()
-checkOne f x y z = do
-  status <- atomically $ do
-    (maxInfo :: MaxFile TxVarFS) <- new () maxFile
-    ((max_fmd, max_md), Max m) <- read maxInfo
-    let candidate = f x y z
-    case candidate > m of
-      True -> do
-        (swatInfo :: Swat_d TxVarFS) <- new () optDir
-        (main_fmd, dir) <- read swatInfo
-        ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
-        let updated = setVar3 (setVar2 (setVar1 bsnVals x) y) z
-        _ <- writeOrElse (bsn dir) ((file1_fmd, file1_md), SwatFile updated) ("") (return . show)
-        _ <- writeOrElse (maxInfo) ((max_fmd, max_md), Max candidate) ("") (return . show)
-        return "updated"
-      False -> return "not updated"
-  putStrLn status
-
-writeCurrent :: OptFunc -> IO ()
-writeCurrent f = do
-  _ <- atomically $ do
-    (rep :: MaxFile TxVarFS) <- new () maxFile
-    (swatRep :: Swat_d TxVarFS) <- new () optDir
-    (main_fmd, dir) <- read swatRep
-    ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
-    let v1 = getVar1 bsnVals
-    let v2 = getVar2 bsnVals
-    let v3 = getVar3 bsnVals
-    ((max_fmd, max_md), Max m) <- read rep
-    _ <- writeOrElse (rep) ((max_fmd, max_md), Max (f v1 v2 v3)) ("") (return . show)
-    return ()
-  return ()
-
-getBest :: OptFunc -> Interval -> Interval -> Interval -> IO ()
-getBest f i1 i2 i3 =
-  let ((l1, h1), (l2, h2), (l3, h3)) = (i1, i2, i3) in
-  let trips = [(i, j, k) | i <- [l1..h1], j <- [l2..h2], k <- [l3..h3]] in
-  do
-    _ <- writeCurrent f
-    _ <- mapM_ (\(x,y,z) -> forkIO $ checkOne f x y z) trips
-    return ()
-
-test = getBest (\x y z -> x + y - z) (1,5) (1,5) (1,5)
-
-getErrors = atomically $ do
-  (rep :: Swat_d TxVarFS) <- new () optDir
-  read rep
