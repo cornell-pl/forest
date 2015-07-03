@@ -1,2 +1,0 @@
-#!/bin/bash
-rm -rf gen/BT* gen/Complexity gen/GNUmakefile gen/Params gen/Ty gen/*.c gen/*.p gen/`$PADS_HOME/ast-ast/bin/package.cvs`

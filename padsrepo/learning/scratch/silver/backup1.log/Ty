@@ -1,5 +1,0 @@
-Pstruct(Id = BTy_5 36, 3b, 105.459b)
-	[StringConst] "	Configure "(Id = BTy_0 36, 1b, 3.459b);
-	[string](Id = BTy_3 36, 1b, 102b);
-	[StringConst] "."(Id = BTy_4 36, 1b, 0b);
-End Pstruct

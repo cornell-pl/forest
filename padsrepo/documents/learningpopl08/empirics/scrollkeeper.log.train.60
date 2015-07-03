@@ -1,8 +1,0 @@
-gen/scrollkeeper.log.chunk0.out: time = 1.76
-gen/scrollkeeper.log.chunk0.out: success rate = 99.70%
-gen/scrollkeeper.log.chunk1.out: time = 2.12
-gen/scrollkeeper.log.chunk1.out: success rate = 99.85%
-gen/scrollkeeper.log.chunk2.out: time = 1.96
-gen/scrollkeeper.log.chunk2.out: success rate = 99.70%
-The average time = 1.95
-The average success rate = 99.75%

@@ -1,8 +1,0 @@
-gen/ls-l.txt.chunk0.out: time = 0.02
-gen/ls-l.txt.chunk0.out: success rate = 48.57%
-gen/ls-l.txt.chunk1.out: time = 0.02
-gen/ls-l.txt.chunk1.out: success rate = 28.57%
-gen/ls-l.txt.chunk2.out: time = 0.06
-gen/ls-l.txt.chunk2.out: success rate = 51.43%
-The average time = 0.03
-The average success rate = 42.86%

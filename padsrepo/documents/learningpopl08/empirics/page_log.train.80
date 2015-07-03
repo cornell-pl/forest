@@ -1,8 +1,0 @@
-gen/page_log.chunk0.out: time = 0.44
-gen/page_log.chunk0.out: success rate = 100.00%
-gen/page_log.chunk1.out: time = 0.58
-gen/page_log.chunk1.out: success rate = 100.00%
-gen/page_log.chunk2.out: time = 0.63
-gen/page_log.chunk2.out: success rate = 100.00%
-The average time = 0.55
-The average success rate = 100.00%

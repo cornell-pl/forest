@@ -1,9 +1,0 @@
-# This is not quite the right comparison: need to use a library that contains the query for dss test
-
-(in data dir:)
-/home/gsf/bin/package use gsf
-/bin/time dss -x flat:attflow-txt -p '%(BytesSent)d' 'Protocol==17' ATTFlow-n54ny01239ta-0-20021111_005957-64731.bcp.bi.gz | awk '{t+=$1}END{print t}'
-
-(in tests/arch dir:)
-/bin/time ./test_attflowtxt ../../data/ATTFlow-n54ny01239ta-0-20021111_005957-64731.bcp.bi.gz
-

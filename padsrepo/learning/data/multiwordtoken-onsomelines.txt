@@ -1,4 +1,0 @@
-startrecord alex end
-startrecord kathleen end
-start vikas end
-start format end
