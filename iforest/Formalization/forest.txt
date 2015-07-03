@@ -1,9 +1,8 @@
 (*
 -- TODOS:
+-- Let open and whatnot work on non-existent files (fixing all that goes with that)
 
--- Lemma 1a. Claim primitive functions translated to don't change FS
--- - Obvious by inspection
--- Redo Lemma 1b by inducting on the structure of the derivation
+-- Get rid of f(v) expression?
 
 -- Finish Lemma 1a
 -- Make just one error type (ERROR or -1)
@@ -29,11 +28,16 @@ Questions:
 -- Compilation look kinda like what you were thinking?
 -- Lambdas look like you were thinking? Should I also remove f(e) and make everything lambdas?
 -- - Alright to have them take in F,H,[whatever is actually passed in]?
+-- - Should probably get rid of f(v) expression all together?
 -- Not sure how I want to formulate Lemma 0c. I don't quite like the current one because it looks
    too much like the 1a case
-
+ 
 -- Tuple case seems shaky. I feel like I need tuples in expression too though, non?
+-- - Could possibly make a function that takes curried expressions and pairs them?
+--   Not sure how to make it work for arbitrary n though.
+-- - Could just make all functions curried?
 
+-- Lemma 1b can't possibly be right.
 
 Notes:
 -- Data type constructors are implicit functions that construct them in the obvious way.
@@ -835,18 +839,15 @@ Optimistic Compilation
 ([ skip ]) = skip
 
 ([ x := e ]) = 
-   let c',e' = ([ e ]) in 
-   c'; x := e'
+   x := ([ e ])
 
 ([ c1; c2 ]) = ([ c1 ]); ([ c2 ])
 
 ([ if e then c1 else c2 ]) = 
-   let c',e' = ([ e ]) in 
-   c'; if e' then ([ c1 ]) else ([ c2 ])
+   if ([ e ]) then ([ c1 ]) else ([ c2 ])
 
 ([ while e do c ]) = 
-   let c',e' = ([ e ]) in 
-   c'; while e' do ([ c ])
+   while ([ e ]) do ([ c ])
 
 ([ atomic c ]) = 
    f := 1;
@@ -970,6 +971,9 @@ Proof:
   This is obvious by inspection of the functions.
   They return the same F that they received.
 
+Proof:
+  By inspection.
+
 Lemma 1a[Compiled Expression Effects]:
   If (F,H,([ e ])) - l ->* (F',H',e') then F=F'.
 
@@ -1060,148 +1064,109 @@ Proof.
 
 By induction on the derivation of (F,H,([c])) - l ->* (F',H',c')
 
-Case c = skip:
+There are only two applicable rules:
 
-  By the definition of ([ . ]) we have ([ skip ]) = skip
+Case T-Refl:
 
-  By Lemma 0b, case for skip, we have F=F'=F''.
+  --------------------------------T-Refl
+  (F,H,([c])) - [] ->* (F,H,([c]))
 
-Case c = c1;c2:
+  F=F' directly.
 
-  By definition of ([ . ]) we have ([ c1;c2 ]) = ([ c1 ]); ([ c2 ]).
+Case T-Step:
 
-  By Lemma 0b, case for sequence, there are two subcases.
+  (F,H,([c])) - l ->*  (F0,H0,c0)
+  (F0,H0,c0) - o -> (F',H',c')
+  --------------------------------- T-Step
+  (F,H,([c])) - o :: l -> (F',H',c')
 
-  Subcase c' = c1';([c2]) and (F,H,([c1])) - l ->* (F',H',c1'): 
+  By the inductive hypothesis we have F=F0.
+  We want to show F0=F' by induction on the derivation of
+  (F0,H0,c0) - o -> (F',H',c').
 
-    By the induction hypothesis applied to c1 we immediately have F=F'.
-
-  Subcase c' = c2' and (F,H,([c1])) - l1 ->* (F0,H0,skip) and (F0,H0,([c2])) - l2 ->* (F',H',c2'):
-
-    By the induction hypothesis applied to c1 we have F=F0 and by the
-    induction hypothesis applied to c2 we have F0=F'. By transitivity,
-    we have F=F', as required.
-
-Case c = x := e:
-
-  By definition of ([ . ]) we have ([ x := e ]) = c1; x := e1 where c1,e1 = ([e])
-
-  By Lemma 0b, case for sequence, there are two subcases. 
-
-  Subcase c' = c1'; x:= e1 and (F,H,c1) - l ->* (F',H',c1'): 
-
-    By Lemma 1a, case for commands, we immediately have F=F'.
-
-  Subcase c' = c2' and (F,H,c1) - l1 ->* (F0,H0,skip) and (F0,H0,x := e1) - l2 ->* (F',H',c2'):
-
-    By Lemma 1a, case for commands, we have F=F0.
-
-    By Lemma 0b, case for assignment, applied to 
-
-       (F0,H0,x := e1) - l2 ->* (F',H',c2')
-
-    there are two further subcases.
-
-    -- JDL to JNF: This should be c2', yeah?
-
-    Subsubcase c2 = x := e1' and (F0,H0,e1) - l2 ->* (F',H',e1'): 
-
-      By Lemma 1a, case for expressions, we have that F0=F'. By
-      transitivity, we have F=F', as required.
-
-    Subsubcase c2 = skip and (F0,H0,e1) - l2 ->* (F',H1,v) and H' = H1[x:=v].
-
-      By Lemma 1a, case for expressions, we have that F0=F'. By
-      transitivity, we have F=F', as required.
-
-Case c = if e then c1 else c2:
-
-  By definition of ([ . ]) we have ([ if e then c1 else c2 ]) = c0; if e0 then ([ c1 ]) else ([ c2 ])
-  where c0,e0 = ([e])
-
-  By Lemma 0b, case for sequence, there are two subcases.
-
-  Subcase c' = c3; if e0 then ([ c1 ]) else ([ c2 ]) and (F,H,c0) - l ->* (F',H',c3): 
-
-    By Lemma 1a, case for commands, we immediately have F=F'.
-
-  Subcase c' = c3 and (F,H,c0) - l1 ->* (F0,H0,skip) and (F0,H0, if e0 then ([ c1 ]) else ([ c2 ])) - l2 ->* (F',H',c3):
-
-    By Lemma 1a, case for commands, we have F=F0.
-
-    By Lemma 0b, case for if-clause, applied to 
-
-       (F0,H0, if e0 then ([ c1 ]) else ([ c2 ])) - l2 ->* (F',H',c3)
-
-    there are three further subcases.
-
-    Subsubcase c3 = if e' then ([ c1 ]) else ([ c2 ]) and (F0,H0,e0) - l2 ->* (F',H',e')
-    
-      By Lemma 1a, case for expressions, we have that F0=F'. By
-      transitivity, we have F=F', as required.
-
-    Subsubcase c3 = c1' and (F0,H0,e0) - l3 ->* (F1,H1,n) where n <> 0 and (F1,H1,([ c1 ])) - l4 ->* (F',H',c1') and l2 = l4@l3
-    
-      By Lemma 1a, case for expressions, we have that F0=F1. By the induction
-      hypothesis applied to c1, we have F1=F'. By transitivity,
-      we have F=F', as required.
-
-    Subsubcase c3 = c2' and (F0,H0,e0) - l3 ->* (F1,H1,n) where n = 0 and (F1,H1,([ c2 ])) - l4 ->* (F',H',c2') and l2 = l4@l3
-    
-      By Lemma 1a, case for expressions, we have that F0=F1. By the induction
-      hypothesis applied to c2, we have F1=F'. By transitivity,
-      we have F=F', as required.
-
-Case c = while e do c:
-
-  By definition of ([ . ]) we have ([ while e do c ]) = c1; while e1 do ([ c ])
-  where c1,e1 = ([e])
-
-  By Lemma 0b, case for sequence, there are two subcases.
-
-  Subcase c' = c1'; while e1 do ([ c ]) and (F,H,c1) - l ->* (F',H',c1')
+  Case C-SkipSeq:
   
-    By Lemma 1a, case for commands, we immediately have F=F'.
+  ------------------------------ C-SkipSeq
+  (F0,H0,skip;c2) --> (F0,H0,c2)
 
-  Subcase c' = c2' and (F,H,c1) - l1 ->* (F0,H0,skip) and (F0,H0,while e1 do ([ c ])) - l2 ->* (F',H',c2')
+  c0=skip;c2
+  F0=F'. F=F' by transitivity.
 
-    By Lemma 1a, case for commands, we have F=F0.
+  Case C-Assgn:
 
-    By Lemma 0b, case for while-loops, applied to 
+  H' = H0[x:=v]
+  -------------------------- C-Assgn
+  (F0,H0,x := v) --> (F0,H',skip)
+
+  c0=x := v
+  F0=F'. F=F' by transitivity.
+
+  Case C-IfFalse:
+
+  ------------------------------------------- C-IfFalse
+  (F0,H0,if 0 then c1 else c2) --> (F0,H0,c2)
+
+  c0=if 0 then c1 else c2
+  F0=F'. F=F' by transitivity.
+
+  Case C-IfTrue:
+
+  n <> 0
+  ------------------------------------------- C-IfTrue
+  (F0,H0,if n then c1 else c2) --> (F0,H0,c1)
+
+  c0=if n then c1 else c2
+  F0=F'. F=F' by transitivity.
+
+  Case C-WhileFalse:
+
+  ------------------------------------------- C-WhileFalse
+  (F0,H0,while 0 do c) --> (F0,H0,skip)
+
+  c0=while 0 do c
+  F0=F'. F=F' by transitivity.
+
+  Case C-WhileTrue:
+
+  n <> 0
+  ------------------------------------------- C-WhileTrue
+  (F0,H0,while n do c) --> (F0,H0,c;while n do c)
+
+  c0=while n do c
+  F0=F'. F=F' by transitivity.
+
+  Case C-Context:
+  
+  (F0,H0,t) - o -> (F',H',t')
+  --------------------------- C-Context
+  (F0,H0,C[t]) - o -> (F',H',C[t'])
+  
+  c0= C[t]. We examine the possible contexts:
+
+    Case c0 = x := C:
     
-       (F0,H0,while e1 do ([ c ])) - l2 ->* (F',H',c2')
+      The hole is an expression, so by Lemma 1a, F0=F'.
+      By transitivity, F=F'.
 
-    there are three further subcases.
+    Case c0 = if C then c1 else c2:
+    
+      The hole is an expression, so by Lemma 1a, F0=F'.
+      By transitivity, F=F'.
 
-    Subsubcase c2' = while e' do ([ c ]) and (F0,H0,e1) - l2 ->* (F',H',e'')
+    Case c0 = While C do c:
     
-      By Lemma 1a, case for expressions, we have that F0=F'. By
-      transitivity, we have F=F', as required.
+      The hole is an expression, so by Lemma 1a, F0=F'.
+      By transitivity, F=F'.
+
+    Case c0 = C;c2:
     
-    Subsubcase c2' = c1';while e1 do ([ c ]) and (F0,H0,e1) - l3 ->* (F1,H1,n) where n <> 0 and 
-    	       	     (F1,H1,([ c ])) - l4 ->* (F',H',c1') and l2 = l4@l3
-    
-      By Lemma 1a, case for expressions, we have that F0=F1. By the inductive hypothesis on c1 we have
-      F1 = F'. By transitivity, we have F=F', as required and we're back to the beginning of
-      the while case.
+      The hole is a command. C=c1. Then, we instantiate the Context rule
+      (F0,H0,c1) - o -> (F',H',c1')
+      ----------------------------------
+      (F0,H0,c1;c2) - o -> (F',H',c1';c2)
       
-    Subsubcase c2' = skip and (F0,H0,e1) - l2 ->* (F',H',n) where n = 0
-    
-      By Lemma 1a, case for expressions, we have that F0=F'. By
-      transitivity, we have F=F', as required.
-
-
-Case c = atomic c1:
-
-  The result vacuously holds since c contains a sub-command of the
-  form atomic(_).
-
-So, having proved it for all cases, we conclude that Lemma 1b holds.
-
-
--- What's important is the structure of the induction hypothesis
--- 
-
+      By the (second) inductive hypothesis derivation (F0,H0,c1) - o -> (F',H',c1'),
+      we have F0 = F'. By transitivity, F=F'.
 
 Lemma 1: There does not exist a c where atomic(d) \not \in c s.t. (F,H,([ c ])) ->*
          (F',H',_) and F <> F'.
