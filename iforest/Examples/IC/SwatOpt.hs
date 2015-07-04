@@ -68,6 +68,9 @@ data FRCH = File RCH
 data MaxFile = File Max
 |]
 
+escoRange = (0.1, 1.0)
+surlagRange = (0.0, 15.0)
+
 rootDir = "."
 optDir = rootDir </> "Examples/IC/bolo_arriba"
 
@@ -93,15 +96,32 @@ writeCurrent maxFile = do
 optSwat :: Int -> IO ()
 optSwat n = replicateM_ n optSwatIter -- 6 is number of iterations
 
+newValue :: (Floating a, Ord a, Random a) => (a, a) -> a -> IO a
+newValue (min, max) current = do
+  (randValue :: a) <- randomRIO (0, 1)
+  let new = current + randValue * (max - min) / 3 -- this is arbitrary
+  return (case compare min new of
+  	LT | new < max -> new
+  	   | new >= max -> max
+  	_ -> min)
+
 optSwatIter :: IO ()
 optSwatIter = do
   tmpDir <- getNewDirectory
   err <- atomically $ ((do
-    (original :: Universal_d TxVarFS) <- new () optDir
-    (copy :: Universal_d TxVarFS) <- new () $ tmpDir
-    copyOrElse original copy ("") $ return . show) :: FTM TxVarFS String)
+    (original :: Universal_d TxVarFS) <- new () "/home/vagrant/forest/iforest/Examples/IC/bolo_arriba"
+    (copy :: Universal_d TxVarFS) <- new () tmpDir
+    copyOrElse original copy "" $ return . show) :: FTM TxVarFS String)
   putStrLn err
-  -- edit parameters in random fashion
+
+  let copiedBsnFile = tmpDir </> "basins.bsn"
+  ((bsnRep, bsnMd) :: (SwatFile, SwatFile_md)) <- parseFile copiedBsnFile
+  let bsnValues = swatValues bsnRep
+  newEsco <- newValue escoRange $ getEsco bsnValues
+  newSurlag <- newValue surlagRange $ getSurlag bsnValues
+  let newBsn = setSurlag newSurlag $ setEsco newEsco bsnValues -- figure out nicer syntax here
+  printFile copiedBsnFile $ (SwatFile {swatValues=newBsn}, bsnMd)
+  
   _ <- runSwat tmpDir
 
   -- Not worried about transactions here, so I'm using the pads interface
@@ -111,69 +131,51 @@ optSwatIter = do
   ((rchRep, rchMd) :: (RCH, RCH_md)) <- parseFile $ tmpDir </> "output.rch"
   let calcFlow = trim . rchInFlow . head . rchInfo $ rchRep
   let (calcFlowValue :: Double) = fst . head $ readFloat calcFlow
-  _ <- case firstFlowValue > calcFlowValue of
-    True -> atomically $ ((do
-      return ()) :: FTM TxVarFS ()) -- write files here
-    False -> return ()
-  return ()
+  -- Not the actual function here, but trying something easy before moving on
+  let optVal = abs $ firstFlowValue - calcFlowValue
+  msg <- atomically $ ((do
+    (maxInfo :: MaxFile TxVarFS) <- new () maxFile
+    ((max_fmd, max_md), Max m) <- read maxInfo
+    case m > optVal of
+      True -> do
+        _ <- writeOrElse maxInfo ((max_fmd, max_md), Max optVal) "" $ return . show
+        (swatRep :: Swat_d TxVarFS) <- new () optDir
+        (main_fmd, dir) <- read swatRep
+        (bsn_md, SwatFile bsnVals) <- read $ bsn dir
+        _ <- writeOrElse (bsn dir) (bsn_md, SwatFile newBsn) "" $ return . show
+        return "Updated"
+      False -> return "Not updated") :: FTM TxVarFS String)
+  putStrLn msg  
 
 main :: IO ()
 main = do
   _ <- writeCurrent maxFile
   replicateM_ 2 $ forkIO $ optSwat 6 -- 2 is number of threads, starting small
 
---getVar1 :: SwatLines -> Double
---getVar1 lines =
---  case lines !! 3 of
---    SwatDouble d -> numVal d
---    _ -> 0
+getEsco :: SwatLines -> Double
+getEsco lines =
+  case lines !! 12 of
+    SwatDouble d -> numVal d
+    _ -> 0
 
---setVar1 :: SwatLines -> Double -> SwatLines
---setVar1 lines newDouble =
---  let start = take 3 lines in
---  let end = drop 4 lines in
---  case lines !! 3 of
---    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
---    x -> lines
+setEsco :: Double -> SwatLines -> SwatLines
+setEsco newDouble lines =
+  let start = take 12 lines in
+  let end = drop 13 lines in
+  case lines !! 12 of
+    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
+    x -> lines
 
---checkOne :: OptFunc -> Double -> Double -> Double -> IO ()
---checkOne f x y z = do
---  status <- atomically $ do
---    (maxInfo :: MaxFile TxVarFS) <- new () maxFile
---    ((max_fmd, max_md), Max m) <- read maxInfo
---    let candidate = f x y z
---    case candidate > m of
---      True -> do
---        (swatInfo :: Swat_d TxVarFS) <- new () optDir
---        (main_fmd, dir) <- read swatInfo
---        ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
---        let updated = setVar3 (setVar2 (setVar1 bsnVals x) y) z
---        _ <- writeOrElse (bsn dir) ((file1_fmd, file1_md), SwatFile updated) ("") (return . show)
---        _ <- writeOrElse (maxInfo) ((max_fmd, max_md), Max candidate) ("") (return . show)
---        return "updated"
---      False -> return "not updated"
---  putStrLn status
+getSurlag :: SwatLines -> Double
+getSurlag lines =
+  case lines !! 19 of
+    SwatDouble d -> numVal d
+    _ -> 0
 
---writeCurrent :: OptFunc -> IO ()
---writeCurrent f = do
---  _ <- atomically $ do
---    (rep :: MaxFile TxVarFS) <- new () maxFile
---    (swatRep :: Swat_d TxVarFS) <- new () optDir
---    (main_fmd, dir) <- read swatRep
---    ((file1_fmd, file1_md), SwatFile bsnVals) <- read $ bsn dir
---    let v1 = getVar1 bsnVals
---    let v2 = getVar2 bsnVals
---    let v3 = getVar3 bsnVals
---    ((max_fmd, max_md), Max m) <- read rep
---    _ <- writeOrElse (rep) ((max_fmd, max_md), Max (f v1 v2 v3)) ("") (return . show)
---    return ()
---  return ()
-
---getBest :: OptFunc -> Interval -> Interval -> Interval -> IO ()
---getBest f i1 i2 i3 =
---  let ((l1, h1), (l2, h2), (l3, h3)) = (i1, i2, i3) in
---  let trips = [(i, j, k) | i <- [l1..h1], j <- [l2..h2], k <- [l3..h3]] in
---  do
---    _ <- writeCurrent f
---    _ <- mapM_ (\(x,y,z) -> forkIO $ checkOne f x y z) trips
---    return ()
+setSurlag :: Double -> SwatLines -> SwatLines
+setSurlag newDouble lines =
+  let start = take 19 lines in
+  let end = drop 20 lines in
+  case lines !! 19 of
+    SwatDouble d -> start ++ [SwatDouble (d {numVal = newDouble})] ++ end
+    x -> lines

@@ -1,102 +1,102 @@
 Basin data           .bsn file Monday, March 21, 2011 6:57:24 PM MapWindow - SWAT interface
 Modeling Options: Land Area
 Water Balance:
-               5.0    | SFTMP : Snowfall temperature [ degC]
+               1    | SFTMP : Snowfall temperature [ degC]
              0.5    | SMTMP : Snow melt base temperature [degC]
              4.5    | SMFMX : Melt factor for snow on June 21 [mm H2O/degC-day]
-               5.0    | SNOCOVMX : Minimum snow water content that corresponds to 100% snow cover [mm]
-               1.0    | SNOCOVMX : Minimum snow water content that corresponds to 100% snow cover [mm]
-               1.0    | SNOCOVMX : Minimum snow water content that corresponds to 100% snow cover [mm]
+             4.5    | SMFMN : Melt factor for snow on December 21 [mm H2O/degC-day]
+               1    | TIMP : Snow pack temperature lag factor
+               1    | SNOCOVMX : Minimum snow water content that corresponds to 100% snow cover [mm]
              0.5    | SNO50COV : Fraction of snow volume represented by SNOCOVMX that corresponds to 50% snow cover
-               1.0    | IPET: PET method: 0=priest-t, 1=pen-m, 2=har, 3=read into model
+               1    | IPET: PET method: 0=priest-t, 1=pen-m, 2=har, 3=read into model
                     | PETFILE: name of potential ET input file
             0.95    | ESCO: soil evaporation compensation factor
-               1.0    | EPCO: plant water uptake compensation factor
-               3.0    | EVLAI : Leaf area index at which no evaporation occurs from water surface [m2/m2]
-               0.0    | FFCB : Initial soil water storage expressed as a fraction of field capacity water content
+               1    | EPCO: plant water uptake compensation factor
+               3    | EVLAI : Leaf area index at which no evaporation occurs from water surface [m2/m2]
+               0    | FFCB : Initial soil water storage expressed as a fraction of field capacity water content
 Surface Runoff:
-               0.0    | IEVENT: rainfall/runoff code: 0=daily rainfall/CN
-               0.0    | ICRK: crack flow code: 1=model crack flow in soil
-               4.0    | SURLAG : Surface runoff lag time [days]
-               0.0    | ADJ_PKR : Peak rate adjustment factor for sediment routing in the subbasin (tributary channels)
-               1.0    | PRF : Peak rate adjustment factor for sediment routing in the main channel
-               0.0    | SPCON : Linear parameter for calculating the maximum amount of sediment that can be reentrained during channel sediment routing
-               1.0    | SPEXP : Exponent parameter for calculating sediment reentrained in channel sediment routing
+               0    | IEVENT: rainfall/runoff code: 0=daily rainfall/CN
+               0    | ICRK: crack flow code: 1=model crack flow in soil
+               4    | SURLAG : Surface runoff lag time [days]
+               0    | ADJ_PKR : Peak rate adjustment factor for sediment routing in the subbasin (tributary channels)
+               1    | PRF : Peak rate adjustment factor for sediment routing in the main channel
+               0    | SPCON : Linear parameter for calculating the maximum amount of sediment that can be reentrained during channel sediment routing
+               1    | SPEXP : Exponent parameter for calculating sediment reentrained in channel sediment routing
 Nutrient Cycling:
-               1.0    | RCN : Concentration of nitrogen in rainfall [mg N/l]
-               0.0    | CMN : Rate factor for humus mineralization of active organic nitrogen
-              20.0    | N_UPDIS : Nitrogen uptake distribution parameter
-              20.0    | P_UPDIS : Phosphorus uptake distribution parameter
+               1    | RCN : Concentration of nitrogen in rainfall [mg N/l]
+               0    | CMN : Rate factor for humus mineralization of active organic nitrogen
+              20    | N_UPDIS : Nitrogen uptake distribution parameter
+              20    | P_UPDIS : Phosphorus uptake distribution parameter
              0.2    | NPERCO : Nitrogen percolation coefficient
-              10.0    | PPERCO : Phosphorus percolation coefficient
-             175.0    | PHOSKD : Phosphorus soil partitioning coefficient
+              10    | PPERCO : Phosphorus percolation coefficient
+             175    | PHOSKD : Phosphorus soil partitioning coefficient
              0.4    | PSP : Phosphorus sorption coefficient
-            5.0e-2    | RSDCO : Residue decomposition coefficient
+            0.05    | RSDCO : Residue decomposition coefficient
 Pesticide Cycling:
              0.5    | PERCOP : Pesticide percolation coefficient
 Algae/CBOD/Dissolved Oxygen:
-               1.0    | ISUBWQ: subbasin water quality parameter
+               1    | ISUBWQ: subbasin water quality parameter
 Bacteria:
-               0.0    | WDPQ : Die-off factor for persistent bacteria in soil solution. [1/day]
-               0.0    | WGPQ : Growth factor for persistent bacteria in soil solution [1/day]
-               0.0    | WDLPQ : Die-off factor for less persistent bacteria in soil solution [1/day]
-               0.0    | WGLPQ : Growth factor for less persistent bacteria in soil solution. [1/day] 
-               0.0    | WDPS : Die-off factor for persistent bacteria adsorbed to soil particles. [1/day]
-               0.0    | WGPS : Growth factor for persistent bacteria adsorbed to soil particles. [1/day]
-               0.0    | WDLPS : Die-off factor for less persistent bacteria adsorbed to soil particles. [1/day] 
-               0.0    | WGLPS : Growth factor for less persistent bacteria adsorbed to soil particles. [1/day]
-             175.0    | BACTKDQ : Bacteria partition coefficient
+               0    | WDPQ : Die-off factor for persistent bacteria in soil solution. [1/day]
+               0    | WGPQ : Growth factor for persistent bacteria in soil solution [1/day]
+               0    | WDLPQ : Die-off factor for less persistent bacteria in soil solution [1/day]
+               0    | WGLPQ : Growth factor for less persistent bacteria in soil solution. [1/day] 
+               0    | WDPS : Die-off factor for persistent bacteria adsorbed to soil particles. [1/day]
+               0    | WGPS : Growth factor for persistent bacteria adsorbed to soil particles. [1/day]
+               0    | WDLPS : Die-off factor for less persistent bacteria adsorbed to soil particles. [1/day] 
+               0    | WGLPS : Growth factor for less persistent bacteria adsorbed to soil particles. [1/day]
+             175    | BACTKDQ : Bacteria partition coefficient
             1.07    | THBACT : Temperature adjustment factor for bacteria die-off/growth
-               0.0    | WOF_P: wash-off fraction for persistent bacteria on foliage
-               0.0    | WOF_LP: wash-off fraction for less persistent bacteria on foliage
-               0.0    | WDPF: persistent bacteria die-off factor on foliage
-               0.0    | WGPF: persistent bacteria growth factor on foliage 
-               0.0    | WDLPF: less persistent bacteria die-off factor on foliage
-               0.0    | WGLPF: less persistent bacteria growth factor on foliage
-               0.0    | ISED_DET: 
+               0    | WOF_P: wash-off fraction for persistent bacteria on foliage
+               0    | WOF_LP: wash-off fraction for less persistent bacteria on foliage
+               0    | WDPF: persistent bacteria die-off factor on foliage
+               0    | WGPF: persistent bacteria growth factor on foliage 
+               0    | WDLPF: less persistent bacteria die-off factor on foliage
+               0    | WGLPF: less persistent bacteria growth factor on foliage
+               0    | ISED_DET: 
 Modeling Options: Reaches
-               0.0    | IRTE: water routing method 0=variable travel-time 1=Muskingum
-               0.0    | MSK_CO1 : Calibration coefficient used to control impact of the storage time constant (Km) for normal flow 
+               0    | IRTE: water routing method 0=variable travel-time 1=Muskingum
+               0    | MSK_CO1 : Calibration coefficient used to control impact of the storage time constant (Km) for normal flow 
              3.5    | MSK_CO2 : Calibration coefficient used to control impact of the storage time constant (Km) for low flow 
              0.2    | MSK_X : Weighting factor controlling relative importance of inflow rate and outflow rate in determining water storage in reach segment
-               0.0    | IDEG: channel degradation code 
-               1.0    | IWQ: in-stream water quality: 1=model in-stream water quality 
+               0    | IDEG: channel degradation code 
+               1    | IWQ: in-stream water quality: 1=model in-stream water quality 
    basins.wwq       | WWQFILE: name of watershed water quality file
-               0.0    | TRNSRCH: reach transmission loss partitioning to deep aquifer
-               1.0    | EVRCH : Reach evaporation adjustment factor
-               0.0    | IRTPEST : Number of pesticide to be routed through the watershed channel network
-               0.0    | ICN : Daily curve number calculation method
-               1.0    | CNCOEF : Plant ET curve number coefficient
-               0.0    | CDN : Denitrification exponential rate coefficient
-               0.0    | SDNCO : Denitrification threshold water content
-               0.0    | BACT_SWF : Fraction of manure applied to land areas that has active colony forming units
-              10.0    | BACTMX : Bacteria percolation coefficient [10 m3/Mg]
-               0.0    | BACTMINLP : Minimum daily bacteria loss for less persistent bacteria [# cfu/m2]
-               0.0    | BACTMINP : Minimum daily bacteria loss for persistent bacteria [# cfu/m2]
-               0.0    | WDLPRCH : Die-off factor for less persistent bacteria in streams (moving water) at 20 C [1/day]
-               0.0    | WDPRCH : Die-off factor for persistent bacteria in streams (moving water) at 20 C [1/day]
-               0.0    | WDLPRES : Die-off factor for less persistent bacteria in water bodies (still water) at 20 C [1/day]
-               0.0    | WDPRES : Die-off factor for persistent bacteria in water bodies (still water) at 20 C [1/day]
-               0.0    | TB_ADJ : New variable in testing ...Adjustment factor for subdaily unit hydrograph basetime
-               0.0    | DEPIMP_BSN : Depth to impervious layer for modeling perched water tables [mm]
-               0.0    | DDRAIN_BSN : Depth to the sub-surface drain [mm]
-               0.0    | TDRAIN_BSN : Time to drain soil to field capacity [hours]
-               0.0    | GDRAIN_BSN : Drain tile lag time [hours]
-               0.0    | CN_FROZ : Parameter for frozen soil adjustment on infiltration/runoff
-               0.0    | DORM_HR : Time threshold used to define dormancy [hours]
-               0.0    | SMXCO : Adjustment factor for maximum curve number S factor
-               0.0    | FIXCO : Nitrogen fixation coefficient
-               0.0    | NFIXMX : Maximum daily-n fixation [kg/ha]
-               0.0    | ANION_EXCL_BSN : Fraction of porosity from which anions are excluded
-               0.0    | CH_ONCO_BSN : Channel organic nitrogen concentration in basin [ppm]
-               0.0    | CH_OPCO_BSN : Channel organic phosphorus concentration in basin [ppm]
-               0.0    | HLIFE_NGW_BSN : Half-life of nitrogen in groundwater [days]
-               0.0    | RCN_SUB_BSN : Concentration of nitrate in precipitation [ppm]
-               0.0    | BC1_BSN : Rate constant for biological oxidation of NH3 [1/day]
-               0.0    | BC2_BSN : Rate constant for biological oxidation NO2 to NO3 [1/day]
-               0.0    | BC3_BSN : Rate constant for hydrolosis of organic nitrogen to ammonia [1/day]
-               0.0    | BC4_BSN : Rate constant for decay of organic phosphorus to dissolved phosphorus [1/day]
-               0.0    | DECR_MIN: Minimum daily residue decay
-               0.0    | ICFAC : C-factor calculation method
-               0.0    | RSD_COVCO : Residue cover factor for computing fraction of cover
-               0.0    | BUFF_CF : Fraction of amount channelized or not impacted from flow over the buffer
+               0    | TRNSRCH: reach transmission loss partitioning to deep aquifer
+               1    | EVRCH : Reach evaporation adjustment factor
+               0    | IRTPEST : Number of pesticide to be routed through the watershed channel network
+               0    | ICN : Daily curve number calculation method
+               1    | CNCOEF : Plant ET curve number coefficient
+               0    | CDN : Denitrification exponential rate coefficient
+               0    | SDNCO : Denitrification threshold water content
+               0    | BACT_SWF : Fraction of manure applied to land areas that has active colony forming units
+              10    | BACTMX : Bacteria percolation coefficient [10 m3/Mg]
+               0    | BACTMINLP : Minimum daily bacteria loss for less persistent bacteria [# cfu/m2]
+               0    | BACTMINP : Minimum daily bacteria loss for persistent bacteria [# cfu/m2]
+               0    | WDLPRCH : Die-off factor for less persistent bacteria in streams (moving water) at 20 C [1/day]
+               0    | WDPRCH : Die-off factor for persistent bacteria in streams (moving water) at 20 C [1/day]
+               0    | WDLPRES : Die-off factor for less persistent bacteria in water bodies (still water) at 20 C [1/day]
+               0    | WDPRES : Die-off factor for persistent bacteria in water bodies (still water) at 20 C [1/day]
+               0    | TB_ADJ : New variable in testing ...Adjustment factor for subdaily unit hydrograph basetime
+               0    | DEPIMP_BSN : Depth to impervious layer for modeling perched water tables [mm]
+               0    | DDRAIN_BSN : Depth to the sub-surface drain [mm]
+               0    | TDRAIN_BSN : Time to drain soil to field capacity [hours]
+               0    | GDRAIN_BSN : Drain tile lag time [hours]
+               0    | CN_FROZ : Parameter for frozen soil adjustment on infiltration/runoff
+               0    | DORM_HR : Time threshold used to define dormancy [hours]
+               0    | SMXCO : Adjustment factor for maximum curve number S factor
+               0    | FIXCO : Nitrogen fixation coefficient
+               0    | NFIXMX : Maximum daily-n fixation [kg/ha]
+               0    | ANION_EXCL_BSN : Fraction of porosity from which anions are excluded
+               0    | CH_ONCO_BSN : Channel organic nitrogen concentration in basin [ppm]
+               0    | CH_OPCO_BSN : Channel organic phosphorus concentration in basin [ppm]
+               0    | HLIFE_NGW_BSN : Half-life of nitrogen in groundwater [days]
+               0    | RCN_SUB_BSN : Concentration of nitrate in precipitation [ppm]
+               0    | BC1_BSN : Rate constant for biological oxidation of NH3 [1/day]
+               0    | BC2_BSN : Rate constant for biological oxidation NO2 to NO3 [1/day]
+               0    | BC3_BSN : Rate constant for hydrolosis of organic nitrogen to ammonia [1/day]
+               0    | BC4_BSN : Rate constant for decay of organic phosphorus to dissolved phosphorus [1/day]
+               0    | DECR_MIN: Minimum daily residue decay
+               0    | ICFAC : C-factor calculation method
+               0    | RSD_COVCO : Residue cover factor for computing fraction of cover
+               0    | BUFF_CF : Fraction of amount channelized or not impacted from flow over the buffer
