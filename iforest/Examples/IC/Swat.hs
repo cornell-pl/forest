@@ -52,16 +52,27 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
 --       those files are missing newlines at the end. Not sure if this is an 
 --       input error, or something I should take into account?
 [ipads|
-       data NumEntry = NumEntry {
-             numJunkWS :: StringME ws
-           , numVal :: Double
-           , numJunkWS2 :: StringME ws, "|" 
-           , numJunkWS3 :: StringME ws
-           , numTag :: StringME label
-           , numJunkWS4 :: StringME ws, ":" 
-           , numJunkWS5 :: StringME ws
-           , numDesc :: StringLn
-           } 
+       data IntEntry = IntEntry {
+             intJunkWS :: StringME ws
+           , intVal :: Int
+           , intJunkWS2 :: StringME ws, "|"
+           , intJunkWS3 :: StringME ws
+           , intTag :: StringME label
+           , intJunkWS4 :: StringME ws, ":"
+           , intJunkWS5 :: StringME ws
+           , intDesc :: StringLn
+           }
+
+       data DoubleEntry = DoubleEntry {
+             doubleJunkWS :: StringME ws
+           , doubleVal :: Double
+           , doubleJunkWS2 :: StringME ws, "|"
+           , doubleJunkWS3 :: StringME ws
+           , doubleTag :: StringME label
+           , doubleJunkWS4 :: StringME ws, ":"
+           , doubleJunkWS5 :: StringME ws
+           , doubleDesc :: StringLn
+           }
 
        data StrEntry = StrEntry {
              strWS :: StringME ws
@@ -76,7 +87,7 @@ trim = let removeWS = dropWhile $ (`elem` " \r\t\NUL") in
            
        type SwatLines = [Line SwatLine] terminator EOF
        data SwatFile = SwatFile {swatValues :: SwatLines}
-       data SwatLine = SwatDouble NumEntry | SwatString StrEntry | SwatLine StringLn
+       data SwatLine = SwatInt IntEntry | SwatDouble DoubleEntry | SwatString StrEntry | SwatLine StringLn
        data Preamble = Preamble
            { f :: [Line StringLn] length 2
            , title :: (Line StringLn, Line StringLn, Line StringLn)
@@ -327,6 +338,7 @@ wndFile :: SwatLines -> FilePath
 wndFile = getSwatStringVal 37
 
 bsnFile :: SwatLines -> FilePath
+--bsnFile l = "basins.bsn"
 bsnFile = getSwatStringVal 40
 
 plantFile :: SwatLines -> FilePath
@@ -346,7 +358,8 @@ urbanFile = getSwatStringVal 46
 
 pcpNumber :: SwatLines -> Int
 pcpNumber s = case s!!11 of
-                SwatDouble e -> fromEnum $ numVal e
+                SwatInt i -> intVal i
+                SwatDouble e -> fromEnum $ doubleVal e
 
 pcpFiles :: SwatLines -> [FilePath]
 pcpFiles s = case drop 28 (take 31 s)  of
@@ -359,7 +372,8 @@ pcpValid pcps swatlines =
 
 tmpNumber :: SwatLines -> Int
 tmpNumber s = case s !! 15 of
-                SwatDouble e -> fromEnum $ numVal e
+                SwatInt i -> intVal i
+                SwatDouble e -> fromEnum $ doubleVal e
 
 tmpFiles :: SwatLines -> [FilePath]
 tmpFiles s = case drop 32 (take 35 s) of
