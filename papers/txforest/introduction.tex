@@ -1,0 +1,199 @@
+%
+% File systems are a thing
+%
+Many applications today use file systems to store persistent
+data. There are numerous reasons that programmers choose to use file
+systems instead of systems specifically designed for managing data,
+such as key-value stores or relational databases. File systems are
+ubiquitous and have a low barrier to entry, being bundled with all
+major operating systems. Programs can manipulate the file system
+directly, through standard APIs such as POSIX, and do not have to
+first perform tasks such as setting up database accounts, creating
+tables, defining schemeas, or loading data into the system. File
+system data is portable across operating systems and can be easily
+replicated and transferred between them, since it is not ``locked in''
+to a custom database representation. For this reason, a large number
+of data-intensive users such as scientists have come to rely on file
+systems for storing their data.
+
+%
+% But they kind of suck
+%
+At the same time, file systems have several serious limitations that
+create practical hurdles in many programs. First, many applications
+divide their data across multiple files and directories on the file
+system. Having to write explicit code to open, read, and write these
+files is tedious for programmers and complicates the logic of many
+applications. For example, consider a system that stores web server
+logging data in files whose name records the year and month when the
+data was recorded and whose contents records the actual requests
+received by the web server. Even a simple task such as tabulating up
+the total number of requests in a given date range will require
+opening and reading a large number of files. Second, APIs such as
+POSIX lack constructs for documenting assumptions about the structure
+of the file system. Applications whose correctness depends on specific
+sets of files and directories being organized in a particular way
+essentially have no way to declare and enforce those constraints
+(except by writing code to manually traverse the file system and
+verify the presence of certain files). Simple errors such as a
+misnamed directory or a missing file can easily lead to
+applications-level errors, but can be difficult diagnose. Third, few
+file systems offer constructs for ensuring consistency in the presence
+of multiple concurrent users. Although POSIX file locks can be used to
+control access to specific files, these primitives are complicated to
+use and, like any pessimistic scheme, reduce the degree of concurrency
+that can be achieved by the system. 
+
+%
+% Forest 1.0
+%
+Previous work on Forest developed type-based abstractions for file
+systems. The programmer writes a high-level specification that
+describes the expected structure of the file system, and the Forest
+compiler automatically generates an in-memory representation for the
+data as well as accompanying ``load'' and ``store'' functions. In
+addition, the framework provides generic tools for visualizing,
+summarizing, and validating file system data described in
+Forest. Forest solves the first two issues discussed above: it
+streamlines applications, since they can be written against high-level
+datatypes rather than having to use low-level file system APIs; and it
+also provides mechanisms for automatically detecting situations when
+assumptions about the structure of the file system have been
+violated. However, Forest's ``load'' and ``store'' functions are
+strictly best effort and do not provide any guarantees about
+consistency. When there are multiple concurrent users of the file
+system, low-level file system operations may be interleaved
+arbitrarily, leading to inconsistent results.
+
+%
+% SWAT
+%
+As an example to illutrate the ways that consistency failures can lead
+to incorrect results, consider the following real-world
+application. The Soil and Water Assessment Tool (SWAT) is a widely
+tool that models the impact of various land management practices in
+large watersheds. An environmental scientist might use SWAT to predict
+the effects on local rivers and streams that would result from
+changing the type of crops and fertilizers used on farms, or by
+replacing farmland with a new suburban development. SWAT represents
+data about the watershed in a structured directory with a large
+collection of files, each recorded in a master ``index'' file and
+stored under a specific name and extension in the directory and with a
+specific, although varying structure. An attractive feature of SWAT is
+that it includes tools and interfaces for connecting to other datasets
+and frameworks for modeling watershed dynamics, which allows
+scientists calibrate their results and crosscheck predictions.
+
+%
+% SWAT Workflow
+%
+In a typical workflow using SWAT, a scientist might wish to modify
+some of the parameters stored in certain data files within certain
+parameters, until the overall model is calibrated to a given
+theoretical model or external dataset. Another common workflow is
+finding the value of a set of input parameters (e.g., land use) to
+optimize a set of output parameters (e.g., phosporus runoff). In both
+of these cases, the scientist needs to explore the set of parameters
+to optimize some value---concretely, this entails modifying the input
+parameters stored in ASCII text files, running the SWAT binary to
+compute derived data, and then comparing the output parameters, which
+are also stored in ASCII text files. Although this is a
+straightforward optimization problem, it is not generally feasible to
+use techniques such as gradient descent since the function being
+computed is encoded as a black-box function and may not even be
+convex. Hence, typically scientists solve these problems by exhaustive
+trial-and-error search.
+
+%
+% Consistency failure
+%
+Ideally, to improve performance, the search for optimal parameters
+could be done in parallel, using multiple threads to explore the
+search space. However, since the data is stored on the file system,
+this is not safe in general since writes to the file system performed
+by multiple threads may be interleaved in arbitrary order, which can
+easily lead to incorrect results. For example, if the optimal value
+terminates first but a later thread writes its parameters into the
+SWAT files, then the computation would halt with sub-optimal
+parameters.
+
+%
+% Transactions to the rescue!
+%
+It is not hard to see that the root cause of this problem is Forest's
+``best effort'' approach to loading and storing data on the file
+system. This paper develops a new version of Forest, Transactional
+Forest (TxForest) that remedies this problem by providing a more
+powerful abstractions that offer strong consistency
+guarantees. TxForest provides an ``atomic'' construct and a new
+monadic API for accessing data on the file system. By using these
+features, programmers gain the guarantee that all of the low-level
+read and write operations needed to implement a transaction will be
+executed as if they ran from start to finish in isolation, or not at
+all---i.e., TxForest ensures serializability. This has all of the
+usual benefits in that programmers can reason locally about the
+behavior of each transaction without worrying about harmful
+interference from other transactions that might be executing
+concurrently.
+
+%
+% Implementation
+%
+There are many possible ways of implementing serializable transactions
+including pessimistic schemes based on locking, optimistic schemes
+based on buffering reads and writes using a log, and emerging schemes
+such as coordination-free transactions. In principle, any of these
+could be used as the basis for an implementation of TxForest. We have
+built a full working prototype in Haskell based on an optimistic
+scheme. It leverages the power of Haskell's type system to track file
+system effects in a monad, and provides constructs for executing those
+effects atomically, failing if some other transaction has caused their
+assumptions to become invalid.
+
+%
+% Formalization
+%
+To establish the correctness of our implementation, we formalized the
+subset of POSIX used by the TxForest compiler and run-time system in a
+simple calculus and proved that it guarantees serializability.
+Although this calculus only models a subset of the overall POSIX API,
+it captures a number of its essential features. Hence, we hope that it
+might be useful for other work on file system based abstractions.
+
+%
+% Evaluation
+%
+Through a collaboration with environmental scientists, we have built a
+TxForest description that captures SWAT data files and used it to
+automate the task of searching for optimal parameters, as described
+above. This application demonstrates that even our unoptimized version
+of TxForest is a useful tool that can be used to solve practical
+real-world problems. 
+
+%
+% Contributions
+%
+Overall, the contributions of this paper are as follows:
+\begin{itemize}
+\item We make the case for developing language-based file system
+  abstractions with strong consistency guarantees.
+\item We describe the design of TxForest, a particular language that
+  realizes these goals in a Haskell DSL.
+\item We formalize the key elements of TxForest and POSIX in a core
+  calculus and prove that our implementation provides strong
+  consistency.
+\item We present a prototype implementation of TxForest, and discuss
+  using it to build a real-world application for representing and
+  optimizing SWAT data. 
+\end{itemize}
+%
+The rest of this paper is structured as follows. The next section
+reviews the Forest and provides further motivation for our
+design. Section~\ref{sec:txforest} presents our design for
+TxForest. Section~\ref{sec:formalization} develops a formal model of
+POSIX and establishes the correctness of a reference implementation
+based on optimistic transactions. Section~\ref{sec:implementation}
+discusses our implementation. Section~\ref{sec:swat} describes our
+experience building a SWAT application in TxForest. We discuss related
+work in Section~\ref{sec:related} and conclude in
+Section~\ref{sec:conclusion}.
