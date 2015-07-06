@@ -13,8 +13,8 @@ The Forest language includes primitives for describing files,
 directories, symbolic links, and associated meta-data.  Meta-data
 includes names, owners, permissions, sizes, and timestamps.  File
 contents may be represented as simple strings or as structured data
-using Pads descriptions~\cite{pads}.  We implemented Forest using
-Haskell's quasi-quotation mechanism~\cite{haskell-quasi-quote}.
+using Pads descriptions~\cite{fisher+:pads,fisher-walker:icdt}.  We implemented Forest using
+Haskell's quasi-quotation mechanism~\cite{Mainland:quasi}.
 Figure~\ref{fig:SWAT-description} shows a simple Forest
 description of the running example we will use throughout this paper.
 
@@ -42,7 +42,7 @@ otherwise have observed a conflict.
 To explain the design of TxForest, we will use the following running
 example, drawn from the field of agriculture science.  Specifically,
 there is a large community centered on SWAT, a Soil and Water
-Assessment Tool~\cite{SWAT}(\url{http://swat.tamu.edu}).  Members of
+Assessment Tool~\cite{SWAT}.  Members of
 this community use SWAT to explore tradeoffs related to different uses
 of land in a given watershed.  The model includes data related to the
 topology of the watershed, current land use of regions within the
