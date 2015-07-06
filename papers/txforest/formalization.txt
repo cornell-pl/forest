@@ -1,8 +1,12 @@
 (*
 -- TODOS:
 -- Write opsem induction
+-- - To show: That log is added correctly so that writelog does the right thing.
+-- - Induction on derivation maybe?
 -- Go through whole thing
+-- - Remove unnecessary Lemmas
 -- Fix translation to IMPOSIX
+
 -- Do we need to add a mkdir?
 
 -- If anything becomes vastly easier because of it,
@@ -84,18 +88,18 @@ l in List
 F in FileStore
 
 recType := Read(n,c,b) -- Read character c from fd n, which is a dir if b and file o.w.
-	|  Write(n,w)  -- Wrote string w to fd n  
-	|  Remove(p)   -- Removed path p
-	|  Test(p)     -- Tested path p
+        |  Write(n,w)  -- Wrote string w to fd n  
+        |  Remove(p)   -- Removed path p
+        |  Test(p)     -- Tested path p
 
 testCond := TFile    --It is a file
          |  TDir(b)  --It is a possibly empty directory (b=true \implies empty)
          |  TNone    --No file there
-	 |  TUnknown --Need to check
+         |  TUnknown --Need to check
 
 readCond := RKnown   --Reading from a file/dir where we have it all
-	 |  RUnknown --Reading from a file/dir where we have none of it
-	 |  RPartial --Reading from a dir where we have part of it
+         |  RUnknown --Reading from a file/dir where we have none of it
+         |  RPartial --Reading from a dir where we have part of it
 
 logT := Test(p)    -- We've run 'test' on p
      |  RF(p,c,n)  -- We read from file p at index n and got c
@@ -154,7 +158,7 @@ Built-in POSIX functions and their semantics
         let F' = F[p := File(w)] in             
         let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
         (F',H',0,Some(W(p,w,i)))
-     | _	     -> (F,H,-1,None)
+     | _             -> (F,H,-1,None)
    else
      (F,H,-1,None)
 
@@ -176,7 +180,7 @@ Built-in POSIX functions and their semantics
    | Some(Dir([])) ->
       let F' = F \ p in
       (F',H',0,Some(Rm(p))) 
-   | _		   -> 
+   | _             -> 
       (F,H,-1,Some(Test(p))
 
 
@@ -195,17 +199,17 @@ Built-in POSIX functions and their semantics
 [[ lockf ]] = fun (F,H,(p,n)) ->
    if n then
       match F(p) with
-      | None	      
+      | None          
       | Some(Lock(_)) -> (F,H,-1,None)
       | Some(x)       -> 
          let F' = F[p := Lock(x)] in
-	 (F',H,0,None)
+         (F',H,0,None)
    else
       match F(p) with
       | Lock(x) -> 
          let F' = F[p := x] in
          (F',H,0,None)
-      | _	-> (F,H,-1,None)
+      | _       -> (F,H,-1,None)
 
 --------------------------------------------------------------------------------
 Built-in Helper functions and their semantics
@@ -244,19 +248,19 @@ Built-in Helper functions and their semantics
 -- 9. Writes will have to check to make sure the directory under them exists
 -- 10. Reading directories becomes a super pain. Solution:
 --     - Check and collect all writes and removes right below it
---     	 only keeping the last for each entry
+--       only keeping the last for each entry
 --     - If there's a remove of directory, then we fail
 --     - Then actually read what's there and check if it's actually supposed
 --       to be at that spot. If it's not, it's either because of a write or remove.
---	 Keep a special counter that you add to index and increase it with removes,
---	 while reducing it with writes.
+--       Keep a special counter that you add to index and increase it with removes,
+--       while reducing it with writes.
 --     - If an RD of that spot is after any write/remove, then take that
---	 Else, check what's supposed to be there (with RD) and then compare
---	 with newer writes/removes.
+--       Else, check what's supposed to be there (with RD) and then compare
+--       with newer writes/removes.
 --     - What if there's a write/remove after RDs, but we haven't read FDs in order?
---     	 Maybe look at all the RDs before and determine where it should be removed
---	 and if it's before, update when doing write/remove?
---	 Need reverse path to fd lookup then
+--       Maybe look at all the RDs before and determine where it should be removed
+--       and if it's before, update when doing write/remove?
+--       Need reverse path to fd lookup then
 
 -- Builds logFS
 -- Depending on entry found (starting from beginning)
@@ -307,29 +311,6 @@ let build_fs () =
    in 
    let H' = H[logFS := helper l empty ""] in
    (F,H',())
-   
-
--- Lookup log for opens
--- Do different things depending on type of File found
--- Files    (F)  Virtual open
--- Dirs    (D)  Virtual open+Real open
--- Removes  (Rm) Fail
--- None           Real open
-
--- 0 will tell open to actually do a real open
--- O.w. it returns a virtual (in that it will read from log) file descriptor
-
-[[ lookup_logO ]] = fun (F,H,p) -> 
-    match H(logFS)(p) with
-    | Some(F(_))             
-    | Some(D(_,_,true)) -> 
-       let S  = H(posix_fds) in    
-       let n  = gensym(S) in 
-       let H' = H[posix_fds := S U { n |-> (p,0) }] in 
-       (F,H',n)
-    | Some(D(_,_,false))      
-    | Some(Rm)          
-    | None              -> (F,H,0) 
 
 -- Lookup log for reads etc.
 -- Do different things depending on type of file found
@@ -360,12 +341,12 @@ let build_fs () =
 [[ lookup_logE ]] = fun (F,H,p) -> 
    let b = 
       match H(logFS)(p) with
-      | Some(F(_))		    -> TFile
+      | Some(F(_))                  -> TFile
       | Some(D(l,_,_)) when l <> [] -> TDir(false)
       | Some(D(_,_,false))            
-      | None 		   	    -> TUnknown
-      | Some(D(_)) 		    -> TDir(true)
-      | Some(Rm) 		    -> TNone in 
+      | None                        -> TUnknown
+      | Some(D(_))                  -> TDir(true)
+      | Some(Rm)                    -> TNone in 
    (F,H,b)
 
 -- Do different things depending on type of file found
@@ -381,7 +362,7 @@ let build_fs () =
       match H(logFS)(p) with
       | Some(F(w))         -> w[i],Some(RF(p,w[i],i))
       | Some(D(w,_,true))  -> w[i],Some(RD(p,w[i],i))    
-      | Some(Rm)	   
+      | Some(Rm)           
       | Some(D(_,_,false))     
       | None               -> failwith "lookup_logR would've failed"
    in 
@@ -440,7 +421,7 @@ let build_fs () =
    
 [[ check_error ]] = fun (F,H,()) ->
    let t = H(tstart) in
-   let glog = 	     -- We add all the changes that happened post tstart
+   let glog =        -- We add all the changes that happened post tstart
       fold (fun acc (t',p) -> if t < t' then p :: acc else acc) F(glog)
    in
    let rec err_help l =
@@ -480,12 +461,12 @@ let build_fs () =
          | _        -> writer tl acc
       | [] -> acc
    in
-   let l	     = H(log) in
+   let l             = H(log) in
    let (F',H',clist) = writer (rev H(log)) (F,H,[]) in
-   let t 	     = time() in
+   let t             = time() in
    let clist         = map (fun p -> (t,p)) clist in
    let F''           = F(glog := F(glog) @ clist) in
-   (F',H'',())
+   (F'',H',())
 
 --------------------------------------------------------------------------------
 Syntax
@@ -528,7 +509,7 @@ c ::= skip
     | x := e
     | if e then c1 else c2
     | while e do c
-    | atomic c1
+    | atomic c
 
 (* Heaps *)
 H in Var |-> Value
@@ -737,18 +718,15 @@ Optimistic Compilation
    let en' = ([ en ]) in
    (e1',...,en')
 
-([ open ]) = fun (F,H,p) ->
-   let (_,H',b)   = lookup_logO p in
-   let (_,H',b,x) = if not b then open p else (F,H',b,None) in
-   (F,H',b,x)
+([ open ]) = fun (F,H,p) -> open p
 
 ([ close ]) = fun (F,H,n) -> close n
 
 ([ test ]) = fun (F,H,p) ->
    let (_,H',_) = record Test(p) in
    match lookup_logE p with
-   | TFile 	 -> (F,H',0,Test(p))
-   | TNone	 -> (F,H',-1,Test(p))
+   | TFile       -> (F,H',0,Test(p))
+   | TNone       -> (F,H',-1,Test(p))
    | TDir(true)  -> (F,H',2,Test(p))
    | TDir(false) -> (F,H',1,Test(p))
    | TUnknown    -> test p
@@ -785,17 +763,17 @@ Optimistic Compilation
 
 ([ remove ]) = fun (F,H,p) ->
    match lookup_logE p with
-   | TFile 	 
+   | TFile       
    | TDir(true)  -> 
       let (_,H',t) = record Remove(p) in
       (F,H',t,Some(Rem(p)))
-   | TNone	 
+   | TNone       
    | TDir(false) -> (F,H,-1,None)
    | TUnknown    -> 
       let (_,H',t,x) = test p in
       let (_,H',t),x   = if t = 0 || t = 2
          then (record Remove(p)),Some(Rem(p))
-	 else (t,H',-1),x
+         else (t,H',-1),x
       in
       (F,H',t,x)
 
@@ -816,18 +794,18 @@ Optimistic Compilation
 
 ([ atomic c ]) = 
    f := 1;
-   while f do {
+   while f do
      tstart := time (); -- Gets current time
      log := [];
      ([ c ]);
      lsucc := -1;
      while lsucc = -1 do -- Did we acquire lock successfully?
-     	lsucc := lockf (lockfile,1);
+        lsucc := lockf (lockfile,1);
      f := check_error ();
      if not f then _ := write_log () else skip;       
      _ := lockf (lockfile,0)
-   }
-   where f is fresh and atomic is not a subcommand of c
+   where f and lsucc are fresh, atomic is not a subcommand of c.
+   and time returns the current time.
 
 --------------------------------------------------------------------------------
 Theorems
@@ -976,15 +954,15 @@ Case e = e1 e2
     By transitivity, we have F=F' as required.
 
   Subcase e' = e3 and (F,H,e1') - l1 ->* (F0,H0,fun x -> e) and (F0,H0,e2') - l2 ->* (F',H',v2)
-  	       and e3 = e[x -> v2] and l = l2@l1
+               and e3 = e[x -> v2] and l = l2@l1
 
     By the inductive hypothesis applied to e1, we have F = F0.
     By the inductive hypothesis applied to e2, we have F0 = F'.
     By transitivity, we have F=F' as required.
 
   Subcase e' = e3 and (F,H,e1') - l1 ->* (F0,H0,fun x -> e) and (F0,H0,e2') - l2 ->* (F1,H1,v2) 
-  	       and (F1,H1,e[x -> v2]) - l3 ->* (F',H',e3) and l = l3@l2@l1
-	    
+               and (F1,H1,e[x -> v2]) - l3 ->* (F',H',e3) and l = l3@l2@l1
+            
     By the inductive hypothesis applied to e1, we have F = F0.
     By the inductive hypothesis applied to e2, we have F0 = F'.
     By Lemma 0c, we have F1=F'.
@@ -1009,16 +987,16 @@ Case e = (e1,...,en)
       Case e(n+1) is not reduced:
 
         Then, by the 2nd inductive hypothesis applied to the first n expressions of the n+1-tuple,
-	F=F'.
+        F=F'.
 
       Case e(n+1) is reduced:
 
         By the semantic rule E-Context, e(n+1) can not be reduced until all previous components are.
-	(F,H,(e1,...,en,e(n+1))) - l ->* (F0,H0,(v1,...,vn,e(n+1)))
-      	By the 2nd inductive hypothesis applied to the first n expressions of the (n+1)-tuple, F=F0.
+        (F,H,(e1,...,en,e(n+1))) - l ->* (F0,H0,(v1,...,vn,e(n+1)))
+        By the 2nd inductive hypothesis applied to the first n expressions of the (n+1)-tuple, F=F0.
         Then, (F0,H0,e(n+1)) - l' ->* (F',H',e(n+1)').
-	By the inductive hypothesis applied to e(n+1), F0=F'
-	By transitivity F=F'.  
+        By the inductive hypothesis applied to e(n+1), F0=F'
+        By transitivity F=F'.  
 
 Lemma 1b[Compiled Command Effects]. 
   Let c be a command that does not contain any sub-commands of the
@@ -1133,44 +1111,96 @@ Case T-Step:
       By the (second) inductive hypothesis derivation (F0,H0,c1) - o -> (F',H',c1'),
       we have F0 = F'. By transitivity, F=F'.
 
-Lemma 1: There does not exist a c where atomic(d) \not \in c s.t. (F,H,([ c ])) ->*
-         (F',H',_) and F <> F'.
-Proof: By induction on the compilation of expressions, commands, and the rules
-       of the functions and commands they compile to:
-       - All commands just compile to themselves, with subcommands and
-         expressions compiled.
-       - The small step operational semantics governing commands clearly
-         show that they do not change the filesystem except function calls.
-         Only function calls change the filesystem.
-       - By inspection, expressions compile into one of the various commands,
-         themselves, and/or possibly a variety of function calls
-         (exhaustively named below):
-         - open
-         - close
-         - test
-         - lseek
-         - read
-         - readdir
-         - lookup_logO
-         - lookup_logR
-         - lookup_logE
-         - get_rn
-         - link_fd
-         - close_fd
-         - read_log
-         - record
-       - Notably, the set of function calls above is disjoint from the
-         set of function calls that modify the filesystem (listed below)
-         as seen in the function semantics:
-         - write
-         - truncate
-         - rename
-         - remove
-         - write_log
-       Thus, since none of the possible functions that modify the filesystem
-       are invoked, the filesystem clearly doesn't change.
+Lemma 2: If <F,H,c> - l -> * <F',H',skip> and <F,H,([ atomic c ])> - l' -> * <F'',H'',skip>,
+         then F'=F''.
+         
 
-Lemma 2: <F,c> —> * <F’, skip> iff <F,([ atomic c ])> —> * <F’, skip>
+Proof:
+
+  By the definition of ([ . ]), ([ atomic c ]) =
+    f := 1;
+    while f do
+      tstart := time (); -- Gets current time
+      log := [];
+      ([ c ]);
+      lsucc := -1;
+      while lsucc = -1 do -- Did we acquire lock successfully?
+        lsucc := lockf (lockfile,1)
+      f := check_error ();
+      if not f then _ := write_log () else skip;       
+      _ := lockf (lockfile,0)
+    where f and lsucc are fresh, atomic is not a subcommand of c.
+    and time returns the current time.
+
+    We will consider the sequence one piece at a time:
+    
+    1. (F,H,f:=1;rest) ->* (F,H[f:=1],rest)
+       By the semantic rules C-Assgn and C-SkipSeq.
+     
+    2. (F,H[f:=1],while f do loopC1) ->* (F,H[f:=1],loopC1;while f do loopC1)
+       By the semantic rules E-var and C-WhileTrue.
+
+    3. (F,H[f:=1],tstart := time ();rest) ->* (F,H[f:=1,tstart:= t1],rest)
+       Where t1 is the current time.
+       By the semantic rules C-Assgn, definition of time, and C-SkipSeq.
+
+    4. (F,H[f:=1,tstart:= t1], log := [];rest) ->* (F,H[f:=1,tstart:= t1,log := []],rest)
+       By the semantic rules C-Assgn and C-SkipSeq.
+
+    5. (F,H[f:=1,tstart:= t1, log := []], ([ c ]);rest) -l1->* (F,H'[f:=1,tstart:= t1],rest)
+       By Lemma 1b, the FS doesn't change. Since f is fresh and tstart is a
+       reserved variable, we know they don't change, o.w. H could be changed
+       basically arbitrarily.
+
+    6. (F,H'[f:=1,tstart:= t1], lsucc := -1;rest) ->* (F,H'[f:=1,tstart:= t1,lsucc := -1],rest)
+       By the semantic rules C-Assgn and C-SkipSeq.
+
+    7. (F,H'[f:=1,tstart:= t1,lsucc := -1], while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
+       ->* (F,H'[f:=1,tstart:= t1,lsucc := -1], lsucc := lockf(lockfile,1); while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
+       By the semantic rules E-var and C-WhileTrue.
+
+    8. (F,H'[f:=1,tstart:= t1,lsucc := -1], lsucc := lockf(lockfile,1); while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
+       ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
+       By the semantic rules C-Assgn and C-SkipSeq and the definition of lockf. Since there are no other threads, lockf succeeds.
+
+    9. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
+       ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], rest)
+       By the semantic rules E-var and C-WhileFalse.
+
+    10. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], f := check_error ();rest)
+        ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], rest)
+        By the semantic rules C-Assgn and C-SkipSeq and the definition of check_error. Since there are no other
+	threads and this thread hasn't written anything to glog yet, it will be empty. Thus,
+	check_error succeeds and returns 0.
+
+    11. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], if not f then _ := write_log () else skip;rest)
+        ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], _ := write_log ();rest)
+        By the semantic rules E-var and C-IfTrue. 
+
+    12. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], _ := write_log ();rest)
+        - l2 ->* (F' / lockfile \uplus {lockfile -> Lock(F(""))},H''[f:=0,tstart:= t1,lsucc := 0], rest)
+        By the semantic rules C-Assgn and C-SkipSeq and the definition of write_log. Write_log may change
+	both the file system and the heap (well, actually it never changes the heap, but we don't care about
+	proving that). However, all of the variables specifically noted (lockfile, f, tstart, lsucc) were either
+	fresh or reserved. More on the changes done to the filesystem by later.
+
+    13. (F' / lockfile \uplus {lockfile -> Lock(F(""))},H''[f:=0,tstart:= t1,lsucc := 0], _ := lockf (lockfile,0);rest)
+        ->* (F',H''[f:=0,tstart:= t1,lsucc := 0], rest)
+        By the semantic rules C-Assgn and C-SkipSeq and the definition of lockf. Notably, when 0 is passed into lockf,
+	it simply undoes what was done when 1 was passed in.
+
+    14. (F',H''[f:=0,tstart:= t1,lsucc := 0], while f do loopC1)
+        ->* (F',H''[f:=0,tstart:= t1,lsucc := 0], skip)
+        By the semantic rules E-Var and C-WhileFalse.
+
+    Importantly, in the end, only write_log has wrought changes to the filesystem. These changes are described
+    by the log, as written in ([ c ]). So what we have left to prove is that the changes described in the log
+    are the same as those made by c.
+
+
+
+-- JDL: OLD!
+
 Proof: By lemma 1, the only part of the compiled atomic(c) that can change the
        filesystem is write_log. It suffices to show that the combination of
        additions made to the log during the execution and then their
