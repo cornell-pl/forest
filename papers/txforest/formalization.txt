@@ -1,11 +1,7 @@
 (*
 -- TODOS:
--- Write opsem induction
--- - To show: That log is added correctly so that writelog does the right thing.
--- - Induction on derivation maybe?
 -- Go through whole thing
 -- - Recheck theorem proof
--- - Remove unnecessary Lemmas
 -- Fix translation to IMPOSIX
 
 -- Do we need to add a mkdir?
@@ -847,13 +843,12 @@ read by c, and (III) where they both modify files read by each other.
 (II)  : If any modifications of files that d reads occurs after d has completed,
         then this is clearly equivalent to d;c.
         O.w., since all modifications to the filesystem happen in the final
-        write_log (that is, when it's not a nested transaction),
-        by Lemmas 1 and 3, ([ atomic(c) ]) must have gotten the lock before
-        ([ atomic(d) ]). Then, when it releases the lock and d does a 
-        check_error, it will detect that c has run, thus restarting, which
-        means that we have c;d (though changes to the heap could have been made).
-(III) : Either c or d will acquire the lock first. By Lemma 1 and 3, we know that
-        neither will change the FS before then. Assume WLOG that c gets it.
+        write_log (as noted in the proof of Lemma 2), ([ atomic(c) ])
+	must have gotten the lock before ([ atomic(d) ]). Then, when it releases
+	the lock and d does a check_error, it will detect that c has run, thus restarting,
+	which means that we have c;d (with possible changes to the heap).
+(III) : Either c or d will acquire the lock first. By proof of Lemma 2, we know
+        that neither will change the FS before then. Assume WLOG that c gets it.
         Then, c can't be in conflict with anything (because the FS hasn't
         been changed) and thus commits his changes in write_log before
         releasing the lock. Then, since d read files modified by c,
