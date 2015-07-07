@@ -13,7 +13,7 @@ The Forest language includes primitives for describing files,
 directories, symbolic links, and associated meta-data.  Meta-data
 includes names, owners, permissions, sizes, and timestamps.  File
 contents may be represented as simple strings or as structured data
-using Pads descriptions~\cite{fisher+:pads,fisher-walker:icdt}.  We implemented Forest using
+using Pads descriptions~\cite{fisher+:pads,fisher-walker:icdt}. Forest has been implemented using
 Haskell's quasi-quotation mechanism~\cite{Mainland:quasi}.
 Figure~\ref{fig:SWAT-description} shows a simple Forest
 description of the running example we will use throughout this paper.
@@ -65,7 +65,9 @@ one, the tool writes those changes back into the file system.  Figure
 
 \begin{figure}
 \begin{code}
-Update with relevant parts of SWAT forest description    
+Update with relevant parts of SWAT forest description   
+Ideally we should only have to change the quotation
+forest to txforest to port this code snippet
 [forest|
  \kw{type} Stats = \kw{Directory}
    \{ last :: File Last, topk :: File Topk \}
@@ -81,6 +83,7 @@ Update with relevant parts of SWAT forest description
 \begin{figure}
 \begin{code}
 Update with relevant parts of SWAT optimization code
+Not portable, relevant to illustrate the design differences?
 \end{code}
 \caption{Forest SWAT description. }
 \label{fig:SWAT-opt-code}

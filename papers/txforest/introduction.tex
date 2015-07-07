@@ -37,7 +37,7 @@ essentially have no way to declare and enforce those constraints
 (except by writing code to manually traverse the file system and
 verify the presence of certain files). Simple errors such as a
 misnamed directory or a missing file can easily lead to
-applications-level errors, but can be difficult diagnose. Third, few
+application-level errors, but can be difficult diagnose. Third, few
 file systems offer constructs for ensuring consistency in the presence
 of multiple concurrent users. Although POSIX file locks can be used to
 control access to specific files, these primitives are complicated to
@@ -188,7 +188,7 @@ Overall, the contributions of this paper are as follows:
 \end{itemize}
 %
 The rest of this paper is structured as follows. The next section
-reviews the Forest and provides further motivation for our
+reviews Forest and provides further motivation for our
 design. Section~\ref{sec:txforest} presents our design for
 TxForest. Section~\ref{sec:formalization} develops a formal model of
 POSIX and establishes the correctness of a reference implementation
