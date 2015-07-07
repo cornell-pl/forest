@@ -1,10 +1,7 @@
 (*
 -- TODOS:
--- Write opsem induction
--- - To show: That log is added correctly so that writelog does the right thing.
--- - Induction on derivation maybe?
 -- Go through whole thing
--- - Remove unnecessary Lemmas
+-- - Recheck theorem proof
 -- Fix translation to IMPOSIX
 
 -- Do we need to add a mkdir?
@@ -41,6 +38,8 @@ Questions:
 Notes:
 -- Data type constructors are implicit functions that construct them in the obvious way.
 -- w[i,i+1] returns ERR if it's outside range
+-- Technically, Lemma 2 is false since you could make operations depend on the heap
+   in a way where running it in atomic actually changes what the commands do to the FS.
 
 
 *)
@@ -103,12 +102,12 @@ readCond := RKnown   --Reading from a file/dir where we have it all
 
 logT := Test(p)    -- We've run 'test' on p
      |  RF(p,c,n)  -- We read from file p at index n and got c
-     |  RD(p,w,n)  -- We read from dir p at index n and got d
+     |  RD(p,w,n)  -- We read from dir p at index n and got w
      |  W(p,w,n)   -- We wrote w to file p at index n 
      |  Rm(p)      -- We removed file/dir p
 
 logFST := Rem       -- Whatever was at this path has been removed
-       |  F(w)      -- This path has a file containing w in it
+       |  Fi(w)     -- This path has a file containing w in it
        |  D(l,l',b) -- This is explained just below
 
 -- D(l,l',b) means that the path is a directory containing the entries in list l
@@ -146,6 +145,18 @@ Built-in POSIX functions and their semantics
    else
       (F,H,ERR,None)
 
+[[ readdir ]] = fun (F,H, n) ->
+   if n \in H(posix_fds) then
+     let (p,i) = H(posix_fds)(n) in
+     match F(p) with
+     | Some(Dir(l)) -> 
+        let H' = H[posix_fds(n) :=  (p,i+1)] in
+        let f = l[i,i+1] in
+        (F,H',f, Some(RD(p,f,i)))
+     | _            -> (F,H,ERR,None)
+   else
+     (F,H,ERR,None)
+
 [[ write ]] = fun (F,H,(n,w)) ->
    if n \in H(posix_fds) then
      let (p,i) = H(posix_fds)(n) in
@@ -162,24 +173,12 @@ Built-in POSIX functions and their semantics
    else
      (F,H,-1,None)
 
-[[ readdir ]] = fun (F,H, n) ->
-   if n \in H(posix_fds) then
-     let (p,i) = H(posix_fds)(n) in
-     match F(p) with
-     | Some(Dir(l)) -> 
-        let H' = H[posix_fds(n) :=  (p,i+1)] in
-        let f = l[i,i+1] in
-        (F,H',f, Some(RD(p,f,i)))
-     | _            -> (F,H,ERR,None)
-   else
-     (F,H,ERR,None)
-
 [[ remove ]] = fun (F,H,p) ->
    match F(p) with
    | Some(File(_)) 
    | Some(Dir([])) ->
       let F' = F \ p in
-      (F',H',0,Some(Rm(p))) 
+      (F',H,0,Some(Rm(p))) 
    | _             -> 
       (F,H,-1,Some(Test(p))
 
@@ -264,9 +263,9 @@ Built-in Helper functions and their semantics
 
 -- Builds logFS
 -- Depending on entry found (starting from beginning)
--- Reads:    RF(p,c,i) Adds c to accumulator or makes p F(acc) if c=ERR
+-- Reads:    RF(p,c,i) Adds c to accumulator or makes p Fi(acc) if c=ERR
 -- ReadDirs: RD(p,d,i) Adds d to accumulator or makes p D(acc,[],true) if c=ERR
--- Writes:   W(p,w,i)  makes p F(w) and possibly adds p to p's directory
+-- Writes:   W(p,w,i)  makes p Fi(w) and possibly adds p to p's directory
 -- Removes:  Rm(p)     makes p Rm and removes it from p's dir
 
 -- souq here is sort and unique at the same time.
@@ -280,7 +279,7 @@ let build_fs () =
          (match hd with
          | RF(p,c,i)  ->
             if c = ERR
-            then add p F(acc) map
+            then add p Fi(acc) map
             else map
          | RD(p,d,i)  -> 
             if d = ERR
@@ -288,8 +287,8 @@ let build_fs () =
             else map
          | W(p,w,_)   ->
             match map(dir(p)) with
-            | None            -> add dir(p) D([p],[],false) (add p F(w) map)
-            | Some(D(l,l',b)) -> add dir(p) D(souq (p :: l),rem p l',b) (add p F(w) map)
+            | None            -> add dir(p) D([p],[],false) (add p Fi(w) map)
+            | Some(D(l,l',b)) -> add dir(p) D(souq (p :: l),rem p l',b) (add p Fi(w) map)
             | _               -> failwith "Path directory isn't a directory?"
          | Rm(p)    -> 
             match map(dir(p)) with
@@ -323,7 +322,7 @@ let build_fs () =
    let (p,i) = H(posix_fds)(n) in
    let b = 
       match H(logFS)(p) with
-      | Some(F(_))
+      | Some(Fi(_))
       | Some(D(_,_,true))  -> RKnown       
       | Some(D(_,_,false)) -> RPartial
       | Some(Rm) 
@@ -341,7 +340,7 @@ let build_fs () =
 [[ lookup_logE ]] = fun (F,H,p) -> 
    let b = 
       match H(logFS)(p) with
-      | Some(F(_))                  -> TFile
+      | Some(Fi(_))                  -> TFile
       | Some(D(l,_,_)) when l <> [] -> TDir(false)
       | Some(D(_,_,false))            
       | None                        -> TUnknown
@@ -360,7 +359,7 @@ let build_fs () =
    let H' = H[posix_fds(n) :=  (p,i+1)]) in 
    let c,x = 
       match H(logFS)(p) with
-      | Some(F(w))         -> w[i],Some(RF(p,w[i],i))
+      | Some(Fi(w))         -> w[i],Some(RF(p,w[i],i))
       | Some(D(w,_,true))  -> w[i],Some(RD(p,w[i],i))    
       | Some(Rm)           
       | Some(D(_,_,false))     
@@ -369,7 +368,7 @@ let build_fs () =
    (F,H',c,x)
 
 -- JDL: Check over this function to make sure it needs to be this complex
-
+-- JDL: ERR > everything
 [[ read_and_check ]] = fun (F,H,(n,e)) ->
    let (p,i) = H(posix_fds)(n) in
    let rec get_correct e last l l' =
@@ -400,8 +399,10 @@ let build_fs () =
       match t with
       | Read(fd,v,d)   ->
         let (p,i) = H(posix_fds)(n) in
-        let ele   = if d then RD(p,v,i) else RF(p,v,i) in
-        H[log := ele :: l]
+	let index = if H(real_index) = 0 && i > 0 then i-1 else H(real_index)-1 in
+        let ele   = if d then RD(p,v,index) else RF(p,v,index) in
+	let H' = if v = ERR then H[real_index := 0] else H in
+        H'[log := ele :: l]
       | Write(fd,w)    ->  
          let (p,i) = H(posix_fds)(n) in
          H[log := W(p,w,i) :: l]
@@ -722,19 +723,11 @@ Optimistic Compilation
 
 ([ close ]) = fun (F,H,n) -> close n
 
-([ test ]) = fun (F,H,p) ->
-   let (_,H',_) = record Test(p) in
-   match lookup_logE p with
-   | TFile       -> (F,H',0,Test(p))
-   | TNone       -> (F,H',-1,Test(p))
-   | TDir(true)  -> (F,H',2,Test(p))
-   | TDir(false) -> (F,H',1,Test(p))
-   | TUnknown    -> test p
-
 ([ read ]) = fun (F,H,n) ->
    match lookup_logR n with
    | RKnown   -> 
       let (_,H',r,x) = read_log n in
+      let (_,H',_)   = record Read(n,r,false) in -- Solely required for proof of Lemma 2
       (F,H',r,x)
    | RUnknown ->
       let (_,H',r,x) = read n in
@@ -746,6 +739,7 @@ Optimistic Compilation
    match lookup_logR n with
    | RKnown   -> 
       let (_,H',r,x) = read_log n in
+      let (_,H',_) = record Read(n,r,true) in -- Solely required for proof of Lemma 2
       (F,H',r,x)
    | RUnknown ->
       let (_,H',r,x) = readdir n in
@@ -754,9 +748,11 @@ Optimistic Compilation
    | RPartial ->
       let (_,H',r,_) = readdir n in
       let (_,H',r,x) = read_and_check (n,r) in
+      let H' = H'[real_index := H'(real_index)+1] in
       let (_,H',_) = record Read(n,r,true)  in
       (F,H',r,x)
 
+-- Need to add an error if F(p) = Dir(_)
 ([ write ]) = fun (F,H,(n,w)) ->
    let (_,H',x) = record Write(n,w) in
    (F,H',x)
@@ -766,16 +762,26 @@ Optimistic Compilation
    | TFile       
    | TDir(true)  -> 
       let (_,H',t) = record Remove(p) in
-      (F,H',t,Some(Rem(p)))
+      (F,H',t,Some(Rm(p)))
    | TNone       
    | TDir(false) -> (F,H,-1,None)
    | TUnknown    -> 
       let (_,H',t,x) = test p in
       let (_,H',t),x   = if t = 0 || t = 2
-         then (record Remove(p)),Some(Rem(p))
+         then (record Remove(p)),Some(Rm(p))
          else (t,H',-1),x
       in
       (F,H',t,x)
+
+([ test ]) = fun (F,H,p) ->
+   let (_,H',_) = record Test(p) in
+   match lookup_logE p with
+   | TFile       -> (F,H',0,Test(p))
+   | TNone       -> (F,H',-1,Test(p))
+   | TDir(true)  -> (F,H',2,Test(p))
+   | TDir(false) -> (F,H',1,Test(p))
+   | TUnknown    -> test p
+
 
 (* ([ c ]) : Com \ {atomic c} *)
 
@@ -813,8 +819,8 @@ Theorems
 
 -- For all compilations of the form ([ atomic(c) ]):
 -- We require reads in c to be in a while loop, reading until EOF.
--- We require writes of string s to path p in c to be from position 0 in the fd
--- and to be followed by a truncate(p,|s|).
+-- We require writes of string s to path p in c to be from position 0 in the fd 
+-- and be preceded by a remove(p).
 
 Theorem:
 Given some starting filesystem F, executing ([ atomic(c) ]) || ([ atomic(d) ])
@@ -829,21 +835,20 @@ Proof of theorem:
 Assume not. Then c = c_1;...;c_n and d=d_1;...;d_m and there is some
 interleaving of them which creates F' (since by lemma 2, o.w. c;d or d;c would
 generate F').
-Consider the cases where c and d do not overlap (in the files they read/modify)
-(I), where c modifies files read by d (II), where d modifies files read by c 
-(II by symmetry), and where they both modify files read by each other (III).
+Consider the cases (I) where c and d do not overlap (in the files they read/modify),
+(II) where c modifies files read by d, (II by symmetry) where d modifies files
+read by c, and (III) where they both modify files read by each other.
 
 (I)   : If they don't overlap, then any interleaving is equivalent to c;d
 (II)  : If any modifications of files that d reads occurs after d has completed,
         then this is clearly equivalent to d;c.
         O.w., since all modifications to the filesystem happen in the final
-        write_log (that is, when it's not a nested transaction),
-        by Lemmas 1 and 3, ([ atomic(c) ]) must have gotten the lock before
-        ([ atomic(d) ]). Then, when it releases the lock and d does a 
-        check_error, it will detect that c has run, thus restarting, which
-        means that we have c;d (though changes to the heap could have been made).
-(III) : Either c or d will acquire the lock first. By Lemma 1 and 3, we know that
-        neither will change the FS before then. Assume WLOG that c gets it.
+        write_log (as noted in the proof of Lemma 2), ([ atomic(c) ])
+	must have gotten the lock before ([ atomic(d) ]). Then, when it releases
+	the lock and d does a check_error, it will detect that c has run, thus restarting,
+	which means that we have c;d (with possible changes to the heap).
+(III) : Either c or d will acquire the lock first. By proof of Lemma 2, we know
+        that neither will change the FS before then. Assume WLOG that c gets it.
         Then, c can't be in conflict with anything (because the FS hasn't
         been changed) and thus commits his changes in write_log before
         releasing the lock. Then, since d read files modified by c,
@@ -1112,11 +1117,10 @@ Case T-Step:
       we have F0 = F'. By transitivity, F=F'.
 
 Lemma 2: If <F,H,c> - l -> * <F',H',skip> and <F,H,([ atomic c ])> - l' -> * <F'',H'',skip>,
-         then F'=F''.
+         then F'=F'', where c does not contain sub-commands of the form atomic(_).
          
 
 Proof:
-
   By the definition of ([ . ]), ([ atomic c ]) =
     f := 1;
     while f do
@@ -1160,185 +1164,281 @@ Proof:
        By the semantic rules E-var and C-WhileTrue.
 
     8. (F,H'[f:=1,tstart:= t1,lsucc := -1], lsucc := lockf(lockfile,1); while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
-       ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
+       ->* (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=1,tstart:= t1,lsucc := 0], while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
        By the semantic rules C-Assgn and C-SkipSeq and the definition of lockf. Since there are no other threads, lockf succeeds.
 
-    9. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
-       ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], rest)
+    9. (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=1,tstart:= t1,lsucc := 0], while lsucc = -1 do lsucc := lockf(lockfile,1);rest)
+       ->* (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=1,tstart:= t1,lsucc := 0], rest)
        By the semantic rules E-var and C-WhileFalse.
 
-    10. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=1,tstart:= t1,lsucc := 0], f := check_error ();rest)
-        ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], rest)
+    10. (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=1,tstart:= t1,lsucc := 0], f := check_error ();rest)
+        ->* (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=0,tstart:= t1,lsucc := 0], rest)
         By the semantic rules C-Assgn and C-SkipSeq and the definition of check_error. Since there are no other
-	threads and this thread hasn't written anything to glog yet, it will be empty. Thus,
-	check_error succeeds and returns 0.
+        threads and this thread hasn't written anything to glog yet, it will be empty. Thus,
+        check_error succeeds and returns 0.
 
-    11. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], if not f then _ := write_log () else skip;rest)
-        ->* (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], _ := write_log ();rest)
+    11. (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=0,tstart:= t1,lsucc := 0], if not f then _ := write_log () else skip;rest)
+        ->* (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=0,tstart:= t1,lsucc := 0], _ := write_log ();rest)
         By the semantic rules E-var and C-IfTrue. 
 
-    12. (F / lockfile \uplus {lockfile -> Lock(F(""))},H'[f:=0,tstart:= t1,lsucc := 0], _ := write_log ();rest)
-        - l2 ->* (F' / lockfile \uplus {lockfile -> Lock(F(""))},H''[f:=0,tstart:= t1,lsucc := 0], rest)
+    12. (F / lockfile \uplus {lockfile -> Lock(File(""))},H'[f:=0,tstart:= t1,lsucc := 0], _ := write_log ();rest)
+        - l2 ->* (F' / lockfile \uplus {lockfile -> Lock(File(""))},H''[f:=0,tstart:= t1,lsucc := 0], rest)
         By the semantic rules C-Assgn and C-SkipSeq and the definition of write_log. Write_log may change
-	both the file system and the heap (well, actually it never changes the heap, but we don't care about
-	proving that). However, all of the variables specifically noted (lockfile, f, tstart, lsucc) were either
-	fresh or reserved. More on the changes done to the filesystem by later.
+        both the file system and the heap (well, actually it never changes the heap, but we don't care about
+        proving that). However, all of the variables specifically noted (lockfile, f, tstart, lsucc) were either
+        fresh or reserved. More on the changes done to the filesystem by later.
 
-    13. (F' / lockfile \uplus {lockfile -> Lock(F(""))},H''[f:=0,tstart:= t1,lsucc := 0], _ := lockf (lockfile,0);rest)
+    13. (F' / lockfile \uplus {lockfile -> Lock(File(""))},H''[f:=0,tstart:= t1,lsucc := 0], _ := lockf (lockfile,0);rest)
         ->* (F',H''[f:=0,tstart:= t1,lsucc := 0], rest)
         By the semantic rules C-Assgn and C-SkipSeq and the definition of lockf. Notably, when 0 is passed into lockf,
-	it simply undoes what was done when 1 was passed in.
+        it simply undoes what was done when 1 was passed in.
 
     14. (F',H''[f:=0,tstart:= t1,lsucc := 0], while f do loopC1)
         ->* (F',H''[f:=0,tstart:= t1,lsucc := 0], skip)
         By the semantic rules E-Var and C-WhileFalse.
 
     Importantly, in the end, only write_log has wrought changes to the filesystem. These changes are described
-    by the log, as written in ([ c ]). So what we have left to prove is that the changes described in the log
-    are the same as those made by c.
+    by the log, as written in ([ c ]).
 
+  So what we have left to prove is that the changes described in the log are the same as those made by c.
+  We proceed as follows:
+  1. We show that build_fs correctly constructs a partial virtual filesystem (VFS) sitting atop the real one.
+  2. We show that the translated commands correctly invoke this virtual FS to add the right things to the log
+  3. such that write_log actually makes the same changes that running 'c' directly would.
 
+  1. We will start with the meanings of the various constructs that can
+     be in the log as they are important for the rest of the proof:
+     RF(p,c,i) means we read location i of a file at path p and it contained c.
+     RD(p,d,i) means we read location i of a directory at path p and it contained d.
+     W(p,w,i)  means we wrote w to location i of a file at path p.
+     Rm(p)     means we removed whatever was at path p.
+     
+     Now we look at how the build_fs function builds up the virtual filesystem (VFS)
+     using each log entry.
+     Paths can map to one of 3 different things (encoding our current knowledge of what's there)
+     or nothing if we haven't changed the path:
+     Fi(w) is a file containing string w.
+     Rm means that whatever was there is now removed (so nothing is there).
+     D(l,l',b) means that the path is a directory containing all the entries in l and none of the
+     entries in l'.  If b is true, then l is the sum total of what's in the directory, o.w. we
+     don't know if there is more.
 
--- JDL: OLD!
+     Starting from the first entry of the log and going to the last one,
+     build_fs updates the VFS depending on what it sees as follows:
+     RF(p,c,i) - Accumulates all characters into acc until it gets ERR at which point it makes
+                 p map to Fi(acc). This works since we always read a full file.
+     RD(p,d,i) - Accumulates all entries into acc until it gets ERR at which point it makes 
+                 p map to D(acc,[],true). This works since we always read a full directory.
+     W(p,w)   -
+       If the path of the directory of p (dir(p)) doesn't map to anything it makes p map to Fi(w)
+         and dir(p) map to D([p],[],false) (since we now know a p is in dir(p), but haven't read it).
+       O.w. if dir(p) maps to D(l,l',b), it adds p into the sorted list of paths l at the correct
+         position if it's not in there already and removes it from l'. It then makes dir(p) map to
+         that construct and makes p map to Fi(w). Regardless of whether we had the complete list 
+         (b is true) or not we continue to stay in that state since we just add what we know is
+         now there (or nothing if it already was).
+     Rm(p)    -
+       It maps p to Rem, then:
+       If dir(p) doesn't map to anything, it makes it map to D([],[p],false) since the only thing
+         we know about the directory is that it no longer contains p.
+       O.w. if it maps to D(l,l',b), it removes p from list l and adds it (in unique sorted order)
+         to l' indicating that we now know that p is not in the directory.
 
-Proof: By lemma 1, the only part of the compiled atomic(c) that can change the
-       filesystem is write_log. It suffices to show that the combination of
-       additions made to the log during the execution and then their
-       subsequent writing to the filesystem faithfully reproduces what c does.
+     These statements are true by inspection, but it is not until we get to 2 that it is clear
+     that this is correct. However, it should be apparent that:
+     1. For any removed file or folder, we now know that it is removed (since it maps to Rem).
+     2. That know said file/folder is no longer in the folder it was in.
+     3. That files or folders we've read now are mapped to and known in their entirety
+        (Fi(w) for files and D(l,l',true) for folders).
+     4. And lastly that files written to are now known to exist and have known contents
+
+  2. We will show this property by comparing the real log to the augmented log from the semantics.
+
+     WTS: If H(log) = l, ([ c ]) = c’, c does not contain a sub-command of the form atomic(_), 
+     <F',H,c’> - _ ->* <F',H1,c1'> and H1(log) = x :: l for some x iff \exists c2 s.t. 
+     <F,H,c> - [o] ->* <F2,H2,c2> and o = Some(x) where, F=F' if len(l)=0. Assuming no errors.
+
+     Proof: By induction on the length of the log in H.
+
+       Base case: len(l) = 0
+       We consider all possible functions that causes a change to either the augmented or real log
+       if called between c' and c1' or c and c2.
+
+       Subcase read n:
+
+         If H(posix_fds)(n) = (p,i) for some p and i, and F(p) = File(w) then, by the definition of
+         [[ read ]], o = Some(RF(p,w[i,i+1],i)).
+         Given the same circumstances, lookup_logR n will return RUnknown. Thus, ([ read ]) will 
+         call read n (returning byte w[i,i+1]), and then record Read(n,w[i,i+1],false), which adds 
+         RF(p,w[i,i+1],i) to the log, as desired. Since those circumstances are required for there
+         not to be an error, our property holds.         
        
-       We will start with the second part. There are four different functions
-       in the log, which are written to the FS. They are rename, truncate,
-       remove, and write. All but the final one record all the information
-       required to call the original function and thus are no different.
-       The write is a bit different in that it takes a path and a string.
-       However, this is easily translated to an open, write, and close,
-       which is correct since we know that our translation to IMPOSIX only
-       ever writes an entire file.
+       Subcase readdir n:
 
-       The first part is a bit more subtle since we need to essentially build
-       a virtual filesystem that we're operating on and make sure that all
-       of our reads, renames, truncates, removes, etc. are operating on the
-       correct data. This is what build_fs does for us. By actually building
-       a virtual filesystem, it can deal with most of the cumbersome parts
-       letting us basically treat it as the normal filesystem, with a few,
-       rather simple, changes.
+         If H(posix_fds)(n) = (p,i) for some p and i, and F(p) = Dir(l) then, by the definition of
+         [[ readdir ]], o = Some(RD(p,l[i,i+1],i)).
+         Given the same circumstances, lookup_logR n will return RUnknown. Thus, ([ readdir ]) will 
+         call readdir n (returning entry l[i,i+1]), and then record Read(n,l[i,i+1],true), which adds 
+         RD(p,l[i,i+1],i) to the log, as desired. Since those circumstances are required for there
+         not to be an error, our property holds.
 
-More tedious proof: 
-       Here we wish to show that the compilations still do the right thing. 
-       We do this by mutually recursive induction on all built-in helper
-       functions and compilations.
+       Subcase write (n,w):
 
-       We will start with the meanings of various constructs that can
-       be in the log as they are important for the rest of this:
-       RF(p,c,i) means we read location i of a file at path p and it contained c.
-       RD(p,d,i) means we read location i of a directory at path p and it 
-                 contained d.
-       T(p,n)    means we truncated a file at path p to length n.
-       W(p,w)    means we wrote w to a file at path p.
-       Rm(p)     means we removed whatever was at path p.
-       Rn(p,p')  means we moved whatever was at path p to path p'.
+         If H(posix_fds)(n) = (p,i) for some p and i, and F(p) = File(w) or None then, by the definition
+         of [[ write ]], o = Some(W(p,w,i)).
+         ([ write ]) will call record Write(n,w), which adds W(p,w,i) to the log, as desired.
+         Since those circumstances are required for there not to be an error, our property holds.
+
+       Subcase remove p:
+
+         If F(p) = File(_) or Dir([]) then, by the definition of [[ remove ]] o = Some(Rm(p)).
+         Given the same circumstances, lookup_logE will return TUnknown (since the log is empty) so
+         ([ remove ]) will call test p getting either 0 (if F(p) = File(_)) or 2 (if F(p) = Dir([]))
+         back. Thus, it will call record Remove(p), which adds Rm(p) to the log as desired.
+
+       Subcase test:
+
+         In all cases, o = Some(Test(p)).
+         ([ test ]) calls record Test(p), which will add Test(p) to the log.
+     
+       Since it holds for all subcases, it holds for the base case.
+
+       Inductive case: We assume it holds for len(l) = n. Prove for len(l) = n + 1.
+       Now, we no longer have that F = F', so we use part 1 to assert that the VFS correctly portrays
+       the changed portion of the FS. 
+
+       Subcase read m:
+
+         If H(posix_fds)(m) = (p,i) for some p and i, and F(p) = File(w) then, by the definition of
+         [[ read ]], o = Some(RF(p,w[i,i+1],i)).
+         Given the same circumstances, lookup_logR may return either RUnknown or RKnown. 
+
+         Subsubcase RUnknown: 
+           If it returns RUnknown, then no changes have been made to path p, since by the inductive
+           hypothesis, the log has so far been correctly built up and by part 1, the VFS is correctly
+           extrapolated from there. So, F(p)=F'(p) and ([ read ]) adds RF(p,w[i,i+1],i) to the log
+           correctly as in the base case.
+
+         Subsubcase RKnown:
+           If it instead returns RKnown, then by the inductive hypothesis and part 1,
+           H1(logFS)(p)=Fi(w). Thus, ([ read ]) will read from the log, adding RF(p,w[i,i+1],i) to it
+           as required.
+
+         Notably, since we require that there wasn't an error, only those circumstances are allowable
+         and lookup_logR can't return RPartial.
+
+       Subcase readdir m:
+
+
+         If H(posix_fds)(m) = (p,i) for some p and i, and F(p) = Dir(l) then, by the definition of
+         [[ readdir ]], o = Some(RD(p,l[i,i+1],i)).
+         Given the same circumstances, lookup_logR may return either RUnknown, RPartial or RKnown. 
+         Subsubcase RUnknown:
+           If it returns RUnknown, then no changes have been made to path p, since by the inductive
+           hypothesis, the log has so far been correctly built up and by part 1, the VFS is correctly
+           extrapolated from there. So, F(p)=F'(p) and ([ readdir ]) adds RD(p,l[i,i+1],i) to the log
+           correctly as in the base case.
+         
+         Subsubcase RKnown:
+           If it instead returns RKnown, then by the inductive hypothesis and part 1,
+           H1(logFS)(p)=D(l,l',true). Thus, ([ readdir ]) will read from the log, adding RD(p,w[i,i+1],i)
+           to it as required.
+
+         Subsubcase RPartial:
+           If it returns RPartial, then H1(logFS)(p)=D(l1,l1',false). By the inductive hypothesis
+           and part 1, we know everything in l1 is in the directory F(p) and everything in l1'
+           is not. Here, ([ readdir ]) actually reads an entry from F'(p), and passes it
+           into the read_and_check helper routine. Notably, since F'(p) is not necessarily equal to
+           F(p), we do not yet know that the read entry is l[i,i+1] (as in the uncompiled case).
+           read_and_check checks what the correct entry to return is based on our extra knowledge,
+           and correctly updates the file descriptor index for future reads, while keeping tabs of
+	   the 'real' current index for logging. Thus, ([ readdir ]) adds RD(p,l[i,i+1],i) to the log 
+	   as desired.
+
+       Subcase write (n,w):
+
+         If H(posix_fds)(n) = (p,i) for some p and i, and F(p) = File(w) or None then, by the definition
+         of [[ write ]], o = Some(W(p,w,i)).
+         ([ write ]) will call record Write(n,w), which adds W(p,w,i) to the log, as desired.
+         Since those circumstances are required for there not to be an error, our property holds.
+
+       Subcase remove p:
+
+         If F(p) = File(_) or Dir([]) then, by the definition of [[ remove ]] o = Some(Rm(p)).
+         Given the same circumstances, lookup_logE will return TUnknown,TFile,TDir(b), or TNone.
+	 By the inductive hypothesis combined with part 1, we know that the VFS will correctly
+	 describe the current state of the filesystem.
+	 
+	 Subsubcase TUnknown:
+	   In this case, nothing has been changed on the path, thus it calls the test function and
+	   correctly determines what is at the path since F'(p)=F(p). Since this is an empty
+	   directory of a file, Rm(p) is correctly added to the log.
+
+	 Subsubcase TFile:
+	   In this case, the path contains a file in the VFS and thus in the parallel filesystem F,
+	   so Rm(p) is added to the log.
+
+	 Subsubcase TDir(true):
+	   In this case, the path contains an empty directory in the VFS and thus in the parallel filesystem F,
+	   so Rm(p) is added to the log.
+
+	 Subsubcase TDir(false):
+	   In this case, the path contains a non-empty directory in the VFS and thus in the parallel
+	   filesystem F. So, remove fails (in both cases), which can't happen by our assumption.
+
+	 Subsubcase TNone:
+	   In this case, the path is empty in the VFS and thus in the parallel filesystem F. 
+	   So, remove fails (in both cases), which can't happen by our assumption.
+
+	 In all cases, the right thing is added.
+
+       Subcase test:
+
+         In all cases, o = Some(Test(p)).
+         ([ test ]) calls record Test(p), which will add Test(p) to the log.
+     
+       Since it holds for all subcases, it holds for the inductive case and the base case,
+       so we conclude that the hypothesis holds.
+
+  3. Now that we know that the log is correct, we examine write_log to determine that it in
+     fact does the right thing for the right log step. 
+
+     Firstly, note that in the log the newest thing is first, so we want to do them in reverse order.
+     Write_log reverses the list, then goes through it one at a time implementing the changes.
+     
+     We proceed by induction on possible log entries:
+
+     Case Test(p):
        
-       Now we look at the build_fs function as that is the lynchpin
-       of all the other functions:
-       Assuming all other functions and compilations are correct,
-       calling build_fs builds up a virtual representation of 
-       what we currently know about the filesystem (we call this VFS).
-       In particular, if the transaction has not touched the path or
-       something beneath it in some manner, we know nothing, otherwise
-       the VFS has whatever we know, represented in the following
-       manner:
-       F(w) is a file containing string w.
-       T(n) means that the path contains a file and it is truncated
-       to length n.
-       Rm means whatever was there is now removed (so nothing is there).
-       Rn(p,n) means that the path contains whatever is at path p,
-       but truncated to length n (or not if n is 0).
-       D(l,l',b) means that the path is a directory containing
-       exactly what is in l (if b is true) and o.w.
-       at least what is in l minus what is in l', but we have yet
-       to read it so there could be more things.
+       By the definition of writer in write_log, tests are simply discarded. Since they do
+       not change the filesystem, by definition, this is fine.
 
-       Starting from the first piece of the log and going to the last one,
-       build_fs updates the VFS depending on what it sees as follows:
-       RF(p,c,i) - Accumulates all characters into acc until it gets the empty
-                   character at which point it makes p map to F(acc)
-       RD(p,d,i) - Accumulates all entries into acc until it gets the empty
-                   entry at which point it makes p map to D(acc,[],true)
-       T(p,n)   - 
-          If p doesn't map to anything then it makes path p map to T(n)
-          O.w. if p maps to F(w) it makes path p map to F(s) where 
-             s is w correctly truncated to n characters.
-          O.w. if p maps to some renamed file Rn(p',n') we make p map to Rn(p',n)
-       W(p,w)   -
-          If the path of the directory of p (dir(p)) doesn't map to anything
-             it makes p map to F(w) and dir(p) map to D([p],[],false) (since we 
-             now know a p is in dir(p), but haven't read it).
-          O.w. if dir(p) maps to D(l,l',b), it adds p into the sorted list of
-             paths l at the correct position if it's not in there already.
-             It then makes dir(p) map to that construct and makes p map to F(w).
-             Regardless of whether we had the complete list (b is true) or not
-             we continue to stay in that state since we just add what we know is
-             now there (or nothing if it already was).
-       Rm(p)    -
-          It maps p to Rm, then:
-          If dir(p) doesn't map to anything, it makes it map to D([],[p],false)
-             since the only thing we know about the directory is that it no
-             longer contains p.
-          O.w. if it maps to D(l,l',b), it removes p from list l and adds it
-             (in unique sorted order) to l'. It will be more clear why this
-             is correct when we get to reading directories, but basically
-             regardless if b is true, it will only ever check l,
-             which is fine since we removed it.
-             If b is false, it'll check l first (and not find it there) then l',
-             where it'll see that it's been removed.
-       Rn(p,p') -
-          It does Rm(p) (as above, but mapping p to Rm happens last), then:
-          If dir(p') doesnt' map to anything it makes it map to
-             D([p'],[],false) since we know there is a p' in the directory.
-          O.w. if it maps to D(l,l',b) we make it map to 
-             D(souq (p'::l),rem p' l',b).
-          If p originally mapped to some x, it makes p' map to x.
-          O.w. it makes p' map to Rn(p,0), signifying that it holds whatever
-             is in p, unchanged.
+     Case RF(p,c,n):
+       
+       By the definition of writer in write_log, reads are simply discarded. Since they do
+       not change the filesystem, by definition, this is fine. 
+
+     Case RD(p,w,n):
+       
+       By the definition of writer in write_log, reads are simply discarded. Since they do
+       not change the filesystem, by definition, this is fine. 
 
 
--- JDL to JNF: Start of proof of induction for property we want below.
+     Case W(p,w,n):
+       
+       By the definition of writer in write_log, first 'open p' is called, then 'write (fd,w)'
+       where fd is  the returned file descriptor, then 'close fd' is called.
+       Notably, the open and close do not affect the filesystem, and effectively cancel
+       each other out in terms of the heap.
+       write(fd,w) correctly writes w to p. The n argument is ignored, since we have
+       already assumed that the transactions only write full files.       
 
-       WTS: If H(log) = l', H(rl) = l, ([ c ]) = c’, c does not contain
-       atomic, <F',H,c’> —>* <F',H1,c1'> and H1(log) = x :: l' for some x,
-       then \exists c2 s.t. <F,H,c> —>* <F2,H2,c2> and H2(rl) = y :: l \implies
-       x=y where F is the result of applying l' to F'.
-       Proof: By induction on the length of the log in H and structure of the
-       commands and functions.
+     Case Rm(p):
+       
+       By the definition of writer in write_log, 'remove p' is simply called, which
+       will remove whatever is at p.
 
-       Base case: Length = 0
-       Note that F' = F. Now, we restrict ourselves to the portion of c that
-       changes H(rl). So, consider all possible functions that change
-       H(rl) noting that we need exactly one such change. Further, note that
-       the functions that modify the filesystem is a subset of those
-       modifying H(rl): c calls:
-
-       read (F,H,n) adding RF(p,c,i) to rl where (p,i) = H(posix_fds)(n)
-       and c = w[i] for some w s.t. F(p) = File(w).
-
-       readdir (F,H,n) adding RD(p,d,i) to rl where (p,i) = H(posix_fds)(n)
-       and d = l[i] for some l s.t. F(p) = Dir(l).
-
-       write (F,H,(n,w)) adding W(p,w,i) to rl where (p,i) = H(posix_fds)(n).
-
-       truncate (F,H,(p,n)) adding T(p,n) to rl.
-
-       rename (F,H,(p,p')) adding Rn(p,p') to rl.
-
-
-       -- Remove doesn't hold because it needs to read the directory to see if
-       it's empty. And in hindsight, it's possible test should 
-       remove (F,H,p) adding Rm(p) to rl. so y = Rm(p). ([ remove p ]) looks up
-       if p is in the log, which it isn't. It checks if p exists and is either
-       a file or an empty directory. 
-
-       -- Not strictly true
-       Note that if any of them fail, nothing is added, so we won't consider
-       that case.
-
-       Inductive case: Holds for n, show for n+1
+  So, by the analysis of ([ atomic c ]), we know only write_log changes the filesystem.
+  Further, by parts 1,2, and 3 above, we know that the log is correctly written and that 
+  write_log thus performs exactly the filesystem changing actions that c would have made.
+  This finishes our proof of the Lemma.
