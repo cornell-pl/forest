@@ -5,7 +5,7 @@ TARGET = main.pdf
 SOURCES = main.tex \
 	  main.bib \
 	  background.tex \
-          posix.tex
+          posix.tex \
 	  introduction.tex \
           txforest.tex \
 	  main.bbl
