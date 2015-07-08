@@ -47,20 +47,20 @@ that can be achieved by the system.
 %
 % Forest 1.0
 %
-Previous work on Forest developed type-based abstractions for file
-systems. The programmer writes a high-level specification that
-describes the expected structure of the file system, and the Forest
-compiler automatically generates an in-memory representation for the
-data as well as accompanying ``load'' and ``store'' functions. In
-addition, the framework provides generic tools for visualizing,
-summarizing, and validating file system data described in
-Forest. Forest solves the first two issues discussed above: it
-streamlines applications, since they can be written against high-level
-datatypes rather than having to use low-level file system APIs; and it
-also provides mechanisms for automatically detecting situations when
-assumptions about the structure of the file system have been
-violated. However, Forest's ``load'' and ``store'' functions are
-strictly best effort and do not provide any guarantees about
+Previous work on Forest~\cite{forest-icfp:fisher+} developed
+type-based abstractions for file systems. The programmer writes a
+high-level specification that describes the expected structure of the
+file system, and the Forest compiler automatically generates an
+in-memory representation for the data as well as accompanying ``load''
+and ``store'' functions. In addition, the framework provides generic
+tools for visualizing, summarizing, and validating file system data
+described in Forest. Forest solves the first two issues discussed
+above: it streamlines applications, since they can be written against
+high-level datatypes rather than having to use low-level file system
+APIs; and it also provides mechanisms for automatically detecting
+situations when assumptions about the structure of the file system
+have been violated. However, Forest's ``load'' and ``store'' functions
+are strictly best effort and do not provide any guarantees about
 consistency. When there are multiple concurrent users of the file
 system, low-level file system operations may be interleaved
 arbitrarily, leading to inconsistent results.

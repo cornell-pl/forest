@@ -6,6 +6,9 @@ SOURCES = main.tex \
 	  main.bib \
 	  background.tex \
           posix.tex
+	  introduction.tex \
+          txforest.tex \
+	  main.bbl
 
 all : $(TARGET)
 
