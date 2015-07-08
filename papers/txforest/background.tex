@@ -19,14 +19,14 @@ Figure~\ref{fig:SWAT-description} shows a simple Forest
 description of the running example we will use throughout this paper.
 
 Given such a description, the Forest compiler generates functions for
-(lazily) loading the contents of the filestore into a Haskell data
+(lazily) loading the contents of the file store into a Haskell data
 structure and for writing a Haskell data structure back to disk.
 Writing structures to disk is a two-step process.  In step one, a
 \textit{manifest} function writes the structure into a temporary space
 and notes any errors.  In step two, a \textit{store} function copies
 the temporary store into the correct location.  This two-step process
 allows Forest to detect errors without corrupting the mainline
-filestore and lets users determine whether the errors should halt the
+file store and lets users determine whether the errors should halt the
 writing process.
 
 The initial version of Forest did not attempt to ensure that 
@@ -35,7 +35,7 @@ corruption.  As the number of users manipulating the file store grows,
 this laissez-faire approach becomes untenable.  To address this
 weekness, this paper integrates transactions into Forest.  With
 Transactional Forest (TxForest) we ensure that all accesses to the
-filestore mediated by a Forest description will see and maintain a
+file store mediated by a Forest description will see and maintain a
 consistent view by aborting and restarting transactions that would
 otherwise have observed a conflict.
 
@@ -48,7 +48,7 @@ of land in a given watershed.  The model includes data related to the
 topology of the watershed, current land use of regions within the
 watershed, historic precipitation and temperature levels, measurements
 of water purity at various locations, etc.  This data is stored in a
-large collection of files and directories in the filesystem (XXX:how
+large collection of files and directories in the file system (XXX:how
 many files? how much data?).
 
 An example query that researchers using this tool might ask is

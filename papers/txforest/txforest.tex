@@ -7,12 +7,12 @@
 % Revised running example
 % Guarantees 
 
-In order to facilitate the construction of general transactions, TxForest programmers must be able to use transactional constructs to manipulate file system objects, side-by-side with the rich computations over ordinary data structures offered by its host language.
+In order to facilitate the construction of general transactions, TxForest programmers are able to use transactional constructs to manipulate the file system, side-by-side with the rich computations over ordinary data structures offered by its host language.
 This coupling of transactional and pure functional code is elegantly supported by the type system.
 
 \paragraph{Transactions}
 In Haskell, I/O actions with irrevocable side-effects, such as reading/writing to files or managing threads, are typed as operations in the primitive \cd{IO} monad.
-Akin to \emph{software transactional memory}~\cite{HaskellSTM}, forest memory transactions perform tentative filestore operations that can be rolled  back at any time. Therefore, they live within an explicitly different \cd{FTM} forest transactional monad.
+Akin to \emph{software transactional memory}~\cite{HaskellSTM}, forest memory transactions perform tentative file store operations that can be rolled  back at any time. Therefore, they live within an explicitly different \cd{FTM} forest transactional monad.
 One can execute a TxForest transaction atomically with respect to other concurrent transactions by placing it inside an \cd{atomic} function with type:
 \begin{code}
 atomic :: FTM a -> IO a
@@ -22,7 +22,7 @@ As a bonus, the type-level distinction between monads prevents non-transactional
 For the Haskell aficionados, the \cd{FTM} monad is also an instance of \cd{MonadPlus} (blocking and choice), \cd{MonadThrow} and \cd{MonadCatch} (throwing and catching user-defined exceptions).
 
 \paragraph{Transactional variables}
-TxForest interacts with the filesystem by means of shared \emph{forest transactional variables}. Variable types are declared with the \cd{var} keyword within the TxForest sublanguage. For each variable type declaration, the TxForest compiler generates an instance of the \cd{TxForest} type class:
+TxForest interacts with the file system by means of shared \emph{forest transactional variables}. Variable types are declared with the \cd{var} keyword within the TxForest sublanguage. For each variable type declaration, the TxForest compiler generates an instance of the \cd{TxForest} type class:
 \begin{code}
 class TxForest args ty rep | ty -> rep, ty -> args where
   new         :: args -> FilePath -> FTM ty
@@ -30,16 +30,16 @@ class TxForest args ty rep | ty -> rep, ty -> args where
   writeOrElse :: ty -> rep -> b
               -> (Manifest -> FTM b) -> FTM b
 \end{code}
-In the above signature, a variable of TxForest type \cd{ty} has a Haskell data representation of type \cd{rep}. A \cd{new} variable can be declared with argument data consistent with its forest type and rooted at the argument file path. A \cd{read} (lazily) loads the corresponding slice of the filesystem into memory and a \cd{writeOrElse} attempts to store a Haskell data structure on disk.
-Following this special interface, a transaction is able to log all filestore effects.
+In the above signature, a variable of TxForest type \cd{ty} has a Haskell data representation of type \cd{rep}. A \cd{new} variable can be declared with argument data consistent with its forest type and rooted at the argument file path. A \cd{read} (lazily) loads the corresponding slice of the file system into memory and a \cd{writeOrElse} attempts to store a Haskell data structure on disk.
+Following this special interface, a transaction is able to log all file store effects.
 
 \paragraph{Errors}
-Since TxForest descriptions define richer structured views of filestores, specific classes of \emph{forest errors} become evident to programmers, who can respond in application-specific ways.
-One such example is the tentative nature of \cd{writeOrElse}. Forest dependent types may impose certain data dependencies on the underlying Haskell representations that can not be statically checked by the type system. For example, all the site files listed in a SWAT log of Figure~\ref{fig:SWAT-description} must have names matching the \cd{time} pattern. (Precisely, only values that could be read from a filestore are deemed valid representations.) If these dependencies are not met, the write is aborted with a \emph{manifest error}, and a user-supplied alternate procedure is executed instead.
+Since TxForest descriptions define richer structured views of file stores, specific classes of \emph{forest errors} become evident to programmers, who can respond in application-specific ways.
+One such example is the tentative nature of \cd{writeOrElse}. Forest dependent types may impose certain data dependencies on the underlying Haskell representations that can not be statically checked by the type system. For example, all the site files listed in a SWAT log of Figure~\ref{fig:SWAT-description} must have names matching the \cd{time} pattern. (Precisely, only values that could be read from a file store are deemed valid representations.) If these dependencies are not met, the write is aborted with a \emph{manifest error}, and a user-supplied alternate procedure is executed instead.
 
-Nevertheless, a filestore does not need to conform perfectly to its associated TxForest description.
+Nevertheless, a file store does not need to conform perfectly to its associated TxForest description.
 Instead, TxForest (lazily) computes a summary of \emph{validation errors}. These may flag, for instance, that a required file can not be found or that an arbitrarily complex user-specified TxForest constraint is not satisfied.
-At any point, a programmer can explicitly demand the validation of the whole filestore bound to a transactional variable by calling:
+At any point, a programmer can explicitly demand the validation of the whole file store bound to a transactional variable by calling:
 \begin{code}
 validate :: TxForest args ty rep => ty -> FTM ForestErr
 \end{code}
@@ -52,9 +52,9 @@ validate :: TxForest args ty rep => ty -> FTM ForestErr
 TxForest is designed to the obey the following principles:
 \begin{itemize} 
 	\item Transactions are serializable. Successful transactions are guaranteed to run in serial order and failing transactions roll back and retry again;
-	\item Transactional operations are transparent, as if they were performed on the filesystem. All the transactional variables are kept consistent with the same filesystem;
-	\item Transactional variables are lazy. The content of a variable is only loaded from the filesystem when explicitly read or (recursively) validated;
-	\item Transactional reads and writes preserve data on round-trips. Reading a variable and immediately writing it back always succeeds and keeps the filesystem unchanged; and writing succeeds as long as reading the resulting filesystem yields the same in-memory representation.
+	\item Transactional operations are transparent, as if they were performed on the file system. All the transactional variables are kept consistent with the same file system;
+	\item Transactional variables are lazy. The content of a variable is only loaded from the file system when explicitly read or (recursively) validated;
+	\item Transactional reads and writes preserve data on round-trips. Reading a variable and immediately writing it back always succeeds and keeps the file system unchanged; and writing succeeds as long as reading the resulting file system yields the same in-memory representation.
 \end{itemize}
 
 
