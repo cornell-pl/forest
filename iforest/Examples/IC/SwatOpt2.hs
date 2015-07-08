@@ -4,7 +4,7 @@ module Examples.IC.SwatOpt where
 
 import Language.Pads.Padsc hiding (take, rest, head, numErrors)
 import Language.Forest.IC hiding (writeFile)
-import Examples.IC.Swat
+import Examples.IC.Swat2
 import Examples.IC.Universal
 
 import Control.Concurrent
@@ -40,6 +40,7 @@ copyOrError :: (Forest fs, FTK fs rep) => rep -> rep -> String -> FTM fs ()
 copyOrError orig copy e = copyOrElse orig copy () (Prelude.const $ error e)
 
 
+
 [ipads|
 data FlowEntry = FlowEntry {
     flowAgency :: StringME uc
@@ -68,11 +69,43 @@ data RCH = RCH {
 data Deviation = Deviation Double
 |]
 
+
 [txforest|
-  data FFlow = File Flow
-  data FRCH  = File RCH
-  data DeviationFile = File Deviation
+  data Preamble_f  = File Preamble
+  data BSN_f       = File SwatFile
+  data PCP_f       = File PCP
+  data TMP_f       = File TMP
+
+  data Flow_f      = File Flow                  -- Contains measured flow data.
+  data RCH_f       = File RCH                   -- Contains modeled flow information.
+  data Deviation_f = File Deviation     -- Contains deviation between modeled and measured flows.  
+                                          -- XXX: Shouldn't these be in the SWAT directory?
+  data Swat_d = Directory 
+     { cio is "file.cio" :: Preamble_f      -- master watershed file (options, inputs and output specifications)
+     , basin is <| getBasinPath cio |> :: BSN_f          -- physical information about basin
+     , pcps  is [f :: PCP_f | f <- matches (GL "*.pcp") ]     -- daily precipitation data
+     , tmps  is [f :: TMP_f | f <- matches (GL "*.tmp") ]     -- daily temperature data
+     }
 |]
+
+
+{- 
+ adaptor functions to make the code in the paper smoother.
+-}
+getBasinPath cio = getCioFile basinFile cio
+getCioFile :: (SwatLines -> FilePath) -> Preamble_f TxVarFS -> ReadOnlyFTM TxVarFS FilePath
+getCioFile f cio = liftM (f . swatLines) $ readData cio
+
+
+
+{-
+  XXXX: We should be able to replace 
+         FPreamble with File Preamble,
+         FPCP with File PCP
+         FTMP with File TMP
+         FBSN with File SwatLines, etc.
+     but at the moment if we do so, we get tons of type errors.
+-}
 
 type Path = String
 {- Constants -}
@@ -158,6 +191,10 @@ modifyBsnParams workingDir = do
 
 {- Calculuate the deviation of the flows predicated by the working model 
    from the measured flows -}
+{-
+   XXX: it seems wrong here that we are manipulating the path to the rch
+   file by hand rather than using forest to navigate.
+-}
 getNewDeviation :: Path -> IO Double
 getNewDeviation workingDir = do
   -- Read the measured flow.
@@ -189,16 +226,20 @@ runSWAT path = do
   If the newDeviation is smaller, then write the basin data with the updated
   parametrs to the SWAT data directory.
 -}
+{-
+  XXX: pads returns (rep, md) but iforest is returning (md, rep)
+       Is there a reason we can't be consistent?
+-}
 updateDeviation :: SwatLines -> Double -> FTM TxVarFS ()
 updateDeviation newBsn newDeviation =  do
-    (devInfo :: DeviationFile TxVarFS) <- new () deviationFile
+    (devInfo :: Deviation_f TxVarFS) <- new () deviationFile
     (devMd, Deviation currentDeviation) <- read devInfo
     guard (currentDeviation > newDeviation)
     (swatRep :: Swat_d TxVarFS) <- new () $ swatDataDir
     (dirMd, dir) <- read swatRep
-    (bsnMd, _  ) <- read $ bsn dir
-    writeOrError devInfo   (devMd, Deviation newDeviation) "Failed to write new deviation."
-    writeOrError (bsn dir) (bsnMd, SwatFile  newBsn)       "Failed to update SWAT Basin data."
+    (bsnMd, _  ) <- read $ basin dir
+    writeOrError devInfo     (devMd, Deviation newDeviation) "Failed to write new deviation."
+    writeOrError (basin dir) (bsnMd, SwatFile  newBsn)       "Failed to update SWAT Basin data."
 
 
 
@@ -301,14 +342,14 @@ setSurlag newDouble lines =
 updateDeviation' :: SwatLines -> Double -> FTM TxVarFS ()
 updateDeviation' newBsn newDeviation = 
   (( do
-    (devInfo :: DeviationFile TxVarFS) <- new () deviationFile
+    (devInfo :: Deviation_f TxVarFS) <- new () deviationFile
     (devMd, Deviation currentDeviation) <- read devInfo
     if currentDeviation > newDeviation then do
         (swatRep :: Swat_d TxVarFS) <- new () $ swatDataDir
         (dirMd, dir) <- read swatRep
-        (bsnMd, _  ) <- read $ bsn dir
+        (bsnMd, _  ) <- read $ basin dir
         writeOrError devInfo   (devMd, Deviation newDeviation) "Failed to write new deviation."
-        writeOrError (bsn dir) (bsnMd, SwatFile  newBsn)       "Failed to update SWAT Basin data."
+        writeOrError (basin dir) (bsnMd, SwatFile  newBsn)       "Failed to update SWAT Basin data."
         return ()
     else do
         return ()) :: FTM TxVarFS ())

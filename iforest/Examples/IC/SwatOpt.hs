@@ -83,10 +83,10 @@ getNewDirectory = do
   threadID <- myThreadId
   createTempDirectory "/tmp/Swat/" $ (drop 9 $ show threadID)
 
-runSwat :: FilePath -> IO ()
-runSwat path = do
+runSWAT :: FilePath -> IO ()
+runSWAT path = do
   setCurrentDirectory path
-  callProcess swatLocation []
+  callProcess executableSWAT []
 
 writeCurrent :: FilePath -> IO ()
 writeCurrent maxFile = do
