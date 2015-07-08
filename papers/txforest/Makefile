@@ -4,7 +4,8 @@ TARGET = main.pdf
 
 SOURCES = main.tex \
 	  main.bib \
-	  background.tex
+	  background.tex \
+          posix.tex
 
 all : $(TARGET)
 

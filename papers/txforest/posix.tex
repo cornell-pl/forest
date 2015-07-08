@@ -1,0 +1,274 @@
+We present a core calculus for working with POSIX, which we call IMPOSIX.
+We start by discussing some of the reasons why one might want a core calculus
+rather than a more advanced, Sewell-esque formalism followed by some
+subtleties arising from using POSIX as the underlying filesystem model for 
+Forest (\ref{subsec:posix-discussion}).
+We then describe the semantics of our core calculus and some of the differences
+from standard POSIX (\ref{subsec:posix-semantics}).
+In \ref{subsec:posix-translation} we define a translation from TxForest to IMPOSIX 
+before finally proving serializability in fully Forested programs (\ref{subsec:posix-proof}).
+
+\subsection{Discussion}
+\label{subsec:posix-discussion}
+
+The motivation for using a core calculus rather than a Sewell-esque formalism
+is largely simplicity. Sewell-esque formalism are fantastic for large
+real-world proofs of complicated systems, but in some situations you don't
+need the level of detail or even accuracy that they offer and the simplicity
+of dealing with just a core calculus of POSIX is beneficial.
+
+In choosing POSIX as the filesystem model underlying Forest, we
+believe we have the large benefit of being immediately applicable to
+real-world systems since many filesystems do use POSIX as the core
+model. A toy filesystem may have offered more power, but would also have a much
+higher barrier to adoption, which goes against one of Forest's core creeds.
+
+However, this also presents a number of subtle problems. For example,
+POSIX solely offers advisory file locking (as opposed to mandatory).
+There are a variety of arguably good reasons why they choose to do this,
+but the effect on Transactional Forest is that we can't offer
+transactionality with respect to arbitrary processes making changes on the
+filesystem. We could be transactional w.r.t. those adhering to advisory
+file locks and we are inherently transactional within Forest threads.
+
+\subsection{Semantics}
+\label{subsec:posix-semantics}
+
+In our core calculus, we include the POSIX operations,
+open, close, read, readdir, write, remove, test, and lockf.
+In most cases these work similarly to POSIX, but with some simplifications,
+particularly in regards to errors. For example open cannot fail and
+read can only get one type of error whether it fails due to the argument
+not being a file descriptor or the file descriptor not pointing to a file.
+lockf works on whole files instead of pieces of them and simply allow 
+locking and unlocking while test is slightly more powerful in that it
+can not only tell you if a path has a file, a directory, or nothing,
+but also if it is a directory, whether or not it is empty. 
+This is largely done for simplicity, but in practice one could
+simply check by opening and trying to read a directory instead. The
+exact semantics are described in Figure~\ref{fig:posix-semantics}
+along with a standard IMP-like construction for command and
+expression evaluation.
+
+\begin{figure}
+\caption{POSIX Semantics goes here}
+\label{fig:posix-semantics}
+\end{figure}
+
+\subsection{Translation to IMPOSIX}
+\label{subsec:posix-translation}
+
+
+
+\subsection{Proof of Serializability}
+\label{subsec:posix-proof}
+
+We define a compilation function, which runs on the IMPOSIX translation
+and turns it into our transactional code.
+
+
+
+Now we move on to proving that compiled atomic statements exhibit mutual
+serializability.
+
+\begin{comment}
+
+\begin{figure*}
+\begin{minipage}{.5\linewidth}
+\begin{displaymath}
+\begin{array}{l@{\quad}l@{\,}c@{\,}ll@{}}
+ \textrm{Switch} & \S & ::= & \mkS(\sw,\pts,\SF,\inp,\outp,\inm,\outm)  \\
+ \textrm{Controller} & \C & ::= & \mkC(\Cst,\Cin,\Cout) \\
+ \textrm{Link} & \Lt & ::= & 
+  \mkL((\sw_{\mathit{src}},\pt_{\mathit{src}}),\pks,
+       (\sw_{\mathit{dst}},\pt_{\mathit{dst}})) \\
+ \textrm{Link to Controller} & \Mt & ::= & \mkM(\sw,\CSL,\SCL) \\
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Devices}}
+\end{minipage}\begin{minipage}{.5\linewidth}
+\begin{displaymath}
+\begin{array}{l@{\quad}l@{\,}c@{\,}ll@{}}
+ \textrm{Ports on switch} & \pts & \in & \{\pt\} \\
+ \textrm{Input/output buffers} & \inp,\outp & \in & 
+  \multiset{(\pt,\pk)} \\
+ \textrm{Messages from controller} & 
+  \inm & \in & \multiset{\CS} \\
+ \textrm{Messages to controller} & 
+  \outm & \in & \multiset{\SC} \\
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Switch Components}}
+\end{minipage}
+
+\end{figure*}
+\begin{comment}
+
+\begin{minipage}{.5\linewidth}
+\begin{displaymath}
+\begin{array}{l@{\quad}l@{\,}c@{\,}ll@{}}
+ \textrm{Controller state} & \Cst & & \\
+ \textrm{Controller input relation} & \Cin & \in 
+   \sw \times \SC \times \Cst \crel \Cst \\
+ \textrm{Controller output relation} & \Cout & \in 
+   \Cst \crel \sw \times \CS \times \Cst \\
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Controller Components}}
+\end{minipage}\begin{minipage}{.5\linewidth}
+\begin{displaymath}
+\begin{array}{@{}l@{\quad}l@{\,}c@{\,}l@{\,}l@{}}
+& \textrm{Message queue from controller} & 
+  \CSL & \in & \queue{\CS_1\cdots\CS_n} \\
+& \textrm{Message queue to controller} & 
+  \SCL & \in & \queue{\SC_1\cdots\SC_n} \\
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Controller Link}}
+\end{minipage}
+
+%\begin{minipage}{.5\linewidth}
+\begin{displaymath}
+\begin{array}{l@{\quad}l@{\,}c@{\,}ll@{}}
+ \textrm{From controller} & 
+  \textrm{\CS} & ::= & \FlowMod{\SFMod} \mid \PktOut{\pt~\pk} \mid \BarrierRequest{n}\\
+ \textrm{To controller} &
+  \textrm{\SC} & ::= & \PktIn{\pt~\pk} \mid \BarrierReply{n} \\
+ \textrm{Table update} & \SFMod & ::= & \addflow{\prio}{\Patt}{\Action} 
+            \alt \delflow{\Patt}
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Abstract OpenFlow Protocol}}
+%\end{minipage}
+
+\infrule[Fwd]
+{\SFint{\SF}(\pt,\pk) \crel 
+ (\multiset{\pt'_1\cdots \pt'_n}, \multiset{\pk'_1\cdots \pk'_m})}
+{\begin{array}{ll}
+ & \mkS(\sw,\pts,\SF,\multiset{(\pt,\pk)} \uplus \inp,\outp,\inm,\outm) \\
+ \obsstep{(\sw,\pt,\pk)} &
+ \mkS(\sw,\pts,\SF,\inp,\multiset{(\pt'_1,\pk)\cdots (\pt'_n,\pk)} \uplus \outp,
+  \inm, \multiset{\PktIn~\pt~\pk'_1 \cdots \PktIn~\pt~\pk'_m} \uplus\outm)
+ \end{array}}
+
+\squeezev\squeezev
+\infrule[Wire-Send]
+{}
+{\begin{array}{ll}
+ & \mkS(\sw,\pts,\SF,\inp,\multiset{(\pt,\pk)} \uplus \outp,\inm,\outm) 
+    \parcomp
+   \mkL((\sw,\pt),\pks,(\sw',\pt')) \\
+ \taustep &
+   \mkS(\sw,\pts,\SF,\inp,\outp,\inm,\outm) 
+    \parcomp
+   \mkL((\sw,\pt),\queue{\pk}\app\pks,(\sw',\pt'))
+  \end{array}}
+ 
+\squeezev\squeezev
+\infrule[Wire-Recv]
+{}
+{\begin{array}{ll}
+ & \mkL((\sw',\pt'),\pks\app\queue{\pk},(\sw,\pt)) \parcomp
+   \mkS(\sw,\pts,\SF,\inp,\outp,\inm,\outm)
+   \\
+ \taustep &
+   \mkL((\sw',\pt'),\pks,(\sw,\pt)) \parcomp
+   \mkS(\sw,\pts,\SF,\multiset{(\pt,\pk)} \uplus \inp,\outp,\inm,\outm)
+\end{array}}
+
+\squeezev\squeezev
+\infrule[Add]
+{\squeezeh}
+{\squeezeh\mkS(\sw,\pts,\SF,\inp,\outp,\multiset{\!\FlowMod{\addflow{m}{\Patt}{\Action}}\!}\uplus\inm,\outm)
+ \taustep
+ \mkS(\sw,\pts,\SF \uplus \multiset{(m,\Patt,\Action)},\inp,\outp,\inm,\outm)}
+
+\squeezev\squeezev
+\infrule[Del]
+{\SF_{rem} = \multiset{(\prio',\Patt',\Action') \mid 
+            \textrm{$(\prio',\Patt',\Action') \in \SF$ and $\Patt \ne \Patt'$}}}
+{\begin{array}{ll}
+& \mkS(\sw,\pts,\SF,\inp,\outp,\multiset{\FlowMod{\delflow{\Patt}}}\uplus\inm,
+      \outm) 
+ \taustep 
+ \mkS(\sw,\pts,
+      \SF_{rem},
+      \inp,\outp,\inm,\outm)
+\end{array}}
+
+\squeezev\squeezev
+\infrule[PktOut]
+{\pt \in \pts}
+{\mkS(\sw,\pts,\SF,\inp,\outp,\multiset{\PktOut{\pt~\pk}}\uplus\inm,\outm)
+ \taustep
+ \mkS(\sw,\pts,\SF,\inp,\multiset{(\pt,\pk)} \uplus \outp,\inm,\outm)}
+
+\squeezev\squeezev
+\infrule[Ctrl-Send]
+{\Cout(\Cst) \crel (\sw,\CS,\Cst')}
+{\mkC(\Cst,\Cin,\Cout) \parcomp 
+ \mkM(\sw,\CSL,\SCL)
+ \taustep
+ \mkC(\Cst',\Cin,\Cout) \parcomp 
+ \mkM(\sw,\queue{\CS} \app \CSL,\SCL)}
+
+\squeezev\squeezev
+\infrule[Ctrl-Recv]
+{\Cin(\sw,\Cst,\SC) \crel \Cst'}
+{\mkC(\Cst,\Cin,\Cout)
+ \parcomp 
+ \mkM(\sw,\CSL,\SCL\app\queue{\SC})
+ \taustep
+ \mkC(\Cst',\Cin,\Cout)
+ \parcomp 
+ \mkM(\sw,\CSL,\SCL)}
+
+
+\squeezev\squeezev
+\infrule[Switch-Recv-Ctrl]
+{\CS\ne\BarrierRequest{n}}
+{\begin{array}{ll}
+ &
+ \mkM(\sw,\CSL\app\queue{\CS},\SCL)
+ \parcomp
+ \mkS(\sw,\pts,\SF,\inp,\outp,\inm,\outm) \\
+ \taustep &
+ \mkM(\sw,\CSL,\SCL)
+ \parcomp
+ \mkS(\sw,\pts,\SF,\inp,\outp,\multiset{\CS}\uplus\inm,\outm)
+ \end{array}}
+
+\squeezev\squeezev
+\infrule[Switch-Recv-Barrier]
+{}
+{\begin{array}{ll}
+ &
+ \mkM(\sw,\CSL\app\queue{\BarrierRequest{n}},\SCL)
+ \parcomp
+ \mkS(\sw,\pts,\SF,\inp,\outp,\emptymset,\outm) \\
+ \taustep &
+ \mkM(\sw,\CSL,\SCL)
+ \parcomp
+ \mkS(\sw,\pts,\SF,\inp,\outp,\emptymset,\multiset{\BarrierReply{n}}\uplus\outm)
+ \end{array}}
+
+\squeezev\squeezev
+\infrule[Switch-Send-Ctrl]
+{}
+{\begin{array}{ll}
+ & 
+ \mkS(\sw,\pts,\SF,\inp,\outp,\inm,\multiset{\SC} \uplus \outm) \parcomp
+ \mkM(\sw,\CSL,\SCL) \\
+ \taustep &
+ \mkS(\sw,\pts,\SF,\inp,\outp,\inm,\outm) \parcomp
+ \mkM(\sw,\CSL,\queue{\SC}\app\SCL)
+ \end{array}}
+
+\squeezev\squeezev
+\infrule[Congruence]
+{\Sys_1 \taustep \Sys_1'}
+{\Sys_1 \parcomp \Sys_2 \taustep \Sys_1' \parcomp \Sys_2}
+\caption{Featherweight OpenFlow syntax and semantics.}
+\label{fig:fwof}
+\end{figure*}
+\end{comment}

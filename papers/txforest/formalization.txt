@@ -137,7 +137,8 @@ Built-in POSIX functions and their semantics
    if n \in H(posix_fds) then
      let (p,i) = H(posix_fds)(n) in
      match F(p) with
-     | Some(File(w)) -> 
+     | Some(File(w)) 
+     | Some(Lock(File(w))) -> 
         let H' = H[posix_fds(n) :=  (p,i+1)] in
         let c = w[i,i+1] in
         (F,H',c, Some(RF(p,c,i)))
@@ -149,6 +150,7 @@ Built-in POSIX functions and their semantics
    if n \in H(posix_fds) then
      let (p,i) = H(posix_fds)(n) in
      match F(p) with
+     | Some(Lock(Dir(l)))
      | Some(Dir(l)) -> 
         let H' = H[posix_fds(n) :=  (p,i+1)] in
         let f = l[i,i+1] in
@@ -161,6 +163,10 @@ Built-in POSIX functions and their semantics
    if n \in H(posix_fds) then
      let (p,i) = H(posix_fds)(n) in
      match F(p) with
+     | Some(Lock(File(u))) ->
+        let F' = F[p := Lock(File(u[i] := w))] in             -- JDL: Better way to write this?
+        let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
+        (F',H',0,Some(W(p,w,i)))
      | Some(File(u)) ->
         let F' = F[p := File(u[i] := w)] in             -- JDL: Better way to write this?
         let H' = H[posix_fds(n) :=  (p,i + |w|)] in 
@@ -175,6 +181,8 @@ Built-in POSIX functions and their semantics
 
 [[ remove ]] = fun (F,H,p) ->
    match F(p) with
+   | Some(Lock(File(_))) 
+   | Some(Lock(Dir([]))) 
    | Some(File(_)) 
    | Some(Dir([])) ->
       let F' = F \ p in
@@ -188,8 +196,11 @@ Built-in POSIX functions and their semantics
 [[ test ]] = fun (F,H,p) ->
    let b = 
      match F(p) with
+     | Some(Lock(File(_)))
      | Some(File(_)) -> 0
+     | Some(Lock(Dir([])))
      | Some(Dir([])) -> 2
+     | Some(Lock(Dir(_))) 
      | Some(Dir(_))  -> 1
      | _ -> -1
    in 
