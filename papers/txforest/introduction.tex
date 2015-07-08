@@ -70,15 +70,15 @@ arbitrarily, leading to inconsistent results.
 %
 As an example to illutrate the ways that consistency failures can lead
 to incorrect results, consider the following real-world
-application. The Soil and Water Assessment Tool (SWAT) is a widely
-tool that models the impact of various land management practices in
+application. The widely used Soil and Water Assessment Tool (SWAT)~\cite{SWAT} 
+models the impact of various land management practices in
 large watersheds. An environmental scientist might use SWAT to predict
 the effects on local rivers and streams that would result from
-changing the type of crops and fertilizers used on farms, or by
-replacing farmland with a new suburban development. SWAT represents
+changing crops and fertilizers or
+replacing farmland with a suburban development. SWAT represents
 data about the watershed in a structured directory with a large
 collection of files, each recorded in a master ``index'' file and
-stored under a specific name and extension in the directory and with a
+stored with a specific name and extension in the directory and with a
 specific, although varying structure. An attractive feature of SWAT is
 that it includes tools and interfaces for connecting to other datasets
 and frameworks for modeling watershed dynamics, which allows
