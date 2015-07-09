@@ -31,17 +31,16 @@ running SWAT over the datastore with the parameters set to the desired
 values.  If the deviation is higher than desired, the scientists
 randomly perturb the parameters and rerun the calibration.  
 
-We used TxForest to parallelize this process.  
-
-
-Each thread searches a
-portion of the parameter space.  The threads communicate via a shared file
-(with format \texttt{Deviation\_f}) that stores the best deviation
-found so far.   
-
-The calibration process starts by initializing the deviation to 
-sentinel value that will be replaced by the first thread to finish its
-search. 
+We used TxForest to parallelize this process.  At a high level, the
+code spawns a number of threads, each of which searches a portion of
+the parameter space.  Each thread atomically copies the SWAT filestore
+to a thread-local location.  It then sets the Basin parameters to a
+new point in the search space, calls the SWAT executable to calculate
+the impact of these parameters, computes the resulting deviation from
+the measured flow, and atomically copies the values back to the SWAT
+filestore if the new deviation is less than the previously seen
+minimum. \figref{fig:SWAT-code} shows the most important pieces of
+this code. 
 
 \begin{figure}
 \begin{code}
@@ -64,7 +63,7 @@ optSWAT = do
    to its working space, modifies the Basin parameters,
    runs SWAT on the working space, calculates the new 
    deviation, and updates the global deviation atomically.}
-iterateSWAT :: Path -> IO ()
+iterateSWAT :: FilePath -> IO ()
 iterateSWAT workingDir = do
   atomically (copySWATData workingDir)
   newBsn <- modifyBsnParams workingDir
@@ -73,29 +72,35 @@ iterateSWAT workingDir = do
   atomically (updateDeviation newBsn newDeviation)
 
 \mbox{}
-\hscomment{Copy all data from the SWAT datastore to a
-   temporary directory.}
+\hscomment{Copy SWAT filestore to working filestore.}
 copySWATData :: FilePath -> FTM TxVarFS ()
-copySWATData tmpDir = do
+copySWATData workingDir = do
     (orig :: Universal_d TxVarFS) <- new () swatDataDir
-    (copy :: Universal_d TxVarFS) <- new () tmpDir
+    (copy :: Universal_d TxVarFS) <- new () workingDir
     copyOrError orig copy ``Failed to copy SWAT data.''
 
 \mbox{}
-modifyBsnParams :: Path -> IO SwatLines
+\hscomment{Modify basin parameters in working filestore,
+   including SURLAG and ESCO parameters.}
+modifyBsnParams :: FilePath -> IO SwatLines
 modifyBsnParams workingDir = ...
 
 \mbox{}
-getNewDeviation :: Path -> IO Double
+\hscomment{Calculuate deviation between measured and predicted 
+   outflows in the working filestore.}
+getNewDeviation :: FilePath -> IO Double
 getNewDeviation workingDir = ...
 
 \mbox{}
+\hscomment{Run SWAT executable on working filestore. }
 runSWAT :: FilePath -> IO ()
-runSWAT path = do
-  setCurrentDirectory path
+runSWAT workingDir = do
+  setCurrentDirectory workingDir
   callProcess swatExe []
 
 \mbox{}
+\hscomment{Replace the basin file in SWAT filestore if the 
+   newDeviation is smaller than the current one.}
 updateDeviation :: SwatLines -> Double -> FTM TxVarFS ()
 updateDeviation newBsn newDeviation =  do
   (dInfo :: Deviation_f TxVarFS) <- new () deviationFile
@@ -111,7 +116,7 @@ updateDeviation newBsn newDeviation =  do
 
 
 \end{code}
-\caption{TxForest code.}
+\caption{TxForest code for calibrating SWAT.}
 \label{fig:SWAT-code}
 \end{figure}
 
