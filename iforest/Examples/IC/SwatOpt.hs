@@ -71,20 +71,20 @@ data MaxFile = File Max
 escoRange = (0.1, 1.0)
 surlagRange = (0.0, 15.0)
 
-rootDir = "."
-optDir = "/home/vagrant/forest/iforest/Examples/IC/bolo_arriba"
+rootDir = "/home/vagrant/forest/iforest" -- change this to proper location
+optDir = rootDir </> "Examples/IC/bolo_arriba"
 
 maxFile = "/tmp/maxOpt"
-flowFile = "/home/vagrant/Downloads/flow.dat"
-swatLocation = "/home/vagrant/R/i686-pc-linux-gnu-library/3.2/SWATmodel/libs/i686/rswat2012.exe"
+flowFile = rootDir </> "Examples/IC/Swat/flow.dat"
+executableSWAT = rootDir </> "Examples/IC/Swat/rswat2012.exe"
 
 getNewDirectory :: IO FilePath
 getNewDirectory = do
   threadID <- myThreadId
   createTempDirectory "/tmp/Swat/" $ (drop 9 $ show threadID)
 
-runSWAT :: FilePath -> IO ()
-runSWAT path = do
+runSwat :: FilePath -> IO ()
+runSwat path = do
   setCurrentDirectory path
   callProcess executableSWAT []
 

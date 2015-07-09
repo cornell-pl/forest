@@ -109,11 +109,12 @@ getCioFile f cio = liftM (f . swatLines) $ readData cio
 
 type Path = String
 {- Constants -}
-swatExe  = "/home/vagrant/R/i686-pc-linux-gnu-library/3.2/SWATmodel/libs/i686/rswat2012.exe"
 
-rootDir = "."
-swatDataDir = "/home/vagrant/forest/iforest/Examples/IC/bolo_arriba"
-measuredFlowFile    = "/home/vagrant/Downloads/flow.dat"
+rootDir = "/home/vagrant/forest/iforest"
+
+swatExe  = rootDir </> "Examples/IC/Swat/rswat2012.exe"
+swatDataDir = rootDir </> "Examples/IC/bolo_arriba"
+measuredFlowFile    = rootDir </> "Examples/IC/Swat/flow.dat"
 
 deviationFile = "/tmp/deviationt"
 deviationMax = Deviation 5000000
