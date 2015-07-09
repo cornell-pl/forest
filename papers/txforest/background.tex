@@ -9,90 +9,27 @@
 %%\item Transactions to the rescue
 %%\end{itemize}
 
-To explain the design of TxForest, we will use a running example drawn
-from the field of agriculture science, specifically SWAT.  This
-modeling tool allows researchers to explore tradeoffs related to
-different uses of land in a given watershed.  The model includes data
-related to the topology of the watershed, current land use of regions
-within the watershed, historic precipitation and temperature levels,
-measurements of water purity at various locations, etc.  This data is
-stored in a large collection of files and directories in the file
-system.  A typical data SWAT installation contains XXX:hundreds of
-files and require roughly XXX of disk space.  This data is documented
-in a 654~page manual available on the web~\cite{SWAT-IO-Documentation}.
+To explain the design of TxForest, we use a running example drawn from
+the field of agriculture science, specifically SWAT.  This modeling
+tool allows researchers to explore tradeoffs related to land use in a
+given watershed.  The model incorporates data related to the topology
+of the watershed, current land use, historic precipitation and
+temperature levels, measurements of water purity at various locations,
+\textit{etc}.  This data is stored in a large collection of files and
+directories in the file system.  A typical SWAT installation contains
+thousands of files.  The data and required formats are documented in a
+654~page manual available on the web~\cite{SWAT-IO-Documentation}. We
+call such a structured use of the file system a \textit{filestore}.
 
-The Forest language was designed to describe exactly this kind of
-datastore.  It includes primitives for describing files,
-directories, symbolic links, and associated meta-data.  Meta-data
-includes names, owners, groups, permissions, sizes, and timestamps.
-File contents may be represented as simple strings in a variety of
-encodings or as structured data using Pads
+The Forest language was designed to describe filestores such as SWAT.
+The language includes primitives for describing files, directories,
+symbolic links, and associated meta-data such as names, owners,
+groups, permissions, sizes, and timestamps.  File contents may be
+represented as unstructured strings in a variety of encodings or as
+structured data using Pads
 descriptions~\cite{fisher+:pads,fisher-walker:icdt}. Forest is
 implemented using Haskell's quasi-quotation
-mechanism~\cite{Mainland:quasi}.  Figure~\ref{fig:SWAT-description}
-shows a (partial) Forest description of the SWAT datastore
-that we will use as a running example throughout this paper.
-
-The TxForest declarations appear within \texttt{[txforest|...|]}
-quasiquotation brackets, allowing us to embed TxForest within Haskell
-code files.  The SWAT description starts by declaring a number of
-different file formats by applying the \texttt{File} constructor to
-a PADS format description.  (For brevity, we omit the PADS
-descriptions).   For example, the TxForest file format
-\texttt{Preamble\_f}, which contains SWAT configuration information,
-is described by the PADS type \texttt{Preamble}.
-The other TxForest file formats in the figure use PADS types to
-describe the format of files storing 
-physical information about the watershed basin (\texttt{BSN\_f}),
-daily precipitation data (\texttt{PCP\_f}),
-daily temperature data (\texttt{TMP\_f}),
-measured waterflow out of the basin (\texttt{Flow\_f}),
-modeled waterflow out of the region (\texttt{RCH\_f}),
-and the deviation between the measured and modeled outflows (\texttt{Deviation\_f}).
-
-Given these file formats, the description describes the root SWAT
-directory, \texttt{Swat\_d}.  This description of this directory
-starts with the master watershed file, which has internal name
-\texttt{cio}, on-disk name \texttt{file.cio}, and a file format
-described by \texttt{Preamble\_f}.  The next component of the
-directory is the \texttt{basin} field, which XXX (landing in Boston...)
-
-
-
-
-Given such a description, the Forest compiler generates functions for
-(lazily) loading the contents of the file store into a Haskell data
-structure and for writing a Haskell data structure back to disk.
-Writing structures to disk is a two-step process.  In step one, a
-\textit{manifest} function writes the structure into a temporary space
-and notes any errors.  In step two, a \textit{store} function copies
-the temporary store into the correct location.  This two-step process
-allows Forest to detect errors without corrupting the mainline
-file store and lets users determine whether the errors should halt the
-writing process.
-
-The initial version of Forest did not attempt to ensure that 
-concurrent loads and stores did not cause inconsistencies or
-corruption.  As the number of users manipulating the file store grows,
-this laissez-faire approach becomes untenable.  To address this
-weekness, this paper integrates transactions into Forest.  With
-Transactional Forest (TxForest) we ensure that all accesses to the
-file store mediated by a Forest description will see and maintain a
-consistent view by aborting and restarting transactions that would
-otherwise have observed a conflict.
-
-
-An example query that researchers using this tool might ask is
-``what type of land use assignment to a given area of a watershed
-keeps corn yield above a threshold, maintains housing capacity above
-another threshold, and minimizes nitrate levels in nearby streams.''
-The SWAT approach to solving such queries involves a concurrent black-box
-optimization process in which each thread reads the current values of
-all relevant parameters from the file system, computes the current
-value of the optimization function, and makes local changes, and re-runs
-the optimization function. If the new result is higher than the old
-one, the tool writes those changes back into the file system.  Figure
-~\ref{fig:SWAT-opt-code} shows Forest code that replicates this process.
+mechanism~\cite{Mainland:quasi}.
 
 \begin{figure}
 \begin{code}
@@ -119,12 +56,122 @@ one, the tool writes those changes back into the file system.  Figure
 \label{fig:SWAT-description}
 \end{figure}
 
+
+\figref{fig:SWAT-description}
+shows a (partial) Forest description of the SWAT filestore that we use
+as a running example in this paper.
+The TxForest declarations appear within \texttt{[txforest|...|]}
+quasiquotation brackets, allowing us to embed TxForest within Haskell
+code files.  The SWAT description starts by declaring a number of
+different file formats by applying the \texttt{File} constructor to
+a PADS format description.  (For brevity, we omit the PADS
+descriptions).   For example, the TxForest file format
+\texttt{Preamble\_f}, which contains SWAT configuration information,
+is described by the PADS type \texttt{Preamble}.
+The other TxForest file formats in the figure use PADS types to
+describe the format of files storing 
+physical information about the watershed basin (\texttt{BSN\_f}),
+daily precipitation data (\texttt{PCP\_f}),
+daily temperature data (\texttt{TMP\_f}),
+measured waterflow out of the basin (\texttt{Flow\_f}),
+modeled waterflow out of the basin (\texttt{RCH\_f}),
+and the deviation between the measured and modeled outflows (\texttt{Deviation\_f}).
+
+Given these file formats, the description specifies the root SWAT
+directory, \texttt{Swat\_d}.  This directory includes the master
+watershed file, which has internal name \texttt{cio}, on-disk name
+\texttt{file.cio}, and a file format described by
+\texttt{Preamble\_f}.  The next component of the directory is the
+\texttt{basin} field, whose format is described by the \texttt{BSN\_f}
+file type.  The on-disk name of the \texttt{basin} component is given
+in the \texttt{cio} file.  The Haskell code \texttt{getBasinPath cio},
+included in TxForest using the anti-quotation notation
+\texttt{<|...|>} extracts this path information from the configuration
+file.  The next component in the SWAT directory is internally named
+\texttt{pcps}; this component stores daily precipitation information.
+It is stored on disk as a collection of files each of which has the
+\texttt{PCP\_f} file format and the \texttt{.pcp} file extension.  The
+SWAT description uses TxForest's file comprehension and Glob matching
+facilities to bind the \texttt{pcp} internal name to the list of files
+matching this specification.  Similarly, the \texttt{tmps} component
+specifies the collection of files that contain daily temperature
+information.
+
+Given such a description, the TxForest compiler generates Haskell data
+structures for storing in-memory representations of the on-disk data
+and associated metadata, including any discrepancies detected between
+the TxForest description and the actual filestore.  TxForest also
+generates functions for (lazily) loading the contents of the filestore
+into the generated Haskell data structures and for writing the
+information in these Haskell data structures back to the datastore in
+the required formats.
+
+\cut{Writing structures to disk is a two-step
+process.  In step one, a \textit{manifest} function writes the
+structure into a temporary space and notes any errors.  In step two, a
+\textit{store} function copies the temporary store into the correct
+location.  This two-step process allows TxForest to detect errors
+without corrupting the mainline file store and lets users determine
+whether the errors should halt the writing process.}
+
+The original Forest implementation did not prevent concurrent loads
+and stores from causing inconsistencies or corruption.  As the number
+of users manipulating a filestore grows, such a laissez-faire approach
+becomes untenable.  In this paper, we address this weakness by
+integrating transactions into Forest.  Transactional Forest (TxForest)
+ensures that all accesses to the filestore mediated by a Forest
+description will see and maintain a consistent view by aborting and
+restarting transactions that would otherwise have created a
+conflict. The design of the description language is unchanged: the
+TxForst description in \figref{fig:SWAT-description} is also a valid
+Forest description.  The difference between TxForest and Forest lies
+in the generated code for loading and storing files and in how the
+user accesses the in-memory representations.
+
+The process that SWAT users follow to calibrate their models
+illustrates the utility of transactions.  The goal of calibration is
+to tune various model parameters stored in the filestore so that the
+outflow predicated by SWAT matches the measured outflow as closely as
+possible.  Because SWAT is a black-box executable developed over
+decades, researchers perform this calibration by searching through the
+parameter space: they set the parameters in the filestore, run SWAT,
+calculate the deviation between the modeled and predicted value, and
+repeat until they find a set of parameters with an acceptable
+deviation.  Using TxForest, we are able to parallelize this search.
+Each thread atomically copies the SWAT datastore to thread-local
+space, sets the parameters, invokes SWAT on the thread-local
+filestore, checks if the calculuated deviation is the best found by
+any thread so far, and if so, atomically writes the new parameter
+values back into the SWAT filestore.
+
+
+
+An example query that researchers using this tool might ask is ``what
+type of land use assignment to a given area of a watershed keeps corn
+yield above a threshold, maintains housing capacity above another
+threshold, and minimizes nitrate levels in nearby streams.''  The SWAT
+approach to solving such queries involves a concurrent black-box
+optimization process in which each thread reads the current values of
+all relevant parameters from the file system, computes the current
+value of the optimization function, and makes local changes, and
+re-runs the optimization function. If the new result is higher than
+the old one, the tool writes those changes back into the file system.
+Figure ~\ref{fig:SWAT-opt-code} shows the key TxForest code that
+replicates this process.
+
+
 \begin{figure}
 \begin{code}
-Update with relevant parts of SWAT optimization code
-Not portable, relevant to illustrate the design differences?
+iterateSWAT :: Path -> IO ()
+iterateSWAT workingDir = do
+  atomically (copySWATData workingDir)
+  newBasin <- modifyBasinParams workingDir
+  runSWAT workingDir
+  newDeviation <- getNewDeviation workingDir
+  atomically (updateDeviation newBasin newDeviation)
 \end{code}
-\caption{Forest SWAT description. }
+\caption{TxForest code to determine if new model parameters reduce teh
+deviation between modeled and measured outflows.}
 \label{fig:SWAT-opt-code}
 \end{figure}
 
