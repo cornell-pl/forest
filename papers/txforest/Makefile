@@ -4,10 +4,14 @@ TARGET = main.pdf
 
 SOURCES = main.tex \
 	  main.bib \
-	  background.tex \
-          posix.tex \
 	  introduction.tex \
+	  background.tex \
           txforest.tex \
+          posix.tex \
+	  implementation.tex \
+          related.tex \
+	  conclusion.tex \
+	  case-study.tex \
 	  main.bbl
 
 all : $(TARGET)

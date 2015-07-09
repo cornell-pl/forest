@@ -123,9 +123,12 @@ description will see and maintain a consistent view by aborting and
 restarting transactions that would otherwise have created a
 conflict. The design of the description language is unchanged: the
 TxForest description in \figref{fig:SWAT-description} is also a valid
-Forest description.  The difference between TxForest and Forest lies
+Forest description.\footnote{Modulo the type required for anti-quoted
+  Haskell expressions has changed so such code can operate within the
+  TxForest monad.}  The difference between TxForest and Forest lies
 in the generated code for loading and storing files and in how the
-user accesses the in-memory representations.
+user accesses the in-memory representations, changes we
+describe in the next section.
 
 The process that SWAT users follow to calibrate their models
 illustrates the utility of transactions.  The goal of calibration is
