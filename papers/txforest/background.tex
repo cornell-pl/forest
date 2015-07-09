@@ -10,7 +10,7 @@
 %%\end{itemize}
 
 To explain the design of TxForest, we use a running example drawn from
-the field of agriculture science, specifically SWAT.  This modeling
+the field of environmental science, specifically SWAT.  This modeling
 tool allows researchers to explore tradeoffs related to land use in a
 given watershed.  The model incorporates data related to the topology
 of the watershed, current land use, historic precipitation and
@@ -145,7 +145,7 @@ any thread so far, and if so, atomically writes the new parameter
 values back into the SWAT filestore.
 
 
-
+\cut{
 An example query that researchers using this tool might ask is ``what
 type of land use assignment to a given area of a watershed keeps corn
 yield above a threshold, maintains housing capacity above another
@@ -158,7 +158,7 @@ re-runs the optimization function. If the new result is higher than
 the old one, the tool writes those changes back into the file system.
 Figure ~\ref{fig:SWAT-opt-code} shows the key TxForest code that
 replicates this process.
-
+}
 
 \begin{figure}
 \begin{code}
@@ -170,7 +170,7 @@ iterateSWAT workingDir = do
   newDeviation <- getNewDeviation workingDir
   atomically (updateDeviation newBasin newDeviation)
 \end{code}
-\caption{TxForest code to determine if new model parameters reduce teh
+\caption{TxForest code to determine if new model parameters reduce the
 deviation between modeled and measured outflows.}
 \label{fig:SWAT-opt-code}
 \end{figure}
