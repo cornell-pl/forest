@@ -33,29 +33,29 @@ mechanism~\cite{Mainland:quasi}.  Figure~\ref{fig:SWAT-description}
 shows a (partial) Forest description of the SWAT datastore
 that we will use as a running example throughout this paper.
 
-The TxForest declarations appear within \texttt{[txforest|...|]}
+The TxForest declarations appear within \cd{[txforest|...|]}
 quasiquotation brackets, allowing us to embed TxForest within Haskell
 code files.  The SWAT description starts by declaring a number of
-different file formats by applying the \texttt{File} constructor to
+different file formats by applying the \cd{File} constructor to
 a PADS format description.  (For brevity, we omit the PADS
 descriptions).   For example, the TxForest file format
-\texttt{Preamble\_f}, which contains SWAT configuration information,
-is described by the PADS type \texttt{Preamble}.
+\cd{Preamble\_f}, which contains SWAT configuration information,
+is described by the PADS type \cd{Preamble}.
 The other TxForest file formats in the figure use PADS types to
 describe the format of files storing 
-physical information about the watershed basin (\texttt{BSN\_f}),
-daily precipitation data (\texttt{PCP\_f}),
-daily temperature data (\texttt{TMP\_f}),
-measured waterflow out of the basin (\texttt{Flow\_f}),
-modeled waterflow out of the region (\texttt{RCH\_f}),
-and the deviation between the measured and modeled outflows (\texttt{Deviation\_f}).
+physical information about the watershed basin (\cd{BSN\_f}),
+daily precipitation data (\cd{PCP\_f}),
+daily temperature data (\cd{TMP\_f}),
+measured waterflow out of the basin (\cd{Flow\_f}),
+modeled waterflow out of the region (\cd{RCH\_f}),
+and the deviation between the measured and modeled outflows (\cd{Deviation\_f}).
 
 Given these file formats, the description describes the root SWAT
-directory, \texttt{Swat\_d}.  This description of this directory
+directory, \cd{Swat\_d}.  This description of this directory
 starts with the master watershed file, which has internal name
-\texttt{cio}, on-disk name \texttt{file.cio}, and a file format
-described by \texttt{Preamble\_f}.  The next component of the
-directory is the \texttt{basin} field, which XXX (landing in Boston...)
+\cd{cio}, on-disk name \cd{file.cio}, and a file format
+described by \cd{Preamble\_f}.  The next component of the
+directory is the \cd{basin} field, which XXX (landing in Boston...)
 
 
 
