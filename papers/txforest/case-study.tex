@@ -1,2 +1,124 @@
 \section{SWAT: A Case Study}
 \label{sec:swat}
+In this section, we describe a case study we have built to show the
+use of TxForest in a real-world application.  As mentioned earlier,
+SWAT is a tool used by environmental scientists to study the impact of
+land use.  Each SWAT datastore contains data related to a single
+watershed.  The datastore includes information about topology, land
+use, vegetation, precipitation, temperatures, measured waterflows,
+\etc{}.  \figref{fig:SWAT-description} gives a TxForest description of
+a portion of a SWAT datastore.  
+
+Before environmental scientists can use SWAT to answer questions about
+possible crop yields or pollution effects resulting from various land
+use policies, they must first calibrate the system so that predicted
+values match measured ones.  A key portion of the model that must be
+calibrated is the predicted outflow from the watershed.  Basin
+parameters that are particularly important in determining outflow
+include \texttt{SURLAG}, which is the 
+ \textit{surface runoff lag coefficient} that models how much surface
+ water reaches the main basin channel 
+and \texttt{ESCO}, which is the 
+ \textit{soil evaporation compensation factor} that models how ground
+ characteristics might impede or enhance evaporation.
+
+Scientists use SWAT as a black box, so to perform calibration, they
+perform a search over the parameter space, seeking to minimize the
+deviation between the measured outflow and the predicted outflow.
+The measured outflow is available in a data file supplied by the
+United States Geological Survey.  The predicted outflow is computed by
+running SWAT over the datastore with the parameters set to the desired
+values.  If the deviation is higher than desired, the scientists
+randomly perturb the parameters and rerun the calibration.  
+
+We used TxForest to parallelize this process.  
+
+
+Each thread searches a
+portion of the parameter space.  The threads communicate via a shared file
+(with format \texttt{Deviation\_f}) that stores the best deviation
+found so far.   
+
+The calibration process starts by initializing the deviation to 
+sentinel value that will be replaced by the first thread to finish its
+search. 
+
+\begin{figure}
+\begin{code}
+\hscomment{Start numThread optSWAT threads.}
+main :: IO ()
+main = do
+  setDeviation deviationMax deviationFile  
+  replicateM_ numThreads \$ forkIO \$ optSWAT
+
+\mbox{}
+\hscomment{Each thread runs iterateSwat numIteration
+   times in a thread-local space.}
+optSWAT :: IO ()
+optSWAT = do
+  workingDir <- getThreadTempDirectory
+  replicateM_ numIterations \$ iterateSWAT workingDir
+
+\mbox{}
+\hscomment{Each iteration atomically copies the filestore
+   to its working space, modifies the Basin parameters,
+   runs SWAT on the working space, calculates the new 
+   deviation, and updates the global deviation atomically.}
+iterateSWAT :: Path -> IO ()
+iterateSWAT workingDir = do
+  atomically (copySWATData workingDir)
+  newBsn <- modifyBsnParams workingDir
+  runSWAT workingDir
+  newDeviation <- getNewDeviation workingDir
+  atomically (updateDeviation newBsn newDeviation)
+
+\mbox{}
+\hscomment{Copy all data from the SWAT datastore to a
+   temporary directory.}
+copySWATData :: FilePath -> FTM TxVarFS ()
+copySWATData tmpDir = do
+    (orig :: Universal_d TxVarFS) <- new () swatDataDir
+    (copy :: Universal_d TxVarFS) <- new () tmpDir
+    copyOrError orig copy ``Failed to copy SWAT data.''
+
+\mbox{}
+modifyBsnParams :: Path -> IO SwatLines
+modifyBsnParams workingDir = ...
+
+\mbox{}
+getNewDeviation :: Path -> IO Double
+getNewDeviation workingDir = ...
+
+\mbox{}
+runSWAT :: FilePath -> IO ()
+runSWAT path = do
+  setCurrentDirectory path
+  callProcess swatExe []
+
+\mbox{}
+updateDeviation :: SwatLines -> Double -> FTM TxVarFS ()
+updateDeviation newBsn newDeviation =  do
+  (dInfo :: Deviation_f TxVarFS) <- new () deviationFile
+  (devMd, Deviation currentDeviation) <- read dInfo
+  guard (currentDeviation > newDeviation)
+  (swatRep :: Swat_d TxVarFS) <- new () \$ swatDataDir
+  (dirMd, dir) <- read swatRep
+  (bsnMd, _  ) <- read \$ basin dir
+  writeOrError devInfo     (devMd, Deviation newDeviation) 
+               ``Failed to write new deviation.''
+  writeOrError (basin dir) (bsnMd, SwatFile  newBsn)       
+               ``Failed to update SWAT Basin data.''
+
+
+\end{code}
+\caption{TxForest code.}
+\label{fig:SWAT-code}
+\end{figure}
+
+
+\note{To be fixed later: Why do we store the deviation in a file
+  instead of in the program doing the search?}
+
+\note{We need to have some results about running this process.  How
+  fast is it?  How does it compare with what the scientists were doing
+previosly?   Ie, is it in the same ballpark?}
