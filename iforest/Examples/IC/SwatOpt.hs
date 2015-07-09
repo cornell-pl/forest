@@ -157,6 +157,7 @@ runOpt tmpDir = do
 
 main :: IO ()
 main = do
+  createDirectoryIfMissing True "/tmp/Swat"
   _ <- writeCurrent maxFile
   replicateM_ 2 $ forkIO $ optSwat 6 -- 2 is number of threads, starting small
 

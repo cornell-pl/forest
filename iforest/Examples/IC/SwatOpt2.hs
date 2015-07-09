@@ -134,6 +134,7 @@ surlagRange = (0.0, 15.0)
 -}
 main :: IO ()
 main = do
+  createDirectoryIfMissing True "/tmp/Swat"
   setDeviation deviationMax deviationFile     -- XXX: Why doesn't this have to be done atomically?
   replicateM_ numThreads $ forkIO $ optSWAT 
 
