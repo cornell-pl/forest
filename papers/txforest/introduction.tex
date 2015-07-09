@@ -1,19 +1,21 @@
 %
 % File systems are a thing
 %
-Many applications today use file systems to store persistent
-data. There are numerous reasons that programmers choose to use file
-systems instead of systems specifically designed for managing data,
-such as key-value stores or relational databases. File systems are
-ubiquitous and have a low barrier to entry, being bundled with all
-major operating systems. Programs can manipulate the file system
-directly, through standard APIs such as POSIX, and do not have to
-first perform tasks such as setting up database accounts, creating
-tables, defining schemeas, or loading data into the system. File
-system data is portable across operating systems and can be easily
-replicated and transferred between them, since it is not ``locked in''
-to a custom database representation. For this reason, a large number
-of data-intensive users such as scientists have come to rely on file
+Many applications today use file systems to store persistent data in
+collections of files and directories with a specified structure, an
+arrangement we call a \textit{filestore}. There are numerous reasons
+that programmers choose to use file systems instead of systems
+specifically designed for managing data, such as key-value stores or
+relational databases. File systems are ubiquitous and have a low
+barrier to entry, being bundled with all major operating
+systems. Programs can manipulate the file system directly, through
+standard APIs such as POSIX, and do not have to first perform tasks
+such as setting up database accounts, creating tables, defining
+schemeas, or loading data into the system. File system data is
+portable across operating systems and can be easily replicated and
+transferred between them, since it is not ``locked in'' to a custom
+database representation. For this reason, a large number of
+data-intensive users such as scientists have come to rely on file
 systems for storing their data.
 
 %
@@ -48,9 +50,9 @@ that can be achieved by the system.
 % Forest 1.0
 %
 Previous work on Forest~\cite{forest-icfp:fisher+} developed
-type-based abstractions for file systems. The programmer writes a
+type-based abstractions for filestores. The programmer writes a
 high-level specification that describes the expected structure of the
-file system, and the Forest compiler automatically generates an
+filestore, and the Forest compiler automatically generates an
 in-memory representation for the data as well as accompanying ``load''
 and ``store'' functions. In addition, the framework provides generic
 tools for visualizing, summarizing, and validating file system data
@@ -58,7 +60,7 @@ described in Forest. Forest solves the first two issues discussed
 above: it streamlines applications, since they can be written against
 high-level datatypes rather than having to use low-level file system
 APIs; and it also provides mechanisms for automatically detecting
-situations when assumptions about the structure of the file system
+situations when assumptions about the structure of the filestore
 have been violated. However, Forest's ``load'' and ``store'' functions
 are strictly best effort and do not provide any guarantees about
 consistency. When there are multiple concurrent users of the file
@@ -109,13 +111,13 @@ trial-and-error search.
 %
 Ideally, to improve performance, the search for optimal parameters
 could be done in parallel, using multiple threads to explore the
-search space. However, since the data is stored on the file system,
-this is not safe in general since writes to the file system performed
-by multiple threads may be interleaved in arbitrary order, which can
-easily lead to incorrect results. For example, if the optimal value
-terminates first but a later thread writes its parameters into the
-SWAT files, then the computation would halt with sub-optimal
-parameters.
+search space. However, since the data is stored in the file system,
+this approach is not safe in general since writes to the file system
+performed by multiple threads may be interleaved in arbitrary order,
+which can easily lead to incorrect results. For example, if the
+optimal value terminates first but a later thread writes its
+parameters into the SWAT files, then the computation would halt with
+sub-optimal parameters.
 
 %
 % Transactions to the rescue!
@@ -123,15 +125,15 @@ parameters.
 It is not hard to see that the root cause of this problem is Forest's
 ``best effort'' approach to loading and storing data on the file
 system. This paper develops a new version of Forest, Transactional
-Forest (TxForest) that remedies this problem by providing a more
+Forest (TxForest) that remedies this problem by providing more
 powerful abstractions that offer strong consistency
 guarantees. TxForest provides an ``atomic'' construct and a new
 monadic API for accessing data on the file system. By using these
 features, programmers gain the guarantee that all of the low-level
 read and write operations needed to implement a transaction will be
 executed as if they ran from start to finish in isolation, or not at
-all---i.e., TxForest ensures serializability. This has all of the
-usual benefits in that programmers can reason locally about the
+all---i.e., TxForest ensures serializability. This guarantee ensures
+the usual benefits in that programmers can reason locally about the
 behavior of each transaction without worrying about harmful
 interference from other transactions that might be executing
 concurrently.
@@ -164,7 +166,7 @@ might be useful for other work on file system based abstractions.
 % Evaluation
 %
 Through a collaboration with environmental scientists, we have built a
-TxForest description that captures SWAT data files and used it to
+TxForest description that captures the SWAT datastore and used it to
 automate the task of searching for optimal parameters, as described
 above. This application demonstrates that even our unoptimized version
 of TxForest is a useful tool that can be used to solve practical
@@ -175,25 +177,25 @@ real-world problems.
 %
 Overall, the contributions of this paper are as follows:
 \begin{itemize}
-\item We make the case for developing language-based file system
+\item We make the case for developing language-based filestore
   abstractions with strong consistency guarantees.
 \item We describe the design of TxForest, a particular language that
   realizes these goals in a Haskell DSL.
 \item We formalize the key elements of TxForest and POSIX in a core
   calculus and prove that our implementation provides strong
   consistency.
-\item We present a prototype implementation of TxForest, and discuss
+\item We present a prototype implementation of TxForest and discuss
   using it to build a real-world application for representing and
   optimizing SWAT data. 
 \end{itemize}
 %
 The rest of this paper is structured as follows. The next section
 reviews Forest and provides further motivation for our
-design. Section~\ref{sec:txforest} presents our design for
-TxForest. Section~\ref{sec:formalization} develops a formal model of
+design. \secref{sec:txforest} presents our design for
+TxForest. \secref{sec:posix} develops a formal model of
 POSIX and establishes the correctness of a reference implementation
-based on optimistic transactions. Section~\ref{sec:implementation}
-discusses our implementation. Section~\ref{sec:swat} describes our
+based on optimistic transactions. \secref{sec:implementation}
+discusses our implementation. \secref{sec:swat} describes our
 experience building a SWAT application in TxForest. We discuss related
-work in Section~\ref{sec:related} and conclude in
-Section~\ref{sec:conclusion}.
+work in \secref{sec:related} and conclude in
+\secref{sec:conclusion}.
