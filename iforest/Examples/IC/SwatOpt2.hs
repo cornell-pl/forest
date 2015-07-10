@@ -136,7 +136,7 @@ main :: IO ()
 main = do
   createDirectoryIfMissing True "/tmp/Swat"
   setDeviation deviationMax deviationFile     -- XXX: Why doesn't this have to be done atomically?
-  replicateM_ numThreads $ forkIO $ optSWAT 
+  replicateM_ numThreads $ forkIO $ timeIt optSWAT 
 
 {-
   Get thread's temporary directory, assumed to be unique and not accessible via other processes,
@@ -220,8 +220,18 @@ calcDeviation measuredFlow estimatedFlow =
 {- Invoke SWAT black-box solver on data in path directory -}
 runSWAT :: FilePath -> IO ()
 runSWAT path = do
-  setCurrentDirectory path
-  callProcess swatExe []
+  let toBeRun = CreateProcess {cmdspec = RawCommand swatExe [], 
+                               cwd = Just path,
+                               env = Nothing,
+                               std_in = Inherit,
+                               std_out = Inherit,
+                               std_err = Inherit,
+                               close_fds = True,
+                               create_group = False,
+                               delegate_ctlc = True}
+  (_, _, _, handle) <- createProcess toBeRun
+  _ <- waitForProcess handle
+  return ()
 
 {-
   Read the current best deviation from the global file.
@@ -236,7 +246,9 @@ updateDeviation :: SwatLines -> Double -> FTM TxVarFS ()
 updateDeviation newBsn newDeviation =  do
     (devInfo :: Deviation_f TxVarFS) <- new () deviationFile
     (devMd, Deviation currentDeviation) <- read devInfo
-    guard (currentDeviation > newDeviation)
+    unless (currentDeviation > newDeviation) $ writeDeviationAndBsn devInfo devMd newDeviation newBsn
+
+writeDeviationAndBsn devInfo devMd newDeviation newBsn = do
     (swatRep :: Swat_d TxVarFS) <- new () $ swatDataDir
     (dirMd, dir) <- read swatRep
     (bsnMd, _  ) <- read $ basin dir
