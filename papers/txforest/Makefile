@@ -12,6 +12,8 @@ SOURCES = main.tex \
           related.tex \
 	  conclusion.tex \
 	  case-study.tex \
+          appendix.tex \
+	  pervasives.sty \
 	  main.bbl
 
 all : $(TARGET)

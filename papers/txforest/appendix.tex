@@ -1,0 +1,218 @@
+\subsection*{Type definitions}
+
+\begin{figure*}
+\begin{minipage}[t]{\linewidth}
+\begin{displaymath}
+\begin{array}{l@{\quad}l@{\quad}l@{\quad}l@{\quad}l@{\quad}l@{\quad}l@{\quad}l@{}}
+n \in \mathbb{N} & b \in \mathbb{B} & p \in \textbf{Path} & x \in \textbf{Var} &
+ch \in \textbf{Character} & w \in \textbf{String} &  F \in \textbf{FileStore} 
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Metavariable Conventions}}
+\end{minipage}
+\begin{minipage}[t]{0.24\linewidth}
+\begin{displaymath}
+\begin{array}{l@{~}l@{\,}ll@{}}
+ \text{recType} & ::= & Read(n,c,b) \\
+ & \mid & Write(n,w) \\
+ & \mid & Remove(p) \\
+ & \mid & Test(p)
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Recording Type}}
+\end{minipage}
+\begin{minipage}[t]{0.24\linewidth}
+\begin{displaymath}
+\begin{array}{l@{~}l@{\,}ll@{}}
+ \text{testCond} & ::= & TFile \\
+ & \mid & TDir(b) \\
+ & \mid & TNone \\
+ & \mid & TUnknown
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Test Condition Type}}
+\end{minipage}
+\begin{minipage}[t]{0.24\linewidth}
+\begin{displaymath}
+\begin{array}{l@{~}l@{\,}ll@{}}
+ \text{readCond} & ::= & RKnown \\
+ & \mid & RUnknown \\
+ & \mid & RPartial \\
+ & &
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Read Condition Type}}
+\end{minipage}
+\begin{minipage}[t]{0.24\linewidth}
+\begin{displaymath}
+\begin{array}{l@{~}l@{\,}ll@{}}
+ \text{vFST} & ::= & Rem \\
+ & \mid & Fi(w) \\
+ & \mid & D(l,l',b) \\
+ & &
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Virtual FS Type}}
+\end{minipage}
+\begin{minipage}[t]{0.5\linewidth}
+\begin{displaymath}
+\begin{array}{l@{\quad}l@{~}l@{\,}ll@{}}
+ \text{Values} & v  & ::= & n \mid p \mid w \mid (v_1,\dots,v_n) \mid l \mid \text{fun } x \rightarrow e \\
+ \text{Options} & o  & ::= & Some(v) \mid None \\
+ \text{Lists} & l  & ::= & v :: l \mid [] \\
+ \text{FS Types} & lf & ::= & File(w) \mid Dir(l) \mid Lock(lf) \\
+ \text{Expressions} & e  & ::= & x \mid v \mid f~e \mid e_1~e_2 \\ 
+ \text{Threads} & t  & ::= & <H,c> \\ 
+ \text{Thread Bag} & M  & ::= & \{t_1,\dots,t_n\} \\
+ \text{Heap} & H & \in &\textbf{Var} \mapsto v
+\end{array}
+\end{displaymath}
+\centerline{\textbf{More Types}}
+\end{minipage}
+\begin{minipage}[t]{0.25\linewidth}
+\begin{displaymath}
+\begin{array}{l@{~}l@{\,}ll@{}}
+ c & ::= & \text{skip} \\
+ & \mid & c_1;c_2 \\
+ & \mid & x := e \\
+ & \mid & \ifte{e}{c_1}{c_2}\\
+ & \mid & \wdo{e}{c} \\
+ & \mid & \text{atomic } c \\ \\ \\
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Commands}}
+\end{minipage}
+\begin{minipage}[t]{0.25\linewidth}
+\begin{displaymath}
+\begin{array}{l@{~}l@{\,}ll@{}}
+ \text{logT} & ::= & Test(p) \\
+ & \mid & RF(p,ch,n) \\
+ & \mid & RD(p,w,n) \\
+ & \mid & W(p,w,n)  \\
+ & \mid & Rm(p)     \\ \\ \\ \\
+\end{array}
+\end{displaymath}
+\centerline{\textbf{Log Type}}
+\end{minipage}
+\caption{Lots of type definitions}
+\end{figure*}
+
+%Evaluation Semantics
+\begin{figure*}
+%TODO: Note notational conventions somewhere
+\begin{comment}
+(* Expression evaluation: (F,H,e) - o -> (F',H',e') *)
+
+(* Notational convention: 
+   write 
+     (F,H,e) - None -> (F',H',e') 
+   as 
+     (F,H,e) --> (F',H',e') 
+*)  
+
+(* Command evaluation: (F,H,c) - o -> (F',H',c') *)
+C[t] needs to be well-formed...
+
+(* Multi-step command evaluation: (F,H,c) - l -> (F',H',c') *)
+\end{comment}
+\begin{minipage}[t]{\linewidth}
+\begin{displaymath}
+\begin{array}{l@{\quad}l@{~}l@{\,}ll@{}}
+ \text{Expressions} & E  & ::= & . \mid f~E \mid E~e \mid v~E \\
+ \text{Commands} & C  & ::= & . \mid x := C \mid \ifte{C}{c_1}{c_2} \mid \wdo{C}{c} \mid C ; c \\
+ \text{Hole type?} & t & ::=  & e \mid c
+\end{array}
+\end{displaymath}
+\end{minipage}
+\centerline{\textbf{Evaluation Contexts}}
+
+%\begin{minipage}{0.5\linewidth}
+\infrule[E-var]
+{H(x) = v}
+{(F,H,x) \rightarrow (F,H,v)}
+
+\infrule[E-Call1]
+{(F',H',v',o) = [[ f ]]~(F,H,v)}
+{(F,H,f~v) \opstep{o} (F',H',v')}
+
+\infrule[E-Call2]
+{(F',H',v') = [[ f ]]~(F,H,v)}
+{(F,H,f~v) \rightarrow (F',H',v')}
+%\end{minipage}
+
+%\begin{minipage}{0.5\linewidth}
+\infrule[E-Lambda]
+{v_1 = \text{fun } x \rightarrow e \\
+ e'  = e[x \mapsto v_2]}
+{(F,H,v_1~v_2) \rightarrow (F,H,e')}
+
+\infrule[E-Context]
+{(F,H,e) \opstep{o} (F',H',e')}
+{(F,H,E[e]) \opstep{o} (F',H',E[e'])}
+%\end{minipage}
+\centerline{\textbf{Expression Evaluation}}
+
+%\begin{minipage}[t]{0.5\linewidth}
+\infrule[C-IfFalse]
+{}
+{(F,H,\ifte{0}{c_1}{c_2}) \rightarrow (F,H,c_2)}
+
+\infrule[C-IfTrue]
+{n <> 0}
+{(F,H,\ifte{n}{c_1}{c_2}) \rightarrow (F,H,c_1)}
+
+\infrule[C-WhileFalse]
+{}
+{(F,H,\wdo{0}{c}) \rightarrow (F,H,skip)}
+
+\infrule[C-WhileTrue]
+{n <> 0}
+{(F,H,\wdo{n}{c}) \rightarrow (F,H,c;\wdo{n}{c})}
+%\end{minipage}
+
+%\begin{minipage}[t]{0.5\linewidth}
+\infrule[C-Context]
+{(F,H,e) \opstep{o} (F',H',e')}
+{(F,H,E[e]) \opstep{o} (F',H',E[e'])}
+
+\infrule[C-SkipSeq]
+{}
+{(F,H,skip;c_2) \rightarrow (F,H,c_2)}
+
+\infrule[C-Assgn]
+{H' = H[x \mapsto v]}
+{(F,H,x:=v) \rightarrow (F,H',skip)}
+%\end{minipage}
+\centerline{\textbf{Command Evaluation}}
+
+%\begin{minipage}[t]{0.5\linewidth}
+\infrule[T-Refl]
+{}
+{(F,H,t)  \opsteps{[]} (F,H,t)}
+
+\infrule[T-step]
+{(F,H,t) \opsteps{l} (F',H',t') \\
+(F',H',t') \opstep{o} (F'',H'',t'') }
+{(F,H,t) \opsteps{o :: l} (F'',H'',t'')}
+\centerline{\textbf{Multi-Step Command Evaluation}}
+%\end{minipage}
+
+%\begin{minipage}[t]{0.5\linewidth}
+\infrule[M-skip]
+{}
+{(F,M \uplus \mset{ <H,skip> }) \rightarrow (F,M)}
+
+\infrule[M-step]
+{(F,H,c) \rightarrow (F',H',c')}
+{(F,M \uplus \mset{ <H,c> }) \rightarrow (F',M \uplus \mset{ <H',c'> })}
+
+\infrule[M-atomic]
+{(F,H,c) \rightarrow^* (F',H',skip)}
+{(F,M \uplus \mset{ <H,atomic c> }) \rightarrow (F',M)} %In txt we have C[atomic c]. Not sure why.
+\centerline{\textbf{Concurrent Command Evaluation}}
+%\end{minipage}
+
+\caption{Operational Semantics}
+\end{figure*}
+
+

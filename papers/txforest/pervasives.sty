@@ -9,11 +9,17 @@
 \usepackage[normalem]{ulem}
 \usepackage{url}
 \usepackage{verbatim}
+\usepackage{bcprules} % Is this a pun?
+
+\newcommand{\opstep}[1]{\ensuremath{\xrightarrow{#1}}}
+\newcommand{\opsteps}[1]{\ensuremath{\xrightarrow{#1}\mathrel{\vphantom{\to}^*}}}
+\newcommand{\ifte}[3]{\text{if } #1 \text{ then } #2 \text{ else } #3}
+\newcommand{\wdo}[2]{\text{while } #1 \text{ do } #2}
+\newcommand{\mset}[1]{\{ #1 \}}
 
 \begin{comment}
 \usepackage{stmaryrd}
 \usepackage{xspace}
-\usepackage{bcprules} % Is this a pun?
 \usepackage{color}
 \usepackage{graphicx}
 \usepackage[capitalise]{cleveref}
@@ -27,7 +33,6 @@
 \usepackage{floatpag}
 \floatpagestyle{empty}
 \usepackage{caption}
-\usepackage{balance}
 \usepackage{subcaption}
 
 \newcommand{\squeezeh}{\hspace{-.1in}}
