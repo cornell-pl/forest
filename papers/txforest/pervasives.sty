@@ -11,11 +11,33 @@
 \usepackage{verbatim}
 \usepackage{bcprules} % Is this a pun?
 
+\usepackage{stmaryrd}
+\usepackage{xspace}
+
 \newcommand{\opstep}[1]{\ensuremath{\xrightarrow{#1}}}
 \newcommand{\opsteps}[1]{\ensuremath{\xrightarrow{#1}\mathrel{\vphantom{\to}^*}}}
 \newcommand{\ifte}[3]{\text{if } #1 \text{ then } #2 \text{ else } #3}
 \newcommand{\wdo}[2]{\text{while } #1 \text{ do } #2}
 \newcommand{\mset}[1]{\{ #1 \}}
+\newcommand{\evalpat}[1]{\ensuremath{\llbracket#1\rrbracket}}
+\newcommand{\pfds}{\ensuremath{posix\_fds}}
+\newcommand{\GOOSE}[1]{\{ #1 \}}
+\newcommand{\FUN}{\text{fun}~}
+\newcommand{\LET}{\text{let}~}
+\newcommand{\IN}{~\text{in}}
+\newcommand{\IF}{\text{if}~}
+\newcommand{\THEN}{~\text{then}}
+\newcommand{\ELSE}{\text{else}~}
+\newcommand{\NONE}{\text{None}}
+\newcommand{\BS}{~\text{\textbackslash}~}
+\newcommand{\LETIN}[2]{\text{let}~ #1 = #2 ~\text{in}}
+\newcommand{\MWITH}[1]{\text{match}~ #1 ~\text{with}}
+\newcommand{\qqquad}{\quad \qquad}
+\newcommand{\qqqquad}{\qquad \qquad}
+\newcommand{\SOME}{\text{Some}}
+\newcommand{\ERR}{\text{ERR}}
+\newcommand{\IFTHEN}[1]{\text{if } #1 \text{ then}}
+\newcommand{\abs}[1]{\left| #1 \right|}
 
 \begin{comment}
 \usepackage{stmaryrd}
@@ -157,7 +179,6 @@
 
 \newcommand{\evalpol}[1]{\ensuremath{\llbracket#1\rrbracket}}
 \newcommand{\evalact}[1]{\ensuremath{\llbracket#1\rrbracket}}
-\newcommand{\evalpat}[1]{\ensuremath{\llbracket#1\rrbracket}}
 
 \newcommand{\PktOut}[1]{\textbf{PktOut\ }#1}
 \newcommand{\PktIn}[1]{\textbf{PktIn\ }#1}

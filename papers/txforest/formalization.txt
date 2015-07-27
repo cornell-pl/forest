@@ -12,6 +12,7 @@
 -- Low priority:
 -- Minimize how much we need 'read whole file' and 'write whole file' assumptions
 -- Add errors into theorem?
+-- If things go wrong, make an ERROR (or -1) not multiple different ones
 
 -- Super low:
 -- Change from global lock to something fancier (like one of those cool data structures?)
@@ -33,45 +34,16 @@ Questions:
 
 -- Lemma 1b can't possibly be right.
 
--- Should I put in in some way that it runs the function after functional application?
+-- Should I add in some way that it runs the function after functional application?
 
 Notes:
 -- Data type constructors are implicit functions that construct them in the obvious way.
 -- w[i,i+1] returns ERR if it's outside range
 -- Technically, Lemma 2 is false since you could make operations depend on the heap
    in a way where running it in atomic actually changes what the commands do to the FS.
-
-
 *)
 
-(* JNF: 
-
-1. Decide what fragment of POSIX File Systems we need. It's fine to
-only handle a fragment but we need to be consistent.
-
-2. Decide what to do with errors.
-
-3. Let's not bake our use of the operations (e.g., reading the whole
-file) into the calculus. If it is tailored to our use, it is less of a
-contribution.
-
--- JDL: If things go wrong, make an ERROR (or -1) not multiple different ones
-
--- JDL: Make Data types for errors for the built-in helper functions
-
--- JDL: Skip errors initially and prove the main part of the theorem (non-transaction errors)
--- only skip in the theorem
-
--- JDL: Figure out if you need read/write atomic on whole files
--- If it cuts down complexity and it's fast, do it
-
---------------------------------------------------------------------------------
-Dedicated Space
---------------------------------------------------------------------------------
-
-Some file 'filelock' and some file 'glog'
-
---JDL: Not sure where to put this info
+-- ADDED TO .tex:
 
 --------------------------------------------------------------------------------
 Special types in functions below
@@ -113,6 +85,170 @@ logFST := Rem       -- Whatever was at this path has been removed
 -- D(l,l',b) means that the path is a directory containing the entries in list l
 -- and not containing the entries in list l'. If b is true, then l is the complete
 -- list of entries in the directory, otherwise we don't know and need to check.
+
+
+--------------------------------------------------------------------------------
+Syntax
+--------------------------------------------------------------------------------
+
+(* Metavariable Conventions *)
+n in Integer
+p in Path
+w in String
+F in FileStore
+ 
+(* Values *)
+v ::= n
+    | p
+    | w
+    | (v1,...,vn)
+    | l
+    | fun x -> e
+
+o ::= Some v 
+    | None
+
+l ::= v :: l | []
+
+-- Things that can exist in filesystem
+lf ::= File(w)
+   | Dir(l)
+   | Lock(lf)
+
+(* Expressions *)
+e ::= x
+    | v
+    | f e
+    | e e
+    | (e1,...,en)
+
+(* Commands *)
+c ::= skip
+    | c1; c2
+    | x := e
+    | if e then c1 else c2
+    | while e do c
+    | atomic c
+
+(* Heaps *)
+H in Var |-> Value
+
+(* Threads *)
+t ::= <H,c>
+
+M ::= {t1,...,tk}
+
+--------------------------------------------------------------------------------
+SEMANTICS
+--------------------------------------------------------------------------------
+
+(* Evaluation Contexts *)
+E ::= . 
+    | f E
+    | E e
+    | v E
+    | (E,e2,...,en)
+    | (v1,E,e3,...,en)
+    | ...
+    | (v1,...,v(n-1),E)
+
+(* Expression evaluation: (F,H,e) - o -> (F',H',e') *)
+
+(* Notational convention: 
+   write 
+     (F,H,e) - None -> (F',H',e') 
+   as 
+     (F,H,e) --> (F',H',e') 
+*)  
+
+H(x) = v
+-------------- E-Var
+(F,H,x) -> (F,H,v)
+
+(F',H',v',o) = [[ f ]] (F,H,v)
+--------------------------------- E-Call1
+(F,H,f v) - o -> (F',H',v')
+
+
+(F',H',v') = [[ f ]] (F,H,v)
+--------------------------------- E-Call2
+(F,H,f v) --> (F',H',v')
+
+v1 = fun x -> e
+e' = e[x -> v2]
+--------------------------------- E-Lambda
+(F,H,v1 v2) -> (F,H,e')
+
+(F,H,e) - o -> (F',H',e')
+--------------------------- E-Context
+(F,H,E[e]) - o -> (F',H',E[e'])
+
+(* Command evaluation: (F,H,c) - o -> (F',H',c') *)
+
+C ::= . 
+     | x := C
+     | if C then c1 else c2
+     | while C do c
+     | C ; c
+
+t ::= e | c 
+
+C[t] needs to be well-formed...
+
+(F,H,t) - o -> (F',H',t')
+--------------------------- C-Context
+(F,H,C[t]) - o -> (F',H',C[t'])
+     
+-------------------------- C-SkipSeq
+(F,H,skip;c2) --> (F,H,c2)
+
+H' = H[x:=v]
+-------------------------C-Assgn
+(F,H,x:=v) --> (F,H',skip)
+
+--------------------------------------C-IfFalse
+(F,H,if 0 then c1 else c2) --> (F,H,c2)
+
+n <> 0
+--------------------------------------C-IfTrue
+(F,H,if n then c1 else c2) --> (F,H,c1)
+
+
+--------------------------------C-WhileFalse
+(F,H,while 0 do c) --> (F,H,skip)
+
+n <> 0
+------------------------------------------C-WhileTrue
+(F,H,while n do c) --> (F,H,c;while n do c)
+
+(* Multi-step command evaluation: (F,H,c) - l -> (F',H',c') *)
+
+------------------------T-Refl
+(F,H,t) - [] ->* (F,H,t)
+
+-- JDL: The T-Step log ordering is weird, but
+-- The other log is collected in that order, so it makes
+-- the theorem proofs a bit easier.
+
+(F,H,t) - l ->*  (F',H',t')
+(F',H',t') - o -> (F'',H'',t'')
+--------------------------------- T-Step
+(F,H,t) - o :: l -> (F'',H'',t'')
+
+--------------------------------------------------------------------------------
+Concurrent Operational Semantics
+--------------------------------------------------------------------------------
+
+(F,H,c) -> (F',H',c')
+----------------------------------------- M-step
+(F,M U { <H,c> }) -> (F',M U { <H',c'> })
+
+----------------------------------------- M-skip
+(F,M U { <H,skip> }) -> (F,M)
+
+(F,H,c) ->* (F',H',skip)
+---------------------------------------------- M-atomic
+(F,M U { <H,C[atomic c]> }) -> (F',M',C[skip])
 
 --------------------------------------------------------------------------------
 Built-in POSIX functions and their semantics
@@ -204,7 +340,7 @@ Built-in POSIX functions and their semantics
      | Some(Dir(_))  -> 1
      | _ -> -1
    in 
-   (F,H,b,Some(Test(x)))
+   (F,H,b,Some(Test(p)))
    
 [[ lockf ]] = fun (F,H,(p,n)) ->
    if n then
@@ -220,6 +356,8 @@ Built-in POSIX functions and their semantics
          let F' = F[p := x] in
          (F',H,0,None)
       | _       -> (F,H,-1,None)
+
+-- TODO: Still needs to be added:
 
 --------------------------------------------------------------------------------
 Built-in Helper functions and their semantics
@@ -479,173 +617,6 @@ let build_fs () =
    let clist         = map (fun p -> (t,p)) clist in
    let F''           = F(glog := F(glog) @ clist) in
    (F'',H',())
-
---------------------------------------------------------------------------------
-Syntax
---------------------------------------------------------------------------------
-
-(* Metavariable Conventions *)
-n in Integer
-p in Path
-w in String
-F in FileStore
- 
-(* Values *)
-v ::= n
-    | p
-    | w
-    | (v1,...,vn)
-    | l
-    | fun x -> e
-
-o ::= Some v 
-    | None
-
-l ::= v :: l | []
-
--- Things that can exist in filesystem
-lf ::= File(w)
-   | Dir(l)
-   | Lock(lf)
-
-(* Expressions *)
-e ::= x
-    | v
-    | f e
-    | e e
-    | (e1,...,en)
-
-(* Commands *)
-c ::= skip
-    | c1; c2
-    | x := e
-    | if e then c1 else c2
-    | while e do c
-    | atomic c
-
-(* Heaps *)
-H in Var |-> Value
-
-(* Threads *)
-t ::= <H,c>
-
-M ::= {t1,...,tk}
-
---------------------------------------------------------------------------------
-SEMANTICS
---------------------------------------------------------------------------------
-
-(* Evaluation Contexts *)
-E ::= . 
-    | f E
-    | E e
-    | v E
-    | (E,e2,...,en)
-    | (v1,E,e3,...,en)
-    | ...
-    | (v1,...,v(n-1),E)
-
-(* Expression evaluation: (F,H,e) - o -> (F',H',e') *)
-
-(* Notational convention: 
-   write 
-     (F,H,e) - None -> (F',H',e') 
-   as 
-     (F,H,e) --> (F',H',e') 
-*)  
-
-H(x) = v
--------------- E-Var
-(F,H,x) -> (F,H,v)
-
-(F',H',v',o) = [[ f ]] (F,H,v)
---------------------------------- E-Call1
-(F,H,f v) - o -> (F',H',v')
-
-
-(F',H',v') = [[ f ]] (F,H,v)
---------------------------------- E-Call2
-(F,H,f v) --> (F',H',v')
-
-v1 = fun x -> e
-e' = e[x -> v2]
---------------------------------- E-Lambda
-(F,H,v1 v2) -> (F,H,e')
-
-(F,H,e) - o -> (F',H',e')
---------------------------- E-Context
-(F,H,E[e]) - o -> (F',H',E[e'])
-
-(* Command evaluation: (F,H,c) - o -> (F',H',c') *)
-
-C ::= . 
-     | x := C
-     | if C then c1 else c2
-     | while C do c
-     | C ; c
-
-t ::= e | c 
-
-C[t] needs to be well-formed...
-
-(F,H,t) - o -> (F',H',t')
---------------------------- C-Context
-(F,H,C[t]) - o -> (F',H',C[t'])
-     
--------------------------- C-SkipSeq
-(F,H,skip;c2) --> (F,H,c2)
-
-H' = H[x:=v]
--------------------------C-Assgn
-(F,H,x:=v) --> (F,H',skip)
-
---------------------------------------C-IfFalse
-(F,H,if 0 then c1 else c2) --> (F,H,c2)
-
-n <> 0
---------------------------------------C-IfTrue
-(F,H,if n then c1 else c2) --> (F,H,c1)
-
-
---------------------------------C-WhileFalse
-(F,H,while 0 do c) --> (F,H,skip)
-
-n <> 0
-------------------------------------------C-WhileTrue
-(F,H,while n do c) --> (F,H,c;while n do c)
-
-(* Multi-step command evaluation: (F,H,c) - l -> (F',H',c') *)
-
-------------------------T-Refl
-(F,H,t) - [] ->* (F,H,t)
-
-(* JNF: NB, I flipped T-Step around so the effects are accumulated in
-order *)
-
--- JDL: I reflipped it. The other log is collected in opposite order,
--- so I figure we may as well make this one the same.
--- Although it is a bit weird
-
-(F,H,t) - l ->*  (F',H',t')
-(F',H',t') - o -> (F'',H'',t'')
---------------------------------- T-Step
-(F,H,t) - o :: l -> (F'',H'',t'')
-
---------------------------------------------------------------------------------
-Concurrent Operational Semantics
---------------------------------------------------------------------------------
-
-(F,H,c) -> (F',H',c')
------------------------------------------ M-step
-(F,M U { <H,c> }) -> (F',M U { <H',c'> })
-
------------------------------------------ M-skip
-(F,M U { <H,skip> }) -> (F,M)
-
-(F,H,c) ->* (F',H',skip)
----------------------------------------------- M-atomic
-(F,M U { <H,C[atomic c]> }) -> (F',M',C[skip])
-
 --------------------------------------------------------------------------------
 Translation from TxForest to IMPOSIX
 --------------------------------------------------------------------------------
@@ -1504,3 +1475,11 @@ Proof:
   Further, by parts 1,2, and 3 above, we know that the log is correctly written and that 
   write_log thus performs exactly the filesystem changing actions that c would have made.
   This finishes our proof of the Lemma.
+
+--------------------------------------------------------------------------------
+Dedicated Space
+--------------------------------------------------------------------------------
+
+Some file 'filelock' and some file 'glog'
+
+--JDL: Not sure where to put this info

@@ -97,6 +97,8 @@ ch \in \textbf{Character} & w \in \textbf{String} &  F \in \textbf{FileStore}
 \caption{Lots of type definitions}
 \end{figure*}
 
+\subsection*{Evaluation Semantics}
+
 %Evaluation Semantics
 \begin{figure*}
 %TODO: Note notational conventions somewhere
@@ -126,93 +128,207 @@ C[t] needs to be well-formed...
 \end{minipage}
 \centerline{\textbf{Evaluation Contexts}}
 
-%\begin{minipage}{0.5\linewidth}
+\begin{minipage}{0.5\linewidth}
 \infrule[E-var]
 {H(x) = v}
 {(F,H,x) \rightarrow (F,H,v)}
+\vspace{8pt}
 
 \infrule[E-Call1]
 {(F',H',v',o) = [[ f ]]~(F,H,v)}
 {(F,H,f~v) \opstep{o} (F',H',v')}
+\vspace{8pt}
 
 \infrule[E-Call2]
 {(F',H',v') = [[ f ]]~(F,H,v)}
 {(F,H,f~v) \rightarrow (F',H',v')}
-%\end{minipage}
-
-%\begin{minipage}{0.5\linewidth}
+\end{minipage}
+\hfill
+\begin{minipage}{0.5\linewidth}
 \infrule[E-Lambda]
 {v_1 = \text{fun } x \rightarrow e \\
  e'  = e[x \mapsto v_2]}
-{(F,H,v_1~v_2) \rightarrow (F,H,e')}
+{(F,H,v_1~v_2) \rightarrow (F,H,e'})
+\vspace{8pt}
 
 \infrule[E-Context]
 {(F,H,e) \opstep{o} (F',H',e')}
 {(F,H,E[e]) \opstep{o} (F',H',E[e'])}
-%\end{minipage}
+\end{minipage}
 \centerline{\textbf{Expression Evaluation}}
 
-%\begin{minipage}[t]{0.5\linewidth}
+\begin{minipage}[t]{0.5\linewidth}
 \infrule[C-IfFalse]
 {}
 {(F,H,\ifte{0}{c_1}{c_2}) \rightarrow (F,H,c_2)}
+\vspace{8pt}
 
 \infrule[C-IfTrue]
 {n <> 0}
 {(F,H,\ifte{n}{c_1}{c_2}) \rightarrow (F,H,c_1)}
+\vspace{8pt}
 
 \infrule[C-WhileFalse]
 {}
 {(F,H,\wdo{0}{c}) \rightarrow (F,H,skip)}
+\vspace{8pt}
 
 \infrule[C-WhileTrue]
 {n <> 0}
 {(F,H,\wdo{n}{c}) \rightarrow (F,H,c;\wdo{n}{c})}
-%\end{minipage}
-
-%\begin{minipage}[t]{0.5\linewidth}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\linewidth}
 \infrule[C-Context]
 {(F,H,e) \opstep{o} (F',H',e')}
 {(F,H,E[e]) \opstep{o} (F',H',E[e'])}
+\vspace{22pt}
 
 \infrule[C-SkipSeq]
 {}
 {(F,H,skip;c_2) \rightarrow (F,H,c_2)}
+\vspace{22pt}
 
 \infrule[C-Assgn]
 {H' = H[x \mapsto v]}
 {(F,H,x:=v) \rightarrow (F,H',skip)}
-%\end{minipage}
+\end{minipage}
 \centerline{\textbf{Command Evaluation}}
 
-%\begin{minipage}[t]{0.5\linewidth}
+\begin{minipage}[t]{0.5\linewidth}
 \infrule[T-Refl]
 {}
 {(F,H,t)  \opsteps{[]} (F,H,t)}
+\vspace{18pt}
 
 \infrule[T-step]
 {(F,H,t) \opsteps{l} (F',H',t') \\
 (F',H',t') \opstep{o} (F'',H'',t'') }
 {(F,H,t) \opsteps{o :: l} (F'',H'',t'')}
 \centerline{\textbf{Multi-Step Command Evaluation}}
-%\end{minipage}
-
-%\begin{minipage}[t]{0.5\linewidth}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\linewidth}
 \infrule[M-skip]
 {}
 {(F,M \uplus \mset{ <H,skip> }) \rightarrow (F,M)}
+\vspace{8pt}
 
 \infrule[M-step]
 {(F,H,c) \rightarrow (F',H',c')}
 {(F,M \uplus \mset{ <H,c> }) \rightarrow (F',M \uplus \mset{ <H',c'> })}
+\vspace{8pt}
 
 \infrule[M-atomic]
 {(F,H,c) \rightarrow^* (F',H',skip)}
 {(F,M \uplus \mset{ <H,atomic c> }) \rightarrow (F',M)} %In txt we have C[atomic c]. Not sure why.
 \centerline{\textbf{Concurrent Command Evaluation}}
-%\end{minipage}
+\end{minipage}
 
 \caption{Operational Semantics}
 \end{figure*}
 
-
+\begin{figure*}
+\begin{minipage}[t]{0.5\linewidth}
+\begin{displaymath}
+\begin{array}{l}
+\evalpat{open} = \FUN (F,H,p) \rightarrow \\
+\quad \LET S = H(\pfds) \IN \\
+\quad \LET n = gensym(S) \IN \\
+\quad \LET H' = H[\pfds := S \cup \GOOSE{n \mapsto (p,0)}] \IN \\
+\quad (F,H',n,\NONE) \\ \\
+\\
+\evalpat{read} = \FUN (F,H,n) \rightarrow \\
+\quad \IF n \in H(\pfds) \THEN \\
+\qquad \LET (p,i) = H(\pfds)(n) \IN \\
+\qquad \MWITH{F(p)} \\
+\qquad \mid~\SOME(Lock(File(w))) \\
+\qquad \mid~\SOME(File(w)) \rightarrow \\
+\qqquad \LETIN{H'}{H[\pfds(n) := (p,i+1)]} \\
+\qqquad \LETIN{c}{w[i,i+1]} \\
+\qqquad (F,H',c,\SOME(RF(p,c,i))) \\
+\qquad \mid~\_  \rightarrow (F,H,\ERR,\NONE) \\
+\quad \ELSE (F,H,\ERR,\NONE) \\
+\\
+\evalpat{write} = \FUN (F,H,(n,w)) \rightarrow \\
+\quad \IF n \in H(\pfds) \THEN \\
+\qquad \LET (p,i) = H(\pfds)(n) \IN \\
+\qquad \MWITH{F(p)} \\
+\qquad \mid~\SOME(Lock(File(u))) \rightarrow \\
+\qqquad \LETIN{F'}{F[p := Lock(File(u[i] := w))]} \\
+\qqquad \LETIN{H'}{H[\pfds(n) := (p,i + \abs{w})]} \\
+\qqquad (F',H',0,\SOME(W(p,w,i))) \\
+\qquad \mid~\SOME(File(u)) \rightarrow \\
+\qqquad \LETIN{F'}{F[p := File(u[i] := w)]} \\
+\qqquad \LETIN{H'}{H[\pfds(n) := (p,i + \abs{w})]} \\
+\qqquad (F',H',0,\SOME(W(p,w,i))) \\
+\qquad \mid~\_  \rightarrow (F,H,\ERR,\NONE) \\
+\quad \ELSE (F,H,\ERR,\NONE) \\
+\\
+\evalpat{test} = \FUN (F,H,p) \rightarrow \\
+\quad \LET b = \\
+\qquad \MWITH{F(p)} \\
+\qquad \mid~\SOME(Lock(File(\_))) \\
+\qquad \mid~\SOME(File(\_)) \qquad \rightarrow 0 \\
+\qquad \mid~\SOME(Lock(Dir([]))) \\
+\qquad \mid~\SOME(Dir([])) \qquad \rightarrow 2 \\
+\qquad \mid~\SOME(Lock(Dir(\_))) \\
+\qquad \mid~\SOME(Dir(\_)) \qquad ~ \rightarrow 1 \\
+\qquad  \mid~\_ \qqqquad \qqquad ~~~ \rightarrow ERR \\
+\quad \IN \\
+\quad (F,H,b,\SOME(Test(p)))
+\end{array}
+\end{displaymath}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\linewidth}
+\begin{displaymath}
+\begin{array}{l}
+\evalpat{close} = \FUN (F,H,n) \rightarrow \\
+\quad \LET S = H(\pfds) \IN \\
+\quad \IF n \in dom(S) \THEN \\
+\qquad \LET H' = H[\pfds := S \BS n] \IN \\
+\qquad (F,H',0,\NONE) \\
+\quad \ELSE (F,H,\ERR,\NONE) \\
+\\
+\evalpat{readdir} = \FUN (F,H,n) \rightarrow \\
+\quad \IF n \in H(\pfds) \THEN \\
+\qquad \LET (p,i) = H(\pfds)(n) \IN \\
+\qquad \MWITH{F(p)} \\
+\qquad \mid~\SOME(Lock(Dir(l))) \\
+\qquad \mid~\SOME(Dir(l)) \rightarrow \\
+\qqquad \LETIN{H'}{H[\pfds(n) := (p,i+1)]} \\
+\qqquad \LETIN{f}{l[i,i+1]} \\
+\qqquad (F,H',f,\SOME(RD(p,f,i))) \\
+\qquad \mid~\_  \rightarrow (F,H,\ERR,\NONE) \\
+\quad \ELSE (F,H,\ERR,\NONE) \\
+\\
+\evalpat{lockf} = \FUN (F,H,(p,n)) \rightarrow \\
+\quad \IF n \THEN \\
+\qquad \MWITH{F(p)} \\
+\qquad \mid~\NONE \\
+\qquad \mid~\SOME(Lock(\_)) \rightarrow (F,H,\ERR,\NONE) \\
+\qquad \mid~\SOME(x) \rightarrow \\
+\qqquad \LETIN{F'}{F[p := Lock(x)]} \\
+\qqquad (F',H,0,\NONE) \\
+\quad \ELSE \\
+\qquad \MWITH{F(p)} \\
+\qquad \mid~\SOME(Lock(x)) \rightarrow \\
+\qqquad \LETIN{F'}{F[p := x]} \\
+\qqquad (F',H,0,\NONE) \\
+\qquad \mid~\_ \rightarrow (F,H,\ERR,\NONE) \\
+\\
+\evalpat{remove} = \FUN (F,H,p) \rightarrow \\
+\quad \MWITH{F(p)} \\
+\quad \mid~\SOME(Lock(File(\_))) \\
+\quad \mid~\SOME(Lock(Dir([]))) \\
+\quad \mid~\SOME(File(\_)) \\
+\quad \mid~\SOME(Dir([])) \rightarrow \\
+\qquad \LETIN{F'}{F \BS p} \\
+\qquad (F',H,0,\SOME(Rm(p))) \\
+\quad \mid~\_  \rightarrow (F,H,\ERR,\SOME(Test(p)))
+\end{array}
+\end{displaymath}
+\end{minipage}
+\caption{Built-in function semantics}
+\end{figure*}
