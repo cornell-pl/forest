@@ -10,9 +10,7 @@
 \usepackage{url}
 \usepackage{verbatim}
 \usepackage{bcprules} % Is this a pun?
-
 \usepackage{stmaryrd}
-\usepackage{xspace}
 
 \newcommand{\opstep}[1]{\ensuremath{\xrightarrow{#1}}}
 \newcommand{\opsteps}[1]{\ensuremath{\xrightarrow{#1}\mathrel{\vphantom{\to}^*}}}
@@ -21,10 +19,12 @@
 \newcommand{\mset}[1]{\{ #1 \}}
 \newcommand{\evalpat}[1]{\ensuremath{\llbracket#1\rrbracket}}
 \newcommand{\pfds}{\ensuremath{posix\_fds}}
-\newcommand{\GOOSE}[1]{\{ #1 \}}
+\newcommand{\GOOSE}[1]{\{#1\}}
 \newcommand{\FUN}{\text{fun}~}
 \newcommand{\LET}{\text{let}~}
+\newcommand{\LETR}{\text{let rec }}
 \newcommand{\IN}{~\text{in}}
+\newcommand{\FIN}{\text{in}}
 \newcommand{\IF}{\text{if}~}
 \newcommand{\THEN}{~\text{then}}
 \newcommand{\ELSE}{\text{else}~}
@@ -38,9 +38,15 @@
 \newcommand{\ERR}{\text{ERR}}
 \newcommand{\IFTHEN}[1]{\text{if } #1 \text{ then}}
 \newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\LL}[1]{lookup\_log#1}
+\newcommand{\FW}[1]{\text{failwith ``#1''}}
+\newcommand{\AND}{~\&\&~}
+\newcommand{\BEGIN}{\text{begin}}
+\newcommand{\END}{\text{end}}
+\newcommand{\WHERE}{\text{ where }}
+\newcommand{\WHEN}{\text{ when }}
 
 \begin{comment}
-\usepackage{stmaryrd}
 \usepackage{xspace}
 \usepackage{color}
 \usepackage{graphicx}
