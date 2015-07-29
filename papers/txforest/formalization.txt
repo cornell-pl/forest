@@ -357,8 +357,6 @@ Built-in POSIX functions and their semantics
          (F',H,0,None)
       | _       -> (F,H,-1,None)
 
--- TODO: Still needs to be added:
-
 --------------------------------------------------------------------------------
 Built-in Helper functions and their semantics
 --------------------------------------------------------------------------------
@@ -613,123 +611,10 @@ let build_fs l  =
    let (F',H',clist) = writer (rev H(log)) (F,H,[]) in
    let t             = time() in
    let clist         = map (fun p -> (t,p)) clist in
-   let F''           = F(glog := F(glog) @ clist) in
+   let F''           = F'[glog := F'(glog) @ clist] in
    (F'',H',())
---------------------------------------------------------------------------------
-Translation from TxForest to IMPOSIX
---------------------------------------------------------------------------------
 
-(* JNF: Let's define the syntax of the subset of Haskell that we're
-using here? I think this includes new, read, write, etc. Should also
-define data structures like Rep(p). *)
-
--- Notably, this could just be a POSIX tuple. This is mostly for ease of reading.
--- x is where it is stored.
-rep := Dir(p,n,l,x)  -- Directory at path p, which contains l and is read if n=1
-    |  File(p,n,w,x) -- File at path p containing w and is read if n=1
-    |  Rm(p)         -- Just lets us know that we've removed it
-
-spec := Directory
-     |  File
-
--- Where ret is the return value
-
-[[ new ]] = fun spec p ->
-  match spec with
-  | Directory ->
-    x   := Dir(p,0,[],x);
-    ret := Dir(p,0,[],x)
-  | File      ->
-    x   := File(p,0,"",x); 
-    ret := File(p,0,"",x)
-  where x is fresh.
-
-[[ read ]] = fun rep ->
-  match rep with
-  | Rm(_)         -> failwith "Can't read deleted rep"
-  | Dir(_,1,w,_)
-  | File(_,1,w,_) -> ret := (rep,w)
-  | Dir(p,_,_,x)  ->
-    tmp := [];
-    r := 1;
-    fd := open p;
-    while r do {
-      r   := readdir fd; 
-      tmp := r :: H(tmp)
-    };
-    tmp := rev H(tmp);
-    _ := close fd;
-    x   := Dir(p,1,tmp,x);
-    ret := (x,tmp)
-  | File(p,_,_,x) -> -- For simplicity, I'll think of strings as a list of chars
-    tmp := [];
-    r := 1;
-    fd := open p;
-    while r do {
-      r   := read fd; 
-      tmp := r :: H(tmp)
-    };
-    tmp := rev H(tmp);
-    _ := close fd;
-    x   := File(p,1,tmp,x);
-    ret := (x,tmp)
-  where r, fd, and tmp are fresh
-   
-[[ delete ]] = fun rep ->
-  match rep with
-  | Rm(_) -> ret := ()
-  | Dir(p,1,l,x) ->
-    iter [[ delete ]] l 
-    ret := ();
-    _ := remove p;
-    x := Rm(p)
-  | Dir(p,n,l,x)  ->
-    list := [p];
-    ret := ()
-    while list <> [] do {
-      y := hd H(list);
-      r := remove(x);
-      if r then {
-        fd := open (x);
-        while r do {
-          r    := readdir fd; 
-          list := r :: H(list)
-        };
-        _ := close fd
-      } 
-      else list := tl H(list)
-    }
-    x := Rm(p)
-  | File(p,_,_,x) ->
-    ret := ();
-    _ := remove p;
-    x := Rm(p)
-  where list, fd, y, and r are fresh.
-   
--- JDL: Not quite sure what to do with b and func for errors?
-
-[[ writeOrElse ]] = fun rep l' b func = 
-  match rep with
-  | Rm(_)
-  | Dir(_,0,_,_)
-  | File(_,0,_,_) -> ret := ()
-  | Dir(p,n,l,x)  ->
-    iter (fun rep' -> 
-      match rep' with
-      | File(_,_,newl,_)
-      | Dir(_,_,newl,_)  -> [[ writeOrElse ]] rep' newl b func
-      ) l'  
-    x  := Dir(p,n,l',x)
-  | File(p,n,w,x) ->
-    _  := remove p;
-    fd := open p;
-    r  := write (fd,l');
-    _  := close fd;
-    if r = -1
-    then ret := func r
-    else ret := b;
-    x  := File(p,n,l',x)
-  where r and fd are fresh.
+-- TODO: Still needs to be added:
 
 --------------------------------------------------------------------------------
 Optimistic Compilation
@@ -850,6 +735,122 @@ Optimistic Compilation
      _ := lockf (lockfile,0)
    where f and lsucc are fresh, atomic is not a subcommand of c.
    and time returns the current time.
+
+--------------------------------------------------------------------------------
+Translation from TxForest to IMPOSIX
+--------------------------------------------------------------------------------
+
+(* JNF: Let's define the syntax of the subset of Haskell that we're
+using here? I think this includes new, read, write, etc. Should also
+define data structures like Rep(p). *)
+
+-- Notably, this could just be a POSIX tuple. This is mostly for ease of reading.
+-- x is where it is stored.
+rep := Dir(p,n,l,x)  -- Directory at path p, which contains l and is read if n=1
+    |  File(p,n,w,x) -- File at path p containing w and is read if n=1
+    |  Rm(p)         -- Just lets us know that we've removed it
+
+spec := Directory
+     |  File
+
+-- Where ret is the return value
+
+[[ new ]] = fun spec p ->
+  match spec with
+  | Directory ->
+    x   := Dir(p,0,[],x);
+    ret := Dir(p,0,[],x)
+  | File      ->
+    x   := File(p,0,"",x); 
+    ret := File(p,0,"",x)
+  where x is fresh.
+
+[[ read ]] = fun rep ->
+  match rep with
+  | Rm(_)         -> failwith "Can't read deleted rep"
+  | Dir(_,1,w,_)
+  | File(_,1,w,_) -> ret := (rep,w)
+  | Dir(p,_,_,x)  ->
+    tmp := [];
+    r := 1;
+    fd := open p;
+    while r do {
+      r   := readdir fd; 
+      tmp := r :: H(tmp)
+    };
+    tmp := rev H(tmp);
+    _ := close fd;
+    x   := Dir(p,1,tmp,x);
+    ret := (x,tmp)
+  | File(p,_,_,x) -> -- For simplicity, I'll think of strings as a list of chars
+    tmp := [];
+    r := 1;
+    fd := open p;
+    while r do {
+      r   := read fd; 
+      tmp := r :: H(tmp)
+    };
+    tmp := rev H(tmp);
+    _ := close fd;
+    x   := File(p,1,tmp,x);
+    ret := (x,tmp)
+  where r, fd, and tmp are fresh
+   
+[[ delete ]] = fun rep ->
+  match rep with
+  | Rm(_) -> ret := ()
+  | Dir(p,1,l,x) ->
+    iter [[ delete ]] l 
+    ret := ();
+    _ := remove p;
+    x := Rm(p)
+  | Dir(p,n,l,x)  ->
+    list := [p];
+    ret := ()
+    while list <> [] do {
+      y := hd H(list);
+      r := remove(x);
+      if r then {
+        fd := open (x);
+        while r do {
+          r    := readdir fd; 
+          list := r :: H(list)
+        };
+        _ := close fd
+      } 
+      else list := tl H(list)
+    }
+    x := Rm(p)
+  | File(p,_,_,x) ->
+    ret := ();
+    _ := remove p;
+    x := Rm(p)
+  where list, fd, y, and r are fresh.
+   
+-- JDL: Not quite sure what to do with b and func for errors?
+
+[[ writeOrElse ]] = fun rep l' b func = 
+  match rep with
+  | Rm(_)
+  | Dir(_,0,_,_)
+  | File(_,0,_,_) -> ret := ()
+  | Dir(p,n,l,x)  ->
+    iter (fun rep' -> 
+      match rep' with
+      | File(_,_,newl,_)
+      | Dir(_,_,newl,_)  -> [[ writeOrElse ]] rep' newl b func
+      ) l'  
+    x  := Dir(p,n,l',x)
+  | File(p,n,w,x) ->
+    _  := remove p;
+    fd := open p;
+    r  := write (fd,l');
+    _  := close fd;
+    if r = -1
+    then ret := func r
+    else ret := b;
+    x  := File(p,n,l',x)
+  where r and fd are fresh.
 
 --------------------------------------------------------------------------------
 Theorems

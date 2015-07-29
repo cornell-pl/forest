@@ -432,22 +432,27 @@ C[t] needs to be well-formed...
 \caption{Built-in Helper Function Semantics}
 \end{figure*}
 
-\begin{comment}
 \begin{figure*}
 \begin{minipage}[t]{0.5\linewidth}
 \begin{displaymath}
 \begin{array}{l}
-\evalpat{\LL{R}} = \FUN (F,H,n) \rightarrow \\
-\quad \LET (p,i) = H(\pfds)(n) \IN \\
-\quad \LET b = \\
-\qquad \MWITH{H(logFS)(p)} \\
-\qquad \mid~\SOME(Fi(\_)) \\
-\qquad \mid~\SOME(D(\_,\_,true)) \rightarrow RKnown \\
-\qquad \mid~\SOME(D(\_,\_,false)) \rightarrow RPartial \\
-\qquad \mid~\SOME(Rm) \\
-\qquad \mid~\NONE \rightarrow RUnknown \\
+\evalpat{check\_error} = \FUN (F,H,()) \rightarrow \\
+\quad \LET glog = fold (\FUN acc (t,p) \rightarrow \\ 
+\qquad \IFTHEN{H(tstart) < t}~ p :: acc ~\ELSE acc) []~F(glog) \IN \\
+\quad \LETR err\_help~l = \\
+\qquad \MWITH{l} \\
+\qquad \mid~[] \rightarrow 0 \\
+\qquad \mid~hd :: tl \rightarrow \\
+\qqquad \BEGIN \\
+\qqquad \MWITH{hd} \\
+\qqquad \mid~RD(p,\_,\_) \\
+\qqquad \mid~RF(p,\_,\_) \\
+\qqquad \mid~Test(p) \rightarrow \IFTHEN{exists~(= p)~glog}~1~ \ELSE err\_help~tl\\
+\qqquad \mid~\_ \rightarrow err\_help~tl \\ 
+\qqquad \END \\
 \quad \FIN \\
-\quad (F,H,b) \\
+\quad \LETIN{b}{err\_help~H(log)} \\
+\quad (F,H,b)
 \end{array}
 \end{displaymath}
 \end{minipage}
@@ -455,43 +460,34 @@ C[t] needs to be well-formed...
 \begin{minipage}[t]{0.5\linewidth}
 \begin{displaymath}
 \begin{array}{l}
-\evalpat{\LL{E}} = \FUN (F,H,p) \rightarrow \\
-\quad \LET b = \\
-\qquad \MWITH{H(logFS)(p)} \\
-\qquad \mid~\SOME(Fi(\_)) \rightarrow TFile\\
-\qquad \mid~\SOME(D(l,\_,\_)) \WHEN l <> [] \rightarrow TDir(false) \\
-\qquad \mid~\SOME(D(\_,\_,false))  \\
-\qquad \mid~\NONE \rightarrow TUnknown \\
-\qquad \mid~\SOME(D(\_)) \rightarrow TDir(true) \\
-\qquad \mid~\SOME(Rm) \rightarrow TNone \\
+\evalpat{write\_log} = \FUN (F,H,()) \rightarrow \\
+\quad \LETR writer~l~acc = \\
+\qquad \MWITH{l} \\
+\qquad \mid~[] \rightarrow acc \\
+\qquad \mid~hd :: tl \rightarrow \\
+\qqquad \BEGIN \\
+\qqquad \MWITH{hd} \\
+\qqquad \mid~W(p,w,\_) \rightarrow \\
+\qqqquad \LETIN{(F',H',fd)}{open~p)} \\
+\qqqquad \LETIN{(F',H',\_)}{write~(fd,w))} \\
+\qqqquad \LETIN{(F',H',\_)}{close~fd)} \\
+\qqqquad writer~tl~(F',H',p :: lst) \\
+\qqquad \mid~Rm(p) \rightarrow \\
+\qqqquad \LETIN{(F',H',\_)}{remove~p)} \\
+\qqqquad writer~tl~(F',H',p :: lst) \\
+\qqquad \mid~\_ \rightarrow writer~tl~acc \\ 
+\qqquad \END \\
 \quad \FIN \\
-\quad (F,H,b) \\
-\\
-\evalpat{record} = \FUN (F,H,t) \rightarrow \\
-\quad \LET H' = \\
-\qquad \MWITH{t} \\
-\qquad \mid~Read(fd,v,d) \rightarrow \\
-\qqquad \LETIN{(p,i)}{H(\pfds)(fd)} \\
-\qqquad \LETIN{index}{\IFTHEN{H(real\_index) = 0 \AND i > 0} ~ i-1 ~ \\
-\qqqquad \qqqquad ~ \ELSE H(real\_index)-1} \\
-\qqquad \LETIN{ele}{\IFTHEN{d}~ RD(p,v,index) ~ \ELSE RF(p,v,index)} \\
-\qqquad \LETIN{H'}{\IFTHEN{v=\ERR}~ H[real\_index := 0] ~ \ELSE H} \\
-\qqquad H'[log := ele :: H(log)] \\
-\qquad \mid~Write(fd,w) \rightarrow \\
-\qqquad \LETIN{(p,i)}{H(\pfds)(fd)} \\
-\qqquad H[log := W(p,w,i) :: H(log)] \\
-\qquad \mid~Remove(p) \rightarrow H[log := Rm(p) :: H(log)] \\
-\qquad \mid~Test(p) \rightarrow H[log := Test(p) :: H(log)] \\
-\quad \FIN \\
-\quad \LETIN{logFS}{build\_fs (rev H(log))} \\
-\quad \LETIN{H'}{H'[logFS := logFS]} \\
-\quad (F,H',0)
+\quad \LETIN{(F',H',clist)}{writer~(rev~H(log))~(F,H,[])} \\
+\quad \LETIN{t}{time()} \\
+\quad \LETIN{clist}{map~(\FUN p \rightarrow (t,p))~clist} \\
+\quad \LETIN{F''}{F'[glog := F'(glog) @ clist]} \\
+\quad (F'',H',())
 \end{array}
 \end{displaymath}
 \end{minipage}
 \caption{Transaction Helper Function Semantics}
 \end{figure*}
-\end{comment}
 
 \begin{figure}
 \begin{code}
@@ -563,3 +559,4 @@ the file descriptor set.
 It is initialized as 0.
 \end{itemize}
 The filesystem F has the reserved value \textbf{glog}, which is a list of (time,path) pairs. It starts empty.
+%Note: Could conceivably make it a file containing such a list to make it fit more into the abstraction. Adds nothing though.
